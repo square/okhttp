@@ -15,6 +15,9 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.startsWith
 import java.net.CookieManager
 import java.net.ResponseCache
 import java.text.DateFormat
@@ -34,7 +37,6 @@ import okhttp3.okio.LoggingFilesystem
 import okhttp3.testing.PlatformRule
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -94,7 +96,7 @@ class CacheCorruptionTest {
     assertThat(cache.networkCount()).isEqualTo(1)
     assertThat(cache.hitCount()).isEqualTo(1)
 
-    assertThat(response.handshake?.cipherSuite?.javaName).startsWith("SLT_")
+    assertThat(response.handshake!!.cipherSuite.javaName).startsWith("SLT_")
   }
 
   @Test

@@ -15,13 +15,18 @@
  */
 package okhttp3.internal.connection
 
+import assertk.assertThat
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNotEmpty
+import assertk.assertions.isTrue
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.TestValueFactory
 import okhttp3.internal.concurrent.TaskRunner
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
@@ -47,27 +52,27 @@ class ConnectionPoolTest {
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
     assertThat(pool.cleanup(50L)).isEqualTo(100L)
     assertThat(pool.connectionCount()).isEqualTo(1)
-    assertThat(c1.socket().isClosed).isFalse
+    assertThat(c1.socket().isClosed).isFalse()
 
     // Running at time 60, the pool returns that nothing can be evicted until time 150.
     assertThat(pool.cleanup(60L)).isEqualTo(90L)
     assertThat(pool.connectionCount()).isEqualTo(1)
-    assertThat(c1.socket().isClosed).isFalse
+    assertThat(c1.socket().isClosed).isFalse()
 
     // Running at time 149, the pool returns that nothing can be evicted until time 150.
     assertThat(pool.cleanup(149L)).isEqualTo(1L)
     assertThat(pool.connectionCount()).isEqualTo(1)
-    assertThat(c1.socket().isClosed).isFalse
+    assertThat(c1.socket().isClosed).isFalse()
 
     // Running at time 150, the pool evicts.
     assertThat(pool.cleanup(150L)).isEqualTo(0)
     assertThat(pool.connectionCount()).isEqualTo(0)
-    assertThat(c1.socket().isClosed).isTrue
+    assertThat(c1.socket().isClosed).isTrue()
 
     // Running again, the pool reports that no further runs are necessary.
     assertThat(pool.cleanup(150L)).isEqualTo(-1)
     assertThat(pool.connectionCount()).isEqualTo(0)
-    assertThat(c1.socket().isClosed).isTrue
+    assertThat(c1.socket().isClosed).isTrue()
   }
 
   @Test fun inUseConnectionsNotEvicted() {
@@ -84,17 +89,17 @@ class ConnectionPoolTest {
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
     assertThat(pool.cleanup(50L)).isEqualTo(100L)
     assertThat(pool.connectionCount()).isEqualTo(1)
-    assertThat(c1.socket().isClosed).isFalse
+    assertThat(c1.socket().isClosed).isFalse()
 
     // Running at time 60, the pool returns that nothing can be evicted until time 160.
     assertThat(pool.cleanup(60L)).isEqualTo(100L)
     assertThat(pool.connectionCount()).isEqualTo(1)
-    assertThat(c1.socket().isClosed).isFalse
+    assertThat(c1.socket().isClosed).isFalse()
 
     // Running at time 160, the pool returns that nothing can be evicted until time 260.
     assertThat(pool.cleanup(160L)).isEqualTo(100L)
     assertThat(pool.connectionCount()).isEqualTo(1)
-    assertThat(c1.socket().isClosed).isFalse
+    assertThat(c1.socket().isClosed).isFalse()
   }
 
   @Test fun cleanupPrioritizesEarliestEviction() {
@@ -113,8 +118,8 @@ class ConnectionPoolTest {
     // Running at time 150, the pool evicts c2.
     assertThat(pool.cleanup(150L)).isEqualTo(0L)
     assertThat(pool.connectionCount()).isEqualTo(1)
-    assertThat(c1.socket().isClosed).isFalse
-    assertThat(c2.socket().isClosed).isTrue
+    assertThat(c1.socket().isClosed).isFalse()
+    assertThat(c2.socket().isClosed).isTrue()
 
     // Running at time 150, the pool returns that nothing can be evicted until time 175.
     assertThat(pool.cleanup(150L)).isEqualTo(25L)
@@ -123,8 +128,8 @@ class ConnectionPoolTest {
     // Running at time 175, the pool evicts c1.
     assertThat(pool.cleanup(175L)).isEqualTo(0L)
     assertThat(pool.connectionCount()).isEqualTo(0)
-    assertThat(c1.socket().isClosed).isTrue
-    assertThat(c2.socket().isClosed).isTrue
+    assertThat(c1.socket().isClosed).isTrue()
+    assertThat(c2.socket().isClosed).isTrue()
   }
 
   @Test fun oldestConnectionsEvictedIfIdleLimitExceeded() {
@@ -137,8 +142,8 @@ class ConnectionPoolTest {
     // With 2 connections, there's no need to evict until the connections time out.
     assertThat(pool.cleanup(100L)).isEqualTo(50L)
     assertThat(pool.connectionCount()).isEqualTo(2)
-    assertThat(c1.socket().isClosed).isFalse
-    assertThat(c2.socket().isClosed).isFalse
+    assertThat(c1.socket().isClosed).isFalse()
+    assertThat(c2.socket().isClosed).isFalse()
 
     // Add a third connection
     val c3 = factory.newConnection(pool, routeC1, 75L)
@@ -146,9 +151,9 @@ class ConnectionPoolTest {
     // The third connection bounces the first.
     assertThat(pool.cleanup(100L)).isEqualTo(0L)
     assertThat(pool.connectionCount()).isEqualTo(2)
-    assertThat(c1.socket().isClosed).isTrue
-    assertThat(c2.socket().isClosed).isFalse
-    assertThat(c3.socket().isClosed).isFalse
+    assertThat(c1.socket().isClosed).isTrue()
+    assertThat(c2.socket().isClosed).isFalse()
+    assertThat(c3.socket().isClosed).isFalse()
   }
 
   @Test fun leakedAllocation() {
@@ -161,7 +166,7 @@ class ConnectionPoolTest {
     assertThat(c1.calls).isEmpty()
 
     // Can't allocate once a leak has been detected.
-    assertThat(c1.noNewExchanges).isTrue
+    assertThat(c1.noNewExchanges).isTrue()
   }
 
   @Test fun interruptStopsThread() {
@@ -171,7 +176,7 @@ class ConnectionPoolTest {
       maxIdleConnections = 2
     )
     factory.newConnection(pool, routeA1)
-    assertThat(realTaskRunner.activeQueues()).isNotEmpty
+    assertThat(realTaskRunner.activeQueues()).isNotEmpty()
     Thread.sleep(100)
     val threads = arrayOfNulls<Thread>(Thread.activeCount() * 2)
     Thread.enumerate(threads)

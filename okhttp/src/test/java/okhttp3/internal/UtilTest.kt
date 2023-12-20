@@ -15,18 +15,21 @@
  */
 package okhttp3.internal
 
-import okio.buffer
-import okio.source
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
-import org.assertj.core.api.Assertions.assertThatIllegalStateException
-import org.junit.jupiter.api.Test
+import assertk.assertThat
+import assertk.assertions.hasMessage
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isTrue
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
+import okio.buffer
+import okio.source
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class UtilTest {
     @Test
@@ -49,17 +52,19 @@ class UtilTest {
         assertThat(checkDuration("timeout", 0, TimeUnit.MILLISECONDS)).isEqualTo(0)
         assertThat(checkDuration("timeout", 1, TimeUnit.MILLISECONDS)).isEqualTo(1)
 
-        assertThatIllegalStateException().isThrownBy { checkDuration("timeout", -1, TimeUnit.MILLISECONDS) }
-            .withMessage("timeout < 0")
-        assertThatIllegalArgumentException().isThrownBy { checkDuration("timeout", 1, TimeUnit.NANOSECONDS) }
-            .withMessage("timeout too small")
-        assertThatIllegalArgumentException().isThrownBy {
-            checkDuration(
-                "timeout",
-                1L + Int.MAX_VALUE.toLong(),
-                TimeUnit.MILLISECONDS
-            )
-        }.withMessage("timeout too large")
+        assertThat(assertThrows<IllegalStateException> {
+          checkDuration("timeout", -1, TimeUnit.MILLISECONDS)
+        }).hasMessage("timeout < 0")
+        assertThat(assertThrows<IllegalArgumentException> {
+          checkDuration("timeout", 1, TimeUnit.NANOSECONDS)
+        }).hasMessage("timeout too small")
+        assertThat(assertThrows<IllegalArgumentException> {
+          checkDuration(
+            "timeout",
+            1L + Int.MAX_VALUE.toLong(),
+            TimeUnit.MILLISECONDS
+          )
+        }).hasMessage("timeout too large")
     }
 
     @Test
@@ -67,15 +72,17 @@ class UtilTest {
         assertThat(checkDuration("timeout", 0.milliseconds)).isEqualTo(0)
         assertThat(checkDuration("timeout", 1.milliseconds)).isEqualTo(1)
 
-        assertThatIllegalStateException().isThrownBy { checkDuration("timeout", (-1).milliseconds) }
-            .withMessage("timeout < 0")
-        assertThatIllegalArgumentException().isThrownBy { checkDuration("timeout", 1.nanoseconds) }
-            .withMessage("timeout too small")
-        assertThatIllegalArgumentException().isThrownBy {
-            checkDuration(
-                "timeout",
-                (1L + Int.MAX_VALUE).milliseconds
-            )
-        }.withMessage("timeout too large")
+        assertThat(assertThrows<IllegalStateException> {
+          checkDuration("timeout", (-1).milliseconds)
+        }).hasMessage("timeout < 0")
+        assertThat(assertThrows<IllegalArgumentException> {
+          checkDuration("timeout", 1.nanoseconds)
+        }).hasMessage("timeout too small")
+        assertThat(assertThrows<IllegalArgumentException> {
+          checkDuration(
+            "timeout",
+            (1L + Int.MAX_VALUE).milliseconds
+          )
+        }).hasMessage("timeout too large")
     }
 }

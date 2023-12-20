@@ -15,9 +15,11 @@
  */
 package okhttp3.internal.http
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import java.util.Date
 import java.util.TimeZone
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

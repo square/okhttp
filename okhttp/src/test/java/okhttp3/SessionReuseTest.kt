@@ -15,6 +15,10 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.containsExactlyInAnyOrder
+import assertk.assertions.isEmpty
+import assertk.assertions.isNotEmpty
 import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -22,7 +26,6 @@ import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
 import okio.ByteString.Companion.toByteString
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -128,14 +131,14 @@ class SessionReuseTest {
 
     if (platform.isConscrypt()) {
       if (tlsVersion == TlsVersion.TLS_1_3) {
-        assertThat(sessionIds[0]).isBlank()
-        assertThat(sessionIds[1]).isBlank()
+        assertThat(sessionIds[0]).isEmpty()
+        assertThat(sessionIds[1]).isEmpty()
 
         // https://github.com/google/conscrypt/issues/985
         // assertThat(directSessionIds).containsExactlyInAnyOrder(sessionIds[0], sessionIds[1])
       } else {
-        assertThat(sessionIds[0]).isNotBlank()
-        assertThat(sessionIds[1]).isNotBlank()
+        assertThat(sessionIds[0]).isNotEmpty()
+        assertThat(sessionIds[1]).isNotEmpty()
 
         assertThat(directSessionIds).containsExactlyInAnyOrder(sessionIds[1])
       }
@@ -148,7 +151,7 @@ class SessionReuseTest {
         // assertEquals(sessionIds[0], sessionIds[1])
         // assertThat(directSessionIds).contains(sessionIds[0], sessionIds[1])
       }
-      assertThat(sessionIds[0]).isNotBlank()
+      assertThat(sessionIds[0]).isNotEmpty()
     }
   }
 

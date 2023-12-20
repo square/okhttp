@@ -15,6 +15,9 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.io.IOException
@@ -25,7 +28,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import okio.FileSystem
 import okio.Path.Companion.toOkioPath
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

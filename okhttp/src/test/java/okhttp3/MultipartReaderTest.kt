@@ -15,17 +15,21 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.hasMessage
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import java.io.EOFException
+import java.net.ProtocolException
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
-import java.io.EOFException
-import java.net.ProtocolException
 
 @Tag("Slowish")
 class MultipartReaderTest {

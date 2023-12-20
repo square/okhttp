@@ -15,15 +15,19 @@
  */
 package okhttp3.compare
 
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.matches
 import java.net.http.HttpClient
 import java.net.http.HttpClient.Redirect.NORMAL
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -66,6 +70,6 @@ class JavaHttpClientTest {
       }
       assertThat(recorded.headers["HTTP2-Settings"]).isNotNull()
       assertThat(recorded.headers["Upgrade"]).isEqualTo("h2c") // HTTP/2 over plaintext!
-      assertThat(recorded.headers["User-Agent"]).matches("Java-http-client/.*")
+      assertThat(recorded.headers["User-Agent"]!!).matches(Regex("Java-http-client/.*"))
   }
 }

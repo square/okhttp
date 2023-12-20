@@ -15,6 +15,11 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.hasMessage
+import assertk.assertions.isEqualTo
+import assertk.assertions.isIn
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
@@ -30,7 +35,6 @@ import okhttp3.internal.connection.RealConnectionPool.Companion.get
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test

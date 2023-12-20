@@ -15,9 +15,12 @@
  */
 package okhttp3.compare
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
+import assertk.assertions.matches
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jetty.client.HttpClient
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -54,6 +57,6 @@ class JettyHttpClientTest {
       assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
       assertThat(recorded.headers["Accept-Encoding"]).isEqualTo("gzip")
       assertThat(recorded.headers["Connection"]).isNull()
-      assertThat(recorded.headers["User-Agent"]).matches("Jetty/.*")
+      assertThat(recorded.headers["User-Agent"]!!).matches(Regex("Jetty/.*"))
   }
 }

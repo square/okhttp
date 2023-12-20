@@ -15,12 +15,14 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import java.net.URI
 import java.net.URL
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.testing.PlatformRule
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @Suppress("HttpUrlsUsage") // Don't warn if we should be using https://.
@@ -147,7 +149,7 @@ open class HttpUrlJvmTest {
     // option to the native-image command.
     platform.assumeNotGraalVMImage()
     val javaNetUrl = URL("mailto:user@example.com")
-    assertThat<HttpUrl>(javaNetUrl.toHttpUrlOrNull()).isNull()
+    assertThat(javaNetUrl.toHttpUrlOrNull()).isNull()
   }
 
   @Test
@@ -161,13 +163,13 @@ open class HttpUrlJvmTest {
   @Test
   fun fromUriUnsupportedScheme() {
     val uri = URI("mailto:user@example.com")
-    assertThat<HttpUrl>(uri.toHttpUrlOrNull()).isNull()
+    assertThat(uri.toHttpUrlOrNull()).isNull()
   }
 
   @Test
   fun fromUriPartial() {
     val uri = URI("/path")
-    assertThat<HttpUrl>(uri.toHttpUrlOrNull()).isNull()
+    assertThat(uri.toHttpUrlOrNull()).isNull()
   }
 
   @Test

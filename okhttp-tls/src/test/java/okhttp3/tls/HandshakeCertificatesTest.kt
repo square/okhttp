@@ -15,6 +15,9 @@
  */
 package okhttp3.tls
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.matchesPredicate
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.ServerSocket
@@ -30,7 +33,6 @@ import okhttp3.Handshake.Companion.handshake
 import okhttp3.internal.closeQuietly
 import okhttp3.testing.PlatformRule
 import okio.ByteString.Companion.toByteString
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -133,7 +135,9 @@ class HandshakeCertificatesTest {
       .toSet()
 
     // It's safe to assume all platforms will have a major Internet certificate issuer.
-    assertThat(names).anyMatch { it.matches(Regex("[A-Z]+=Entrust.*")) }
+    assertThat(names).matchesPredicate { strings ->
+      strings.any { it.matches(Regex("[A-Z]+=Entrust.*")) }
+    }
   }
 
   private fun startTlsServer(): InetSocketAddress {

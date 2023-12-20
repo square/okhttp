@@ -15,6 +15,13 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNotEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Arrays
@@ -25,7 +32,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.UTC
 import okhttp3.internal.http.MAX_DATE
 import okhttp3.internal.parseCookie
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -130,14 +136,14 @@ class CookieTest {
     val cookie = parse(url, "SID=31d4d96e407aad42; Path=/; Domain=example.com")
     assertThat(cookie!!.domain).isEqualTo("example.com")
     assertThat(cookie.path).isEqualTo("/")
-    assertThat(cookie.hostOnly).isFalse
+    assertThat(cookie.hostOnly).isFalse()
     assertThat(cookie.toString()).isEqualTo("SID=31d4d96e407aad42; domain=example.com; path=/")
   }
 
   @Test fun secureAndHttpOnly() {
     val cookie = parse(url, "SID=31d4d96e407aad42; Path=/; Secure; HttpOnly")
-    assertThat(cookie!!.secure).isTrue
-    assertThat(cookie.httpOnly).isTrue
+    assertThat(cookie!!.secure).isTrue()
+    assertThat(cookie.httpOnly).isTrue()
     assertThat(cookie.toString()).isEqualTo("SID=31d4d96e407aad42; path=/; secure; httponly")
   }
 
@@ -215,49 +221,49 @@ class CookieTest {
 
   @Test fun domainMatches() {
     val cookie = parse(url, "a=b; domain=example.com")
-    assertThat(cookie!!.matches("http://example.com".toHttpUrl())).isTrue
-    assertThat(cookie.matches("http://www.example.com".toHttpUrl())).isTrue
-    assertThat(cookie.matches("http://square.com".toHttpUrl())).isFalse
+    assertThat(cookie!!.matches("http://example.com".toHttpUrl())).isTrue()
+    assertThat(cookie.matches("http://www.example.com".toHttpUrl())).isTrue()
+    assertThat(cookie.matches("http://square.com".toHttpUrl())).isFalse()
   }
 
   /** If no domain is present, match only the origin domain.  */
   @Test fun domainMatchesNoDomain() {
     val cookie = parse(url, "a=b")
-    assertThat(cookie!!.matches("http://example.com".toHttpUrl())).isTrue
-    assertThat(cookie.matches("http://www.example.com".toHttpUrl())).isFalse
-    assertThat(cookie.matches("http://square.com".toHttpUrl())).isFalse
+    assertThat(cookie!!.matches("http://example.com".toHttpUrl())).isTrue()
+    assertThat(cookie.matches("http://www.example.com".toHttpUrl())).isFalse()
+    assertThat(cookie.matches("http://square.com".toHttpUrl())).isFalse()
   }
 
   /** Ignore an optional leading `.` in the domain.  */
   @Test fun domainMatchesIgnoresLeadingDot() {
     val cookie = parse(url, "a=b; domain=.example.com")
-    assertThat(cookie!!.matches("http://example.com".toHttpUrl())).isTrue
-    assertThat(cookie.matches("http://www.example.com".toHttpUrl())).isTrue
-    assertThat(cookie.matches("http://square.com".toHttpUrl())).isFalse
+    assertThat(cookie!!.matches("http://example.com".toHttpUrl())).isTrue()
+    assertThat(cookie.matches("http://www.example.com".toHttpUrl())).isTrue()
+    assertThat(cookie.matches("http://square.com".toHttpUrl())).isFalse()
   }
 
   /** Ignore the entire attribute if the domain ends with `.`.  */
   @Test fun domainIgnoredWithTrailingDot() {
     val cookie = parse(url, "a=b; domain=example.com.")
-    assertThat(cookie!!.matches("http://example.com".toHttpUrl())).isTrue
-    assertThat(cookie.matches("http://www.example.com".toHttpUrl())).isFalse
-    assertThat(cookie.matches("http://square.com".toHttpUrl())).isFalse
+    assertThat(cookie!!.matches("http://example.com".toHttpUrl())).isTrue()
+    assertThat(cookie.matches("http://www.example.com".toHttpUrl())).isFalse()
+    assertThat(cookie.matches("http://square.com".toHttpUrl())).isFalse()
   }
 
   @Test fun idnDomainMatches() {
     val cookie = parse("http://☃.net/".toHttpUrl(), "a=b; domain=☃.net")
-    assertThat(cookie!!.matches("http://☃.net/".toHttpUrl())).isTrue
-    assertThat(cookie.matches("http://xn--n3h.net/".toHttpUrl())).isTrue
-    assertThat(cookie.matches("http://www.☃.net/".toHttpUrl())).isTrue
-    assertThat(cookie.matches("http://www.xn--n3h.net/".toHttpUrl())).isTrue
+    assertThat(cookie!!.matches("http://☃.net/".toHttpUrl())).isTrue()
+    assertThat(cookie.matches("http://xn--n3h.net/".toHttpUrl())).isTrue()
+    assertThat(cookie.matches("http://www.☃.net/".toHttpUrl())).isTrue()
+    assertThat(cookie.matches("http://www.xn--n3h.net/".toHttpUrl())).isTrue()
   }
 
   @Test fun punycodeDomainMatches() {
     val cookie = parse("http://xn--n3h.net/".toHttpUrl(), "a=b; domain=xn--n3h.net")
-    assertThat(cookie!!.matches("http://☃.net/".toHttpUrl())).isTrue
-    assertThat(cookie.matches("http://xn--n3h.net/".toHttpUrl())).isTrue
-    assertThat(cookie.matches("http://www.☃.net/".toHttpUrl())).isTrue
-    assertThat(cookie.matches("http://www.xn--n3h.net/".toHttpUrl())).isTrue
+    assertThat(cookie!!.matches("http://☃.net/".toHttpUrl())).isTrue()
+    assertThat(cookie.matches("http://xn--n3h.net/".toHttpUrl())).isTrue()
+    assertThat(cookie.matches("http://www.☃.net/".toHttpUrl())).isTrue()
+    assertThat(cookie.matches("http://www.xn--n3h.net/".toHttpUrl())).isTrue()
   }
 
   @Test fun domainMatchesIpAddress() {
@@ -269,13 +275,13 @@ class CookieTest {
   @Test fun domainMatchesIpv6Address() {
     val cookie = parse("http://[::1]/".toHttpUrl(), "a=b; domain=::1")
     assertThat(cookie!!.domain).isEqualTo("::1")
-    assertThat(cookie.matches("http://[::1]/".toHttpUrl())).isTrue
+    assertThat(cookie.matches("http://[::1]/".toHttpUrl())).isTrue()
   }
 
   @Test fun domainMatchesIpv6AddressWithCompression() {
     val cookie = parse("http://[0001:0000::]/".toHttpUrl(), "a=b; domain=0001:0000::")
     assertThat(cookie!!.domain).isEqualTo("1::")
-    assertThat(cookie.matches("http://[1::]/".toHttpUrl())).isTrue
+    assertThat(cookie.matches("http://[1::]/".toHttpUrl())).isTrue()
   }
 
   @Test fun domainMatchesIpv6AddressWithIpv4Suffix() {
@@ -283,7 +289,7 @@ class CookieTest {
       "http://[::1:ffff:ffff]/".toHttpUrl(), "a=b; domain=::1:255.255.255.255"
     )
     assertThat(cookie!!.domain).isEqualTo("::1:ffff:ffff")
-    assertThat(cookie.matches("http://[::1:ffff:ffff]/".toHttpUrl())).isTrue
+    assertThat(cookie.matches("http://[::1:ffff:ffff]/".toHttpUrl())).isTrue()
   }
 
   @Test fun ipv6AddressDoesntMatch() {
@@ -303,22 +309,22 @@ class CookieTest {
    */
   @Test fun domainIsPublicSuffix() {
     val ascii = "https://foo1.foo.bar.elb.amazonaws.com".toHttpUrl()
-    assertThat(parse(ascii, "a=b; domain=foo.bar.elb.amazonaws.com")).isNotNull
+    assertThat(parse(ascii, "a=b; domain=foo.bar.elb.amazonaws.com")).isNotNull()
     assertThat(parse(ascii, "a=b; domain=bar.elb.amazonaws.com")).isNull()
     assertThat(parse(ascii, "a=b; domain=com")).isNull()
     val unicode = "https://長.長.長崎.jp".toHttpUrl()
-    assertThat(parse(unicode, "a=b; domain=長.長崎.jp")).isNotNull
+    assertThat(parse(unicode, "a=b; domain=長.長崎.jp")).isNotNull()
     assertThat(parse(unicode, "a=b; domain=長崎.jp")).isNull()
     val punycode = "https://xn--ue5a.xn--ue5a.xn--8ltr62k.jp".toHttpUrl()
-    assertThat(parse(punycode, "a=b; domain=xn--ue5a.xn--8ltr62k.jp")).isNotNull
+    assertThat(parse(punycode, "a=b; domain=xn--ue5a.xn--8ltr62k.jp")).isNotNull()
     assertThat(parse(punycode, "a=b; domain=xn--8ltr62k.jp")).isNull()
   }
 
   @Test fun hostOnly() {
-    assertThat(parse(url, "a=b")!!.hostOnly).isTrue
+    assertThat(parse(url, "a=b")!!.hostOnly).isTrue()
     assertThat(
       parse(url, "a=b; domain=example.com")!!.hostOnly
-    ).isFalse
+    ).isFalse()
   }
 
   @Test fun defaultPath() {
@@ -343,13 +349,13 @@ class CookieTest {
   }
 
   @Test fun httpOnly() {
-    assertThat(parse(url, "a=b")!!.httpOnly).isFalse
-    assertThat(parse(url, "a=b; HttpOnly")!!.httpOnly).isTrue
+    assertThat(parse(url, "a=b")!!.httpOnly).isFalse()
+    assertThat(parse(url, "a=b; HttpOnly")!!.httpOnly).isTrue()
   }
 
   @Test fun secure() {
-    assertThat(parse(url, "a=b")!!.secure).isFalse
-    assertThat(parse(url, "a=b; Secure")!!.secure).isTrue
+    assertThat(parse(url, "a=b")!!.secure).isFalse()
+    assertThat(parse(url, "a=b; Secure")!!.secure).isTrue()
   }
 
   @Test fun maxAgeTakesPrecedenceOverExpires() {
@@ -385,10 +391,10 @@ class CookieTest {
   }
 
   @Test fun maxAgeOrExpiresMakesCookiePersistent() {
-    assertThat(parseCookie(0L, url, "a=b")!!.persistent).isFalse
-    assertThat(parseCookie(0L, url, "a=b; Max-Age=1")!!.persistent).isTrue
+    assertThat(parseCookie(0L, url, "a=b")!!.persistent).isFalse()
+    assertThat(parseCookie(0L, url, "a=b; Max-Age=1")!!.persistent).isTrue()
     assertThat(parseCookie(0L, url, "a=b; Expires=Thu, 01 Jan 1970 00:00:01 GMT")!!.persistent)
-      .isTrue
+      .isTrue()
   }
 
   @Test fun parseAll() {
@@ -413,10 +419,10 @@ class CookieTest {
     assertThat(cookie.expiresAt).isEqualTo(MAX_DATE)
     assertThat(cookie.domain).isEqualTo("example.com")
     assertThat(cookie.path).isEqualTo("/")
-    assertThat(cookie.secure).isFalse
-    assertThat(cookie.httpOnly).isFalse
-    assertThat(cookie.persistent).isFalse
-    assertThat(cookie.hostOnly).isFalse
+    assertThat(cookie.secure).isFalse()
+    assertThat(cookie.httpOnly).isFalse()
+    assertThat(cookie.persistent).isFalse()
+    assertThat(cookie.hostOnly).isFalse()
     assertThat(cookie.sameSite).isNull()
   }
 
@@ -432,11 +438,11 @@ class CookieTest {
     assertThat(cookie.expiresAt).isEqualTo(MAX_DATE)
     assertThat(cookie.domain).isEqualTo("example.com")
     assertThat(cookie.path).isEqualTo("/")
-    assertThat(cookie.secure).isFalse
-    assertThat(cookie.httpOnly).isFalse
+    assertThat(cookie.secure).isFalse()
+    assertThat(cookie.httpOnly).isFalse()
     // can't be unset
-    assertThat(cookie.persistent).isTrue
-    assertThat(cookie.hostOnly).isFalse
+    assertThat(cookie.persistent).isTrue()
+    assertThat(cookie.hostOnly).isFalse()
   }
 
   @Test fun builderNameValidation() {
@@ -500,7 +506,7 @@ class CookieTest {
       .hostOnlyDomain("squareup.com")
       .build()
     assertThat(cookie.domain).isEqualTo("squareup.com")
-    assertThat(cookie.hostOnly).isTrue
+    assertThat(cookie.hostOnly).isTrue()
   }
 
   @Test fun builderPath() {
@@ -528,7 +534,7 @@ class CookieTest {
       .hostOnlyDomain("example.com")
       .secure()
       .build()
-    assertThat(cookie.secure).isTrue
+    assertThat(cookie.secure).isTrue()
   }
 
   @Test fun builderHttpOnly() {
@@ -538,7 +544,7 @@ class CookieTest {
       .hostOnlyDomain("example.com")
       .httpOnly()
       .build()
-    assertThat(cookie.httpOnly).isTrue
+    assertThat(cookie.httpOnly).isTrue()
   }
 
   @Test fun builderIpv6() {

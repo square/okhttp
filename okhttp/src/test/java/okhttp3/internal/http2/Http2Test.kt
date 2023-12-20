@@ -15,6 +15,10 @@
  */
 package okhttp3.internal.http2
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isTrue
 import java.io.IOException
 import java.util.Arrays
 import java.util.concurrent.atomic.AtomicInteger
@@ -36,7 +40,6 @@ import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
 import okio.GzipSink
 import okio.buffer
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 
@@ -70,7 +73,7 @@ class Http2Test {
         inFinished: Boolean, streamId: Int,
         associatedStreamId: Int, headerBlock: List<Header>
       ) {
-        assertThat(inFinished).isTrue
+        assertThat(inFinished).isTrue()
         assertThat(streamId).isEqualTo(expectedStreamId)
         assertThat(associatedStreamId).isEqualTo(-1)
         assertThat(headerBlock).isEqualTo(sentHeaders)
@@ -95,7 +98,7 @@ class Http2Test {
       ) {
         assertThat(streamDependency).isEqualTo(0)
         assertThat(weight).isEqualTo(256)
-        assertThat(exclusive).isFalse
+        assertThat(exclusive).isFalse()
       }
 
       override fun headers(
@@ -104,7 +107,7 @@ class Http2Test {
         associatedStreamId: Int,
         headerBlock: List<Header>
       ) {
-        assertThat(inFinished).isFalse
+        assertThat(inFinished).isFalse()
         assertThat(streamId).isEqualTo(expectedStreamId)
         assertThat(associatedStreamId).isEqualTo(-1)
         assertThat(headerBlock).isEqualTo(sentHeaders)
@@ -140,7 +143,7 @@ class Http2Test {
         inFinished: Boolean, streamId: Int,
         associatedStreamId: Int, headerBlock: List<Header>
       ) {
-        assertThat(inFinished).isFalse
+        assertThat(inFinished).isFalse()
         assertThat(streamId).isEqualTo(expectedStreamId)
         assertThat(associatedStreamId).isEqualTo(-1)
         assertThat(headerBlock).isEqualTo(sentHeaders)
@@ -248,9 +251,9 @@ class Http2Test {
     reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
       override fun settings(clearPrevious: Boolean, settings: Settings) {
         // No clearPrevious in HTTP/2.
-        assertThat(clearPrevious).isFalse
+        assertThat(clearPrevious).isFalse()
         assertThat(settings.headerTableSize).isEqualTo(reducedTableSizeBytes)
-        assertThat(settings.getEnablePush(true)).isFalse
+        assertThat(settings.getEnablePush(true)).isFalse()
       }
     })
   }
@@ -378,7 +381,7 @@ class Http2Test {
     assertThat(sendPingFrame(true, expectedPayload1, expectedPayload2)).isEqualTo(frame)
     reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
       override fun ping(ack: Boolean, payload1: Int, payload2: Int) {
-        assertThat(ack).isTrue
+        assertThat(ack).isTrue()
         assertThat(payload1).isEqualTo(expectedPayload1)
         assertThat(payload2).isEqualTo(expectedPayload2)
       }
@@ -398,7 +401,7 @@ class Http2Test {
     assertThat(sendDataFrame(Buffer().write(expectedData))).isEqualTo(frame)
     reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
       override fun data(inFinished: Boolean, streamId: Int, source: BufferedSource, length: Int) {
-        assertThat(inFinished).isFalse
+        assertThat(inFinished).isFalse()
         assertThat(streamId).isEqualTo(expectedStreamId)
         assertThat(length).isEqualTo(Http2.INITIAL_MAX_FRAME_SIZE)
         val data = source.readByteString(length.toLong())
@@ -460,7 +463,7 @@ class Http2Test {
     frame.write(padding)
     reader.nextFrame(requireSettings = false, assertData())
     // Padding was skipped.
-    assertThat(frame.exhausted()).isTrue
+    assertThat(frame.exhausted()).isTrue()
   }
 
   @Test fun readPaddedDataFrameZeroPadding() {
@@ -490,7 +493,7 @@ class Http2Test {
     frame.write(padding)
     reader.nextFrame(requireSettings = false, assertHeaderBlock())
     // Padding was skipped.
-    assertThat(frame.exhausted()).isTrue
+    assertThat(frame.exhausted()).isTrue()
   }
 
   @Test fun readPaddedHeadersFrameZeroPadding() {
@@ -529,7 +532,7 @@ class Http2Test {
     frame.writeInt(expectedStreamId and 0x7fffffff)
     frame.writeAll(headerBlock)
     reader.nextFrame(requireSettings = false, assertHeaderBlock())
-    assertThat(frame.exhausted()).isTrue
+    assertThat(frame.exhausted()).isTrue()
   }
 
   @Test fun tooLargeDataFrame() {
@@ -720,7 +723,7 @@ class Http2Test {
         associatedStreamId: Int,
         headerBlock: List<Header>
       ) {
-        assertThat(inFinished).isFalse
+        assertThat(inFinished).isFalse()
         assertThat(streamId).isEqualTo(expectedStreamId)
         assertThat(associatedStreamId).isEqualTo(-1)
         assertThat(headerBlock).isEqualTo(headerEntries("foo", "barrr", "baz", "qux"))
@@ -731,7 +734,7 @@ class Http2Test {
   private fun assertData(): Http2Reader.Handler {
     return object : BaseTestHandler() {
       override fun data(inFinished: Boolean, streamId: Int, source: BufferedSource, length: Int) {
-        assertThat(inFinished).isFalse
+        assertThat(inFinished).isFalse()
         assertThat(streamId).isEqualTo(expectedStreamId)
         assertThat(length).isEqualTo(1123)
         val data = source.readByteString(length.toLong())

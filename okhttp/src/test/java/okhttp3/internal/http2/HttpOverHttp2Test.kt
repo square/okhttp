@@ -15,6 +15,14 @@
  */
 package okhttp3.internal.http2
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.hasMessage
+import assertk.assertions.isCloseTo
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -77,8 +85,6 @@ import okio.Buffer
 import okio.BufferedSink
 import okio.GzipSink
 import okio.buffer
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -356,9 +362,10 @@ class HttpOverHttp2Test {
     // Cancel the call and discard what we've buffered for the response body. This should free up
     // the connection flow-control window so new requests can proceed.
     call1.cancel()
-    assertThat(response1.body.source().discard(1, TimeUnit.SECONDS))
-      .overridingErrorMessage("Call should not have completed successfully.")
-      .isFalse
+    assertThat(
+      response1.body.source().discard(1, TimeUnit.SECONDS),
+      "Call should not have completed successfully."
+    ).isFalse()
     val call2 = client.newCall(Request(server.url("/")))
     val response2 = call2.execute()
     assertThat(response2.body.string()).isEqualTo("abc")
@@ -1351,8 +1358,7 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("ABC")
     assertThat(response.protocol).isEqualTo(protocol)
     val logs = testLogHandler.takeAll()
-    assertThat(firstFrame(logs, "HEADERS"))
-      .overridingErrorMessage("header logged")
+    assertThat(firstFrame(logs, "HEADERS")!!, "header logged")
       .contains("HEADERS       END_STREAM|END_HEADERS")
   }
 
@@ -1370,8 +1376,7 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("ABC")
     assertThat(response.protocol).isEqualTo(protocol)
     val logs = testLogHandler.takeAll()
-    assertThat(firstFrame(logs, "HEADERS"))
-      .overridingErrorMessage("header logged")
+    assertThat(firstFrame(logs, "HEADERS")!!, "header logged")
       .contains("HEADERS       END_HEADERS")
     // While MockWebServer waits to read the client's HEADERS frame before sending the response, it
     // doesn't wait to read the client's DATA frame and may send a DATA frame before the client
@@ -1446,7 +1451,7 @@ class HttpOverHttp2Test {
     }
     val elapsedUntilFailure = System.nanoTime() - executeAtNanos
     assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure).toDouble())
-      .isCloseTo(1000.0, Offset.offset(250.0))
+      .isCloseTo(1000.0, 250.0)
 
     // Confirm a single ping was sent but not acknowledged.
     val logs = testLogHandler.takeAll()
@@ -1930,10 +1935,10 @@ class HttpOverHttp2Test {
       call.execute()
       fail<Any?>()
     } catch (expected: IOException) {
-      assertThat(call.isCanceled()).isTrue
+      assertThat(call.isCanceled()).isTrue()
     }
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.failure).hasMessage("stream was reset: CANCEL")
+    assertThat(recordedRequest.failure!!).hasMessage("stream was reset: CANCEL")
   }
 
   @ParameterizedTest

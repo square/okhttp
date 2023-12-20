@@ -15,6 +15,8 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLException
 import mockwebserver3.MockResponse
@@ -28,7 +30,6 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.internal.closeQuietly
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
-import org.assertj.core.api.Assertions.assertThat
 import org.bouncycastle.tls.TlsFatalAlert
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach

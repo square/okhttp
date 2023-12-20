@@ -15,9 +15,11 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotEqualTo
 import java.net.Proxy
 import okhttp3.internal.http.RecordingProxySelector
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 

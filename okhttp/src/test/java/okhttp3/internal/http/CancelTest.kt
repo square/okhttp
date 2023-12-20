@@ -15,6 +15,11 @@
  */
 package okhttp3.internal.http
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.doesNotContain
+import assertk.assertions.isEqualTo
+import assertk.assertions.startsWith
 import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
@@ -53,7 +58,6 @@ import okhttp3.internal.http.CancelTest.ConnectionType.HTTPS
 import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.BufferedSink
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Timeout

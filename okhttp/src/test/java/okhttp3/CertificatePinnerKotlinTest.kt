@@ -15,11 +15,14 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
 import okhttp3.CertificatePinner.Companion.sha1Hash
 import okhttp3.CertificatePinner.Pin
 import okhttp3.tls.HeldCertificate
 import okio.ByteString.Companion.decodeBase64
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue

@@ -15,13 +15,15 @@
  */
 package okhttp3.internal.ws
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isLessThan
 import java.io.EOFException
 import okhttp3.TestUtil.fragmentBuffer
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 

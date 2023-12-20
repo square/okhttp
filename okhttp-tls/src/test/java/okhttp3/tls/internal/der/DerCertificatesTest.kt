@@ -15,6 +15,11 @@
  */
 package okhttp3.tls.internal.der
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import java.math.BigInteger
 import java.security.KeyFactory
 import java.security.spec.PKCS8EncodedKeySpec
@@ -36,7 +41,6 @@ import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 internal class DerCertificatesTest {

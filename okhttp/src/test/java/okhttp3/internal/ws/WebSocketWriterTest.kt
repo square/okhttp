@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.ws
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import java.util.Random
 import okhttp3.TestUtil.repeat
 import okhttp3.internal.format
@@ -28,7 +30,6 @@ import okio.ByteString.Companion.EMPTY
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -46,8 +47,7 @@ class WebSocketWriterTest {
   @RegisterExtension
   val noDataLeftBehind = AfterEachCallback { context: ExtensionContext ->
     if (context.executionException.isPresent) return@AfterEachCallback
-    assertThat(data.readByteString().hex())
-      .overridingErrorMessage("Data not empty")
+    assertThat(data.readByteString().hex(), "Data not empty")
       .isEqualTo("")
   }
 

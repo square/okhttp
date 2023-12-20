@@ -15,6 +15,11 @@
  */
 package okhttp3.internal.ws
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.isEqualTo
+import assertk.assertions.matches
+import assertk.fail
 import java.io.EOFException
 import java.io.IOException
 import java.net.ProtocolException
@@ -26,9 +31,7 @@ import okio.ByteString.Companion.EMPTY
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 
 class WebSocketReaderTest {
@@ -74,7 +77,7 @@ class WebSocketReaderTest {
     data.write("0a00".decodeHex()) // Empty pong.
     try {
       clientReader.processNextFrame()
-      fail()
+      fail("")
     } catch (e: ProtocolException) {
       assertThat(e.message)
         .isEqualTo("Control frames must be final.")
@@ -85,7 +88,7 @@ class WebSocketReaderTest {
     data.write("ca00".decodeHex()) // Empty pong, flag 1 set.
     try {
       clientReader.processNextFrame()
-      fail()
+      fail("")
     } catch (e: ProtocolException) {
       assertThat(e.message).isEqualTo("Unexpected rsv1 flag")
     }
@@ -95,7 +98,7 @@ class WebSocketReaderTest {
     data.write("ca00".decodeHex()) // Empty pong, flag 1 set.
     try {
       clientReaderWithCompression.processNextFrame()
-      fail()
+      fail("")
     } catch (e: ProtocolException) {
       assertThat(e.message).isEqualTo("Unexpected rsv1 flag")
     }
@@ -105,7 +108,7 @@ class WebSocketReaderTest {
     data.write("c000".decodeHex()) // Empty continuation, flag 1 set.
     try {
       clientReaderWithCompression.processNextFrame()
-      fail()
+      fail("")
     } catch (e: ProtocolException) {
       assertThat(e.message).isEqualTo("Unexpected rsv1 flag")
     }
@@ -115,7 +118,7 @@ class WebSocketReaderTest {
     data.write("aa00".decodeHex()) // Empty pong, flag 2 set.
     try {
       clientReader.processNextFrame()
-      fail()
+      fail("")
     } catch (e: ProtocolException) {
       assertThat(e.message).isEqualTo("Unexpected rsv2 flag")
     }
@@ -123,7 +126,7 @@ class WebSocketReaderTest {
     data.write("9a00".decodeHex()) // Empty pong, flag 3 set.
     try {
       clientReader.processNextFrame()
-      fail()
+      fail("")
     } catch (e: ProtocolException) {
       assertThat(e.message).isEqualTo("Unexpected rsv3 flag")
     }
@@ -133,7 +136,7 @@ class WebSocketReaderTest {
     data.write("8100".decodeHex())
     try {
       serverReader.processNextFrame()
-      fail()
+      fail("")
     } catch (e: ProtocolException) {
       assertThat(e.message)
         .isEqualTo("Client-sent frames must be masked.")
@@ -144,7 +147,7 @@ class WebSocketReaderTest {
     data.write("8180".decodeHex())
     try {
       clientReader.processNextFrame()
-      fail()
+      fail("")
     } catch (e: ProtocolException) {
       assertThat(e.message)
         .isEqualTo("Server-sent frames must not be masked.")
@@ -155,7 +158,7 @@ class WebSocketReaderTest {
     data.write("8a7e007e".decodeHex())
     try {
       clientReader.processNextFrame()
-      fail()
+      fail("")
     } catch (e: ProtocolException) {
       assertThat(e.message)
         .isEqualTo("Control frame must be less than 125B.")
@@ -214,7 +217,7 @@ class WebSocketReaderTest {
     data.write("817f8000000000000000".decodeHex())
     try {
       clientReader.processNextFrame()
-      fail()
+      fail("")
     } catch (e: ProtocolException) {
       assertThat(e.message).isEqualTo(
         "Frame length 0x8000000000000000 > 0x7FFFFFFFFFFFFFFF"
@@ -298,7 +301,7 @@ class WebSocketReaderTest {
     data.write("810548656c".decodeHex()) // Length = 5, "Hel"
     try {
       clientReader.processNextFrame()
-      fail()
+      fail("")
     } catch (ignored: EOFException) {
     }
   }
@@ -307,7 +310,7 @@ class WebSocketReaderTest {
     data.write("c10548656c6c6f".decodeHex()) // Uncompressed 'Hello', flag 1 set
     try {
       clientReaderWithCompression.processNextFrame()
-      fail()
+      fail("")
     } catch (ignored: IOException) {
     }
   }
@@ -316,7 +319,7 @@ class WebSocketReaderTest {
     data.write("8a0548656c".decodeHex()) // Length = 5, "Hel"
     try {
       clientReader.processNextFrame()
-      fail()
+      fail("")
     } catch (ignored: EOFException) {
     }
   }
@@ -325,7 +328,7 @@ class WebSocketReaderTest {
     data.write("818537fa213d7f9f4d".decodeHex()) // Length = 5, "Hel"
     try {
       serverReader.processNextFrame()
-      fail()
+      fail("")
     } catch (ignored: EOFException) {
     }
   }
@@ -334,7 +337,7 @@ class WebSocketReaderTest {
     data.write("8a8537fa213d7f9f4d".decodeHex()) // Length = 5, "Hel"
     try {
       serverReader.processNextFrame()
-      fail()
+      fail("")
     } catch (ignored: EOFException) {
     }
   }
@@ -360,7 +363,7 @@ class WebSocketReaderTest {
     data.write("8264".decodeHex()).write(bytes, 100, 100)
     try {
       clientReader.processNextFrame()
-      fail()
+      fail("")
     } catch (e: ProtocolException) {
       assertThat(e.message)
         .isEqualTo("Expected continuation opcode. Got: 2")
@@ -389,7 +392,7 @@ class WebSocketReaderTest {
     data.write("880100".decodeHex()) // Close with invalid 1-byte payload
     try {
       clientReader.processNextFrame()
-      fail()
+      fail("")
     } catch (e: ProtocolException) {
       assertThat(e.message)
         .isEqualTo("Malformed close payload length of 1.")
@@ -413,7 +416,7 @@ class WebSocketReaderTest {
     data.write("88020001".decodeHex()) // Close with code 1
     try {
       clientReader.processNextFrame()
-      fail()
+      fail("")
     } catch (e: ProtocolException) {
       assertThat(e.message)
         .isEqualTo("Code must be in range [1000,5000): 1")
@@ -421,7 +424,7 @@ class WebSocketReaderTest {
     data.write("88021388".decodeHex()) // Close with code 5000
     try {
       clientReader.processNextFrame()
-      fail()
+      fail("")
     } catch (e: ProtocolException) {
       assertThat(e.message)
         .isEqualTo("Code must be in range [1000,5000): 5000")
@@ -439,10 +442,10 @@ class WebSocketReaderTest {
     while (!data.exhausted()) {
       try {
         clientReader.processNextFrame()
-        fail()
+        fail("")
       } catch (e: ProtocolException) {
-        assertThat(e.message)
-          .matches("Code \\d+ is reserved and may not be used.")
+        assertThat(e.message!!)
+          .matches(Regex("Code \\d+ is reserved and may not be used."))
       }
       count++
     }
@@ -457,9 +460,9 @@ class WebSocketReaderTest {
     clientReaderWithCompression.close()
     try {
       clientReaderWithCompression.processNextFrame()
-      fail()
+      fail("")
     } catch (e: Exception) {
-      assertThat(e.message).contains("closed")
+      assertThat(e.message!!).contains("closed")
     }
   }
 

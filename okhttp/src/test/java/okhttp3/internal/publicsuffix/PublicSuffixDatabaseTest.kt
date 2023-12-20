@@ -15,8 +15,11 @@
  */
 package okhttp3.internal.publicsuffix
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import kotlin.test.assertEquals
-import kotlin.test.assertSame
 import okhttp3.internal.toCanonicalHost
 import okio.Buffer
 import okio.FileSystem
@@ -24,7 +27,6 @@ import okio.GzipSource
 import okio.Path.Companion.toPath
 import okio.buffer
 import okio.use
-import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Test
 
@@ -146,7 +148,7 @@ class PublicSuffixDatabaseTest {
       val result = publicSuffixDatabase.getEffectiveTldPlusOne("squareup.com")
       assertThat(result).isEqualTo("squareup.com")
     } finally {
-      assertThat(Thread.interrupted()).isTrue
+      assertThat(Thread.interrupted()).isTrue()
     }
   }
 

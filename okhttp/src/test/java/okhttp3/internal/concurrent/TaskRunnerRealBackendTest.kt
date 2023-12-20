@@ -15,12 +15,15 @@
  */
 package okhttp3.internal.concurrent
 
+import assertk.assertThat
+import assertk.assertions.isCloseTo
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isTrue
 import java.lang.Thread.UncaughtExceptionHandler
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -66,11 +69,11 @@ class TaskRunnerRealBackendTest {
 
     assertThat(log.take()).isEqualTo("runOnce delays.size=2")
     val t2 = System.nanoTime() / 1e6 - t1
-    assertThat(t2).isCloseTo(750.0, Offset.offset(250.0))
+    assertThat(t2).isCloseTo(750.0, 250.0)
 
     assertThat(log.take()).isEqualTo("runOnce delays.size=1")
     val t3 = System.nanoTime() / 1e6 - t1
-    assertThat(t3).isCloseTo(1750.0, Offset.offset(250.0))
+    assertThat(t3).isCloseTo(1750.0, 250.0)
   }
 
   @Test fun taskFailsWithUncheckedException() {

@@ -15,6 +15,10 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.hasMessage
+import assertk.assertions.hasSize
+import assertk.assertions.isEqualTo
 import java.io.IOException
 import java.net.Inet4Address
 import java.net.Inet6Address
@@ -30,7 +34,6 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.ResetStreamAtStart
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.Flaky
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

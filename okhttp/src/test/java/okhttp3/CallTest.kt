@@ -15,6 +15,22 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.containsExactly
+import assertk.assertions.doesNotContain
+import assertk.assertions.hasMessage
+import assertk.assertions.isCloseTo
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isLessThan
+import assertk.assertions.isNotEmpty
+import assertk.assertions.isNotNull
+import assertk.assertions.isNotSameAs
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
+import assertk.assertions.startsWith
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -91,8 +107,6 @@ import okio.GzipSink
 import okio.Path.Companion.toPath
 import okio.buffer
 import okio.fakefilesystem.FakeFileSystem
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.fail
@@ -512,7 +526,7 @@ open class CallTest {
       .build()
     executeSynchronously("/")
       .assertCode(401)
-    assertThat(authenticator.onlyRoute()).isNotNull
+    assertThat(authenticator.onlyRoute()).isNotNull()
   }
 
   @Test
@@ -997,7 +1011,7 @@ open class CallTest {
           chain.proceed(chain.request())
           fail<Unit>()
         } catch (expected: IllegalStateException) {
-          assertThat(expected).hasMessageContaining("please call response.close()")
+          assertThat(expected.message!!).contains("please call response.close()")
         }
         response
       })
@@ -1069,7 +1083,7 @@ open class CallTest {
       override fun contentType(): MediaType = "text/plain".toMediaType()
 
       override fun writeTo(sink: BufferedSink) {
-        assertThat(sink.timeout().hasDeadline()).isFalse
+        assertThat(sink.timeout().hasDeadline()).isFalse()
         sink.writeUtf8("def")
       }
     }
@@ -1102,7 +1116,7 @@ open class CallTest {
     val response2 = client.newCall(request2).execute()
     val body2 = response2.body.source()
     assertThat(body2.readUtf8()).isEqualTo("def")
-    assertThat(body2.timeout().hasDeadline()).isFalse
+    assertThat(body2.timeout().hasDeadline()).isFalse()
 
     // Use sequence numbers to confirm the connection was pooled.
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
@@ -1161,7 +1175,7 @@ open class CallTest {
       .dns(DoubleInetAddressDns())
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build()
-    assertThat(client.retryOnConnectionFailure).isTrue
+    assertThat(client.retryOnConnectionFailure).isTrue()
     executeSynchronously("/").assertBody("seed connection pool")
     executeSynchronously("/").assertBody("retry success")
 
@@ -1496,7 +1510,7 @@ open class CallTest {
       client.newCall(request).execute()
       fail<Unit>()
     } catch (expected: SSLPeerUnverifiedException) {
-      assertThat(expected.message).startsWith("Certificate pinning failure!")
+      assertThat(expected.message!!).startsWith("Certificate pinning failure!")
     }
   }
 
@@ -1542,7 +1556,7 @@ open class CallTest {
       client.newCall(request2).execute()
       fail()
     } catch (e: IOException) {
-      assertThat(e).hasMessageStartingWith("unexpected end of stream on http://")
+      assertThat(e.message!!).startsWith("unexpected end of stream on http://")
       // expected
     }
 
@@ -2493,7 +2507,7 @@ open class CallTest {
     }
     val elapsedNanos = System.nanoTime() - startNanos
     assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toFloat())
-      .isCloseTo(cancelDelayMillis.toFloat(), Offset.offset(100f))
+      .isCloseTo(cancelDelayMillis.toFloat(), 100f)
   }
 
   @Test
@@ -2707,7 +2721,7 @@ open class CallTest {
     })
     latch.await()
     assertThat(bodyRef.get()).isEqualTo("A")
-    assertThat(failureRef.get()).isFalse
+    assertThat(failureRef.get()).isFalse()
   }
 
   @Test
@@ -2855,7 +2869,7 @@ open class CallTest {
     server.enqueue(MockResponse())
     executeSynchronously("/")
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.headers["User-Agent"]).matches(userAgent)
+    assertThat(recordedRequest.headers["User-Agent"]!!).isEqualTo(userAgent)
   }
 
   @Test
@@ -3181,7 +3195,7 @@ open class CallTest {
     )
     call.execute().use { response ->
       assertThat(response.code).isEqualTo(200)
-      assertThat(response.body.string()).isNotBlank
+      assertThat(response.body.string()).isNotEmpty()
     }
     if (!platform.isJdk8()) {
       val connectCount = listener.eventSequence.stream()
@@ -3684,7 +3698,7 @@ open class CallTest {
     upload(true, 1048576, 256)
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.bodySize).isEqualTo(1048576)
-    assertThat(recordedRequest.chunkSizes).isNotEmpty
+    assertThat(recordedRequest.chunkSizes).isNotEmpty()
   }
 
   @Test
@@ -3692,7 +3706,7 @@ open class CallTest {
     upload(true, 1048576, 65536)
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.bodySize).isEqualTo(1048576)
-    assertThat(recordedRequest.chunkSizes).isNotEmpty
+    assertThat(recordedRequest.chunkSizes).isNotEmpty()
   }
 
   @Test
@@ -4086,10 +4100,8 @@ open class CallTest {
     assertThat(response.header("h2")).isEqualTo("v2")
     assertThat(source.readUtf8(5)).isEqualTo("Hello")
     assertThat(source.readUtf8(7)).isEqualTo("Bonjour")
-    assertThat(source.exhausted()).isTrue
-    assertThat<Pair<String?, String?>?>(
-      response.trailers()
-    ).isEqualTo(headersOf("trailers", "boom"))
+    assertThat(source.exhausted()).isTrue()
+    assertThat(response.trailers()).isEqualTo(headersOf("trailers", "boom"))
   }
 
   @Test
@@ -4110,7 +4122,7 @@ open class CallTest {
       assertThat(response.header("h2")).isEqualTo("v2")
       assertThat(source.readUtf8(5)).isEqualTo("Hello")
       assertThat(source.readUtf8(7)).isEqualTo("Bonjour")
-      assertThat(source.exhausted()).isTrue
+      assertThat(source.exhausted()).isTrue()
       assertThat(response.trailers()).isEqualTo(headersOf("trailers", "boom"))
     }
   }
@@ -4147,7 +4159,7 @@ open class CallTest {
       },
     )
     executeSynchronously(request).assertFailure("boom")
-    assertThat(server.takeRequest().failure).isNotNull
+    assertThat(server.takeRequest().failure).isNotNull()
   }
 
   @Test
@@ -4205,7 +4217,7 @@ open class CallTest {
       })
       .build()
     executeSynchronously("/").assertFailure("Canceled")
-    assertThat(closed.get()).isTrue
+    assertThat(closed.get()).isTrue()
   }
 
   @Test
@@ -4234,7 +4246,7 @@ open class CallTest {
       response.priorResponse?.body?.string()
       fail<Unit>()
     } catch (expected: IllegalStateException) {
-      assertThat(expected.message).contains("Unreadable ResponseBody!")
+      assertThat(expected.message!!).contains("Unreadable ResponseBody!")
     }
   }
 
