@@ -15,6 +15,17 @@
  */
 package mockwebserver3
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.containsExactly
+import assertk.assertions.isBetween
+import assertk.assertions.isCloseTo
+import assertk.assertions.isEqualTo
+import assertk.assertions.isGreaterThan
+import assertk.assertions.isGreaterThanOrEqualTo
+import assertk.assertions.isNotEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import java.io.BufferedReader
 import java.io.Closeable
 import java.io.IOException
@@ -42,8 +53,6 @@ import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okio.Buffer
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
@@ -371,7 +380,7 @@ class MockWebServerTest {
       i++
     }
     // Halfway +/- 0.5%
-    assertThat(i.toFloat()).isCloseTo(512f, Offset.offset(5f))
+    assertThat(i.toFloat()).isCloseTo(512f, 5f)
   }
 
   @Test
@@ -425,12 +434,12 @@ class MockWebServerTest {
 
   @Test
   fun hostnameImplicitlyStarts() {
-    assertThat(server.hostName).isNotNull
+    assertThat(server.hostName).isNotNull()
   }
 
   @Test
   fun toProxyAddressImplicitlyStarts() {
-    assertThat(server.toProxyAddress()).isNotNull
+    assertThat(server.toProxyAddress()).isNotNull()
   }
 
   @Test
@@ -491,7 +500,7 @@ class MockWebServerTest {
       refusedConnection.responseCode
       fail<Any?>("Second connection should be refused")
     } catch (e: ConnectException) {
-      assertThat(e.message).contains("refused")
+      assertThat(e.message!!).contains("refused")
     }
   }
 
@@ -579,9 +588,9 @@ class MockWebServerTest {
     val request = server.takeRequest()
     assertThat(request.requestUrl!!.scheme).isEqualTo("https")
     val handshake = request.handshake
-    assertThat(handshake!!.tlsVersion).isNotNull
-    assertThat(handshake.cipherSuite).isNotNull
-    assertThat(handshake.localPrincipal).isNotNull
+    assertThat(handshake!!.tlsVersion).isNotNull()
+    assertThat(handshake.cipherSuite).isNotNull()
+    assertThat(handshake.localPrincipal).isNotNull()
     assertThat(handshake.localCertificates.size).isEqualTo(1)
     assertThat(handshake.peerPrincipal).isNull()
     assertThat(handshake.peerCertificates.size).isEqualTo(0)
@@ -628,11 +637,11 @@ class MockWebServerTest {
     val request = server.takeRequest()
     assertThat(request.requestUrl!!.scheme).isEqualTo("https")
     val handshake = request.handshake
-    assertThat(handshake!!.tlsVersion).isNotNull
-    assertThat(handshake.cipherSuite).isNotNull
-    assertThat(handshake.localPrincipal).isNotNull
+    assertThat(handshake!!.tlsVersion).isNotNull()
+    assertThat(handshake.cipherSuite).isNotNull()
+    assertThat(handshake.localPrincipal).isNotNull()
     assertThat(handshake.localCertificates.size).isEqualTo(1)
-    assertThat(handshake.peerPrincipal).isNotNull
+    assertThat(handshake.peerPrincipal).isNotNull()
     assertThat(handshake.peerCertificates.size).isEqualTo(1)
   }
 

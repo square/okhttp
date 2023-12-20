@@ -15,15 +15,17 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isCloseTo
+import assertk.assertions.isFalse
+import assertk.assertions.isInstanceOf
+import assertk.assertions.matchesPredicate
 import java.util.Deque
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
 import okhttp3.ConnectionEvent.NoNewExchanges
 import okhttp3.internal.connection.RealConnection
-import okhttp3.internal.platform.Platform
 import okio.IOException
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
 import org.junit.jupiter.api.Assertions
 
 open class RecordingConnectionListener(
@@ -88,7 +90,7 @@ open class RecordingConnectionListener(
         TimeUnit.NANOSECONDS.toMillis(actualElapsedNs)
           .toDouble()
       )
-        .isCloseTo(elapsedMs.toDouble(), Offset.offset(100.0))
+        .isCloseTo(elapsedMs.toDouble(), 100.0)
     }
 
     return result
@@ -104,13 +106,11 @@ open class RecordingConnectionListener(
 
   private fun logEvent(e: ConnectionEvent) {
     if (e.connection != null) {
-      assertThat(Thread.holdsLock(e.connection))
-        .overridingErrorMessage("Called with lock $${e.connection}")
+      assertThat(Thread.holdsLock(e.connection), "Called with lock $${e.connection}")
         .isFalse()
     }
     for (lock in forbiddenLocks) {
-      assertThat(Thread.holdsLock(lock))
-        .overridingErrorMessage("Called with lock $lock")
+      assertThat(Thread.holdsLock(lock), "Called with lock $lock")
         .isFalse()
     }
 
@@ -153,7 +153,9 @@ open class RecordingConnectionListener(
   override fun connectionReleased(connection: Connection, call: Call) {
     if (eventSequence.find { it is ConnectionEvent.ConnectStart && it.connection == connection } != null && connection is RealConnection) {
       if (connection.noNewExchanges) {
-        assertThat(eventSequence).anyMatch { it is NoNewExchanges && it.connection == connection }
+        assertThat(eventSequence).matchesPredicate { deque ->
+          deque.any { it is NoNewExchanges && it.connection == connection }
+        }
       }
     }
 

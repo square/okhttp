@@ -15,8 +15,11 @@
  */
 package mockwebserver3.junit5.internal
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotEqualTo
+import assertk.assertions.isTrue
 import mockwebserver3.MockWebServer
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

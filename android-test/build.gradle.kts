@@ -63,6 +63,7 @@ dependencies {
     exclude("org.conscrypt", "conscrypt-openjdk-uber")
     exclude("software.amazon.cryptools", "AmazonCorrettoCryptoProvider")
   }
+  androidTestImplementation(libs.assertk)
   androidTestImplementation(libs.bouncycastle.bcprov)
   androidTestImplementation(libs.bouncycastle.bctls)
   androidTestImplementation(libs.conscrypt.android)

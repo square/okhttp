@@ -16,6 +16,8 @@
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 package okhttp3.internal.http
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Proxy
@@ -23,7 +25,6 @@ import java.net.ProxySelector
 import java.net.SocketAddress
 import java.net.URI
 import okhttp3.internal.format
-import org.assertj.core.api.Assertions.assertThat
 
 class RecordingProxySelector : ProxySelector() {
   @JvmField val proxies = mutableListOf<Proxy>()

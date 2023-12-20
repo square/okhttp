@@ -8,6 +8,7 @@ dependencies {
   api(projects.okhttp)
   api(projects.okhttpTls)
   api(libs.assertj.core)
+  api(libs.assertk)
   api(libs.bouncycastle.bcprov)
   implementation(libs.bouncycastle.bcpkix)
   implementation(libs.bouncycastle.bctls)
