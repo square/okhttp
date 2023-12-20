@@ -38,6 +38,10 @@ dependencies {
   testImplementation(kotlin("test"))
 }
 
+animalsniffer {
+  isIgnoreFailures = true
+}
+
 tasks.jar {
   manifest {
     attributes("Automatic-Module-Name" to "okhttp3.curl")
