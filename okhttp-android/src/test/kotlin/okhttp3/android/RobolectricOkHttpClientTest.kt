@@ -19,22 +19,24 @@ package okhttp3.android
 import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import okhttp3.CacheControl
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import java.net.InetAddress
+import java.net.UnknownHostException
+import okhttp3.Cache
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.assertj.core.api.Assertions.assertThat
+import okio.Path.Companion.toPath
+import okio.fakefilesystem.FakeFileSystem
 import org.junit.AssumptionViolatedException
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.net.InetAddress
-import java.net.UnknownHostException
-import okhttp3.Cache
-import okio.Path.Companion.toPath
-import okio.fakefilesystem.FakeFileSystem
 
 @RunWith(RobolectricTestRunner::class)
 @Config(

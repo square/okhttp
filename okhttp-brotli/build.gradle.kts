@@ -23,6 +23,7 @@ dependencies {
   testImplementation(libs.conscrypt.openjdk)
   testImplementation(libs.junit)
   testImplementation(libs.assertj.core)
+  testImplementation(libs.assertk)
 }
 
 mavenPublishing {

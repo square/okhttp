@@ -16,13 +16,14 @@
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 package mockwebserver3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import java.net.InetAddress
 import java.net.Socket
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.EMPTY_HEADERS
 import okio.Buffer
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 

@@ -26,12 +26,6 @@ import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.getByName
 
 fun Project.applyOsgi(vararg bndProperties: String) {
-  // Configure OSGi for the JVM platform on kotlin-multiplatform.
-  plugins.withId("org.jetbrains.kotlin.multiplatform") {
-    applyOsgi("jvmJar", "jvmOsgiApi", bndProperties)
-  }
-
-  // Configure OSGi for kotlin-jvm.
   plugins.withId("org.jetbrains.kotlin.jvm") {
     applyOsgi("jar", "osgiApi", bndProperties)
   }

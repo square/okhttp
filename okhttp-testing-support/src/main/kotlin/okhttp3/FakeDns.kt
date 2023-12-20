@@ -15,10 +15,11 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
 import java.net.InetAddress
 import java.net.UnknownHostException
 import okio.Buffer
-import org.assertj.core.api.Assertions.assertThat
 
 class FakeDns : Dns {
   private val hostAddresses: MutableMap<String, List<InetAddress>> = mutableMapOf()

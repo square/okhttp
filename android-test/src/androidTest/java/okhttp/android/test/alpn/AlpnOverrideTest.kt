@@ -17,12 +17,17 @@ package okhttp.android.test.alpn;
 
 import android.os.Build
 import android.util.Log
-import java.net.InetSocketAddress
-import java.net.Proxy
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
-import okhttp3.*
-import org.assertj.core.api.Assertions.assertThat
+import okhttp3.Call
+import okhttp3.Connection
+import okhttp3.ConnectionSpec
+import okhttp3.DelegatingSSLSocketFactory
+import okhttp3.EventListener
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 

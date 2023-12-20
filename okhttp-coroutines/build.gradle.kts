@@ -1,38 +1,11 @@
 import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinMultiplatform
+import com.vanniktech.maven.publish.KotlinJvm
 
 plugins {
-  kotlin("multiplatform")
+  kotlin("jvm")
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
-}
-
-kotlin {
-  jvm {
-    withJava()
-  }
-
-  sourceSets {
-    getByName("jvmMain") {
-      dependencies {
-        api(projects.okhttp)
-        implementation(libs.kotlinx.coroutines.core)
-        api(libs.squareup.okio)
-        api(libs.kotlin.stdlib)
-      }
-    }
-    getByName("jvmTest") {
-      dependencies {
-        implementation(libs.kotlin.test.common)
-        implementation(libs.kotlin.test.annotations)
-        api(libs.assertk)
-        implementation(projects.okhttpTestingSupport)
-        implementation(libs.kotlinx.coroutines.test)
-        implementation(projects.mockwebserver3Junit5)
-      }
-    }
-  }
 }
 
 project.applyOsgi(
@@ -41,8 +14,20 @@ project.applyOsgi(
   "Bundle-SymbolicName: com.squareup.okhttp3.coroutines"
 )
 
+dependencies {
+  api(projects.okhttp)
+  implementation(libs.kotlinx.coroutines.core)
+  api(libs.squareup.okio)
+  api(libs.kotlin.stdlib)
+
+  testImplementation(libs.kotlin.test.common)
+  testImplementation(libs.kotlin.test.annotations)
+  testApi(libs.assertk)
+  testImplementation(projects.okhttpTestingSupport)
+  testImplementation(libs.kotlinx.coroutines.test)
+  testImplementation(projects.mockwebserver3Junit5)
+}
+
 mavenPublishing {
-  configure(
-    KotlinMultiplatform(javadocJar = JavadocJar.Empty())
-  )
+  configure(KotlinJvm(javadocJar = JavadocJar.Empty()))
 }

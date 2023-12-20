@@ -15,9 +15,10 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
 import java.util.ArrayDeque
 import java.util.Deque
-import org.assertj.core.api.Assertions.assertThat
 
 class RecordingCookieJar : CookieJar {
   private val requestCookies: Deque<List<Cookie>> = ArrayDeque()
