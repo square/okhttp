@@ -17,6 +17,9 @@ package okhttp.android.test.sni;
 
 import android.os.Build
 import android.util.Log
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.isEqualTo
 import java.security.cert.X509Certificate
 import javax.net.ssl.SNIHostName
 import javax.net.ssl.SNIServerName
@@ -28,7 +31,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import org.junit.jupiter.api.Assumptions.assumeTrue
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 

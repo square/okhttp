@@ -22,6 +22,7 @@ dependencies {
   testRuntimeOnly(projects.mockwebserver3Junit5)
   testImplementation(libs.junit)
   testImplementation(libs.assertj.core)
+  testImplementation(libs.assertk)
 }
 
 mavenPublishing {

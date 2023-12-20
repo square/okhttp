@@ -16,15 +16,16 @@
 package okhttp.android.test.letsencrypt;
 
 import android.os.Build
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import java.security.cert.X509Certificate
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.decodeCertificatePem
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
-import java.security.cert.X509Certificate
 
 /**
  * Test for new Let's Encrypt Root Certificate.

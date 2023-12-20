@@ -15,8 +15,8 @@
  */
 package okhttp3.internal.concurrent
 
-import okhttp3.OkHttpClient
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.isEmpty
 import java.io.Closeable
 import java.util.AbstractQueue
 import java.util.concurrent.BlockingQueue
@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
 import kotlin.concurrent.withLock
+import okhttp3.OkHttpClient
 
 /**
  * Runs a [TaskRunner] in a controlled environment so that everything is sequential and

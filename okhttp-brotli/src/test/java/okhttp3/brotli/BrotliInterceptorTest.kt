@@ -15,6 +15,11 @@
  */
 package okhttp3.brotli
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.hasMessage
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
 import java.io.IOException
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
@@ -26,7 +31,6 @@ import okio.ByteString
 import okio.ByteString.Companion.EMPTY
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 

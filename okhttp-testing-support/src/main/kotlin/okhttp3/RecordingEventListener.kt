@@ -15,6 +15,11 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isCloseTo
+import assertk.assertions.isFalse
+import assertk.assertions.isInstanceOf
+import assertk.assertions.matchesPredicate
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -51,11 +56,7 @@ import okhttp3.CallEvent.ResponseHeadersStart
 import okhttp3.CallEvent.SatisfactionFailure
 import okhttp3.CallEvent.SecureConnectEnd
 import okhttp3.CallEvent.SecureConnectStart
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
-import org.junit.jupiter.api.fail
 
 open class RecordingEventListener(
   /**
@@ -119,7 +120,7 @@ open class RecordingEventListener(
           TimeUnit.NANOSECONDS.toMillis(actualElapsedNs)
               .toDouble()
       )
-          .isCloseTo(elapsedMs.toDouble(), Offset.offset(100.0))
+          .isCloseTo(elapsedMs.toDouble(), 100.0)
     }
 
     return result
@@ -135,9 +136,7 @@ open class RecordingEventListener(
 
   private fun logEvent(e: CallEvent) {
     for (lock in forbiddenLocks) {
-      assertThat(Thread.holdsLock(lock))
-          .overridingErrorMessage(lock.toString())
-          .isFalse()
+      assertThat(Thread.holdsLock(lock), lock.toString()).isFalse()
     }
 
     if (enforceOrder) {
@@ -149,7 +148,7 @@ open class RecordingEventListener(
 
   private fun checkForStartEvent(e: CallEvent) {
     if (eventSequence.isEmpty()) {
-      assertThat(e).isInstanceOfAny(CallStart::class.java, Canceled::class.java)
+      assertThat(e).matchesPredicate { it is CallStart || it is Canceled }
     } else {
       eventSequence.forEach loop@ {
         when (e.closes(it)) {

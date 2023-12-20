@@ -20,11 +20,16 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.os.Build
 import androidx.test.platform.app.InstrumentationRegistry
+import assertk.assertThat
+import assertk.assertions.hasMessage
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotEmpty
+import assertk.assertions.isNull
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
 import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
 import mockwebserver3.junit4.MockWebServerRule
 import okhttp3.AsyncDns
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -33,9 +38,7 @@ import okhttp3.Request
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okio.IOException
-import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
-import org.junit.Assume
 import org.junit.Assume.assumeTrue
 import org.junit.AssumptionViolatedException
 import org.junit.Before
@@ -115,7 +118,7 @@ class AndroidAsyncDnsTest {
     val (allAddresses, exception) = dnsQuery("localhost")
 
     assertThat(exception).isNull()
-    assertThat(allAddresses).isNotEmpty
+    assertThat(allAddresses).isNotEmpty()
   }
 
   private fun dnsQuery(hostname: String): Pair<List<InetAddress>, Exception?> {
@@ -148,7 +151,7 @@ class AndroidAsyncDnsTest {
     val (allAddresses, exception) = dnsQuery("google.com")
 
     assertThat(exception).isNull()
-    assertThat(allAddresses).isNotEmpty
+    assertThat(allAddresses).isNotEmpty()
   }
 
   @Test
