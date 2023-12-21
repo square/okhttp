@@ -13,336 +13,350 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.HttpURLConnection;
-import java.time.Duration;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import mockwebserver3.MockResponse;
-import mockwebserver3.MockWebServer;
-import okhttp3.testing.Flaky;
-import okio.BufferedSink;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.api.extension.RegisterExtension;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.net.HttpURLConnection
+import java.time.Duration
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.TestUtil.repeat
+import okhttp3.testing.Flaky
+import okio.BufferedSink
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.extension.RegisterExtension
 
 @Timeout(30)
 @Tag("Slow")
-public final class WholeOperationTimeoutTest {
-  /** A large response body. Smaller bodies might successfully read after the socket is closed! */
-  private static final String BIG_ENOUGH_BODY = TestUtil.repeat('a', 64 * 1024);
+class WholeOperationTimeoutTest {
+  @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
+  private val client = clientTestRule.newClient()
 
-  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
-
-  private MockWebServer server;
-  private final OkHttpClient client = clientTestRule.newClient();
+  private lateinit var server: MockWebServer
 
   @BeforeEach
-  public void setUp(MockWebServer server) throws Exception {
-    this.server = server;
+  fun setUp(server: MockWebServer) {
+    this.server = server
   }
 
-  @Test public void defaultConfigIsNoTimeout() throws Exception {
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .build();
-    Call call = client.newCall(request);
-    assertThat(call.timeout().timeoutNanos()).isEqualTo(0);
+  @Test
+  fun defaultConfigIsNoTimeout() {
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .build()
+    val call = client.newCall(request)
+    assertThat(call.timeout().timeoutNanos()).isEqualTo(0)
   }
 
-  @Test public void configureClientDefault() throws Exception {
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .build();
-
-    OkHttpClient timeoutClient = client.newBuilder()
-        .callTimeout(Duration.ofMillis(456))
-        .build();
-
-    Call call = timeoutClient.newCall(request);
-    assertThat(call.timeout().timeoutNanos()).isEqualTo(TimeUnit.MILLISECONDS.toNanos(456));
+  @Test
+  fun configureClientDefault() {
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .build()
+    val timeoutClient = client.newBuilder()
+      .callTimeout(Duration.ofMillis(456))
+      .build()
+    val call = timeoutClient.newCall(request)
+    assertThat(call.timeout().timeoutNanos())
+      .isEqualTo(TimeUnit.MILLISECONDS.toNanos(456))
   }
 
-  @Test public void timeoutWritingRequest() throws Exception {
-    server.enqueue(new MockResponse());
-
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .post(sleepingRequestBody(500))
-        .build();
-
-    Call call = client.newCall(request);
-    call.timeout().timeout(250, TimeUnit.MILLISECONDS);
+  @Test
+  fun timeoutWritingRequest() {
+    server.enqueue(MockResponse())
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .post(sleepingRequestBody(500))
+      .build()
+    val call = client.newCall(request)
+    call.timeout().timeout(250, TimeUnit.MILLISECONDS)
     try {
-      call.execute();
-      fail();
-    } catch (IOException e) {
-      assertThat(e.getMessage()).isEqualTo("timeout");
-      assertThat(call.isCanceled()).isTrue();
-    }
-  }
-
-  @Test public void timeoutWritingRequestWithEnqueue() throws Exception {
-    server.enqueue(new MockResponse());
-
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .post(sleepingRequestBody(500))
-        .build();
-
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
-
-    Call call = client.newCall(request);
-    call.timeout().timeout(250, TimeUnit.MILLISECONDS);
-    call.enqueue(new Callback() {
-      @Override public void onFailure(Call call, IOException e) {
-        exceptionRef.set(e);
-        latch.countDown();
-      }
-
-      @Override public void onResponse(Call call, Response response) throws IOException {
-        response.close();
-        latch.countDown();
-      }
-    });
-
-    latch.await();
-    assertThat(call.isCanceled()).isTrue();
-    assertThat(exceptionRef.get()).isNotNull();
-  }
-
-  @Test public void timeoutProcessing() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .headersDelay(500, TimeUnit.MILLISECONDS)
-        .build());
-
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .build();
-
-    Call call = client.newCall(request);
-    call.timeout().timeout(250, TimeUnit.MILLISECONDS);
-    try {
-      call.execute();
-      fail();
-    } catch (IOException e) {
-      assertThat(e.getMessage()).isEqualTo("timeout");
-      assertThat(call.isCanceled()).isTrue();
-    }
-  }
-
-  @Test public void timeoutProcessingWithEnqueue() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .headersDelay(500, TimeUnit.MILLISECONDS)
-        .build());
-
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .build();
-
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
-
-    Call call = client.newCall(request);
-    call.timeout().timeout(250, TimeUnit.MILLISECONDS);
-    call.enqueue(new Callback() {
-      @Override public void onFailure(Call call, IOException e) {
-        exceptionRef.set(e);
-        latch.countDown();
-      }
-
-      @Override public void onResponse(Call call, Response response) throws IOException {
-        response.close();
-        latch.countDown();
-      }
-    });
-
-    latch.await();
-    assertThat(call.isCanceled()).isTrue();
-    assertThat(exceptionRef.get()).isNotNull();
-  }
-
-  @Test public void timeoutReadingResponse() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .body(BIG_ENOUGH_BODY)
-        .build());
-
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .build();
-
-    Call call = client.newCall(request);
-    call.timeout().timeout(250, TimeUnit.MILLISECONDS);
-    Response response = call.execute();
-    Thread.sleep(500);
-    try {
-      response.body().source().readUtf8();
-      fail();
-    } catch (IOException e) {
-      assertThat(e.getMessage()).isEqualTo("timeout");
-      assertThat(call.isCanceled()).isTrue();
-    }
-  }
-
-  @Test public void timeoutReadingResponseWithEnqueue() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .body(BIG_ENOUGH_BODY)
-        .build());
-
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .build();
-
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
-
-    Call call = client.newCall(request);
-    call.timeout().timeout(250, TimeUnit.MILLISECONDS);
-    call.enqueue(new Callback() {
-      @Override public void onFailure(Call call, IOException e) {
-        latch.countDown();
-      }
-
-      @Override public void onResponse(Call call, Response response) throws IOException {
-        try {
-          Thread.sleep(500);
-        } catch (InterruptedException e) {
-          throw new AssertionError();
-        }
-        try {
-          response.body().source().readUtf8();
-          fail();
-        } catch (IOException e) {
-          exceptionRef.set(e);
-        } finally {
-          latch.countDown();
-        }
-      }
-    });
-
-    latch.await();
-    assertThat(call.isCanceled()).isTrue();
-    assertThat(exceptionRef.get()).isNotNull();
-  }
-
-  @Test public void singleTimeoutForAllFollowUpRequests() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .code(HttpURLConnection.HTTP_MOVED_TEMP)
-        .setHeader("Location", "/b")
-        .headersDelay(100, TimeUnit.MILLISECONDS)
-        .build());
-    server.enqueue(new MockResponse.Builder()
-        .code(HttpURLConnection.HTTP_MOVED_TEMP)
-        .setHeader("Location", "/c")
-        .headersDelay(100, TimeUnit.MILLISECONDS)
-        .build());
-    server.enqueue(new MockResponse.Builder()
-        .code(HttpURLConnection.HTTP_MOVED_TEMP)
-        .setHeader("Location", "/d")
-        .headersDelay(100, TimeUnit.MILLISECONDS)
-        .build());
-    server.enqueue(new MockResponse.Builder()
-        .code(HttpURLConnection.HTTP_MOVED_TEMP)
-        .setHeader("Location", "/e")
-        .headersDelay(100, TimeUnit.MILLISECONDS)
-        .build());
-    server.enqueue(new MockResponse.Builder()
-        .code(HttpURLConnection.HTTP_MOVED_TEMP)
-        .setHeader("Location", "/f")
-        .headersDelay(100, TimeUnit.MILLISECONDS)
-        .build());
-    server.enqueue(new MockResponse());
-
-    Request request = new Request.Builder()
-        .url(server.url("/a"))
-        .build();
-
-    Call call = client.newCall(request);
-    call.timeout().timeout(250, TimeUnit.MILLISECONDS);
-    try {
-      call.execute();
-      fail();
-    } catch (IOException e) {
-      assertThat(e.getMessage()).isEqualTo("timeout");
-      assertThat(call.isCanceled()).isTrue();
+      call.execute()
+      fail<Any>()
+    } catch (e: IOException) {
+      assertThat(e.message).isEqualTo("timeout")
+      assertThat(call.isCanceled()).isTrue()
     }
   }
 
   @Test
-  public void timeoutFollowingRedirectOnNewConnection() throws Exception {
-    MockWebServer otherServer = new MockWebServer();
+  fun timeoutWritingRequestWithEnqueue() {
+    server.enqueue(MockResponse())
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .post(sleepingRequestBody(500))
+      .build()
+    val latch = CountDownLatch(1)
+    val exceptionRef = AtomicReference<Throwable>()
+    val call = client.newCall(request)
+    call.timeout().timeout(250, TimeUnit.MILLISECONDS)
+    call.enqueue(object : Callback {
+      override fun onFailure(call: Call, e: IOException) {
+        exceptionRef.set(e)
+        latch.countDown()
+      }
 
-    server.enqueue(new MockResponse.Builder()
+      @Throws(IOException::class)
+      override fun onResponse(call: Call, response: Response) {
+        response.close()
+        latch.countDown()
+      }
+    })
+    latch.await()
+    assertThat(call.isCanceled()).isTrue()
+    assertThat(exceptionRef.get()).isNotNull()
+  }
+
+  @Test
+  fun timeoutProcessing() {
+    server.enqueue(
+      MockResponse.Builder()
+        .headersDelay(500, TimeUnit.MILLISECONDS)
+        .build()
+    )
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .build()
+    val call = client.newCall(request)
+    call.timeout().timeout(250, TimeUnit.MILLISECONDS)
+    try {
+      call.execute()
+      fail<Any>()
+    } catch (e: IOException) {
+      assertThat(e.message).isEqualTo("timeout")
+      assertThat(call.isCanceled()).isTrue()
+    }
+  }
+
+  @Test
+  fun timeoutProcessingWithEnqueue() {
+    server.enqueue(
+      MockResponse.Builder()
+        .headersDelay(500, TimeUnit.MILLISECONDS)
+        .build()
+    )
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .build()
+    val latch = CountDownLatch(1)
+    val exceptionRef = AtomicReference<Throwable>()
+    val call = client.newCall(request)
+    call.timeout().timeout(250, TimeUnit.MILLISECONDS)
+    call.enqueue(object : Callback {
+      override fun onFailure(call: Call, e: IOException) {
+        exceptionRef.set(e)
+        latch.countDown()
+      }
+
+      @Throws(IOException::class)
+      override fun onResponse(call: Call, response: Response) {
+        response.close()
+        latch.countDown()
+      }
+    })
+    latch.await()
+    assertThat(call.isCanceled()).isTrue()
+    assertThat(exceptionRef.get()).isNotNull()
+  }
+
+  @Test
+  fun timeoutReadingResponse() {
+    server.enqueue(
+      MockResponse.Builder()
+        .body(BIG_ENOUGH_BODY)
+        .build()
+    )
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .build()
+    val call = client.newCall(request)
+    call.timeout().timeout(250, TimeUnit.MILLISECONDS)
+    val response = call.execute()
+    Thread.sleep(500)
+    try {
+      response.body.source().readUtf8()
+      fail<Any>()
+    } catch (e: IOException) {
+      assertThat(e.message).isEqualTo("timeout")
+      assertThat(call.isCanceled()).isTrue()
+    }
+  }
+
+  @Test
+  fun timeoutReadingResponseWithEnqueue() {
+    server.enqueue(
+      MockResponse.Builder()
+        .body(BIG_ENOUGH_BODY)
+        .build()
+    )
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .build()
+    val latch = CountDownLatch(1)
+    val exceptionRef = AtomicReference<Throwable>()
+    val call = client.newCall(request)
+    call.timeout().timeout(250, TimeUnit.MILLISECONDS)
+    call.enqueue(object : Callback {
+      override fun onFailure(call: Call, e: IOException) {
+        latch.countDown()
+      }
+
+      @Throws(IOException::class)
+      override fun onResponse(call: Call, response: Response) {
+        try {
+          Thread.sleep(500)
+        } catch (e: InterruptedException) {
+          throw AssertionError()
+        }
+        try {
+          response.body.source().readUtf8()
+          fail<Any>()
+        } catch (e: IOException) {
+          exceptionRef.set(e)
+        } finally {
+          latch.countDown()
+        }
+      }
+    })
+    latch.await()
+    assertThat(call.isCanceled()).isTrue()
+    assertThat(exceptionRef.get()).isNotNull()
+  }
+
+  @Test
+  fun singleTimeoutForAllFollowUpRequests() {
+    server.enqueue(
+      MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
+        .setHeader("Location", "/b")
+        .headersDelay(100, TimeUnit.MILLISECONDS)
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
+        .setHeader("Location", "/c")
+        .headersDelay(100, TimeUnit.MILLISECONDS)
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
+        .setHeader("Location", "/d")
+        .headersDelay(100, TimeUnit.MILLISECONDS)
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
+        .setHeader("Location", "/e")
+        .headersDelay(100, TimeUnit.MILLISECONDS)
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
+        .setHeader("Location", "/f")
+        .headersDelay(100, TimeUnit.MILLISECONDS)
+        .build()
+    )
+    server.enqueue(MockResponse())
+    val request = Request.Builder()
+      .url(server.url("/a"))
+      .build()
+    val call = client.newCall(request)
+    call.timeout().timeout(250, TimeUnit.MILLISECONDS)
+    try {
+      call.execute()
+      fail<Any>()
+    } catch (e: IOException) {
+      assertThat(e.message).isEqualTo("timeout")
+      assertThat(call.isCanceled()).isTrue()
+    }
+  }
+
+  @Test
+  fun timeoutFollowingRedirectOnNewConnection() {
+    val otherServer = MockWebServer()
+    server.enqueue(
+      MockResponse.Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", otherServer.url("/"))
-        .build());
-
-    otherServer.enqueue(new MockResponse.Builder()
+        .build()
+    )
+    otherServer.enqueue(
+      MockResponse.Builder()
         .headersDelay(500, TimeUnit.MILLISECONDS)
-        .build());
-
-    Request request = new Request.Builder().url(server.url("/")).build();
-
-    Call call = client.newCall(request);
-    call.timeout().timeout(250, TimeUnit.MILLISECONDS);
+        .build()
+    )
+    val request = Request.Builder().url(server.url("/")).build()
+    val call = client.newCall(request)
+    call.timeout().timeout(250, TimeUnit.MILLISECONDS)
     try {
-      call.execute();
-      fail();
-    } catch (IOException e) {
-      assertThat(e.getMessage()).isEqualTo("timeout");
-      assertThat(call.isCanceled()).isTrue();
+      call.execute()
+      fail<Any>()
+    } catch (e: IOException) {
+      assertThat(e.message).isEqualTo("timeout")
+      assertThat(call.isCanceled()).isTrue()
     }
   }
 
   @Flaky
-  @Test public void noTimeout() throws Exception {
+  @Test
+  fun noTimeout() {
     // Flaky https://github.com/square/okhttp/issues/5304
-
-    server.enqueue(new MockResponse.Builder()
+    server.enqueue(
+      MockResponse.Builder()
         .headersDelay(250, TimeUnit.MILLISECONDS)
         .body(BIG_ENOUGH_BODY)
-        .build());
-
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .post(sleepingRequestBody(250))
-        .build();
-
-    Call call = client.newCall(request);
-    call.timeout().timeout(2000, TimeUnit.MILLISECONDS);
-    Response response = call.execute();
-    Thread.sleep(250);
-    response.body().source().readUtf8();
-    response.close();
-    assertThat(call.isCanceled()).isFalse();
+        .build()
+    )
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .post(sleepingRequestBody(250))
+      .build()
+    val call = client.newCall(request)
+    call.timeout().timeout(2000, TimeUnit.MILLISECONDS)
+    val response = call.execute()
+    Thread.sleep(250)
+    response.body.source().readUtf8()
+    response.close()
+    assertThat(call.isCanceled()).isFalse()
   }
 
-  private RequestBody sleepingRequestBody(final int sleepMillis) {
-    return new RequestBody() {
-      @Override public MediaType contentType() {
-        return MediaType.parse("text/plain");
+  private fun sleepingRequestBody(sleepMillis: Int): RequestBody {
+    return object : RequestBody() {
+      override fun contentType(): MediaType? {
+        return "text/plain".toMediaTypeOrNull()
       }
 
-      @Override public void writeTo(BufferedSink sink) throws IOException {
+      @Throws(IOException::class)
+      override fun writeTo(sink: BufferedSink) {
         try {
-          sink.writeUtf8("abc");
-          sink.flush();
-          Thread.sleep(sleepMillis);
-          sink.writeUtf8("def");
-        } catch (InterruptedException e) {
-          throw new InterruptedIOException();
+          sink.writeUtf8("abc")
+          sink.flush()
+          Thread.sleep(sleepMillis.toLong())
+          sink.writeUtf8("def")
+        } catch (e: InterruptedException) {
+          throw InterruptedIOException()
         }
       }
-    };
+    }
+  }
+
+  companion object {
+    /** A large response body. Smaller bodies might successfully read after the socket is closed!  */
+    private val BIG_ENOUGH_BODY = repeat('a', 64 * 1024)
   }
 }

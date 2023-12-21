@@ -13,269 +13,289 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.IOException;
-import okio.Buffer;
-import okio.BufferedSink;
-import org.junit.jupiter.api.Test;
+import java.io.IOException
+import java.nio.charset.StandardCharsets
+import okhttp3.Headers.Companion.headersOf
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
+import okio.Buffer
+import okio.BufferedSink
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Test
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
-
-public final class MultipartBodyTest {
-  @Test public void onePartRequired() throws Exception {
+class MultipartBodyTest {
+  @Test
+  fun onePartRequired() {
     try {
-      new MultipartBody.Builder().build();
-      fail();
-    } catch (IllegalStateException e) {
-      assertThat(e.getMessage()).isEqualTo("Multipart body must have at least one part.");
+      MultipartBody.Builder().build()
+      fail<Any>()
+    } catch (e: IllegalStateException) {
+      assertThat(e.message)
+        .isEqualTo("Multipart body must have at least one part.")
     }
   }
 
-  @Test public void singlePart() throws Exception {
-    String expected = ""
-        + "--123\r\n"
-        + "\r\n"
-        + "Hello, World!\r\n"
-        + "--123--\r\n";
-
-    MultipartBody body = new MultipartBody.Builder("123")
-        .addPart(RequestBody.create("Hello, World!", null))
-        .build();
-
-    assertThat(body.boundary()).isEqualTo("123");
-    assertThat(body.type()).isEqualTo(MultipartBody.MIXED);
-    assertThat(body.contentType().toString()).isEqualTo("multipart/mixed; boundary=123");
-    assertThat(body.parts().size()).isEqualTo(1);
-    assertThat(body.contentLength()).isEqualTo(33L);
-
-    Buffer buffer = new Buffer();
-    body.writeTo(buffer);
-    assertThat(body.contentLength()).isEqualTo(buffer.size());
-    assertThat(buffer.readUtf8()).isEqualTo(expected);
+  @Test
+  fun singlePart() {
+    val expected = """
+      |--123
+      |
+      |Hello, World!
+      |--123--
+      |
+      """.trimMargin().replace("\n", "\r\n")
+    val body = MultipartBody.Builder("123")
+      .addPart("Hello, World!".toRequestBody(null))
+      .build()
+    assertThat(body.boundary).isEqualTo("123")
+    assertThat(body.type).isEqualTo(MultipartBody.MIXED)
+    assertThat(body.contentType().toString())
+      .isEqualTo("multipart/mixed; boundary=123")
+    assertThat(body.parts.size).isEqualTo(1)
+    assertThat(body.contentLength()).isEqualTo(33L)
+    val buffer = Buffer()
+    body.writeTo(buffer)
+    assertThat(body.contentLength()).isEqualTo(buffer.size)
+    assertThat(buffer.readUtf8()).isEqualTo(expected)
   }
 
-  @Test public void threeParts() throws Exception {
-    String expected = ""
-        + "--123\r\n"
-        + "\r\n"
-        + "Quick\r\n"
-        + "--123\r\n"
-        + "\r\n"
-        + "Brown\r\n"
-        + "--123\r\n"
-        + "\r\n"
-        + "Fox\r\n"
-        + "--123--\r\n";
-
-    MultipartBody body = new MultipartBody.Builder("123")
-        .addPart(RequestBody.create("Quick", null))
-        .addPart(RequestBody.create("Brown", null))
-        .addPart(RequestBody.create("Fox", null))
-        .build();
-
-    assertThat(body.boundary()).isEqualTo("123");
-    assertThat(body.type()).isEqualTo(MultipartBody.MIXED);
-    assertThat(body.contentType().toString()).isEqualTo("multipart/mixed; boundary=123");
-    assertThat(body.parts().size()).isEqualTo(3);
-    assertThat(body.contentLength()).isEqualTo(55L);
-
-    Buffer buffer = new Buffer();
-    body.writeTo(buffer);
-    assertThat(body.contentLength()).isEqualTo(buffer.size());
-    assertThat(buffer.readUtf8()).isEqualTo(expected);
+  @Test
+  fun threeParts() {
+    val expected = """
+      |--123
+      |
+      |Quick
+      |--123
+      |
+      |Brown
+      |--123
+      |
+      |Fox
+      |--123--
+      |
+      """.trimMargin().replace("\n", "\r\n")
+    val body = MultipartBody.Builder("123")
+      .addPart("Quick".toRequestBody(null))
+      .addPart("Brown".toRequestBody(null))
+      .addPart("Fox".toRequestBody(null))
+      .build()
+    assertThat(body.boundary).isEqualTo("123")
+    assertThat(body.type).isEqualTo(MultipartBody.MIXED)
+    assertThat(body.contentType().toString())
+      .isEqualTo("multipart/mixed; boundary=123")
+    assertThat(body.parts.size).isEqualTo(3)
+    assertThat(body.contentLength()).isEqualTo(55L)
+    val buffer = Buffer()
+    body.writeTo(buffer)
+    assertThat(body.contentLength()).isEqualTo(buffer.size)
+    assertThat(buffer.readUtf8()).isEqualTo(expected)
   }
 
-  @Test public void fieldAndTwoFiles() throws Exception {
-    String expected = ""
-        + "--AaB03x\r\n"
-        + "Content-Disposition: form-data; name=\"submit-name\"\r\n"
-        + "\r\n"
-        + "Larry\r\n"
-        + "--AaB03x\r\n"
-        + "Content-Disposition: form-data; name=\"files\"\r\n"
-        + "Content-Type: multipart/mixed; boundary=BbC04y\r\n"
-        + "\r\n"
-        + "--BbC04y\r\n"
-        + "Content-Disposition: file; filename=\"file1.txt\"\r\n"
-        + "Content-Type: text/plain; charset=utf-8\r\n"
-        + "\r\n"
-        + "... contents of file1.txt ...\r\n"
-        + "--BbC04y\r\n"
-        + "Content-Disposition: file; filename=\"file2.gif\"\r\n"
-        + "Content-Transfer-Encoding: binary\r\n"
-        + "Content-Type: image/gif\r\n"
-        + "\r\n"
-        + "... contents of file2.gif ...\r\n"
-        + "--BbC04y--\r\n"
-        + "\r\n"
-        + "--AaB03x--\r\n";
-
-    MultipartBody body = new MultipartBody.Builder("AaB03x")
-        .setType(MultipartBody.FORM)
-        .addFormDataPart("submit-name", "Larry")
-        .addFormDataPart("files", null,
-            new MultipartBody.Builder("BbC04y")
-                .addPart(
-                    Headers.of("Content-Disposition", "file; filename=\"file1.txt\""),
-                    RequestBody.create(
-                        "... contents of file1.txt ...", MediaType.get("text/plain")))
-                .addPart(
-                    Headers.of(
-                        "Content-Disposition", "file; filename=\"file2.gif\"",
-                        "Content-Transfer-Encoding", "binary"),
-                    RequestBody.create(
-                        "... contents of file2.gif ...".getBytes(UTF_8),
-                        MediaType.get("image/gif")))
-                .build())
-        .build();
-
-    assertThat(body.boundary()).isEqualTo("AaB03x");
-    assertThat(body.type()).isEqualTo(MultipartBody.FORM);
+  @Test
+  fun fieldAndTwoFiles() {
+    val expected = """
+      |--AaB03x
+      |Content-Disposition: form-data; name="submit-name"
+      |
+      |Larry
+      |--AaB03x
+      |Content-Disposition: form-data; name="files"
+      |Content-Type: multipart/mixed; boundary=BbC04y
+      |
+      |--BbC04y
+      |Content-Disposition: file; filename="file1.txt"
+      |Content-Type: text/plain; charset=utf-8
+      |
+      |... contents of file1.txt ...
+      |--BbC04y
+      |Content-Disposition: file; filename="file2.gif"
+      |Content-Transfer-Encoding: binary
+      |Content-Type: image/gif
+      |
+      |... contents of file2.gif ...
+      |--BbC04y--
+      |
+      |--AaB03x--
+      |
+      """.trimMargin().replace("\n", "\r\n")
+    val body = MultipartBody.Builder("AaB03x")
+      .setType(MultipartBody.FORM)
+      .addFormDataPart("submit-name", "Larry")
+      .addFormDataPart(
+        "files", null,
+        MultipartBody.Builder("BbC04y")
+          .addPart(
+            headersOf("Content-Disposition", "file; filename=\"file1.txt\""),
+            "... contents of file1.txt ...".toRequestBody("text/plain".toMediaType())
+          )
+          .addPart(
+            headersOf(
+              "Content-Disposition", "file; filename=\"file2.gif\"",
+              "Content-Transfer-Encoding", "binary"
+            ),
+            "... contents of file2.gif ...".toByteArray(StandardCharsets.UTF_8)
+              .toRequestBody("image/gif".toMediaType())
+          )
+          .build()
+      )
+      .build()
+    assertThat(body.boundary).isEqualTo("AaB03x")
+    assertThat(body.type).isEqualTo(MultipartBody.FORM)
     assertThat(body.contentType().toString()).isEqualTo(
-        "multipart/form-data; boundary=AaB03x");
-    assertThat(body.parts().size()).isEqualTo(2);
-    assertThat(body.contentLength()).isEqualTo(488L);
-
-    Buffer buffer = new Buffer();
-    body.writeTo(buffer);
-    assertThat(body.contentLength()).isEqualTo(buffer.size());
-    assertThat(buffer.readUtf8()).isEqualTo(expected);
+      "multipart/form-data; boundary=AaB03x"
+    )
+    assertThat(body.parts.size).isEqualTo(2)
+    assertThat(body.contentLength()).isEqualTo(488L)
+    val buffer = Buffer()
+    body.writeTo(buffer)
+    assertThat(body.contentLength()).isEqualTo(buffer.size)
+    assertThat(buffer.readUtf8()).isEqualTo(expected)
   }
 
-  @Test public void stringEscapingIsWeird() throws Exception {
-    String expected = ""
-        + "--AaB03x\r\n"
-        + "Content-Disposition: form-data; name=\"field with spaces\"; filename=\"filename with spaces.txt\"\r\n"
-        + "Content-Type: text/plain; charset=utf-8\r\n"
-        + "\r\n"
-        + "okay\r\n"
-        + "--AaB03x\r\n"
-        + "Content-Disposition: form-data; name=\"field with %22\"\r\n"
-        + "\r\n"
-        + "\"\r\n"
-        + "--AaB03x\r\n"
-        + "Content-Disposition: form-data; name=\"field with %22\"\r\n"
-        + "\r\n"
-        + "%22\r\n"
-        + "--AaB03x\r\n"
-        + "Content-Disposition: form-data; name=\"field with \u007e\"\r\n"
-        + "\r\n"
-        + "Alpha\r\n"
-        + "--AaB03x--\r\n";
-
-    MultipartBody body = new MultipartBody.Builder("AaB03x")
-        .setType(MultipartBody.FORM)
-        .addFormDataPart("field with spaces", "filename with spaces.txt",
-            RequestBody.create("okay", MediaType.get("text/plain; charset=utf-8")))
-        .addFormDataPart("field with \"", "\"")
-        .addFormDataPart("field with %22", "%22")
-        .addFormDataPart("field with \u007e", "Alpha")
-        .build();
-
-    Buffer buffer = new Buffer();
-    body.writeTo(buffer);
-    assertThat(buffer.readUtf8()).isEqualTo(expected);
+  @Test
+  fun stringEscapingIsWeird() {
+    val expected = """
+      |--AaB03x
+      |Content-Disposition: form-data; name="field with spaces"; filename="filename with spaces.txt"
+      |Content-Type: text/plain; charset=utf-8
+      |
+      |okay
+      |--AaB03x
+      |Content-Disposition: form-data; name="field with %22"
+      |
+      |"
+      |--AaB03x
+      |Content-Disposition: form-data; name="field with %22"
+      |
+      |%22
+      |--AaB03x
+      |Content-Disposition: form-data; name="field with ~"
+      |
+      |Alpha
+      |--AaB03x--
+      |
+      """.trimMargin().replace("\n", "\r\n")
+    val body = MultipartBody.Builder("AaB03x")
+      .setType(MultipartBody.FORM)
+      .addFormDataPart(
+        "field with spaces", "filename with spaces.txt",
+        "okay".toRequestBody("text/plain; charset=utf-8".toMediaType())
+      )
+      .addFormDataPart("field with \"", "\"")
+      .addFormDataPart("field with %22", "%22")
+      .addFormDataPart("field with \u007e", "Alpha")
+      .build()
+    val buffer = Buffer()
+    body.writeTo(buffer)
+    assertThat(buffer.readUtf8()).isEqualTo(expected)
   }
 
-  @Test public void streamingPartHasNoLength() throws Exception {
-    class StreamingBody extends RequestBody {
-      private final String body;
-
-      StreamingBody(String body) {
-        this.body = body;
+  @Test
+  fun streamingPartHasNoLength() {
+    class StreamingBody(private val body: String) : RequestBody() {
+      override fun contentType(): MediaType? {
+        return null
       }
 
-      @Override public MediaType contentType() {
-        return null;
-      }
-
-      @Override public void writeTo(BufferedSink sink) throws IOException {
-        sink.writeUtf8(body);
+      @Throws(IOException::class)
+      override fun writeTo(sink: BufferedSink) {
+        sink.writeUtf8(body)
       }
     }
 
-    String expected = ""
-        + "--123\r\n"
-        + "\r\n"
-        + "Quick\r\n"
-        + "--123\r\n"
-        + "\r\n"
-        + "Brown\r\n"
-        + "--123\r\n"
-        + "\r\n"
-        + "Fox\r\n"
-        + "--123--\r\n";
-
-    MultipartBody body = new MultipartBody.Builder("123")
-        .addPart(RequestBody.create("Quick", null))
-        .addPart(new StreamingBody("Brown"))
-        .addPart(RequestBody.create("Fox", null))
-        .build();
-
-    assertThat(body.boundary()).isEqualTo("123");
-    assertThat(body.type()).isEqualTo(MultipartBody.MIXED);
-    assertThat(body.contentType().toString()).isEqualTo("multipart/mixed; boundary=123");
-    assertThat(body.parts().size()).isEqualTo(3);
-    assertThat(body.contentLength()).isEqualTo(-1);
-
-    Buffer buffer = new Buffer();
-    body.writeTo(buffer);
-    assertThat(buffer.readUtf8()).isEqualTo(expected);
+    val expected = """
+      |--123
+      |
+      |Quick
+      |--123
+      |
+      |Brown
+      |--123
+      |
+      |Fox
+      |--123--
+      |
+      """.trimMargin().replace("\n", "\r\n")
+    val body = MultipartBody.Builder("123")
+      .addPart("Quick".toRequestBody(null))
+      .addPart(StreamingBody("Brown"))
+      .addPart("Fox".toRequestBody(null))
+      .build()
+    assertThat(body.boundary).isEqualTo("123")
+    assertThat(body.type).isEqualTo(MultipartBody.MIXED)
+    assertThat(body.contentType().toString())
+      .isEqualTo("multipart/mixed; boundary=123")
+    assertThat(body.parts.size).isEqualTo(3)
+    assertThat(body.contentLength()).isEqualTo(-1)
+    val buffer = Buffer()
+    body.writeTo(buffer)
+    assertThat(buffer.readUtf8()).isEqualTo(expected)
   }
 
-  @Test public void contentTypeHeaderIsForbidden() throws Exception {
-    MultipartBody.Builder multipart = new MultipartBody.Builder();
+  @Test
+  fun contentTypeHeaderIsForbidden() {
+    val multipart = MultipartBody.Builder()
     try {
-      multipart.addPart(Headers.of("Content-Type", "text/plain"),
-          RequestBody.create("Hello, World!", null));
-      fail();
-    } catch (IllegalArgumentException expected) {
+      multipart.addPart(
+        headersOf("Content-Type", "text/plain"),
+        "Hello, World!".toRequestBody(null)
+      )
+      fail<Any>()
+    } catch (expected: IllegalArgumentException) {
     }
   }
 
-  @Test public void contentLengthHeaderIsForbidden() throws Exception {
-    MultipartBody.Builder multipart = new MultipartBody.Builder();
+  @Test
+  fun contentLengthHeaderIsForbidden() {
+    val multipart = MultipartBody.Builder()
     try {
-      multipart.addPart(Headers.of("Content-Length", "13"),
-          RequestBody.create("Hello, World!", null));
-      fail();
-    } catch (IllegalArgumentException expected) {
+      multipart.addPart(
+        headersOf("Content-Length", "13"),
+        "Hello, World!".toRequestBody(null)
+      )
+      fail<Any>()
+    } catch (expected: IllegalArgumentException) {
     }
   }
 
-  @Test public void partAccessors() throws IOException {
-    MultipartBody body = new MultipartBody.Builder()
-        .addPart(Headers.of("Foo", "Bar"), RequestBody.create("Baz", null))
-        .build();
-    assertThat(body.parts().size()).isEqualTo(1);
-
-    Buffer part1Buffer = new Buffer();
-    MultipartBody.Part part1 = body.part(0);
-    part1.body().writeTo(part1Buffer);
-    assertThat(part1.headers()).isEqualTo(Headers.of("Foo", "Bar"));
-    assertThat(part1Buffer.readUtf8()).isEqualTo("Baz");
+  @Test
+  @Throws(IOException::class)
+  fun partAccessors() {
+    val body = MultipartBody.Builder()
+      .addPart(headersOf("Foo", "Bar"), "Baz".toRequestBody(null))
+      .build()
+    assertThat(body.parts.size).isEqualTo(1)
+    val part1Buffer = Buffer()
+    val part1 = body.part(0)
+    part1.body.writeTo(part1Buffer)
+    assertThat(part1.headers).isEqualTo(headersOf("Foo", "Bar"))
+    assertThat(part1Buffer.readUtf8()).isEqualTo("Baz")
   }
 
-  @Test public void nonAsciiFilename() throws Exception {
-    String expected = ""
-        + "--AaB03x\r\n"
-        + "Content-Disposition: form-data; name=\"attachment\"; filename=\"resumé.pdf\"\r\n"
-        + "Content-Type: application/pdf; charset=utf-8\r\n"
-        + "\r\n"
-        + "Jesse’s Resumé\r\n"
-        + "--AaB03x--\r\n";
-
-    MultipartBody body = new MultipartBody.Builder("AaB03x")
-        .setType(MultipartBody.FORM)
-        .addFormDataPart("attachment", "resumé.pdf",
-            RequestBody.create("Jesse’s Resumé", MediaType.parse("application/pdf")))
-        .build();
-
-    Buffer buffer = new Buffer();
-    body.writeTo(buffer);
-    assertThat(buffer.readUtf8()).isEqualTo(expected);
+  @Test
+  fun nonAsciiFilename() {
+    val expected = """
+      |--AaB03x
+      |Content-Disposition: form-data; name="attachment"; filename="resumé.pdf"
+      |Content-Type: application/pdf; charset=utf-8
+      |
+      |Jesse’s Resumé
+      |--AaB03x--
+      |
+      """.trimMargin().replace("\n", "\r\n")
+    val body = MultipartBody.Builder("AaB03x")
+      .setType(MultipartBody.FORM)
+      .addFormDataPart(
+        "attachment", "resumé.pdf",
+        "Jesse’s Resumé".toRequestBody("application/pdf".toMediaTypeOrNull())
+      )
+      .build()
+    val buffer = Buffer()
+    body.writeTo(buffer)
+    assertThat(buffer.readUtf8()).isEqualTo(expected)
   }
 }

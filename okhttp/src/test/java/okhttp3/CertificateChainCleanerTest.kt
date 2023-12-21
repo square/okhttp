@@ -13,281 +13,295 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.List;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.X509TrustManager;
-import okhttp3.internal.tls.CertificateChainCleaner;
-import okhttp3.tls.HandshakeCertificates;
-import okhttp3.tls.HeldCertificate;
-import org.junit.jupiter.api.Test;
+import java.security.cert.Certificate
+import javax.net.ssl.SSLPeerUnverifiedException
+import okhttp3.internal.tls.CertificateChainCleaner.Companion.get
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Test
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
-
-public final class CertificateChainCleanerTest {
-  @Test public void equalsFromCertificate() {
-    HeldCertificate rootA = new HeldCertificate.Builder()
-        .serialNumber(1L)
-        .build();
-    HeldCertificate rootB = new HeldCertificate.Builder()
-        .serialNumber(2L)
-        .build();
-    assertThat(CertificateChainCleaner.Companion.get(rootB.certificate(), rootA.certificate()))
-        .isEqualTo(CertificateChainCleaner.Companion.get(rootA.certificate(), rootB.certificate()));
+class CertificateChainCleanerTest {
+  @Test
+  fun equalsFromCertificate() {
+    val rootA = HeldCertificate.Builder()
+      .serialNumber(1L)
+      .build()
+    val rootB = HeldCertificate.Builder()
+      .serialNumber(2L)
+      .build()
+    assertThat(get(rootB.certificate, rootA.certificate))
+      .isEqualTo(get(rootA.certificate, rootB.certificate))
   }
 
-  @Test public void equalsFromTrustManager() {
-    HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder().build();
-    X509TrustManager x509TrustManager = handshakeCertificates.trustManager();
-    assertThat(CertificateChainCleaner.Companion.get(x509TrustManager)).isEqualTo(
-        CertificateChainCleaner.Companion.get(x509TrustManager));
+  @Test
+  fun equalsFromTrustManager() {
+    val handshakeCertificates = HandshakeCertificates.Builder().build()
+    val x509TrustManager = handshakeCertificates.trustManager
+    assertThat(get(x509TrustManager)).isEqualTo(get(x509TrustManager))
   }
 
-  @Test public void normalizeSingleSelfSignedCertificate() throws Exception {
-    HeldCertificate root = new HeldCertificate.Builder()
-        .serialNumber(1L)
-        .build();
-    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root.certificate());
-    assertThat(cleaner.clean(list(root), "hostname")).isEqualTo(list(root));
+  @Test
+  fun normalizeSingleSelfSignedCertificate() {
+    val root = HeldCertificate.Builder()
+      .serialNumber(1L)
+      .build()
+    val cleaner = get(root.certificate)
+    assertThat(cleaner.clean(list(root), "hostname")).isEqualTo(list(root))
   }
 
-  @Test public void normalizeUnknownSelfSignedCertificate() {
-    HeldCertificate root = new HeldCertificate.Builder()
-        .serialNumber(1L)
-        .build();
-    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get();
-
+  @Test
+  fun normalizeUnknownSelfSignedCertificate() {
+    val root = HeldCertificate.Builder()
+      .serialNumber(1L)
+      .build()
+    val cleaner = get()
     try {
-      cleaner.clean(list(root), "hostname");
-      fail();
-    } catch (SSLPeerUnverifiedException expected) {
+      cleaner.clean(list(root), "hostname")
+      fail<Any>()
+    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
-  @Test public void orderedChainOfCertificatesWithRoot() throws Exception {
-    HeldCertificate root = new HeldCertificate.Builder()
-        .serialNumber(1L)
-        .certificateAuthority(1)
-        .build();
-    HeldCertificate certA = new HeldCertificate.Builder()
-        .serialNumber(2L)
-        .certificateAuthority(0)
-        .signedBy(root)
-        .build();
-    HeldCertificate certB = new HeldCertificate.Builder()
-        .serialNumber(3L)
-        .signedBy(certA)
-        .build();
-
-    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root.certificate());
-    assertThat(cleaner.clean(list(certB, certA, root), "hostname")).isEqualTo(
-        list(certB, certA, root));
+  @Test
+  fun orderedChainOfCertificatesWithRoot() {
+    val root = HeldCertificate.Builder()
+      .serialNumber(1L)
+      .certificateAuthority(1)
+      .build()
+    val certA = HeldCertificate.Builder()
+      .serialNumber(2L)
+      .certificateAuthority(0)
+      .signedBy(root)
+      .build()
+    val certB = HeldCertificate.Builder()
+      .serialNumber(3L)
+      .signedBy(certA)
+      .build()
+    val cleaner = get(root.certificate)
+    assertThat(cleaner.clean(list(certB, certA, root), "hostname"))
+      .isEqualTo(list(certB, certA, root))
   }
 
-  @Test public void orderedChainOfCertificatesWithoutRoot() throws Exception {
-    HeldCertificate root = new HeldCertificate.Builder()
-        .serialNumber(1L)
-        .certificateAuthority(1)
-        .build();
-    HeldCertificate certA = new HeldCertificate.Builder()
-        .serialNumber(2L)
-        .certificateAuthority(0)
-        .signedBy(root)
-        .build();
-    HeldCertificate certB = new HeldCertificate.Builder()
-        .serialNumber(3L)
-        .signedBy(certA)
-        .build();
-
-    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root.certificate());
+  @Test
+  fun orderedChainOfCertificatesWithoutRoot() {
+    val root = HeldCertificate.Builder()
+      .serialNumber(1L)
+      .certificateAuthority(1)
+      .build()
+    val certA = HeldCertificate.Builder()
+      .serialNumber(2L)
+      .certificateAuthority(0)
+      .signedBy(root)
+      .build()
+    val certB = HeldCertificate.Builder()
+      .serialNumber(3L)
+      .signedBy(certA)
+      .build()
+    val cleaner = get(root.certificate)
     // Root is added!
     assertThat(cleaner.clean(list(certB, certA), "hostname")).isEqualTo(
-        list(certB, certA, root));
+      list(certB, certA, root)
+    )
   }
 
-  @Test public void unorderedChainOfCertificatesWithRoot() throws Exception {
-    HeldCertificate root = new HeldCertificate.Builder()
-        .serialNumber(1L)
-        .certificateAuthority(2)
-        .build();
-    HeldCertificate certA = new HeldCertificate.Builder()
-        .serialNumber(2L)
-        .certificateAuthority(1)
-        .signedBy(root)
-        .build();
-    HeldCertificate certB = new HeldCertificate.Builder()
-        .serialNumber(3L)
-        .certificateAuthority(0)
-        .signedBy(certA)
-        .build();
-    HeldCertificate certC = new HeldCertificate.Builder()
-        .serialNumber(4L)
-        .signedBy(certB)
-        .build();
-
-    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root.certificate());
+  @Test
+  fun unorderedChainOfCertificatesWithRoot() {
+    val root = HeldCertificate.Builder()
+      .serialNumber(1L)
+      .certificateAuthority(2)
+      .build()
+    val certA = HeldCertificate.Builder()
+      .serialNumber(2L)
+      .certificateAuthority(1)
+      .signedBy(root)
+      .build()
+    val certB = HeldCertificate.Builder()
+      .serialNumber(3L)
+      .certificateAuthority(0)
+      .signedBy(certA)
+      .build()
+    val certC = HeldCertificate.Builder()
+      .serialNumber(4L)
+      .signedBy(certB)
+      .build()
+    val cleaner = get(root.certificate)
     assertThat(cleaner.clean(list(certC, certA, root, certB), "hostname")).isEqualTo(
-        list(certC, certB, certA, root));
+      list(certC, certB, certA, root)
+    )
   }
 
-  @Test public void unorderedChainOfCertificatesWithoutRoot() throws Exception {
-    HeldCertificate root = new HeldCertificate.Builder()
-        .serialNumber(1L)
-        .certificateAuthority(2)
-        .build();
-    HeldCertificate certA = new HeldCertificate.Builder()
-        .serialNumber(2L)
-        .certificateAuthority(1)
-        .signedBy(root)
-        .build();
-    HeldCertificate certB = new HeldCertificate.Builder()
-        .serialNumber(3L)
-        .certificateAuthority(0)
-        .signedBy(certA)
-        .build();
-    HeldCertificate certC = new HeldCertificate.Builder()
-        .serialNumber(4L)
-        .signedBy(certB)
-        .build();
-
-    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root.certificate());
+  @Test
+  fun unorderedChainOfCertificatesWithoutRoot() {
+    val root = HeldCertificate.Builder()
+      .serialNumber(1L)
+      .certificateAuthority(2)
+      .build()
+    val certA = HeldCertificate.Builder()
+      .serialNumber(2L)
+      .certificateAuthority(1)
+      .signedBy(root)
+      .build()
+    val certB = HeldCertificate.Builder()
+      .serialNumber(3L)
+      .certificateAuthority(0)
+      .signedBy(certA)
+      .build()
+    val certC = HeldCertificate.Builder()
+      .serialNumber(4L)
+      .signedBy(certB)
+      .build()
+    val cleaner = get(root.certificate)
     assertThat(cleaner.clean(list(certC, certA, certB), "hostname")).isEqualTo(
-        list(certC, certB, certA, root));
+      list(certC, certB, certA, root)
+    )
   }
 
-  @Test public void unrelatedCertificatesAreOmitted() throws Exception {
-    HeldCertificate root = new HeldCertificate.Builder()
-        .serialNumber(1L)
-        .certificateAuthority(1)
-        .build();
-    HeldCertificate certA = new HeldCertificate.Builder()
-        .serialNumber(2L)
-        .certificateAuthority(0)
-        .signedBy(root)
-        .build();
-    HeldCertificate certB = new HeldCertificate.Builder()
-        .serialNumber(3L)
-        .signedBy(certA)
-        .build();
-    HeldCertificate certUnnecessary = new HeldCertificate.Builder()
-        .serialNumber(4L)
-        .build();
-
-    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root.certificate());
-    assertThat(cleaner.clean(list(certB, certUnnecessary, certA, root), "hostname")).isEqualTo(
-        list(certB, certA, root));
+  @Test
+  fun unrelatedCertificatesAreOmitted() {
+    val root = HeldCertificate.Builder()
+      .serialNumber(1L)
+      .certificateAuthority(1)
+      .build()
+    val certA = HeldCertificate.Builder()
+      .serialNumber(2L)
+      .certificateAuthority(0)
+      .signedBy(root)
+      .build()
+    val certB = HeldCertificate.Builder()
+      .serialNumber(3L)
+      .signedBy(certA)
+      .build()
+    val certUnnecessary = HeldCertificate.Builder()
+      .serialNumber(4L)
+      .build()
+    val cleaner = get(root.certificate)
+    assertThat(cleaner.clean(list(certB, certUnnecessary, certA, root), "hostname"))
+      .isEqualTo(
+        list(certB, certA, root)
+      )
   }
 
-  @Test public void chainGoesAllTheWayToSelfSignedRoot() throws Exception {
-    HeldCertificate selfSigned = new HeldCertificate.Builder()
-        .serialNumber(1L)
-        .certificateAuthority(2)
-        .build();
-    HeldCertificate trusted = new HeldCertificate.Builder()
-        .serialNumber(2L)
-        .signedBy(selfSigned)
-        .certificateAuthority(1)
-        .build();
-    HeldCertificate certA = new HeldCertificate.Builder()
-        .serialNumber(3L)
-        .certificateAuthority(0)
-        .signedBy(trusted)
-        .build();
-    HeldCertificate certB = new HeldCertificate.Builder()
-        .serialNumber(4L)
-        .signedBy(certA)
-        .build();
-
-    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(
-        selfSigned.certificate(), trusted.certificate());
+  @Test
+  fun chainGoesAllTheWayToSelfSignedRoot() {
+    val selfSigned = HeldCertificate.Builder()
+      .serialNumber(1L)
+      .certificateAuthority(2)
+      .build()
+    val trusted = HeldCertificate.Builder()
+      .serialNumber(2L)
+      .signedBy(selfSigned)
+      .certificateAuthority(1)
+      .build()
+    val certA = HeldCertificate.Builder()
+      .serialNumber(3L)
+      .certificateAuthority(0)
+      .signedBy(trusted)
+      .build()
+    val certB = HeldCertificate.Builder()
+      .serialNumber(4L)
+      .signedBy(certA)
+      .build()
+    val cleaner = get(
+      selfSigned.certificate, trusted.certificate
+    )
     assertThat(cleaner.clean(list(certB, certA), "hostname")).isEqualTo(
-        list(certB, certA, trusted, selfSigned));
+      list(certB, certA, trusted, selfSigned)
+    )
     assertThat(cleaner.clean(list(certB, certA, trusted), "hostname")).isEqualTo(
-        list(certB, certA, trusted, selfSigned));
-    assertThat(cleaner.clean(list(certB, certA, trusted, selfSigned), "hostname")).isEqualTo(
-        list(certB, certA, trusted, selfSigned));
+      list(certB, certA, trusted, selfSigned)
+    )
+    assertThat(cleaner.clean(list(certB, certA, trusted, selfSigned), "hostname"))
+      .isEqualTo(
+        list(certB, certA, trusted, selfSigned)
+      )
   }
 
-  @Test public void trustedRootNotSelfSigned() throws Exception {
-    HeldCertificate unknownSigner = new HeldCertificate.Builder()
-        .serialNumber(1L)
-        .certificateAuthority(2)
-        .build();
-    HeldCertificate trusted = new HeldCertificate.Builder()
-        .signedBy(unknownSigner)
-        .certificateAuthority(1)
-        .serialNumber(2L)
-        .build();
-    HeldCertificate intermediateCa = new HeldCertificate.Builder()
-        .signedBy(trusted)
-        .certificateAuthority(0)
-        .serialNumber(3L)
-        .build();
-    HeldCertificate certificate = new HeldCertificate.Builder()
-        .signedBy(intermediateCa)
-        .serialNumber(4L)
-        .build();
-
-    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(trusted.certificate());
-    assertThat(cleaner.clean(list(certificate, intermediateCa), "hostname")).isEqualTo(
-        list(certificate, intermediateCa, trusted));
-    assertThat(cleaner.clean(list(certificate, intermediateCa, trusted), "hostname")).isEqualTo(
-        list(certificate, intermediateCa, trusted));
+  @Test
+  fun trustedRootNotSelfSigned() {
+    val unknownSigner = HeldCertificate.Builder()
+      .serialNumber(1L)
+      .certificateAuthority(2)
+      .build()
+    val trusted = HeldCertificate.Builder()
+      .signedBy(unknownSigner)
+      .certificateAuthority(1)
+      .serialNumber(2L)
+      .build()
+    val intermediateCa = HeldCertificate.Builder()
+      .signedBy(trusted)
+      .certificateAuthority(0)
+      .serialNumber(3L)
+      .build()
+    val certificate = HeldCertificate.Builder()
+      .signedBy(intermediateCa)
+      .serialNumber(4L)
+      .build()
+    val cleaner = get(trusted.certificate)
+    assertThat(cleaner.clean(list(certificate, intermediateCa), "hostname"))
+      .isEqualTo(
+        list(certificate, intermediateCa, trusted)
+      )
+    assertThat(cleaner.clean(list(certificate, intermediateCa, trusted), "hostname"))
+      .isEqualTo(
+        list(certificate, intermediateCa, trusted)
+      )
   }
 
-  @Test public void chainMaxLength() throws Exception {
-    List<HeldCertificate> heldCertificates = chainOfLength(10);
-    List<Certificate> certificates = new ArrayList<>();
-    for (HeldCertificate heldCertificate : heldCertificates) {
-      certificates.add(heldCertificate.certificate());
+  @Test
+  fun chainMaxLength() {
+    val heldCertificates = chainOfLength(10)
+    val certificates: MutableList<Certificate> = ArrayList()
+    for (heldCertificate in heldCertificates) {
+      certificates.add(heldCertificate.certificate)
     }
-
-    X509Certificate root = heldCertificates.get(heldCertificates.size() - 1).certificate();
-    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root);
-    assertThat(cleaner.clean(certificates, "hostname")).isEqualTo(certificates);
+    val root = heldCertificates[heldCertificates.size - 1].certificate
+    val cleaner = get(root)
+    assertThat(cleaner.clean(certificates, "hostname")).isEqualTo(certificates)
     assertThat(cleaner.clean(certificates.subList(0, 9), "hostname")).isEqualTo(
-        certificates);
+      certificates
+    )
   }
 
-  @Test public void chainTooLong() {
-    List<HeldCertificate> heldCertificates = chainOfLength(11);
-    List<Certificate> certificates = new ArrayList<>();
-    for (HeldCertificate heldCertificate : heldCertificates) {
-      certificates.add(heldCertificate.certificate());
+  @Test
+  fun chainTooLong() {
+    val heldCertificates = chainOfLength(11)
+    val certificates: MutableList<Certificate> = ArrayList()
+    for (heldCertificate in heldCertificates) {
+      certificates.add(heldCertificate.certificate)
     }
-
-    X509Certificate root = heldCertificates.get(heldCertificates.size() - 1).certificate();
-    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root);
+    val root = heldCertificates[heldCertificates.size - 1].certificate
+    val cleaner = get(root)
     try {
-      cleaner.clean(certificates, "hostname");
-      fail();
-    } catch (SSLPeerUnverifiedException expected) {
+      cleaner.clean(certificates, "hostname")
+      fail<Any>()
+    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
-  /** Returns a chain starting at the leaf certificate and progressing to the root. */
-  private List<HeldCertificate> chainOfLength(int length) {
-    List<HeldCertificate> result = new ArrayList<>();
-    for (int i = 1; i <= length; i++) {
-      result.add(0, new HeldCertificate.Builder()
-          .signedBy(!result.isEmpty() ? result.get(0) : null)
+  /** Returns a chain starting at the leaf certificate and progressing to the root.  */
+  private fun chainOfLength(length: Int): List<HeldCertificate> {
+    val result = mutableListOf<HeldCertificate>()
+    for (i in 1..length) {
+      result.add(
+        0, HeldCertificate.Builder()
+          .signedBy(if (result.isNotEmpty()) result[0] else null)
           .certificateAuthority(length - i)
-          .serialNumber(i)
-          .build());
+          .serialNumber(i.toLong())
+          .build()
+      )
     }
-    return result;
+    return result
   }
 
-  private List<Certificate> list(HeldCertificate... heldCertificates) {
-    List<Certificate> result = new ArrayList<>();
-    for (HeldCertificate heldCertificate : heldCertificates) {
-      result.add(heldCertificate.certificate());
+  private fun list(vararg heldCertificates: HeldCertificate): List<Certificate> {
+    val result: MutableList<Certificate> = ArrayList()
+    for (heldCertificate in heldCertificates) {
+      result.add(heldCertificate.certificate)
     }
-    return result;
+    return result
   }
 }

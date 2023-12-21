@@ -13,312 +13,291 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.tls;
+package okhttp3.internal.tls
 
-import java.io.IOException;
-import java.net.SocketException;
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
-import java.util.Collections;
-import java.util.List;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509KeyManager;
-import javax.net.ssl.X509TrustManager;
-import javax.security.auth.x500.X500Principal;
-import mockwebserver3.MockResponse;
-import mockwebserver3.MockWebServer;
-import mockwebserver3.junit5.internal.MockWebServerExtension;
-import okhttp3.Call;
-import okhttp3.OkHttpClient;
-import okhttp3.OkHttpClientTestRule;
-import okhttp3.RecordingEventListener;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.internal.http2.ConnectionShutdownException;
-import okhttp3.testing.Flaky;
-import okhttp3.testing.PlatformRule;
-import okhttp3.tls.HandshakeCertificates;
-import okhttp3.tls.HeldCertificate;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junitpioneer.jupiter.RetryingTest;
-
-import static java.util.Arrays.asList;
-import static okhttp3.tls.internal.TlsUtil.newKeyManager;
-import static okhttp3.tls.internal.TlsUtil.newTrustManager;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import java.io.IOException
+import java.net.SocketException
+import java.security.GeneralSecurityException
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
+import java.util.Arrays
+import javax.net.ssl.KeyManager
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLException
+import javax.net.ssl.SSLHandshakeException
+import javax.net.ssl.SSLPeerUnverifiedException
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManager
+import javax.security.auth.x500.X500Principal
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.internal.MockWebServerExtension
+import okhttp3.OkHttpClient
+import okhttp3.OkHttpClientTestRule
+import okhttp3.RecordingEventListener
+import okhttp3.Request
+import okhttp3.internal.http2.ConnectionShutdownException
+import okhttp3.testing.Flaky
+import okhttp3.testing.PlatformRule
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
+import okhttp3.tls.internal.TlsUtil.newKeyManager
+import okhttp3.tls.internal.TlsUtil.newTrustManager
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.RegisterExtension
+import org.junitpioneer.jupiter.RetryingTest
 
 @Tag("Slowish")
-@ExtendWith(MockWebServerExtension.class)
-public final class ClientAuthTest {
-  @RegisterExtension public final PlatformRule platform = new PlatformRule();
-  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+@ExtendWith(MockWebServerExtension::class)
+class ClientAuthTest {
+  @RegisterExtension
+  val platform = PlatformRule()
 
-  private MockWebServer server;
-  private HeldCertificate serverRootCa;
-  private HeldCertificate serverIntermediateCa;
-  private HeldCertificate serverCert;
-  private HeldCertificate clientRootCa;
-  private HeldCertificate clientIntermediateCa;
-  private HeldCertificate clientCert;
+  @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
+
+  private lateinit var server: MockWebServer
+  private lateinit var serverRootCa: HeldCertificate
+  private lateinit var serverIntermediateCa: HeldCertificate
+  private lateinit var serverCert: HeldCertificate
+  private lateinit var clientRootCa: HeldCertificate
+  private lateinit var clientIntermediateCa: HeldCertificate
+  private lateinit var clientCert: HeldCertificate
 
   @BeforeEach
-  public void setUp(MockWebServer server) {
-    this.server = server;
-
-    platform.assumeNotOpenJSSE();
-    platform.assumeNotBouncyCastle();
-
-    serverRootCa = new HeldCertificate.Builder()
-        .serialNumber(1L)
-        .certificateAuthority(1)
-        .commonName("root")
-        .addSubjectAlternativeName("root_ca.com")
-        .build();
-    serverIntermediateCa = new HeldCertificate.Builder()
-        .signedBy(serverRootCa)
-        .certificateAuthority(0)
-        .serialNumber(2L)
-        .commonName("intermediate_ca")
-        .addSubjectAlternativeName("intermediate_ca.com")
-        .build();
-
-    serverCert = new HeldCertificate.Builder()
-        .signedBy(serverIntermediateCa)
-        .serialNumber(3L)
-        .commonName("Local Host")
-        .addSubjectAlternativeName(server.getHostName())
-        .build();
-
-    clientRootCa = new HeldCertificate.Builder()
-        .serialNumber(1L)
-        .certificateAuthority(1)
-        .commonName("root")
-        .addSubjectAlternativeName("root_ca.com")
-        .build();
-    clientIntermediateCa = new HeldCertificate.Builder()
-        .signedBy(serverRootCa)
-        .certificateAuthority(0)
-        .serialNumber(2L)
-        .commonName("intermediate_ca")
-        .addSubjectAlternativeName("intermediate_ca.com")
-        .build();
-
-    clientCert = new HeldCertificate.Builder()
-        .signedBy(clientIntermediateCa)
-        .serialNumber(4L)
-        .commonName("Jethro Willis")
-        .addSubjectAlternativeName("jethrowillis.com")
-        .build();
+  fun setUp(server: MockWebServer) {
+    this.server = server
+    platform.assumeNotOpenJSSE()
+    platform.assumeNotBouncyCastle()
+    serverRootCa = HeldCertificate.Builder()
+      .serialNumber(1L)
+      .certificateAuthority(1)
+      .commonName("root")
+      .addSubjectAlternativeName("root_ca.com")
+      .build()
+    serverIntermediateCa = HeldCertificate.Builder()
+      .signedBy(serverRootCa)
+      .certificateAuthority(0)
+      .serialNumber(2L)
+      .commonName("intermediate_ca")
+      .addSubjectAlternativeName("intermediate_ca.com")
+      .build()
+    serverCert = HeldCertificate.Builder()
+      .signedBy(serverIntermediateCa)
+      .serialNumber(3L)
+      .commonName("Local Host")
+      .addSubjectAlternativeName(server.hostName)
+      .build()
+    clientRootCa = HeldCertificate.Builder()
+      .serialNumber(1L)
+      .certificateAuthority(1)
+      .commonName("root")
+      .addSubjectAlternativeName("root_ca.com")
+      .build()
+    clientIntermediateCa = HeldCertificate.Builder()
+      .signedBy(serverRootCa)
+      .certificateAuthority(0)
+      .serialNumber(2L)
+      .commonName("intermediate_ca")
+      .addSubjectAlternativeName("intermediate_ca.com")
+      .build()
+    clientCert = HeldCertificate.Builder()
+      .signedBy(clientIntermediateCa)
+      .serialNumber(4L)
+      .commonName("Jethro Willis")
+      .addSubjectAlternativeName("jethrowillis.com")
+      .build()
   }
 
-  @Test public void clientAuthForWants() throws Exception {
-    OkHttpClient client = buildClient(clientCert, clientIntermediateCa.certificate());
-
-    SSLSocketFactory socketFactory = buildServerSslSocketFactory();
-
-    server.useHttps(socketFactory);
-    server.requestClientAuth();
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun clientAuthForWants() {
+    val client = buildClient(clientCert, clientIntermediateCa.certificate)
+    val socketFactory = buildServerSslSocketFactory()
+    server.useHttps(socketFactory)
+    server.requestClientAuth()
+    server.enqueue(
+      MockResponse.Builder()
         .body("abc")
-        .build());
-
-    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
-    Response response = call.execute();
-    assertThat(response.handshake().peerPrincipal()).isEqualTo(
-        new X500Principal("CN=Local Host"));
-    assertThat(response.handshake().localPrincipal()).isEqualTo(
-        new X500Principal("CN=Jethro Willis"));
-    assertThat(response.body().string()).isEqualTo("abc");
+        .build()
+    )
+    val call = client.newCall(Request.Builder().url(server.url("/")).build())
+    val response = call.execute()
+    assertThat(response.handshake!!.peerPrincipal).isEqualTo(
+      X500Principal("CN=Local Host")
+    )
+    assertThat(response.handshake!!.localPrincipal).isEqualTo(
+      X500Principal("CN=Jethro Willis")
+    )
+    assertThat(response.body.string()).isEqualTo("abc")
   }
 
-  @Test public void clientAuthForNeeds() throws Exception {
-    OkHttpClient client = buildClient(clientCert, clientIntermediateCa.certificate());
-
-    SSLSocketFactory socketFactory = buildServerSslSocketFactory();
-
-    server.useHttps(socketFactory);
-    server.requireClientAuth();
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun clientAuthForNeeds() {
+    val client = buildClient(clientCert, clientIntermediateCa.certificate)
+    val socketFactory = buildServerSslSocketFactory()
+    server.useHttps(socketFactory)
+    server.requireClientAuth()
+    server.enqueue(
+      MockResponse.Builder()
         .body("abc")
-        .build());
-
-    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
-    Response response = call.execute();
-    assertThat(response.handshake().peerPrincipal()).isEqualTo(
-        new X500Principal("CN=Local Host"));
-    assertThat(response.handshake().localPrincipal()).isEqualTo(
-        new X500Principal("CN=Jethro Willis"));
-    assertThat(response.body().string()).isEqualTo("abc");
+        .build()
+    )
+    val call = client.newCall(Request.Builder().url(server.url("/")).build())
+    val response = call.execute()
+    assertThat(response.handshake!!.peerPrincipal).isEqualTo(
+      X500Principal("CN=Local Host")
+    )
+    assertThat(response.handshake!!.localPrincipal).isEqualTo(
+      X500Principal("CN=Jethro Willis")
+    )
+    assertThat(response.body.string()).isEqualTo("abc")
   }
 
-  @Test public void clientAuthSkippedForNone() throws Exception {
-    OkHttpClient client = buildClient(clientCert, clientIntermediateCa.certificate());
-
-    SSLSocketFactory socketFactory = buildServerSslSocketFactory();
-
-    server.useHttps(socketFactory);
-    server.noClientAuth();
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun clientAuthSkippedForNone() {
+    val client = buildClient(clientCert, clientIntermediateCa.certificate)
+    val socketFactory = buildServerSslSocketFactory()
+    server.useHttps(socketFactory)
+    server.noClientAuth()
+    server.enqueue(
+      MockResponse.Builder()
         .body("abc")
-        .build());
-
-    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
-    Response response = call.execute();
-    assertThat(response.handshake().peerPrincipal()).isEqualTo(
-        new X500Principal("CN=Local Host"));
-    assertThat(response.handshake().localPrincipal()).isNull();
-    assertThat(response.body().string()).isEqualTo("abc");
+        .build()
+    )
+    val call = client.newCall(Request.Builder().url(server.url("/")).build())
+    val response = call.execute()
+    assertThat(response.handshake!!.peerPrincipal).isEqualTo(
+      X500Principal("CN=Local Host")
+    )
+    assertThat(response.handshake!!.localPrincipal).isNull()
+    assertThat(response.body.string()).isEqualTo("abc")
   }
 
-  @Test public void missingClientAuthSkippedForWantsOnly() throws Exception {
-    OkHttpClient client = buildClient(null, clientIntermediateCa.certificate());
-
-    SSLSocketFactory socketFactory = buildServerSslSocketFactory();
-
-    server.useHttps(socketFactory);
-    server.requestClientAuth();
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun missingClientAuthSkippedForWantsOnly() {
+    val client = buildClient(null, clientIntermediateCa.certificate)
+    val socketFactory = buildServerSslSocketFactory()
+    server.useHttps(socketFactory)
+    server.requestClientAuth()
+    server.enqueue(
+      MockResponse.Builder()
         .body("abc")
-        .build());
-
-    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
-    Response response = call.execute();
-    assertThat(response.handshake().peerPrincipal()).isEqualTo(
-        new X500Principal("CN=Local Host"));
-    assertThat(response.handshake().localPrincipal()).isNull();
-    assertThat(response.body().string()).isEqualTo("abc");
+        .build()
+    )
+    val call = client.newCall(Request.Builder().url(server.url("/")).build())
+    val response = call.execute()
+    assertThat(response.handshake!!.peerPrincipal).isEqualTo(
+      X500Principal("CN=Local Host")
+    )
+    assertThat(response.handshake!!.localPrincipal).isNull()
+    assertThat(response.body.string()).isEqualTo("abc")
   }
 
-  @Flaky @RetryingTest(5)
-  public void missingClientAuthFailsForNeeds() throws Exception {
+  @Flaky
+  @RetryingTest(5)
+  fun missingClientAuthFailsForNeeds() {
     // Fails with 11.0.1 https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
-
-    OkHttpClient client = buildClient(null, clientIntermediateCa.certificate());
-
-    SSLSocketFactory socketFactory = buildServerSslSocketFactory();
-
-    server.useHttps(socketFactory);
-    server.requireClientAuth();
-
-    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
-
+    val client = buildClient(null, clientIntermediateCa.certificate)
+    val socketFactory = buildServerSslSocketFactory()
+    server.useHttps(socketFactory)
+    server.requireClientAuth()
+    val call = client.newCall(Request.Builder().url(server.url("/")).build())
     try {
-      call.execute();
-      fail();
-    } catch (SSLHandshakeException expected) {
+      call.execute()
+      fail<Any>()
+    } catch (expected: SSLHandshakeException) {
       // JDK 11+
-    } catch (SSLException expected) {
+    } catch (expected: SSLException) {
       // javax.net.ssl.SSLException: readRecord
-    } catch (SocketException expected) {
+    } catch (expected: SocketException) {
       // Conscrypt, JDK 8 (>= 292), JDK 9
-    } catch (IOException expected) {
-      assertThat(expected.getMessage()).isEqualTo("exhausted all routes");
+    } catch (expected: IOException) {
+      assertThat(expected.message).isEqualTo("exhausted all routes")
     }
   }
 
-  @Test public void commonNameIsNotTrusted() throws Exception {
-    serverCert = new HeldCertificate.Builder()
-        .signedBy(serverIntermediateCa)
-        .serialNumber(3L)
-        .commonName(server.getHostName())
-        .addSubjectAlternativeName("different-host.com")
-        .build();
-
-    OkHttpClient client = buildClient(clientCert, clientIntermediateCa.certificate());
-
-    SSLSocketFactory socketFactory = buildServerSslSocketFactory();
-
-    server.useHttps(socketFactory);
-    server.requireClientAuth();
-
-    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
-
+  @Test
+  fun commonNameIsNotTrusted() {
+    serverCert = HeldCertificate.Builder()
+      .signedBy(serverIntermediateCa)
+      .serialNumber(3L)
+      .commonName(server.hostName)
+      .addSubjectAlternativeName("different-host.com")
+      .build()
+    val client = buildClient(clientCert, clientIntermediateCa.certificate)
+    val socketFactory = buildServerSslSocketFactory()
+    server.useHttps(socketFactory)
+    server.requireClientAuth()
+    val call = client.newCall(Request.Builder().url(server.url("/")).build())
     try {
-      call.execute();
-      fail();
-    } catch (SSLPeerUnverifiedException expected) {
+      call.execute()
+      fail<Any>()
+    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
-  @Test public void invalidClientAuthFails() throws Throwable {
+  @Test
+  fun invalidClientAuthFails() {
     // Fails with https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
-
-    HeldCertificate clientCert2 = new HeldCertificate.Builder()
-        .serialNumber(4L)
-        .commonName("Jethro Willis")
-        .build();
-
-    OkHttpClient client = buildClient(clientCert2);
-
-    SSLSocketFactory socketFactory = buildServerSslSocketFactory();
-
-    server.useHttps(socketFactory);
-    server.requireClientAuth();
-
-    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
-
+    val clientCert2 = HeldCertificate.Builder()
+      .serialNumber(4L)
+      .commonName("Jethro Willis")
+      .build()
+    val client = buildClient(clientCert2)
+    val socketFactory = buildServerSslSocketFactory()
+    server.useHttps(socketFactory)
+    server.requireClientAuth()
+    val call = client.newCall(Request.Builder().url(server.url("/")).build())
     try {
-      call.execute();
-      fail();
-    } catch (SSLHandshakeException expected) {
+      call.execute()
+      fail<Any>()
+    } catch (expected: SSLHandshakeException) {
       // JDK 11+
-    } catch (SSLException expected) {
+    } catch (expected: SSLException) {
       // javax.net.ssl.SSLException: readRecord
-    } catch (SocketException expected) {
+    } catch (expected: SocketException) {
       // Conscrypt, JDK 8 (>= 292), JDK 9
-    } catch (ConnectionShutdownException expected) {
+    } catch (expected: ConnectionShutdownException) {
       // It didn't fail until it reached the application layer.
-    } catch (IOException expected) {
-      assertThat(expected.getMessage()).isEqualTo("exhausted all routes");
+    } catch (expected: IOException) {
+      assertThat(expected.message).isEqualTo("exhausted all routes")
     }
   }
 
-  @Test public void invalidClientAuthEvents() throws Throwable {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun invalidClientAuthEvents() {
+    server.enqueue(
+      MockResponse.Builder()
         .body("abc")
-        .build());
-
-    clientCert = new HeldCertificate.Builder()
-        .signedBy(clientIntermediateCa)
-        .serialNumber(4L)
-        .commonName("Jethro Willis")
-        .addSubjectAlternativeName("jethrowillis.com")
-        .validityInterval(1, 2)
-        .build();
-
-    OkHttpClient client = buildClient(clientCert, clientIntermediateCa.certificate());
-
-    RecordingEventListener listener = new RecordingEventListener();
-
+        .build()
+    )
+    clientCert = HeldCertificate.Builder()
+      .signedBy(clientIntermediateCa)
+      .serialNumber(4L)
+      .commonName("Jethro Willis")
+      .addSubjectAlternativeName("jethrowillis.com")
+      .validityInterval(1, 2)
+      .build()
+    var client = buildClient(clientCert, clientIntermediateCa.certificate)
+    val listener = RecordingEventListener()
     client = client.newBuilder()
-        .eventListener(listener)
-        .build();
-
-    SSLSocketFactory socketFactory = buildServerSslSocketFactory();
-
-    server.useHttps(socketFactory);
-    server.requireClientAuth();
-
-    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
-
+      .eventListener(listener)
+      .build()
+    val socketFactory = buildServerSslSocketFactory()
+    server.useHttps(socketFactory)
+    server.requireClientAuth()
+    val call = client.newCall(Request.Builder().url(server.url("/")).build())
     try {
-      call.execute();
-      fail();
-    } catch (IOException expected) {
+      call.execute()
+      fail<Any>()
+    } catch (expected: IOException) {
     }
 
     // Observed Events are variable
@@ -332,43 +311,54 @@ public final class ClientAuthTest {
     // Gradle - JDK 11
     // CallStart, ProxySelectStart, ProxySelectEnd, DnsStart, DnsEnd, ConnectStart, SecureConnectStart,
     // SecureConnectEnd, ConnectFailed, CallFailed
-
-    List<String> recordedEventTypes = listener.recordedEventTypes();
+    val recordedEventTypes = listener.recordedEventTypes()
     assertThat(recordedEventTypes).startsWith(
-        "CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart");
-    assertThat(recordedEventTypes).endsWith("CallFailed");
+      "CallStart",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "SecureConnectStart"
+    )
+    assertThat(recordedEventTypes).endsWith("CallFailed")
   }
 
-  private OkHttpClient buildClient(
-      HeldCertificate heldCertificate, X509Certificate... intermediates) {
-    HandshakeCertificates.Builder builder = new HandshakeCertificates.Builder()
-        .addTrustedCertificate(serverRootCa.certificate());
-
+  private fun buildClient(
+    heldCertificate: HeldCertificate?, vararg intermediates: X509Certificate
+  ): OkHttpClient {
+    val builder = HandshakeCertificates.Builder()
+      .addTrustedCertificate(serverRootCa.certificate)
     if (heldCertificate != null) {
-      builder.heldCertificate(heldCertificate, intermediates);
+      builder.heldCertificate(heldCertificate, *intermediates)
     }
-
-    HandshakeCertificates handshakeCertificates = builder.build();
+    val handshakeCertificates = builder.build()
     return clientTestRule.newClientBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .build();
+      .sslSocketFactory(
+        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
+      )
+      .build()
   }
 
-  private SSLSocketFactory buildServerSslSocketFactory() {
+  private fun buildServerSslSocketFactory(): SSLSocketFactory {
     // The test uses JDK default SSL Context instead of the Platform provided one
     // as Conscrypt seems to have some differences, we only want to test client side here.
-    try {
-      X509KeyManager keyManager = newKeyManager(
-          null, serverCert, serverIntermediateCa.certificate());
-      X509TrustManager trustManager = newTrustManager(null,
-          asList(serverRootCa.certificate(), clientRootCa.certificate()), Collections.emptyList());
-      SSLContext sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(new KeyManager[] {keyManager}, new TrustManager[] {trustManager},
-          new SecureRandom());
-      return sslContext.getSocketFactory();
-    } catch (GeneralSecurityException e) {
-      throw new AssertionError(e);
+    return try {
+      val keyManager = newKeyManager(
+        null, serverCert, serverIntermediateCa.certificate
+      )
+      val trustManager = newTrustManager(
+        null,
+        Arrays.asList(serverRootCa.certificate, clientRootCa.certificate), emptyList()
+      )
+      val sslContext = SSLContext.getInstance("TLS")
+      sslContext.init(
+        arrayOf<KeyManager>(keyManager), arrayOf<TrustManager>(trustManager),
+        SecureRandom()
+      )
+      sslContext.socketFactory
+    } catch (e: GeneralSecurityException) {
+      throw AssertionError(e)
     }
   }
 }

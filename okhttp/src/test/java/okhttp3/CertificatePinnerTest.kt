@@ -13,308 +13,321 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.util.HashSet;
-import java.util.List;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import okhttp3.tls.HeldCertificate;
-import org.junit.jupiter.api.Test;
+import java.util.Arrays
+import javax.net.ssl.SSLPeerUnverifiedException
+import okhttp3.CertificatePinner.Companion.pin
+import okhttp3.CertificatePinner.Companion.sha1Hash
+import okhttp3.tls.HeldCertificate
+import okio.ByteString.Companion.decodeBase64
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Test
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static okhttp3.CertificatePinner.sha1Hash;
-import static okio.ByteString.decodeBase64;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
-public final class CertificatePinnerTest {
-  static final HeldCertificate certA1 = new HeldCertificate.Builder()
-      .serialNumber(100L)
-      .build();
-  static final String certA1Sha256Pin = CertificatePinner.pin(certA1.certificate());
-
-  static final HeldCertificate certB1 = new HeldCertificate.Builder()
-      .serialNumber(200L)
-      .build();
-  static final String certB1Sha256Pin = CertificatePinner.pin(certB1.certificate());
-
-  static final HeldCertificate certC1 = new HeldCertificate.Builder()
-      .serialNumber(300L)
-      .build();
-  static final String certC1Sha1Pin = "sha1/" + sha1Hash(certC1.certificate()).base64();
-
-  @Test public void malformedPin() throws Exception {
-    CertificatePinner.Builder builder = new CertificatePinner.Builder();
+class CertificatePinnerTest {
+  @Test
+  fun malformedPin() {
+    val builder = CertificatePinner.Builder()
     try {
-      builder.add("example.com", "md5/DmxUShsZuNiqPQsX2Oi9uv2sCnw=");
-      fail();
-    } catch (IllegalArgumentException expected) {
+      builder.add("example.com", "md5/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
+      fail<Any>()
+    } catch (expected: IllegalArgumentException) {
     }
   }
 
-  @Test public void malformedBase64() throws Exception {
-    CertificatePinner.Builder builder = new CertificatePinner.Builder();
+  @Test
+  fun malformedBase64() {
+    val builder = CertificatePinner.Builder()
     try {
-      builder.add("example.com", "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw*");
-      fail();
-    } catch (IllegalArgumentException expected) {
+      builder.add("example.com", "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw*")
+      fail<Any>()
+    } catch (expected: IllegalArgumentException) {
     }
   }
 
-  /** Multiple certificates generated from the same keypair have the same pin. */
-  @Test public void sameKeypairSamePin() throws Exception {
-    HeldCertificate heldCertificateA2 = new HeldCertificate.Builder()
-        .keyPair(certA1.keyPair())
-        .serialNumber(101L)
-        .build();
-    String keypairACertificate2Pin = CertificatePinner.pin(heldCertificateA2.certificate());
-
-    HeldCertificate heldCertificateB2 = new HeldCertificate.Builder()
-        .keyPair(certB1.keyPair())
-        .serialNumber(201L)
-        .build();
-    String keypairBCertificate2Pin = CertificatePinner.pin(heldCertificateB2.certificate());
-
-    assertThat(keypairACertificate2Pin).isEqualTo(certA1Sha256Pin);
-    assertThat(keypairBCertificate2Pin).isEqualTo(certB1Sha256Pin);
-    assertThat(certB1Sha256Pin).isNotEqualTo(certA1Sha256Pin);
+  /** Multiple certificates generated from the same keypair have the same pin.  */
+  @Test
+  fun sameKeypairSamePin() {
+    val heldCertificateA2 = HeldCertificate.Builder()
+      .keyPair(certA1.keyPair)
+      .serialNumber(101L)
+      .build()
+    val keypairACertificate2Pin = pin(heldCertificateA2.certificate)
+    val heldCertificateB2 = HeldCertificate.Builder()
+      .keyPair(certB1.keyPair)
+      .serialNumber(201L)
+      .build()
+    val keypairBCertificate2Pin = pin(heldCertificateB2.certificate)
+    assertThat(keypairACertificate2Pin).isEqualTo(
+      certA1Sha256Pin
+    )
+    assertThat(keypairBCertificate2Pin).isEqualTo(
+      certB1Sha256Pin
+    )
+    assertThat(certB1Sha256Pin).isNotEqualTo(certA1Sha256Pin)
   }
 
-  @Test public void successfulCheck() throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-        .add("example.com", certA1Sha256Pin)
-        .build();
-
-    certificatePinner.check("example.com", singletonList(certA1.certificate()));
+  @Test
+  fun successfulCheck() {
+    val certificatePinner = CertificatePinner.Builder()
+      .add("example.com", certA1Sha256Pin)
+      .build()
+    certificatePinner.check("example.com", listOf(certA1.certificate))
   }
 
-  @Test public void successfulMatchAcceptsAnyMatchingCertificateOld() throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-        .add("example.com", certB1Sha256Pin)
-        .build();
-
-    certificatePinner.check("example.com", certA1.certificate(), certB1.certificate());
+  @Test
+  fun successfulMatchAcceptsAnyMatchingCertificateOld() {
+    val certificatePinner = CertificatePinner.Builder()
+      .add("example.com", certB1Sha256Pin)
+      .build()
+    certificatePinner.check("example.com", certA1.certificate, certB1.certificate)
   }
 
-  @Test public void successfulMatchAcceptsAnyMatchingCertificate() throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-        .add("example.com", certB1Sha256Pin)
-        .build();
-
-    certificatePinner.check("example.com", asList(certA1.certificate(), certB1.certificate()));
+  @Test
+  fun successfulMatchAcceptsAnyMatchingCertificate() {
+    val certificatePinner = CertificatePinner.Builder()
+      .add("example.com", certB1Sha256Pin)
+      .build()
+    certificatePinner.check(
+      "example.com",
+      Arrays.asList(certA1.certificate, certB1.certificate)
+    )
   }
 
-  @Test public void unsuccessfulCheck() throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-        .add("example.com", certA1Sha256Pin)
-        .build();
-
+  @Test
+  fun unsuccessfulCheck() {
+    val certificatePinner = CertificatePinner.Builder()
+      .add("example.com", certA1Sha256Pin)
+      .build()
     try {
-      certificatePinner.check("example.com", certB1.certificate());
-      fail();
-    } catch (SSLPeerUnverifiedException expected) {
+      certificatePinner.check("example.com", certB1.certificate)
+      fail<Any>()
+    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
-  @Test public void multipleCertificatesForOneHostname() throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-        .add("example.com", certA1Sha256Pin, certB1Sha256Pin)
-        .build();
-
-    certificatePinner.check("example.com", singletonList(certA1.certificate()));
-    certificatePinner.check("example.com", singletonList(certB1.certificate()));
+  @Test
+  fun multipleCertificatesForOneHostname() {
+    val certificatePinner = CertificatePinner.Builder()
+      .add("example.com", certA1Sha256Pin, certB1Sha256Pin)
+      .build()
+    certificatePinner.check("example.com", listOf(certA1.certificate))
+    certificatePinner.check("example.com", listOf(certB1.certificate))
   }
 
-  @Test public void multipleHostnamesForOneCertificate() throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-        .add("example.com", certA1Sha256Pin)
-        .add("www.example.com", certA1Sha256Pin)
-        .build();
-
-    certificatePinner.check("example.com", singletonList(certA1.certificate()));
-    certificatePinner.check("www.example.com", singletonList(certA1.certificate()));
+  @Test
+  fun multipleHostnamesForOneCertificate() {
+    val certificatePinner = CertificatePinner.Builder()
+      .add("example.com", certA1Sha256Pin)
+      .add("www.example.com", certA1Sha256Pin)
+      .build()
+    certificatePinner.check("example.com", listOf(certA1.certificate))
+    certificatePinner.check("www.example.com", listOf(certA1.certificate))
   }
 
-  @Test public void absentHostnameMatches() throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder().build();
-    certificatePinner.check("example.com", singletonList(certA1.certificate()));
+  @Test
+  fun absentHostnameMatches() {
+    val certificatePinner = CertificatePinner.Builder().build()
+    certificatePinner.check("example.com", listOf(certA1.certificate))
   }
 
-  @Test public void successfulCheckForWildcardHostname() throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-        .add("*.example.com", certA1Sha256Pin)
-        .build();
-
-    certificatePinner.check("a.example.com", singletonList(certA1.certificate()));
+  @Test
+  fun successfulCheckForWildcardHostname() {
+    val certificatePinner = CertificatePinner.Builder()
+      .add("*.example.com", certA1Sha256Pin)
+      .build()
+    certificatePinner.check("a.example.com", listOf(certA1.certificate))
   }
 
-  @Test public void successfulMatchAcceptsAnyMatchingCertificateForWildcardHostname()
-      throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-        .add("*.example.com", certB1Sha256Pin)
-        .build();
-
-    certificatePinner.check("a.example.com", asList(certA1.certificate(), certB1.certificate()));
+  @Test
+  fun successfulMatchAcceptsAnyMatchingCertificateForWildcardHostname() {
+    val certificatePinner = CertificatePinner.Builder()
+      .add("*.example.com", certB1Sha256Pin)
+      .build()
+    certificatePinner.check(
+      "a.example.com",
+      Arrays.asList(certA1.certificate, certB1.certificate)
+    )
   }
 
-  @Test public void unsuccessfulCheckForWildcardHostname() throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-        .add("*.example.com", certA1Sha256Pin)
-        .build();
-
+  @Test
+  fun unsuccessfulCheckForWildcardHostname() {
+    val certificatePinner = CertificatePinner.Builder()
+      .add("*.example.com", certA1Sha256Pin)
+      .build()
     try {
-      certificatePinner.check("a.example.com", singletonList(certB1.certificate()));
-      fail();
-    } catch (SSLPeerUnverifiedException expected) {
+      certificatePinner.check("a.example.com", listOf(certB1.certificate))
+      fail<Any>()
+    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
-  @Test public void multipleCertificatesForOneWildcardHostname() throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-        .add("*.example.com", certA1Sha256Pin, certB1Sha256Pin)
-        .build();
-
-    certificatePinner.check("a.example.com", singletonList(certA1.certificate()));
-    certificatePinner.check("a.example.com", singletonList(certB1.certificate()));
+  @Test
+  fun multipleCertificatesForOneWildcardHostname() {
+    val certificatePinner = CertificatePinner.Builder()
+      .add("*.example.com", certA1Sha256Pin, certB1Sha256Pin)
+      .build()
+    certificatePinner.check("a.example.com", listOf(certA1.certificate))
+    certificatePinner.check("a.example.com", listOf(certB1.certificate))
   }
 
-  @Test public void successfulCheckForOneHostnameWithWildcardAndDirectCertificate()
-      throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-        .add("*.example.com", certA1Sha256Pin)
-        .add("a.example.com", certB1Sha256Pin)
-        .build();
-
-    certificatePinner.check("a.example.com", singletonList(certA1.certificate()));
-    certificatePinner.check("a.example.com", singletonList(certB1.certificate()));
+  @Test
+  fun successfulCheckForOneHostnameWithWildcardAndDirectCertificate() {
+    val certificatePinner = CertificatePinner.Builder()
+      .add("*.example.com", certA1Sha256Pin)
+      .add("a.example.com", certB1Sha256Pin)
+      .build()
+    certificatePinner.check("a.example.com", listOf(certA1.certificate))
+    certificatePinner.check("a.example.com", listOf(certB1.certificate))
   }
 
-  @Test public void unsuccessfulCheckForOneHostnameWithWildcardAndDirectCertificate()
-      throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-        .add("*.example.com", certA1Sha256Pin)
-        .add("a.example.com", certB1Sha256Pin)
-        .build();
-
+  @Test
+  fun unsuccessfulCheckForOneHostnameWithWildcardAndDirectCertificate() {
+    val certificatePinner = CertificatePinner.Builder()
+      .add("*.example.com", certA1Sha256Pin)
+      .add("a.example.com", certB1Sha256Pin)
+      .build()
     try {
-      certificatePinner.check("a.example.com", singletonList(certC1.certificate()));
-      fail();
-    } catch (SSLPeerUnverifiedException expected) {
+      certificatePinner.check("a.example.com", listOf(certC1.certificate))
+      fail<Any>()
+    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
-  @Test public void checkForHostnameWithDoubleAsterisk() throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-        .add("**.example.co.uk", certA1Sha256Pin)
-        .build();
+  @Test
+  fun checkForHostnameWithDoubleAsterisk() {
+    val certificatePinner = CertificatePinner.Builder()
+      .add("**.example.co.uk", certA1Sha256Pin)
+      .build()
 
     // Should be pinned:
     try {
-      certificatePinner.check("example.co.uk", singletonList(certB1.certificate()));
-      fail();
-    } catch (SSLPeerUnverifiedException expected) {
+      certificatePinner.check("example.co.uk", listOf(certB1.certificate))
+      fail<Any>()
+    } catch (expected: SSLPeerUnverifiedException) {
     }
     try {
-      certificatePinner.check("foo.example.co.uk", singletonList(certB1.certificate()));
-      fail();
-    } catch (SSLPeerUnverifiedException expected) {
+      certificatePinner.check("foo.example.co.uk", listOf(certB1.certificate))
+      fail<Any>()
+    } catch (expected: SSLPeerUnverifiedException) {
     }
     try {
-      certificatePinner.check("foo.bar.example.co.uk", singletonList(certB1.certificate()));
-      fail();
-    } catch (SSLPeerUnverifiedException expected) {
+      certificatePinner.check("foo.bar.example.co.uk", listOf(certB1.certificate))
+      fail<Any>()
+    } catch (expected: SSLPeerUnverifiedException) {
     }
     try {
-      certificatePinner.check("foo.bar.baz.example.co.uk", singletonList(certB1.certificate()));
-      fail();
-    } catch (SSLPeerUnverifiedException expected) {
+      certificatePinner.check("foo.bar.baz.example.co.uk", listOf(certB1.certificate))
+      fail<Any>()
+    } catch (expected: SSLPeerUnverifiedException) {
     }
 
     // Should not be pinned:
-    certificatePinner.check("uk", singletonList(certB1.certificate()));
-    certificatePinner.check("co.uk", singletonList(certB1.certificate()));
-    certificatePinner.check("anotherexample.co.uk", singletonList(certB1.certificate()));
-    certificatePinner.check("foo.anotherexample.co.uk", singletonList(certB1.certificate()));
+    certificatePinner.check("uk", listOf(certB1.certificate))
+    certificatePinner.check("co.uk", listOf(certB1.certificate))
+    certificatePinner.check("anotherexample.co.uk", listOf(certB1.certificate))
+    certificatePinner.check("foo.anotherexample.co.uk", listOf(certB1.certificate))
   }
 
   @Test
-  public void testBadPin() {
+  fun testBadPin() {
     try {
-      new CertificatePinner.Pin("example.co.uk",
-          "sha256/a");
-      fail();
-    } catch (IllegalArgumentException iae) {
+      CertificatePinner.Pin(
+        "example.co.uk",
+        "sha256/a"
+      )
+      fail<Any>()
+    } catch (iae: IllegalArgumentException) {
       // expected
     }
   }
 
   @Test
-  public void testBadAlgorithm() {
+  fun testBadAlgorithm() {
     try {
-      new CertificatePinner.Pin("example.co.uk",
-          "sha512/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
-      fail();
-    } catch (IllegalArgumentException iae) {
+      CertificatePinner.Pin(
+        "example.co.uk",
+        "sha512/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+      )
+      fail<Any>()
+    } catch (iae: IllegalArgumentException) {
       // expected
     }
   }
 
   @Test
-  public void testBadHost() {
+  fun testBadHost() {
     try {
-      new CertificatePinner.Pin("example.*",
-          "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
-      fail();
-    } catch (IllegalArgumentException iae) {
+      CertificatePinner.Pin(
+        "example.*",
+        "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+      )
+      fail<Any>()
+    } catch (iae: IllegalArgumentException) {
       // expected
     }
   }
 
   @Test
-  public void testGoodPin() {
-    CertificatePinner.Pin pin = new CertificatePinner.Pin("**.example.co.uk",
-        "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
-
-    assertEquals(decodeBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="), pin.getHash());
-    assertEquals("sha256", pin.getHashAlgorithm());
-    assertEquals("**.example.co.uk", pin.getPattern());
-
-    assertTrue(pin.matchesHostname("www.example.co.uk"));
-    assertTrue(pin.matchesHostname("gopher.example.co.uk"));
-    assertFalse(pin.matchesHostname("www.example.com"));
+  fun testGoodPin() {
+    val pin = CertificatePinner.Pin(
+      "**.example.co.uk",
+      "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    )
+    assertEquals(
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=".decodeBase64(),
+      pin.hash
+    )
+    assertEquals("sha256", pin.hashAlgorithm)
+    assertEquals("**.example.co.uk", pin.pattern)
+    Assertions.assertTrue(pin.matchesHostname("www.example.co.uk"))
+    Assertions.assertTrue(pin.matchesHostname("gopher.example.co.uk"))
+    Assertions.assertFalse(pin.matchesHostname("www.example.com"))
   }
 
   @Test
-  public void testMatchesSha256() {
-    CertificatePinner.Pin pin = new CertificatePinner.Pin("example.com", certA1Sha256Pin);
-
-    assertTrue(pin.matchesCertificate(certA1.certificate()));
-    assertFalse(pin.matchesCertificate(certB1.certificate()));
+  fun testMatchesSha256() {
+    val pin = CertificatePinner.Pin("example.com", certA1Sha256Pin)
+    Assertions.assertTrue(pin.matchesCertificate(certA1.certificate))
+    Assertions.assertFalse(pin.matchesCertificate(certB1.certificate))
   }
 
   @Test
-  public void testMatchesSha1() {
-    CertificatePinner.Pin pin = new CertificatePinner.Pin("example.com", certC1Sha1Pin);
-
-    assertTrue(pin.matchesCertificate(certC1.certificate()));
-    assertFalse(pin.matchesCertificate(certB1.certificate()));
+  fun testMatchesSha1() {
+    val pin = CertificatePinner.Pin("example.com", certC1Sha1Pin)
+    Assertions.assertTrue(pin.matchesCertificate(certC1.certificate))
+    Assertions.assertFalse(pin.matchesCertificate(certB1.certificate))
   }
 
-  @Test public void pinList() {
-    CertificatePinner.Builder builder = new CertificatePinner.Builder()
-        .add("example.com", certA1Sha256Pin)
-        .add("www.example.com", certA1Sha256Pin);
-    CertificatePinner certificatePinner = builder.build();
+  @Test
+  fun pinList() {
+    val builder = CertificatePinner.Builder()
+      .add("example.com", certA1Sha256Pin)
+      .add("www.example.com", certA1Sha256Pin)
+    val certificatePinner = builder.build()
+    val expectedPins = Arrays.asList(
+      CertificatePinner.Pin("example.com", certA1Sha256Pin),
+      CertificatePinner.Pin("www.example.com", certA1Sha256Pin)
+    )
+    assertEquals(expectedPins, builder.pins)
+    assertEquals(HashSet(expectedPins), certificatePinner.pins)
+  }
 
-    List<CertificatePinner.Pin> expectedPins =
-        asList(new CertificatePinner.Pin("example.com", certA1Sha256Pin),
-            new CertificatePinner.Pin("www.example.com", certA1Sha256Pin));
-
-    assertEquals(expectedPins, builder.getPins());
-    assertEquals(new HashSet<>(expectedPins), certificatePinner.getPins());
+  companion object {
+    val certA1 = HeldCertificate.Builder()
+      .serialNumber(100L)
+      .build()
+    val certA1Sha256Pin = pin(certA1.certificate)
+    val certB1 = HeldCertificate.Builder()
+      .serialNumber(200L)
+      .build()
+    val certB1Sha256Pin = pin(certB1.certificate)
+    val certC1 = HeldCertificate.Builder()
+      .serialNumber(300L)
+      .build()
+    val certC1Sha1Pin = "sha1/" + certC1.certificate.sha1Hash().base64()
   }
 }

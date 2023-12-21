@@ -13,62 +13,97 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2;
+package okhttp3.internal.http2
 
-import java.io.IOException;
-import java.util.List;
-import okio.BufferedSource;
-import okio.ByteString;
+import okio.BufferedSource
+import okio.ByteString
+import org.junit.jupiter.api.Assertions.fail
 
-import static org.junit.jupiter.api.Assertions.fail;
-
-class BaseTestHandler implements Http2Reader.Handler {
-  @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length)
-      throws IOException {
-    fail();
+internal open class BaseTestHandler : Http2Reader.Handler {
+  override fun data(
+    inFinished: Boolean,
+    streamId: Int,
+    source: BufferedSource,
+    length: Int,
+  ) {
+    fail<Any>()
   }
 
-  @Override public void headers(boolean inFinished, int streamId, int associatedStreamId,
-      List<Header> headerBlock) {
-    fail();
+  override fun headers(
+    inFinished: Boolean,
+    streamId: Int,
+    associatedStreamId: Int,
+    headerBlock: List<Header>,
+  ) {
+    fail<Any>()
   }
 
-  @Override public void rstStream(int streamId, ErrorCode errorCode) {
-    fail();
+  override fun rstStream(
+    streamId: Int,
+    errorCode: ErrorCode,
+  ) {
+    fail<Any>()
   }
 
-  @Override public void settings(boolean clearPrevious, Settings settings) {
-    fail();
+  override fun settings(
+    clearPrevious: Boolean,
+    settings: Settings,
+  ) {
+    fail<Any>()
   }
 
-  @Override public void ackSettings() {
-    fail();
+  override fun ackSettings() {
+    fail<Any>()
   }
 
-  @Override public void ping(boolean ack, int payload1, int payload2) {
-    fail();
+  override fun ping(
+    ack: Boolean,
+    payload1: Int,
+    payload2: Int,
+  ) {
+    fail<Any>()
   }
 
-  @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
-    fail();
+  override fun goAway(
+    lastGoodStreamId: Int,
+    errorCode: ErrorCode,
+    debugData: ByteString,
+  ) {
+    fail<Any>()
   }
 
-  @Override public void windowUpdate(int streamId, long windowSizeIncrement) {
-    fail();
+  override fun windowUpdate(
+    streamId: Int,
+    windowSizeIncrement: Long,
+  ) {
+    fail<Any>()
   }
 
-  @Override public void priority(int streamId, int streamDependency, int weight,
-      boolean exclusive) {
-    fail();
+  override fun priority(
+    streamId: Int,
+    streamDependency: Int,
+    weight: Int,
+    exclusive: Boolean,
+  ) {
+    fail<Any>()
   }
 
-  @Override
-  public void pushPromise(int streamId, int associatedStreamId, List<Header> headerBlock) {
-    fail();
+  override fun pushPromise(
+    streamId: Int,
+    associatedStreamId: Int,
+    headerBlock: List<Header>,
+  ) {
+    fail<Any>()
   }
 
-  @Override public void alternateService(int streamId, String origin, ByteString protocol,
-      String host, int port, long maxAge) {
-    fail();
+  override fun alternateService(
+    streamId: Int,
+    origin: String,
+    protocol: ByteString,
+    host: String,
+    port: Int,
+    maxAge: Long,
+  ) {
+    fail<Any>()
   }
 }

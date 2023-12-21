@@ -13,151 +13,139 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.security.cert.X509Certificate;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.X509TrustManager;
-import mockwebserver3.MockResponse;
-import mockwebserver3.MockWebServer;
-import okhttp3.testing.PlatformRule;
-import okhttp3.tls.HandshakeCertificates;
-import okhttp3.tls.HeldCertificate;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-
-import static java.util.Arrays.asList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import java.io.IOException
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.security.cert.X509Certificate
+import java.util.Arrays
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLPeerUnverifiedException
+import javax.net.ssl.SSLSession
+import javax.net.ssl.X509TrustManager
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import okhttp3.CertificatePinner.Companion.pin
+import okhttp3.testing.PlatformRule
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 @Tag("Slowish")
-public final class ConnectionCoalescingTest {
-  @RegisterExtension public final PlatformRule platform = new PlatformRule();
-  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+class ConnectionCoalescingTest {
+  @RegisterExtension
+  val platform = PlatformRule()
 
-  private MockWebServer server;
-  private OkHttpClient client;
-  private HeldCertificate rootCa;
-  private HeldCertificate certificate;
-  private final FakeDns dns = new FakeDns();
-  private HttpUrl url;
-  private List<InetAddress> serverIps;
+  @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
+  private lateinit var server: MockWebServer
+  private lateinit var client: OkHttpClient
+  private lateinit var rootCa: HeldCertificate
+  private lateinit var certificate: HeldCertificate
+  private val dns = FakeDns()
+  private lateinit var url: HttpUrl
+  private lateinit var serverIps: List<InetAddress>
 
-  @BeforeEach public void setUp(MockWebServer server) throws Exception {
-    this.server = server;
-
-    platform.assumeHttp2Support();
-    platform.assumeNotBouncyCastle();
-
-    rootCa = new HeldCertificate.Builder()
-        .serialNumber(1L)
-        .certificateAuthority(0)
-        .commonName("root")
-        .build();
-    certificate = new HeldCertificate.Builder()
-        .signedBy(rootCa)
-        .serialNumber(2L)
-        .commonName(server.getHostName())
-        .addSubjectAlternativeName(server.getHostName())
-        .addSubjectAlternativeName("san.com")
-        .addSubjectAlternativeName("*.wildcard.com")
-        .addSubjectAlternativeName("differentdns.com")
-        .build();
-
-    serverIps = Dns.SYSTEM.lookup(server.getHostName());
-
-    dns.set(server.getHostName(), serverIps);
-    dns.set("san.com", serverIps);
-    dns.set("nonsan.com", serverIps);
-    dns.set("www.wildcard.com", serverIps);
-    dns.set("differentdns.com", Collections.emptyList());
-
-    HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
-        .addTrustedCertificate(rootCa.certificate())
-        .build();
-
+  @BeforeEach
+  fun setUp(server: MockWebServer) {
+    this.server = server
+    platform.assumeHttp2Support()
+    platform.assumeNotBouncyCastle()
+    rootCa = HeldCertificate.Builder()
+      .serialNumber(1L)
+      .certificateAuthority(0)
+      .commonName("root")
+      .build()
+    certificate = HeldCertificate.Builder()
+      .signedBy(rootCa)
+      .serialNumber(2L)
+      .commonName(server.hostName)
+      .addSubjectAlternativeName(server.hostName)
+      .addSubjectAlternativeName("san.com")
+      .addSubjectAlternativeName("*.wildcard.com")
+      .addSubjectAlternativeName("differentdns.com")
+      .build()
+    serverIps = Dns.SYSTEM.lookup(server.hostName)
+    dns[server.hostName] = serverIps
+    dns["san.com"] = serverIps
+    dns["nonsan.com"] = serverIps
+    dns["www.wildcard.com"] = serverIps
+    dns["differentdns.com"] = listOf()
+    val handshakeCertificates = HandshakeCertificates.Builder()
+      .addTrustedCertificate(rootCa.certificate)
+      .build()
     client = clientTestRule.newClientBuilder()
-        .fastFallback(false) // Avoid data races.
-        .dns(dns)
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .build();
-
-    HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
-        .heldCertificate(certificate)
-        .build();
-    server.useHttps(serverHandshakeCertificates.sslSocketFactory());
-
-    url = server.url("/robots.txt");
+      .fastFallback(false) // Avoid data races.
+      .dns(dns)
+      .sslSocketFactory(
+        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
+      )
+      .build()
+    val serverHandshakeCertificates = HandshakeCertificates.Builder()
+      .heldCertificate(certificate)
+      .build()
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory())
+    url = server.url("/robots.txt")
   }
 
   /**
    * Test connecting to the main host then an alternative, although only subject alternative names
    * are used if present no special consideration of common name.
    */
-  @Test public void commonThenAlternative() throws Exception {
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
-
-    assert200Http2Response(execute(url), server.getHostName());
-
-    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
-    assert200Http2Response(execute(sanUrl), "san.com");
-
-    assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
+  @Test
+  fun commonThenAlternative() {
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
+    assert200Http2Response(execute(url), server.hostName)
+    val sanUrl = url.newBuilder().host("san.com").build()
+    assert200Http2Response(execute(sanUrl), "san.com")
+    assertThat(client.connectionPool.connectionCount()).isEqualTo(1)
   }
 
   /**
    * Test connecting to an alternative host then common name, although only subject alternative
    * names are used if present no special consideration of common name.
    */
-  @Test public void alternativeThenCommon() throws Exception {
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
-
-    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
-    assert200Http2Response(execute(sanUrl), "san.com");
-
-    assert200Http2Response(execute(url), server.getHostName());
-
-    assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
+  @Test
+  fun alternativeThenCommon() {
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
+    val sanUrl = url.newBuilder().host("san.com").build()
+    assert200Http2Response(execute(sanUrl), "san.com")
+    assert200Http2Response(execute(url), server.hostName)
+    assertThat(client.connectionPool.connectionCount()).isEqualTo(1)
   }
 
-  /** Test a previously coalesced connection that's no longer healthy. */
-  @Test public void staleCoalescedConnection() throws Exception {
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
-
-    AtomicReference<Connection> connection = new AtomicReference<>();
+  /** Test a previously coalesced connection that's no longer healthy.  */
+  @Test
+  fun staleCoalescedConnection() {
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
+    val connection = AtomicReference<Connection?>()
     client = client.newBuilder()
-        .addNetworkInterceptor(chain -> {
-          connection.set(chain.connection());
-          return chain.proceed(chain.request());
-        })
-        .build();
-    dns.set("san.com", Dns.SYSTEM.lookup(server.getHostName()).subList(0, 1));
-
-    assert200Http2Response(execute(url), server.getHostName());
+      .addNetworkInterceptor(Interceptor { chain: Interceptor.Chain? ->
+        connection.set(chain!!.connection())
+        chain.proceed(chain.request())
+      })
+      .build()
+    dns["san.com"] = Dns.SYSTEM.lookup(server.hostName).subList(0, 1)
+    assert200Http2Response(execute(url), server.hostName)
 
     // Simulate a stale connection in the pool.
-    connection.get().socket().close();
-
-    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
-    assert200Http2Response(execute(sanUrl), "san.com");
-
-    assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
+    connection.get()!!.socket().close()
+    val sanUrl = url.newBuilder().host("san.com").build()
+    assert200Http2Response(execute(sanUrl), "san.com")
+    assertThat(client.connectionPool.connectionCount()).isEqualTo(1)
   }
 
   /**
@@ -170,214 +158,210 @@ public final class ConnectionCoalescingTest {
    * - The coalesced connection is violently closed after servicing the first request.
    * - The second request discovers the coalesced connection is unhealthy just after acquiring it.
    */
-  @Test public void coalescedConnectionDestroyedAfterAcquire() throws Exception {
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
-
-    dns.set("san.com", Dns.SYSTEM.lookup(server.getHostName()).subList(0, 1));
-    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
-
-    CountDownLatch latch1 = new CountDownLatch(1);
-    CountDownLatch latch2 = new CountDownLatch(1);
-    CountDownLatch latch3 = new CountDownLatch(1);
-    CountDownLatch latch4 = new CountDownLatch(1);
-    EventListener listener1 = new EventListener() {
-      @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
-          Proxy proxy) {
+  @Test
+  fun coalescedConnectionDestroyedAfterAcquire() {
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
+    dns["san.com"] = Dns.SYSTEM.lookup(server.hostName).subList(0, 1)
+    val sanUrl = url.newBuilder().host("san.com").build()
+    val latch1 = CountDownLatch(1)
+    val latch2 = CountDownLatch(1)
+    val latch3 = CountDownLatch(1)
+    val latch4 = CountDownLatch(1)
+    val listener1: EventListener = object : EventListener() {
+      override fun connectStart(
+        call: Call, inetSocketAddress: InetSocketAddress,
+        proxy: Proxy
+      ) {
         try {
           // Wait for request2 to guarantee we make 2 separate connections to the server.
-          latch1.await();
-        } catch (InterruptedException e) {
-          throw new AssertionError(e);
+          latch1.await()
+        } catch (e: InterruptedException) {
+          throw AssertionError(e)
         }
       }
 
-      @Override public void connectionAcquired(Call call, Connection connection) {
+      override fun connectionAcquired(call: Call, connection: Connection) {
         // We have the connection and it's in the pool. Let request2 proceed to make a connection.
-        latch2.countDown();
+        latch2.countDown()
       }
-    };
-
-    EventListener request2Listener = new EventListener() {
-      @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
-          Proxy proxy) {
+    }
+    val request2Listener: EventListener = object : EventListener() {
+      override fun connectStart(
+        call: Call, inetSocketAddress: InetSocketAddress, proxy: Proxy,
+      ) {
         // Let request1 proceed to make a connection.
-        latch1.countDown();
+        latch1.countDown()
         try {
           // Wait until request1 makes the connection and puts it in the connection pool.
-          latch2.await();
-        } catch (InterruptedException e) {
-          throw new AssertionError(e);
+          latch2.await()
+        } catch (e: InterruptedException) {
+          throw AssertionError(e)
         }
       }
 
-      @Override public void connectionAcquired(Call call, Connection connection) {
+      override fun connectionAcquired(call: Call, connection: Connection) {
         // We obtained the coalesced connection. Let request1 violently destroy it.
-        latch3.countDown();
+        latch3.countDown()
         try {
-          latch4.await();
-        } catch (InterruptedException e) {
-          throw new AssertionError(e);
+          latch4.await()
+        } catch (e: InterruptedException) {
+          throw AssertionError(e)
         }
       }
-    };
+    }
 
     // Get a reference to the connection so we can violently destroy it.
-    AtomicReference<Connection> connection = new AtomicReference<>();
-    OkHttpClient client1 = client.newBuilder()
-        .addNetworkInterceptor(chain -> {
-          connection.set(chain.connection());
-          return chain.proceed(chain.request());
-        })
-        .eventListenerFactory(clientTestRule.wrap(listener1))
-        .build();
-
-    Request request = new Request.Builder().url(sanUrl).build();
-    Call call1 = client1.newCall(request);
-    call1.enqueue(new Callback() {
-      @Override public void onResponse(Call call, Response response) throws IOException {
+    val connection = AtomicReference<Connection?>()
+    val client1 = client.newBuilder()
+      .addNetworkInterceptor(Interceptor { chain: Interceptor.Chain? ->
+        connection.set(chain!!.connection())
+        chain.proceed(chain.request())
+      })
+      .eventListenerFactory(clientTestRule.wrap(listener1))
+      .build()
+    val request = Request.Builder().url(sanUrl).build()
+    val call1 = client1.newCall(request)
+    call1.enqueue(object : Callback {
+      @Throws(IOException::class)
+      override fun onResponse(call: Call, response: Response) {
         try {
           // Wait until request2 acquires the connection before we destroy it violently.
-          latch3.await();
-        } catch (InterruptedException e) {
-          throw new AssertionError(e);
+          latch3.await()
+        } catch (e: InterruptedException) {
+          throw AssertionError(e)
         }
-        assert200Http2Response(response, "san.com");
-        connection.get().socket().close();
-        latch4.countDown();
+        assert200Http2Response(response, "san.com")
+        connection.get()!!.socket().close()
+        latch4.countDown()
       }
 
-      @Override public void onFailure(Call call, IOException e) {
-        fail();
+      override fun onFailure(call: Call, e: IOException) {
+        fail<Any?>()
       }
-    });
-
-    OkHttpClient client2 = client.newBuilder()
-        .eventListenerFactory(clientTestRule.wrap(request2Listener))
-        .build();
-    Call call2 = client2.newCall(request);
-    Response response = call2.execute();
-
-    assert200Http2Response(response, "san.com");
+    })
+    val client2 = client.newBuilder()
+      .eventListenerFactory(clientTestRule.wrap(request2Listener))
+      .build()
+    val call2 = client2.newCall(request)
+    val response = call2.execute()
+    assert200Http2Response(response, "san.com")
   }
 
-  /** If the existing connection matches a SAN but not a match for DNS then skip. */
-  @Test public void skipsWhenDnsDontMatch() throws Exception {
-    server.enqueue(new MockResponse());
-
-    assert200Http2Response(execute(url), server.getHostName());
-
-    HttpUrl differentDnsUrl = url.newBuilder().host("differentdns.com").build();
+  /** If the existing connection matches a SAN but not a match for DNS then skip.  */
+  @Test
+  fun skipsWhenDnsDontMatch() {
+    server.enqueue(MockResponse())
+    assert200Http2Response(execute(url), server.hostName)
+    val differentDnsUrl = url.newBuilder().host("differentdns.com").build()
     try {
-      execute(differentDnsUrl);
-      fail("expected a failed attempt to connect");
-    } catch (IOException expected) {
+      execute(differentDnsUrl)
+      fail<Any?>("expected a failed attempt to connect")
+    } catch (expected: IOException) {
     }
   }
 
-  @Test public void skipsOnRedirectWhenDnsDontMatch() throws Exception {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun skipsOnRedirectWhenDnsDontMatch() {
+    server.enqueue(
+      MockResponse.Builder()
         .code(301)
         .addHeader("Location", url.newBuilder().host("differentdns.com").build())
-        .build());
-    server.enqueue(new MockResponse.Builder()
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
         .body("unexpected call")
-        .build());
-
+        .build()
+    )
     try {
-      Response response = execute(url);
-      response.close();
-      fail("expected a failed attempt to connect");
-    } catch (IOException expected) {
+      val response = execute(url)
+      response.close()
+      fail<Any?>("expected a failed attempt to connect")
+    } catch (expected: IOException) {
     }
   }
 
-  /** Not in the certificate SAN. */
-  @Test public void skipsWhenNotSubjectAltName() throws Exception {
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
-
-    assert200Http2Response(execute(url), server.getHostName());
-
-    HttpUrl nonsanUrl = url.newBuilder().host("nonsan.com").build();
-
+  /** Not in the certificate SAN.  */
+  @Test
+  fun skipsWhenNotSubjectAltName() {
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
+    assert200Http2Response(execute(url), server.hostName)
+    val nonsanUrl = url.newBuilder().host("nonsan.com").build()
     try {
-      execute(nonsanUrl);
-      fail("expected a failed attempt to connect");
-    } catch (SSLPeerUnverifiedException expected) {
+      execute(nonsanUrl)
+      fail<Any?>("expected a failed attempt to connect")
+    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
-  @Test public void skipsOnRedirectWhenNotSubjectAltName() throws Exception {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun skipsOnRedirectWhenNotSubjectAltName() {
+    server.enqueue(
+      MockResponse.Builder()
         .code(301)
         .addHeader("Location", url.newBuilder().host("nonsan.com").build())
-        .build());
-    server.enqueue(new MockResponse());
-
+        .build()
+    )
+    server.enqueue(MockResponse())
     try {
-      Response response = execute(url);
-      response.close();
-      fail("expected a failed attempt to connect");
-    } catch (SSLPeerUnverifiedException expected) {
+      val response = execute(url)
+      response.close()
+      fail<Any?>("expected a failed attempt to connect")
+    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
-  /** Can still coalesce when pinning is used if pins match. */
-  @Test public void coalescesWhenCertificatePinsMatch() throws Exception {
-    CertificatePinner pinner = new CertificatePinner.Builder()
-        .add("san.com", CertificatePinner.pin(certificate.certificate()))
-        .build();
-    client = client.newBuilder().certificatePinner(pinner).build();
-
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
-
-    assert200Http2Response(execute(url), server.getHostName());
-
-    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
-
-    assert200Http2Response(execute(sanUrl), "san.com");
-
-    assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
+  /** Can still coalesce when pinning is used if pins match.  */
+  @Test
+  fun coalescesWhenCertificatePinsMatch() {
+    val pinner = CertificatePinner.Builder()
+      .add("san.com", pin(certificate.certificate))
+      .build()
+    client = client.newBuilder().certificatePinner(pinner).build()
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
+    assert200Http2Response(execute(url), server.hostName)
+    val sanUrl = url.newBuilder().host("san.com").build()
+    assert200Http2Response(execute(sanUrl), "san.com")
+    assertThat(client.connectionPool.connectionCount()).isEqualTo(1)
   }
 
-  /** Certificate pinning used and not a match will avoid coalescing and try to connect. */
-  @Test public void skipsWhenCertificatePinningFails() throws Exception {
-    CertificatePinner pinner = new CertificatePinner.Builder()
-        .add("san.com", "sha1/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
-        .build();
-    client = client.newBuilder().certificatePinner(pinner).build();
-
-    server.enqueue(new MockResponse());
-
-    assert200Http2Response(execute(url), server.getHostName());
-
-    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
-
+  /** Certificate pinning used and not a match will avoid coalescing and try to connect.  */
+  @Test
+  fun skipsWhenCertificatePinningFails() {
+    val pinner = CertificatePinner.Builder()
+      .add("san.com", "sha1/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
+      .build()
+    client = client.newBuilder().certificatePinner(pinner).build()
+    server.enqueue(MockResponse())
+    assert200Http2Response(execute(url), server.hostName)
+    val sanUrl = url.newBuilder().host("san.com").build()
     try {
-      execute(sanUrl);
-      fail("expected a failed attempt to connect");
-    } catch (IOException expected) {
+      execute(sanUrl)
+      fail<Any?>("expected a failed attempt to connect")
+    } catch (expected: IOException) {
     }
   }
 
-  @Test public void skipsOnRedirectWhenCertificatePinningFails() throws Exception {
-    CertificatePinner pinner = new CertificatePinner.Builder()
-        .add("san.com", "sha1/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
-        .build();
-    client = client.newBuilder().certificatePinner(pinner).build();
-
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun skipsOnRedirectWhenCertificatePinningFails() {
+    val pinner = CertificatePinner.Builder()
+      .add("san.com", "sha1/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
+      .build()
+    client = client.newBuilder().certificatePinner(pinner).build()
+    server.enqueue(
+      MockResponse.Builder()
         .code(301)
         .addHeader("Location", url.newBuilder().host("san.com").build())
-        .build());
-    server.enqueue(new MockResponse());
-
+        .build()
+    )
+    server.enqueue(MockResponse())
     try {
-      execute(url);
-      fail("expected a failed attempt to connect");
-    } catch (SSLPeerUnverifiedException expected) {
+      execute(url)
+      fail<Any?>("expected a failed attempt to connect")
+    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
@@ -385,172 +369,166 @@ public final class ConnectionCoalescingTest {
    * Skips coalescing when hostname verifier is overridden since the intention of the hostname
    * verification is a black box.
    */
-  @Test public void skipsWhenHostnameVerifierUsed() throws Exception {
-    HostnameVerifier verifier = (name, session) -> true;
-    client = client.newBuilder().hostnameVerifier(verifier).build();
-
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
-
-    assert200Http2Response(execute(url), server.getHostName());
-
-    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
-
-    assert200Http2Response(execute(sanUrl), "san.com");
-
-    assertThat(client.connectionPool().connectionCount()).isEqualTo(2);
+  @Test
+  fun skipsWhenHostnameVerifierUsed() {
+    val verifier = HostnameVerifier { name: String?, session: SSLSession? -> true }
+    client = client.newBuilder().hostnameVerifier(verifier).build()
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
+    assert200Http2Response(execute(url), server.hostName)
+    val sanUrl = url.newBuilder().host("san.com").build()
+    assert200Http2Response(execute(sanUrl), "san.com")
+    assertThat(client.connectionPool.connectionCount()).isEqualTo(2)
   }
 
-  @Test public void skipsOnRedirectWhenHostnameVerifierUsed() throws Exception {
-    HostnameVerifier verifier = (name, session) -> true;
-    client = client.newBuilder().hostnameVerifier(verifier).build();
-
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun skipsOnRedirectWhenHostnameVerifierUsed() {
+    val verifier = HostnameVerifier { name: String?, session: SSLSession? -> true }
+    client = client.newBuilder().hostnameVerifier(verifier).build()
+    server.enqueue(
+      MockResponse.Builder()
         .code(301)
         .addHeader("Location", url.newBuilder().host("san.com").build())
-        .build());
-    server.enqueue(new MockResponse());
-
-    assert200Http2Response(execute(url), "san.com");
-
-    assertThat(client.connectionPool().connectionCount()).isEqualTo(2);
-    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0); // Fresh connection.
-    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0); // Fresh connection.
+        .build()
+    )
+    server.enqueue(MockResponse())
+    assert200Http2Response(execute(url), "san.com")
+    assertThat(client.connectionPool.connectionCount()).isEqualTo(2)
+    assertThat(server.takeRequest().sequenceNumber)
+      .isEqualTo(0) // Fresh connection.
+    assertThat(server.takeRequest().sequenceNumber)
+      .isEqualTo(0) // Fresh connection.
   }
 
   /**
    * Check we would use an existing connection to a later DNS result instead of connecting to the
    * first DNS result for the first time.
    */
-  @Test public void prefersExistingCompatible() throws Exception {
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
-
-    AtomicInteger connectCount = new AtomicInteger();
-    EventListener listener = new EventListener() {
-      @Override public void connectStart(
-          Call call, InetSocketAddress inetSocketAddress, Proxy proxy) {
-        connectCount.getAndIncrement();
+  @Test
+  fun prefersExistingCompatible() {
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
+    val connectCount = AtomicInteger()
+    val listener: EventListener = object : EventListener() {
+      override fun connectStart(
+        call: Call, inetSocketAddress: InetSocketAddress, proxy: Proxy
+      ) {
+        connectCount.getAndIncrement()
       }
-    };
+    }
     client = client.newBuilder()
-        .eventListenerFactory(clientTestRule.wrap(listener))
-        .build();
-
-    assert200Http2Response(execute(url), server.getHostName());
-
-    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
-    dns.set("san.com",
-        asList(InetAddress.getByAddress("san.com", new byte[] {0, 0, 0, 0}),
-            serverIps.get(0)));
-    assert200Http2Response(execute(sanUrl), "san.com");
-
-    assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
-    assertThat(connectCount.get()).isEqualTo(1);
+      .eventListenerFactory(clientTestRule.wrap(listener))
+      .build()
+    assert200Http2Response(execute(url), server.hostName)
+    val sanUrl = url.newBuilder().host("san.com").build()
+    dns["san.com"] = Arrays.asList(
+      InetAddress.getByAddress("san.com", byteArrayOf(0, 0, 0, 0)),
+      serverIps[0]
+    )
+    assert200Http2Response(execute(sanUrl), "san.com")
+    assertThat(client.connectionPool.connectionCount()).isEqualTo(1)
+    assertThat(connectCount.get()).isEqualTo(1)
   }
 
-  /** Check that wildcard SANs are supported. */
-  @Test public void commonThenWildcard() throws Exception {
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
-
-    assert200Http2Response(execute(url), server.getHostName());
-
-    HttpUrl sanUrl = url.newBuilder().host("www.wildcard.com").build();
-    assert200Http2Response(execute(sanUrl), "www.wildcard.com");
-
-    assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
+  /** Check that wildcard SANs are supported.  */
+  @Test
+  fun commonThenWildcard() {
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
+    assert200Http2Response(execute(url), server.hostName)
+    val sanUrl = url.newBuilder().host("www.wildcard.com").build()
+    assert200Http2Response(execute(sanUrl), "www.wildcard.com")
+    assertThat(client.connectionPool.connectionCount()).isEqualTo(1)
   }
 
-  /** Network interceptors check for changes to target. */
-  @Test public void worksWithNetworkInterceptors() throws Exception {
+  /** Network interceptors check for changes to target.  */
+  @Test
+  fun worksWithNetworkInterceptors() {
     client = client.newBuilder()
-        .addNetworkInterceptor(chain -> chain.proceed(chain.request()))
-        .build();
-
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
-
-    assert200Http2Response(execute(url), server.getHostName());
-
-    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
-    assert200Http2Response(execute(sanUrl), "san.com");
-
-    assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
+      .addNetworkInterceptor(Interceptor { chain: Interceptor.Chain? ->
+        chain!!.proceed(
+          chain.request()
+        )
+      })
+      .build()
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
+    assert200Http2Response(execute(url), server.hostName)
+    val sanUrl = url.newBuilder().host("san.com").build()
+    assert200Http2Response(execute(sanUrl), "san.com")
+    assertThat(client.connectionPool.connectionCount()).isEqualTo(1)
   }
 
-  @Test public void misdirectedRequestResponseCode() throws Exception {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun misdirectedRequestResponseCode() {
+    server.enqueue(
+      MockResponse.Builder()
         .body("seed connection")
-        .build());
-    server.enqueue(new MockResponse.Builder()
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
         .code(421)
         .body("misdirected!")
-        .build());
-    server.enqueue(new MockResponse.Builder()
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
         .body("after misdirect")
-        .build());
+        .build()
+    )
 
     // Seed the connection pool.
-    assert200Http2Response(execute(url), server.getHostName());
+    assert200Http2Response(execute(url), server.hostName)
 
     // Use the coalesced connection which should retry on a fresh connection.
-    HttpUrl sanUrl = url.newBuilder()
-        .host("san.com")
-        .build();
-    try (Response response = execute(sanUrl)) {
-      assertThat(response.code()).isEqualTo(200);
-      assertThat(response.priorResponse().code()).isEqualTo(421);
-      assertThat(response.body().string()).isEqualTo("after misdirect");
+    val sanUrl = url.newBuilder()
+      .host("san.com")
+      .build()
+    execute(sanUrl).use { response ->
+      assertThat(response.code).isEqualTo(200)
+      assertThat(response.priorResponse!!.code).isEqualTo(421)
+      assertThat(response.body.string()).isEqualTo("after misdirect")
     }
-
-    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
-    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
-    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0); // Fresh connection.
-
-    assertThat(client.connectionPool().connectionCount()).isEqualTo(2);
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().sequenceNumber)
+      .isEqualTo(0) // Fresh connection.
+    assertThat(client.connectionPool.connectionCount()).isEqualTo(2)
   }
 
   /**
    * Won't coalesce if we can't clean certs e.g. a dev setup.
    */
-  @Test public void redirectWithDevSetup() throws Exception {
-    X509TrustManager TRUST_MANAGER = new X509TrustManager() {
-      @Override
-      public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {
+  @Test
+  fun redirectWithDevSetup() {
+    val TRUST_MANAGER: X509TrustManager = object : X509TrustManager {
+      override fun checkClientTrusted(x509Certificates: Array<X509Certificate>, s: String) {
       }
 
-      @Override
-      public void checkServerTrusted(X509Certificate[] x509Certificates, String s) {
+      override fun checkServerTrusted(x509Certificates: Array<X509Certificate>, s: String) {
       }
 
-      @Override
-      public X509Certificate[] getAcceptedIssuers() {
-        return new X509Certificate[0];
+      override fun getAcceptedIssuers(): Array<X509Certificate> {
+        return arrayOf()
       }
-    };
-
-    client = client.newBuilder().sslSocketFactory(client.sslSocketFactory(), TRUST_MANAGER).build();
-
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
-
-    assert200Http2Response(execute(url), server.getHostName());
-
-    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
-    assert200Http2Response(execute(sanUrl), "san.com");
-
-    assertThat(client.connectionPool().connectionCount()).isEqualTo(2);
+    }
+    client =
+      client.newBuilder().sslSocketFactory(client.sslSocketFactory, TRUST_MANAGER).build()
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
+    assert200Http2Response(execute(url), server.hostName)
+    val sanUrl = url.newBuilder().host("san.com").build()
+    assert200Http2Response(execute(sanUrl), "san.com")
+    assertThat(client.connectionPool.connectionCount()).isEqualTo(2)
   }
 
-  private Response execute(HttpUrl url) throws IOException {
-    return client.newCall(new Request.Builder().url(url).build()).execute();
-  }
+  private fun execute(url: HttpUrl) = client.newCall(Request(url = url)).execute()
 
-  private void assert200Http2Response(Response response, String expectedHost) {
-    assertThat(response.code()).isEqualTo(200);
-    assertThat(response.request().url().host()).isEqualTo(expectedHost);
-    assertThat(response.protocol()).isEqualTo(Protocol.HTTP_2);
-    response.body().close();
+  private fun assert200Http2Response(response: Response, expectedHost: String) {
+    assertThat(response.code).isEqualTo(200)
+    assertThat(response.request.url.host).isEqualTo(expectedHost)
+    assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
+    response.body.close()
   }
 }

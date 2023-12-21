@@ -13,1263 +13,1413 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.UnknownHostException;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
-import mockwebserver3.MockResponse;
-import mockwebserver3.MockWebServer;
-import mockwebserver3.SocketPolicy;
-import mockwebserver3.SocketPolicy.DisconnectDuringRequestBody;
-import mockwebserver3.SocketPolicy.DisconnectDuringResponseBody;
-import mockwebserver3.SocketPolicy.FailHandshake;
-import okhttp3.CallEvent.CallEnd;
-import okhttp3.CallEvent.CallFailed;
-import okhttp3.CallEvent.CallStart;
-import okhttp3.CallEvent.ConnectEnd;
-import okhttp3.CallEvent.ConnectFailed;
-import okhttp3.CallEvent.ConnectStart;
-import okhttp3.CallEvent.ConnectionAcquired;
-import okhttp3.CallEvent.ConnectionReleased;
-import okhttp3.CallEvent.DnsEnd;
-import okhttp3.CallEvent.DnsStart;
-import okhttp3.CallEvent.RequestBodyEnd;
-import okhttp3.CallEvent.RequestBodyStart;
-import okhttp3.CallEvent.RequestHeadersEnd;
-import okhttp3.CallEvent.RequestHeadersStart;
-import okhttp3.CallEvent.ResponseBodyEnd;
-import okhttp3.CallEvent.ResponseBodyStart;
-import okhttp3.CallEvent.ResponseFailed;
-import okhttp3.CallEvent.ResponseHeadersEnd;
-import okhttp3.CallEvent.ResponseHeadersStart;
-import okhttp3.CallEvent.SecureConnectEnd;
-import okhttp3.CallEvent.SecureConnectStart;
-import okhttp3.internal.DoubleInetAddressDns;
-import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.connection.RealConnectionPool;
-import okhttp3.logging.HttpLoggingInterceptor;
-import okhttp3.testing.Flaky;
-import okhttp3.testing.PlatformRule;
-import okhttp3.tls.HandshakeCertificates;
-import okio.Buffer;
-import okio.BufferedSink;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import static java.util.Arrays.asList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.any;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assume.assumeThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import java.io.File
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.net.HttpURLConnection
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.net.UnknownHostException
+import java.time.Duration
+import java.util.Arrays
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.SocketPolicy.DisconnectDuringRequestBody
+import mockwebserver3.SocketPolicy.DisconnectDuringResponseBody
+import mockwebserver3.SocketPolicy.FailHandshake
+import okhttp3.CallEvent.CallEnd
+import okhttp3.CallEvent.CallFailed
+import okhttp3.CallEvent.CallStart
+import okhttp3.CallEvent.ConnectStart
+import okhttp3.CallEvent.ConnectionAcquired
+import okhttp3.CallEvent.DnsEnd
+import okhttp3.CallEvent.DnsStart
+import okhttp3.CallEvent.RequestBodyEnd
+import okhttp3.CallEvent.RequestBodyStart
+import okhttp3.CallEvent.RequestHeadersEnd
+import okhttp3.CallEvent.RequestHeadersStart
+import okhttp3.CallEvent.ResponseBodyEnd
+import okhttp3.CallEvent.ResponseBodyStart
+import okhttp3.CallEvent.ResponseFailed
+import okhttp3.CallEvent.ResponseHeadersEnd
+import okhttp3.CallEvent.ResponseHeadersStart
+import okhttp3.CallEvent.SecureConnectEnd
+import okhttp3.CallEvent.SecureConnectStart
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.internal.DoubleInetAddressDns
+import okhttp3.internal.RecordingOkAuthenticator
+import okhttp3.internal.connection.RealConnectionPool.Companion.get
+import okhttp3.logging.HttpLoggingInterceptor
+import okhttp3.testing.Flaky
+import okhttp3.testing.PlatformRule
+import okio.Buffer
+import okio.BufferedSink
+import org.assertj.core.api.Assertions.assertThat
+import org.hamcrest.BaseMatcher
+import org.hamcrest.CoreMatchers
+import org.hamcrest.Description
+import org.hamcrest.Matcher
+import org.hamcrest.MatcherAssert
+import org.junit.Assume
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.extension.RegisterExtension
 
 @Flaky // STDOUT logging enabled for test
 @Timeout(30)
 @Tag("Slow")
-public final class EventListenerTest {
-  public static final Matcher<Response> anyResponse = CoreMatchers.any(Response.class);
+class EventListenerTest {
+  @RegisterExtension
+  val platform = PlatformRule()
 
-  @RegisterExtension public final PlatformRule platform = new PlatformRule();
-  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
+  private lateinit var server: MockWebServer
+  private val listener: RecordingEventListener = RecordingEventListener()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
+  private var client = clientTestRule.newClientBuilder()
+    .eventListenerFactory(clientTestRule.wrap(listener))
+    .build()
+  private var socksProxy: SocksProxy? = null
+  private var cache: Cache? = null
 
-  private MockWebServer server;
-  private final RecordingEventListener listener = new RecordingEventListener();
-  private final HandshakeCertificates handshakeCertificates
-    = platform.localhostHandshakeCertificates();
-
-  private OkHttpClient client = clientTestRule.newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(listener))
-      .build();
-  private SocksProxy socksProxy;
-  private Cache cache = null;
-
-  @BeforeEach public void setUp(MockWebServer server) {
-    this.server = server;
-
-    platform.assumeNotOpenJSSE();
-
-    listener.forbidLock(RealConnectionPool.Companion.get(client.connectionPool()));
-    listener.forbidLock(client.dispatcher());
+  @BeforeEach
+  fun setUp(server: MockWebServer) {
+    this.server = server
+    platform.assumeNotOpenJSSE()
+    listener.forbidLock(get(client.connectionPool))
+    listener.forbidLock(client.dispatcher)
   }
 
-  @AfterEach public void tearDown() throws Exception {
+  @AfterEach
+  fun tearDown() {
     if (socksProxy != null) {
-      socksProxy.shutdown();
+      socksProxy!!.shutdown()
     }
     if (cache != null) {
-      cache.delete();
+      cache!!.delete()
     }
   }
 
-  @Test public void successfulCallEventSequence() throws IOException {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun successfulCallEventSequence() {
+    server.enqueue(
+      MockResponse.Builder()
         .body("abc")
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    assertThat(response.body().string()).isEqualTo("abc");
-    response.body().close();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
-        "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    assertThat(response.body.string()).isEqualTo("abc")
+    response.body.close()
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart",
+      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
+      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+      "ResponseBodyEnd", "ConnectionReleased", "CallEnd"
+    )
   }
 
-  @Test public void successfulCallEventSequenceForIpAddress() throws IOException {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun successfulCallEventSequenceForIpAddress() {
+    server.enqueue(
+      MockResponse.Builder()
         .body("abc")
-        .build());
-
-    String ipAddress = InetAddress.getLoopbackAddress().getHostAddress();
-
-    Call call = client.newCall(new Request.Builder()
-      .url(server.url("/").newBuilder().host(ipAddress).build())
-      .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    assertThat(response.body().string()).isEqualTo("abc");
-    response.body().close();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
+        .build()
+    )
+    val ipAddress = InetAddress.getLoopbackAddress().hostAddress
+    val call = client.newCall(
+      Request.Builder()
+        .url(server.url("/").newBuilder().host(ipAddress!!).build())
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    assertThat(response.body.string()).isEqualTo("abc")
+    response.body.close()
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart",
       "ProxySelectStart", "ProxySelectEnd",
       "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
       "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-      "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+      "ResponseBodyEnd", "ConnectionReleased", "CallEnd"
+    )
   }
 
-  @Test public void successfulCallEventSequenceForEnqueue() throws Exception {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun successfulCallEventSequenceForEnqueue() {
+    server.enqueue(
+      MockResponse.Builder()
         .body("abc")
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-
-    final CountDownLatch completionLatch = new CountDownLatch(1);
-    Callback callback = new Callback() {
-      @Override public void onFailure(Call call, IOException e) {
-        completionLatch.countDown();
+        .build()
+    )
+    val completionLatch = CountDownLatch(1)
+    val callback: Callback = object : Callback {
+      override fun onFailure(call: Call, e: IOException) {
+        completionLatch.countDown()
       }
 
-      @Override public void onResponse(Call call, Response response) {
-        response.close();
-        completionLatch.countDown();
+      override fun onResponse(call: Call, response: Response) {
+        response.close()
+        completionLatch.countDown()
       }
-    };
-
-    call.enqueue(callback);
-
-    completionLatch.await();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
-        "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
-  }
-
-  @Test public void failedCallEventSequence() {
-    server.enqueue(new MockResponse.Builder()
-        .headersDelay(2, TimeUnit.SECONDS)
-        .build());
-
-    client = client.newBuilder()
-        .readTimeout(Duration.ofMillis(250))
-        .build();
-
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
-    try {
-      call.execute();
-      fail();
-    } catch (IOException expected) {
-      assertThat(expected.getMessage()).isIn("timeout", "Read timed out");
     }
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
-        "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseFailed", "ConnectionReleased", "CallFailed");
+    call.enqueue(callback)
+    completionLatch.await()
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart",
+      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
+      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+      "ResponseBodyEnd", "ConnectionReleased", "CallEnd"
+    )
   }
 
-  @Test public void failedDribbledCallEventSequence() throws IOException {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun failedCallEventSequence() {
+    server.enqueue(
+      MockResponse.Builder()
+        .headersDelay(2, TimeUnit.SECONDS)
+        .build()
+    )
+    client = client.newBuilder()
+      .readTimeout(Duration.ofMillis(250))
+      .build()
+    val call = client.newCall(
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
+    )
+    try {
+      call.execute()
+      fail<Any?>()
+    } catch (expected: IOException) {
+      assertThat(expected.message).isIn("timeout", "Read timed out")
+    }
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart",
+      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
+      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+      "RequestHeadersEnd", "ResponseFailed", "ConnectionReleased", "CallFailed"
+    )
+  }
+
+  @Test
+  fun failedDribbledCallEventSequence() {
+    server.enqueue(
+      MockResponse.Builder()
         .body("0123456789")
         .throttleBody(2, 100, TimeUnit.MILLISECONDS)
-        .socketPolicy(DisconnectDuringResponseBody.INSTANCE)
-        .build());
-
+        .socketPolicy(DisconnectDuringResponseBody)
+        .build()
+    )
     client = client.newBuilder()
-        .protocols(Collections.singletonList(Protocol.HTTP_1_1))
-        .readTimeout(Duration.ofMillis(250))
-        .build();
-
-    Call call = client.newCall(new Request.Builder()
+      .protocols(listOf<Protocol>(Protocol.HTTP_1_1))
+      .readTimeout(Duration.ofMillis(250))
+      .build()
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-
-    Response response = call.execute();
+        .build()
+    )
+    val response = call.execute()
     try {
-      response.body().string();
-      fail();
-    } catch (IOException expected) {
-      assertThat(expected.getMessage()).isEqualTo("unexpected end of stream");
+      response.body.string()
+      fail<Any?>()
+    } catch (expected: IOException) {
+      assertThat(expected.message).isEqualTo("unexpected end of stream")
     }
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
-        "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseFailed", "ConnectionReleased", "CallFailed");
-    ResponseFailed responseFailed = listener.removeUpToEvent(ResponseFailed.class);
-    assertThat(responseFailed.getIoe().getMessage()).isEqualTo("unexpected end of stream");
-  }
-
-  @Test public void canceledCallEventSequence() {
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
-    call.cancel();
-    try {
-      call.execute();
-      fail();
-    } catch (IOException expected) {
-      assertThat(expected.getMessage()).isEqualTo("Canceled");
-    }
-
     assertThat(listener.recordedEventTypes()).containsExactly(
-        "Canceled", "CallStart", "CallFailed");
+      "CallStart",
+      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
+      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+      "ResponseFailed", "ConnectionReleased", "CallFailed"
+    )
+    val responseFailed = listener.removeUpToEvent<ResponseFailed>()
+    assertThat(responseFailed.ioe.message).isEqualTo("unexpected end of stream")
   }
 
-  @Test public void cancelAsyncCall() throws IOException {
-    server.enqueue(new MockResponse.Builder()
-        .body("abc")
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+  @Test
+  fun canceledCallEventSequence() {
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    call.enqueue(new Callback() {
-      @Override public void onFailure(Call call, IOException e) {
+        .build()
+    )
+    call.cancel()
+    try {
+      call.execute()
+      fail<Any?>()
+    } catch (expected: IOException) {
+      assertThat(expected.message).isEqualTo("Canceled")
+    }
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "Canceled", "CallStart", "CallFailed"
+    )
+  }
+
+  @Test
+  fun cancelAsyncCall() {
+    server.enqueue(
+      MockResponse.Builder()
+        .body("abc")
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
+    )
+    call.enqueue(object : Callback {
+      override fun onFailure(call: Call, e: IOException) {
       }
 
-      @Override public void onResponse(Call call, Response response) throws IOException {
-        response.close();
+      override fun onResponse(call: Call, response: Response) {
+        response.close()
       }
-    });
-    call.cancel();
-
-    assertThat(listener.recordedEventTypes()).contains("Canceled");
+    })
+    call.cancel()
+    assertThat(listener.recordedEventTypes()).contains("Canceled")
   }
 
-  @Test public void multipleCancelsEmitsOnlyOneEvent() throws IOException {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun multipleCancelsEmitsOnlyOneEvent() {
+    server.enqueue(
+      MockResponse.Builder()
         .body("abc")
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    call.cancel();
-    call.cancel();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("Canceled");
+        .build()
+    )
+    call.cancel()
+    call.cancel()
+    assertThat(listener.recordedEventTypes()).containsExactly("Canceled")
   }
 
-  private void assertSuccessfulEventOrder(Matcher<Response> responseMatcher) throws IOException {
-    Call call = client.newCall(new Request.Builder()
+  private fun assertSuccessfulEventOrder(responseMatcher: Matcher<Response?>?) {
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    response.body().string();
-    response.body().close();
-
-    assumeThat(response, responseMatcher);
-
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    response.body.string()
+    response.body.close()
+    Assume.assumeThat(response, responseMatcher)
     assertThat(listener.recordedEventTypes()).containsExactly(
-        "CallStart", "ProxySelectStart", "ProxySelectEnd",
-        "DnsStart", "DnsEnd", "ConnectStart",
-        "SecureConnectStart", "SecureConnectEnd", "ConnectEnd", "ConnectionAcquired",
-        "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
-        "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+      "CallStart",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "SecureConnectStart",
+      "SecureConnectEnd",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd"
+    )
   }
 
-  @Test public void secondCallEventSequence() throws IOException {
-    enableTlsWithTunnel();
-    server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
-
-    client.newCall(new Request.Builder()
+  @Test
+  fun secondCallEventSequence() {
+    enableTlsWithTunnel()
+    server.protocols = Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
+    client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build()).execute().close();
-
-    listener.removeUpToEvent(CallEnd.class);
-
-    Call call = client.newCall(new Request.Builder()
+        .build()
+    ).execute().close()
+    listener.removeUpToEvent<CallEnd>()
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    response.close();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "ConnectionAcquired",
-        "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
-        "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+        .build()
+    )
+    val response = call.execute()
+    response.close()
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd"
+    )
   }
 
-  private void assertBytesReadWritten(RecordingEventListener listener,
-      @Nullable Matcher<Long> requestHeaderLength, @Nullable Matcher<Long> requestBodyBytes,
-      @Nullable Matcher<Long> responseHeaderLength, @Nullable Matcher<Long> responseBodyBytes) {
-
+  private fun assertBytesReadWritten(
+    listener: RecordingEventListener,
+    requestHeaderLength: Matcher<Long?>?, requestBodyBytes: Matcher<Long?>?,
+    responseHeaderLength: Matcher<Long?>?, responseBodyBytes: Matcher<Long?>?
+  ) {
     if (requestHeaderLength != null) {
-      RequestHeadersEnd responseHeadersEnd = listener.removeUpToEvent(RequestHeadersEnd.class);
-      MatcherAssert.assertThat("request header length", responseHeadersEnd.getHeaderLength(),
-          requestHeaderLength);
+      val responseHeadersEnd = listener.removeUpToEvent<RequestHeadersEnd>()
+      MatcherAssert.assertThat(
+        "request header length", responseHeadersEnd.headerLength,
+        requestHeaderLength
+      )
     } else {
-      assertThat(listener.recordedEventTypes()).doesNotContain("RequestHeadersEnd");
+      assertThat(listener.recordedEventTypes())
+        .doesNotContain("RequestHeadersEnd")
     }
-
     if (requestBodyBytes != null) {
-      RequestBodyEnd responseBodyEnd = listener.removeUpToEvent(RequestBodyEnd.class);
-      MatcherAssert.assertThat("request body bytes", responseBodyEnd.getBytesWritten(), requestBodyBytes);
+      val responseBodyEnd: RequestBodyEnd = listener.removeUpToEvent<RequestBodyEnd>()
+      MatcherAssert.assertThat(
+        "request body bytes",
+        responseBodyEnd.bytesWritten,
+        requestBodyBytes
+      )
     } else {
-      assertThat(listener.recordedEventTypes()).doesNotContain("RequestBodyEnd");
+      assertThat(listener.recordedEventTypes()).doesNotContain("RequestBodyEnd")
     }
-
     if (responseHeaderLength != null) {
-      ResponseHeadersEnd responseHeadersEnd = listener.removeUpToEvent(ResponseHeadersEnd.class);
-      MatcherAssert.assertThat("response header length", responseHeadersEnd.getHeaderLength(),
-          responseHeaderLength);
+      val responseHeadersEnd: ResponseHeadersEnd =
+        listener.removeUpToEvent<ResponseHeadersEnd>()
+      MatcherAssert.assertThat(
+        "response header length", responseHeadersEnd.headerLength,
+        responseHeaderLength
+      )
     } else {
-      assertThat(listener.recordedEventTypes()).doesNotContain("ResponseHeadersEnd");
+      assertThat(listener.recordedEventTypes())
+        .doesNotContain("ResponseHeadersEnd")
     }
-
     if (responseBodyBytes != null) {
-      ResponseBodyEnd responseBodyEnd = listener.removeUpToEvent(ResponseBodyEnd.class);
-      MatcherAssert.assertThat("response body bytes", responseBodyEnd.getBytesRead(), responseBodyBytes);
+      val responseBodyEnd: ResponseBodyEnd = listener.removeUpToEvent<ResponseBodyEnd>()
+      MatcherAssert.assertThat(
+        "response body bytes",
+        responseBodyEnd.bytesRead,
+        responseBodyBytes
+      )
     } else {
-      assertThat(listener.recordedEventTypes()).doesNotContain("ResponseBodyEnd");
+      assertThat(listener.recordedEventTypes()).doesNotContain("ResponseBodyEnd")
     }
   }
 
-  private Matcher<Long> greaterThan(final long value) {
-    return new BaseMatcher<Long>() {
-      @Override public void describeTo(Description description) {
-        description.appendText("> " + value);
+  private fun greaterThan(value: Long): Matcher<Long?> {
+    return object : BaseMatcher<Long?>() {
+      override fun describeTo(description: Description?) {
+        description!!.appendText("> $value")
       }
 
-      @Override public boolean matches(Object o) {
-        return ((Long) o) > value;
+      override fun matches(o: Any?): Boolean {
+        return (o as Long?)!! > value
       }
-    };
+    }
   }
 
-  private Matcher<Response> matchesProtocol(final Protocol protocol) {
-    return new BaseMatcher<Response>() {
-      @Override public void describeTo(Description description) {
-        description.appendText("is HTTP/2");
+  private fun matchesProtocol(protocol: Protocol?): Matcher<Response?> {
+    return object : BaseMatcher<Response?>() {
+      override fun describeTo(description: Description?) {
+        description!!.appendText("is HTTP/2")
       }
 
-      @Override public boolean matches(Object o) {
-        return ((Response) o).protocol() == protocol;
+      override fun matches(o: Any?): Boolean {
+        return (o as Response?)!!.protocol == protocol
       }
-    };
+    }
   }
 
-  @Test public void successfulEmptyH2CallEventSequence() throws IOException {
-    enableTlsWithTunnel();
-    server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
-    server.enqueue(new MockResponse());
-
-    assertSuccessfulEventOrder(matchesProtocol(Protocol.HTTP_2));
-
-    assertBytesReadWritten(listener, any(Long.class), null, greaterThan(0L),
-        equalTo(0L));
+  @Test
+  fun successfulEmptyH2CallEventSequence() {
+    enableTlsWithTunnel()
+    server.protocols = Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
+    server.enqueue(MockResponse())
+    assertSuccessfulEventOrder(matchesProtocol(Protocol.HTTP_2))
+    assertBytesReadWritten(
+      listener, CoreMatchers.any(Long::class.java), null, greaterThan(0L),
+      CoreMatchers.equalTo(0L)
+    )
   }
 
-  @Test public void successfulEmptyHttpsCallEventSequence() throws IOException {
-    enableTlsWithTunnel();
-    server.setProtocols(asList(Protocol.HTTP_1_1));
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun successfulEmptyHttpsCallEventSequence() {
+    enableTlsWithTunnel()
+    server.protocols = Arrays.asList(Protocol.HTTP_1_1)
+    server.enqueue(
+      MockResponse.Builder()
         .body("abc")
-        .build());
-
-    assertSuccessfulEventOrder(anyResponse);
-
-    assertBytesReadWritten(listener, any(Long.class), null, greaterThan(0L),
-        equalTo(3L));
+        .build()
+    )
+    assertSuccessfulEventOrder(anyResponse)
+    assertBytesReadWritten(
+      listener, CoreMatchers.any(Long::class.java), null, greaterThan(0L),
+      CoreMatchers.equalTo(3L)
+    )
   }
 
-  @Test public void successfulChunkedHttpsCallEventSequence() throws IOException {
-    enableTlsWithTunnel();
-    server.setProtocols(asList(Protocol.HTTP_1_1));
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun successfulChunkedHttpsCallEventSequence() {
+    enableTlsWithTunnel()
+    server.protocols = Arrays.asList(Protocol.HTTP_1_1)
+    server.enqueue(
+      MockResponse.Builder()
         .bodyDelay(100, TimeUnit.MILLISECONDS)
         .chunkedBody("Hello!", 2)
-        .build());
-
-    assertSuccessfulEventOrder(anyResponse);
-
-    assertBytesReadWritten(listener, any(Long.class), null, greaterThan(0L),
-        equalTo(6L));
+        .build()
+    )
+    assertSuccessfulEventOrder(anyResponse)
+    assertBytesReadWritten(
+      listener, CoreMatchers.any(Long::class.java), null, greaterThan(0L),
+      CoreMatchers.equalTo(6L)
+    )
   }
 
-  @Test public void successfulChunkedH2CallEventSequence() throws IOException {
-    enableTlsWithTunnel();
-    server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun successfulChunkedH2CallEventSequence() {
+    enableTlsWithTunnel()
+    server.protocols = Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
+    server.enqueue(
+      MockResponse.Builder()
         .bodyDelay(100, TimeUnit.MILLISECONDS)
         .chunkedBody("Hello!", 2)
-        .build());
-
-    assertSuccessfulEventOrder(matchesProtocol(Protocol.HTTP_2));
-
-    assertBytesReadWritten(listener, any(Long.class), null, equalTo(0L),
-        greaterThan(6L));
+        .build()
+    )
+    assertSuccessfulEventOrder(matchesProtocol(Protocol.HTTP_2))
+    assertBytesReadWritten(
+      listener, CoreMatchers.any(Long::class.java), null, CoreMatchers.equalTo(0L),
+      greaterThan(6L)
+    )
   }
 
-  @Test public void successfulDnsLookup() throws IOException {
-    server.enqueue(new MockResponse());
-
-    Call call = client.newCall(new Request.Builder()
+  @Test
+  fun successfulDnsLookup() {
+    server.enqueue(MockResponse())
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    response.body().close();
-
-    DnsStart dnsStart = listener.removeUpToEvent(DnsStart.class);
-    assertThat(dnsStart.getCall()).isSameAs(call);
-    assertThat(dnsStart.getDomainName()).isEqualTo(server.getHostName());
-
-    DnsEnd dnsEnd = listener.removeUpToEvent(DnsEnd.class);
-    assertThat(dnsEnd.getCall()).isSameAs(call);
-    assertThat(dnsEnd.getDomainName()).isEqualTo(server.getHostName());
-    assertThat(dnsEnd.getInetAddressList().size()).isEqualTo(1);
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    response.body.close()
+    val dnsStart: DnsStart = listener.removeUpToEvent<DnsStart>()
+    assertThat(dnsStart.call).isSameAs(call)
+    assertThat(dnsStart.domainName).isEqualTo(server.hostName)
+    val dnsEnd: DnsEnd = listener.removeUpToEvent<DnsEnd>()
+    assertThat(dnsEnd.call).isSameAs(call)
+    assertThat(dnsEnd.domainName).isEqualTo(server.hostName)
+    assertThat(dnsEnd.inetAddressList.size).isEqualTo(1)
   }
 
-  @Test public void noDnsLookupOnPooledConnection() throws IOException {
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
+  @Test
+  fun noDnsLookupOnPooledConnection() {
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
 
     // Seed the pool.
-    Call call1 = client.newCall(new Request.Builder()
+    val call1 = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response1 = call1.execute();
-    assertThat(response1.code()).isEqualTo(200);
-    response1.body().close();
-
-    listener.clearAllEvents();
-
-    Call call2 = client.newCall(new Request.Builder()
+        .build()
+    )
+    val response1 = call1.execute()
+    assertThat(response1.code).isEqualTo(200)
+    response1.body.close()
+    listener.clearAllEvents()
+    val call2 = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response2 = call2.execute();
-    assertThat(response2.code()).isEqualTo(200);
-    response2.body().close();
-
-    List<String> recordedEvents = listener.recordedEventTypes();
-    assertThat(recordedEvents).doesNotContain("DnsStart");
-    assertThat(recordedEvents).doesNotContain("DnsEnd");
+        .build()
+    )
+    val response2 = call2.execute()
+    assertThat(response2.code).isEqualTo(200)
+    response2.body.close()
+    val recordedEvents: List<String> = listener.recordedEventTypes()
+    assertThat(recordedEvents).doesNotContain("DnsStart")
+    assertThat(recordedEvents).doesNotContain("DnsEnd")
   }
 
-  @Test public void multipleDnsLookupsForSingleCall() throws IOException {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun multipleDnsLookupsForSingleCall() {
+    server.enqueue(
+      MockResponse.Builder()
         .code(301)
-        .setHeader("Location", "http://www.fakeurl:" + server.getPort())
-        .build());
-    server.enqueue(new MockResponse());
-
-    FakeDns dns = new FakeDns();
-    dns.set("fakeurl", client.dns().lookup(server.getHostName()));
-    dns.set("www.fakeurl", client.dns().lookup(server.getHostName()));
-
+        .setHeader("Location", "http://www.fakeurl:" + server.port)
+        .build()
+    )
+    server.enqueue(MockResponse())
+    val dns = FakeDns()
+    dns["fakeurl"] = client.dns.lookup(server.hostName)
+    dns["www.fakeurl"] = client.dns.lookup(server.hostName)
     client = client.newBuilder()
-        .dns(dns)
-        .build();
-
-    Call call = client.newCall(new Request.Builder()
-        .url("http://fakeurl:" + server.getPort())
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    response.body().close();
-
-    listener.removeUpToEvent(DnsStart.class);
-    listener.removeUpToEvent(DnsEnd.class);
-    listener.removeUpToEvent(DnsStart.class);
-    listener.removeUpToEvent(DnsEnd.class);
+      .dns(dns)
+      .build()
+    val call = client.newCall(
+      Request.Builder()
+        .url("http://fakeurl:" + server.port)
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    response.body.close()
+    listener.removeUpToEvent<DnsStart>()
+    listener.removeUpToEvent<DnsEnd>()
+    listener.removeUpToEvent<DnsStart>()
+    listener.removeUpToEvent<DnsEnd>()
   }
 
-  @Test public void failedDnsLookup() {
+  @Test
+  fun failedDnsLookup() {
     client = client.newBuilder()
-        .dns(new FakeDns())
-        .build();
-    Call call = client.newCall(new Request.Builder()
+      .dns(FakeDns())
+      .build()
+    val call = client.newCall(
+      Request.Builder()
         .url("http://fakeurl/")
-        .build());
+        .build()
+    )
     try {
-      call.execute();
-      fail();
-    } catch (IOException expected) {
+      call.execute()
+      fail<Any?>()
+    } catch (expected: IOException) {
     }
-
-    listener.removeUpToEvent(DnsStart.class);
-
-    CallFailed callFailed = listener.removeUpToEvent(CallFailed.class);
-    assertThat(callFailed.getCall()).isSameAs(call);
-    assertThat(callFailed.getIoe()).isInstanceOf(UnknownHostException.class);
+    listener.removeUpToEvent<DnsStart>()
+    val callFailed: CallFailed = listener.removeUpToEvent<CallFailed>()
+    assertThat(callFailed.call).isSameAs(call)
+    assertThat(callFailed.ioe).isInstanceOf(
+      UnknownHostException::class.java
+    )
   }
 
-  @Test public void emptyDnsLookup() {
-    Dns emptyDns = hostname -> Collections.emptyList();
-
+  @Test
+  fun emptyDnsLookup() {
+    val emptyDns = Dns { listOf() }
     client = client.newBuilder()
-        .dns(emptyDns)
-        .build();
-    Call call = client.newCall(new Request.Builder()
+      .dns(emptyDns)
+      .build()
+    val call = client.newCall(
+      Request.Builder()
         .url("http://fakeurl/")
-        .build());
+        .build()
+    )
     try {
-      call.execute();
-      fail();
-    } catch (IOException expected) {
+      call.execute()
+      fail<Any?>()
+    } catch (expected: IOException) {
     }
-
-    listener.removeUpToEvent(DnsStart.class);
-
-    CallFailed callFailed = listener.removeUpToEvent(CallFailed.class);
-    assertThat(callFailed.getCall()).isSameAs(call);
-    assertThat(callFailed.getIoe()).isInstanceOf(UnknownHostException.class);
+    listener.removeUpToEvent<DnsStart>()
+    val callFailed: CallFailed = listener.removeUpToEvent<CallFailed>()
+    assertThat(callFailed.call).isSameAs(call)
+    assertThat(callFailed.ioe).isInstanceOf(
+      UnknownHostException::class.java
+    )
   }
 
-  @Test public void successfulConnect() throws IOException {
-    server.enqueue(new MockResponse());
-
-    Call call = client.newCall(new Request.Builder()
+  @Test
+  fun successfulConnect() {
+    server.enqueue(MockResponse())
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    response.body().close();
-
-    InetAddress address = client.dns().lookup(server.getHostName()).get(0);
-    InetSocketAddress expectedAddress = new InetSocketAddress(address, server.getPort());
-
-    ConnectStart connectStart = listener.removeUpToEvent(ConnectStart.class);
-    assertThat(connectStart.getCall()).isSameAs(call);
-    assertThat(connectStart.getInetSocketAddress()).isEqualTo(expectedAddress);
-    assertThat(connectStart.getProxy()).isEqualTo(Proxy.NO_PROXY);
-
-    ConnectEnd connectEnd = listener.removeUpToEvent(ConnectEnd.class);
-    assertThat(connectEnd.getCall()).isSameAs(call);
-    assertThat(connectEnd.getInetSocketAddress()).isEqualTo(expectedAddress);
-    assertThat(connectEnd.getProtocol()).isEqualTo(Protocol.HTTP_1_1);
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    response.body.close()
+    val address = client.dns.lookup(server.hostName)[0]
+    val expectedAddress = InetSocketAddress(address, server.port)
+    val connectStart = listener.removeUpToEvent<ConnectStart>()
+    assertThat(connectStart.call).isSameAs(call)
+    assertThat(connectStart.inetSocketAddress).isEqualTo(expectedAddress)
+    assertThat(connectStart.proxy).isEqualTo(Proxy.NO_PROXY)
+    val connectEnd = listener.removeUpToEvent<CallEvent.ConnectEnd>()
+    assertThat(connectEnd.call).isSameAs(call)
+    assertThat(connectEnd.inetSocketAddress).isEqualTo(expectedAddress)
+    assertThat(connectEnd.protocol).isEqualTo(Protocol.HTTP_1_1)
   }
 
-  @Test public void failedConnect() throws UnknownHostException {
-    enableTlsWithTunnel();
-    server.enqueue(new MockResponse.Builder()
-        .socketPolicy(FailHandshake.INSTANCE)
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+  @Test
+  fun failedConnect() {
+    enableTlsWithTunnel()
+    server.enqueue(
+      MockResponse.Builder()
+        .socketPolicy(FailHandshake)
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
+        .build()
+    )
     try {
-      call.execute();
-      fail();
-    } catch (IOException expected) {
+      call.execute()
+      fail<Any?>()
+    } catch (expected: IOException) {
     }
-
-    InetAddress address = client.dns().lookup(server.getHostName()).get(0);
-    InetSocketAddress expectedAddress = new InetSocketAddress(address, server.getPort());
-
-    ConnectStart connectStart = listener.removeUpToEvent(ConnectStart.class);
-    assertThat(connectStart.getCall()).isSameAs(call);
-    assertThat(connectStart.getInetSocketAddress()).isEqualTo(expectedAddress);
-    assertThat(connectStart.getProxy()).isEqualTo(Proxy.NO_PROXY);
-
-    ConnectFailed connectFailed = listener.removeUpToEvent(ConnectFailed.class);
-    assertThat(connectFailed.getCall()).isSameAs(call);
-    assertThat(connectFailed.getInetSocketAddress()).isEqualTo(expectedAddress);
-    assertThat(connectFailed.getProtocol()).isNull();
-    assertThat(connectFailed.getIoe()).isNotNull();
+    val address = client.dns.lookup(server.hostName)[0]
+    val expectedAddress = InetSocketAddress(address, server.port)
+    val connectStart = listener.removeUpToEvent<ConnectStart>()
+    assertThat(connectStart.call).isSameAs(call)
+    assertThat(connectStart.inetSocketAddress).isEqualTo(expectedAddress)
+    assertThat(connectStart.proxy).isEqualTo(Proxy.NO_PROXY)
+    val connectFailed = listener.removeUpToEvent<CallEvent.ConnectFailed>()
+    assertThat(connectFailed.call).isSameAs(call)
+    assertThat(connectFailed.inetSocketAddress).isEqualTo(expectedAddress)
+    assertThat(connectFailed.protocol).isNull()
+    assertThat(connectFailed.ioe).isNotNull()
   }
 
-  @Test public void multipleConnectsForSingleCall() throws IOException {
-    enableTlsWithTunnel();
-    server.enqueue(new MockResponse.Builder()
-        .socketPolicy(FailHandshake.INSTANCE)
-        .build());
-    server.enqueue(new MockResponse());
-
+  @Test
+  fun multipleConnectsForSingleCall() {
+    enableTlsWithTunnel()
+    server.enqueue(
+      MockResponse.Builder()
+        .socketPolicy(FailHandshake)
+        .build()
+    )
+    server.enqueue(MockResponse())
     client = client.newBuilder()
-        .dns(new DoubleInetAddressDns())
-        .build();
-
-    Call call = client.newCall(new Request.Builder()
+      .dns(DoubleInetAddressDns())
+      .build()
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    response.body().close();
-
-    listener.removeUpToEvent(ConnectStart.class);
-    listener.removeUpToEvent(ConnectFailed.class);
-    listener.removeUpToEvent(ConnectStart.class);
-    listener.removeUpToEvent(ConnectEnd.class);
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    response.body.close()
+    listener.removeUpToEvent<ConnectStart>()
+    listener.removeUpToEvent<CallEvent.ConnectFailed>()
+    listener.removeUpToEvent<ConnectStart>()
+    listener.removeUpToEvent<CallEvent.ConnectEnd>()
   }
 
-  @Test public void successfulHttpProxyConnect() throws IOException {
-    server.enqueue(new MockResponse());
-
+  @Test
+  fun successfulHttpProxyConnect() {
+    server.enqueue(MockResponse())
     client = client.newBuilder()
-        .proxy(server.toProxyAddress())
-        .build();
-
-    Call call = client.newCall(new Request.Builder()
+      .proxy(server.toProxyAddress())
+      .build()
+    val call = client.newCall(
+      Request.Builder()
         .url("http://www.fakeurl")
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    response.body().close();
-
-    InetAddress address = client.dns().lookup(server.getHostName()).get(0);
-    InetSocketAddress expectedAddress = new InetSocketAddress(address, server.getPort());
-
-    ConnectStart connectStart = listener.removeUpToEvent(ConnectStart.class);
-    assertThat(connectStart.getCall()).isSameAs(call);
-    assertThat(connectStart.getInetSocketAddress()).isEqualTo(expectedAddress);
-    assertThat(connectStart.getProxy()).isEqualTo(server.toProxyAddress());
-
-    ConnectEnd connectEnd = listener.removeUpToEvent(ConnectEnd.class);
-    assertThat(connectEnd.getCall()).isSameAs(call);
-    assertThat(connectEnd.getInetSocketAddress()).isEqualTo(expectedAddress);
-    assertThat(connectEnd.getProtocol()).isEqualTo(Protocol.HTTP_1_1);
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    response.body.close()
+    val address = client.dns.lookup(server.hostName)[0]
+    val expectedAddress = InetSocketAddress(address, server.port)
+    val connectStart: ConnectStart = listener.removeUpToEvent<ConnectStart>(
+      )
+    assertThat(connectStart.call).isSameAs(call)
+    assertThat(connectStart.inetSocketAddress).isEqualTo(expectedAddress)
+    assertThat(connectStart.proxy).isEqualTo(
+      server.toProxyAddress()
+    )
+    val connectEnd = listener.removeUpToEvent<CallEvent.ConnectEnd>()
+    assertThat(connectEnd.call).isSameAs(call)
+    assertThat(connectEnd.inetSocketAddress).isEqualTo(expectedAddress)
+    assertThat(connectEnd.protocol).isEqualTo(Protocol.HTTP_1_1)
   }
 
-  @Test public void successfulSocksProxyConnect() throws Exception {
-    server.enqueue(new MockResponse());
-
-    socksProxy = new SocksProxy();
-    socksProxy.play();
-    Proxy proxy = socksProxy.proxy();
-
+  @Test
+  fun successfulSocksProxyConnect() {
+    server.enqueue(MockResponse())
+    socksProxy = SocksProxy()
+    socksProxy!!.play()
+    val proxy = socksProxy!!.proxy()
     client = client.newBuilder()
-        .proxy(proxy)
-        .build();
-
-    Call call = client.newCall(new Request.Builder()
-        .url("http://" + SocksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS + ":" + server.getPort())
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    response.body().close();
-
-    InetSocketAddress expectedAddress = InetSocketAddress.createUnresolved(
-        SocksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS, server.getPort());
-
-    ConnectStart connectStart = listener.removeUpToEvent(ConnectStart.class);
-    assertThat(connectStart.getCall()).isSameAs(call);
-    assertThat(connectStart.getInetSocketAddress()).isEqualTo(expectedAddress);
-    assertThat(connectStart.getProxy()).isEqualTo(proxy);
-
-    ConnectEnd connectEnd = listener.removeUpToEvent(ConnectEnd.class);
-    assertThat(connectEnd.getCall()).isSameAs(call);
-    assertThat(connectEnd.getInetSocketAddress()).isEqualTo(expectedAddress);
-    assertThat(connectEnd.getProtocol()).isEqualTo(Protocol.HTTP_1_1);
+      .proxy(proxy)
+      .build()
+    val call = client.newCall(
+      Request.Builder()
+        .url("http://" + SocksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS + ":" + server.port)
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    response.body.close()
+    val expectedAddress = InetSocketAddress.createUnresolved(
+      SocksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS, server.port
+    )
+    val connectStart = listener.removeUpToEvent<ConnectStart>()
+    assertThat(connectStart.call).isSameAs(call)
+    assertThat(connectStart.inetSocketAddress).isEqualTo(expectedAddress)
+    assertThat(connectStart.proxy).isEqualTo(proxy)
+    val connectEnd = listener.removeUpToEvent<CallEvent.ConnectEnd>()
+    assertThat(connectEnd.call).isSameAs(call)
+    assertThat(connectEnd.inetSocketAddress).isEqualTo(expectedAddress)
+    assertThat(connectEnd.protocol).isEqualTo(Protocol.HTTP_1_1)
   }
 
-  @Test public void authenticatingTunnelProxyConnect() throws IOException {
-    enableTlsWithTunnel();
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun authenticatingTunnelProxyConnect() {
+    enableTlsWithTunnel()
+    server.enqueue(
+      MockResponse.Builder()
         .inTunnel()
         .code(407)
         .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
         .addHeader("Connection: close")
-        .build());
-    server.enqueue(new MockResponse.Builder()
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
         .inTunnel()
-        .build());
-    server.enqueue(new MockResponse());
-
+        .build()
+    )
+    server.enqueue(MockResponse())
     client = client.newBuilder()
-        .proxy(server.toProxyAddress())
-        .proxyAuthenticator(new RecordingOkAuthenticator("password", "Basic"))
-        .build();
-
-    Call call = client.newCall(new Request.Builder()
+      .proxy(server.toProxyAddress())
+      .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
+      .build()
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    response.body().close();
-
-    listener.removeUpToEvent(ConnectStart.class);
-
-    ConnectEnd connectEnd = listener.removeUpToEvent(ConnectEnd.class);
-    assertThat(connectEnd.getProtocol()).isNull();
-
-    listener.removeUpToEvent(ConnectStart.class);
-    listener.removeUpToEvent(ConnectEnd.class);
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    response.body.close()
+    listener.removeUpToEvent<ConnectStart>()
+    val connectEnd = listener.removeUpToEvent<CallEvent.ConnectEnd>()
+    assertThat(connectEnd.protocol).isNull()
+    listener.removeUpToEvent<ConnectStart>()
+    listener.removeUpToEvent<CallEvent.ConnectEnd>()
   }
 
-  @Test public void successfulSecureConnect() throws IOException {
-    enableTlsWithTunnel();
-    server.enqueue(new MockResponse());
-
-    Call call = client.newCall(new Request.Builder()
+  @Test
+  fun successfulSecureConnect() {
+    enableTlsWithTunnel()
+    server.enqueue(MockResponse())
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    response.body().close();
-
-    SecureConnectStart secureStart = listener.removeUpToEvent(SecureConnectStart.class);
-    assertThat(secureStart.getCall()).isSameAs(call);
-
-    SecureConnectEnd secureEnd = listener.removeUpToEvent(SecureConnectEnd.class);
-    assertThat(secureEnd.getCall()).isSameAs(call);
-    assertThat(secureEnd.getHandshake()).isNotNull();
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    response.body.close()
+    val secureStart = listener.removeUpToEvent<SecureConnectStart>()
+    assertThat(secureStart.call).isSameAs(call)
+    val secureEnd = listener.removeUpToEvent<SecureConnectEnd>()
+    assertThat(secureEnd.call).isSameAs(call)
+    assertThat(secureEnd.handshake).isNotNull()
   }
 
-  @Test public void failedSecureConnect() {
-    enableTlsWithTunnel();
-    server.enqueue(new MockResponse.Builder()
-        .socketPolicy(FailHandshake.INSTANCE)
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+  @Test
+  fun failedSecureConnect() {
+    enableTlsWithTunnel()
+    server.enqueue(
+      MockResponse.Builder()
+        .socketPolicy(FailHandshake)
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
+        .build()
+    )
     try {
-      call.execute();
-      fail();
-    } catch (IOException expected) {
+      call.execute()
+      fail<Any?>()
+    } catch (expected: IOException) {
     }
-
-    SecureConnectStart secureStart = listener.removeUpToEvent(SecureConnectStart.class);
-    assertThat(secureStart.getCall()).isSameAs(call);
-
-    CallFailed callFailed = listener.removeUpToEvent(CallFailed.class);
-    assertThat(callFailed.getCall()).isSameAs(call);
-    assertThat(callFailed.getIoe()).isNotNull();
+    val secureStart = listener.removeUpToEvent<SecureConnectStart>()
+    assertThat(secureStart.call).isSameAs(call)
+    val callFailed = listener.removeUpToEvent<CallFailed>()
+    assertThat(callFailed.call).isSameAs(call)
+    assertThat(callFailed.ioe).isNotNull()
   }
 
-  @Test public void secureConnectWithTunnel() throws IOException {
-    enableTlsWithTunnel();
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun secureConnectWithTunnel() {
+    enableTlsWithTunnel()
+    server.enqueue(
+      MockResponse.Builder()
         .inTunnel()
-        .build());
-    server.enqueue(new MockResponse());
-
+        .build()
+    )
+    server.enqueue(MockResponse())
     client = client.newBuilder()
-        .proxy(server.toProxyAddress())
-        .build();
-
-    Call call = client.newCall(new Request.Builder()
+      .proxy(server.toProxyAddress())
+      .build()
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    response.body().close();
-
-    SecureConnectStart secureStart = listener.removeUpToEvent(SecureConnectStart.class);
-    assertThat(secureStart.getCall()).isSameAs(call);
-
-    SecureConnectEnd secureEnd = listener.removeUpToEvent(SecureConnectEnd.class);
-    assertThat(secureEnd.getCall()).isSameAs(call);
-    assertThat(secureEnd.getHandshake()).isNotNull();
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    response.body.close()
+    val secureStart = listener.removeUpToEvent<SecureConnectStart>()
+    assertThat(secureStart.call).isSameAs(call)
+    val secureEnd = listener.removeUpToEvent<SecureConnectEnd>()
+    assertThat(secureEnd.call).isSameAs(call)
+    assertThat(secureEnd.handshake).isNotNull()
   }
 
-  @Test public void multipleSecureConnectsForSingleCall() throws IOException {
-    enableTlsWithTunnel();
-    server.enqueue(new MockResponse.Builder()
-        .socketPolicy(FailHandshake.INSTANCE)
-        .build());
-    server.enqueue(new MockResponse());
-
+  @Test
+  fun multipleSecureConnectsForSingleCall() {
+    enableTlsWithTunnel()
+    server.enqueue(
+      MockResponse.Builder()
+        .socketPolicy(FailHandshake)
+        .build()
+    )
+    server.enqueue(MockResponse())
     client = client.newBuilder()
-        .dns(new DoubleInetAddressDns())
-        .build();
-
-    Call call = client.newCall(new Request.Builder()
+      .dns(DoubleInetAddressDns())
+      .build()
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    response.body().close();
-
-    listener.removeUpToEvent(SecureConnectStart.class);
-    listener.removeUpToEvent(ConnectFailed.class);
-
-    listener.removeUpToEvent(SecureConnectStart.class);
-    listener.removeUpToEvent(SecureConnectEnd.class);
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    response.body.close()
+    listener.removeUpToEvent<SecureConnectStart>()
+    listener.removeUpToEvent<CallEvent.ConnectFailed>()
+    listener.removeUpToEvent<SecureConnectStart>()
+    listener.removeUpToEvent<SecureConnectEnd>()
   }
 
-  @Test public void noSecureConnectsOnPooledConnection() throws IOException {
-    enableTlsWithTunnel();
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
-
+  @Test
+  fun noSecureConnectsOnPooledConnection() {
+    enableTlsWithTunnel()
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
     client = client.newBuilder()
-        .dns(new DoubleInetAddressDns())
-        .build();
+      .dns(DoubleInetAddressDns())
+      .build()
 
     // Seed the pool.
-    Call call1 = client.newCall(new Request.Builder()
+    val call1 = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response1 = call1.execute();
-    assertThat(response1.code()).isEqualTo(200);
-    response1.body().close();
-
-    listener.clearAllEvents();
-
-    Call call2 = client.newCall(new Request.Builder()
+        .build()
+    )
+    val response1 = call1.execute()
+    assertThat(response1.code).isEqualTo(200)
+    response1.body.close()
+    listener.clearAllEvents()
+    val call2 = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response2 = call2.execute();
-    assertThat(response2.code()).isEqualTo(200);
-    response2.body().close();
-
-    List<String> recordedEvents = listener.recordedEventTypes();
-    assertThat(recordedEvents).doesNotContain("SecureConnectStart");
-    assertThat(recordedEvents).doesNotContain("SecureConnectEnd");
+        .build()
+    )
+    val response2 = call2.execute()
+    assertThat(response2.code).isEqualTo(200)
+    response2.body.close()
+    val recordedEvents: List<String> = listener.recordedEventTypes()
+    assertThat(recordedEvents).doesNotContain("SecureConnectStart")
+    assertThat(recordedEvents).doesNotContain("SecureConnectEnd")
   }
 
-  @Test public void successfulConnectionFound() throws IOException {
-    server.enqueue(new MockResponse());
-
-    Call call = client.newCall(new Request.Builder()
+  @Test
+  fun successfulConnectionFound() {
+    server.enqueue(MockResponse())
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    response.body().close();
-
-    ConnectionAcquired connectionAcquired = listener.removeUpToEvent(ConnectionAcquired.class);
-    assertThat(connectionAcquired.getCall()).isSameAs(call);
-    assertThat(connectionAcquired.getConnection()).isNotNull();
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    response.body.close()
+    val connectionAcquired = listener.removeUpToEvent<ConnectionAcquired>()
+    assertThat(connectionAcquired.call).isSameAs(call)
+    assertThat(connectionAcquired.connection).isNotNull()
   }
 
-  @Test public void noConnectionFoundOnFollowUp() throws IOException {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun noConnectionFoundOnFollowUp() {
+    server.enqueue(
+      MockResponse.Builder()
         .code(301)
         .addHeader("Location", "/foo")
-        .build());
-    server.enqueue(new MockResponse.Builder()
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
         .body("ABC")
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.body().string()).isEqualTo("ABC");
-
-    listener.removeUpToEvent(ConnectionAcquired.class);
-
-    List<String> remainingEvents = listener.recordedEventTypes();
-    assertThat(remainingEvents).doesNotContain("ConnectionAcquired");
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.body.string()).isEqualTo("ABC")
+    listener.removeUpToEvent<ConnectionAcquired>()
+    val remainingEvents = listener.recordedEventTypes()
+    assertThat(remainingEvents).doesNotContain("ConnectionAcquired")
   }
 
-  @Test public void pooledConnectionFound() throws IOException {
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
+  @Test
+  fun pooledConnectionFound() {
+    server.enqueue(MockResponse())
+    server.enqueue(MockResponse())
 
     // Seed the pool.
-    Call call1 = client.newCall(new Request.Builder()
+    val call1 = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response1 = call1.execute();
-    assertThat(response1.code()).isEqualTo(200);
-    response1.body().close();
-
-    ConnectionAcquired connectionAcquired1 = listener.removeUpToEvent(ConnectionAcquired.class);
-    listener.clearAllEvents();
-
-    Call call2 = client.newCall(new Request.Builder()
+        .build()
+    )
+    val response1 = call1.execute()
+    assertThat(response1.code).isEqualTo(200)
+    response1.body.close()
+    val connectionAcquired1 = listener.removeUpToEvent<ConnectionAcquired>()
+    listener.clearAllEvents()
+    val call2 = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response2 = call2.execute();
-    assertThat(response2.code()).isEqualTo(200);
-    response2.body().close();
-
-    ConnectionAcquired connectionAcquired2 = listener.removeUpToEvent(ConnectionAcquired.class);
-    assertThat(connectionAcquired2.getConnection()).isSameAs(
-        connectionAcquired1.getConnection());
+        .build()
+    )
+    val response2 = call2.execute()
+    assertThat(response2.code).isEqualTo(200)
+    response2.body.close()
+    val connectionAcquired2 = listener.removeUpToEvent<ConnectionAcquired>()
+    assertThat(connectionAcquired2.connection).isSameAs(
+      connectionAcquired1.connection
+    )
   }
 
-  @Test public void multipleConnectionsFoundForSingleCall() throws IOException {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun multipleConnectionsFoundForSingleCall() {
+    server.enqueue(
+      MockResponse.Builder()
         .code(301)
         .addHeader("Location", "/foo")
         .addHeader("Connection", "Close")
-        .build());
-    server.enqueue(new MockResponse.Builder()
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
         .body("ABC")
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.body().string()).isEqualTo("ABC");
-
-    listener.removeUpToEvent(ConnectionAcquired.class);
-    listener.removeUpToEvent(ConnectionAcquired.class);
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.body.string()).isEqualTo("ABC")
+    listener.removeUpToEvent<ConnectionAcquired>()
+    listener.removeUpToEvent<ConnectionAcquired>()
   }
 
-  @Test public void responseBodyFailHttp1OverHttps() throws IOException {
-    enableTlsWithTunnel();
-    server.setProtocols(asList(Protocol.HTTP_1_1));
-    responseBodyFail(Protocol.HTTP_1_1);
+  @Test
+  fun responseBodyFailHttp1OverHttps() {
+    enableTlsWithTunnel()
+    server.protocols = Arrays.asList(Protocol.HTTP_1_1)
+    responseBodyFail(Protocol.HTTP_1_1)
   }
 
-  @Test public void responseBodyFailHttp2OverHttps() throws IOException {
-    platform.assumeHttp2Support();
-
-    enableTlsWithTunnel();
-    server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
-    responseBodyFail(Protocol.HTTP_2);
+  @Test
+  fun responseBodyFailHttp2OverHttps() {
+    platform.assumeHttp2Support()
+    enableTlsWithTunnel()
+    server.protocols = Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
+    responseBodyFail(Protocol.HTTP_2)
   }
 
-  @Test public void responseBodyFailHttp() throws IOException {
-    responseBodyFail(Protocol.HTTP_1_1);
+  @Test
+  fun responseBodyFailHttp() {
+    responseBodyFail(Protocol.HTTP_1_1)
   }
 
-  private void responseBodyFail(Protocol expectedProtocol) throws IOException {
+  private fun responseBodyFail(expectedProtocol: Protocol?) {
     // Use a 2 MiB body so the disconnect won't happen until the client has read some data.
-    int responseBodySize = 2 * 1024 * 1024; // 2 MiB
-    server.enqueue(new MockResponse.Builder()
-        .body(new Buffer().write(new byte[responseBodySize]))
-        .socketPolicy(DisconnectDuringResponseBody.INSTANCE)
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+    val responseBodySize = 2 * 1024 * 1024 // 2 MiB
+    server.enqueue(
+      MockResponse.Builder()
+        .body(Buffer().write(ByteArray(responseBodySize)))
+        .socketPolicy(DisconnectDuringResponseBody)
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
+        .build()
+    )
+    val response = call.execute()
     if (expectedProtocol == Protocol.HTTP_2) {
       // soft failure since client may not support depending on Platform
-      assumeThat(response, matchesProtocol(Protocol.HTTP_2));
+      Assume.assumeThat(response, matchesProtocol(Protocol.HTTP_2))
     }
-    assertThat(response.protocol()).isEqualTo(expectedProtocol);
+    assertThat(response.protocol).isEqualTo(expectedProtocol)
     try {
-      response.body().string();
-      fail();
-    } catch (IOException expected) {
+      response.body.string()
+      fail<Any?>()
+    } catch (expected: IOException) {
     }
-
-    CallFailed callFailed = listener.removeUpToEvent(CallFailed.class);
-    assertThat(callFailed.getIoe()).isNotNull();
+    val callFailed = listener.removeUpToEvent<CallFailed>()
+    assertThat(callFailed.ioe).isNotNull()
   }
 
-  @Test public void emptyResponseBody() throws IOException {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun emptyResponseBody() {
+    server.enqueue(
+      MockResponse.Builder()
         .body("")
         .bodyDelay(1, TimeUnit.SECONDS)
-        .socketPolicy(DisconnectDuringResponseBody.INSTANCE)
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+        .socketPolicy(DisconnectDuringResponseBody)
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    response.body().close();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
-        "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+        .build()
+    )
+    val response = call.execute()
+    response.body.close()
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart",
+      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
+      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+      "ResponseBodyEnd", "ConnectionReleased", "CallEnd"
+    )
   }
 
-  @Test public void emptyResponseBodyConnectionClose() throws IOException {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun emptyResponseBodyConnectionClose() {
+    server.enqueue(
+      MockResponse.Builder()
         .addHeader("Connection", "close")
         .body("")
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    response.body().close();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
-        "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+        .build()
+    )
+    val response = call.execute()
+    response.body.close()
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart",
+      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
+      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+      "ResponseBodyEnd", "ConnectionReleased", "CallEnd"
+    )
   }
 
-  @Test public void responseBodyClosedClosedWithoutReadingAllData() throws IOException {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun responseBodyClosedClosedWithoutReadingAllData() {
+    server.enqueue(
+      MockResponse.Builder()
         .body("abc")
         .bodyDelay(1, TimeUnit.SECONDS)
-        .socketPolicy(DisconnectDuringResponseBody.INSTANCE)
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+        .socketPolicy(DisconnectDuringResponseBody)
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    response.body().close();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
-        "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+        .build()
+    )
+    val response = call.execute()
+    response.body.close()
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart",
+      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
+      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+      "ResponseBodyEnd", "ConnectionReleased", "CallEnd"
+    )
   }
 
-  @Test public void requestBodyFailHttp1OverHttps() {
-    enableTlsWithTunnel();
-    server.setProtocols(asList(Protocol.HTTP_1_1));
-
-    requestBodyFail(Protocol.HTTP_1_1);
+  @Test
+  fun requestBodyFailHttp1OverHttps() {
+    enableTlsWithTunnel()
+    server.protocols = Arrays.asList(Protocol.HTTP_1_1)
+    requestBodyFail(Protocol.HTTP_1_1)
   }
 
-  @Test public void requestBodyFailHttp2OverHttps() {
-    platform.assumeHttp2Support();
-
-    enableTlsWithTunnel();
-    server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
-
-    requestBodyFail(Protocol.HTTP_2);
+  @Test
+  fun requestBodyFailHttp2OverHttps() {
+    platform.assumeHttp2Support()
+    enableTlsWithTunnel()
+    server.protocols = Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
+    requestBodyFail(Protocol.HTTP_2)
   }
 
-  @Test public void requestBodyFailHttp() {
-    requestBodyFail(null);
+  @Test
+  fun requestBodyFailHttp() {
+    requestBodyFail(null)
   }
 
-  private void requestBodyFail(@Nullable Protocol expectedProtocol) {
-    server.enqueue(new MockResponse.Builder()
-        .socketPolicy(DisconnectDuringRequestBody.INSTANCE)
-        .build());
-
-    NonCompletingRequestBody request = new NonCompletingRequestBody();
-    Call call = client.newCall(new Request.Builder()
+  private fun requestBodyFail(expectedProtocol: Protocol?) {
+    server.enqueue(
+      MockResponse.Builder()
+        .socketPolicy(DisconnectDuringRequestBody)
+        .build()
+    )
+    val request = NonCompletingRequestBody()
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
         .post(request)
-        .build());
+        .build()
+    )
     try {
-      call.execute();
-      fail();
-    } catch (IOException expected) {
+      call.execute()
+      fail<Any?>()
+    } catch (expected: IOException) {
     }
-
     if (expectedProtocol != null) {
-      ConnectionAcquired connectionAcquired = listener.removeUpToEvent(ConnectionAcquired.class);
-      assertThat(connectionAcquired.getConnection().protocol()).isEqualTo(expectedProtocol);
+      val connectionAcquired = listener.removeUpToEvent<ConnectionAcquired>()
+      assertThat(connectionAcquired.connection.protocol())
+        .isEqualTo(expectedProtocol)
     }
-
-    CallFailed callFailed = listener.removeUpToEvent(CallFailed.class);
-    assertThat(callFailed.getIoe()).isNotNull();
-
-    assertThat(request.ioe).isNotNull();
+    val callFailed = listener.removeUpToEvent<CallFailed>()
+    assertThat(callFailed.ioe).isNotNull()
+    assertThat(request.ioe).isNotNull()
   }
 
-  private class NonCompletingRequestBody extends RequestBody {
-    private final byte[] chunk = new byte[1024 * 1024];
-    IOException ioe;
-
-    @Override public MediaType contentType() {
-      return MediaType.get("text/plain");
+  private inner class NonCompletingRequestBody : RequestBody() {
+    private val chunk: ByteArray? = ByteArray(1024 * 1024)
+    var ioe: IOException? = null
+    override fun contentType(): MediaType? {
+      return "text/plain".toMediaType()
     }
 
-    @Override public long contentLength() {
-      return chunk.length * 8L;
+    override fun contentLength(): Long {
+      return chunk!!.size * 8L
     }
 
-    @Override public void writeTo(BufferedSink sink) throws IOException {
+    override fun writeTo(sink: BufferedSink) {
       try {
-        for (int i = 0; i < contentLength(); i += chunk.length) {
-          sink.write(chunk);
-          sink.flush();
-          Thread.sleep(100);
+        var i = 0
+        while (i < contentLength()) {
+          sink.write(chunk!!)
+          sink.flush()
+          Thread.sleep(100)
+          i += chunk.size
         }
-      } catch (IOException e) {
-        ioe = e;
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
+      } catch (e: IOException) {
+        ioe = e
+      } catch (e: InterruptedException) {
+        throw RuntimeException(e)
       }
     }
   }
 
-  @Test public void requestBodyMultipleFailuresReportedOnlyOnce() {
-    RequestBody requestBody = new RequestBody() {
-      @Override public MediaType contentType() {
-        return MediaType.get("text/plain");
+  @Test
+  fun requestBodyMultipleFailuresReportedOnlyOnce() {
+    val requestBody: RequestBody = object : RequestBody() {
+      override fun contentType() = "text/plain".toMediaType()
+
+      override fun contentLength(): Long {
+        return 1024 * 1024 * 256
       }
 
-      @Override public long contentLength() {
-        return 1024 * 1024 * 256;
-      }
-
-      @Override public void writeTo(BufferedSink sink) throws IOException {
-        int failureCount = 0;
-        for (int i = 0; i < 1024; i++) {
+      override fun writeTo(sink: BufferedSink) {
+        var failureCount = 0
+        for (i in 0..1023) {
           try {
-            sink.write(new byte[1024 * 256]);
-            sink.flush();
-          } catch (IOException e) {
-            failureCount++;
-            if (failureCount == 3) throw e;
+            sink.write(ByteArray(1024 * 256))
+            sink.flush()
+          } catch (e: IOException) {
+            failureCount++
+            if (failureCount == 3) throw e
           }
         }
       }
-    };
-
-    server.enqueue(new MockResponse.Builder()
-        .socketPolicy(DisconnectDuringRequestBody.INSTANCE)
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+    }
+    server.enqueue(
+      MockResponse.Builder()
+        .socketPolicy(DisconnectDuringRequestBody)
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
         .post(requestBody)
-        .build());
+        .build()
+    )
     try {
-      call.execute();
-      fail();
-    } catch (IOException expected) {
+      call.execute()
+      fail<Any?>()
+    } catch (expected: IOException) {
     }
-
     assertThat(listener.recordedEventTypes()).containsExactly(
-        "CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd", "ConnectStart",
-        "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
-        "RequestBodyStart", "RequestFailed", "ResponseFailed", "ConnectionReleased", "CallFailed");
+      "CallStart",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "RequestBodyStart",
+      "RequestFailed",
+      "ResponseFailed",
+      "ConnectionReleased",
+      "CallFailed"
+    )
   }
 
-  @Test public void requestBodySuccessHttp1OverHttps() throws IOException {
-    enableTlsWithTunnel();
-    server.setProtocols(asList(Protocol.HTTP_1_1));
-    requestBodySuccess(RequestBody.create("Hello", MediaType.get("text/plain")), equalTo(5L),
-        equalTo(19L));
+  @Test
+  fun requestBodySuccessHttp1OverHttps() {
+    enableTlsWithTunnel()
+    server.protocols = Arrays.asList(Protocol.HTTP_1_1)
+    requestBodySuccess(
+      "Hello".toRequestBody("text/plain".toMediaType()), CoreMatchers.equalTo(5L),
+      CoreMatchers.equalTo(19L)
+    )
   }
 
-  @Test public void requestBodySuccessHttp2OverHttps() throws IOException {
-    platform.assumeHttp2Support();
-
-    enableTlsWithTunnel();
-    server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
-    requestBodySuccess(RequestBody.create("Hello", MediaType.get("text/plain")), equalTo(5L),
-        equalTo(19L));
+  @Test
+  fun requestBodySuccessHttp2OverHttps() {
+    platform.assumeHttp2Support()
+    enableTlsWithTunnel()
+    server.protocols = Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
+    requestBodySuccess(
+      "Hello".toRequestBody("text/plain".toMediaType()), CoreMatchers.equalTo(5L),
+      CoreMatchers.equalTo(19L)
+    )
   }
 
-  @Test public void requestBodySuccessHttp() throws IOException {
-    requestBodySuccess(RequestBody.create("Hello", MediaType.get("text/plain")), equalTo(5L),
-        equalTo(19L));
+  @Test
+  fun requestBodySuccessHttp() {
+    requestBodySuccess(
+      "Hello".toRequestBody("text/plain".toMediaType()), CoreMatchers.equalTo(5L),
+      CoreMatchers.equalTo(19L)
+    )
   }
 
-  @Test public void requestBodySuccessStreaming() throws IOException {
-    RequestBody requestBody = new RequestBody() {
-      @Override public MediaType contentType() {
-        return MediaType.get("text/plain");
+  @Test
+  fun requestBodySuccessStreaming() {
+    val requestBody: RequestBody = object : RequestBody() {
+      override fun contentType() = "text/plain".toMediaType()
+
+      override fun writeTo(sink: BufferedSink) {
+        sink.write(ByteArray(8192))
+        sink.flush()
       }
-
-      @Override public void writeTo(BufferedSink sink) throws IOException {
-        sink.write(new byte[8192]);
-        sink.flush();
-      }
-    };
-
-    requestBodySuccess(requestBody, equalTo(8192L), equalTo(19L));
+    }
+    requestBodySuccess(requestBody, CoreMatchers.equalTo(8192L), CoreMatchers.equalTo(19L))
   }
 
-  @Test public void requestBodySuccessEmpty() throws IOException {
-    requestBodySuccess(RequestBody.create("", MediaType.get("text/plain")), equalTo(0L),
-        equalTo(19L));
+  @Test
+  fun requestBodySuccessEmpty() {
+    requestBodySuccess(
+      "".toRequestBody("text/plain".toMediaType()), CoreMatchers.equalTo(0L),
+      CoreMatchers.equalTo(19L)
+    )
   }
 
-  @Test public void successfulCallEventSequenceWithListener() throws IOException {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun successfulCallEventSequenceWithListener() {
+    server.enqueue(
+      MockResponse.Builder()
         .body("abc")
-        .build());
-
+        .build()
+    )
     client = client.newBuilder()
-        .addNetworkInterceptor(new HttpLoggingInterceptor()
-            .setLevel(HttpLoggingInterceptor.Level.BODY))
-        .build();
-    Call call = client.newCall(new Request.Builder()
+      .addNetworkInterceptor(
+        HttpLoggingInterceptor()
+          .setLevel(HttpLoggingInterceptor.Level.BODY)
+      )
+      .build()
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    assertThat(response.body().string()).isEqualTo("abc");
-    response.body().close();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
-        "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    assertThat(response.body.string()).isEqualTo("abc")
+    response.body.close()
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart",
+      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
+      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+      "ResponseBodyEnd", "ConnectionReleased", "CallEnd"
+    )
   }
 
-  private void requestBodySuccess(RequestBody body, Matcher<Long> requestBodyBytes,
-      Matcher<Long> responseHeaderLength) throws IOException {
-    server.enqueue(new MockResponse.Builder()
+  private fun requestBodySuccess(
+    body: RequestBody?, requestBodyBytes: Matcher<Long?>?,
+    responseHeaderLength: Matcher<Long?>?
+  ) {
+    server.enqueue(
+      MockResponse.Builder()
         .code(200)
         .body("World!")
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .post(body)
-        .build());
-    Response response = call.execute();
-    assertThat(response.body().string()).isEqualTo("World!");
-
-    assertBytesReadWritten(listener, any(Long.class), requestBodyBytes, responseHeaderLength,
-        equalTo(6L));
+        .post(body!!)
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.body.string()).isEqualTo("World!")
+    assertBytesReadWritten(
+      listener, CoreMatchers.any(Long::class.java), requestBodyBytes, responseHeaderLength,
+      CoreMatchers.equalTo(6L)
+    )
   }
 
-  @Test public void timeToFirstByteHttp1OverHttps() throws IOException {
-    enableTlsWithTunnel();
-    server.setProtocols(asList(Protocol.HTTP_1_1));
-
-    timeToFirstByte();
+  @Test
+  fun timeToFirstByteHttp1OverHttps() {
+    enableTlsWithTunnel()
+    server.protocols = Arrays.asList(Protocol.HTTP_1_1)
+    timeToFirstByte()
   }
 
-  @Test public void timeToFirstByteHttp2OverHttps() throws IOException {
-    platform.assumeHttp2Support();
-    enableTlsWithTunnel();
-    server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
-
-    timeToFirstByte();
+  @Test
+  fun timeToFirstByteHttp2OverHttps() {
+    platform.assumeHttp2Support()
+    enableTlsWithTunnel()
+    server.protocols = Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
+    timeToFirstByte()
   }
 
   /**
@@ -1280,378 +1430,421 @@ public final class EventListenerTest {
    * We've had bugs where we report an event when we request data rather than when the data actually
    * arrives. https://github.com/square/okhttp/issues/5578
    */
-  private void timeToFirstByte() throws IOException {
-    long applicationInterceptorDelay = 250L;
-    long networkInterceptorDelay = 250L;
-    long requestBodyDelay = 250L;
-    long responseHeadersStartDelay = 250L;
-    long responseBodyStartDelay = 250L;
-    long responseBodyEndDelay = 250L;
+  private fun timeToFirstByte() {
+    val applicationInterceptorDelay = 250L
+    val networkInterceptorDelay = 250L
+    val requestBodyDelay = 250L
+    val responseHeadersStartDelay = 250L
+    val responseBodyStartDelay = 250L
+    val responseBodyEndDelay = 250L
 
     // Warm up the client so the timing part of the test gets a pooled connection.
-    server.enqueue(new MockResponse());
-    Call warmUpCall = client.newCall(new Request.Builder()
+    server.enqueue(MockResponse())
+    val warmUpCall = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    try (Response warmUpResponse = warmUpCall.execute()) {
-      warmUpResponse.body().string();
-    }
-    listener.clearAllEvents();
+        .build()
+    )
+    warmUpCall.execute().use { warmUpResponse -> warmUpResponse.body.string() }
+    listener.clearAllEvents()
 
     // Create a client with artificial delays.
     client = client.newBuilder()
-        .addInterceptor(chain -> {
-          try {
-            Thread.sleep(applicationInterceptorDelay);
-            return chain.proceed(chain.request());
-          } catch (InterruptedException e) {
-            throw new InterruptedIOException();
-          }
-        })
-        .addNetworkInterceptor(chain -> {
-          try {
-            Thread.sleep(networkInterceptorDelay);
-            return chain.proceed(chain.request());
-          } catch (InterruptedException e) {
-            throw new InterruptedIOException();
-          }
-        })
-        .build();
+      .addInterceptor(Interceptor { chain: Interceptor.Chain ->
+        try {
+          Thread.sleep(applicationInterceptorDelay)
+          return@Interceptor chain.proceed(chain.request())
+        } catch (e: InterruptedException) {
+          throw InterruptedIOException()
+        }
+      })
+      .addNetworkInterceptor(Interceptor { chain: Interceptor.Chain ->
+        try {
+          Thread.sleep(networkInterceptorDelay)
+          return@Interceptor chain.proceed(chain.request())
+        } catch (e: InterruptedException) {
+          throw InterruptedIOException()
+        }
+      })
+      .build()
 
     // Create a request body with artificial delays.
-    Call call = client.newCall(new Request.Builder()
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .post(new RequestBody() {
-          @Override public @Nullable MediaType contentType() {
-            return null;
+        .post(object : RequestBody() {
+          override fun contentType(): MediaType? {
+            return null
           }
 
-          @Override public void writeTo(BufferedSink sink) throws IOException {
+          override fun writeTo(sink: BufferedSink) {
             try {
-              Thread.sleep(requestBodyDelay);
-              sink.writeUtf8("abc");
-            } catch (InterruptedException e) {
-              throw new InterruptedIOException();
+              Thread.sleep(requestBodyDelay)
+              sink.writeUtf8("abc")
+            } catch (e: InterruptedException) {
+              throw InterruptedIOException()
             }
           }
         })
-        .build());
+        .build()
+    )
 
     // Create a response with artificial delays.
-    server.enqueue(new MockResponse.Builder()
+    server.enqueue(
+      MockResponse.Builder()
         .headersDelay(responseHeadersStartDelay, TimeUnit.MILLISECONDS)
         .bodyDelay(responseBodyStartDelay, TimeUnit.MILLISECONDS)
         .throttleBody(5, responseBodyEndDelay, TimeUnit.MILLISECONDS)
         .body("fghijk")
-        .build());
-
-    // Make the call.
-    try (Response response = call.execute()) {
-      assertThat(response.body().string()).isEqualTo("fghijk");
+        .build()
+    )
+    call.execute().use { response ->
+      assertThat(response.body.string()).isEqualTo("fghijk")
     }
 
     // Confirm the events occur when expected.
-    listener.takeEvent(CallStart.class, 0L);
-    listener.takeEvent(ConnectionAcquired.class, applicationInterceptorDelay);
-    listener.takeEvent(RequestHeadersStart.class, networkInterceptorDelay);
-    listener.takeEvent(RequestHeadersEnd.class, 0L);
-    listener.takeEvent(RequestBodyStart.class, 0L);
-    listener.takeEvent(RequestBodyEnd.class, requestBodyDelay);
-    listener.takeEvent(ResponseHeadersStart.class, responseHeadersStartDelay);
-    listener.takeEvent(ResponseHeadersEnd.class, 0L);
-    listener.takeEvent(ResponseBodyStart.class, responseBodyStartDelay);
-    listener.takeEvent(ResponseBodyEnd.class, responseBodyEndDelay);
-    listener.takeEvent(ConnectionReleased.class, 0L);
-    listener.takeEvent(CallEnd.class, 0L);
+    listener.takeEvent(CallStart::class.java, 0L)
+    listener.takeEvent(ConnectionAcquired::class.java, applicationInterceptorDelay)
+    listener.takeEvent(RequestHeadersStart::class.java, networkInterceptorDelay)
+    listener.takeEvent(RequestHeadersEnd::class.java, 0L)
+    listener.takeEvent(RequestBodyStart::class.java, 0L)
+    listener.takeEvent(RequestBodyEnd::class.java, requestBodyDelay)
+    listener.takeEvent(ResponseHeadersStart::class.java, responseHeadersStartDelay)
+    listener.takeEvent(ResponseHeadersEnd::class.java, 0L)
+    listener.takeEvent(ResponseBodyStart::class.java, responseBodyStartDelay)
+    listener.takeEvent(ResponseBodyEnd::class.java, responseBodyEndDelay)
+    listener.takeEvent(CallEvent.ConnectionReleased::class.java, 0L)
+    listener.takeEvent(CallEnd::class.java, 0L)
   }
 
-  private void enableTlsWithTunnel() {
+  private fun enableTlsWithTunnel() {
     client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
-    server.useHttps(handshakeCertificates.sslSocketFactory());
-  }
-
-  @Test public void redirectUsingSameConnectionEventSequence() throws IOException {
-    server.enqueue(new MockResponse.Builder()
-        .code(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: /foo")
-        .build());
-    server.enqueue(new MockResponse());
-
-    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
-    call.execute();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
-        "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
-        "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
-        "CallEnd");
+      .sslSocketFactory(
+        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
+      )
+      .hostnameVerifier(RecordingHostnameVerifier())
+      .build()
+    server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 
   @Test
-  public void redirectUsingNewConnectionEventSequence() throws IOException {
-    MockWebServer otherServer = new MockWebServer();
+  fun redirectUsingSameConnectionEventSequence() {
     server.enqueue(
-        new MockResponse.Builder()
-            .code(HttpURLConnection.HTTP_MOVED_TEMP)
-            .addHeader("Location: " + otherServer.url("/foo"))
-            .build());
-    otherServer.enqueue(new MockResponse());
-
-    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
-    call.execute();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
-        "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "ConnectionReleased", "ProxySelectStart", "ProxySelectEnd",
-        "DnsStart", "DnsEnd", "ConnectStart", "ConnectEnd",
-        "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
-        "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
-        "CallEnd");
-  }
-
-  @Test public void applicationInterceptorProceedsMultipleTimes() throws Exception {
-    server.enqueue(new MockResponse.Builder().body("a").build());
-    server.enqueue(new MockResponse.Builder().body("b").build());
-
-    client = client.newBuilder()
-        .addInterceptor(chain -> {
-          try (Response a = chain.proceed(chain.request())) {
-            assertThat(a.body().string()).isEqualTo("a");
-          }
-          return chain.proceed(chain.request());
-        })
-        .build();
-
-    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
-    Response response = call.execute();
-    assertThat(response.body().string()).isEqualTo("b");
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
-        "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
-        "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
-        "CallEnd");
-
-    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
-    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
-  }
-
-  @Test public void applicationInterceptorShortCircuit() throws Exception {
-    client = client.newBuilder()
-        .addInterceptor(chain -> new Response.Builder()
-            .request(chain.request())
-            .protocol(Protocol.HTTP_1_1)
-            .code(200)
-            .message("OK")
-            .body(ResponseBody.create("a", null))
-            .build())
-        .build();
-
-    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
-    Response response = call.execute();
-    assertThat(response.body().string()).isEqualTo("a");
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CallEnd");
-  }
-
-  /** Response headers start, then the entire request body, then response headers end. */
-  @Test public void expectContinueStartsResponseHeadersEarly() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .add100Continue()
-        .build());
-
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .header("Expect", "100-continue")
-        .post(RequestBody.create("abc", MediaType.get("text/plain")))
-        .build();
-
-    Call call = client.newCall(request);
-    call.execute();
-
+      MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
+        .addHeader("Location: /foo")
+        .build()
+    )
+    server.enqueue(MockResponse())
+    val call = client.newCall(Request.Builder().url(server.url("/")).build())
+    call.execute()
     assertThat(listener.recordedEventTypes()).containsExactly(
-        "CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd", "ConnectStart",
-        "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
-        "ResponseHeadersStart", "RequestBodyStart", "RequestBodyEnd", "ResponseHeadersEnd",
-        "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+      "CallStart",
+      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
+      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+      "ResponseBodyEnd", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
+      "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
+      "CallEnd"
+    )
   }
 
-  @Test public void timeToFirstByteGapBetweenResponseHeaderStartAndEnd() throws IOException {
-    long responseHeadersStartDelay = 250L;
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun redirectUsingNewConnectionEventSequence() {
+    val otherServer = MockWebServer()
+    server.enqueue(
+      MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
+        .addHeader("Location: " + otherServer.url("/foo"))
+        .build()
+    )
+    otherServer.enqueue(MockResponse())
+    val call = client.newCall(Request.Builder().url(server.url("/")).build())
+    call.execute()
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd"
+    )
+  }
+
+  @Test
+  fun applicationInterceptorProceedsMultipleTimes() {
+    server.enqueue(MockResponse.Builder().body("a").build())
+    server.enqueue(MockResponse.Builder().body("b").build())
+    client = client.newBuilder()
+      .addInterceptor(Interceptor { chain: Interceptor.Chain? ->
+        chain!!.proceed(chain.request())
+          .use { a -> assertThat(a.body.string()).isEqualTo("a") }
+        chain.proceed(chain.request())
+      })
+      .build()
+    val call = client.newCall(Request.Builder().url(server.url("/")).build())
+    val response = call.execute()
+    assertThat(response.body.string()).isEqualTo("b")
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart",
+      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
+      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+      "ResponseBodyEnd", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
+      "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
+      "CallEnd"
+    )
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+  }
+
+  @Test
+  fun applicationInterceptorShortCircuit() {
+    client = client.newBuilder()
+      .addInterceptor(Interceptor { chain: Interceptor.Chain? ->
+        Response.Builder()
+          .request(chain!!.request())
+          .protocol(Protocol.HTTP_1_1)
+          .code(200)
+          .message("OK")
+          .body("a".toResponseBody(null))
+          .build()
+      })
+      .build()
+    val call = client.newCall(Request.Builder().url(server.url("/")).build())
+    val response = call.execute()
+    assertThat(response.body.string()).isEqualTo("a")
+    assertThat(listener.recordedEventTypes())
+      .containsExactly("CallStart", "CallEnd")
+  }
+
+  /** Response headers start, then the entire request body, then response headers end.  */
+  @Test
+  fun expectContinueStartsResponseHeadersEarly() {
+    server.enqueue(
+      MockResponse.Builder()
+        .add100Continue()
+        .build()
+    )
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .header("Expect", "100-continue")
+      .post("abc".toRequestBody("text/plain".toMediaType()))
+      .build()
+    val call = client.newCall(request)
+    call.execute()
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd", "ConnectStart",
+      "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
+      "ResponseHeadersStart", "RequestBodyStart", "RequestBodyEnd", "ResponseHeadersEnd",
+      "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd"
+    )
+  }
+
+  @Test
+  fun timeToFirstByteGapBetweenResponseHeaderStartAndEnd() {
+    val responseHeadersStartDelay = 250L
+    server.enqueue(
+      MockResponse.Builder()
         .add100Continue()
         .headersDelay(responseHeadersStartDelay, TimeUnit.MILLISECONDS)
-        .build());
-
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .header("Expect", "100-continue")
-        .post(RequestBody.create("abc", MediaType.get("text/plain")))
-        .build();
-
-    Call call = client.newCall(request);
-    try (Response response = call.execute()) {
-      assertThat(response.body().string()).isEqualTo("");
-    }
-
-    listener.removeUpToEvent(ResponseHeadersStart.class);
-    listener.takeEvent(RequestBodyStart.class, 0L);
-    listener.takeEvent(RequestBodyEnd.class, 0L);
-    listener.takeEvent(ResponseHeadersEnd.class, responseHeadersStartDelay);
+        .build()
+    )
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .header("Expect", "100-continue")
+      .post("abc".toRequestBody("text/plain".toMediaType()))
+      .build()
+    val call = client.newCall(request)
+    call.execute()
+      .use { response -> assertThat(response.body.string()).isEqualTo("") }
+    listener.removeUpToEvent<ResponseHeadersStart>()
+    listener.takeEvent(RequestBodyStart::class.java, 0L)
+    listener.takeEvent(RequestBodyEnd::class.java, 0L)
+    listener.takeEvent(ResponseHeadersEnd::class.java, responseHeadersStartDelay)
   }
 
-  @Test public void cacheMiss() throws IOException {
-    enableCache();
-
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun cacheMiss() {
+    enableCache()
+    server.enqueue(
+      MockResponse.Builder()
         .body("abc")
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+        .build()
+    )
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    assertThat(response.body().string()).isEqualTo("abc");
-    response.close();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheMiss",
-        "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
-        "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    assertThat(response.body.string()).isEqualTo("abc")
+    response.close()
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart", "CacheMiss",
+      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
+      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
+      "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd"
+    )
   }
 
-  @Test public void conditionalCache() throws IOException {
-    enableCache();
-
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun conditionalCache() {
+    enableCache()
+    server.enqueue(
+      MockResponse.Builder()
         .addHeader("ETag", "v1")
         .body("abc")
-        .build());
-    server.enqueue(new MockResponse.Builder()
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
         .code(HttpURLConnection.HTTP_NOT_MODIFIED)
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+        .build()
+    )
+    var call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    response.close();
-
-    listener.clearAllEvents();
-
-    call = call.clone();
-
-    response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    assertThat(response.body().string()).isEqualTo("abc");
-    response.close();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheConditionalHit",
-        "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
-        "ResponseBodyStart", "ResponseBodyEnd", "CacheHit", "ConnectionReleased", "CallEnd");
+        .build()
+    )
+    var response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    response.close()
+    listener.clearAllEvents()
+    call = call.clone()
+    response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    assertThat(response.body.string()).isEqualTo("abc")
+    response.close()
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart", "CacheConditionalHit",
+      "ConnectionAcquired", "RequestHeadersStart",
+      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
+      "ResponseBodyStart", "ResponseBodyEnd", "CacheHit", "ConnectionReleased", "CallEnd"
+    )
   }
 
-  @Test public void conditionalCacheMiss() throws IOException {
-    enableCache();
-
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun conditionalCacheMiss() {
+    enableCache()
+    server.enqueue(
+      MockResponse.Builder()
         .addHeader("ETag: v1")
         .body("abc")
-        .build());
-    server.enqueue(new MockResponse.Builder()
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
         .code(HttpURLConnection.HTTP_OK)
         .addHeader("ETag: v2")
         .body("abd")
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+        .build()
+    )
+    var call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    response.close();
-
-    listener.clearAllEvents();
-
-    call = call.clone();
-
-    response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    assertThat(response.body().string()).isEqualTo("abd");
-    response.close();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheConditionalHit",
-        "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "CacheMiss",
-        "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+        .build()
+    )
+    var response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    response.close()
+    listener.clearAllEvents()
+    call = call.clone()
+    response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    assertThat(response.body.string()).isEqualTo("abd")
+    response.close()
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart", "CacheConditionalHit",
+      "ConnectionAcquired", "RequestHeadersStart",
+      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "CacheMiss",
+      "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd"
+    )
   }
 
-  @Test public void satisfactionFailure() throws IOException {
-    enableCache();
-
-    Call call = client.newCall(new Request.Builder()
+  @Test
+  fun satisfactionFailure() {
+    enableCache()
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
         .cacheControl(CacheControl.FORCE_CACHE)
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(504);
-    response.close();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "SatisfactionFailure", "CallEnd");
+        .build()
+    )
+    val response = call.execute()
+    assertThat(response.code).isEqualTo(504)
+    response.close()
+    assertThat(listener.recordedEventTypes())
+      .containsExactly("CallStart", "SatisfactionFailure", "CallEnd")
   }
 
-  @Test public void cacheHit() throws IOException {
-    enableCache();
-
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun cacheHit() {
+    enableCache()
+    server.enqueue(
+      MockResponse.Builder()
         .body("abc")
         .addHeader("cache-control: public, max-age=300")
-        .build());
-
-    Call call = client.newCall(new Request.Builder()
+        .build()
+    )
+    var call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    assertThat(response.body().string()).isEqualTo("abc");
-    response.close();
-
-    listener.clearAllEvents();
-
-    call = call.clone();
-    response = call.execute();
-    assertThat(response.code()).isEqualTo(200);
-    assertThat(response.body().string()).isEqualTo("abc");
-    response.close();
-
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheHit", "CallEnd");
+        .build()
+    )
+    var response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    assertThat(response.body.string()).isEqualTo("abc")
+    response.close()
+    listener.clearAllEvents()
+    call = call.clone()
+    response = call.execute()
+    assertThat(response.code).isEqualTo(200)
+    assertThat(response.body.string()).isEqualTo("abc")
+    response.close()
+    assertThat(listener.recordedEventTypes())
+      .containsExactly("CallStart", "CacheHit", "CallEnd")
   }
 
-  private Cache enableCache() throws IOException {
-    cache = makeCache();
-    client = client.newBuilder().cache(cache).build();
-    return cache;
+  private fun enableCache(): Cache? {
+    cache = makeCache()
+    client = client.newBuilder().cache(cache).build()
+    return cache
   }
 
-  private Cache makeCache() throws IOException {
-    File cacheDir = File.createTempFile("cache-", ".dir");
-    cacheDir.delete();
-    return new Cache(cacheDir, 1024 * 1024);
+  private fun makeCache(): Cache {
+    val cacheDir = File.createTempFile("cache-", ".dir")
+    cacheDir.delete()
+    return Cache(cacheDir, (1024 * 1024).toLong())
+  }
+
+  companion object {
+    val anyResponse = CoreMatchers.any(Response::class.java)
   }
 }
