@@ -95,6 +95,8 @@ open class RecordingEventListener(
     }
   }
 
+  inline fun <reified T : CallEvent> removeUpToEvent(): T = removeUpToEvent(T::class.java)
+
   /**
    * Remove and return the next event from the recorded sequence.
    *
