@@ -103,7 +103,7 @@ class Http2ConnectionTest {
 
     // This stream was created *after* the connection settings were adjusted.
     val stream = connection.newStream(headerEntries("a", "android"), false)
-    assertThat(connection.peerSettings.initialWindowSize).isEqualTo(3368L)
+    assertThat(connection.peerSettings.initialWindowSize).isEqualTo(3368)
     // New Stream is has the most recent initial window size.
     assertThat(stream.writeBytesTotal).isEqualTo(0L)
     assertThat(stream.writeBytesMaximum).isEqualTo(3368L)
@@ -1032,7 +1032,7 @@ class Http2ConnectionTest {
     synchronized(connection) {
       assertThat(connection.peerSettings.headerTableSize).isEqualTo(-1)
       assertThat(connection.peerSettings.initialWindowSize)
-        .isEqualTo(Settings.DEFAULT_INITIAL_WINDOW_SIZE.toLong())
+        .isEqualTo(Settings.DEFAULT_INITIAL_WINDOW_SIZE)
       assertThat(connection.peerSettings.getMaxFrameSize(-1)).isEqualTo(-1)
       assertThat(connection.peerSettings.getMaxConcurrentStreams()).isEqualTo(60000)
     }

@@ -2870,7 +2870,7 @@ class URLConnectionTest {
     assertThat(
       server.takeRequest().sequenceNumber,
       "When connection: close is used, each request should get its own connection"
-    ).isEqualTo(0L)
+    ).isEqualTo(0)
   }
 
   @Test
@@ -2885,7 +2885,7 @@ class URLConnectionTest {
     assertThat(
       server.takeRequest().sequenceNumber,
       "When connection: close is used, each request should get its own connection",
-    ).isEqualTo(0L)
+    ).isEqualTo(0)
   }
 
   @Test
@@ -2908,7 +2908,7 @@ class URLConnectionTest {
     assertThat(
       server.takeRequest().sequenceNumber,
       "When connection: close is used, each request should get its own connection"
-    ).isEqualTo(0L)
+    ).isEqualTo(0)
   }
 
   /**
@@ -3802,7 +3802,7 @@ class URLConnectionTest {
       MockResponse(body = "b")
     )
     val response1 = getResponse(newRequest("/"))
-    assertThat(response1.code).isEqualTo(HttpURLConnection.HTTP_NOT_MODIFIED.toLong())
+    assertThat(response1.code).isEqualTo(HttpURLConnection.HTTP_NOT_MODIFIED)
     assertContent("", response1)
     val response2 = getResponse(newRequest("/"))
     assertThat(response2.code).isEqualTo(HttpURLConnection.HTTP_OK)

@@ -86,6 +86,7 @@ import okio.BufferedSink
 import okio.GzipSink
 import okio.buffer
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Disabled
@@ -260,7 +261,7 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("ABCDE")
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
-    org.junit.jupiter.api.Assertions.assertArrayEquals(postBytes, request.body.readByteArray())
+    assertArrayEquals(postBytes, request.body.readByteArray())
       assertThat(request.headers["Content-Length"]).isNull()
   }
 
@@ -287,10 +288,8 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("ABCDE")
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
-    org.junit.jupiter.api.Assertions.assertArrayEquals(postBytes, request.body.readByteArray())
-    assertThat(request.headers["Content-Length"]!!.toInt()).isEqualTo(
-      postBytes.size.toLong()
-    )
+    assertArrayEquals(postBytes, request.body.readByteArray())
+    assertThat(request.headers["Content-Length"]!!.toInt()).isEqualTo(postBytes.size)
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -320,9 +319,8 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("ABCDE")
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
-    org.junit.jupiter.api.Assertions.assertArrayEquals(postBytes, request.body.readByteArray())
-    assertThat(request.headers["Content-Length"]!!.toInt())
-      .isEqualTo(postBytes.size.toLong())
+    assertArrayEquals(postBytes, request.body.readByteArray())
+    assertThat(request.headers["Content-Length"]!!.toInt()).isEqualTo(postBytes.size)
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -1140,7 +1138,8 @@ class HttpOverHttp2Test {
 
   /** Make a call and canceling it as soon as it's accepted by the server.  */
   private fun callAndCancel(
-    expectedSequenceNumber: Int, responseDequeuedLatch: CountDownLatch?,
+    expectedSequenceNumber: Int,
+    responseDequeuedLatch: CountDownLatch?,
     requestCanceledLatch: CountDownLatch?
   ) {
     val call = client.newCall(Request(server.url("/")))
@@ -1155,7 +1154,7 @@ class HttpOverHttp2Test {
       }
     })
     assertThat(server.takeRequest().sequenceNumber)
-      .isEqualTo(expectedSequenceNumber.toLong())
+      .isEqualTo(expectedSequenceNumber)
     responseDequeuedLatch!!.await()
     call.cancel()
     requestCanceledLatch!!.countDown()
@@ -1382,9 +1381,9 @@ class HttpOverHttp2Test {
     // doesn't wait to read the client's DATA frame and may send a DATA frame before the client
     // does. So we can't assume the client's empty DATA will be logged first.
     assertThat(countFrames(logs, "FINE: >> 0x00000003     0 DATA          END_STREAM"))
-      .isEqualTo(1L)
+      .isEqualTo(1)
     assertThat(countFrames(logs, "FINE: >> 0x00000003     3 DATA          END_STREAM"))
-      .isEqualTo(1L)
+      .isEqualTo(1)
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -1410,13 +1409,13 @@ class HttpOverHttp2Test {
     // Confirm a single ping was sent and received, and its reply was sent and received.
     val logs = testLogHandler.takeAll()
     assertThat(countFrames(logs, "FINE: >> 0x00000000     8 PING          "))
-      .isEqualTo(1L)
+      .isEqualTo(1)
     assertThat(countFrames(logs, "FINE: << 0x00000000     8 PING          "))
-      .isEqualTo(1L)
+      .isEqualTo(1)
     assertThat(countFrames(logs, "FINE: >> 0x00000000     8 PING          ACK"))
-      .isEqualTo(1L)
+      .isEqualTo(1)
     assertThat(countFrames(logs, "FINE: << 0x00000000     8 PING          ACK"))
-      .isEqualTo(1L)
+      .isEqualTo(1)
   }
 
   @Flaky @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -1456,9 +1455,9 @@ class HttpOverHttp2Test {
     // Confirm a single ping was sent but not acknowledged.
     val logs = testLogHandler.takeAll()
     assertThat(countFrames(logs, "FINE: >> 0x00000000     8 PING          "))
-      .isEqualTo(1L)
+      .isEqualTo(1)
     assertThat(countFrames(logs, "FINE: << 0x00000000     8 PING          ACK"))
-      .isEqualTo(0L)
+      .isEqualTo(0)
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)

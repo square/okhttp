@@ -4081,7 +4081,7 @@ open class CallTest {
       .build()
     executeSynchronously(request)
       .assertFailure(FileNotFoundException::class.java)
-    assertThat(called.get()).isEqualTo(1L)
+    assertThat(called.get()).isEqualTo(1)
   }
 
   @Test

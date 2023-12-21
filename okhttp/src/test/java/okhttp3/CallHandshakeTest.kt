@@ -94,7 +94,7 @@ class CallHandshakeTest {
 
     val handshake = makeRequest(client)
 
-    assertThat(handshake.cipherSuite).isIn(expectedModernTls12CipherSuites)
+    assertThat(handshake.cipherSuite).isIn(*expectedModernTls12CipherSuites.toTypedArray())
 
     // Probably something like
     // TLS_AES_128_GCM_SHA256
@@ -104,7 +104,7 @@ class CallHandshakeTest {
     // TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
     // TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     assertThat(handshakeEnabledCipherSuites).containsExactly(
-      expectedConnectionCipherSuites(client))
+      *expectedConnectionCipherSuites(client).toTypedArray())
   }
 
   @Test
@@ -117,7 +117,7 @@ class CallHandshakeTest {
 
     val handshake = makeRequest(client)
 
-    assertThat(handshake.cipherSuite).isIn(expectedModernTls12CipherSuites)
+    assertThat(handshake.cipherSuite).isIn(*expectedModernTls12CipherSuites.toTypedArray())
 
     // Probably something like
     // TLS_AES_128_GCM_SHA256
@@ -146,7 +146,7 @@ class CallHandshakeTest {
 
     val handshake = makeRequest(client)
 
-    assertThat(handshake.cipherSuite).isIn(expectedModernTls13CipherSuites)
+    assertThat(handshake.cipherSuite).isIn(*expectedModernTls13CipherSuites.toTypedArray())
 
     // TODO: filter down to TLSv1.3 when only activated.
     // Probably something like
