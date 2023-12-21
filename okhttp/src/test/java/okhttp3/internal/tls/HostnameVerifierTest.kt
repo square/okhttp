@@ -16,10 +16,15 @@
  */
 package okhttp3.internal.tls
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isInstanceOf
+import assertk.assertions.isTrue
 import java.io.ByteArrayInputStream
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
-import java.util.stream.Stream
 import javax.net.ssl.SSLSession
 import javax.security.auth.x500.X500Principal
 import okhttp3.FakeSSLSession
@@ -28,7 +33,6 @@ import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.platform.Platform.Companion.isAndroid
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HeldCertificate
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -44,7 +48,7 @@ class HostnameVerifierTest {
 
   @Test fun verify() {
     val session = FakeSSLSession()
-    assertThat(verifier.verify("localhost", session)).isFalse
+    assertThat(verifier.verify("localhost", session)).isFalse()
   }
 
   @Test fun verifyCn() {
@@ -78,9 +82,9 @@ class HostnameVerifierTest {
       -----END CERTIFICATE-----
       """.trimIndent()
     )
-    assertThat(verifier.verify("foo.com", session)).isFalse
-    assertThat(verifier.verify("a.foo.com", session)).isFalse
-    assertThat(verifier.verify("bar.com", session)).isFalse
+    assertThat(verifier.verify("foo.com", session)).isFalse()
+    assertThat(verifier.verify("a.foo.com", session)).isFalse()
+    assertThat(verifier.verify("bar.com", session)).isFalse()
   }
 
   @Test fun verifyNonAsciiCn() {
@@ -114,8 +118,8 @@ class HostnameVerifierTest {
       -----END CERTIFICATE-----
       """.trimIndent()
     )
-    assertThat(verifier.verify("\u82b1\u5b50.co.jp", session)).isFalse
-    assertThat(verifier.verify("a.\u82b1\u5b50.co.jp", session)).isFalse
+    assertThat(verifier.verify("\u82b1\u5b50.co.jp", session)).isFalse()
+    assertThat(verifier.verify("a.\u82b1\u5b50.co.jp", session)).isFalse()
   }
 
   @Test fun verifySubjectAlt() {
@@ -150,10 +154,10 @@ class HostnameVerifierTest {
       -----END CERTIFICATE-----
       """.trimIndent()
     )
-    assertThat(verifier.verify("foo.com", session)).isFalse
-    assertThat(verifier.verify("a.foo.com", session)).isFalse
-    assertThat(verifier.verify("bar.com", session)).isTrue
-    assertThat(verifier.verify("a.bar.com", session)).isFalse
+    assertThat(verifier.verify("foo.com", session)).isFalse()
+    assertThat(verifier.verify("a.foo.com", session)).isFalse()
+    assertThat(verifier.verify("bar.com", session)).isTrue()
+    assertThat(verifier.verify("a.bar.com", session)).isFalse()
   }
 
   /**
@@ -208,16 +212,16 @@ class HostnameVerifierTest {
       assertThat(certificateSANs(peerCertificate)).containsExactly("bar.com", "������.co.jp")
     }
 
-    assertThat(verifier.verify("foo.com", session)).isFalse
-    assertThat(verifier.verify("a.foo.com", session)).isFalse
+    assertThat(verifier.verify("foo.com", session)).isFalse()
+    assertThat(verifier.verify("a.foo.com", session)).isFalse()
     // these checks test alternative subjects. The test data contains an
     // alternative subject starting with a japanese kanji character. This is
     // not supported by Android because the underlying implementation from
     // harmony follows the definition from rfc 1034 page 10 for alternative
     // subject names. This causes the code to drop all alternative subjects.
-    assertThat(verifier.verify("bar.com", session)).isTrue
-    assertThat(verifier.verify("a.bar.com", session)).isFalse
-    assertThat(verifier.verify("a.\u82b1\u5b50.co.jp", session)).isFalse
+    assertThat(verifier.verify("bar.com", session)).isTrue()
+    assertThat(verifier.verify("a.bar.com", session)).isFalse()
+    assertThat(verifier.verify("a.\u82b1\u5b50.co.jp", session)).isFalse()
   }
 
   @Test fun verifySubjectAltOnly() {
@@ -251,10 +255,10 @@ class HostnameVerifierTest {
       -----END CERTIFICATE-----
       """.trimIndent()
     )
-    assertThat(verifier.verify("foo.com", session)).isTrue
-    assertThat(verifier.verify("a.foo.com", session)).isFalse
-    assertThat(verifier.verify("foo.com", session)).isTrue
-    assertThat(verifier.verify("a.foo.com", session)).isFalse
+    assertThat(verifier.verify("foo.com", session)).isTrue()
+    assertThat(verifier.verify("a.foo.com", session)).isFalse()
+    assertThat(verifier.verify("foo.com", session)).isTrue()
+    assertThat(verifier.verify("a.foo.com", session)).isFalse()
   }
 
   @Test fun verifyMultipleCn() {
@@ -289,12 +293,12 @@ class HostnameVerifierTest {
       -----END CERTIFICATE-----
       """.trimIndent()
     )
-    assertThat(verifier.verify("foo.com", session)).isFalse
-    assertThat(verifier.verify("a.foo.com", session)).isFalse
-    assertThat(verifier.verify("bar.com", session)).isFalse
-    assertThat(verifier.verify("a.bar.com", session)).isFalse
-    assertThat(verifier.verify("\u82b1\u5b50.co.jp", session)).isFalse
-    assertThat(verifier.verify("a.\u82b1\u5b50.co.jp", session)).isFalse
+    assertThat(verifier.verify("foo.com", session)).isFalse()
+    assertThat(verifier.verify("a.foo.com", session)).isFalse()
+    assertThat(verifier.verify("bar.com", session)).isFalse()
+    assertThat(verifier.verify("a.bar.com", session)).isFalse()
+    assertThat(verifier.verify("\u82b1\u5b50.co.jp", session)).isFalse()
+    assertThat(verifier.verify("a.\u82b1\u5b50.co.jp", session)).isFalse()
   }
 
   @Test fun verifyWilcardCn() {
@@ -328,10 +332,10 @@ class HostnameVerifierTest {
       -----END CERTIFICATE-----
       """.trimIndent()
     )
-    assertThat(verifier.verify("foo.com", session)).isFalse
-    assertThat(verifier.verify("www.foo.com", session)).isFalse
-    assertThat(verifier.verify("\u82b1\u5b50.foo.com", session)).isFalse
-    assertThat(verifier.verify("a.b.foo.com", session)).isFalse
+    assertThat(verifier.verify("foo.com", session)).isFalse()
+    assertThat(verifier.verify("www.foo.com", session)).isFalse()
+    assertThat(verifier.verify("\u82b1\u5b50.foo.com", session)).isFalse()
+    assertThat(verifier.verify("a.b.foo.com", session)).isFalse()
   }
 
   @Test fun verifyWilcardCnOnTld() {
@@ -366,8 +370,8 @@ class HostnameVerifierTest {
       -----END CERTIFICATE-----
       """.trimIndent()
     )
-    assertThat(verifier.verify("foo.co.jp", session)).isFalse
-    assertThat(verifier.verify("\u82b1\u5b50.co.jp", session)).isFalse
+    assertThat(verifier.verify("foo.co.jp", session)).isFalse()
+    assertThat(verifier.verify("\u82b1\u5b50.co.jp", session)).isFalse()
   }
 
   /**
@@ -423,19 +427,19 @@ class HostnameVerifierTest {
     }
 
     // try the foo.com variations
-    assertThat(verifier.verify("foo.com", session)).isFalse
-    assertThat(verifier.verify("www.foo.com", session)).isFalse
-    assertThat(verifier.verify("\u82b1\u5b50.foo.com", session)).isFalse
-    assertThat(verifier.verify("a.b.foo.com", session)).isFalse
+    assertThat(verifier.verify("foo.com", session)).isFalse()
+    assertThat(verifier.verify("www.foo.com", session)).isFalse()
+    assertThat(verifier.verify("\u82b1\u5b50.foo.com", session)).isFalse()
+    assertThat(verifier.verify("a.b.foo.com", session)).isFalse()
     // these checks test alternative subjects. The test data contains an
     // alternative subject starting with a japanese kanji character. This is
     // not supported by Android because the underlying implementation from
     // harmony follows the definition from rfc 1034 page 10 for alternative
     // subject names. This causes the code to drop all alternative subjects.
-    assertThat(verifier.verify("bar.com", session)).isFalse
-    assertThat(verifier.verify("www.bar.com", session)).isTrue
-    assertThat(verifier.verify("\u82b1\u5b50.bar.com", session)).isFalse
-    assertThat(verifier.verify("a.b.bar.com", session)).isFalse
+    assertThat(verifier.verify("bar.com", session)).isFalse()
+    assertThat(verifier.verify("www.bar.com", session)).isTrue()
+    assertThat(verifier.verify("\u82b1\u5b50.bar.com", session)).isFalse()
+    assertThat(verifier.verify("a.b.bar.com", session)).isFalse()
   }
 
   @Test fun subjectAltUsesLocalDomainAndIp() {
@@ -469,11 +473,11 @@ class HostnameVerifierTest {
       X500Principal("CN=localhost")
     )
     val session = FakeSSLSession(certificate)
-    assertThat(verifier.verify("localhost", session)).isTrue
-    assertThat(verifier.verify("localhost.localdomain", session)).isTrue
-    assertThat(verifier.verify("local.host", session)).isFalse
-    assertThat(verifier.verify("127.0.0.1", session)).isTrue
-    assertThat(verifier.verify("127.0.0.2", session)).isFalse
+    assertThat(verifier.verify("localhost", session)).isTrue()
+    assertThat(verifier.verify("localhost.localdomain", session)).isTrue()
+    assertThat(verifier.verify("local.host", session)).isFalse()
+    assertThat(verifier.verify("127.0.0.1", session)).isTrue()
+    assertThat(verifier.verify("127.0.0.2", session)).isFalse()
   }
 
   @Test fun wildcardsCannotMatchIpAddresses() {
@@ -493,7 +497,7 @@ class HostnameVerifierTest {
       -----END CERTIFICATE-----
       """.trimIndent()
     )
-    assertThat(verifier.verify("127.0.0.1", session)).isFalse
+    assertThat(verifier.verify("127.0.0.1", session)).isFalse()
   }
 
   /**
@@ -518,7 +522,7 @@ class HostnameVerifierTest {
       -----END CERTIFICATE-----
       """.trimIndent()
     )
-    assertThat(verifier.verify("google.com", session)).isFalse
+    assertThat(verifier.verify("google.com", session)).isFalse()
   }
 
   @Test fun subjectAltName() {
@@ -547,11 +551,11 @@ class HostnameVerifierTest {
       -----END CERTIFICATE-----
       """.trimIndent()
     )
-    assertThat(verifier.verify("foo.com", session)).isFalse
-    assertThat(verifier.verify("bar.com", session)).isTrue
-    assertThat(verifier.verify("baz.com", session)).isTrue
-    assertThat(verifier.verify("a.foo.com", session)).isFalse
-    assertThat(verifier.verify("quux.com", session)).isFalse
+    assertThat(verifier.verify("foo.com", session)).isFalse()
+    assertThat(verifier.verify("bar.com", session)).isTrue()
+    assertThat(verifier.verify("baz.com", session)).isTrue()
+    assertThat(verifier.verify("a.foo.com", session)).isFalse()
+    assertThat(verifier.verify("quux.com", session)).isFalse()
   }
 
   @Test fun subjectAltNameWithWildcard() {
@@ -580,13 +584,13 @@ class HostnameVerifierTest {
       -----END CERTIFICATE-----
       """.trimIndent()
     )
-    assertThat(verifier.verify("foo.com", session)).isFalse
-    assertThat(verifier.verify("bar.com", session)).isTrue
-    assertThat(verifier.verify("a.baz.com", session)).isTrue
-    assertThat(verifier.verify("baz.com", session)).isFalse
-    assertThat(verifier.verify("a.foo.com", session)).isFalse
-    assertThat(verifier.verify("a.bar.com", session)).isFalse
-    assertThat(verifier.verify("quux.com", session)).isFalse
+    assertThat(verifier.verify("foo.com", session)).isFalse()
+    assertThat(verifier.verify("bar.com", session)).isTrue()
+    assertThat(verifier.verify("a.baz.com", session)).isTrue()
+    assertThat(verifier.verify("baz.com", session)).isFalse()
+    assertThat(verifier.verify("a.foo.com", session)).isFalse()
+    assertThat(verifier.verify("a.bar.com", session)).isFalse()
+    assertThat(verifier.verify("quux.com", session)).isFalse()
   }
 
   @Test fun subjectAltNameWithIPAddresses() {
@@ -616,18 +620,18 @@ class HostnameVerifierTest {
       -----END CERTIFICATE-----
       """.trimIndent()
     )
-    assertThat(verifier.verify("foo.com", session)).isFalse
-    assertThat(verifier.verify("::1", session)).isTrue
-    assertThat(verifier.verify("::2", session)).isFalse
-    assertThat(verifier.verify("::5", session)).isTrue
-    assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c::2", session)).isTrue
-    assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c:0:2", session)).isTrue
-    assertThat(verifier.verify("2a03:2880:f003:c07:FACE:B00C:0:2", session)).isTrue
-    assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c:0:3", session)).isFalse
-    assertThat(verifier.verify("127.0.0.1", session)).isFalse
-    assertThat(verifier.verify("192.168.1.1", session)).isTrue
-    assertThat(verifier.verify("::ffff:192.168.1.1", session)).isTrue
-    assertThat(verifier.verify("0:0:0:0:0:FFFF:C0A8:0101", session)).isTrue
+    assertThat(verifier.verify("foo.com", session)).isFalse()
+    assertThat(verifier.verify("::1", session)).isTrue()
+    assertThat(verifier.verify("::2", session)).isFalse()
+    assertThat(verifier.verify("::5", session)).isTrue()
+    assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c::2", session)).isTrue()
+    assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c:0:2", session)).isTrue()
+    assertThat(verifier.verify("2a03:2880:f003:c07:FACE:B00C:0:2", session)).isTrue()
+    assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c:0:3", session)).isFalse()
+    assertThat(verifier.verify("127.0.0.1", session)).isFalse()
+    assertThat(verifier.verify("192.168.1.1", session)).isTrue()
+    assertThat(verifier.verify("::ffff:192.168.1.1", session)).isTrue()
+    assertThat(verifier.verify("0:0:0:0:0:FFFF:C0A8:0101", session)).isTrue()
   }
 
   @Test fun generatedCertificate() {
@@ -636,8 +640,8 @@ class HostnameVerifierTest {
       .addSubjectAlternativeName("foo.com")
       .build()
     val session = session(heldCertificate.certificatePem())
-    assertThat(verifier.verify("foo.com", session)).isTrue
-    assertThat(verifier.verify("bar.com", session)).isFalse
+    assertThat(verifier.verify("foo.com", session)).isTrue()
+    assertThat(verifier.verify("bar.com", session)).isFalse()
   }
 
   @Test fun specialKInHostname() {
@@ -649,17 +653,17 @@ class HostnameVerifierTest {
       .addSubjectAlternativeName("tel.com")
       .build()
     val session = session(heldCertificate.certificatePem())
-    assertThat(verifier.verify("foo.com", session)).isFalse
-    assertThat(verifier.verify("bar.com", session)).isFalse
-    assertThat(verifier.verify("k.com", session)).isTrue
-    assertThat(verifier.verify("K.com", session)).isTrue
-    assertThat(verifier.verify("\u2121.com", session)).isFalse
-    assertThat(verifier.verify("℡.com", session)).isFalse
+    assertThat(verifier.verify("foo.com", session)).isFalse()
+    assertThat(verifier.verify("bar.com", session)).isFalse()
+    assertThat(verifier.verify("k.com", session)).isTrue()
+    assertThat(verifier.verify("K.com", session)).isTrue()
+    assertThat(verifier.verify("\u2121.com", session)).isFalse()
+    assertThat(verifier.verify("℡.com", session)).isFalse()
 
     // These should ideally be false, but we know that hostname is usually already checked by us
-    assertThat(verifier.verify("\u212A.com", session)).isFalse
+    assertThat(verifier.verify("\u212A.com", session)).isFalse()
     // Kelvin character below
-    assertThat(verifier.verify("K.com", session)).isFalse
+    assertThat(verifier.verify("K.com", session)).isFalse()
   }
 
   @Test fun specialKInCert() {
@@ -671,12 +675,12 @@ class HostnameVerifierTest {
       .addSubjectAlternativeName("\u212A.com")
       .build()
     val session = session(heldCertificate.certificatePem())
-    assertThat(verifier.verify("foo.com", session)).isFalse
-    assertThat(verifier.verify("bar.com", session)).isFalse
-    assertThat(verifier.verify("k.com", session)).isFalse
-    assertThat(verifier.verify("K.com", session)).isFalse
-    assertThat(verifier.verify("tel.com", session)).isFalse
-    assertThat(verifier.verify("k.com", session)).isFalse
+    assertThat(verifier.verify("foo.com", session)).isFalse()
+    assertThat(verifier.verify("bar.com", session)).isFalse()
+    assertThat(verifier.verify("k.com", session)).isFalse()
+    assertThat(verifier.verify("K.com", session)).isFalse()
+    assertThat(verifier.verify("tel.com", session)).isFalse()
+    assertThat(verifier.verify("k.com", session)).isFalse()
   }
 
   @Test fun specialKInExternalCert() {
@@ -720,20 +724,18 @@ class HostnameVerifierTest {
     } else {
       assertThat(certificateSANs(peerCertificate)).containsExactly("���.com", "���.com")
     }
-    assertThat(verifier.verify("tel.com", session)).isFalse
-    assertThat(verifier.verify("k.com", session)).isFalse
-    assertThat(verifier.verify("foo.com", session)).isFalse
-    assertThat(verifier.verify("bar.com", session)).isFalse
-    assertThat(verifier.verify("k.com", session)).isFalse
-    assertThat(verifier.verify("K.com", session)).isFalse
+    assertThat(verifier.verify("tel.com", session)).isFalse()
+    assertThat(verifier.verify("k.com", session)).isFalse()
+    assertThat(verifier.verify("foo.com", session)).isFalse()
+    assertThat(verifier.verify("bar.com", session)).isFalse()
+    assertThat(verifier.verify("k.com", session)).isFalse()
+    assertThat(verifier.verify("K.com", session)).isFalse()
   }
 
-  private fun certificateSANs(peerCertificate: X509Certificate): Stream<String> {
-    val subjectAlternativeNames = peerCertificate.subjectAlternativeNames
-    return if (subjectAlternativeNames == null) {
-      Stream.empty()
-    } else {
-      subjectAlternativeNames.stream().map { c: List<*> -> c[1] as String }
+  private fun certificateSANs(peerCertificate: X509Certificate): List<String> {
+    return when (val subjectAlternativeNames = peerCertificate.subjectAlternativeNames) {
+      null -> listOf()
+      else -> subjectAlternativeNames.map { c: List<*> -> c[1] as String }
     }
   }
 
@@ -765,44 +767,44 @@ class HostnameVerifierTest {
     )
 
     // Replacement characters are deliberate, from certificate loading.
-    assertThat(verifier.verify("���.com", session)).isFalse
-    assertThat(verifier.verify("℡.com", session)).isFalse
+    assertThat(verifier.verify("���.com", session)).isFalse()
+    assertThat(verifier.verify("℡.com", session)).isFalse()
   }
 
   @Test fun thatCatchesErrorsWithBadSession() {
     val localVerifier = OkHttpClient().hostnameVerifier
 
     // Since this is public API, okhttp3.internal.tls.OkHostnameVerifier.verify is also
-    assertThat(verifier).isInstanceOf(OkHostnameVerifier::class.java)
+    assertThat(verifier).isInstanceOf<OkHostnameVerifier>()
     val handshakeCertificates = platform.localhostHandshakeCertificates()
     val session = handshakeCertificates.sslContext().createSSLEngine().session
-    assertThat(localVerifier.verify("\uD83D\uDCA9.com", session)).isFalse
+    assertThat(localVerifier.verify("\uD83D\uDCA9.com", session)).isFalse()
   }
 
   @Test fun verifyAsIpAddress() {
     // IPv4
-    assertThat("127.0.0.1".canParseAsIpAddress()).isTrue
-    assertThat("1.2.3.4".canParseAsIpAddress()).isTrue
+    assertThat("127.0.0.1".canParseAsIpAddress()).isTrue()
+    assertThat("1.2.3.4".canParseAsIpAddress()).isTrue()
 
     // IPv6
-    assertThat("::1".canParseAsIpAddress()).isTrue
-    assertThat("2001:db8::1".canParseAsIpAddress()).isTrue
-    assertThat("::192.168.0.1".canParseAsIpAddress()).isTrue
-    assertThat("::ffff:192.168.0.1".canParseAsIpAddress()).isTrue
-    assertThat("FEDC:BA98:7654:3210:FEDC:BA98:7654:3210".canParseAsIpAddress()).isTrue
-    assertThat("1080:0:0:0:8:800:200C:417A".canParseAsIpAddress()).isTrue
-    assertThat("1080::8:800:200C:417A".canParseAsIpAddress()).isTrue
-    assertThat("FF01::101".canParseAsIpAddress()).isTrue
-    assertThat("0:0:0:0:0:0:13.1.68.3".canParseAsIpAddress()).isTrue
-    assertThat("0:0:0:0:0:FFFF:129.144.52.38".canParseAsIpAddress()).isTrue
-    assertThat("::13.1.68.3".canParseAsIpAddress()).isTrue
-    assertThat("::FFFF:129.144.52.38".canParseAsIpAddress()).isTrue
+    assertThat("::1".canParseAsIpAddress()).isTrue()
+    assertThat("2001:db8::1".canParseAsIpAddress()).isTrue()
+    assertThat("::192.168.0.1".canParseAsIpAddress()).isTrue()
+    assertThat("::ffff:192.168.0.1".canParseAsIpAddress()).isTrue()
+    assertThat("FEDC:BA98:7654:3210:FEDC:BA98:7654:3210".canParseAsIpAddress()).isTrue()
+    assertThat("1080:0:0:0:8:800:200C:417A".canParseAsIpAddress()).isTrue()
+    assertThat("1080::8:800:200C:417A".canParseAsIpAddress()).isTrue()
+    assertThat("FF01::101".canParseAsIpAddress()).isTrue()
+    assertThat("0:0:0:0:0:0:13.1.68.3".canParseAsIpAddress()).isTrue()
+    assertThat("0:0:0:0:0:FFFF:129.144.52.38".canParseAsIpAddress()).isTrue()
+    assertThat("::13.1.68.3".canParseAsIpAddress()).isTrue()
+    assertThat("::FFFF:129.144.52.38".canParseAsIpAddress()).isTrue()
 
     // Hostnames
-    assertThat("go".canParseAsIpAddress()).isFalse
-    assertThat("localhost".canParseAsIpAddress()).isFalse
-    assertThat("squareup.com".canParseAsIpAddress()).isFalse
-    assertThat("www.nintendo.co.jp".canParseAsIpAddress()).isFalse
+    assertThat("go".canParseAsIpAddress()).isFalse()
+    assertThat("localhost".canParseAsIpAddress()).isFalse()
+    assertThat("squareup.com".canParseAsIpAddress()).isFalse()
+    assertThat("www.nintendo.co.jp".canParseAsIpAddress()).isFalse()
   }
 
   private fun certificate(certificate: String): X509Certificate {

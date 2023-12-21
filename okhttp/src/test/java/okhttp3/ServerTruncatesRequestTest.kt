@@ -15,6 +15,10 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.hasMessage
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
 import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -25,7 +29,6 @@ import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.PlatformRule
 import okio.BufferedSink
 import okio.IOException
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
@@ -231,7 +234,7 @@ class ServerTruncatesRequestTest {
 
     call1.execute().use { response ->
       assertThat(response.body.string()).isEqualTo("Req1")
-      assertThat(response.handshake).isNotNull
+      assertThat(response.handshake).isNotNull()
       assertThat(response.protocol == Protocol.HTTP_1_1)
     }
 

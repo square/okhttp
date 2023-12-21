@@ -15,6 +15,9 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isIn
 import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -31,7 +34,6 @@ import okhttp3.CipherSuite.Companion.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
 import okhttp3.internal.effectiveCipherSuites
 import okhttp3.internal.platform.Platform
 import okhttp3.testing.PlatformRule
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -92,7 +94,7 @@ class CallHandshakeTest {
 
     val handshake = makeRequest(client)
 
-    assertThat(handshake.cipherSuite).isIn(expectedModernTls12CipherSuites)
+    assertThat(handshake.cipherSuite).isIn(*expectedModernTls12CipherSuites.toTypedArray())
 
     // Probably something like
     // TLS_AES_128_GCM_SHA256
@@ -101,8 +103,8 @@ class CallHandshakeTest {
     // TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
     // TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
     // TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-    assertThat(handshakeEnabledCipherSuites).containsExactlyElementsOf(
-      expectedConnectionCipherSuites(client))
+    assertThat(handshakeEnabledCipherSuites).containsExactly(
+      *expectedConnectionCipherSuites(client).toTypedArray())
   }
 
   @Test
@@ -115,7 +117,7 @@ class CallHandshakeTest {
 
     val handshake = makeRequest(client)
 
-    assertThat(handshake.cipherSuite).isIn(expectedModernTls12CipherSuites)
+    assertThat(handshake.cipherSuite).isIn(*expectedModernTls12CipherSuites.toTypedArray())
 
     // Probably something like
     // TLS_AES_128_GCM_SHA256
@@ -130,8 +132,9 @@ class CallHandshakeTest {
     // TLS_RSA_WITH_AES_256_CBC_SHA
     // TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
     // TLS_RSA_WITH_AES_128_CBC_SHA
-    assertThat(handshakeEnabledCipherSuites).containsExactlyElementsOf(
-      expectedConnectionCipherSuites(client))
+    assertThat(handshakeEnabledCipherSuites).containsExactly(
+      *expectedConnectionCipherSuites(client).toTypedArray()
+    )
   }
 
   @Test
@@ -143,7 +146,7 @@ class CallHandshakeTest {
 
     val handshake = makeRequest(client)
 
-    assertThat(handshake.cipherSuite).isIn(expectedModernTls13CipherSuites)
+    assertThat(handshake.cipherSuite).isIn(*expectedModernTls13CipherSuites.toTypedArray())
 
     // TODO: filter down to TLSv1.3 when only activated.
     // Probably something like
@@ -159,8 +162,9 @@ class CallHandshakeTest {
     // TLS_RSA_WITH_AES_256_CBC_SHA
     // TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
     // TLS_RSA_WITH_AES_128_CBC_SHA
-    assertThat(handshakeEnabledCipherSuites).containsExactlyElementsOf(
-      expectedConnectionCipherSuites(client))
+    assertThat(handshakeEnabledCipherSuites).containsExactly(
+      *expectedConnectionCipherSuites(client).toTypedArray()
+    )
   }
 
   @Test
@@ -178,8 +182,9 @@ class CallHandshakeTest {
     val expectedConnectionCipherSuites = expectedConnectionCipherSuites(client)
     // Will choose a poor cipher suite but not plaintext.
 //    assertThat(handshake.cipherSuite).isEqualTo("TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256")
-    assertThat(handshakeEnabledCipherSuites).containsExactlyElementsOf(
-      expectedConnectionCipherSuites)
+    assertThat(handshakeEnabledCipherSuites).containsExactly(
+      *expectedConnectionCipherSuites.toTypedArray()
+    )
   }
 
   @Test
@@ -197,12 +202,14 @@ class CallHandshakeTest {
     val socketOrderedByDefaults =
       handshakeEnabledCipherSuites.sortedBy { ConnectionSpec.MODERN_TLS.cipherSuitesAsString!!.indexOf(it) }
 
-    assertThat(handshakeEnabledCipherSuites).containsExactlyElementsOf(socketOrderedByDefaults)
+    assertThat(handshakeEnabledCipherSuites).containsExactly(
+      *socketOrderedByDefaults.toTypedArray()
+    )
   }
 
   @Test
   fun advertisedOrderInRestricted() {
-    assertThat(ConnectionSpec.RESTRICTED_TLS.cipherSuites).containsExactly(
+    assertThat(ConnectionSpec.RESTRICTED_TLS.cipherSuites!!).containsExactly(
       TLS_AES_128_GCM_SHA256,
       TLS_AES_256_GCM_SHA384,
       TLS_CHACHA20_POLY1305_SHA256,
@@ -229,26 +236,26 @@ class CallHandshakeTest {
       ConnectionSpec.RESTRICTED_TLS.effectiveCipherSuites(platformDefaultCipherSuites)
 
     if (cipherSuites.contains(TLS_CHACHA20_POLY1305_SHA256.javaName)) {
-      assertThat(cipherSuites).containsExactlyElementsOf(listOf(
-        TLS_AES_128_GCM_SHA256,
-        TLS_AES_256_GCM_SHA384,
-        TLS_CHACHA20_POLY1305_SHA256,
-        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-        TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-        TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-        TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
-      ).map { it.javaName })
+      assertThat(cipherSuites).containsExactly(
+        TLS_AES_128_GCM_SHA256.javaName,
+        TLS_AES_256_GCM_SHA384.javaName,
+        TLS_CHACHA20_POLY1305_SHA256.javaName,
+        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName,
+        TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256.javaName,
+        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384.javaName,
+        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384.javaName,
+        TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256.javaName,
+        TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256.javaName,
+      )
     } else {
-      assertThat(cipherSuites).containsExactlyElementsOf(listOf(
-        TLS_AES_128_GCM_SHA256,
-        TLS_AES_256_GCM_SHA384,
-        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-        TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-      ).map { it.javaName })
+      assertThat(cipherSuites).containsExactly(
+        TLS_AES_128_GCM_SHA256.javaName,
+        TLS_AES_256_GCM_SHA384.javaName,
+        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384.javaName,
+        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName,
+        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384.javaName,
+        TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256.javaName,
+      )
     }
   }
 

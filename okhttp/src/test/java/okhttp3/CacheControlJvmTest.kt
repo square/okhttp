@@ -15,14 +15,16 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isSameAs
+import assertk.assertions.isTrue
+import java.util.concurrent.TimeUnit
 import okhttp3.CacheControl.Companion.parse
 import okhttp3.Headers.Companion.headersOf
-import org.junit.jupiter.api.Test
-import java.lang.Exception
-import java.lang.IllegalArgumentException
-import java.util.concurrent.TimeUnit
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Test
 
 class CacheControlJvmTest {
   @Test
@@ -42,20 +44,20 @@ class CacheControlJvmTest {
       "no-cache, no-store, max-age=1, max-stale=2, min-fresh=3, only-if-cached, "
         + "no-transform, immutable"
     )
-    assertThat(cacheControl.noCache).isTrue
-    assertThat(cacheControl.noStore).isTrue
+    assertThat(cacheControl.noCache).isTrue()
+    assertThat(cacheControl.noStore).isTrue()
     assertThat(cacheControl.maxAgeSeconds).isEqualTo(1)
     assertThat(cacheControl.maxStaleSeconds).isEqualTo(2)
     assertThat(cacheControl.minFreshSeconds).isEqualTo(3)
-    assertThat(cacheControl.onlyIfCached).isTrue
-    assertThat(cacheControl.noTransform).isTrue
-    assertThat(cacheControl.immutable).isTrue
+    assertThat(cacheControl.onlyIfCached).isTrue()
+    assertThat(cacheControl.noTransform).isTrue()
+    assertThat(cacheControl.immutable).isTrue()
 
     // These members are accessible to response headers only.
     assertThat(cacheControl.sMaxAgeSeconds).isEqualTo(-1)
-    assertThat(cacheControl.isPrivate).isFalse
-    assertThat(cacheControl.isPublic).isFalse
-    assertThat(cacheControl.mustRevalidate).isFalse
+    assertThat(cacheControl.isPrivate).isFalse()
+    assertThat(cacheControl.isPublic).isFalse()
+    assertThat(cacheControl.mustRevalidate).isFalse()
   }
 
   @Test
@@ -65,16 +67,16 @@ class CacheControlJvmTest {
       Headers.Builder().set("Cache-Control", "").build()
     )
     assertThat(cacheControl.toString()).isEqualTo("")
-    assertThat(cacheControl.noCache).isFalse
-    assertThat(cacheControl.noStore).isFalse
+    assertThat(cacheControl.noCache).isFalse()
+    assertThat(cacheControl.noStore).isFalse()
     assertThat(cacheControl.maxAgeSeconds).isEqualTo(-1)
     assertThat(cacheControl.sMaxAgeSeconds).isEqualTo(-1)
-    assertThat(cacheControl.isPublic).isFalse
-    assertThat(cacheControl.mustRevalidate).isFalse
+    assertThat(cacheControl.isPublic).isFalse()
+    assertThat(cacheControl.mustRevalidate).isFalse()
     assertThat(cacheControl.maxStaleSeconds).isEqualTo(-1)
     assertThat(cacheControl.minFreshSeconds).isEqualTo(-1)
-    assertThat(cacheControl.onlyIfCached).isFalse
-    assertThat(cacheControl.mustRevalidate).isFalse
+    assertThat(cacheControl.onlyIfCached).isFalse()
+    assertThat(cacheControl.mustRevalidate).isFalse()
   }
 
   @Test
@@ -87,17 +89,17 @@ class CacheControlJvmTest {
         .set("Cache-Control", header)
         .build()
     )
-    assertThat(cacheControl.noCache).isTrue
-    assertThat(cacheControl.noStore).isTrue
+    assertThat(cacheControl.noCache).isTrue()
+    assertThat(cacheControl.noStore).isTrue()
     assertThat(cacheControl.maxAgeSeconds).isEqualTo(1)
     assertThat(cacheControl.sMaxAgeSeconds).isEqualTo(2)
-    assertThat(cacheControl.isPrivate).isTrue
-    assertThat(cacheControl.isPublic).isTrue
-    assertThat(cacheControl.mustRevalidate).isTrue
+    assertThat(cacheControl.isPrivate).isTrue()
+    assertThat(cacheControl.isPublic).isTrue()
+    assertThat(cacheControl.mustRevalidate).isTrue()
     assertThat(cacheControl.maxStaleSeconds).isEqualTo(3)
     assertThat(cacheControl.minFreshSeconds).isEqualTo(4)
-    assertThat(cacheControl.onlyIfCached).isTrue
-    assertThat(cacheControl.noTransform).isTrue
+    assertThat(cacheControl.onlyIfCached).isTrue()
+    assertThat(cacheControl.noTransform).isTrue()
     assertThat(cacheControl.toString()).isEqualTo(header)
   }
 
@@ -111,18 +113,18 @@ class CacheControlJvmTest {
         .set("Cache-Control", header)
         .build()
     )
-    assertThat(cacheControl.noCache).isFalse
-    assertThat(cacheControl.noStore).isFalse
+    assertThat(cacheControl.noCache).isFalse()
+    assertThat(cacheControl.noStore).isFalse()
     assertThat(cacheControl.maxAgeSeconds).isEqualTo(-1)
     assertThat(cacheControl.sMaxAgeSeconds).isEqualTo(-1)
-    assertThat(cacheControl.isPrivate).isTrue
-    assertThat(cacheControl.isPublic).isFalse
-    assertThat(cacheControl.mustRevalidate).isFalse
+    assertThat(cacheControl.isPrivate).isTrue()
+    assertThat(cacheControl.isPublic).isFalse()
+    assertThat(cacheControl.mustRevalidate).isFalse()
     assertThat(cacheControl.maxStaleSeconds).isEqualTo(-1)
     assertThat(cacheControl.minFreshSeconds).isEqualTo(-1)
-    assertThat(cacheControl.onlyIfCached).isFalse
-    assertThat(cacheControl.noTransform).isFalse
-    assertThat(cacheControl.immutable).isFalse
+    assertThat(cacheControl.onlyIfCached).isFalse()
+    assertThat(cacheControl.noTransform).isFalse()
+    assertThat(cacheControl.immutable).isFalse()
     assertThat(cacheControl.toString()).isEqualTo(header)
   }
 

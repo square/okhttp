@@ -15,8 +15,9 @@
  */
 package okhttp3.internal.ws
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import okhttp3.Headers.Companion.headersOf
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class WebSocketExtensionsTest {

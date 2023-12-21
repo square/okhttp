@@ -15,6 +15,14 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
+import assertk.assertions.isNotInstanceOf
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.isSameAs
 import java.io.IOException
 import java.net.CookieManager
 import java.net.Proxy
@@ -31,7 +39,6 @@ import mockwebserver3.MockWebServer
 import okhttp3.internal.platform.Platform.Companion.get
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.testing.PlatformRule
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
@@ -132,10 +139,10 @@ class OkHttpClientTest {
 
     // Values should be non-null.
     val a = client.newBuilder().build()
-    assertThat(a.dispatcher).isNotNull
-    assertThat(a.connectionPool).isNotNull
-    assertThat(a.sslSocketFactory).isNotNull
-    assertThat(a.x509TrustManager).isNotNull
+    assertThat(a.dispatcher).isNotNull()
+    assertThat(a.connectionPool).isNotNull()
+    assertThat(a.sslSocketFactory).isNotNull()
+    assertThat(a.x509TrustManager).isNotNull()
 
     // Multiple clients share the instances.
     val b = client.newBuilder().build()

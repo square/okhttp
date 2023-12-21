@@ -15,6 +15,13 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
+import assertk.assertions.isSameAs
+import assertk.assertions.isTrue
 import java.io.File
 import java.io.FileWriter
 import java.net.URI
@@ -26,7 +33,6 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
-import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Test
 
@@ -107,9 +113,7 @@ class RequestTest {
     assertThat(body.contentType()).isEqualTo(contentType)
     assertThat(body.contentLength()).isEqualTo(3)
     assertThat(bodyToHex(body)).isEqualTo("616263")
-    assertThat(bodyToHex(body))
-      .overridingErrorMessage("Retransmit body")
-      .isEqualTo("616263")
+    assertThat(bodyToHex(body), "Retransmit body").isEqualTo("616263")
   }
 
   @Test
@@ -137,9 +141,7 @@ class RequestTest {
     assertThat(body.contentType()).isEqualTo(contentType)
     assertThat(body.contentLength()).isEqualTo(3)
     assertThat(bodyToHex(body)).isEqualTo("616263")
-    assertThat(bodyToHex(body))
-      .overridingErrorMessage("Retransmit body")
-      .isEqualTo("616263")
+    assertThat(bodyToHex(body), "Retransmit body").isEqualTo("616263")
   }
 
   @Test
@@ -149,9 +151,7 @@ class RequestTest {
     assertThat(body.contentType()).isEqualTo(contentType)
     assertThat(body.contentLength()).isEqualTo(3)
     assertThat(bodyToHex(body)).isEqualTo("616263")
-    assertThat(bodyToHex(body))
-      .overridingErrorMessage("Retransmit body")
-      .isEqualTo("616263")
+    assertThat(bodyToHex(body), "Retransmit body").isEqualTo("616263")
   }
 
   @Test
@@ -161,9 +161,7 @@ class RequestTest {
     assertThat(body.contentType()).isEqualTo(contentType)
     assertThat(body.contentLength()).isEqualTo(5)
     assertThat(bodyToHex(body)).isEqualTo("48656c6c6f")
-    assertThat(bodyToHex(body))
-      .overridingErrorMessage("Retransmit body")
-      .isEqualTo("48656c6c6f")
+    assertThat(bodyToHex(body), "Retransmit body").isEqualTo("48656c6c6f")
   }
 
   @Test
@@ -177,9 +175,7 @@ class RequestTest {
     assertThat(body.contentType()).isEqualTo(contentType)
     assertThat(body.contentLength()).isEqualTo(3)
     assertThat(bodyToHex(body)).isEqualTo("616263")
-    assertThat(bodyToHex(body))
-      .overridingErrorMessage("Retransmit body")
-      .isEqualTo("616263")
+    assertThat(bodyToHex(body), "Retransmit body").isEqualTo("616263")
   }
 
   /** Common verbs used for apis such as GitHub, AWS, and Google Cloud.  */
@@ -245,7 +241,7 @@ class RequestTest {
       .url("https://square.com")
       .build()
     assertThat(request.headers("Cache-Control")).containsExactly("no-cache")
-    assertThat(request.cacheControl.noCache).isTrue
+    assertThat(request.cacheControl.noCache).isTrue()
   }
 
   @Test
@@ -489,7 +485,7 @@ class RequestTest {
     assertThat(requestB.tag(String::class.java)).isSameAs("b")
     assertThat(requestC.tag(String::class.java)).isSameAs("c")
   }
-  
+
   @Test
   fun requestToStringRedactsSensitiveHeaders() {
     val headers = Headers.Builder()

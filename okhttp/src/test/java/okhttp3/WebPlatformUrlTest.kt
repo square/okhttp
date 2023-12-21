@@ -15,12 +15,15 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import okhttp3.HttpUrl.Companion.defaultPort
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okio.buffer
 import okio.source
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
@@ -69,12 +72,11 @@ class WebPlatformUrlTest {
     }
 
     if (testData.expectParseFailure()) {
-      assertThat(url).overridingErrorMessage("Expected URL to fail parsing").isNull()
+      assertThat(url, "Expected URL to fail parsing").isNull()
       return
     }
 
-    assertThat(url)
-      .overridingErrorMessage("Expected URL to parse successfully, but was null")
+    assertThat(url, "Expected URL to parse successfully, but was null")
       .isNotNull()
     val effectivePort = when {
       url!!.port != defaultPort(url.scheme) -> Integer.toString(url.port)
@@ -92,12 +94,12 @@ class WebPlatformUrlTest {
       url.host.contains(":") -> "[" + url.host + "]"
       else -> url.host
     }
-    assertThat(url.scheme).overridingErrorMessage("scheme").isEqualTo(testData.scheme)
-    assertThat(effectiveHost).overridingErrorMessage("host").isEqualTo(testData.host)
-    assertThat(effectivePort).overridingErrorMessage("port").isEqualTo(testData.port)
-    assertThat(url.encodedPath).overridingErrorMessage("path").isEqualTo(testData.path)
-    assertThat(effectiveQuery).overridingErrorMessage("query").isEqualTo(testData.query)
-    assertThat(effectiveFragment).overridingErrorMessage("fragment").isEqualTo(testData.fragment)
+    assertThat(url.scheme, "scheme").isEqualTo(testData.scheme)
+    assertThat(effectiveHost, "host").isEqualTo(testData.host)
+    assertThat(effectivePort, "port").isEqualTo(testData.port)
+    assertThat(url.encodedPath, "path").isEqualTo(testData.path)
+    assertThat(effectiveQuery, "query").isEqualTo(testData.query)
+    assertThat(effectiveFragment, "fragment").isEqualTo(testData.fragment)
   }
 
   companion object {

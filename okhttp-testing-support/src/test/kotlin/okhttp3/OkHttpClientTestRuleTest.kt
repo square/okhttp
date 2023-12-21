@@ -15,7 +15,8 @@
  */
 package okhttp3
 
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.hasMessage
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -46,7 +47,7 @@ class OkHttpClientTestRuleTest {
       fail("")
     } catch (expected: AssertionError) {
       assertThat(expected).hasMessage("uncaught exception thrown during test")
-      assertThat(expected.cause).hasMessage("boom!")
+      assertThat(expected.cause!!).hasMessage("boom!")
     }
   }
 }

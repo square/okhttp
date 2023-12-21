@@ -15,6 +15,9 @@
  */
 package okhttp3.internal.http2
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
 import okhttp3.internal.http2.Http2.FLAG_ACK
 import okhttp3.internal.http2.Http2.FLAG_END_HEADERS
 import okhttp3.internal.http2.Http2.FLAG_END_STREAM
@@ -29,7 +32,6 @@ import okhttp3.internal.http2.Http2.TYPE_SETTINGS
 import okhttp3.internal.http2.Http2.formatFlags
 import okhttp3.internal.http2.Http2.frameLog
 import okhttp3.internal.http2.Http2.frameLogWindowUpdate
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class FrameLogTest {

@@ -12,6 +12,7 @@ dependencies {
   testImplementation(libs.jettyClient)
   testImplementation(libs.junit)
   testImplementation(libs.assertj.core)
+  testImplementation(libs.assertk)
 }
 
 tasks.compileJava {

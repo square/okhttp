@@ -15,6 +15,12 @@
  */
 package okhttp3.internal.connection
 
+import assertk.assertThat
+import assertk.assertions.containsExactlyInAnyOrder
+import assertk.assertions.isFalse
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import java.io.IOException
 import java.security.cert.CertificateException
 import javax.net.ssl.SSLHandshakeException
@@ -24,7 +30,6 @@ import okhttp3.OkHttpClientTestRule
 import okhttp3.TestValueFactory
 import okhttp3.TlsVersion
 import okhttp3.tls.internal.TlsUtil.localhost
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -102,8 +107,7 @@ class RetryConnectionTest {
   }
 
   private fun assertEnabledProtocols(socket: SSLSocket, vararg required: TlsVersion) {
-    assertThat(socket.enabledProtocols)
-      .containsExactlyInAnyOrder(*javaNames(*required))
+    assertThat(socket.enabledProtocols.toList()).containsExactlyInAnyOrder(*javaNames(*required))
   }
 
   private fun javaNames(vararg tlsVersions: TlsVersion) =

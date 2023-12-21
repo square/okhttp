@@ -15,12 +15,14 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
 import java.time.Instant
-import java.util.*
+import java.util.Date
 import kotlin.test.fail
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.internal.EMPTY_HEADERS
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class HeadersJvmTest {

@@ -15,7 +15,10 @@
  */
 package okhttp3
 
-import java.net.InetAddress
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
+import assertk.assertions.isNotNull
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.TestUtil.assumeNetwork
@@ -25,7 +28,6 @@ import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -63,7 +65,8 @@ class OpenJSSETest {
       assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
       assertEquals(Protocol.HTTP_2, response.protocol)
 
-      assertThat(response.exchangeAccessor?.connectionAccessor?.socket()).isInstanceOf(SSLSocketImpl::class.java)
+      assertThat(response.exchangeAccessor!!.connectionAccessor.socket())
+        .isInstanceOf<SSLSocketImpl>()
     }
   }
 
@@ -91,7 +94,7 @@ class OpenJSSETest {
   @Test
   fun testBuildIfSupported() {
     val actual = OpenJSSEPlatform.buildIfSupported()
-    assertThat(actual).isNotNull
+    assertThat(actual).isNotNull()
   }
 
   private fun enableTls() {

@@ -15,6 +15,15 @@
  */
 package okhttp3.internal.http2
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.hasSize
+import assertk.assertions.isCloseTo
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isGreaterThan
+import assertk.assertions.isLessThan
+import assertk.assertions.isTrue
 import java.io.EOFException
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -35,8 +44,6 @@ import okio.Buffer
 import okio.BufferedSource
 import okio.Source
 import okio.buffer
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.fail
@@ -72,7 +79,7 @@ class Http2ConnectionTest {
     assertThat(ping.streamId).isEqualTo(0)
     assertThat(ping.payload1).isEqualTo(2)
     assertThat(ping.payload2).isEqualTo(3)
-    assertThat(ping.ack).isTrue
+    assertThat(ping.ack).isTrue()
   }
 
   @Test fun peerHttp2ServerLowersInitialWindowSize() {
@@ -92,11 +99,11 @@ class Http2ConnectionTest {
     val ackFrame = peer.takeFrame()
     assertThat(ackFrame.type).isEqualTo(Http2.TYPE_SETTINGS)
     assertThat(ackFrame.streamId).isEqualTo(0)
-    assertThat(ackFrame.ack).isTrue
+    assertThat(ackFrame.ack).isTrue()
 
     // This stream was created *after* the connection settings were adjusted.
     val stream = connection.newStream(headerEntries("a", "android"), false)
-    assertThat(connection.peerSettings.initialWindowSize).isEqualTo(3368L)
+    assertThat(connection.peerSettings.initialWindowSize).isEqualTo(3368)
     // New Stream is has the most recent initial window size.
     assertThat(stream.writeBytesTotal).isEqualTo(0L)
     assertThat(stream.writeBytesMaximum).isEqualTo(3368L)
@@ -122,7 +129,7 @@ class Http2ConnectionTest {
     val connection = connectWithSettings(client, settings)
 
     // verify the peer's settings were read and applied.
-    assertThat(connection.peerSettings.getEnablePush(true)).isFalse
+    assertThat(connection.peerSettings.getEnablePush(true)).isFalse()
   }
 
   @Test fun peerIncreasesMaxFrameSize() {
@@ -244,8 +251,8 @@ class Http2ConnectionTest {
       fail<Any?>()
     } catch (expected: ConnectionShutdownException) {
     }
-    assertThat(stream1.isOpen).isTrue
-    assertThat(stream2.isOpen).isFalse
+    assertThat(stream1.isOpen).isTrue()
+    assertThat(stream2.isOpen).isFalse()
     assertThat(connection.openStreamCount()).isEqualTo(1)
 
     // Verify the peer received what was expected.
@@ -525,7 +532,7 @@ class Http2ConnectionTest {
     // Verify the peer received what was expected.
     val synStream = peer.takeFrame()
     assertThat(synStream.type).isEqualTo(Http2.TYPE_HEADERS)
-    assertThat(synStream.outFinished).isFalse
+    assertThat(synStream.outFinished).isFalse()
     assertThat(synStream.streamId).isEqualTo(3)
     assertThat(synStream.associatedStreamId).isEqualTo(-1)
     assertThat(synStream.headerBlock).isEqualTo(headerEntries("b", "banana"))
@@ -554,7 +561,7 @@ class Http2ConnectionTest {
     // Verify the peer received what was expected.
     val synStream = peer.takeFrame()
     assertThat(synStream.type).isEqualTo(Http2.TYPE_HEADERS)
-    assertThat(synStream.outFinished).isFalse
+    assertThat(synStream.outFinished).isFalse()
     assertThat(synStream.streamId).isEqualTo(3)
     assertThat(synStream.associatedStreamId).isEqualTo(-1)
     assertThat(synStream.headerBlock).isEqualTo(headerEntries("a", "artichaut"))
@@ -582,7 +589,7 @@ class Http2ConnectionTest {
     // Verify the peer received what was expected.
     val synStream = peer.takeFrame()
     assertThat(synStream.type).isEqualTo(Http2.TYPE_HEADERS)
-    assertThat(synStream.outFinished).isFalse
+    assertThat(synStream.outFinished).isFalse()
     assertThat(synStream.streamId).isEqualTo(3)
     assertThat(synStream.associatedStreamId).isEqualTo(-1)
     assertThat(synStream.headerBlock).isEqualTo(headerEntries("a", "artichaut"))
@@ -718,10 +725,10 @@ class Http2ConnectionTest {
     assertThat(data1.type).isEqualTo(Http2.TYPE_DATA)
     assertThat(data1.streamId).isEqualTo(3)
     assertArrayEquals("abcdefghi".toByteArray(), data1.data)
-    assertThat(data1.inFinished).isFalse
+    assertThat(data1.inFinished).isFalse()
     val headers2 = peer.takeFrame()
     assertThat(headers2.type).isEqualTo(Http2.TYPE_HEADERS)
-    assertThat(headers2.inFinished).isTrue
+    assertThat(headers2.inFinished).isTrue()
   }
 
   @Test fun clientCannotReadTrailersWithoutExhaustingStream() {
@@ -812,7 +819,7 @@ class Http2ConnectionTest {
     // Verify the peer received what was expected.
     val synStream = peer.takeFrame()
     assertThat(synStream.type).isEqualTo(Http2.TYPE_HEADERS)
-    assertThat(synStream.outFinished).isFalse
+    assertThat(synStream.outFinished).isFalse()
     assertThat(synStream.streamId).isEqualTo(3)
     assertThat(synStream.associatedStreamId).isEqualTo(-1)
     assertThat(synStream.headerBlock).isEqualTo(headerEntries("a", "artichaut"))
@@ -843,7 +850,7 @@ class Http2ConnectionTest {
     // Verify the peer received what was expected.
     val synStream = peer.takeFrame()
     assertThat(synStream.type).isEqualTo(Http2.TYPE_HEADERS)
-    assertThat(synStream.outFinished).isFalse
+    assertThat(synStream.outFinished).isFalse()
     assertThat(synStream.streamId).isEqualTo(3)
     assertThat(synStream.associatedStreamId).isEqualTo(-1)
     assertThat(synStream.headerBlock).isEqualTo(headerEntries("b", "banana"))
@@ -893,7 +900,7 @@ class Http2ConnectionTest {
     assertThat(ping.streamId).isEqualTo(0)
     assertThat(ping.payload1).isEqualTo(2)
     assertThat(ping.payload2).isEqualTo(0)
-    assertThat(ping.ack).isTrue
+    assertThat(ping.ack).isTrue()
   }
 
   @Test fun clientPingsServer() {
@@ -918,7 +925,7 @@ class Http2ConnectionTest {
     assertThat(pingFrame.streamId).isEqualTo(0)
     assertThat(pingFrame.payload1).isEqualTo(Http2Connection.AWAIT_PING)
     assertThat(pingFrame.payload2).isEqualTo(0x4f4b6f6b) // OKok.
-    assertThat(pingFrame.ack).isFalse
+    assertThat(pingFrame.ack).isFalse()
   }
 
   @Test fun unexpectedPongIsNotReturned() {
@@ -1025,7 +1032,7 @@ class Http2ConnectionTest {
     synchronized(connection) {
       assertThat(connection.peerSettings.headerTableSize).isEqualTo(-1)
       assertThat(connection.peerSettings.initialWindowSize)
-        .isEqualTo(Settings.DEFAULT_INITIAL_WINDOW_SIZE.toLong())
+        .isEqualTo(Settings.DEFAULT_INITIAL_WINDOW_SIZE)
       assertThat(connection.peerSettings.getMaxFrameSize(-1)).isEqualTo(-1)
       assertThat(connection.peerSettings.getMaxConcurrentStreams()).isEqualTo(60000)
     }
@@ -1103,8 +1110,8 @@ class Http2ConnectionTest {
     // Verify the peer received what was expected.
     val synStream = peer.takeFrame()
     assertThat(synStream.type).isEqualTo(Http2.TYPE_HEADERS)
-    assertThat(synStream.inFinished).isFalse
-    assertThat(synStream.outFinished).isFalse
+    assertThat(synStream.inFinished).isFalse()
+    assertThat(synStream.outFinished).isFalse()
     val ping = peer.takeFrame()
     assertThat(ping.type).isEqualTo(Http2.TYPE_PING)
   }
@@ -1144,8 +1151,8 @@ class Http2ConnectionTest {
     // Verify the peer received what was expected.
     val synStream = peer.takeFrame()
     assertThat(synStream.type).isEqualTo(Http2.TYPE_HEADERS)
-    assertThat(synStream.inFinished).isTrue
-    assertThat(synStream.outFinished).isFalse
+    assertThat(synStream.inFinished).isTrue()
+    assertThat(synStream.outFinished).isFalse()
     val rstStream = peer.takeFrame()
     assertThat(rstStream.type).isEqualTo(Http2.TYPE_RST_STREAM)
     assertThat(rstStream.errorCode).isEqualTo(ErrorCode.CANCEL)
@@ -1184,15 +1191,15 @@ class Http2ConnectionTest {
     // Verify the peer received what was expected.
     val synStream = peer.takeFrame()
     assertThat(synStream.type).isEqualTo(Http2.TYPE_HEADERS)
-    assertThat(synStream.inFinished).isFalse
-    assertThat(synStream.outFinished).isFalse
+    assertThat(synStream.inFinished).isFalse()
+    assertThat(synStream.outFinished).isFalse()
     val data = peer.takeFrame()
     assertThat(data.type).isEqualTo(Http2.TYPE_DATA)
     assertArrayEquals("square".toByteArray(), data.data)
     val fin = peer.takeFrame()
     assertThat(fin.type).isEqualTo(Http2.TYPE_DATA)
-    assertThat(fin.inFinished).isTrue
-    assertThat(fin.outFinished).isFalse
+    assertThat(fin.inFinished).isTrue()
+    assertThat(fin.outFinished).isFalse()
     val rstStream = peer.takeFrame()
     assertThat(rstStream.type).isEqualTo(Http2.TYPE_RST_STREAM)
     assertThat(rstStream.errorCode).isEqualTo(ErrorCode.CANCEL)
@@ -1220,8 +1227,8 @@ class Http2ConnectionTest {
     // Verify the peer received what was expected.
     val synStream = peer.takeFrame()
     assertThat(synStream.type).isEqualTo(Http2.TYPE_HEADERS)
-    assertThat(synStream.inFinished).isTrue
-    assertThat(synStream.outFinished).isFalse
+    assertThat(synStream.inFinished).isTrue()
+    assertThat(synStream.outFinished).isFalse()
   }
 
   @Test fun remoteDoubleSynReply() {
@@ -1370,8 +1377,8 @@ class Http2ConnectionTest {
       fail<Any?>()
     } catch (expected: ConnectionShutdownException) {
     }
-    assertThat(stream1.isOpen).isTrue
-    assertThat(stream2.isOpen).isFalse
+    assertThat(stream1.isOpen).isTrue()
+    assertThat(stream2.isOpen).isFalse()
     assertThat(connection.openStreamCount()).isEqualTo(1)
 
     // Verify the peer received what was expected.
@@ -1489,7 +1496,7 @@ class Http2ConnectionTest {
     awaitWatchdogIdle()
     /* 200ms delta */
     assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
-      .isCloseTo(500.0, Offset.offset(200.0))
+      .isCloseTo(500.0, 200.0)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
@@ -1531,19 +1538,19 @@ class Http2ConnectionTest {
     val elapsedNanos = System.nanoTime() - startNanos
     awaitWatchdogIdle()
     /* 200ms delta */assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
-      .isCloseTo(500.0, Offset.offset(200.0))
+      .isCloseTo(500.0, 200.0)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // When the timeout is sent the connection doesn't immediately go unhealthy.
-    assertThat(connection.isHealthy(System.nanoTime())).isTrue
+    assertThat(connection.isHealthy(System.nanoTime())).isTrue()
 
     // But if the ping doesn't arrive, the connection goes unhealthy.
     Thread.sleep(TimeUnit.NANOSECONDS.toMillis(Http2Connection.DEGRADED_PONG_TIMEOUT_NS.toLong()))
-    assertThat(connection.isHealthy(System.nanoTime())).isFalse
+    assertThat(connection.isHealthy(System.nanoTime())).isFalse()
 
     // When a pong does arrive, the connection becomes healthy again.
     connection.writePingAndAwaitPong()
-    assertThat(connection.isHealthy(System.nanoTime())).isTrue
+    assertThat(connection.isHealthy(System.nanoTime())).isTrue()
 
     // Verify the peer received what was expected.
     assertThat(peer.takeFrame().type).isEqualTo(Http2.TYPE_HEADERS)
@@ -1584,7 +1591,7 @@ class Http2ConnectionTest {
     val elapsedNanos = System.nanoTime() - startNanos
     awaitWatchdogIdle()
     /* 200ms delta */assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
-      .isCloseTo(500.0, Offset.offset(200.0))
+      .isCloseTo(500.0, 200.0)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
@@ -1629,7 +1636,7 @@ class Http2ConnectionTest {
     val elapsedNanos = System.nanoTime() - startNanos
     awaitWatchdogIdle()
     /* 200ms delta */assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
-      .isCloseTo(500.0, Offset.offset(200.0))
+      .isCloseTo(500.0, 200.0)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
@@ -1664,7 +1671,7 @@ class Http2ConnectionTest {
     val data = peer.takeFrame()
     assertThat(data.type).isEqualTo(Http2.TYPE_DATA)
     assertArrayEquals("abcdefghij".toByteArray(), data.data)
-    assertThat(data.inFinished).isTrue
+    assertThat(data.inFinished).isTrue()
   }
 
   @Test fun headers() {
@@ -1988,7 +1995,7 @@ class Http2ConnectionTest {
     val ackFrame = peer.takeFrame()
     assertThat(ackFrame.type).isEqualTo(Http2.TYPE_SETTINGS)
     assertThat(ackFrame.streamId).isEqualTo(0)
-    assertThat(ackFrame.ack).isTrue
+    assertThat(ackFrame.ack).isTrue()
     return connection
   }
 
@@ -2013,7 +2020,7 @@ class Http2ConnectionTest {
       streamId: Int, responseHeaders: List<Header>, last: Boolean
     ): Boolean {
       assertThat(streamId).isEqualTo(2)
-      assertThat(last).isTrue
+      assertThat(last).isTrue()
       events.add(responseHeaders)
       notifyAll()
       return false

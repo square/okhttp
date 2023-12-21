@@ -15,6 +15,16 @@
  */
 package okhttp3.internal.cache
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNull
+import assertk.assertions.isSameAs
+import assertk.assertions.isTrue
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.util.ArrayDeque
 import okhttp3.SimpleProvider
 import okhttp3.TestUtil
 import okhttp3.internal.cache.DiskLruCache.Editor
@@ -27,7 +37,6 @@ import okio.Path.Companion.toPath
 import okio.Source
 import okio.buffer
 import okio.fakefilesystem.FakeFileSystem
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Tag
@@ -36,11 +45,6 @@ import org.junit.jupiter.api.fail
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.IOException
-import java.util.ArrayDeque
-import java.util.NoSuchElementException
 
 class FileSystemParamProvider: SimpleProvider() {
   override fun arguments() = listOf(
@@ -1983,9 +1987,7 @@ class DiskLruCacheTest {
     assertThat(snapshotWhileEditing.hasNext()).isFalse() // entry still is being created/edited
     creator.commit()
     val snapshotAfterCommit = cache.snapshots()
-    assertThat(snapshotAfterCommit.hasNext()).withFailMessage(
-      "Entry has been removed during creation."
-    ).isTrue()
+    assertThat(snapshotAfterCommit.hasNext(), "Entry has been removed during creation.").isTrue()
     snapshotAfterCommit.next().close()
   }
 

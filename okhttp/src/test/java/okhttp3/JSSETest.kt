@@ -15,6 +15,11 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotEmpty
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import mockwebserver3.MockResponse
@@ -24,7 +29,6 @@ import okhttp3.internal.connection
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
 import okio.ByteString.Companion.toByteString
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.BeforeEach
@@ -141,7 +145,7 @@ class JSSETest {
 
     assertEquals(2, sessionIds.size)
     assertNotEquals(sessionIds[0], sessionIds[1])
-    assertThat(sessionIds[0]).isNotBlank()
+    assertThat(sessionIds[0]).isNotEmpty()
   }
 
   private fun enableTls() {

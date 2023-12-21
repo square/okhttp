@@ -15,12 +15,13 @@
  */
 package okhttp3.internal.idn
 
+import assertk.assertThat
+import assertk.assertions.hasSize
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import okio.Buffer
 import okio.FileSystem
 import okio.Path.Companion.toPath
-import org.assertj.core.api.Assertions.assertThat
 
 class StringprepTablesReaderTest {
   @Test fun readRfc3491FromResources() {

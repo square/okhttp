@@ -15,6 +15,19 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isGreaterThanOrEqualTo
+import assertk.assertions.isIn
+import assertk.assertions.isInstanceOf
+import assertk.assertions.isLessThan
+import assertk.assertions.isNotEmpty
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -82,7 +95,6 @@ import okio.BufferedSink
 import okio.GzipSink
 import okio.buffer
 import okio.utf8Size
-import org.assertj.core.api.Assertions.assertThat
 import org.bouncycastle.tls.TlsFatalAlert
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
@@ -399,7 +411,7 @@ class URLConnectionTest {
     assertThat(
       requestAfter.sequenceNumber == 0
         || server.requestCount == 3 && server.takeRequest().sequenceNumber == 0
-    ).isTrue
+    ).isTrue()
   }
 
   internal enum class WriteKind {
@@ -477,7 +489,7 @@ class URLConnectionTest {
     val request = server.takeRequest()
     assertThat(request.bodySize).isEqualTo(n.toLong())
     if (uploadKind === TransferKind.CHUNKED) {
-      assertThat(request.chunkSizes).isNotEmpty
+      assertThat(request.chunkSizes).isNotEmpty()
     } else {
       assertThat(request.chunkSizes).isEmpty()
     }
@@ -625,8 +637,7 @@ class URLConnectionTest {
       fail<Any>()
     } catch (expected: IOException) {
       expected.assertSuppressed { throwables: List<Throwable>? ->
-        assertThat(throwables).hasSize(1)
-        Unit
+        assertThat(throwables!!.size).isEqualTo(1)
       }
     }
   }
@@ -685,9 +696,7 @@ class URLConnectionTest {
     } catch (expected: SSLHandshakeException) {
       // Allow conscrypt to fail in different ways
       if (!platform.isConscrypt()) {
-        assertThat(expected.cause).isInstanceOf(
-          CertificateException::class.java
-        )
+        assertThat(expected.cause!!).isInstanceOf<CertificateException>()
       }
     } catch (expected: TlsFatalAlert) {
     }
@@ -912,9 +921,8 @@ class URLConnectionTest {
     val call = proxyConfig.connect(server, client, url)
     assertContent("this response comes via a secure proxy", call.execute())
     val connect = server.takeRequest()
-    assertThat(connect.requestLine).overridingErrorMessage(
-      "Connect line failure on proxy"
-    ).isEqualTo("CONNECT android.com:443 HTTP/1.1")
+    assertThat(connect.requestLine, "Connect line failure on proxy")
+      .isEqualTo("CONNECT android.com:443 HTTP/1.1")
     assertThat(connect.headers["Host"]).isEqualTo("android.com:443")
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET /foo HTTP/1.1")
@@ -1207,9 +1215,8 @@ class URLConnectionTest {
     server.enqueue(builder.build())
     server.enqueue(builder.build())
     val inputStream = getResponse(newRequest("/")).body.byteStream()
-    assertThat(inputStream.markSupported())
-      .overridingErrorMessage("This implementation claims to support mark().")
-      .isFalse
+    assertThat(inputStream.markSupported(), "This implementation claims to support mark().")
+      .isFalse()
     inputStream.mark(5)
     assertThat(readAscii(inputStream, 5)).isEqualTo("ABCDE")
     try {
@@ -2134,8 +2141,7 @@ class URLConnectionTest {
     val retry = server.takeRequest()
     assertThat(retry.requestLine).isEqualTo("GET /foo HTTP/1.1")
     if (reuse) {
-      assertThat(retry.sequenceNumber)
-        .overridingErrorMessage("Expected connection reuse")
+      assertThat(retry.sequenceNumber, "Expected connection reuse")
         .isEqualTo(1)
     }
   }
@@ -2167,8 +2173,7 @@ class URLConnectionTest {
     assertThat(first.requestLine).isEqualTo("GET / HTTP/1.1")
     val retry = server.takeRequest()
     assertThat(retry.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(retry.sequenceNumber)
-      .overridingErrorMessage("Expected connection reuse")
+    assertThat(retry.sequenceNumber, "Expected connection reuse")
       .isEqualTo(1)
   }
 
@@ -2311,11 +2316,9 @@ class URLConnectionTest {
     val server2Host = server2.hostName + ":" + server2.port
     assertThat(server.takeRequest().headers["Host"]).isEqualTo(server1Host)
     assertThat(server2.takeRequest().headers["Host"]).isEqualTo(server2Host)
-    assertThat(server.takeRequest().sequenceNumber)
-      .overridingErrorMessage("Expected connection reuse")
+    assertThat(server.takeRequest().sequenceNumber, "Expected connection reuse")
       .isEqualTo(1)
-    assertThat(server2.takeRequest().sequenceNumber)
-      .overridingErrorMessage("Expected connection reuse")
+    assertThat(server2.takeRequest().sequenceNumber, "Expected connection reuse")
       .isEqualTo(1)
   }
 
@@ -2864,11 +2867,10 @@ class URLConnectionTest {
     val b = getResponse(newRequest("/"))
     assertThat(b.code).isEqualTo(200)
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber)
-      .overridingErrorMessage(
-        "When connection: close is used, each request should get its own connection"
-      )
-      .isEqualTo(0L)
+    assertThat(
+      server.takeRequest().sequenceNumber,
+      "When connection: close is used, each request should get its own connection"
+    ).isEqualTo(0)
   }
 
   @Test
@@ -2880,11 +2882,10 @@ class URLConnectionTest {
     val b = getResponse(newRequest("/"))
     assertThat(b.code).isEqualTo(200)
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber)
-      .overridingErrorMessage(
-        "When connection: close is used, each request should get its own connection"
-      )
-      .isEqualTo(0L)
+    assertThat(
+      server.takeRequest().sequenceNumber,
+      "When connection: close is used, each request should get its own connection",
+    ).isEqualTo(0)
   }
 
   @Test
@@ -2904,11 +2905,10 @@ class URLConnectionTest {
       "This is the new location!"
     )
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber)
-      .overridingErrorMessage(
-        "When connection: close is used, each request should get its own connection"
-      )
-      .isEqualTo(0L)
+    assertThat(
+      server.takeRequest().sequenceNumber,
+      "When connection: close is used, each request should get its own connection"
+    ).isEqualTo(0)
   }
 
   /**
@@ -3802,7 +3802,7 @@ class URLConnectionTest {
       MockResponse(body = "b")
     )
     val response1 = getResponse(newRequest("/"))
-    assertThat(response1.code).isEqualTo(HttpURLConnection.HTTP_NOT_MODIFIED.toLong())
+    assertThat(response1.code).isEqualTo(HttpURLConnection.HTTP_NOT_MODIFIED)
     assertContent("", response1)
     val response2 = getResponse(newRequest("/"))
     assertThat(response2.code).isEqualTo(HttpURLConnection.HTTP_OK)

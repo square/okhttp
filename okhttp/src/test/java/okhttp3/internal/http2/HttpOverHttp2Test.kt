@@ -15,6 +15,14 @@
  */
 package okhttp3.internal.http2
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.hasMessage
+import assertk.assertions.isCloseTo
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -77,9 +85,8 @@ import okio.Buffer
 import okio.BufferedSink
 import okio.GzipSink
 import okio.buffer
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Disabled
@@ -254,7 +261,7 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("ABCDE")
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
-    org.junit.jupiter.api.Assertions.assertArrayEquals(postBytes, request.body.readByteArray())
+    assertArrayEquals(postBytes, request.body.readByteArray())
       assertThat(request.headers["Content-Length"]).isNull()
   }
 
@@ -281,10 +288,8 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("ABCDE")
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
-    org.junit.jupiter.api.Assertions.assertArrayEquals(postBytes, request.body.readByteArray())
-    assertThat(request.headers["Content-Length"]!!.toInt()).isEqualTo(
-      postBytes.size.toLong()
-    )
+    assertArrayEquals(postBytes, request.body.readByteArray())
+    assertThat(request.headers["Content-Length"]!!.toInt()).isEqualTo(postBytes.size)
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -314,9 +319,8 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("ABCDE")
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
-    org.junit.jupiter.api.Assertions.assertArrayEquals(postBytes, request.body.readByteArray())
-    assertThat(request.headers["Content-Length"]!!.toInt())
-      .isEqualTo(postBytes.size.toLong())
+    assertArrayEquals(postBytes, request.body.readByteArray())
+    assertThat(request.headers["Content-Length"]!!.toInt()).isEqualTo(postBytes.size)
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -356,9 +360,10 @@ class HttpOverHttp2Test {
     // Cancel the call and discard what we've buffered for the response body. This should free up
     // the connection flow-control window so new requests can proceed.
     call1.cancel()
-    assertThat(response1.body.source().discard(1, TimeUnit.SECONDS))
-      .overridingErrorMessage("Call should not have completed successfully.")
-      .isFalse
+    assertThat(
+      response1.body.source().discard(1, TimeUnit.SECONDS),
+      "Call should not have completed successfully."
+    ).isFalse()
     val call2 = client.newCall(Request(server.url("/")))
     val response2 = call2.execute()
     assertThat(response2.body.string()).isEqualTo("abc")
@@ -1133,7 +1138,8 @@ class HttpOverHttp2Test {
 
   /** Make a call and canceling it as soon as it's accepted by the server.  */
   private fun callAndCancel(
-    expectedSequenceNumber: Int, responseDequeuedLatch: CountDownLatch?,
+    expectedSequenceNumber: Int,
+    responseDequeuedLatch: CountDownLatch?,
     requestCanceledLatch: CountDownLatch?
   ) {
     val call = client.newCall(Request(server.url("/")))
@@ -1148,7 +1154,7 @@ class HttpOverHttp2Test {
       }
     })
     assertThat(server.takeRequest().sequenceNumber)
-      .isEqualTo(expectedSequenceNumber.toLong())
+      .isEqualTo(expectedSequenceNumber)
     responseDequeuedLatch!!.await()
     call.cancel()
     requestCanceledLatch!!.countDown()
@@ -1351,8 +1357,7 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("ABC")
     assertThat(response.protocol).isEqualTo(protocol)
     val logs = testLogHandler.takeAll()
-    assertThat(firstFrame(logs, "HEADERS"))
-      .overridingErrorMessage("header logged")
+    assertThat(firstFrame(logs, "HEADERS")!!, "header logged")
       .contains("HEADERS       END_STREAM|END_HEADERS")
   }
 
@@ -1370,16 +1375,15 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("ABC")
     assertThat(response.protocol).isEqualTo(protocol)
     val logs = testLogHandler.takeAll()
-    assertThat(firstFrame(logs, "HEADERS"))
-      .overridingErrorMessage("header logged")
+    assertThat(firstFrame(logs, "HEADERS")!!, "header logged")
       .contains("HEADERS       END_HEADERS")
     // While MockWebServer waits to read the client's HEADERS frame before sending the response, it
     // doesn't wait to read the client's DATA frame and may send a DATA frame before the client
     // does. So we can't assume the client's empty DATA will be logged first.
     assertThat(countFrames(logs, "FINE: >> 0x00000003     0 DATA          END_STREAM"))
-      .isEqualTo(1L)
+      .isEqualTo(1)
     assertThat(countFrames(logs, "FINE: >> 0x00000003     3 DATA          END_STREAM"))
-      .isEqualTo(1L)
+      .isEqualTo(1)
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -1405,13 +1409,13 @@ class HttpOverHttp2Test {
     // Confirm a single ping was sent and received, and its reply was sent and received.
     val logs = testLogHandler.takeAll()
     assertThat(countFrames(logs, "FINE: >> 0x00000000     8 PING          "))
-      .isEqualTo(1L)
+      .isEqualTo(1)
     assertThat(countFrames(logs, "FINE: << 0x00000000     8 PING          "))
-      .isEqualTo(1L)
+      .isEqualTo(1)
     assertThat(countFrames(logs, "FINE: >> 0x00000000     8 PING          ACK"))
-      .isEqualTo(1L)
+      .isEqualTo(1)
     assertThat(countFrames(logs, "FINE: << 0x00000000     8 PING          ACK"))
-      .isEqualTo(1L)
+      .isEqualTo(1)
   }
 
   @Flaky @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -1446,14 +1450,14 @@ class HttpOverHttp2Test {
     }
     val elapsedUntilFailure = System.nanoTime() - executeAtNanos
     assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure).toDouble())
-      .isCloseTo(1000.0, Offset.offset(250.0))
+      .isCloseTo(1000.0, 250.0)
 
     // Confirm a single ping was sent but not acknowledged.
     val logs = testLogHandler.takeAll()
     assertThat(countFrames(logs, "FINE: >> 0x00000000     8 PING          "))
-      .isEqualTo(1L)
+      .isEqualTo(1)
     assertThat(countFrames(logs, "FINE: << 0x00000000     8 PING          ACK"))
-      .isEqualTo(0L)
+      .isEqualTo(0)
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -1930,10 +1934,10 @@ class HttpOverHttp2Test {
       call.execute()
       fail<Any?>()
     } catch (expected: IOException) {
-      assertThat(call.isCanceled()).isTrue
+      assertThat(call.isCanceled()).isTrue()
     }
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.failure).hasMessage("stream was reset: CANCEL")
+    assertThat(recordedRequest.failure!!).hasMessage("stream was reset: CANCEL")
   }
 
   @ParameterizedTest

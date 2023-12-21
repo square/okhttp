@@ -15,6 +15,10 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotEmpty
+import assertk.assertions.isNotNull
 import java.io.IOException
 import java.net.InetAddress
 import java.util.concurrent.CompletableFuture
@@ -37,7 +41,6 @@ import okhttp3.TlsVersion.TLS_1_3
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
@@ -180,7 +183,7 @@ class SocketChannelTest {
 
     assertThat(response).isNotNull()
 
-    assertThat(response.body.string()).isNotBlank()
+    assertThat(response.body.string()).isNotEmpty()
 
     if (socketMode is TlsInstance) {
       assertThat(response.handshake!!.tlsVersion).isEqualTo(socketMode.tlsVersion)

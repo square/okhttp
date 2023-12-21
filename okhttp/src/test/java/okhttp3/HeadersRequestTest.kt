@@ -15,11 +15,12 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.TestUtil.headerEntries
 import okhttp3.internal.http2.Http2ExchangeCodec.Companion.http2HeadersList
 import okhttp3.internal.http2.Http2ExchangeCodec.Companion.readHttp2HeadersList
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class HeadersRequestTest {

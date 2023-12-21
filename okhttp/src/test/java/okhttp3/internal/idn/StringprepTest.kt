@@ -15,11 +15,13 @@
  */
 package okhttp3.internal.idn
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
 import okio.FileSystem
 import okio.Path.Companion.toPath
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 class StringprepTest {

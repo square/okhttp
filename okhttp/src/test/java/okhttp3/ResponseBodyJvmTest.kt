@@ -15,25 +15,24 @@
  */
 package okhttp3
 
+import assertk.assertThat
 import assertk.assertions.isEqualTo
-import okio.buffer
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.ResponseBody.Companion.toResponseBody
-import okio.Buffer
-import okio.BufferedSource
-import okio.ByteString
-import okio.ForwardingSource
-import org.junit.jupiter.api.Test
+import assertk.assertions.isTrue
 import java.io.IOException
 import java.io.InputStreamReader
 import java.io.Reader
-import java.lang.AssertionError
-import java.lang.StringBuilder
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicBoolean
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.internal.and
+import okio.Buffer
+import okio.BufferedSource
+import okio.ByteString
 import okio.ByteString.Companion.decodeHex
-import org.assertj.core.api.Assertions.assertThat
+import okio.ForwardingSource
+import okio.buffer
+import org.junit.jupiter.api.Test
 
 class ResponseBodyJvmTest {
   @Test
@@ -120,7 +119,7 @@ class ResponseBodyJvmTest {
       }
     }
     assertThat(body.string()).isEqualTo("hello")
-    assertThat(closed.get()).isTrue
+    assertThat(closed.get()).isTrue()
   }
 
   @Test
@@ -201,7 +200,7 @@ class ResponseBodyJvmTest {
       }
     }
     body.charStream().close()
-    assertThat(closed.get()).isTrue
+    assertThat(closed.get()).isTrue()
   }
 
   @Test
@@ -230,17 +229,17 @@ class ResponseBodyJvmTest {
     val reader = body.charStream()
     assertThat(reader.read()).isEqualTo('h'.code)
     reader.close()
-    assertThat(closed.get()).isTrue
+    assertThat(closed.get()).isTrue()
   }
 
   @Test
   fun sourceSeesBom() {
     val body = "efbbbf68656c6c6f".decodeHex().toResponseBody()
     val source = body.source()
-    assertk.assertThat(source.readByte() and 0xff).isEqualTo(0xef)
-    assertk.assertThat(source.readByte() and 0xff).isEqualTo(0xbb)
-    assertk.assertThat(source.readByte() and 0xff).isEqualTo(0xbf)
-    assertk.assertThat(source.readUtf8()).isEqualTo("hello")
+    assertThat(source.readByte() and 0xff).isEqualTo(0xef)
+    assertThat(source.readByte() and 0xff).isEqualTo(0xbb)
+    assertThat(source.readByte() and 0xff).isEqualTo(0xbf)
+    assertThat(source.readUtf8()).isEqualTo("hello")
   }
 
   @Test
@@ -283,7 +282,7 @@ class ResponseBodyJvmTest {
       }
     }
     assertThat(body.bytes().size).isEqualTo(5)
-    assertThat(closed.get()).isTrue
+    assertThat(closed.get()).isTrue()
   }
 
   @Test
@@ -374,7 +373,7 @@ class ResponseBodyJvmTest {
       }
     }
     assertThat(body.byteString().size).isEqualTo(5)
-    assertThat(closed.get()).isTrue
+    assertThat(closed.get()).isTrue()
   }
 
   @Test
@@ -468,14 +467,14 @@ class ResponseBodyJvmTest {
       }
     }
     body.byteStream().close()
-    assertThat(closed.get()).isTrue
+    assertThat(closed.get()).isTrue()
   }
 
   @Test
   fun unicodeTextWithUnsupportedEncoding() {
     val text = "eile oli oliiviõli"
     val body = text.toResponseBody("text/plain; charset=unknown".toMediaType())
-    assertk.assertThat(body.string()).isEqualTo(text)
+    assertThat(body.string()).isEqualTo(text)
   }
 
   companion object {
