@@ -13,49 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2;
+package okhttp3.internal.http2
 
-import java.util.List;
-import okhttp3.SimpleProvider;
-import okhttp3.internal.http2.hpackjson.Case;
-import okhttp3.internal.http2.hpackjson.Story;
-import okio.Buffer;
-import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ArgumentsSource;
+import okhttp3.SimpleProvider
+import okhttp3.internal.http2.hpackjson.Case
+import okhttp3.internal.http2.hpackjson.Story
+import okio.Buffer
+import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ArgumentsSource
 
 /**
- * Tests for round-tripping headers through hpack..
+ * Tests for round-tripping headers through hpack.
  */
 // TODO: update hpack-test-case with the output of our encoder.
 // This test will hide complementary bugs in the encoder and decoder,
 // We should test that the encoder is producing responses that are
-public class HpackRoundTripTest extends HpackDecodeTestBase {
-
-  private static final String[] RAW_DATA = {"raw-data"};
-
-  static class StoriesTestProvider extends SimpleProvider {
-    @NotNull @Override public List<Object> arguments() throws Exception {
-      return createStories(RAW_DATA);
-    }
+class HpackRoundTripTest : HpackDecodeTestBase() {
+  internal class StoriesTestProvider : SimpleProvider() {
+    override fun arguments(): List<Any> = createStories(RAW_DATA)
   }
 
-  private final Buffer bytesOut = new Buffer();
-  private final Hpack.Writer hpackWriter = new Hpack.Writer(bytesOut);
+  private val bytesOut = Buffer()
+  private val hpackWriter = Hpack.Writer(out = bytesOut)
 
   @ParameterizedTest
-  @ArgumentsSource(StoriesTestProvider.class)
-  public void testRoundTrip(Story story) throws Exception {
-    Assumptions.assumeFalse(story == Story.MISSING, "Test stories missing, checkout git submodule");
+  @ArgumentsSource(StoriesTestProvider::class)
+  fun testRoundTrip(story: Story) {
+    assumeFalse(
+      story === Story.MISSING,
+      "Test stories missing, checkout git submodule"
+    )
 
-    Story story2 = story.clone();
-    // Mutate cases in base class.
-    for (Case caze : story2.getCases()) {
-      hpackWriter.writeHeaders(caze.getHeaders());
-      caze.setWire(bytesOut.readByteString());
+    val newCases = mutableListOf<Case>()
+    for (case in story.cases) {
+      hpackWriter.writeHeaders(case.headersList)
+      newCases += case.copy(wire = bytesOut.readByteString())
     }
 
-    testDecoder(story2);
+    testDecoder(story.copy(cases = newCases))
+  }
+
+  companion object {
+    private val RAW_DATA = arrayOf("raw-data")
   }
 }

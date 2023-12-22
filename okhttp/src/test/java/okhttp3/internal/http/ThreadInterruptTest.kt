@@ -13,148 +13,145 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http;
+package okhttp3.internal.http
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
-import javax.net.ServerSocketFactory;
-import javax.net.SocketFactory;
-import okhttp3.Call;
-import okhttp3.DelegatingServerSocketFactory;
-import okhttp3.DelegatingSocketFactory;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.OkHttpClientTestRule;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.testing.PlatformRule;
-import okio.Buffer;
-import okio.BufferedSink;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-
-import static org.junit.jupiter.api.Assertions.fail;
+import java.io.IOException
+import java.net.ServerSocket
+import java.net.Socket
+import java.net.SocketException
+import java.util.concurrent.TimeUnit
+import okhttp3.DelegatingServerSocketFactory
+import okhttp3.DelegatingSocketFactory
+import okhttp3.OkHttpClient
+import okhttp3.OkHttpClientTestRule
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.testing.PlatformRule
+import okio.Buffer
+import okio.BufferedSink
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 @Tag("Slowish")
-public final class ThreadInterruptTest {
-  @RegisterExtension public final PlatformRule platform = new PlatformRule();
-  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+class ThreadInterruptTest {
+  @RegisterExtension
+  val platform = PlatformRule()
 
-  // The size of the socket buffers in bytes.
-  private static final int SOCKET_BUFFER_SIZE = 256 * 1024;
+  @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
+  private lateinit var server: MockWebServer
+  private lateinit var client: OkHttpClient
 
-  private MockWebServer server;
-  private OkHttpClient client;
-
-  @BeforeEach public void setUp() throws Exception {
+  @BeforeEach
+  fun setUp() {
     // Sockets on some platforms can have large buffers that mean writes do not block when
     // required. These socket factories explicitly set the buffer sizes on sockets created.
-    server = new MockWebServer();
-    server.setServerSocketFactory(
-        new DelegatingServerSocketFactory(ServerSocketFactory.getDefault()) {
-          @Override
-          protected ServerSocket configureServerSocket(ServerSocket serverSocket) throws SocketException {
-            serverSocket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
-            return serverSocket;
-          }
-        });
+    server = MockWebServer()
+    server.serverSocketFactory = object : DelegatingServerSocketFactory(getDefault()) {
+      @Throws(SocketException::class)
+      override fun configureServerSocket(serverSocket: ServerSocket): ServerSocket {
+        serverSocket.setReceiveBufferSize(SOCKET_BUFFER_SIZE)
+        return serverSocket
+      }
+    }
     client = clientTestRule.newClientBuilder()
-        .socketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
-          @Override
-          protected Socket configureSocket(Socket socket) throws IOException {
-            socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
-            socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
-            return socket;
-          }
-        })
-        .build();
+      .socketFactory(object : DelegatingSocketFactory(getDefault()) {
+        @Throws(IOException::class)
+        override fun configureSocket(socket: Socket): Socket {
+          socket.setSendBufferSize(SOCKET_BUFFER_SIZE)
+          socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE)
+          return socket
+        }
+      })
+      .build()
   }
 
-  @AfterEach public void tearDown() throws Exception {
-    Thread.interrupted(); // Clear interrupted state.
+  @AfterEach
+  fun tearDown() {
+    Thread.interrupted() // Clear interrupted state.
   }
 
-  @Test public void interruptWritingRequestBody() throws Exception {
-    server.enqueue(new MockResponse());
-    server.start();
-
-    Call call = client.newCall(new Request.Builder()
+  @Test
+  fun interruptWritingRequestBody() {
+    server.enqueue(MockResponse())
+    server.start()
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .post(new RequestBody() {
-          @Override public @Nullable MediaType contentType() {
-            return null;
-          }
+        .post(object : RequestBody() {
+          override fun contentType() = null
 
-          @Override public void writeTo(BufferedSink sink) throws IOException {
-            for (int i = 0; i < 10; i++) {
-              sink.writeByte(0);
-              sink.flush();
-              sleep(100);
+          override fun writeTo(sink: BufferedSink) {
+            for (i in 0..9) {
+              sink.writeByte(0)
+              sink.flush()
+              sleep(100)
             }
-            fail("Expected connection to be closed");
+            fail<Any>("Expected connection to be closed")
           }
         })
-        .build());
-
-    interruptLater(500);
+        .build()
+    )
+    interruptLater(500)
     try {
-      call.execute();
-      fail("");
-    } catch (IOException expected) {
+      call.execute()
+      fail<Any>("")
+    } catch (expected: IOException) {
     }
   }
 
-  @Test public void interruptReadingResponseBody() throws Exception {
-    int responseBodySize = 8 * 1024 * 1024; // 8 MiB.
-
-    server.enqueue(new MockResponse()
-        .setBody(new Buffer().write(new byte[responseBodySize]))
-        .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
-    server.start();
-
-    Call call = client.newCall(new Request.Builder()
+  @Test
+  fun interruptReadingResponseBody() {
+    val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
+    server.enqueue(
+      MockResponse()
+        .setBody(Buffer().write(ByteArray(responseBodySize)))
+        .throttleBody((64 * 1024).toLong(), 125, TimeUnit.MILLISECONDS)
+    ) // 500 Kbps
+    server.start()
+    val call = client.newCall(
+      Request.Builder()
         .url(server.url("/"))
-        .build());
-
-    Response response = call.execute();
-    interruptLater(500);
-    InputStream responseBody = response.body().byteStream();
-    byte[] buffer = new byte[1024];
+        .build()
+    )
+    val response = call.execute()
+    interruptLater(500)
+    val responseBody = response.body.byteStream()
+    val buffer = ByteArray(1024)
     try {
       while (responseBody.read(buffer) != -1) {
       }
-      fail("Expected connection to be interrupted");
-    } catch (IOException expected) {
+      fail<Any>("Expected connection to be interrupted")
+    } catch (expected: IOException) {
     }
-
-    responseBody.close();
+    responseBody.close()
   }
 
-  private void sleep(int delayMillis) {
+  private fun sleep(delayMillis: Int) {
     try {
-      Thread.sleep(delayMillis);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+      Thread.sleep(delayMillis.toLong())
+    } catch (e: InterruptedException) {
+      Thread.currentThread().interrupt()
     }
   }
 
-  private void interruptLater(int delayMillis) {
-    Thread toInterrupt = Thread.currentThread();
-    Thread interruptingCow = new Thread(() -> {
-      sleep(delayMillis);
-      toInterrupt.interrupt();
-    });
-    interruptingCow.start();
+  private fun interruptLater(delayMillis: Int) {
+    val toInterrupt = Thread.currentThread()
+    val interruptingCow = Thread {
+      sleep(delayMillis)
+      toInterrupt.interrupt()
+    }
+    interruptingCow.start()
+  }
+
+  companion object {
+    // The size of the socket buffers in bytes.
+    private const val SOCKET_BUFFER_SIZE = 256 * 1024
   }
 }

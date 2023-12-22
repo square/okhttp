@@ -13,224 +13,250 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.sse.internal;
+package okhttp3.sse.internal
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
-import mockwebserver3.MockResponse;
-import mockwebserver3.MockWebServer;
-import mockwebserver3.junit5.internal.MockWebServerExtension;
-import okhttp3.OkHttpClient;
-import okhttp3.OkHttpClientTestRule;
-import okhttp3.RecordingEventListener;
-import okhttp3.Request;
-import okhttp3.sse.EventSource;
-import okhttp3.sse.EventSources;
-import okhttp3.testing.PlatformRule;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junitpioneer.jupiter.RetryingTest;
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.concurrent.TimeUnit
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.internal.MockWebServerExtension
+import okhttp3.OkHttpClientTestRule
+import okhttp3.RecordingEventListener
+import okhttp3.Request
+import okhttp3.sse.EventSource
+import okhttp3.sse.EventSources.createFactory
+import okhttp3.testing.PlatformRule
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.RegisterExtension
+import org.junitpioneer.jupiter.RetryingTest
 
 @Tag("Slowish")
-@ExtendWith(MockWebServerExtension.class)
-public final class EventSourceHttpTest {
-  @RegisterExtension public final PlatformRule platform = new PlatformRule();
+@ExtendWith(MockWebServerExtension::class)
+class EventSourceHttpTest {
+  @RegisterExtension
+  val platform = PlatformRule()
+  private lateinit var server: MockWebServer
 
-  private MockWebServer server;
-  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
-
-  private final RecordingEventListener eventListener = new RecordingEventListener();
-
-  private final EventSourceRecorder listener = new EventSourceRecorder();
-  private OkHttpClient client = clientTestRule.newClientBuilder()
+  @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
+  private val eventListener = RecordingEventListener()
+  private val listener = EventSourceRecorder()
+  private var client = clientTestRule.newClientBuilder()
     .eventListenerFactory(clientTestRule.wrap(eventListener))
-    .build();
+    .build()
 
-  @BeforeEach public void before(MockWebServer server) {
-    this.server = server;
+  @BeforeEach
+  fun before(server: MockWebServer) {
+    this.server = server
   }
 
-  @AfterEach public void after() {
-    listener.assertExhausted();
+  @AfterEach
+  fun after() {
+    listener.assertExhausted()
   }
 
-  @Test public void event() {
-    server.enqueue(new MockResponse.Builder()
-        .body(""
-            + "data: hey\n"
-            + "\n").setHeader("content-type", "text/event-stream")
-        .build());
-
-    EventSource source = newEventSource();
-
-    assertThat(source.request().url().encodedPath()).isEqualTo("/");
-
-    listener.assertOpen();
-    listener.assertEvent(null, null, "hey");
-    listener.assertClose();
+  @Test
+  fun event() {
+    server.enqueue(
+      MockResponse.Builder()
+        .body(
+          """
+          |data: hey
+          |
+          |
+          """.trimMargin()
+        ).setHeader("content-type", "text/event-stream")
+        .build()
+    )
+    val source = newEventSource()
+    assertThat(source.request().url.encodedPath).isEqualTo("/")
+    listener.assertOpen()
+    listener.assertEvent(null, null, "hey")
+    listener.assertClose()
   }
 
   @RetryingTest(5)
-  public void cancelInEventShortCircuits() throws IOException {
-    server.enqueue(new MockResponse.Builder()
-        .body(""
-            + "data: hey\n"
-            + "\n").setHeader("content-type", "text/event-stream")
-        .build());
-    listener.enqueueCancel(); // Will cancel in onOpen().
-
-    newEventSource();
-    listener.assertOpen();
-    listener.assertFailure("canceled");
+  fun cancelInEventShortCircuits() {
+    server.enqueue(
+      MockResponse.Builder()
+        .body(
+          """
+          |data: hey
+          |
+          |
+          """.trimMargin()
+        ).setHeader("content-type", "text/event-stream")
+        .build()
+    )
+    listener.enqueueCancel() // Will cancel in onOpen().
+    newEventSource()
+    listener.assertOpen()
+    listener.assertFailure("canceled")
   }
 
-  @Test public void badContentType() {
-    server.enqueue(new MockResponse.Builder()
-        .body(""
-            + "data: hey\n"
-            + "\n").setHeader("content-type", "text/plain")
-        .build());
-
-    newEventSource();
-    listener.assertFailure("Invalid content-type: text/plain");
+  @Test
+  fun badContentType() {
+    server.enqueue(
+      MockResponse.Builder()
+        .body(
+          """
+          |data: hey
+          |
+          |
+          """.trimMargin()
+        ).setHeader("content-type", "text/plain")
+        .build()
+    )
+    newEventSource()
+    listener.assertFailure("Invalid content-type: text/plain")
   }
 
-  @Test public void badResponseCode() {
-    server.enqueue(new MockResponse.Builder()
-        .body(""
-          + "data: hey\n"
-          + "\n")
+  @Test
+  fun badResponseCode() {
+    server.enqueue(
+      MockResponse.Builder()
+        .body(
+          """
+          |data: hey
+          |
+          |
+          """.trimMargin()
+        )
         .setHeader("content-type", "text/event-stream")
         .code(401)
-        .build());
-
-    newEventSource();
-    listener.assertFailure(null);
+        .build()
+    )
+    newEventSource()
+    listener.assertFailure(null)
   }
 
-  @Test public void fullCallTimeoutDoesNotApplyOnceConnected() throws Exception {
+  @Test
+  fun fullCallTimeoutDoesNotApplyOnceConnected() {
     client = client.newBuilder()
-        .callTimeout(250, TimeUnit.MILLISECONDS)
-        .build();
-
-    server.enqueue(new MockResponse.Builder()
+      .callTimeout(250, TimeUnit.MILLISECONDS)
+      .build()
+    server.enqueue(
+      MockResponse.Builder()
         .bodyDelay(500, TimeUnit.MILLISECONDS)
         .setHeader("content-type", "text/event-stream")
         .body("data: hey\n\n")
-        .build());
-
-    EventSource source = newEventSource();
-
-    assertThat(source.request().url().encodedPath()).isEqualTo("/");
-
-    listener.assertOpen();
-    listener.assertEvent(null, null, "hey");
-    listener.assertClose();
+        .build()
+    )
+    val source = newEventSource()
+    assertThat(source.request().url.encodedPath).isEqualTo("/")
+    listener.assertOpen()
+    listener.assertEvent(null, null, "hey")
+    listener.assertClose()
   }
 
-  @Test public void fullCallTimeoutAppliesToSetup() throws Exception {
+  @Test
+  fun fullCallTimeoutAppliesToSetup() {
     client = client.newBuilder()
-        .callTimeout(250, TimeUnit.MILLISECONDS)
-        .build();
-
-    server.enqueue(new MockResponse.Builder()
+      .callTimeout(250, TimeUnit.MILLISECONDS)
+      .build()
+    server.enqueue(
+      MockResponse.Builder()
         .headersDelay(500, TimeUnit.MILLISECONDS)
         .setHeader("content-type", "text/event-stream")
         .body("data: hey\n\n")
-        .build());
-
-    newEventSource();
-    listener.assertFailure("timeout");
+        .build()
+    )
+    newEventSource()
+    listener.assertFailure("timeout")
   }
 
-  @Test public void retainsAccept() throws InterruptedException {
-    server.enqueue(new MockResponse.Builder()
-        .body(""
-            + "data: hey\n"
-            + "\n").setHeader("content-type", "text/event-stream")
-        .build());
-
-    EventSource source = newEventSource("text/plain");
-
-    listener.assertOpen();
-    listener.assertEvent(null, null, "hey");
-    listener.assertClose();
-
-    assertThat(server.takeRequest().getHeaders().get("Accept")).isEqualTo("text/plain");
+  @Test
+  fun retainsAccept() {
+    server.enqueue(
+      MockResponse.Builder()
+        .body(
+          """
+          |data: hey
+          |
+          |
+          """.trimMargin()
+        )
+        .setHeader("content-type", "text/event-stream")
+        .build()
+    )
+    newEventSource("text/plain")
+    listener.assertOpen()
+    listener.assertEvent(null, null, "hey")
+    listener.assertClose()
+    assertThat(server.takeRequest().headers["Accept"]).isEqualTo("text/plain")
   }
 
-  @Test public void setsMissingAccept() throws InterruptedException {
-    server.enqueue(new MockResponse.Builder()
-        .body(""
-            + "data: hey\n"
-            + "\n").setHeader("content-type", "text/event-stream")
-        .build());
-
-    EventSource source = newEventSource();
-
-    listener.assertOpen();
-    listener.assertEvent(null, null, "hey");
-    listener.assertClose();
-
-    assertThat(server.takeRequest().getHeaders().get("Accept")).isEqualTo("text/event-stream");
+  @Test
+  fun setsMissingAccept() {
+    server.enqueue(
+      MockResponse.Builder()
+        .body(
+          """
+          |data: hey
+          |
+          |
+          """.trimMargin()
+        ).setHeader("content-type", "text/event-stream")
+        .build()
+    )
+    newEventSource()
+    listener.assertOpen()
+    listener.assertEvent(null, null, "hey")
+    listener.assertClose()
+    assertThat(server.takeRequest().headers["Accept"])
+      .isEqualTo("text/event-stream")
   }
 
-  @Test public void eventListenerEvents() {
-    server.enqueue(new MockResponse.Builder()
-        .body(""
-          + "data: hey\n"
-          + "\n").setHeader("content-type", "text/event-stream")
-        .build());
-
-    EventSource source = newEventSource();
-
-    assertThat(source.request().url().encodedPath()).isEqualTo("/");
-
-    listener.assertOpen();
-    listener.assertEvent(null, null, "hey");
-    listener.assertClose();
-
+  @Test
+  fun eventListenerEvents() {
+    server.enqueue(
+      MockResponse.Builder()
+        .body(
+          """
+          |data: hey
+          |
+          |
+          """.trimMargin()
+        ).setHeader("content-type", "text/event-stream")
+        .build()
+    )
+    val source = newEventSource()
+    assertThat(source.request().url.encodedPath).isEqualTo("/")
+    listener.assertOpen()
+    listener.assertEvent(null, null, "hey")
+    listener.assertClose()
     assertThat(eventListener.recordedEventTypes()).containsExactly(
-        "CallStart",
-        "ProxySelectStart",
-        "ProxySelectEnd",
-        "DnsStart",
-        "DnsEnd",
-        "ConnectStart",
-        "ConnectEnd",
-        "ConnectionAcquired",
-        "RequestHeadersStart",
-        "RequestHeadersEnd",
-        "ResponseHeadersStart",
-        "ResponseHeadersEnd",
-        "ResponseBodyStart",
-        "ResponseBodyEnd",
-        "ConnectionReleased",
-        "CallEnd"
-    );
+      "CallStart",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd"
+    )
   }
 
-  private EventSource newEventSource() {
-    return newEventSource(null);
-  }
-
-  private EventSource newEventSource(@Nullable String accept) {
-    Request.Builder builder = new Request.Builder()
-        .url(server.url("/"));
-
+  private fun newEventSource(accept: String? = null): EventSource {
+    val builder = Request.Builder()
+      .url(server.url("/"))
     if (accept != null) {
-      builder.header("Accept", accept);
+      builder.header("Accept", accept)
     }
-
-    Request request = builder
-        .build();
-    EventSource.Factory factory = EventSources.createFactory(client);
-    return factory.newEventSource(request, listener);
+    val request = builder.build()
+    val factory = createFactory(client)
+    return factory.newEventSource(request, listener)
   }
 }

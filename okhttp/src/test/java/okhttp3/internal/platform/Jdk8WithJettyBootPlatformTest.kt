@@ -13,31 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.platform;
+package okhttp3.internal.platform
 
-import okhttp3.testing.PlatformRule;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import okhttp3.internal.platform.Jdk8WithJettyBootPlatform.Companion.buildIfSupported
+import okhttp3.testing.PlatformRule
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
-
-public class Jdk8WithJettyBootPlatformTest {
-  @RegisterExtension public final PlatformRule platform = new PlatformRule();
+class Jdk8WithJettyBootPlatformTest {
+  @RegisterExtension
+  val platform = PlatformRule()
 
   @Test
-  public void testBuildsWithJettyBoot() {
-    assumeTrue(System.getProperty("java.specification.version").equals("1.8"));
-    platform.assumeJettyBootEnabled();
-
-    assertThat(Jdk8WithJettyBootPlatform.Companion.buildIfSupported()).isNotNull();
+  fun testBuildsWithJettyBoot() {
+    assumeTrue(System.getProperty("java.specification.version") == "1.8")
+    platform.assumeJettyBootEnabled()
+    assertThat(buildIfSupported()).isNotNull()
   }
 
   @Test
-  public void testNotBuildWithOther() {
-    assumeFalse(System.getProperty("java.specification.version").equals("1.8"));
-
-    assertThat(Jdk8WithJettyBootPlatform.Companion.buildIfSupported()).isNull();
+  fun testNotBuildWithOther() {
+    assumeFalse(System.getProperty("java.specification.version") == "1.8")
+    assertThat(buildIfSupported()).isNull()
   }
 }

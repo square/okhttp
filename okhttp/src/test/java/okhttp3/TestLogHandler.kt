@@ -13,89 +13,81 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
+import java.util.logging.Handler
+import java.util.logging.Level
+import java.util.logging.LogRecord
+import java.util.logging.Logger
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.rules.TestRule
+import org.junit.runner.Description
+import org.junit.runners.model.Statement
 
 /**
  * A log handler that records which log messages were published so that a calling test can make
  * assertions about them.
  */
-public final class TestLogHandler implements TestRule, BeforeEachCallback, AfterEachCallback {
-  private final Logger logger;
-  private final BlockingQueue<String> logs = new LinkedBlockingQueue<>();
+class TestLogHandler(
+  private val logger: Logger,
+) : TestRule, BeforeEachCallback, AfterEachCallback {
+  constructor(loggerName: Class<*>) : this(Logger.getLogger(loggerName.getName()))
 
-  private final Handler handler = new Handler() {
-    @Override public void publish(LogRecord logRecord) {
-      logs.add(logRecord.getLevel() + ": " + logRecord.getMessage());
+  private val logs = LinkedBlockingQueue<String>()
+
+  private val handler = object : Handler() {
+    override fun publish(logRecord: LogRecord) {
+      logs += "${logRecord.level}: ${logRecord.message}"
     }
 
-    @Override public void flush() {
+    override fun flush() {
     }
 
-    @Override public void close() throws SecurityException {
+    override fun close() {
     }
-  };
-
-  private Level previousLevel;
-
-  public TestLogHandler(Class<?> loggerName) {
-    logger = Logger.getLogger(loggerName.getName());
   }
 
-  public TestLogHandler(Logger logger) {
-    this.logger = logger;
+  private var previousLevel: Level? = null
+
+  override fun beforeEach(context: ExtensionContext?) {
+    previousLevel = logger.level
+    logger.addHandler(handler)
+    logger.setLevel(Level.FINEST)
   }
 
-  @Override public void beforeEach(ExtensionContext context) {
-    previousLevel = logger.getLevel();
-    logger.addHandler(handler);
-    logger.setLevel(Level.FINEST);
+  override fun afterEach(context: ExtensionContext?) {
+    logger.setLevel(previousLevel)
+    logger.removeHandler(handler)
   }
 
-  @Override public void afterEach(ExtensionContext context) {
-    logger.setLevel(previousLevel);
-    logger.removeHandler(handler);
-  }
-
-  @Override public Statement apply(Statement base, Description description) {
-    return new Statement() {
-      @Override public void evaluate() throws Throwable {
-        beforeEach(null);
+  override fun apply(
+    base: Statement,
+    description: Description,
+  ): Statement {
+    return object : Statement() {
+      override fun evaluate() {
+        beforeEach(null)
         try {
-          base.evaluate();
+          base.evaluate()
         } finally {
-          afterEach(null);
+          afterEach(null)
         }
       }
-    };
-  }
-
-  public List<String> takeAll() {
-    List<String> list = new ArrayList<>();
-    logs.drainTo(list);
-    return list;
-  }
-
-  public String take() throws Exception {
-    String message = logs.poll(10, TimeUnit.SECONDS);
-    if (message == null) {
-      throw new AssertionError("Timed out waiting for log message.");
     }
-    return message;
+  }
+
+  fun takeAll(): List<String> {
+    val list = mutableListOf<String>()
+    logs.drainTo(list)
+    return list
+  }
+
+  fun take(): String {
+    return logs.poll(10, TimeUnit.SECONDS)
+      ?: throw AssertionError("Timed out waiting for log message.")
   }
 }

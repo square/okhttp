@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Square, Inc.
+ * Copyright (C) 2018 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.brotli;
+package okhttp3.sse.internal
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-public class BrotliInterceptorJavaApiTest {
-  @Test
-  @Disabled("api only")
-  public void testApi() {
-    BrotliInterceptor.INSTANCE.intercept(null);
-  }
-}
+internal data class Event(
+  val id: String?,
+  val type: String?,
+  val data: String,
+)

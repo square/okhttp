@@ -13,63 +13,63 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2;
+package okhttp3.internal.http2
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import okhttp3.internal.http2.hpackjson.Case;
-import okhttp3.internal.http2.hpackjson.HpackJsonUtil;
-import okhttp3.internal.http2.hpackjson.Story;
-import okio.Buffer;
-
-import static okhttp3.internal.http2.hpackjson.Story.MISSING;
-import static org.assertj.core.api.Assertions.assertThat;
+import okhttp3.internal.http2.hpackjson.HpackJsonUtil
+import okhttp3.internal.http2.hpackjson.Story
+import okio.Buffer
+import org.assertj.core.api.Assertions.assertThat
 
 /**
  * Tests Hpack implementation using https://github.com/http2jp/hpack-test-case/
  */
-public class HpackDecodeTestBase {
+open class HpackDecodeTestBase {
+  private val bytesIn = Buffer()
+  private val hpackReader = Hpack.Reader(bytesIn, 4096)
 
-  /**
-   * Reads all stories in the folders provided, asserts if no story found.
-   */
-  protected static List<Object> createStories(String[] interopTests)
-      throws Exception {
-    if (interopTests.length == 0) {
-      return Collections.singletonList(MISSING);
-    }
-
-    List<Object> result = new ArrayList<>();
-    for (String interopTestName : interopTests) {
-      List<Story> stories = HpackJsonUtil.readStories(interopTestName);
-      result.addAll(stories);
-    }
-    return result;
-  }
-
-  private final Buffer bytesIn = new Buffer();
-  private final Hpack.Reader hpackReader = new Hpack.Reader(bytesIn, 4096);
-
-  protected void testDecoder(Story story) throws Exception {
-    for (Case testCase : story.getCases()) {
-      bytesIn.write(testCase.getWire());
-      hpackReader.readHeaders();
-      assertSetEquals(String.format("seqno=%d", testCase.getSeqno()), testCase.getHeaders(),
-          hpackReader.getAndResetHeaderList());
+  protected fun testDecoder(story: Story) {
+    for (testCase in story.cases) {
+      val encoded = testCase.wire ?: continue
+      bytesIn.write(encoded)
+      hpackReader.readHeaders()
+      assertSetEquals(
+        "seqno=$testCase.seqno",
+        testCase.headersList,
+        hpackReader.getAndResetHeaderList()
+      )
     }
   }
 
-  /**
-   * Checks if {@code expected} and {@code observed} are equal when viewed as a set and headers are
-   * deduped.
-   *
-   * TODO: See if duped headers should be preserved on decode and verify.
-   */
-  private static void assertSetEquals(
-      String message, List<Header> expected, List<Header> observed) {
-    assertThat(new LinkedHashSet<>(observed)).overridingErrorMessage(message).isEqualTo(
-        new LinkedHashSet<>(expected));
+  companion object {
+    /**
+     * Reads all stories in the folders provided, asserts if no story found.
+     */
+    @JvmStatic
+    protected fun createStories(interopTests: Array<String>): List<Any> {
+      if (interopTests.isEmpty()) return listOf<Any>(Story.MISSING)
+
+      val result = mutableListOf<Any>()
+      for (interopTestName in interopTests) {
+        val stories = HpackJsonUtil.readStories(interopTestName)
+        result.addAll(stories)
+      }
+      return result
+    }
+
+    /**
+     * Checks if `expected` and `observed` are equal when viewed as a set and headers are
+     * deduped.
+     *
+     * TODO: See if duped headers should be preserved on decode and verify.
+     */
+    private fun assertSetEquals(
+      message: String,
+      expected: List<Header>,
+      observed: List<Header>,
+    ) {
+      assertThat(LinkedHashSet(observed))
+        .overridingErrorMessage(message)
+        .isEqualTo(LinkedHashSet(expected))
+    }
   }
 }

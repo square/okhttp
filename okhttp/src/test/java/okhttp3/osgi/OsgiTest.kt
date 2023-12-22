@@ -13,57 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.osgi;
+package okhttp3.osgi
 
-import aQute.bnd.build.Project;
-import aQute.bnd.build.Workspace;
-import aQute.bnd.build.model.BndEditModel;
-import aQute.bnd.deployer.repository.LocalIndexedRepo;
-import aQute.bnd.osgi.Constants;
-import aQute.bnd.service.RepositoryPlugin;
-import biz.aQute.resolve.Bndrun;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-import okio.BufferedSource;
-import okio.Okio;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import aQute.bnd.build.Project
+import aQute.bnd.build.Workspace
+import aQute.bnd.build.model.BndEditModel
+import aQute.bnd.deployer.repository.LocalIndexedRepo
+import aQute.bnd.osgi.Constants
+import aQute.bnd.service.RepositoryPlugin
+import biz.aQute.resolve.Bndrun
+import java.io.File
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toPath
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
 
 @Tag("Slow")
-public final class OsgiTest {
-  /** Each is the Bundle-SymbolicName of an OkHttp module's OSGi configuration. */
-  private static final List<String> REQUIRED_BUNDLES = Arrays.asList(
-      "com.squareup.okhttp3",
-      "com.squareup.okhttp3.brotli",
-      "com.squareup.okhttp3.dnsoverhttps",
-      "com.squareup.okhttp3.logging",
-      "com.squareup.okhttp3.sse",
-      "com.squareup.okhttp3.tls",
-      "com.squareup.okhttp3.urlconnection"
-  );
-
-  /** Equinox must also be on the testing classpath. */
-  private static final String RESOLVE_OSGI_FRAMEWORK = "org.eclipse.osgi";
-  private static final String RESOLVE_JAVA_VERSION = "JavaSE-1.8";
-  private static final String REPO_NAME = "OsgiTest";
-
-  private File testResourceDir;
-  private File workspaceDir;
+class OsgiTest {
+  private lateinit var testResourceDir: Path
+  private lateinit var workspaceDir: Path
 
   @BeforeEach
-  public void setUp() throws Exception {
-    testResourceDir = new File("./build/resources/test/okhttp3/osgi");
-    workspaceDir = new File(testResourceDir, "workspace");
+  fun setUp() {
+    testResourceDir = "./build/resources/test/okhttp3/osgi".toPath()
+    workspaceDir = testResourceDir / "workspace"
 
     // Ensure we start from scratch.
-    deleteDirectory(workspaceDir);
-    workspaceDir.mkdirs();
+    fileSystem.deleteRecursively(workspaceDir)
+    fileSystem.createDirectories(workspaceDir)
   }
 
   /**
@@ -71,91 +50,111 @@ public final class OsgiTest {
    * metadata this will fail with an exception.
    */
   @Test
-  public void testMainModuleWithSiblings() throws Exception {
-    try (Workspace workspace = createWorkspace();
-         Bndrun bndRun = createBndRun(workspace)) {
-      bndRun.resolve(false, false);
+  fun testMainModuleWithSiblings() {
+    createWorkspace().use { workspace ->
+      createBndRun(workspace).use { bndRun ->
+        bndRun.resolve(
+          false,
+          false
+        )
+      }
     }
   }
 
-  private Workspace createWorkspace() throws Exception {
-    File bndDir = new File(workspaceDir, "cnf");
-    File repoDir = new File(bndDir, "repo");
-    repoDir.mkdirs();
-
-    Workspace workspace = new Workspace(workspaceDir, bndDir.getName());
-    workspace.setProperty(Constants.PLUGIN + "." + REPO_NAME, ""
-        + LocalIndexedRepo.class.getName()
-        + "; " + LocalIndexedRepo.PROP_NAME + " = '" + REPO_NAME + "'"
-        + "; " + LocalIndexedRepo.PROP_LOCAL_DIR + " = '" + repoDir + "'");
-    workspace.refresh();
-    prepareWorkspace(workspace);
-    return workspace;
+  private fun createWorkspace(): Workspace {
+    val bndDir = workspaceDir / "cnf"
+    val repoDir = bndDir / "repo"
+    fileSystem.createDirectories(repoDir)
+    return Workspace(workspaceDir.toFile(), bndDir.name)
+      .apply {
+        setProperty(
+          "${Constants.PLUGIN}.$REPO_NAME",
+          LocalIndexedRepo::class.java.getName() +
+            "; ${LocalIndexedRepo.PROP_NAME} = '$REPO_NAME'" +
+            "; ${LocalIndexedRepo.PROP_LOCAL_DIR} = '$repoDir'"
+        )
+        refresh()
+        prepareWorkspace()
+      }
   }
 
-  private void prepareWorkspace(Workspace workspace) throws Exception {
-    RepositoryPlugin repositoryPlugin = workspace.getRepository(REPO_NAME);
+  private fun Workspace.prepareWorkspace() {
+    val repositoryPlugin = getRepository(REPO_NAME)
 
     // Deploy the bundles in the deployments test directory.
-    deployDirectory(repositoryPlugin, new File(testResourceDir, "deployments"));
-    deployClassPath(repositoryPlugin);
+    repositoryPlugin.deployDirectory(testResourceDir / "deployments")
+    repositoryPlugin.deployClassPath()
   }
 
-  private Bndrun createBndRun(Workspace workspace) throws Exception {
+  private fun createBndRun(workspace: Workspace): Bndrun {
     // Creating the run require string. It will always use the latest version of each bundle
     // available in the repository.
-    String runRequireString = REQUIRED_BUNDLES.stream()
-        .map(s -> "osgi.identity;filter:='(osgi.identity=" + s + ")'")
-        .collect(Collectors.joining(","));
+    val runRequireString = REQUIRED_BUNDLES.joinToString(separator = ",") {
+      "osgi.identity;filter:='(osgi.identity=$it)'"
+    }
 
-    BndEditModel bndEditModel = new BndEditModel(workspace);
-    // Temporary project to satisfy bnd API.
-    bndEditModel.setProject(new Project(workspace, workspaceDir));
+    val bndEditModel = BndEditModel(workspace).apply {
+      // Temporary project to satisfy bnd API.
+      project = Project(workspace, workspaceDir.toFile())
+    }
 
-    Bndrun result = new Bndrun(bndEditModel);
-    result.setRunfw(RESOLVE_OSGI_FRAMEWORK);
-    result.setRunee(RESOLVE_JAVA_VERSION);
-    result.setRunRequires(runRequireString);
-    return result;
-  }
-
-  private void deployDirectory(RepositoryPlugin repository, File directory) throws Exception {
-    File[] files = directory.listFiles();
-    if (files == null) return;
-
-    for (File file : files) {
-      deployFile(repository, file);
+    return Bndrun(bndEditModel).apply {
+      setRunfw(RESOLVE_OSGI_FRAMEWORK)
+      runee = RESOLVE_JAVA_VERSION
+      setRunRequires(runRequireString)
     }
   }
 
-  private void deployClassPath(RepositoryPlugin repositoryPlugin) throws Exception {
-    String classpath = System.getProperty("java.class.path");
-    for (String classPathEntry : classpath.split(File.pathSeparator)) {
-      deployFile(repositoryPlugin, new File(classPathEntry));
+  private fun RepositoryPlugin.deployDirectory(directory: Path) {
+    for (path in fileSystem.list(directory)) {
+      deployFile(path)
     }
   }
 
-  private void deployFile(RepositoryPlugin repositoryPlugin, File file) throws Exception {
-    if (!file.exists() || file.isDirectory()) return;
+  private fun RepositoryPlugin.deployClassPath() {
+    val classpath = System.getProperty("java.class.path")
+    val entries = classpath.split(File.pathSeparator.toRegex())
+      .dropLastWhile { it.isEmpty() }
+      .toTypedArray()
+    for (classPathEntry in entries) {
+      deployFile(classPathEntry.toPath())
+    }
+  }
 
-    try (BufferedSource source = Okio.buffer(Okio.source(file))) {
-      repositoryPlugin.put(source.inputStream(), new RepositoryPlugin.PutOptions());
-      System.out.println("Deployed " + file.getName());
-    } catch (IllegalArgumentException e) {
-      if (e.getMessage().contains("Jar does not have a symbolic name")) {
-        System.out.println("Skipped non-OSGi dependency: " + file.getName());
-        return;
+  private fun RepositoryPlugin.deployFile(file: Path) {
+    if (fileSystem.metadataOrNull(file)?.isRegularFile != true) return
+    try {
+      fileSystem.read(file) {
+        put(inputStream(), RepositoryPlugin.PutOptions())
+        println("Deployed ${file.name}")
       }
-      throw e;
+    } catch (e: IllegalArgumentException) {
+      if ("Jar does not have a symbolic name" in e.message!!) {
+        println("Skipped non-OSGi dependency: ${file.name}")
+        return
+      }
+      throw e
     }
   }
 
-  private static void deleteDirectory(File dir) throws IOException {
-    if (!dir.exists()) return;
+  companion object {
+    val fileSystem = FileSystem.SYSTEM
 
-    Files.walk(dir.toPath())
-        .filter(Files::isRegularFile)
-        .map(Path::toFile)
-        .forEach(File::delete);
+    /** Each is the Bundle-SymbolicName of an OkHttp module's OSGi configuration.  */
+    private val REQUIRED_BUNDLES: List<String> = mutableListOf(
+      "com.squareup.okhttp3",
+      "com.squareup.okhttp3.brotli",
+      "com.squareup.okhttp3.dnsoverhttps",
+      "com.squareup.okhttp3.logging",
+      "com.squareup.okhttp3.sse",
+      "com.squareup.okhttp3.tls",
+      "com.squareup.okhttp3.urlconnection"
+    )
+
+    /** Equinox must also be on the testing classpath.  */
+    private const val RESOLVE_OSGI_FRAMEWORK = "org.eclipse.osgi"
+    private const val RESOLVE_JAVA_VERSION = "JavaSE-1.8"
+    private const val REPO_NAME = "OsgiTest"
+
   }
 }

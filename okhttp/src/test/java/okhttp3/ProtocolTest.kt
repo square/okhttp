@@ -13,40 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.IOException;
-import org.junit.jupiter.api.Test;
+import java.io.IOException
+import okhttp3.Protocol.Companion.get
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Test
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-public class ProtocolTest {
+class ProtocolTest {
   @Test
-  public void testGetKnown() throws IOException {
-    assertThat(Protocol.get("http/1.0")).isEqualTo(Protocol.HTTP_1_0);
-    assertThat(Protocol.get("http/1.1")).isEqualTo(Protocol.HTTP_1_1);
-    assertThat(Protocol.get("spdy/3.1")).isEqualTo(Protocol.SPDY_3);
-    assertThat(Protocol.get("h2")).isEqualTo(Protocol.HTTP_2);
-    assertThat(Protocol.get("h2_prior_knowledge")).isEqualTo(Protocol.H2_PRIOR_KNOWLEDGE);
-    assertThat(Protocol.get("quic")).isEqualTo(Protocol.QUIC);
-    assertThat(Protocol.get("h3")).isEqualTo(Protocol.HTTP_3);
-    assertThat(Protocol.get("h3-29")).isEqualTo(Protocol.HTTP_3);
+  fun testGetKnown() {
+    assertThat(get("http/1.0")).isEqualTo(Protocol.HTTP_1_0)
+    assertThat(get("http/1.1")).isEqualTo(Protocol.HTTP_1_1)
+    assertThat(get("spdy/3.1")).isEqualTo(Protocol.SPDY_3)
+    assertThat(get("h2")).isEqualTo(Protocol.HTTP_2)
+    assertThat(get("h2_prior_knowledge")).isEqualTo(Protocol.H2_PRIOR_KNOWLEDGE)
+    assertThat(get("quic")).isEqualTo(Protocol.QUIC)
+    assertThat(get("h3")).isEqualTo(Protocol.HTTP_3)
+    assertThat(get("h3-29")).isEqualTo(Protocol.HTTP_3)
   }
 
   @Test
-  public void testGetUnknown() {
-    assertThrows(IOException.class, () -> Protocol.get("tcp"));
+  fun testGetUnknown() {
+    assertThrows(IOException::class.java) { get("tcp") }
   }
 
   @Test
-  public void testToString() {
-    assertThat(Protocol.HTTP_1_0.toString()).isEqualTo("http/1.0");
-    assertThat(Protocol.HTTP_1_1.toString()).isEqualTo("http/1.1");
-    assertThat(Protocol.SPDY_3.toString()).isEqualTo("spdy/3.1");
-    assertThat(Protocol.HTTP_2.toString()).isEqualTo("h2");
-    assertThat(Protocol.H2_PRIOR_KNOWLEDGE.toString()).isEqualTo("h2_prior_knowledge");
-    assertThat(Protocol.QUIC.toString()).isEqualTo("quic");
-    assertThat(Protocol.HTTP_3.toString()).isEqualTo("h3");
+  fun testToString() {
+    assertThat(Protocol.HTTP_1_0.toString()).isEqualTo("http/1.0")
+    assertThat(Protocol.HTTP_1_1.toString()).isEqualTo("http/1.1")
+    assertThat(Protocol.SPDY_3.toString()).isEqualTo("spdy/3.1")
+    assertThat(Protocol.HTTP_2.toString()).isEqualTo("h2")
+    assertThat(Protocol.H2_PRIOR_KNOWLEDGE.toString())
+      .isEqualTo("h2_prior_knowledge")
+    assertThat(Protocol.QUIC.toString()).isEqualTo("quic")
+    assertThat(Protocol.HTTP_3.toString()).isEqualTo("h3")
   }
 }

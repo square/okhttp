@@ -13,94 +13,91 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.dnsoverhttps;
+package okhttp3.dnsoverhttps
 
-import java.io.File;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.security.Security;
-import java.util.Collections;
-import java.util.List;
-import okhttp3.Cache;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
+import java.io.File
+import java.net.UnknownHostException
+import java.security.Security
+import okhttp3.Cache
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.dnsoverhttps.DohProviders.providers
+import org.conscrypt.OpenSSLProvider
 
-import static java.util.Arrays.asList;
-
-public class TestDohMain {
-  public static void main(String[] args) throws IOException {
-    Security.insertProviderAt(new org.conscrypt.OpenSSLProvider(), 1);
-
-    OkHttpClient bootstrapClient = new OkHttpClient.Builder().build();
-
-    List<String> names = asList("google.com", "graph.facebook.com", "sdflkhfsdlkjdf.ee");
-
-    try {
-      System.out.println("uncached\n********\n");
-      List<DnsOverHttps> dnsProviders =
-          DohProviders.providers(bootstrapClient, false, false, false);
-      runBatch(dnsProviders, names);
-
-      Cache dnsCache =
-          new Cache(new File("./target/TestDohMain.cache." + System.currentTimeMillis()),
-              10 * 1024 * 1024);
-
-      System.out.println("Bad targets\n***********\n");
-
-      HttpUrl url = HttpUrl.get("https://dns.cloudflare.com/.not-so-well-known/run-dmc-query");
-      List<DnsOverHttps> badProviders = Collections.singletonList(
-          new DnsOverHttps.Builder().client(bootstrapClient).url(url).post(true).build());
-      runBatch(badProviders, names);
-
-      System.out.println("cached first run\n****************\n");
-      names = asList("google.com", "graph.facebook.com");
-      bootstrapClient = bootstrapClient.newBuilder().cache(dnsCache).build();
-      dnsProviders = DohProviders.providers(bootstrapClient, true, true, true);
-      runBatch(dnsProviders, names);
-
-      System.out.println("cached second run\n*****************\n");
-      dnsProviders = DohProviders.providers(bootstrapClient, true, true, true);
-      runBatch(dnsProviders, names);
-    } finally {
-      bootstrapClient.connectionPool().evictAll();
-      bootstrapClient.dispatcher().executorService().shutdownNow();
-      Cache cache = bootstrapClient.cache();
-      if (cache != null) {
-        cache.close();
-      }
-    }
-  }
-
-  private static void runBatch(List<DnsOverHttps> dnsProviders, List<String> names) {
-    long time = System.currentTimeMillis();
-
-    for (DnsOverHttps dns : dnsProviders) {
-      System.out.println("Testing " + dns.url());
-
-      for (String host : names) {
-        System.out.print(host + ": ");
-        System.out.flush();
-
-        try {
-          List<InetAddress> results = dns.lookup(host);
-          System.out.println(results);
-        } catch (UnknownHostException uhe) {
-          Throwable e = uhe;
-
-          while (e != null) {
-            System.out.println(e);
-
-            e = e.getCause();
-          }
+private fun runBatch(dnsProviders: List<DnsOverHttps>, names: List<String>) {
+  var time = System.currentTimeMillis()
+  for (dns in dnsProviders) {
+    println("Testing ${dns.url}")
+    for (host in names) {
+      print("$host: ")
+      System.out.flush()
+      try {
+        val results = dns.lookup(host)
+        println(results)
+      } catch (uhe: UnknownHostException) {
+        var e: Throwable? = uhe
+        while (e != null) {
+          println(e)
+          e = e.cause
         }
       }
-
-      System.out.println();
     }
+    println()
+  }
+  time = System.currentTimeMillis() - time
+  println("Time: ${time.toDouble() / 1000} seconds\n")
+}
 
-    time = System.currentTimeMillis() - time;
-
-    System.out.println("Time: " + (((double) time) / 1000) + " seconds\n");
+fun main() {
+  Security.insertProviderAt(OpenSSLProvider(), 1)
+  var bootstrapClient = OkHttpClient()
+  var names = listOf("google.com", "graph.facebook.com", "sdflkhfsdlkjdf.ee")
+  try {
+    println("uncached\n********\n")
+    var dnsProviders = providers(
+      client = bootstrapClient,
+      http2Only = false,
+      workingOnly = false,
+      getOnly = false,
+    )
+    runBatch(dnsProviders, names)
+    val dnsCache = Cache(
+      directory = File("./target/TestDohMain.cache.${System.currentTimeMillis()}"),
+      maxSize = 10L * 1024 * 1024
+    )
+    println("Bad targets\n***********\n")
+    val url = "https://dns.cloudflare.com/.not-so-well-known/run-dmc-query".toHttpUrl()
+    val badProviders = listOf(
+      DnsOverHttps.Builder()
+        .client(bootstrapClient)
+        .url(url)
+        .post(true)
+        .build()
+    )
+    runBatch(badProviders, names)
+    println("cached first run\n****************\n")
+    names = listOf("google.com", "graph.facebook.com")
+    bootstrapClient = bootstrapClient.newBuilder()
+      .cache(dnsCache)
+      .build()
+    dnsProviders = providers(
+      client = bootstrapClient,
+      http2Only = true,
+      workingOnly = true,
+      getOnly = true,
+    )
+    runBatch(dnsProviders, names)
+    println("cached second run\n*****************\n")
+    dnsProviders = providers(
+      client = bootstrapClient,
+      http2Only = true,
+      workingOnly = true,
+      getOnly = true,
+    )
+    runBatch(dnsProviders, names)
+  } finally {
+    bootstrapClient.connectionPool.evictAll()
+    bootstrapClient.dispatcher.executorService.shutdownNow()
+    bootstrapClient.cache?.close()
   }
 }

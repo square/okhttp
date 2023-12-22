@@ -13,33 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import okhttp3.internal.http.HttpHeaders;
-import okhttp3.internal.http.HttpMethod;
-import org.junit.jupiter.api.Test;
+import okhttp3.internal.http.HttpMethod.permitsRequestBody
+import okhttp3.internal.http.HttpMethod.requiresRequestBody
+import okhttp3.internal.http.hasBody
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-@SuppressWarnings("ALL") public class PublicInternalApiTest {
-  @Test public void permitsRequestBody() {
-    assertTrue(HttpMethod.permitsRequestBody("POST"));
-    assertFalse(HttpMethod.permitsRequestBody("GET"));
+@Suppress("DEPRECATION_ERROR")
+class PublicInternalApiTest {
+  @Test
+  fun permitsRequestBody() {
+    assertTrue(permitsRequestBody("POST"))
+    assertFalse(permitsRequestBody("GET"))
   }
 
-  @Test public void requiresRequestBody() {
-    assertTrue(HttpMethod.requiresRequestBody("PUT"));
-    assertFalse(HttpMethod.requiresRequestBody("GET"));
+  @Test
+  fun requiresRequestBody() {
+    assertTrue(requiresRequestBody("PUT"))
+    assertFalse(requiresRequestBody("GET"))
   }
 
-  @Test public void hasBody() {
-    Request request = new Request.Builder().url("http://example.com").build();
-    Response response = new Response.Builder().code(200)
-        .message("OK")
-        .request(request)
-        .protocol(Protocol.HTTP_2)
-        .build();
-    assertTrue(HttpHeaders.hasBody(response));
+  @Test
+  fun hasBody() {
+    val request = Request.Builder().url("http://example.com").build()
+    val response = Response.Builder().code(200)
+      .message("OK")
+      .request(request)
+      .protocol(Protocol.HTTP_2)
+      .build()
+    assertTrue(hasBody(response))
   }
 }

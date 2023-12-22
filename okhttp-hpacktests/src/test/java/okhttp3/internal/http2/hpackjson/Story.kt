@@ -13,59 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2.hpackjson;
-
-import java.util.ArrayList;
-import java.util.List;
+package okhttp3.internal.http2.hpackjson
 
 /**
  * Representation of one story, a set of request headers to encode or decode. This class is used
  * reflectively with Moshi to parse stories from files.
  */
-public class Story implements Cloneable {
-  public final static Story MISSING = new Story();
+data class Story(
+  val description: String? = null,
+  val cases: List<Case>,
+  val fileName: String? = null,
+) {
 
-  static {
-    MISSING.setFileName("missing");
-  }
+  // Used as the test name.
+  override fun toString() = fileName ?: "?"
 
-  private transient String fileName;
-  private List<Case> cases;
-  private int draft;
-  private String description;
-
-  /**
-   * The filename is only used in the toString representation.
-   */
-  void setFileName(String fileName) {
-    this.fileName = fileName;
-  }
-
-  public List<Case> getCases() {
-    return cases;
-  }
-
-  /** We only expect stories that match the draft we've implemented to pass. */
-  public int getDraft() {
-    return draft;
-  }
-
-  @Override
-  public Story clone() throws CloneNotSupportedException {
-    Story story = new Story();
-    story.fileName = this.fileName;
-    story.cases = new ArrayList<>();
-    for (Case caze : cases) {
-      story.cases.add(caze.clone());
-    }
-    story.draft = draft;
-    story.description = description;
-    return story;
-  }
-
-  @Override
-  public String toString() {
-    // Used as the test name.
-    return fileName;
+  companion object {
+    @JvmField
+    val MISSING = Story(description = "Missing", cases = listOf(), "missing")
   }
 }

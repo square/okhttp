@@ -13,50 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
+import okhttp3.FallbackTestClientSocketFactory.Companion.TLS_FALLBACK_SCSV
 
 /**
  * An SSLSocketFactory that delegates calls. Sockets created by the delegate are wrapped with ones
- * that will not accept the {@link #TLS_FALLBACK_SCSV} cipher, thus bypassing server-side fallback
+ * that will not accept the [TLS_FALLBACK_SCSV] cipher, thus bypassing server-side fallback
  * checks on platforms that support it. Unfortunately this wrapping will disable any
  * reflection-based calls to SSLSocket from Platform.
  */
-public class FallbackTestClientSocketFactory extends DelegatingSSLSocketFactory {
-  /**
-   * The cipher suite used during TLS connection fallback to indicate a fallback. See
-   * https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00
-   */
-  public static final String TLS_FALLBACK_SCSV = "TLS_FALLBACK_SCSV";
+class FallbackTestClientSocketFactory(
+  delegate: SSLSocketFactory,
+) : DelegatingSSLSocketFactory(delegate) {
+  override fun configureSocket(sslSocket: SSLSocket): SSLSocket =
+    TlsFallbackScsvDisabledSSLSocket(sslSocket)
 
-  public FallbackTestClientSocketFactory(SSLSocketFactory delegate) {
-    super(delegate);
-  }
-
-  @Override protected SSLSocket configureSocket(SSLSocket sslSocket) throws IOException {
-    return new TlsFallbackScsvDisabledSSLSocket(sslSocket);
-  }
-
-  private static class TlsFallbackScsvDisabledSSLSocket extends DelegatingSSLSocket {
-
-    public TlsFallbackScsvDisabledSSLSocket(SSLSocket socket) {
-      super(socket);
-    }
-
-    @Override public void setEnabledCipherSuites(String[] suites) {
-      List<String> enabledCipherSuites = new ArrayList<>(suites.length);
-      for (String suite : suites) {
-        if (!suite.equals(TLS_FALLBACK_SCSV)) {
-          enabledCipherSuites.add(suite);
+  private class TlsFallbackScsvDisabledSSLSocket(
+    socket: SSLSocket
+  ) : DelegatingSSLSocket(socket) {
+    override fun setEnabledCipherSuites(suites: Array<String>) {
+      val enabledCipherSuites = mutableListOf<String>()
+      for (suite in suites) {
+        if (suite != TLS_FALLBACK_SCSV) {
+          enabledCipherSuites.add(suite)
         }
       }
-      getDelegate().setEnabledCipherSuites(
-          enabledCipherSuites.toArray(new String[enabledCipherSuites.size()]));
+      delegate!!.enabledCipherSuites = enabledCipherSuites.toTypedArray<String>()
     }
+  }
+
+  companion object {
+    /**
+     * The cipher suite used during TLS connection fallback to indicate a fallback. See
+     * https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00
+     */
+    const val TLS_FALLBACK_SCSV = "TLS_FALLBACK_SCSV"
   }
 }

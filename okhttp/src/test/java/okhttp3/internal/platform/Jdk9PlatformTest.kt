@@ -13,54 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.platform;
+package okhttp3.internal.platform
 
-import javax.net.ssl.SSLSocket;
-import okhttp3.DelegatingSSLSocket;
-import okhttp3.testing.PlatformRule;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import javax.net.ssl.SSLSocket
+import okhttp3.DelegatingSSLSocket
+import okhttp3.internal.platform.Jdk9Platform.Companion.buildIfSupported
+import okhttp3.testing.PlatformRule
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class Jdk9PlatformTest {
-  @RegisterExtension public final PlatformRule platform = new PlatformRule();
+class Jdk9PlatformTest {
+  @RegisterExtension
+  val platform = PlatformRule()
 
   @Test
-  public void buildsWhenJdk9() {
-    platform.assumeJdk9();
-    assertThat(Jdk9Platform.Companion.buildIfSupported()).isNotNull();
+  fun buildsWhenJdk9() {
+    platform.assumeJdk9()
+    assertThat(buildIfSupported()).isNotNull()
   }
 
   @Test
-  public void buildsWhenJdk8() {
-    platform.assumeJdk8();
-
+  fun buildsWhenJdk8() {
+    platform.assumeJdk8()
     try {
-      SSLSocket.class.getMethod("getApplicationProtocol");
-
+      SSLSocket::class.java.getMethod("getApplicationProtocol")
       // also present on JDK8 after build 252.
-      assertThat(Jdk9Platform.Companion.buildIfSupported()).isNotNull();
-    } catch (NoSuchMethodException nsme) {
-      assertThat(Jdk9Platform.Companion.buildIfSupported()).isNull();
+      assertThat(buildIfSupported()).isNotNull()
+    } catch (nsme: NoSuchMethodException) {
+      assertThat(buildIfSupported()).isNull()
     }
   }
 
   @Test
-  public void testToStringIsClassname() {
-    assertThat(new Jdk9Platform().toString()).isEqualTo("Jdk9Platform");
+  fun testToStringIsClassname() {
+    assertThat(Jdk9Platform().toString()).isEqualTo("Jdk9Platform")
   }
 
   @Test
-  public void selectedProtocolIsNullWhenSslSocketThrowsExceptionForApplicationProtocol() {
-    platform.assumeJdk9();
-
-    DelegatingSSLSocket applicationProtocolUnsupported = new DelegatingSSLSocket(null) {
-      @Override public String getApplicationProtocol() {
-        throw new UnsupportedOperationException("Mock exception");
+  fun selectedProtocolIsNullWhenSslSocketThrowsExceptionForApplicationProtocol() {
+    platform.assumeJdk9()
+    val applicationProtocolUnsupported = object : DelegatingSSLSocket(null) {
+      override fun getApplicationProtocol(): String {
+        throw UnsupportedOperationException("Mock exception")
       }
-    };
-
-    assertThat(new Jdk9Platform().getSelectedProtocol(applicationProtocolUnsupported)).isNull();
+    }
+    assertThat(Jdk9Platform().getSelectedProtocol(applicationProtocolUnsupported)).isNull()
   }
 }

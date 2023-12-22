@@ -13,110 +13,118 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.dnsoverhttps;
+package okhttp3.dnsoverhttps
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
+import java.net.InetAddress
+import java.net.UnknownHostException
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
 
 /**
  * Temporary registry of known DNS over HTTPS providers.
  *
  * https://github.com/curl/curl/wiki/DNS-over-HTTPS
  */
-public class DohProviders {
-  static DnsOverHttps buildGoogle(OkHttpClient bootstrapClient) {
-    return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(HttpUrl.get("https://dns.google/dns-query"))
-        .bootstrapDnsHosts(getByIp("8.8.4.4"), getByIp("8.8.8.8"))
-        .build();
+object DohProviders {
+  private fun buildGoogle(bootstrapClient: OkHttpClient): DnsOverHttps {
+    return DnsOverHttps.Builder()
+      .client(bootstrapClient)
+      .url("https://dns.google/dns-query".toHttpUrl())
+      .bootstrapDnsHosts(getByIp("8.8.4.4"), getByIp("8.8.8.8"))
+      .build()
   }
 
-  static DnsOverHttps buildGooglePost(OkHttpClient bootstrapClient) {
-    return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(HttpUrl.get("https://dns.google/dns-query"))
-        .bootstrapDnsHosts(getByIp("8.8.4.4"), getByIp("8.8.8.8"))
-        .post(true)
-        .build();
+  private fun buildGooglePost(bootstrapClient: OkHttpClient): DnsOverHttps {
+    return DnsOverHttps.Builder()
+      .client(bootstrapClient)
+      .url("https://dns.google/dns-query".toHttpUrl())
+      .bootstrapDnsHosts(getByIp("8.8.4.4"), getByIp("8.8.8.8"))
+      .post(true)
+      .build()
   }
 
-  static DnsOverHttps buildCloudflareIp(OkHttpClient bootstrapClient) {
-    return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(HttpUrl.get("https://1.1.1.1/dns-query"))
-        .includeIPv6(false)
-        .build();
+  private fun buildCloudflareIp(bootstrapClient: OkHttpClient): DnsOverHttps {
+    return DnsOverHttps.Builder()
+      .client(bootstrapClient)
+      .url("https://1.1.1.1/dns-query".toHttpUrl())
+      .includeIPv6(false)
+      .build()
   }
 
-  static DnsOverHttps buildCloudflare(OkHttpClient bootstrapClient) {
-    return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(HttpUrl.get("https://1.1.1.1/dns-query"))
-        .bootstrapDnsHosts(getByIp("1.1.1.1"), getByIp("1.0.0.1"))
-        .includeIPv6(false)
-        .build();
+  private fun buildCloudflare(bootstrapClient: OkHttpClient): DnsOverHttps {
+    return DnsOverHttps.Builder()
+      .client(bootstrapClient)
+      .url("https://1.1.1.1/dns-query".toHttpUrl())
+      .bootstrapDnsHosts(getByIp("1.1.1.1"), getByIp("1.0.0.1"))
+      .includeIPv6(false)
+      .build()
   }
 
-  static DnsOverHttps buildCloudflarePost(OkHttpClient bootstrapClient) {
-    return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(HttpUrl.get("https://cloudflare-dns.com/dns-query"))
-        .bootstrapDnsHosts(getByIp("1.1.1.1"), getByIp("1.0.0.1"))
-        .includeIPv6(false)
-        .post(true)
-        .build();
+  private fun buildCloudflarePost(bootstrapClient: OkHttpClient): DnsOverHttps {
+    return DnsOverHttps.Builder()
+      .client(bootstrapClient)
+      .url("https://cloudflare-dns.com/dns-query".toHttpUrl())
+      .bootstrapDnsHosts(getByIp("1.1.1.1"), getByIp("1.0.0.1"))
+      .includeIPv6(false)
+      .post(true)
+      .build()
   }
 
-  static DnsOverHttps buildCleanBrowsing(OkHttpClient bootstrapClient) {
-    return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(HttpUrl.get("https://doh.cleanbrowsing.org/doh/family-filter/"))
-        .includeIPv6(false)
-        .build();
+  fun buildCleanBrowsing(bootstrapClient: OkHttpClient): DnsOverHttps {
+    return DnsOverHttps.Builder()
+      .client(bootstrapClient)
+      .url("https://doh.cleanbrowsing.org/doh/family-filter/".toHttpUrl())
+      .includeIPv6(false)
+      .build()
   }
 
-  static DnsOverHttps buildChantra(OkHttpClient bootstrapClient) {
-    return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(HttpUrl.get("https://dns.dnsoverhttps.net/dns-query"))
-        .includeIPv6(false)
-        .build();
+  private fun buildChantra(bootstrapClient: OkHttpClient): DnsOverHttps {
+    return DnsOverHttps.Builder()
+      .client(bootstrapClient)
+      .url("https://dns.dnsoverhttps.net/dns-query".toHttpUrl())
+      .includeIPv6(false)
+      .build()
   }
 
-  static DnsOverHttps buildCryptoSx(OkHttpClient bootstrapClient) {
-    return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(HttpUrl.get("https://doh.crypto.sx/dns-query"))
-        .includeIPv6(false)
-        .build();
+  private fun buildCryptoSx(bootstrapClient: OkHttpClient): DnsOverHttps {
+    return DnsOverHttps.Builder()
+      .client(bootstrapClient)
+      .url("https://doh.crypto.sx/dns-query".toHttpUrl())
+      .includeIPv6(false)
+      .build()
   }
 
-  public static List<DnsOverHttps> providers(OkHttpClient client, boolean http2Only,
-      boolean workingOnly, boolean getOnly) {
-
-    List<DnsOverHttps> result = new ArrayList<>();
-
-    result.add(buildGoogle(client));
-    if (!getOnly) {
-      result.add(buildGooglePost(client));
+  @JvmStatic
+  fun providers(
+    client: OkHttpClient,
+    http2Only: Boolean,
+    workingOnly: Boolean,
+    getOnly: Boolean,
+  ): List<DnsOverHttps> {
+    return buildList {
+      add(buildGoogle(client))
+      if (!getOnly) {
+        add(buildGooglePost(client))
+      }
+      add(buildCloudflare(client))
+      add(buildCloudflareIp(client))
+      if (!getOnly) {
+        add(buildCloudflarePost(client))
+      }
+      if (!workingOnly) {
+        // result += buildCleanBrowsing(client); // timeouts
+        add(buildCryptoSx(client)) // 521 - server down
+      }
+      add(buildChantra(client))
     }
-    result.add(buildCloudflare(client));
-    result.add(buildCloudflareIp(client));
-    if (!getOnly) {
-      result.add(buildCloudflarePost(client));
-    }
-    if (!workingOnly) {
-      //result.add(buildCleanBrowsing(client)); // timeouts
-      result.add(buildCryptoSx(client)); // 521 - server down
-    }
-    result.add(buildChantra(client));
-
-    return result;
   }
 
-  private static InetAddress getByIp(String host) {
-    try {
-      return InetAddress.getByName(host);
-    } catch (UnknownHostException e) {
+  private fun getByIp(host: String): InetAddress {
+    return try {
+      InetAddress.getByName(host)
+    } catch (e: UnknownHostException) {
       // unlikely
-      throw new RuntimeException(e);
+      throw RuntimeException(e)
     }
   }
 }

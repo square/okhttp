@@ -13,37 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal;
+package okhttp3.internal
 
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.Authenticator
+import java.net.PasswordAuthentication
 
-public final class RecordingAuthenticator extends Authenticator {
-  /** base64("username:password") */
-  public static final String BASE_64_CREDENTIALS = "dXNlcm5hbWU6cGFzc3dvcmQ=";
+class RecordingAuthenticator(
+  private val authentication: PasswordAuthentication? = PasswordAuthentication(
+    "username",
+    "password".toCharArray()
+  )
+) : Authenticator() {
+  val calls = mutableListOf<String>()
 
-  public final List<String> calls = new ArrayList<>();
-  public final PasswordAuthentication authentication;
-
-  public RecordingAuthenticator(PasswordAuthentication authentication) {
-    this.authentication = authentication;
+  override fun getPasswordAuthentication(): PasswordAuthentication? {
+    calls.add("host=$requestingHost port=$requestingPort site=${requestingSite.hostName} " +
+      "url=$requestingURL type=$requestorType prompt=$requestingPrompt " +
+      "protocol=$requestingProtocol scheme=$requestingScheme"
+    )
+    return authentication
   }
 
-  public RecordingAuthenticator() {
-    this(new PasswordAuthentication("username", "password".toCharArray()));
-  }
-
-  @Override protected PasswordAuthentication getPasswordAuthentication() {
-    this.calls.add("host=" + getRequestingHost()
-        + " port=" + getRequestingPort()
-        + " site=" + getRequestingSite().getHostName()
-        + " url=" + getRequestingURL()
-        + " type=" + getRequestorType()
-        + " prompt=" + getRequestingPrompt()
-        + " protocol=" + getRequestingProtocol()
-        + " scheme=" + getRequestingScheme());
-    return authentication;
+  companion object {
+    /** base64("username:password")  */
+    const val BASE_64_CREDENTIALS = "dXNlcm5hbWU6cGFzc3dvcmQ="
   }
 }

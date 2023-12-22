@@ -750,8 +750,8 @@ open class CallTest {
     val firstResponse = callback.await(request.url).assertSuccessful()
     val secondResponse = callback.await(request.url).assertSuccessful()
     val bodies: MutableSet<String?> = LinkedHashSet()
-    bodies.add(firstResponse.getBody())
-    bodies.add(secondResponse.getBody())
+    bodies.add(firstResponse.body)
+    bodies.add(secondResponse.body)
     assertThat(bodies).contains("abc")
     assertThat(bodies).contains("def")
   }

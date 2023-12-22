@@ -13,182 +13,145 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import javax.annotation.Nullable;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Date
+import org.assertj.core.api.Assertions.assertThat
 
 /**
  * A received response or failure recorded by the response recorder.
  */
-public final class RecordedResponse {
-  public final Request request;
-  public final @Nullable Response response;
-  public final @Nullable WebSocket webSocket;
-  public final @Nullable String body;
-  public final @Nullable IOException failure;
-
-  public RecordedResponse(Request request, @Nullable Response response,
-      @Nullable WebSocket webSocket, @Nullable String body, @Nullable IOException failure) {
-    this.request = request;
-    this.response = response;
-    this.webSocket = webSocket;
-    this.body = body;
-    this.failure = failure;
+class RecordedResponse(
+  @JvmField val request: Request,
+  val response: Response?,
+  val webSocket: WebSocket?,
+  val body: String?,
+  val failure: IOException?
+) {
+  fun assertRequestUrl(url: HttpUrl) = apply {
+    assertThat(request.url).isEqualTo(url)
   }
 
-  public RecordedResponse assertRequestUrl(HttpUrl url) {
-    assertThat(request.url()).isEqualTo(url);
-    return this;
+  fun assertRequestMethod(method: String) = apply {
+    assertThat(request.method).isEqualTo(method)
   }
 
-  public RecordedResponse assertRequestMethod(String method) {
-    assertThat(request.method()).isEqualTo(method);
-    return this;
+  fun assertRequestHeader(name: String, vararg values: String) = apply {
+    assertThat(request.headers(name)).containsExactly(*values)
   }
 
-  public RecordedResponse assertRequestHeader(String name, String... values) {
-    assertThat(request.headers(name)).containsExactly(values);
-    return this;
+  fun assertCode(expectedCode: Int) = apply {
+    assertThat(response!!.code).isEqualTo(expectedCode)
   }
 
-  public RecordedResponse assertCode(int expectedCode) {
-    assertThat(response == null ? null : response.code()).isEqualTo(expectedCode);
-    return this;
+  fun assertSuccessful() = apply {
+    assertThat(failure).isNull()
+    assertThat(response!!.isSuccessful).isTrue()
   }
 
-  public RecordedResponse assertSuccessful() {
-    assertThat(failure).isNull();
-    assertThat(response.isSuccessful()).isTrue();
-    return this;
+  fun assertNotSuccessful() = apply {
+    assertThat(response!!.isSuccessful).isFalse()
   }
 
-  public RecordedResponse assertNotSuccessful() {
-    assertThat(response.isSuccessful()).isFalse();
-    return this;
+  fun assertHeader(name: String, vararg values: String?) = apply {
+    assertThat(response!!.headers(name)).containsExactly(*values)
   }
 
-  public RecordedResponse assertHeader(String name, String... values) {
-    assertThat(response.headers(name)).containsExactly(values);
-    return this;
+  fun assertHeaders(headers: Headers) = apply {
+    assertThat(response!!.headers).isEqualTo(headers)
   }
 
-  public RecordedResponse assertHeaders(Headers headers) {
-    assertThat(response.headers()).isEqualTo(headers);
-    return this;
+  fun assertBody(expectedBody: String) = apply {
+    assertThat(body).isEqualTo(expectedBody)
   }
 
-  public RecordedResponse assertBody(String expectedBody) {
-    assertThat(body).isEqualTo(expectedBody);
-    return this;
-  }
-
-  public RecordedResponse assertHandshake() {
-    Handshake handshake = response.handshake();
-    assertThat(handshake.tlsVersion()).isNotNull();
-    assertThat(handshake.cipherSuite()).isNotNull();
-    assertThat(handshake.peerPrincipal()).isNotNull();
-    assertThat(handshake.peerCertificates().size()).isEqualTo(1);
-    assertThat(handshake.localPrincipal()).isNull();
-    assertThat(handshake.localCertificates().size()).isEqualTo(0);
-    return this;
+  fun assertHandshake() = apply {
+    val handshake = response!!.handshake!!
+    assertThat(handshake.tlsVersion).isNotNull()
+    assertThat(handshake.cipherSuite).isNotNull()
+    assertThat(handshake.peerPrincipal).isNotNull()
+    assertThat(handshake.peerCertificates.size).isEqualTo(1)
+    assertThat(handshake.localPrincipal).isNull()
+    assertThat(handshake.localCertificates.size).isEqualTo(0)
   }
 
   /**
    * Asserts that the current response was redirected and returns the prior response.
    */
-  public RecordedResponse priorResponse() {
-    Response priorResponse = response.priorResponse();
-    assertThat(priorResponse).isNotNull();
-    return new RecordedResponse(priorResponse.request(), priorResponse, null, null, null);
+  fun priorResponse(): RecordedResponse {
+    val priorResponse = response!!.priorResponse!!
+    return RecordedResponse(priorResponse.request, priorResponse, null, null, null)
   }
 
   /**
    * Asserts that the current response used the network and returns the network response.
    */
-  public RecordedResponse networkResponse() {
-    Response networkResponse = response.networkResponse();
-    assertThat(networkResponse).isNotNull();
-    return new RecordedResponse(networkResponse.request(), networkResponse, null, null, null);
+  fun networkResponse(): RecordedResponse {
+    val networkResponse = response!!.networkResponse!!
+    return RecordedResponse(networkResponse.request, networkResponse, null, null, null)
   }
 
-  /** Asserts that the current response didn't use the network. */
-  public RecordedResponse assertNoNetworkResponse() {
-    assertThat(response.networkResponse()).isNull();
-    return this;
+  /** Asserts that the current response didn't use the network.  */
+  fun assertNoNetworkResponse() = apply {
+    assertThat(response!!.networkResponse).isNull()
   }
 
-  /** Asserts that the current response didn't use the cache. */
-  public RecordedResponse assertNoCacheResponse() {
-    assertThat(response.cacheResponse()).isNull();
-    return this;
+  /** Asserts that the current response didn't use the cache.  */
+  fun assertNoCacheResponse() = apply {
+    assertThat(response!!.cacheResponse).isNull()
   }
 
   /**
    * Asserts that the current response used the cache and returns the cache response.
    */
-  public RecordedResponse cacheResponse() {
-    Response cacheResponse = response.cacheResponse();
-    assertThat(cacheResponse).isNotNull();
-    return new RecordedResponse(cacheResponse.request(), cacheResponse, null, null, null);
+  fun cacheResponse(): RecordedResponse {
+    val cacheResponse = response!!.cacheResponse!!
+    return RecordedResponse(cacheResponse.request, cacheResponse, null, null, null)
   }
 
-  public RecordedResponse assertFailure(Class<?>... allowedExceptionTypes) {
-    boolean found = false;
-    for (Class<?> expectedClass : allowedExceptionTypes) {
+  fun assertFailure(vararg allowedExceptionTypes: Class<*>) = apply {
+    var found = false
+    for (expectedClass in allowedExceptionTypes) {
       if (expectedClass.isInstance(failure)) {
-        found = true;
-        break;
+        found = true
+        break
       }
     }
     assertThat(found)
-        .overridingErrorMessage("Expected exception type among "
-            + Arrays.toString(allowedExceptionTypes) + ", got " + failure)
-        .isTrue();
-    return this;
+      .overridingErrorMessage(
+        "Expected exception type among "
+          + allowedExceptionTypes.contentToString() + ", got " + failure
+      )
+      .isTrue()
   }
 
-  public RecordedResponse assertFailure(String... messages) {
-    assertThat(failure).overridingErrorMessage("No failure found").isNotNull();
-    assertThat(messages).contains(failure.getMessage());
-    return this;
+  fun assertFailure(vararg messages: String) = apply {
+    assertThat(failure).overridingErrorMessage("No failure found").isNotNull()
+    assertThat(messages).contains(failure!!.message)
   }
 
-  public RecordedResponse assertFailureMatches(String... patterns) {
-    assertThat(failure).isNotNull();
-    for (String pattern : patterns) {
-      if (failure.getMessage().matches(pattern)) return this;
-    }
-    throw new AssertionError(failure.getMessage());
+  fun assertFailureMatches(vararg patterns: String) = apply {
+    val message = failure!!.message!!
+    assertThat(patterns.firstOrNull { pattern ->
+      message.matches(pattern.toRegex())
+    }).isNotNull()
   }
 
-  public RecordedResponse assertSentRequestAtMillis(long minimum, long maximum) {
-    assertDateInRange(minimum, response.sentRequestAtMillis(), maximum);
-    return this;
+  fun assertSentRequestAtMillis(minimum: Long, maximum: Long) = apply {
+    assertDateInRange(minimum, response!!.sentRequestAtMillis, maximum)
   }
 
-  public RecordedResponse assertReceivedResponseAtMillis(long minimum, long maximum) {
-    assertDateInRange(minimum, response.receivedResponseAtMillis(), maximum);
-    return this;
+  fun assertReceivedResponseAtMillis(minimum: Long, maximum: Long) = apply {
+    assertDateInRange(minimum, response!!.receivedResponseAtMillis, maximum)
   }
 
-  private void assertDateInRange(long minimum, long actual, long maximum) {
+  private fun assertDateInRange(minimum: Long, actual: Long, maximum: Long) {
     assertThat(actual)
-        .overridingErrorMessage("%s <= %s <= %s", format(minimum), format(actual), format(maximum))
-        .isBetween(minimum, maximum);
-
+      .overridingErrorMessage("${format(minimum)} <= ${format(actual)} <= ${format(maximum)}")
+      .isBetween(minimum, maximum)
   }
 
-  private String format(long time) {
-    return new SimpleDateFormat("HH:mm:ss.SSS").format(new Date(time));
-  }
-
-  public String getBody() {
-    return body;
-  }
+  private fun format(time: Long) = SimpleDateFormat("HH:mm:ss.SSS").format(Date(time))
 }

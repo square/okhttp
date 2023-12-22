@@ -13,31 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2;
+package okhttp3.internal.http2
 
-import java.util.List;
-import okhttp3.SimpleProvider;
-import okhttp3.internal.http2.hpackjson.Story;
-import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ArgumentsSource;
+import okhttp3.SimpleProvider
+import okhttp3.internal.http2.hpackjson.HpackJsonUtil
+import okhttp3.internal.http2.hpackjson.Story
+import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-import static okhttp3.internal.http2.hpackjson.HpackJsonUtil.storiesForCurrentDraft;
-
-public class HpackDecodeInteropTest extends HpackDecodeTestBase {
-
+class HpackDecodeInteropTest : HpackDecodeTestBase() {
   @ParameterizedTest
-  @ArgumentsSource(StoriesTestProvider.class)
-  public void testGoodDecoderInterop(Story story) throws Exception {
-    Assumptions.assumeFalse(story == Story.MISSING, "Test stories missing, checkout git submodule");
-
-    testDecoder(story);
+  @ArgumentsSource(StoriesTestProvider::class)
+  fun testGoodDecoderInterop(story: Story) {
+    assumeFalse(
+      story === Story.MISSING,
+      "Test stories missing, checkout git submodule"
+    )
+    testDecoder(story)
   }
 
-  static class StoriesTestProvider extends SimpleProvider {
-    @NotNull @Override public List<Object> arguments() throws Exception {
-      return createStories(storiesForCurrentDraft());
-    }
+  internal class StoriesTestProvider : SimpleProvider() {
+    override fun arguments(): List<Any> = createStories(HpackJsonUtil.storiesForCurrentDraft())
   }
 }

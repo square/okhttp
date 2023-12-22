@@ -13,77 +13,88 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.sse.internal;
+package okhttp3.sse.internal
 
-import java.io.IOException;
-import mockwebserver3.MockResponse;
-import mockwebserver3.MockWebServer;
-import mockwebserver3.junit5.internal.MockWebServerExtension;
-import okhttp3.OkHttpClient;
-import okhttp3.OkHttpClientTestRule;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.sse.EventSources;
-import okhttp3.testing.PlatformRule;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.internal.MockWebServerExtension
+import okhttp3.OkHttpClientTestRule
+import okhttp3.Request
+import okhttp3.sse.EventSources.processResponse
+import okhttp3.testing.PlatformRule
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.RegisterExtension
 
 @Tag("Slowish")
-@ExtendWith(MockWebServerExtension.class)
-public final class EventSourcesHttpTest {
-  @RegisterExtension public final PlatformRule platform = new PlatformRule();
+@ExtendWith(MockWebServerExtension::class)
+class EventSourcesHttpTest {
+  @RegisterExtension
+  val platform = PlatformRule()
+  private lateinit var server: MockWebServer
 
-  private MockWebServer server;
-  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
 
-  private final EventSourceRecorder listener = new EventSourceRecorder();
-  private OkHttpClient client = clientTestRule.newClient();
+  private val listener = EventSourceRecorder()
+  private val client = clientTestRule.newClient()
 
-  @BeforeEach public void before(MockWebServer server) {
-    this.server = server;
+  @BeforeEach
+  fun before(server: MockWebServer) {
+    this.server = server
   }
 
-  @AfterEach public void after() {
-    listener.assertExhausted();
+  @AfterEach
+  fun after() {
+    listener.assertExhausted()
   }
 
-  @Test public void processResponse() throws IOException {
-    server.enqueue(new MockResponse.Builder()
-      .body(""
-          + "data: hey\n"
-          + "\n").setHeader("content-type", "text/event-stream")
-      .build());
-
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .build();
-    Response response = client.newCall(request).execute();
-    EventSources.processResponse(response, listener);
-
-    listener.assertOpen();
-    listener.assertEvent(null, null, "hey");
-    listener.assertClose();
-  }
-
-  @Test public void cancelShortCircuits() throws IOException {
-    server.enqueue(new MockResponse.Builder()
-      .body(""
-          + "data: hey\n"
-          + "\n").setHeader("content-type", "text/event-stream")
-      .build());
-    listener.enqueueCancel(); // Will cancel in onOpen().
-
-    Request request = new Request.Builder()
+  @Test
+  fun processResponse() {
+    server.enqueue(
+      MockResponse.Builder()
+        .body(
+          """
+          |data: hey
+          |
+          |
+          """.trimMargin()
+        ).setHeader("content-type", "text/event-stream")
+        .build()
+    )
+    val request = Request.Builder()
       .url(server.url("/"))
-      .build();
-    Response response = client.newCall(request).execute();
-    EventSources.processResponse(response, listener);
+      .build()
+    val response = client.newCall(request).execute()
+    processResponse(response, listener)
+    listener.assertOpen()
+    listener.assertEvent(null, null, "hey")
+    listener.assertClose()
+  }
 
-    listener.assertOpen();
-    listener.assertFailure("canceled");
+  @Test
+  fun cancelShortCircuits() {
+    server.enqueue(
+      MockResponse.Builder()
+        .body(
+          """
+          |data: hey
+          |
+          |
+          """.trimMargin()
+        ).setHeader("content-type", "text/event-stream")
+        .build()
+    )
+    listener.enqueueCancel() // Will cancel in onOpen().
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .build()
+    val response = client.newCall(request).execute()
+    processResponse(response, listener)
+    listener.assertOpen()
+    listener.assertFailure("canceled")
   }
 }

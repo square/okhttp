@@ -13,38 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2;
+package okhttp3.internal.http2
 
-import java.io.IOException;
-import java.util.Random;
-import okio.Buffer;
-import okio.ByteString;
-import org.junit.jupiter.api.Test;
+import java.util.Random
+import okhttp3.internal.http2.Huffman.decode
+import okhttp3.internal.http2.Huffman.encode
+import okhttp3.internal.http2.Huffman.encodedLength
+import okio.Buffer
+import okio.ByteString
+import okio.ByteString.Companion.encodeUtf8
+import okio.ByteString.Companion.toByteString
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-/** Original version of this class was lifted from {@code com.twitter.hpack.HuffmanTest}. */
-public final class HuffmanTest {
-  @Test public void roundTripForRequestAndResponse() throws IOException {
-    String s = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    for (int i = 0; i < s.length(); i++) {
-      assertRoundTrip(ByteString.encodeUtf8(s.substring(0, i)));
+/** Original version of this class was lifted from `com.twitter.hpack.HuffmanTest`.  */
+class HuffmanTest {
+  @Test
+  fun roundTripForRequestAndResponse() {
+    val s = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    for (i in s.indices) {
+      assertRoundTrip(s.substring(0, i).encodeUtf8())
     }
-
-    Random random = new Random(123456789L);
-    byte[] buf = new byte[4096];
-    random.nextBytes(buf);
-    assertRoundTrip(ByteString.of(buf));
+    val random = Random(123456789L)
+    val buf = ByteArray(4096)
+    random.nextBytes(buf)
+    assertRoundTrip(buf.toByteString())
   }
 
-  private void assertRoundTrip(ByteString data) throws IOException {
-    Buffer encodeBuffer = new Buffer();
-    Huffman.INSTANCE.encode(data, encodeBuffer);
-    assertThat(Huffman.INSTANCE.encodedLength(data)).isEqualTo(encodeBuffer.size());
-
-    Buffer decodeBuffer = new Buffer();
-    Huffman.INSTANCE.decode(encodeBuffer, encodeBuffer.size(), decodeBuffer);
-    assertEquals(data, decodeBuffer.readByteString());
+  private fun assertRoundTrip(data: ByteString) {
+    val encodeBuffer = Buffer()
+    encode(data, encodeBuffer)
+    assertThat(encodedLength(data)).isEqualTo(encodeBuffer.size)
+    val decodeBuffer = Buffer()
+    decode(encodeBuffer, encodeBuffer.size, decodeBuffer)
+    assertEquals(data, decodeBuffer.readByteString())
   }
 }

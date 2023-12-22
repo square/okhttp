@@ -13,66 +13,59 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2;
+package okhttp3.internal.http2
 
-import org.junit.jupiter.api.Test;
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-import static okhttp3.internal.http2.Settings.DEFAULT_INITIAL_WINDOW_SIZE;
-import static okhttp3.internal.http2.Settings.MAX_CONCURRENT_STREAMS;
-import static org.assertj.core.api.Assertions.assertThat;
-
-public final class SettingsTest {
-  @Test public void unsetField() {
-    Settings settings = new Settings();
-    assertThat(settings.isSet(MAX_CONCURRENT_STREAMS)).isFalse();
-    assertThat(settings.getMaxConcurrentStreams()).isEqualTo(Integer.MAX_VALUE);
+class SettingsTest {
+  @Test
+  fun unsetField() {
+    val settings = Settings()
+    assertThat(settings.isSet(Settings.MAX_CONCURRENT_STREAMS)).isFalse()
+    assertThat(settings.getMaxConcurrentStreams()).isEqualTo(Int.MAX_VALUE)
   }
 
-  @Test public void setFields() {
-    Settings settings = new Settings();
-
-    settings.set(Settings.HEADER_TABLE_SIZE, 8096);
-    assertThat(settings.getHeaderTableSize()).isEqualTo(8096);
-
-    assertThat(settings.getEnablePush(true)).isTrue();
-    settings.set(Settings.ENABLE_PUSH, 1);
-    assertThat(settings.getEnablePush(false)).isTrue();
-    settings.clear();
-
-    assertThat(settings.getMaxConcurrentStreams()).isEqualTo(Integer.MAX_VALUE);
-    settings.set(MAX_CONCURRENT_STREAMS, 75);
-    assertThat(settings.getMaxConcurrentStreams()).isEqualTo(75);
-
-    settings.clear();
-    assertThat(settings.getMaxFrameSize(16384)).isEqualTo(16384);
-    settings.set(Settings.MAX_FRAME_SIZE, 16777215);
-    assertThat(settings.getMaxFrameSize(16384)).isEqualTo(16777215);
-
-    assertThat(settings.getMaxHeaderListSize(-1)).isEqualTo(-1);
-    settings.set(Settings.MAX_HEADER_LIST_SIZE, 16777215);
-    assertThat(settings.getMaxHeaderListSize(-1)).isEqualTo(16777215);
-
-    assertThat(settings.getInitialWindowSize()).isEqualTo(
-        DEFAULT_INITIAL_WINDOW_SIZE);
-    settings.set(Settings.INITIAL_WINDOW_SIZE, 108);
-    assertThat(settings.getInitialWindowSize()).isEqualTo(108);
+  @Test
+  fun setFields() {
+    val settings = Settings()
+    settings[Settings.HEADER_TABLE_SIZE] = 8096
+    assertThat(settings.headerTableSize).isEqualTo(8096)
+    assertThat(settings.getEnablePush(true)).isTrue()
+    settings[Settings.ENABLE_PUSH] = 1
+    assertThat(settings.getEnablePush(false)).isTrue()
+    settings.clear()
+    assertThat(settings.getMaxConcurrentStreams()).isEqualTo(Int.MAX_VALUE)
+    settings[Settings.MAX_CONCURRENT_STREAMS] = 75
+    assertThat(settings.getMaxConcurrentStreams()).isEqualTo(75)
+    settings.clear()
+    assertThat(settings.getMaxFrameSize(16384)).isEqualTo(16384)
+    settings[Settings.MAX_FRAME_SIZE] = 16777215
+    assertThat(settings.getMaxFrameSize(16384)).isEqualTo(16777215)
+    assertThat(settings.getMaxHeaderListSize(-1)).isEqualTo(-1)
+    settings[Settings.MAX_HEADER_LIST_SIZE] = 16777215
+    assertThat(settings.getMaxHeaderListSize(-1)).isEqualTo(16777215)
+    assertThat(settings.initialWindowSize).isEqualTo(
+      Settings.DEFAULT_INITIAL_WINDOW_SIZE
+    )
+    settings[Settings.INITIAL_WINDOW_SIZE] = 108
+    assertThat(settings.initialWindowSize).isEqualTo(108)
   }
 
-  @Test public void merge() {
-    Settings a = new Settings();
-    a.set(Settings.HEADER_TABLE_SIZE, 10000);
-    a.set(Settings.MAX_HEADER_LIST_SIZE, 20000);
-    a.set(Settings.INITIAL_WINDOW_SIZE, 30000);
-
-    Settings b = new Settings();
-    b.set(Settings.MAX_HEADER_LIST_SIZE, 40000);
-    b.set(Settings.INITIAL_WINDOW_SIZE, 50000);
-    b.set(Settings.MAX_CONCURRENT_STREAMS, 60000);
-
-    a.merge(b);
-    assertThat(a.getHeaderTableSize()).isEqualTo(10000);
-    assertThat(a.getMaxHeaderListSize(-1)).isEqualTo(40000);
-    assertThat(a.getInitialWindowSize()).isEqualTo(50000);
-    assertThat(a.getMaxConcurrentStreams()).isEqualTo(60000);
+  @Test
+  fun merge() {
+    val a = Settings()
+    a[Settings.HEADER_TABLE_SIZE] = 10000
+    a[Settings.MAX_HEADER_LIST_SIZE] = 20000
+    a[Settings.INITIAL_WINDOW_SIZE] = 30000
+    val b = Settings()
+    b[Settings.MAX_HEADER_LIST_SIZE] = 40000
+    b[Settings.INITIAL_WINDOW_SIZE] = 50000
+    b[Settings.MAX_CONCURRENT_STREAMS] = 60000
+    a.merge(b)
+    assertThat(a.headerTableSize).isEqualTo(10000)
+    assertThat(a.getMaxHeaderListSize(-1)).isEqualTo(40000)
+    assertThat(a.initialWindowSize).isEqualTo(50000)
+    assertThat(a.getMaxConcurrentStreams()).isEqualTo(60000)
   }
 }

@@ -29,7 +29,7 @@ class MockWebServerRuleTest {
     val rule = MockWebServerRule()
     val called = AtomicBoolean()
     val statement: Statement = rule.apply(object : Statement() {
-      @Throws(Throwable::class) override fun evaluate() {
+      override fun evaluate() {
         called.set(true)
         rule.server.url("/").toUrl().openConnection().connect()
       }

@@ -13,106 +13,113 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http;
+package okhttp3.internal.http
 
-import java.io.IOException;
-import java.net.ProtocolException;
-import okhttp3.Protocol;
-import org.junit.jupiter.api.Test;
+import java.net.ProtocolException
+import okhttp3.Protocol
+import okhttp3.internal.http.StatusLine.Companion.parse
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Test
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
-
-public final class StatusLineTest {
-  @Test public void parse() throws IOException {
-    String message = "Temporary Redirect";
-    int version = 1;
-    int code = 200;
-    StatusLine statusLine = StatusLine.Companion.parse(
-        "HTTP/1." + version + " " + code + " " + message);
-    assertThat(statusLine.message).isEqualTo(message);
-    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1);
-    assertThat(statusLine.code).isEqualTo(code);
+class StatusLineTest {
+  @Test
+  fun parse() {
+    val message = "Temporary Redirect"
+    val version = 1
+    val code = 200
+    val statusLine = parse("HTTP/1.$version $code $message")
+    assertThat(statusLine.message).isEqualTo(message)
+    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1)
+    assertThat(statusLine.code).isEqualTo(code)
   }
 
-  @Test public void emptyMessage() throws IOException {
-    int version = 1;
-    int code = 503;
-    StatusLine statusLine = StatusLine.Companion.parse("HTTP/1." + version + " " + code + " ");
-    assertThat(statusLine.message).isEqualTo("");
-    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1);
-    assertThat(statusLine.code).isEqualTo(code);
+  @Test
+  fun emptyMessage() {
+    val version = 1
+    val code = 503
+    val statusLine = parse("HTTP/1.$version $code ")
+    assertThat(statusLine.message).isEqualTo("")
+    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1)
+    assertThat(statusLine.code).isEqualTo(code)
   }
 
   /**
    * This is not defined in the protocol but some servers won't add the leading empty space when the
    * message is empty. http://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html#sec6.1
    */
-  @Test public void emptyMessageAndNoLeadingSpace() throws IOException {
-    int version = 1;
-    int code = 503;
-    StatusLine statusLine = StatusLine.Companion.parse("HTTP/1." + version + " " + code);
-    assertThat(statusLine.message).isEqualTo("");
-    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1);
-    assertThat(statusLine.code).isEqualTo(code);
+  @Test
+  fun emptyMessageAndNoLeadingSpace() {
+    val version = 1
+    val code = 503
+    val statusLine = parse("HTTP/1.$version $code")
+    assertThat(statusLine.message).isEqualTo("")
+    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1)
+    assertThat(statusLine.code).isEqualTo(code)
   }
 
   // https://github.com/square/okhttp/issues/386
-  @Test public void shoutcast() throws IOException {
-    StatusLine statusLine = StatusLine.Companion.parse("ICY 200 OK");
-    assertThat(statusLine.message).isEqualTo("OK");
-    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_0);
-    assertThat(statusLine.code).isEqualTo(200);
+  @Test
+  fun shoutcast() {
+    val statusLine = parse("ICY 200 OK")
+    assertThat(statusLine.message).isEqualTo("OK")
+    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_0)
+    assertThat(statusLine.code).isEqualTo(200)
   }
 
-  @Test public void missingProtocol() throws IOException {
-    assertInvalid("");
-    assertInvalid(" ");
-    assertInvalid("200 OK");
-    assertInvalid(" 200 OK");
+  @Test
+  fun missingProtocol() {
+    assertInvalid("")
+    assertInvalid(" ")
+    assertInvalid("200 OK")
+    assertInvalid(" 200 OK")
   }
 
-  @Test public void protocolVersions() throws IOException {
-    assertInvalid("HTTP/2.0 200 OK");
-    assertInvalid("HTTP/2.1 200 OK");
-    assertInvalid("HTTP/-.1 200 OK");
-    assertInvalid("HTTP/1.- 200 OK");
-    assertInvalid("HTTP/0.1 200 OK");
-    assertInvalid("HTTP/101 200 OK");
-    assertInvalid("HTTP/1.1_200 OK");
+  @Test
+  fun protocolVersions() {
+    assertInvalid("HTTP/2.0 200 OK")
+    assertInvalid("HTTP/2.1 200 OK")
+    assertInvalid("HTTP/-.1 200 OK")
+    assertInvalid("HTTP/1.- 200 OK")
+    assertInvalid("HTTP/0.1 200 OK")
+    assertInvalid("HTTP/101 200 OK")
+    assertInvalid("HTTP/1.1_200 OK")
   }
 
-  @Test public void nonThreeDigitCode() throws IOException {
-    assertInvalid("HTTP/1.1  OK");
-    assertInvalid("HTTP/1.1 2 OK");
-    assertInvalid("HTTP/1.1 20 OK");
-    assertInvalid("HTTP/1.1 2000 OK");
-    assertInvalid("HTTP/1.1 two OK");
-    assertInvalid("HTTP/1.1 2");
-    assertInvalid("HTTP/1.1 2000");
-    assertInvalid("HTTP/1.1 two");
+  @Test
+  fun nonThreeDigitCode() {
+    assertInvalid("HTTP/1.1  OK")
+    assertInvalid("HTTP/1.1 2 OK")
+    assertInvalid("HTTP/1.1 20 OK")
+    assertInvalid("HTTP/1.1 2000 OK")
+    assertInvalid("HTTP/1.1 two OK")
+    assertInvalid("HTTP/1.1 2")
+    assertInvalid("HTTP/1.1 2000")
+    assertInvalid("HTTP/1.1 two")
   }
 
-  @Test public void truncated() throws IOException {
-    assertInvalid("");
-    assertInvalid("H");
-    assertInvalid("HTTP/1");
-    assertInvalid("HTTP/1.");
-    assertInvalid("HTTP/1.1");
-    assertInvalid("HTTP/1.1 ");
-    assertInvalid("HTTP/1.1 2");
-    assertInvalid("HTTP/1.1 20");
+  @Test
+  fun truncated() {
+    assertInvalid("")
+    assertInvalid("H")
+    assertInvalid("HTTP/1")
+    assertInvalid("HTTP/1.")
+    assertInvalid("HTTP/1.1")
+    assertInvalid("HTTP/1.1 ")
+    assertInvalid("HTTP/1.1 2")
+    assertInvalid("HTTP/1.1 20")
   }
 
-  @Test public void wrongMessageDelimiter() throws IOException {
-    assertInvalid("HTTP/1.1 200_");
+  @Test
+  fun wrongMessageDelimiter() {
+    assertInvalid("HTTP/1.1 200_")
   }
 
-  private void assertInvalid(String statusLine) throws IOException {
+  private fun assertInvalid(statusLine: String) {
     try {
-      StatusLine.Companion.parse(statusLine);
-      fail("");
-    } catch (ProtocolException expected) {
+      parse(statusLine)
+      fail<Any>("")
+    } catch (expected: ProtocolException) {
     }
   }
 }

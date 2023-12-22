@@ -13,102 +13,94 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.IOException;
-import java.net.Proxy;
-import java.net.ProxySelector;
-import java.net.SocketAddress;
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import mockwebserver3.MockResponse;
-import mockwebserver3.MockWebServer;
-import okhttp3.testing.PlatformRule;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import java.io.IOException
+import java.net.ProxySelector
+import java.net.SocketAddress
+import java.net.URI
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import okhttp3.testing.PlatformRule
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
-import static org.assertj.core.api.Assertions.assertThat;
+class SocksProxyTest {
+  @RegisterExtension
+  val platform = PlatformRule()
 
-public final class SocksProxyTest {
-  @RegisterExtension public final PlatformRule platform = new PlatformRule();
-  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
+  private lateinit var server: MockWebServer
+  private val socksProxy = SocksProxy()
 
-  private MockWebServer server;
-  private final SocksProxy socksProxy = new SocksProxy();
-
-  @BeforeEach public void setUp(MockWebServer server) throws Exception {
-    this.server = server;
-    socksProxy.play();
+  @BeforeEach
+  fun setUp(server: MockWebServer) {
+    this.server = server
+    socksProxy.play()
   }
 
-  @AfterEach public void tearDown() throws Exception {
-    socksProxy.shutdown();
+  @AfterEach
+  fun tearDown() {
+    socksProxy.shutdown()
   }
 
-  @Test public void proxy() throws Exception {
-    server.enqueue(new MockResponse.Builder().body("abc").build());
-    server.enqueue(new MockResponse.Builder().body("def").build());
-
-    OkHttpClient client = clientTestRule.newClientBuilder()
-        .proxy(socksProxy.proxy())
-        .build();
-
-    Request request1 = new Request.Builder().url(server.url("/")).build();
-    Response response1 = client.newCall(request1).execute();
-    assertThat(response1.body().string()).isEqualTo("abc");
-
-    Request request2 = new Request.Builder().url(server.url("/")).build();
-    Response response2 = client.newCall(request2).execute();
-    assertThat(response2.body().string()).isEqualTo("def");
+  @Test
+  fun proxy() {
+    server.enqueue(MockResponse.Builder().body("abc").build())
+    server.enqueue(MockResponse.Builder().body("def").build())
+    val client = clientTestRule.newClientBuilder()
+      .proxy(socksProxy.proxy())
+      .build()
+    val request1 = Request.Builder().url(server.url("/")).build()
+    val response1 = client.newCall(request1).execute()
+    assertThat(response1.body.string()).isEqualTo("abc")
+    val request2 = Request.Builder().url(server.url("/")).build()
+    val response2 = client.newCall(request2).execute()
+    assertThat(response2.body.string()).isEqualTo("def")
 
     // The HTTP calls should share a single connection.
-    assertThat(socksProxy.connectionCount()).isEqualTo(1);
+    assertThat(socksProxy.connectionCount()).isEqualTo(1)
   }
 
-  @Test public void proxySelector() throws Exception {
-    server.enqueue(new MockResponse.Builder().body("abc").build());
+  @Test
+  fun proxySelector() {
+    server.enqueue(MockResponse.Builder().body("abc").build())
+    val proxySelector: ProxySelector = object : ProxySelector() {
+      override fun select(uri: URI) = listOf(socksProxy.proxy())
 
-    ProxySelector proxySelector = new ProxySelector() {
-      @Override public List<Proxy> select(URI uri) {
-        return Collections.singletonList(socksProxy.proxy());
-      }
-
-      @Override public void connectFailed(URI uri, SocketAddress socketAddress, IOException e) {
-        throw new AssertionError();
-      }
-    };
-
-    OkHttpClient client = clientTestRule.newClientBuilder()
-        .proxySelector(proxySelector)
-        .build();
-
-    Request request = new Request.Builder().url(server.url("/")).build();
-    Response response = client.newCall(request).execute();
-    assertThat(response.body().string()).isEqualTo("abc");
-
-    assertThat(socksProxy.connectionCount()).isEqualTo(1);
+      override fun connectFailed(
+        uri: URI,
+        socketAddress: SocketAddress,
+        e: IOException,
+      ) = error("unexpected call")
+    }
+    val client = clientTestRule.newClientBuilder()
+      .proxySelector(proxySelector)
+      .build()
+    val request = Request.Builder().url(server.url("/")).build()
+    val response = client.newCall(request).execute()
+    assertThat(response.body.string()).isEqualTo("abc")
+    assertThat(socksProxy.connectionCount()).isEqualTo(1)
   }
 
-  @Test public void checkRemoteDNSResolve() throws Exception {
+  @Test
+  fun checkRemoteDNSResolve() {
     // This testcase will fail if the target is resolved locally instead of through the proxy.
-    server.enqueue(new MockResponse.Builder().body("abc").build());
-
-    OkHttpClient client = clientTestRule.newClientBuilder()
-        .proxy(socksProxy.proxy())
-        .build();
-
-    HttpUrl url = server.url("/")
-        .newBuilder()
-        .host(SocksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS)
-        .build();
-
-    Request request = new Request.Builder().url(url).build();
-    Response response1 = client.newCall(request).execute();
-    assertThat(response1.body().string()).isEqualTo("abc");
-
-    assertThat(socksProxy.connectionCount()).isEqualTo(1);
+    server.enqueue(MockResponse.Builder().body("abc").build())
+    val client = clientTestRule.newClientBuilder()
+      .proxy(socksProxy.proxy())
+      .build()
+    val url = server.url("/")
+      .newBuilder()
+      .host(SocksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS)
+      .build()
+    val request = Request.Builder().url(url).build()
+    val response1 = client.newCall(request).execute()
+    assertThat(response1.body.string()).isEqualTo("abc")
+    assertThat(socksProxy.connectionCount()).isEqualTo(1)
   }
 }

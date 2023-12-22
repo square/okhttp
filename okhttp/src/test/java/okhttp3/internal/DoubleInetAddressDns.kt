@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal;
+package okhttp3.internal
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.List;
-import okhttp3.Dns;
-
-import static java.util.Arrays.asList;
+import java.net.InetAddress
+import okhttp3.Dns
 
 /**
  * A network that always resolves two IP addresses per host. Use this when testing route selection
  * fallbacks to guarantee that a fallback address is available.
  */
-public class DoubleInetAddressDns implements Dns {
-  @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
-    List<InetAddress> addresses = Dns.SYSTEM.lookup(hostname);
-    return asList(addresses.get(0), addresses.get(0));
+class DoubleInetAddressDns : Dns {
+  override fun lookup(hostname: String): List<InetAddress> {
+    val addresses = Dns.SYSTEM.lookup(hostname)
+    return listOf(addresses[0], addresses[0])
   }
 }

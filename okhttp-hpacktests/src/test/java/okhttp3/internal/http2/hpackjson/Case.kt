@@ -13,55 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2.hpackjson;
+package okhttp3.internal.http2.hpackjson
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import okhttp3.internal.http2.Header;
-import okio.ByteString;
+import okhttp3.internal.http2.Header
+import okio.ByteString
 
 /**
  * Representation of an individual case (set of headers and wire format). There are many cases for a
  * single story.  This class is used reflectively with Moshi to parse stories.
  */
-public class Case implements Cloneable {
-
-  private int seqno;
-  private String wire;
-  private List<Map<String, String>> headers;
-
-  public List<Header> getHeaders() {
-    List<Header> result = new ArrayList<>();
-    for (Map<String, String> inputHeader : headers) {
-      Map.Entry<String, String> entry = inputHeader.entrySet().iterator().next();
-      result.add(new Header(entry.getKey(), entry.getValue()));
+data class Case(
+  val seqno: Int = 0,
+  val wire: ByteString? = null,
+  val headers: List<Map<String, String>>,
+) : Cloneable {
+  val headersList: List<Header>
+    get() {
+      val result = mutableListOf<Header>()
+      for (inputHeader in headers) {
+        val (key, value) = inputHeader.entries.iterator().next()
+        result.add(Header(key, value))
+      }
+      return result
     }
-    return result;
-  }
 
-  public ByteString getWire() {
-    return ByteString.decodeHex(wire);
-  }
-
-  public int getSeqno() {
-    return seqno;
-  }
-
-  public void setWire(ByteString wire) {
-    this.wire = wire.hex();
-  }
-
-  @Override
-  protected Case clone() throws CloneNotSupportedException {
-    Case result = new Case();
-    result.seqno = seqno;
-    result.wire = wire;
-    result.headers = new ArrayList<>();
-    for (Map<String, String> header : headers) {
-      result.headers.add(new LinkedHashMap<>(header));
-    }
-    return result;
-  }
+  public override fun clone() = Case(seqno, this.wire, headers)
 }

@@ -13,95 +13,100 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2.hpackjson;
+package okhttp3.internal.http2.hpackjson
 
-import com.squareup.moshi.JsonAdapter;
-import com.squareup.moshi.Moshi;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import okio.Okio;
-
-import static java.util.Arrays.asList;
-import static okhttp3.internal.http2.hpackjson.Story.MISSING;
+import com.squareup.moshi.FromJson
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.ToJson
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import java.io.File
+import java.io.IOException
+import okio.BufferedSource
+import okio.ByteString
+import okio.ByteString.Companion.decodeHex
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toOkioPath
+import okio.buffer
+import okio.source
 
 /**
  * Utilities for reading HPACK tests.
  */
-public final class HpackJsonUtil {
-  /** Earliest draft that is code-compatible with latest. */
-  private static final int BASE_DRAFT = 9;
+object HpackJsonUtil {
+  @Suppress("unused")
+  private val MOSHI = Moshi.Builder()
+    .add(object : Any() {
+      @ToJson fun byteStringToJson(byteString: ByteString) = byteString.hex()
+      @FromJson fun byteStringFromJson(json: String) = json.decodeHex()
+    })
+    .add(KotlinJsonAdapterFactory())
+    .build()
+  private val STORY_JSON_ADAPTER = MOSHI.adapter(Story::class.java)
 
-  private static final String STORY_RESOURCE_FORMAT = "/hpack-test-case/%s/story_%02d.json";
+  private val fileSystem = FileSystem.SYSTEM
 
-  private static final Moshi MOSHI = new Moshi.Builder().build();
-  private static final JsonAdapter<Story> STORY_JSON_ADAPTER = MOSHI.adapter(Story.class);
-
-  private static Story readStory(InputStream jsonResource) throws IOException {
-    return STORY_JSON_ADAPTER.fromJson(Okio.buffer(Okio.source(jsonResource)));
+  private fun readStory(source: BufferedSource): Story {
+    return STORY_JSON_ADAPTER.fromJson(source)!!
   }
 
-  private static Story readStory(File file) throws IOException {
-    return STORY_JSON_ADAPTER.fromJson(Okio.buffer(Okio.source(file)));
-  }
-
-  /** Iterate through the hpack-test-case resources, only picking stories for the current draft. */
-  public static String[] storiesForCurrentDraft() throws URISyntaxException {
-    URL resource = HpackJsonUtil.class.getResource("/hpack-test-case");
-    if (resource == null) {
-      return new String[0];
+  private fun readStory(file: Path): Story {
+    fileSystem.read(file) {
+      return readStory(this)
     }
-    File testCaseDirectory = new File(resource.toURI());
-    List<String> storyNames = new ArrayList<>();
-    for (File path : testCaseDirectory.listFiles()) {
-      if (path.isDirectory() && asList(path.list()).contains("story_00.json")) {
-        try {
-          Story firstStory = readStory(new File(path, "story_00.json"));
-          if (firstStory.getDraft() >= BASE_DRAFT) {
-            storyNames.add(path.getName());
-          }
-        } catch (IOException ignored) {
-          // Skip this path.
-        }
+  }
+
+  /** Iterate through the hpack-test-case resources, only picking stories for the current draft.  */
+  fun storiesForCurrentDraft(): Array<String> {
+    val resource = HpackJsonUtil::class.java.getResource("/hpack-test-case")
+      ?: return arrayOf()
+
+    val testCaseDirectory = File(resource.toURI()).toOkioPath()
+    val result = mutableListOf<String>()
+    for (path in fileSystem.list(testCaseDirectory)) {
+      val story00 = path / "story_00.json"
+      if (!fileSystem.exists(story00)) continue
+      try {
+        readStory(story00)
+        result.add(path.name)
+      } catch (ignored: IOException) {
+        // Skip this path.
       }
     }
-    return storyNames.toArray(new String[0]);
+    return result.toTypedArray<String>()
   }
 
   /**
    * Reads stories named "story_xx.json" from the folder provided.
    */
-  public static List<Story> readStories(String testFolderName) throws Exception {
-    List<Story> result = new ArrayList<>();
-    int i = 0;
+  fun readStories(testFolderName: String): List<Story> {
+    val result = mutableListOf<Story>()
+    var i = 0
     while (true) { // break after last test.
-      String storyResourceName = String.format(STORY_RESOURCE_FORMAT, testFolderName, i);
-      InputStream storyInputStream = HpackJsonUtil.class.getResourceAsStream(storyResourceName);
-      if (storyInputStream == null) {
-        break;
-      }
+      val storyResourceName = String.format(
+        "/hpack-test-case/%s/story_%02d.json",
+        testFolderName,
+        i,
+      )
+      val storyInputStream = HpackJsonUtil::class.java.getResourceAsStream(storyResourceName)
+        ?: break
       try {
-        Story story = readStory(storyInputStream);
-        story.setFileName(storyResourceName);
-        result.add(story);
-        i++;
+        storyInputStream.use {
+          val story = readStory(storyInputStream.source().buffer())
+            .copy(fileName = storyResourceName)
+          result.add(story)
+          i++
+        }
       } finally {
-        storyInputStream.close();
+        storyInputStream.close()
       }
     }
 
     if (result.isEmpty()) {
       // missing files
-      result.add(MISSING);
+      result.add(Story.MISSING)
     }
 
-    return result;
+    return result
   }
-
-  private HpackJsonUtil() {
-  } // Utilities only.
 }
