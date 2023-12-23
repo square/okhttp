@@ -498,6 +498,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
+          arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
           script: ./gradlew -PandroidBuild=true :okhttp-android:connectedCheck :android-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
@@ -506,6 +507,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
+          arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
           script: ./gradlew -PandroidBuild=true :android-test-app:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
