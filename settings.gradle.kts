@@ -49,6 +49,7 @@ project(":okhttp-logging-interceptor").name = "logging-interceptor"
 if (!isKnownBrokenIntelliJ()) {
   include(":okhttp-android")
   include(":android-test")
+  include(":android-test-app")
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
