@@ -450,6 +450,7 @@ jobs:
         api-level:
           - 21
           - 29
+          - 34
 
     steps:
       - name: Checkout
@@ -498,6 +499,14 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           script: ./gradlew -PandroidBuild=true :okhttp-android:connectedCheck :android-test:connectedCheck
+        env:
+          API_LEVEL: ${{ matrix.api-level }}
+
+      - name: Run Release Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          script: ./gradlew -PandroidBuild=true :android-test-app:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
 
