@@ -19,7 +19,8 @@ class DispatcherTest {
   val clientTestRule = OkHttpClientTestRule()
   private val executor = RecordingExecutor(this)
   val callback = RecordingCallback()
-  val webSocketListener = RecordingWebSocketListener()
+  val webSocketListener = object : WebSocketListener() {
+  }
   val dispatcher = Dispatcher(executor)
   val listener = RecordingEventListener()
   var client = clientTestRule.newClientBuilder()
