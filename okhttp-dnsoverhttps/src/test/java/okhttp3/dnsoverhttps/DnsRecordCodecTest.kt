@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 package okhttp3.dnsoverhttps
 
 import java.net.InetAddress
 import java.net.UnknownHostException
-import okhttp3.dnsoverhttps.DnsRecordCodec.TYPE_A
-import okhttp3.dnsoverhttps.DnsRecordCodec.TYPE_AAAA
+import okhttp3.AsyncDns.Companion.TYPE_A
+import okhttp3.AsyncDns.Companion.TYPE_AAAA
 import okhttp3.dnsoverhttps.DnsRecordCodec.decodeAnswers
 import okio.ByteString.Companion.decodeHex
 import org.assertj.core.api.Assertions.assertThat
