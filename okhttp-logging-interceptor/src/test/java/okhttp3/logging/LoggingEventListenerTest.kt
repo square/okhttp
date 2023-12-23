@@ -48,7 +48,9 @@ class LoggingEventListenerTest {
   val clientTestRule = OkHttpClientTestRule()
   private lateinit var server: MockWebServer
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
-  private val logRecorder = HttpLoggingInterceptorTest.LogRecorder()
+  private val logRecorder = HttpLoggingInterceptorTest.LogRecorder(
+    prefix = Regex("""\[\d+ ms] """)
+  )
   private val loggingEventListenerFactory = LoggingEventListener.Factory(logRecorder)
   private lateinit var client: OkHttpClient
   private lateinit var url: HttpUrl

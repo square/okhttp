@@ -977,7 +977,9 @@ class HttpLoggingInterceptorTest {
     return Request.Builder().url(url)
   }
 
-  internal class LogRecorder : HttpLoggingInterceptor.Logger {
+  internal class LogRecorder(
+    val prefix: Regex = Regex(""),
+  ) : HttpLoggingInterceptor.Logger {
     private val logs = mutableListOf<String>()
     private var index = 0
 
@@ -994,7 +996,7 @@ class HttpLoggingInterceptorTest {
         .overridingErrorMessage("No more messages found")
         .isLessThan(logs.size)
       assertThat(logs[index++])
-        .matches(Pattern.compile("\\[\\d+ ms] ${regex.pattern}", Pattern.DOTALL))
+        .matches(Pattern.compile(prefix.pattern + regex.pattern, Pattern.DOTALL))
     }
 
     fun assertNoMoreLogs() {
