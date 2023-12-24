@@ -5,7 +5,7 @@ com-squareup-moshi = "1.15.0"
 com-squareup-okio = "3.7.0"
 de-mannodermaus-junit5 = "1.4.0"
 graalvm = "22.3.2"
-kotlinx-serialization = "1.6.0"
+kotlinx-serialization = "1.6.2"
 org-bouncycastle = "1.76"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.7.3"
@@ -39,7 +39,7 @@ gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.10
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.7.1"
 gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.13.2"
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
-gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.9.0"
+gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.9.10"
 gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:3.1.0"
 gradlePlugin-graal = "com.palantir.graal:gradle-graal:0.12.0"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
