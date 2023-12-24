@@ -50,7 +50,7 @@ class MultipartBody internal constructor(
   fun part(index: Int): Part = parts[index]
 
   override fun isOneShot(): Boolean {
-    return parts.find { it.body.isOneShot() } != null
+    return parts.any { it.body.isOneShot() }
   }
 
   /** A combination of [type] and [boundaryByteString]. */
