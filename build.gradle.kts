@@ -8,6 +8,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
+import java.net.URI
 
 buildscript {
   dependencies {
@@ -138,7 +139,7 @@ subprojects {
   }
 
   val platform = System.getProperty("okhttp.platform", "jdk9")
-  val testJavaVersion = System.getProperty("test.java.version", "17").toInt()
+  val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
 
   val testRuntimeOnly: Configuration by configurations.getting
   dependencies {
@@ -221,8 +222,8 @@ subprojects {
         includes.from(project.file("Module.md"))
       }
       externalDocumentationLink {
-        url.set(URL("https://square.github.io/okio/3.x/okio/"))
-        packageListUrl.set(URL("https://square.github.io/okio/3.x/okio/okio/package-list"))
+        url.set(URI.create("https://square.github.io/okio/3.x/okio/").toURL())
+        packageListUrl.set(URI.create("https://square.github.io/okio/3.x/okio/okio/package-list").toURL())
       }
     }
   }
