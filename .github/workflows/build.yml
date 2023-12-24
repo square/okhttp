@@ -341,7 +341,7 @@ jobs:
         with:
           arguments: test -Dtest.java.version=17
 
-  testopenjdk19:
+  testopenjdk21:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
@@ -362,7 +362,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 19
+          java-version: 21
 
       - name: Configure JDK
         uses: actions/setup-java@v3
@@ -373,7 +373,7 @@ jobs:
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: test -Dtest.java.version=19
+          arguments: test -Dtest.java.version=21
 
   testwindows:
     runs-on: windows-latest
@@ -533,7 +533,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 20
+          java-version: 21
 
       - name: Configure JDK
         uses: actions/setup-java@v3
@@ -544,7 +544,7 @@ jobs:
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: test -Dokhttp.platform=loom -Dtest.java.version=20
+          arguments: test -Dokhttp.platform=loom -Dtest.java.version=21
 
 
   testandroidregression:
