@@ -39,7 +39,7 @@ class PublicSuffixDatabaseTest {
 
   @Test
   fun testPublicSuffixes() {
-    platform.assumeNotLoom()
+    platform.assumeNotGraalVMImage()
 
     val metadata = FileSystem.RESOURCES.metadata(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE)
     assertThat(metadata.size!!).isGreaterThan(30000)
