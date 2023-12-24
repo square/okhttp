@@ -65,7 +65,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
  * ```
  */
 fun isKnownBrokenIntelliJ(): Boolean {
-  val ideaVersionString = System.getProperty("idea.version").also { println("idea.version = $it") } ?: return false
+  val ideaVersionString = System.getProperty("idea.version") ?: return false
 
   return try {
     val (major, minor, _) = ideaVersionString.split(".", limit = 3)
