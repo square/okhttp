@@ -9,7 +9,7 @@ plugins {
 val androidBuild = property("androidBuild").toString().toBoolean()
 
 android {
-  compileSdk = 33
+  compileSdk = 34
 
   namespace = "okhttp.android.test"
 
@@ -36,6 +36,10 @@ android {
   compileOptions {
     targetCompatibility(JavaVersion.VERSION_11)
     sourceCompatibility(JavaVersion.VERSION_11)
+  }
+
+  testOptions {
+    targetSdk = 34
   }
 
   kotlinOptions {
