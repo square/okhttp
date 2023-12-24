@@ -816,6 +816,7 @@ public final class okhttp3/MultipartBody : okhttp3/RequestBody {
 	public final fun boundary ()Ljava/lang/String;
 	public fun contentLength ()J
 	public fun contentType ()Lokhttp3/MediaType;
+	public fun isOneShot ()Z
 	public final fun part (I)Lokhttp3/MultipartBody$Part;
 	public final fun parts ()Ljava/util/List;
 	public final fun size ()I
