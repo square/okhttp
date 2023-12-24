@@ -23,6 +23,8 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import okio.BufferedSink
+import okio.ByteString.Companion.encodeUtf8
+import okio.utf8Size
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
@@ -297,5 +299,66 @@ class MultipartBodyTest {
     val buffer = Buffer()
     body.writeTo(buffer)
     assertThat(buffer.readUtf8()).isEqualTo(expected)
+  }
+
+  @Test
+  fun writeTwice() {
+    val expected = """
+      |--123
+      |
+      |Hello, World!
+      |--123--
+      |
+      """.trimMargin().replace("\n", "\r\n")
+    val body = MultipartBody.Builder("123")
+      .addPart("Hello, World!".toRequestBody(null))
+      .build()
+
+    assertThat(body.isOneShot()).isEqualTo(false)
+
+    val buffer = Buffer()
+    body.writeTo(buffer)
+    assertThat(body.contentLength()).isEqualTo(buffer.size)
+    assertThat(buffer.readUtf8()).isEqualTo(expected)
+
+    val buffer2 = Buffer()
+    body.writeTo(buffer2)
+    assertThat(body.contentLength()).isEqualTo(buffer2.size)
+    assertThat(buffer2.readUtf8()).isEqualTo(expected)
+  }
+
+  @Test
+  fun writeTwiceWithOneShot() {
+    val expected = """
+      |--123
+      |
+      |Hello, World!
+      |--123--
+      |
+      """.trimMargin().replace("\n", "\r\n")
+    val body = MultipartBody.Builder("123")
+      .addPart("Hello, World!".toOneShotRequestBody())
+      .build()
+
+    assertThat(body.isOneShot()).isEqualTo(true)
+
+    val buffer = Buffer()
+    body.writeTo(buffer)
+    assertThat(body.contentLength()).isEqualTo(buffer.size)
+    assertThat(buffer.readUtf8()).isEqualTo(expected)
+  }
+
+  fun String.toOneShotRequestBody(): RequestBody {
+    return object : RequestBody() {
+      override fun contentType() = null
+
+      override fun isOneShot(): Boolean = true
+
+      override fun contentLength() = this@toOneShotRequestBody.utf8Size()
+
+      override fun writeTo(sink: BufferedSink) {
+        sink.writeUtf8(this@toOneShotRequestBody)
+      }
+    }
   }
 }
