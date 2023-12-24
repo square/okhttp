@@ -30,6 +30,8 @@ android {
       unitTests {
         isIncludeAndroidResources = true
       }
+
+      targetSdk = 34
     }
   }
 
