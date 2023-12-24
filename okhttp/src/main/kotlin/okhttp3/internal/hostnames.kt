@@ -29,7 +29,7 @@ import okio.Buffer
  * `null` will be returned if the host cannot be ToASCII encoded or if the result contains
  * unsupported ASCII characters.
  */
-fun String.toCanonicalHost(): String? {
+internal fun String.toCanonicalHost(): String? {
   val host: String = this
 
   // If the input contains a :, it’s an IPv6 address.
