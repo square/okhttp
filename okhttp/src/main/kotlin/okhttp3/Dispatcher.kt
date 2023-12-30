@@ -19,6 +19,8 @@ import java.util.ArrayDeque
 import java.util.Collections
 import java.util.Deque
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -26,6 +28,7 @@ import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealCall.AsyncCall
 import okhttp3.internal.okHttpName
+import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadFactory
 
 /**
@@ -92,8 +95,13 @@ class Dispatcher() {
   @get:JvmName("executorService") val executorService: ExecutorService
     get() {
       if (executorServiceOrNull == null) {
-        executorServiceOrNull = ThreadPoolExecutor(0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
+        executorServiceOrNull = if (Platform.majorVersion < 21) {
+          ThreadPoolExecutor(0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
             SynchronousQueue(), threadFactory("$okHttpName Dispatcher", false))
+        } else {
+          @Suppress("Since15")
+          newVirtualThreadPerTaskExecutor()
+        }
       }
       return executorServiceOrNull!!
     }

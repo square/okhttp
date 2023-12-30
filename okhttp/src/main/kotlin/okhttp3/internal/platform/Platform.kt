@@ -293,5 +293,16 @@ open class Platform {
       }
       return result.readByteArray()
     }
+
+    val majorVersion: Int by lazy {
+      when (val jvmSpecVersion = getJvmSpecVersion()) {
+        "1.8" -> 8
+        else -> jvmSpecVersion.toInt()
+      }
+    }
+
+    fun getJvmSpecVersion(): String {
+      return System.getProperty("java.specification.version", "unknown")
+    }
   }
 }
