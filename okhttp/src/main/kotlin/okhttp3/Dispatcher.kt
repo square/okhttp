@@ -24,6 +24,7 @@ import java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealCall.AsyncCall
@@ -91,6 +92,7 @@ class Dispatcher() {
 
   private var executorServiceOrNull: ExecutorService? = null
 
+  @SuppressSignatureCheck
   @get:Synchronized
   @get:JvmName("executorService") val executorService: ExecutorService
     get() {
