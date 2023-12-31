@@ -85,7 +85,7 @@ subprojects {
 
   configure<JavaPluginExtension> {
     toolchain {
-      languageVersion.set(JavaLanguageVersion.of(17))
+      languageVersion.set(JavaLanguageVersion.of(21))
     }
   }
 
@@ -202,7 +202,7 @@ subprojects {
   }
 
   tasks.withType<JavaCompile> {
-    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
+    sourceCompatibility = JavaVersion.VERSION_21.toString()
     targetCompatibility = JavaVersion.VERSION_1_8.toString()
   }
 }
@@ -213,7 +213,7 @@ subprojects {
     dokkaSourceSets.configureEach {
       reportUndocumented.set(false)
       skipDeprecated.set(true)
-      jdkVersion.set(8)
+      jdkVersion.set(21)
       perPackageOption {
         matchingRegex.set(".*\\.internal.*")
         suppress.set(true)
