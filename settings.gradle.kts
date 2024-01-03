@@ -1,5 +1,9 @@
 rootProject.name = "okhttp-parent"
 
+plugins {
+  id("org.gradle.toolchains.foojay-resolver-convention") version("0.7.0")
+}
+
 include(":mockwebserver")
 project(":mockwebserver").name = "mockwebserver3"
 include(":mockwebserver-deprecated")
