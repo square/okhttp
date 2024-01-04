@@ -15,6 +15,12 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.ProtocolException
@@ -34,9 +40,8 @@ import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.duplex.AsyncRequestBody
 import okhttp3.testing.PlatformRule
 import okio.BufferedSink
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -200,17 +205,12 @@ class DuplexTest {
         .build()
     )
     call.execute().use { response ->
-      assertThat<Pair<String?, String?>?>(response.headers)
-        .isEqualTo(
-          headersOf("h1", "v1", "h2", "v2")
-        )
+      assertThat(response.headers)
+        .isEqualTo(headersOf("h1", "v1", "h2", "v2"))
       val responseBody = response.body.source()
       assertThat(responseBody.readUtf8(2)).isEqualTo("ok")
-      Assertions.assertTrue(responseBody.exhausted())
-      assertThat<Pair<String?, String?>?>(response.trailers())
-        .isEqualTo(
-          headersOf("trailers", "boom")
-        )
+      assertThat(responseBody.exhausted()).isTrue()
+      assertThat(response.trailers()).isEqualTo(headersOf("trailers", "boom"))
     }
     body.awaitSuccess()
   }
@@ -267,7 +267,7 @@ class DuplexTest {
     )
     call.execute().use { response ->
       val responseBody = response.body.source()
-      Assertions.assertTrue(responseBody.exhausted())
+      assertTrue(responseBody.exhausted())
       val requestBody = (call.request().body as AsyncRequestBody?)!!.takeSink()
       requestBody.writeUtf8("request A\n")
       requestBody.close()
@@ -448,7 +448,7 @@ class DuplexTest {
     val responseBody2 = response2.body.source()
     assertThat(responseBody2.readUtf8Line())
       .isEqualTo("response body")
-    Assertions.assertTrue(responseBody2.exhausted())
+    assertTrue(responseBody2.exhausted())
     body.awaitSuccess()
 
     // No more requests attempted!
@@ -474,7 +474,7 @@ class DuplexTest {
       fail<Any?>()
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("timeout")
-      Assertions.assertTrue(call.isCanceled())
+      assertTrue(call.isCanceled())
     }
   }
 
@@ -607,7 +607,7 @@ class DuplexTest {
       assertThat(response.body.string()).isEqualTo("success!")
     }
     body.awaitSuccess()
-    assertThat(log.take())
+    assertThat(log.take()!!)
       .contains("StreamResetException: stream was reset: CANCEL")
   }
 

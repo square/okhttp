@@ -15,10 +15,18 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.containsExactly
+import assertk.assertions.isBetween
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
-import org.assertj.core.api.Assertions.assertThat
 
 /**
  * A received response or failure recorded by the response recorder.
@@ -119,16 +127,14 @@ class RecordedResponse(
         break
       }
     }
-    assertThat(found)
-      .overridingErrorMessage(
-        "Expected exception type among "
-          + allowedExceptionTypes.contentToString() + ", got " + failure
-      )
-      .isTrue()
+    assertThat(
+      found,
+      "Expected exception type among ${allowedExceptionTypes.contentToString()}, got $failure"
+    ).isTrue()
   }
 
   fun assertFailure(vararg messages: String) = apply {
-    assertThat(failure).overridingErrorMessage("No failure found").isNotNull()
+    assertThat(failure, "No failure found").isNotNull()
     assertThat(messages).contains(failure!!.message)
   }
 
@@ -148,8 +154,7 @@ class RecordedResponse(
   }
 
   private fun assertDateInRange(minimum: Long, actual: Long, maximum: Long) {
-    assertThat(actual)
-      .overridingErrorMessage("${format(minimum)} <= ${format(actual)} <= ${format(maximum)}")
+    assertThat(actual, "${format(minimum)} <= ${format(actual)} <= ${format(maximum)}")
       .isBetween(minimum, maximum)
   }
 

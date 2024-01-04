@@ -15,6 +15,9 @@
  */
 package okhttp3.sse.internal
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
 import java.util.concurrent.TimeUnit
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -25,7 +28,6 @@ import okhttp3.Request
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSources.createFactory
 import okhttp3.testing.PlatformRule
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag

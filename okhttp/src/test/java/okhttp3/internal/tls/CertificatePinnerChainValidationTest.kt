@@ -15,6 +15,10 @@
  */
 package okhttp3.internal.tls
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.isEqualTo
+import assertk.assertions.startsWith
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import javax.net.ssl.KeyManager
@@ -36,7 +40,6 @@ import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.newKeyManager
 import okhttp3.tls.internal.TlsUtil.newTrustManager
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -268,8 +271,7 @@ class CertificatePinnerChainValidationTest {
       fail<Any>()
     } catch (expected: SSLPeerUnverifiedException) {
       // Certificate pinning fails!
-      val message = expected.message
-      assertThat(message).startsWith("Certificate pinning failure!")
+      assertThat(expected.message!!).startsWith("Certificate pinning failure!")
     }
   }
 
@@ -354,12 +356,10 @@ class CertificatePinnerChainValidationTest {
       fail<Any>()
     } catch (expected: SSLHandshakeException) {
       // On Android, the handshake fails before the certificate pinner runs.
-      val message = expected.message
-      assertThat(message).contains("Could not validate certificate")
+      assertThat(expected.message!!).contains("Could not validate certificate")
     } catch (expected: SSLPeerUnverifiedException) {
       // On OpenJDK, the handshake succeeds but the certificate pinner fails.
-      val message = expected.message
-      assertThat(message).startsWith("Certificate pinning failure!")
+      assertThat(expected.message!!).startsWith("Certificate pinning failure!")
     }
   }
 
@@ -490,11 +490,10 @@ class CertificatePinnerChainValidationTest {
         .use { response -> fail<Any>("expected connection failure but got $response") }
     } catch (expected: SSLPeerUnverifiedException) {
       // Certificate pinning fails!
-      val message = expected.message
-      assertThat(message).startsWith("Certificate pinning failure!")
+      assertThat(expected.message!!).startsWith("Certificate pinning failure!")
     } catch (expected: SSLHandshakeException) {
       // We didn't have the opportunity to do certificate pinning because the handshake failed.
-      assertThat(expected).hasMessageContaining("this is not a CA certificate")
+      assertThat(expected.message!!).contains("this is not a CA certificate")
     }
   }
 

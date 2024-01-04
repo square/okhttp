@@ -15,6 +15,11 @@
  */
 package okhttp3.internal.cache2
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.Callable
@@ -28,7 +33,6 @@ import okio.Pipe
 import okio.Source
 import okio.buffer
 import okio.source
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag

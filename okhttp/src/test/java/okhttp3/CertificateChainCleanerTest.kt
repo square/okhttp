@@ -15,12 +15,13 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import java.security.cert.Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import okhttp3.internal.tls.CertificateChainCleaner.Companion.get
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 

@@ -15,10 +15,11 @@
  */
 package okhttp3.internal.http2
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import okhttp3.internal.http2.hpackjson.HpackJsonUtil
 import okhttp3.internal.http2.hpackjson.Story
 import okio.Buffer
-import org.assertj.core.api.Assertions.assertThat
 
 /**
  * Tests Hpack implementation using https://github.com/http2jp/hpack-test-case/
@@ -67,8 +68,7 @@ open class HpackDecodeTestBase {
       expected: List<Header>,
       observed: List<Header>,
     ) {
-      assertThat(LinkedHashSet(observed))
-        .overridingErrorMessage(message)
+      assertThat(LinkedHashSet(observed), message)
         .isEqualTo(LinkedHashSet(expected))
     }
   }

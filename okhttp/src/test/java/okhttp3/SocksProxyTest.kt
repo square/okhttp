@@ -15,6 +15,8 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import java.io.IOException
 import java.net.ProxySelector
 import java.net.SocketAddress
@@ -22,7 +24,6 @@ import java.net.URI
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.testing.PlatformRule
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

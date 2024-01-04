@@ -24,7 +24,7 @@ dependencies {
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.mockwebserver3Junit5)
   testImplementation(libs.junit)
-  testImplementation(libs.assertj.core)
+  testImplementation(libs.assertk)
 }
 
 animalsniffer {

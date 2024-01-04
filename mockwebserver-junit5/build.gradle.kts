@@ -26,10 +26,8 @@ dependencies {
   compileOnly(libs.animalsniffer.annotations)
 
   testRuntimeOnly(libs.junit.jupiter.engine)
-  testImplementation(libs.assertj.core)
   testImplementation(libs.kotlin.junit5)
   testImplementation(projects.okhttpTestingSupport)
-  testImplementation(libs.assertj.core)
   testImplementation(libs.assertk)
 }
 

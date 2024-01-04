@@ -15,11 +15,14 @@
  */
 package okhttp3.internal.platform
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import javax.net.ssl.SSLSocket
 import okhttp3.DelegatingSSLSocket
 import okhttp3.internal.platform.Jdk9Platform.Companion.buildIfSupported
 import okhttp3.testing.PlatformRule
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 

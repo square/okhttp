@@ -15,6 +15,14 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isCloseTo
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isGreaterThan
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import java.net.CookieHandler
 import java.net.CookieManager
 import java.net.CookiePolicy
@@ -27,8 +35,6 @@ import mockwebserver3.MockWebServer
 import okhttp3.Cookie.Companion.parse
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.java.net.cookiejar.JavaNetCookieJar
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -110,7 +116,7 @@ class CookiesTest {
     assertThat(cookie.commentURL).isNull()
     assertThat(cookie.discard).isFalse()
     // Converting to a fixed date can cause rounding!
-    assertThat(cookie.maxAge.toDouble()).isCloseTo(60.0, Offset.offset(5.0))
+    assertThat(cookie.maxAge.toDouble()).isCloseTo(60.0, 5.0)
     assertThat(cookie.path).isEqualTo("/path")
     assertThat(cookie.secure).isTrue()
   }
@@ -145,7 +151,7 @@ class CookiesTest {
     assertThat(cookie.name).isEqualTo("a")
     assertThat(cookie.value).isEqualTo("android")
     // Converting to a fixed date can cause rounding!
-    assertThat(cookie.maxAge.toDouble()).isCloseTo(60.0, Offset.offset(1.0))
+    assertThat(cookie.maxAge.toDouble()).isCloseTo(60.0, 1.0)
     assertThat(cookie.path).isEqualTo("/path")
     assertThat(cookie.secure).isTrue()
   }

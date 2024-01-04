@@ -22,7 +22,6 @@ dependencies {
   testImplementation(projects.mockwebserver3)
   testImplementation(projects.mockwebserver3Junit5)
   testImplementation(libs.junit)
-  testImplementation(libs.assertj.core)
   testCompileOnly(libs.findbugs.jsr305)
 }
 

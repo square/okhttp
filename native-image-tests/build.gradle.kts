@@ -6,7 +6,6 @@ plugins {
 }
 
 dependencies {
-  implementation(libs.assertj.core)
   implementation(libs.junit.jupiter.api)
   implementation(libs.junit.jupiter.engine)
   implementation(libs.junit.platform.console)
@@ -19,7 +18,6 @@ dependencies {
   implementation(projects.okhttpSse)
   implementation(projects.okhttpTestingSupport)
   implementation(projects.okhttpTls)
-  implementation(libs.assertj.core)
   implementation(projects.mockwebserver3)
   implementation(projects.mockwebserver)
   implementation(projects.okhttpJavaNetCookiejar)

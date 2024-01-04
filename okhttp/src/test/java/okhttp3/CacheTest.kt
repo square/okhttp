@@ -15,6 +15,15 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isCloseTo
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import java.io.IOException
 import java.net.CookieManager
 import java.net.HttpURLConnection
@@ -49,8 +58,6 @@ import okio.Path
 import okio.Path.Companion.toPath
 import okio.buffer
 import okio.fakefilesystem.FakeFileSystem
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
@@ -2369,107 +2376,99 @@ class CacheTest {
     cookieJar.assertResponseCookies("a=SECOND; path=/")
   }
 
-  @get:Throws(Exception::class)
-  @get:Test
-  val headersReturnsNetworkEndToEndHeaders: Unit
-    get() {
-      server.enqueue(
-        MockResponse.Builder()
-          .addHeader("Allow: GET, HEAD")
-          .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-          .addHeader("Cache-Control: max-age=0")
-          .body("A")
-          .build()
-      )
-      server.enqueue(
-        MockResponse.Builder()
-          .addHeader("Allow: GET, HEAD, PUT")
-          .code(HttpURLConnection.HTTP_NOT_MODIFIED)
-          .build()
-      )
-      val response1 = get(server.url("/"))
-      assertThat(response1.body.string()).isEqualTo("A")
-      assertThat(response1.header("Allow")).isEqualTo("GET, HEAD")
-      val response2 = get(server.url("/"))
-      assertThat(response2.body.string()).isEqualTo("A")
-      assertThat(response2.header("Allow")).isEqualTo("GET, HEAD, PUT")
-    }
+  @Test
+  fun getHeadersReturnsNetworkEndToEndHeaders() {
+    server.enqueue(
+      MockResponse.Builder()
+        .addHeader("Allow: GET, HEAD")
+        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+        .addHeader("Cache-Control: max-age=0")
+        .body("A")
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
+        .addHeader("Allow: GET, HEAD, PUT")
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build()
+    )
+    val response1 = get(server.url("/"))
+    assertThat(response1.body.string()).isEqualTo("A")
+    assertThat(response1.header("Allow")).isEqualTo("GET, HEAD")
+    val response2 = get(server.url("/"))
+    assertThat(response2.body.string()).isEqualTo("A")
+    assertThat(response2.header("Allow")).isEqualTo("GET, HEAD, PUT")
+  }
 
-  @get:Throws(Exception::class)
-  @get:Test
-  val headersReturnsCachedHopByHopHeaders: Unit
-    get() {
-      server.enqueue(
-        MockResponse.Builder()
-          .addHeader("Transfer-Encoding: identity")
-          .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-          .addHeader("Cache-Control: max-age=0")
-          .body("A")
-          .build()
-      )
-      server.enqueue(
-        MockResponse.Builder()
-          .addHeader("Transfer-Encoding: none")
-          .code(HttpURLConnection.HTTP_NOT_MODIFIED)
-          .build()
-      )
-      val response1 = get(server.url("/"))
-      assertThat(response1.body.string()).isEqualTo("A")
-      assertThat(response1.header("Transfer-Encoding")).isEqualTo("identity")
-      val response2 = get(server.url("/"))
-      assertThat(response2.body.string()).isEqualTo("A")
-      assertThat(response2.header("Transfer-Encoding")).isEqualTo("identity")
-    }
+  @Test
+  fun getHeadersReturnsCachedHopByHopHeaders() {
+    server.enqueue(
+      MockResponse.Builder()
+        .addHeader("Transfer-Encoding: identity")
+        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+        .addHeader("Cache-Control: max-age=0")
+        .body("A")
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
+        .addHeader("Transfer-Encoding: none")
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build()
+    )
+    val response1 = get(server.url("/"))
+    assertThat(response1.body.string()).isEqualTo("A")
+    assertThat(response1.header("Transfer-Encoding")).isEqualTo("identity")
+    val response2 = get(server.url("/"))
+    assertThat(response2.body.string()).isEqualTo("A")
+    assertThat(response2.header("Transfer-Encoding")).isEqualTo("identity")
+  }
 
-  @get:Throws(Exception::class)
-  @get:Test
-  val headersDeletesCached100LevelWarnings: Unit
-    get() {
-      server.enqueue(
-        MockResponse.Builder()
-          .addHeader("Warning: 199 test danger")
-          .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-          .addHeader("Cache-Control: max-age=0")
-          .body("A")
-          .build()
-      )
-      server.enqueue(
-        MockResponse.Builder()
-          .code(HttpURLConnection.HTTP_NOT_MODIFIED)
-          .build()
-      )
-      val response1 = get(server.url("/"))
-      assertThat(response1.body.string()).isEqualTo("A")
-      assertThat(response1.header("Warning")).isEqualTo("199 test danger")
-      val response2 = get(server.url("/"))
-      assertThat(response2.body.string()).isEqualTo("A")
-      assertThat(response2.header("Warning")).isNull()
-    }
+  @Test
+  fun getHeadersDeletesCached100LevelWarnings() {
+    server.enqueue(
+      MockResponse.Builder()
+        .addHeader("Warning: 199 test danger")
+        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+        .addHeader("Cache-Control: max-age=0")
+        .body("A")
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build()
+    )
+    val response1 = get(server.url("/"))
+    assertThat(response1.body.string()).isEqualTo("A")
+    assertThat(response1.header("Warning")).isEqualTo("199 test danger")
+    val response2 = get(server.url("/"))
+    assertThat(response2.body.string()).isEqualTo("A")
+    assertThat(response2.header("Warning")).isNull()
+  }
 
-  @get:Throws(Exception::class)
-  @get:Test
-  val headersRetainsCached200LevelWarnings: Unit
-    get() {
-      server.enqueue(
-        MockResponse.Builder()
-          .addHeader("Warning: 299 test danger")
-          .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-          .addHeader("Cache-Control: max-age=0")
-          .body("A")
-          .build()
-      )
-      server.enqueue(
-        MockResponse.Builder()
-          .code(HttpURLConnection.HTTP_NOT_MODIFIED)
-          .build()
-      )
-      val response1 = get(server.url("/"))
-      assertThat(response1.body.string()).isEqualTo("A")
-      assertThat(response1.header("Warning")).isEqualTo("299 test danger")
-      val response2 = get(server.url("/"))
-      assertThat(response2.body.string()).isEqualTo("A")
-      assertThat(response2.header("Warning")).isEqualTo("299 test danger")
-    }
+  @Test
+  fun getHeadersRetainsCached200LevelWarnings() {
+    server.enqueue(
+      MockResponse.Builder()
+        .addHeader("Warning: 299 test danger")
+        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+        .addHeader("Cache-Control: max-age=0")
+        .body("A")
+        .build()
+    )
+    server.enqueue(
+      MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build()
+    )
+    val response1 = get(server.url("/"))
+    assertThat(response1.body.string()).isEqualTo("A")
+    assertThat(response1.header("Warning")).isEqualTo("299 test danger")
+    val response2 = get(server.url("/"))
+    assertThat(response2.body.string()).isEqualTo("A")
+    assertThat(response2.header("Warning")).isEqualTo("299 test danger")
+  }
 
   @Test
   fun doNotCachePartialResponse() {
@@ -2510,8 +2509,7 @@ class CacheTest {
     val response1 = get(server.url("/a"))
     assertThat(response1.body.string()).isEqualTo("A")
     assertThat(response1.header("Allow")).isNull()
-    assertThat((response1.receivedResponseAtMillis - t0).toDouble())
-      .isCloseTo(0.0, Offset.offset(250.0))
+    assertThat((response1.receivedResponseAtMillis - t0).toDouble()).isCloseTo(0.0, 250.0)
 
     // A conditional cache hit updates the cache.
     Thread.sleep(500) // Make sure t0 and t1 are distinct.
@@ -2521,8 +2519,7 @@ class CacheTest {
     assertThat(response2.body.string()).isEqualTo("A")
     assertThat(response2.header("Allow")).isEqualTo("GET, HEAD")
     val updatedTimestamp = response2.receivedResponseAtMillis
-    assertThat((updatedTimestamp - t1).toDouble())
-      .isCloseTo(0.0, Offset.offset(250.0))
+    assertThat((updatedTimestamp - t1).toDouble()).isCloseTo(0.0, 250.0)
 
     // A full cache hit reads the cache.
     Thread.sleep(10)

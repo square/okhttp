@@ -22,7 +22,6 @@ dependencies {
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(libs.conscrypt.openjdk)
   testImplementation(libs.junit)
-  testImplementation(libs.assertj.core)
   testImplementation(libs.assertk)
 }
 

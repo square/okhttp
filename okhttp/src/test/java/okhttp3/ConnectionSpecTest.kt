@@ -15,7 +15,14 @@
  */
 package okhttp3
 
-import java.util.Arrays
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.containsExactlyInAnyOrder
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import java.util.concurrent.CopyOnWriteArraySet
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -23,7 +30,6 @@ import okhttp3.internal.applyConnectionSpec
 import okhttp3.internal.platform.Platform.Companion.isAndroid
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion.majorVersion
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -71,9 +77,9 @@ class ConnectionSpecTest {
       .tlsVersions(TlsVersion.TLS_1_2)
       .supportsTlsExtensions(true)
       .build()
-    assertThat(tlsSpec.cipherSuites)
+    assertThat(tlsSpec.cipherSuites!!.toList())
       .containsExactly(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
-    assertThat(tlsSpec.tlsVersions)
+    assertThat(tlsSpec.tlsVersions!!.toList())
       .containsExactly(TlsVersion.TLS_1_2)
     assertThat(tlsSpec.supportsTlsExtensions).isTrue()
   }
@@ -85,7 +91,7 @@ class ConnectionSpecTest {
       .supportsTlsExtensions(true)
       .build()
     assertThat(tlsSpec.cipherSuites).isNull()
-    assertThat(tlsSpec.tlsVersions)
+    assertThat(tlsSpec.tlsVersions!!.toList())
       .containsExactly(TlsVersion.TLS_1_2)
     assertThat(tlsSpec.supportsTlsExtensions).isTrue()
   }
@@ -112,7 +118,7 @@ class ConnectionSpecTest {
     assertThat(socket.enabledProtocols).containsExactly(
       TlsVersion.TLS_1_2.javaName
     )
-    assertThat(socket.enabledCipherSuites)
+    assertThat(socket.enabledCipherSuites.toList())
       .containsExactlyInAnyOrder(
         CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName,
         CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA.javaName
@@ -148,7 +154,7 @@ class ConnectionSpecTest {
       expectedCipherSuites.add("TLS_FALLBACK_SCSV")
     }
     assertThat(socket.enabledCipherSuites)
-      .containsExactlyElementsOf(expectedCipherSuites)
+      .containsExactly(*expectedCipherSuites.toTypedArray())
   }
 
   @Test
@@ -176,11 +182,11 @@ class ConnectionSpecTest {
     )
     val expectedCipherSuites: MutableList<String> = ArrayList()
     expectedCipherSuites.add(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName)
-    if (Arrays.asList<String>(*socket.supportedCipherSuites).contains("TLS_FALLBACK_SCSV")) {
+    if (listOf<String>(*socket.supportedCipherSuites).contains("TLS_FALLBACK_SCSV")) {
       expectedCipherSuites.add("TLS_FALLBACK_SCSV")
     }
     assertThat(socket.enabledCipherSuites)
-      .containsExactlyElementsOf(expectedCipherSuites)
+      .containsExactly(*expectedCipherSuites.toTypedArray())
   }
 
   @Test

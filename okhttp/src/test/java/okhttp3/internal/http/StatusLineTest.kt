@@ -15,10 +15,11 @@
  */
 package okhttp3.internal.http
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import java.net.ProtocolException
 import okhttp3.Protocol
 import okhttp3.internal.http.StatusLine.Companion.parse
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 

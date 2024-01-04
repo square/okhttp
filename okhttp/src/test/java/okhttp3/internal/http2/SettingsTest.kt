@@ -15,7 +15,10 @@
  */
 package okhttp3.internal.http2
 
-import org.assertj.core.api.Assertions.assertThat
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isTrue
 import org.junit.jupiter.api.Test
 
 class SettingsTest {

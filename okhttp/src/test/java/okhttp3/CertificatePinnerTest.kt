@@ -15,13 +15,15 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotEqualTo
 import java.util.Arrays
 import javax.net.ssl.SSLPeerUnverifiedException
 import okhttp3.CertificatePinner.Companion.pin
 import okhttp3.CertificatePinner.Companion.sha1Hash
 import okhttp3.tls.HeldCertificate
 import okio.ByteString.Companion.decodeBase64
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
@@ -61,12 +63,8 @@ class CertificatePinnerTest {
       .serialNumber(201L)
       .build()
     val keypairBCertificate2Pin = pin(heldCertificateB2.certificate)
-    assertThat(keypairACertificate2Pin).isEqualTo(
-      certA1Sha256Pin
-    )
-    assertThat(keypairBCertificate2Pin).isEqualTo(
-      certB1Sha256Pin
-    )
+    assertThat(keypairACertificate2Pin).isEqualTo(certA1Sha256Pin)
+    assertThat(keypairBCertificate2Pin).isEqualTo(certB1Sha256Pin)
     assertThat(certB1Sha256Pin).isNotEqualTo(certA1Sha256Pin)
   }
 

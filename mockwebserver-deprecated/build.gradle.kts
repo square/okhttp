@@ -21,7 +21,6 @@ dependencies {
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.okhttpTls)
-  testImplementation(libs.assertj.core)
 }
 
 mavenPublishing {

@@ -15,8 +15,13 @@
  */
 package okhttp3.logging
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isLessThan
+import assertk.assertions.isLessThanOrEqualTo
+import assertk.assertions.isSameAs
+import assertk.assertions.matches
 import java.net.UnknownHostException
-import java.util.regex.Pattern
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.internal.MockWebServerExtension
@@ -36,7 +41,6 @@ import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.BufferedSink
 import okio.ByteString.Companion.decodeBase64
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
@@ -572,9 +576,8 @@ class HttpLoggingInterceptorTest {
         .build()
     ).execute()
     val responseBody = response.body
-    assertThat(responseBody.string()).overridingErrorMessage(
-      "Expected response body to be valid"
-    ).isEqualTo("Uncompressed")
+    assertThat(responseBody.string(), "Expected response body to be valid")
+      .isEqualTo("Uncompressed")
     responseBody.close()
     networkLogs
       .assertLogEqual("--> POST $url http/1.1")
@@ -607,9 +610,8 @@ class HttpLoggingInterceptorTest {
     )
     val response = client.newCall(request().build()).execute()
     val responseBody = response.body
-    assertThat(responseBody.string()).overridingErrorMessage(
-      "Expected response body to be valid"
-    ).isEqualTo("Hello, Hello, Hello")
+    assertThat(responseBody.string(), "Expected response body to be valid")
+      .isEqualTo("Hello, Hello, Hello")
     responseBody.close()
     networkLogs
       .assertLogEqual("--> GET $url http/1.1")
@@ -984,24 +986,21 @@ class HttpLoggingInterceptorTest {
     private var index = 0
 
     fun assertLogEqual(expected: String) = apply {
-      assertThat(index)
-        .overridingErrorMessage("No more messages found")
+      assertThat(index, "No more messages found")
         .isLessThan(logs.size)
       assertThat(logs[index++]).isEqualTo(expected)
       return this
     }
 
     fun assertLogMatch(regex: Regex) = apply {
-      assertThat(index)
-        .overridingErrorMessage("No more messages found")
+      assertThat(index, "No more messages found")
         .isLessThan(logs.size)
       assertThat(logs[index++])
-        .matches(Pattern.compile(prefix.pattern + regex.pattern, Pattern.DOTALL))
+        .matches(Regex(prefix.pattern + regex.pattern, RegexOption.DOT_MATCHES_ALL))
     }
 
     fun assertNoMoreLogs() {
-      assertThat(logs.size)
-        .overridingErrorMessage("More messages remain: ${logs.subList(index, logs.size)}")
+      assertThat(logs.size, "More messages remain: ${logs.subList(index, logs.size)}")
         .isEqualTo(index)
     }
 

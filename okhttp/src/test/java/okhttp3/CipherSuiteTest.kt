@@ -15,9 +15,12 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotEqualTo
+import assertk.assertions.isSameAs
 import okhttp3.CipherSuite.Companion.forJavaName
 import okhttp3.internal.applyConnectionSpec
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
 
@@ -25,8 +28,7 @@ class CipherSuiteTest {
   @Test
   fun hashCode_usesIdentityHashCode_legacyCase() {
     val cs = CipherSuite.TLS_RSA_EXPORT_WITH_RC4_40_MD5 // This one's javaName starts with "SSL_".
-    assertThat(cs.hashCode())
-      .overridingErrorMessage(cs.toString())
+    assertThat(cs.hashCode(), cs.toString())
       .isEqualTo(System.identityHashCode(cs))
   }
 
@@ -34,8 +36,7 @@ class CipherSuiteTest {
   fun hashCode_usesIdentityHashCode_regularCase() {
     // This one's javaName matches the identifier.
     val cs = CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA256
-    assertThat(cs.hashCode())
-      .overridingErrorMessage(cs.toString())
+    assertThat(cs.hashCode(), cs.toString())
       .isEqualTo(System.identityHashCode(cs))
   }
 

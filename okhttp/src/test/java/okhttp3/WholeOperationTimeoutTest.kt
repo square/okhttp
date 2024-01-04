@@ -15,6 +15,11 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNotNull
+import assertk.assertions.isTrue
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.HttpURLConnection
@@ -28,7 +33,6 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.TestUtil.repeat
 import okhttp3.testing.Flaky
 import okio.BufferedSink
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
