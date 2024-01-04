@@ -26,6 +26,7 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNull
+import assertk.fail
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
@@ -38,7 +39,6 @@ import okhttp3.Request
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okio.IOException
-import org.assertj.core.api.Assertions.fail
 import org.junit.Assume.assumeTrue
 import org.junit.AssumptionViolatedException
 import org.junit.Before

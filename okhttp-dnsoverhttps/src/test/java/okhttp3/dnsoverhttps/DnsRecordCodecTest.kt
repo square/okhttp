@@ -16,14 +16,16 @@
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 package okhttp3.dnsoverhttps
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
+import assertk.fail
 import java.net.InetAddress
 import java.net.UnknownHostException
 import okhttp3.AsyncDns.Companion.TYPE_A
 import okhttp3.AsyncDns.Companion.TYPE_AAAA
 import okhttp3.dnsoverhttps.DnsRecordCodec.decodeAnswers
 import okio.ByteString.Companion.decodeHex
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Test
 
 class DnsRecordCodecTest {
@@ -85,7 +87,7 @@ class DnsRecordCodecTest {
           "00060001000007070038026e7303746c64c01b0a686f73746d61737465720d6565737469696e7465726e65" +
           "74c01b5adb12c100000e10000003840012750000000e10").decodeHex()
       )
-      fail<Any>("")
+      fail("")
     } catch (uhe: UnknownHostException) {
       assertThat(uhe.message).isEqualTo("sdflkhfsdlkjdf.ee: NXDOMAIN")
     }

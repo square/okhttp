@@ -15,10 +15,11 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import okio.Buffer
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class FormBodyTest {

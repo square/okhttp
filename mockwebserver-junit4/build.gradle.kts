@@ -18,7 +18,6 @@ dependencies {
   api(projects.mockwebserver3)
   api(libs.junit)
 
-  testImplementation(libs.assertj.core)
   testImplementation(libs.assertk)
 }
 

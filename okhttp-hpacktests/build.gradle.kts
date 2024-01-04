@@ -10,5 +10,4 @@ dependencies {
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.mockwebserver)
   testImplementation(libs.junit)
-  testImplementation(libs.assertj.core)
 }

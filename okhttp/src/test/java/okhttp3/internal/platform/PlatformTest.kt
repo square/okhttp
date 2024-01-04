@@ -15,9 +15,10 @@
  */
 package okhttp3.internal.platform
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import okhttp3.internal.platform.Platform.Companion.isAndroid
 import okhttp3.testing.PlatformRule
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 

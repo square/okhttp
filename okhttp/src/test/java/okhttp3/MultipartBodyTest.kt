@@ -15,6 +15,8 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import okhttp3.Headers.Companion.headersOf
@@ -23,9 +25,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import okio.BufferedSink
-import okio.ByteString.Companion.encodeUtf8
 import okio.utf8Size
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 

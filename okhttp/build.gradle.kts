@@ -139,7 +139,6 @@ dependencies {
   testImplementation(libs.junit.jupiter.api)
   testImplementation(libs.junit.jupiter.params)
   testImplementation(libs.kotlin.test.junit)
-  testImplementation(libs.assertj.core)
   testImplementation(libs.openjsse)
   testImplementation(libs.aqute.resolve)
   testCompileOnly(libs.findbugs.jsr305)

@@ -15,6 +15,8 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -34,7 +36,6 @@ import okhttp3.CertificatePinner.Companion.pin
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag

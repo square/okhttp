@@ -15,6 +15,16 @@
  */
 package okhttp3.internal.ws
 
+import assertk.assertThat
+import assertk.assertions.isBetween
+import assertk.assertions.isCloseTo
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isInstanceOf
+import assertk.assertions.isLessThan
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import java.io.EOFException
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -57,8 +67,6 @@ import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -497,9 +505,7 @@ class WebSocketHttpTest {
         assertThat(chain.request().body).isNull()
         val response = chain.proceed(chain.request())
         assertThat(response.header("Connection")).isEqualTo("Upgrade")
-        assertThat(response.body).isInstanceOf(
-          UnreadableResponseBody::class.java
-        )
+        assertThat(response.body).isInstanceOf<UnreadableResponseBody>()
         interceptedCount.incrementAndGet()
         response
       })
@@ -730,8 +736,8 @@ class WebSocketHttpTest {
       Thread.sleep(50)
     }
     val elapsedUntilPong3 = System.nanoTime() - startNanos
-    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3))
-      .isCloseTo(1500L, Offset.offset(250L))
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3).toDouble())
+      .isCloseTo(1500.0, 250.0)
 
     // The client pinged the server 3 times, and it has ponged back 3 times.
     assertThat(webSocket.sentPingCount()).isEqualTo(3)
@@ -803,8 +809,8 @@ class WebSocketHttpTest {
     )
     latch.countDown()
     val elapsedUntilFailure = System.nanoTime() - openAtNanos
-    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure))
-      .isCloseTo(1000L, Offset.offset(250L))
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure).toDouble())
+      .isCloseTo(1000.0, 250.0)
   }
 
   /** https://github.com/square/okhttp/issues/2788  */
@@ -827,8 +833,8 @@ class WebSocketHttpTest {
     // Confirm that the hard cancel occurred after 500 ms.
     clientListener.assertFailure()
     val elapsedUntilFailure = System.nanoTime() - closeAtNanos
-    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure))
-      .isCloseTo(500L, Offset.offset(250L))
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure).toDouble())
+      .isCloseTo(500.0, 250.0)
 
     // Close the server and confirm it saw what we expected.
     server.close(1000, null)

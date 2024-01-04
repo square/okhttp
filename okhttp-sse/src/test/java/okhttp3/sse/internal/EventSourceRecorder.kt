@@ -15,6 +15,10 @@
  */
 package okhttp3.sse.internal
 
+import assertk.assertThat
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 import okhttp3.Response
@@ -22,7 +26,6 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.get
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
-import org.assertj.core.api.Assertions.assertThat
 
 class EventSourceRecorder : EventSourceListener() {
   private val events = LinkedBlockingDeque<Any>()

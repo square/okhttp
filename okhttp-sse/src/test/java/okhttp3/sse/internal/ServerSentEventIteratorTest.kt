@@ -15,10 +15,12 @@
  */
 package okhttp3.sse.internal
 
+import assertk.assertThat
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
 import java.util.ArrayDeque
 import java.util.Deque
 import okio.Buffer
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
@@ -298,8 +300,7 @@ class ServerSentEventIteratorTest {
     val reader = ServerSentEventReader(buffer, callback)
     while (reader.processNextEvent()) {
     }
-    assertThat(buffer.size)
-      .overridingErrorMessage("Unconsumed buffer: ${buffer.readUtf8()}")
+    assertThat(buffer.size, "Unconsumed buffer: ${buffer.readUtf8()}")
       .isEqualTo(0)
   }
 }

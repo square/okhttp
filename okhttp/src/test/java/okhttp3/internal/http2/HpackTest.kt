@@ -15,6 +15,10 @@
  */
 package okhttp3.internal.http2
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import java.io.IOException
 import java.util.Arrays
 import okhttp3.TestUtil.headerEntries
@@ -22,7 +26,6 @@ import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -1057,7 +1060,7 @@ class HpackTest {
   }
 
   @Test
-  fun incrementalIndexingWithDynamcTableIndexedName() {
+  fun incrementalIndexingWithDynamicTableIndexedName() {
     hpackWriter!!.writeHeaders(headerEntries("foo", "bar"))
     assertBytes(0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code)
     assertThat(hpackWriter!!.headerCount).isEqualTo(1)

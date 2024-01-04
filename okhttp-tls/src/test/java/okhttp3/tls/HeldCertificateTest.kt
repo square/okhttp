@@ -15,17 +15,20 @@
  */
 package okhttp3.tls
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isCloseTo
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
+import assertk.assertions.matches
 import java.math.BigInteger
 import java.security.KeyFactory
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
-import java.util.Arrays
 import java.util.concurrent.TimeUnit
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HeldCertificate.Companion.decode
 import okio.ByteString.Companion.decodeBase64
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
 import org.bouncycastle.asn1.x509.GeneralName
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
@@ -40,19 +43,17 @@ class HeldCertificateTest {
     val now = System.currentTimeMillis()
     val heldCertificate = HeldCertificate.Builder().build()
     val certificate = heldCertificate.certificate
-    assertThat(certificate.getSubjectX500Principal().name).overridingErrorMessage(
-      "self-signed"
-    ).isEqualTo(certificate.getIssuerX500Principal().name)
-    assertThat(certificate.getIssuerX500Principal().name).matches("CN=[0-9a-f-]{36}")
+    assertThat(certificate.getSubjectX500Principal().name, "self-signed")
+      .isEqualTo(certificate.getIssuerX500Principal().name)
+    assertThat(certificate.getIssuerX500Principal().name).matches(Regex("CN=[0-9a-f-]{36}"))
     assertThat(certificate.serialNumber).isEqualTo(BigInteger.ONE)
     assertThat(certificate.subjectAlternativeNames).isNull()
     val deltaMillis = 1000.0
     val durationMillis = TimeUnit.MINUTES.toMillis((60 * 24).toLong())
     assertThat(certificate.notBefore.time.toDouble())
-      .isCloseTo(now.toDouble(), Offset.offset(deltaMillis))
-    assertThat(certificate.notAfter.time.toDouble()).isCloseTo(
-      now.toDouble() + durationMillis, Offset.offset(deltaMillis)
-    )
+      .isCloseTo(now.toDouble(), deltaMillis)
+    assertThat(certificate.notAfter.time.toDouble())
+      .isCloseTo(now.toDouble() + durationMillis, deltaMillis)
   }
 
   @Test
@@ -76,10 +77,9 @@ class HeldCertificateTest {
     val deltaMillis = 1000.0
     val durationMillis = 5000L
     assertThat(certificate.notBefore.time.toDouble())
-      .isCloseTo(now.toDouble(), Offset.offset(deltaMillis))
-    assertThat(certificate.notAfter.time.toDouble()).isCloseTo(
-      now.toDouble() + durationMillis, Offset.offset(deltaMillis)
-    )
+      .isCloseTo(now.toDouble(), deltaMillis)
+    assertThat(certificate.notAfter.time.toDouble())
+      .isCloseTo(now.toDouble() + durationMillis, deltaMillis)
   }
 
   @Test
@@ -89,7 +89,7 @@ class HeldCertificateTest {
       .addSubjectAlternativeName("cash.app")
       .build()
     val certificate = heldCertificate.certificate
-    assertThat(certificate.subjectAlternativeNames).containsExactly(
+    assertThat(certificate.subjectAlternativeNames.toList()).containsExactly(
       listOf(GeneralName.iPAddress, "1.1.1.1"),
       listOf(GeneralName.dNSName, "cash.app")
     )
@@ -213,8 +213,8 @@ class HeldCertificateTest {
       .ecdsa256()
       .signedBy(root)
       .build()
-    assertThat(root.certificate.sigAlgName).isEqualToIgnoringCase("SHA256WITHRSA")
-    assertThat(leaf.certificate.sigAlgName).isEqualToIgnoringCase("SHA256WITHRSA")
+    assertThat(root.certificate.sigAlgName).isEqualTo("SHA256WITHRSA", ignoreCase = true)
+    assertThat(leaf.certificate.sigAlgName).isEqualTo("SHA256WITHRSA", ignoreCase = true)
   }
 
   @Test
@@ -228,8 +228,8 @@ class HeldCertificateTest {
       .rsa2048()
       .signedBy(root)
       .build()
-    assertThat(root.certificate.sigAlgName).isEqualToIgnoringCase("SHA256WITHECDSA")
-    assertThat(leaf.certificate.sigAlgName).isEqualToIgnoringCase("SHA256WITHECDSA")
+    assertThat(root.certificate.sigAlgName).isEqualTo("SHA256WITHECDSA", ignoreCase = true)
+    assertThat(leaf.certificate.sigAlgName).isEqualTo("SHA256WITHECDSA", ignoreCase = true)
   }
 
   @Test
@@ -281,7 +281,7 @@ class HeldCertificateTest {
     val certificate = heldCertificate.certificate
     assertThat(certificate.notBefore.time).isEqualTo(5000L)
     assertThat(certificate.notAfter.time).isEqualTo(10000L)
-    assertThat(certificate.subjectAlternativeNames).containsExactly(
+    assertThat(certificate.subjectAlternativeNames.toList()).containsExactly(
       listOf(GeneralName.iPAddress, "1.1.1.1"),
       listOf(GeneralName.dNSName, "cash.app")
     )
@@ -401,9 +401,9 @@ class HeldCertificateTest {
     val certificate = heldCertificate.certificate
     assertThat(certificate.notBefore.time).isEqualTo(5000L)
     assertThat(certificate.notAfter.time).isEqualTo(10000L)
-    assertThat(certificate.subjectAlternativeNames).containsExactly(
-      Arrays.asList(GeneralName.iPAddress, "1.1.1.1"),
-      Arrays.asList(GeneralName.dNSName, "cash.app")
+    assertThat(certificate.subjectAlternativeNames.toList()).containsExactly(
+      listOf(GeneralName.iPAddress, "1.1.1.1"),
+      listOf(GeneralName.dNSName, "cash.app")
     )
     assertThat(certificate.getSubjectX500Principal().name)
       .isEqualTo("CN=cash.app,OU=engineering")
@@ -433,25 +433,25 @@ class HeldCertificateTest {
       decode(certificatePem)
       fail<Any>()
     } catch (expected: IllegalArgumentException) {
-      assertThat(expected).hasMessage("string does not include a private key")
+      assertThat(expected.message).isEqualTo("string does not include a private key")
     }
     try {
       decode(pkcs8Pem)
       fail<Any>()
     } catch (expected: IllegalArgumentException) {
-      assertThat(expected).hasMessage("string does not include a certificate")
+      assertThat(expected.message).isEqualTo("string does not include a certificate")
     }
     try {
       decode(certificatePem + pkcs8Pem + certificatePem)
       fail<Any>()
     } catch (expected: IllegalArgumentException) {
-      assertThat(expected).hasMessage("string includes multiple certificates")
+      assertThat(expected.message).isEqualTo("string includes multiple certificates")
     }
     try {
       decode(pkcs8Pem + certificatePem + pkcs8Pem)
       fail<Any>()
     } catch (expected: IllegalArgumentException) {
-      assertThat(expected).hasMessage("string includes multiple private keys")
+      assertThat(expected.message).isEqualTo("string includes multiple private keys")
     }
   }
 
@@ -470,7 +470,7 @@ class HeldCertificateTest {
       )
       fail<Any>()
     } catch (expected: IllegalArgumentException) {
-      assertThat(expected).hasMessage("unexpected type: RSA PRIVATE KEY")
+      assertThat(expected.message).isEqualTo("unexpected type: RSA PRIVATE KEY")
     }
   }
 
@@ -491,7 +491,7 @@ class HeldCertificateTest {
       fail<Any>()
     } catch (expected: IllegalArgumentException) {
       if (!platform.isConscrypt()) {
-        assertThat(expected).hasMessage("failed to decode certificate")
+        assertThat(expected.message).isEqualTo("failed to decode certificate")
       }
     }
     try {
@@ -515,7 +515,7 @@ class HeldCertificateTest {
       fail<Any>()
     } catch (expected: IllegalArgumentException) {
       if (!platform.isConscrypt()) {
-        assertThat(expected).hasMessage("failed to decode private key")
+        assertThat(expected.message).isEqualTo("failed to decode private key")
       }
     }
   }

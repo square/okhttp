@@ -15,6 +15,15 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.isSameAs
+import assertk.assertions.isTrue
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.time.Duration
@@ -39,7 +48,6 @@ import okio.GzipSink
 import okio.Sink
 import okio.Source
 import okio.buffer
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
@@ -543,10 +551,9 @@ class InterceptorTest {
     val call = client.newCall(request)
     call.enqueue(callback)
     val recordedResponse = callback.await(server.url("/"))
-    assertThat(recordedResponse.failure)
-      .hasMessage("canceled due to java.lang.RuntimeException: boom!")
+    assertThat(recordedResponse.failure, "canceled due to java.lang.RuntimeException: boom!")
     recordedResponse.failure!!.assertSuppressed { throwables: List<Throwable>? ->
-      assertThat(throwables).contains(boom)
+      assertThat(throwables!!).contains(boom)
       Unit
     }
     assertThat(call.isCanceled()).isTrue()

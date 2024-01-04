@@ -15,12 +15,18 @@
  */
 package okhttp3.dnsoverhttps
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.containsExactly
+import assertk.assertions.containsExactlyInAnyOrder
+import assertk.assertions.hasMessage
+import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
 import java.io.EOFException
 import java.io.File
 import java.io.IOException
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.util.Arrays
 import java.util.concurrent.TimeUnit
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -34,7 +40,6 @@ import okio.Buffer
 import okio.ByteString.Companion.decodeHex
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
@@ -103,7 +108,7 @@ class DnsOverHttpsTest {
     assertThat(request1.method).isEqualTo("GET")
     val request2 = server.takeRequest()
     assertThat(request2.method).isEqualTo("GET")
-    assertThat(Arrays.asList(request1.path, request2.path))
+    assertThat(listOf(request1.path, request2.path))
       .containsExactlyInAnyOrder(
         "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
         "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AABwAAQ"
@@ -140,8 +145,8 @@ class DnsOverHttpsTest {
       fail<Any>()
     } catch (ioe: IOException) {
       assertThat(ioe.message).isEqualTo("google.com")
-      val cause = ioe.cause
-      assertThat(cause).isInstanceOf(IOException::class.java)
+      val cause = ioe.cause!!
+      assertThat(cause).isInstanceOf<IOException>()
       assertThat(cause).hasMessage("response size exceeds limit (65536 bytes): 65537 bytes")
     }
   }
@@ -154,7 +159,7 @@ class DnsOverHttpsTest {
       fail<Any>()
     } catch (ioe: IOException) {
       assertThat(ioe).hasMessage("google.com")
-      assertThat(ioe.cause).isInstanceOf(EOFException::class.java)
+      assertThat(ioe.cause!!).isInstanceOf<EOFException>()
     }
   }
 

@@ -15,6 +15,8 @@
  */
 package okhttp3.logging
 
+import assertk.assertThat
+import assertk.assertions.isNotNull
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.Arrays
@@ -32,7 +34,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.testing.PlatformRule
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

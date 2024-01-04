@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.http2
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import java.util.Random
 import okhttp3.internal.http2.Huffman.decode
 import okhttp3.internal.http2.Huffman.encode
@@ -23,7 +25,6 @@ import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 

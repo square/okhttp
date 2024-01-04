@@ -15,6 +15,16 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.containsExactly
+import assertk.assertions.doesNotContain
+import assertk.assertions.isEqualTo
+import assertk.assertions.isIn
+import assertk.assertions.isInstanceOf
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.isSameAs
 import java.io.File
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -61,7 +71,6 @@ import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.BufferedSink
-import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.BaseMatcher
 import org.hamcrest.CoreMatchers
 import org.hamcrest.Description
@@ -617,9 +626,7 @@ class EventListenerTest {
     listener.removeUpToEvent<DnsStart>()
     val callFailed: CallFailed = listener.removeUpToEvent<CallFailed>()
     assertThat(callFailed.call).isSameAs(call)
-    assertThat(callFailed.ioe).isInstanceOf(
-      UnknownHostException::class.java
-    )
+    assertThat(callFailed.ioe).isInstanceOf<UnknownHostException>()
   }
 
   @Test

@@ -57,7 +57,6 @@ dependencies {
 
   testImplementation(libs.junit)
   testImplementation(libs.junit.ktx)
-  testImplementation(libs.assertj.core)
   testImplementation(libs.assertk)
   testImplementation(projects.okhttpTls)
   testImplementation(libs.androidx.test.runner)
@@ -66,7 +65,6 @@ dependencies {
   testImplementation(libs.squareup.okio.fakefilesystem)
 
   androidTestImplementation(projects.okhttpTls)
-  androidTestImplementation(libs.assertj.core)
   androidTestImplementation(libs.assertk)
   androidTestImplementation(projects.mockwebserver3Junit4)
   androidTestImplementation(libs.androidx.test.runner)

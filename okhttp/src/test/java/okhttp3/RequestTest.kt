@@ -26,6 +26,7 @@ import java.io.File
 import java.io.FileWriter
 import java.net.URI
 import java.util.UUID
+import kotlin.test.fail
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -33,7 +34,6 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
-import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Test
 
 class RequestTest {

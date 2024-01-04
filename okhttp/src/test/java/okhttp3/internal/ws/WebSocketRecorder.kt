@@ -15,6 +15,12 @@
  */
 package okhttp3.internal.ws
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
+import assertk.assertions.isSameAs
 import java.io.IOException
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
@@ -23,7 +29,6 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okhttp3.internal.platform.Platform
 import okio.ByteString
-import org.assertj.core.api.Assertions.assertThat
 
 class WebSocketRecorder(
   private val name: String,

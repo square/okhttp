@@ -15,6 +15,18 @@
  */
 package okhttp3.mockwebserver
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.containsExactly
+import assertk.assertions.isBetween
+import assertk.assertions.isCloseTo
+import assertk.assertions.isEqualTo
+import assertk.assertions.isGreaterThan
+import assertk.assertions.isGreaterThanOrEqualTo
+import assertk.assertions.isNotEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import java.io.BufferedReader
 import java.io.Closeable
 import java.io.IOException
@@ -35,8 +47,6 @@ import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
@@ -354,7 +364,7 @@ class MockWebServerTest {
       i++
     }
     // Halfway +/- 0.5%
-    assertThat(i.toFloat()).isCloseTo(512f, Offset.offset(5f))
+    assertThat(i.toFloat()).isCloseTo(512f, 5f)
   }
 
   @Test
@@ -494,7 +504,7 @@ class MockWebServerTest {
       refusedConnection.getResponseCode()
       fail<Any>("Second connection should be refused")
     } catch (e: ConnectException) {
-      assertThat(e.message).contains("refused")
+      assertThat(e.message!!).contains("refused")
     }
   }
 
