@@ -21,7 +21,9 @@ package okhttp3
  * of the experimental API.
  *
  * Do not use these APIs in modules that may be executed using a version of OkHttp different from
- * the version the library was compiled with.
+ * the version the module was compiled with.
+ *
+ * Do not use these APIs in published libraries.
  *
  * Do not use these APIs if you aren't willing to track changes to them.
  */
@@ -40,5 +42,5 @@ package okhttp3
   AnnotationTarget.PROPERTY_SETTER,
   AnnotationTarget.TYPEALIAS
 )
-@RequiresOptIn(level = RequiresOptIn.Level.WARNING)
+@RequiresOptIn(level = RequiresOptIn.Level.ERROR)
 public annotation class ExperimentalOkHttpApi
