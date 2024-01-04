@@ -785,7 +785,7 @@ class HpackTest {
     hpackWriter!!.writeInt(0x7fffffff, 31, 0)
     assertBytes(31, 224, 255, 255, 255, 7)
     assertThat(newReader(byteStream(224, 255, 255, 255, 7)).readInt(31, 31))
-      .isEqualTo(0x7fffffffL)
+      .isEqualTo(0x7fffffff)
   }
 
   @Test

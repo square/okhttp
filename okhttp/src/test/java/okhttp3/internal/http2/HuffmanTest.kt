@@ -45,7 +45,7 @@ class HuffmanTest {
   private fun assertRoundTrip(data: ByteString) {
     val encodeBuffer = Buffer()
     encode(data, encodeBuffer)
-    assertThat(encodedLength(data)).isEqualTo(encodeBuffer.size)
+    assertThat(encodedLength(data).toLong()).isEqualTo(encodeBuffer.size)
     val decodeBuffer = Buffer()
     decode(encodeBuffer, encodeBuffer.size, decodeBuffer)
     assertEquals(data, decodeBuffer.readByteString())
