@@ -81,6 +81,8 @@ dependencies {
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(libs.httpClient5)
+  androidTestImplementation(libs.kotlin.test.common)
+  androidTestImplementation(libs.kotlin.test.junit)
   androidTestImplementation(libs.squareup.moshi)
   androidTestImplementation(libs.squareup.moshi.kotlin)
   androidTestImplementation(libs.squareup.okio.fakefilesystem)
