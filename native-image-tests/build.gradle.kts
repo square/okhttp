@@ -27,6 +27,8 @@ dependencies {
   implementation(libs.junit.jupiter.api)
   implementation(libs.junit.jupiter.params)
   implementation(libs.assertk)
+  implementation(libs.kotlin.test.common)
+  implementation(libs.kotlin.test.junit)
 
   implementation(libs.nativeImageSvm)
 
