@@ -20,7 +20,6 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
-import assertk.fail
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.HttpURLConnection
@@ -225,6 +224,7 @@ class WholeOperationTimeoutTest {
           response.body.source().readUtf8()
         }.also { expected ->
           exceptionRef.set(expected)
+          latch.countDown()
         }
       }
     })
