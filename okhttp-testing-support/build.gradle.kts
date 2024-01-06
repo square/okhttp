@@ -8,8 +8,6 @@ dependencies {
   api(projects.okhttp)
   api(projects.okhttpTls)
   api(libs.assertk)
-  implementation(libs.kotlin.test.common)
-  implementation(libs.kotlin.test.junit)
   api(libs.bouncycastle.bcprov)
   implementation(libs.bouncycastle.bcpkix)
   implementation(libs.bouncycastle.bctls)
@@ -29,6 +27,8 @@ dependencies {
   compileOnly(libs.findbugs.jsr305)
   compileOnly(libs.robolectric.android)
 
+  testImplementation(libs.kotlin.test.common)
+  testImplementation(libs.kotlin.test.junit)
 }
 
 animalsniffer {
