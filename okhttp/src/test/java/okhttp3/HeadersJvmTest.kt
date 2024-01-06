@@ -100,12 +100,12 @@ class HeadersJvmTest {
   @Test fun addThrowsOnEmptyName() {
     try {
       Headers.Builder().add(": bar")
-      fail()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
     try {
       Headers.Builder().add(" : bar")
-      fail()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -113,7 +113,7 @@ class HeadersJvmTest {
   @Test fun addThrowsOnNoColon() {
     try {
       Headers.Builder().add("foo bar")
-      fail()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -121,7 +121,7 @@ class HeadersJvmTest {
   @Test fun addThrowsOnMultiColon() {
     try {
       Headers.Builder().add(":status: 200 OK")
-      fail()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -148,7 +148,7 @@ class HeadersJvmTest {
   @Test fun ofMapThrowsOnNull() {
     try {
       (mapOf("User-Agent" to null) as Map<String, String>).toHeaders()
-      fail()
+      fail("")
     } catch (expected: NullPointerException) {
     }
   }

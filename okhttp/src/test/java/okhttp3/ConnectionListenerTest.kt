@@ -20,6 +20,7 @@ import assertk.assertions.containsExactly
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isIn
+import assertk.fail
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
@@ -105,7 +106,7 @@ open class ConnectionListenerTest {
       .build())
     try {
       call.execute()
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail("")
     } catch (expected: IOException) {
       assertThat(expected.message).isIn("timeout", "Read timed out")
     }
@@ -221,7 +222,7 @@ open class ConnectionListenerTest {
       .build())
     try {
       call.execute()
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
     val address = client.dns.lookup(server!!.hostName)[0]

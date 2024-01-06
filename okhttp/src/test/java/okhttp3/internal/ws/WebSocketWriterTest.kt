@@ -30,7 +30,7 @@ import okio.ByteString.Companion.EMPTY
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -198,7 +198,7 @@ class WebSocketWriterTest {
   @Test fun closeCodeOutOfRangeThrows() {
     try {
       clientWriter.writeClose(98724976, "Hello".encodeUtf8())
-      fail()
+      fail("")
     } catch (e: IllegalArgumentException) {
       assertThat(e.message).isEqualTo("Code must be in range [1000,5000): 98724976")
     }
@@ -207,7 +207,7 @@ class WebSocketWriterTest {
   @Test fun closeReservedThrows() {
     try {
       clientWriter.writeClose(1005, "Hello".encodeUtf8())
-      fail()
+      fail("")
     } catch (e: IllegalArgumentException) {
       assertThat(e.message).isEqualTo("Code 1005 is reserved and may not be used.")
     }
@@ -256,7 +256,7 @@ class WebSocketWriterTest {
   @Test fun pingTooLongThrows() {
     try {
       serverWriter.writePing(binaryData(1000))
-      fail()
+      fail("")
     } catch (e: IllegalArgumentException) {
       assertThat(e.message).isEqualTo(
         "Payload size must be less than or equal to 125"
@@ -267,7 +267,7 @@ class WebSocketWriterTest {
   @Test fun pongTooLongThrows() {
     try {
       serverWriter.writePong((binaryData(1000)))
-      fail()
+      fail("")
     } catch (e: IllegalArgumentException) {
       assertThat(e.message).isEqualTo(
         "Payload size must be less than or equal to 125"
@@ -279,7 +279,7 @@ class WebSocketWriterTest {
     try {
       val longReason: ByteString = repeat('X', 124).encodeUtf8()
       serverWriter.writeClose(1000, longReason)
-      fail()
+      fail("")
     } catch (e: IllegalArgumentException) {
       assertThat(e.message).isEqualTo(
         "Payload size must be less than or equal to 125"

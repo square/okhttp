@@ -26,7 +26,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import okio.BufferedSink
 import okio.utf8Size
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.Test
 
 class MultipartBodyTest {
@@ -34,7 +34,7 @@ class MultipartBodyTest {
   fun onePartRequired() {
     try {
       MultipartBody.Builder().build()
-      fail<Any>()
+      fail("")
     } catch (e: IllegalStateException) {
       assertThat(e.message)
         .isEqualTo("Multipart body must have at least one part.")
@@ -246,7 +246,7 @@ class MultipartBodyTest {
         headersOf("Content-Type", "text/plain"),
         "Hello, World!".toRequestBody(null)
       )
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -259,7 +259,7 @@ class MultipartBodyTest {
         headersOf("Content-Length", "13"),
         "Hello, World!".toRequestBody(null)
       )
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }

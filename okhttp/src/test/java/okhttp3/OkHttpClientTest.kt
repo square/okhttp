@@ -43,7 +43,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -156,7 +156,7 @@ class OkHttpClientTest {
     val builder = OkHttpClient.Builder()
     try {
       builder.protocols(listOf(Protocol.HTTP_1_0, Protocol.HTTP_1_1))
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -172,7 +172,7 @@ class OkHttpClientTest {
     builder.interceptors().addAll(listOf(null) as List<Interceptor>)
     try {
       builder.build()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalStateException) {
       assertThat(expected.message).isEqualTo("Null interceptor: [null]")
     }
@@ -183,7 +183,7 @@ class OkHttpClientTest {
     builder.networkInterceptors().addAll(listOf(null) as List<Interceptor>)
     try {
       builder.build()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalStateException) {
       assertThat(expected.message).isEqualTo("Null network interceptor: [null]")
     }
@@ -193,7 +193,7 @@ class OkHttpClientTest {
     try {
       OkHttpClient.Builder()
         .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1))
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
       assertThat(expected.message).isEqualTo(
         "protocols containing h2_prior_knowledge cannot use other protocols: "
@@ -206,7 +206,7 @@ class OkHttpClientTest {
     try {
       OkHttpClient.Builder()
         .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.H2_PRIOR_KNOWLEDGE))
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
       assertThat(expected.message).isEqualTo(
         "protocols containing h2_prior_knowledge cannot use other protocols: "
@@ -236,7 +236,7 @@ class OkHttpClientTest {
     val builder = OkHttpClient.Builder()
     try {
       builder.socketFactory(SSLSocketFactory.getDefault())
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -247,7 +247,7 @@ class OkHttpClientTest {
       .build()
     try {
       client.sslSocketFactory
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalStateException) {
     }
   }
@@ -284,7 +284,7 @@ class OkHttpClientTest {
     try {
       OkHttpClient.Builder()
         .protocols(protocols as List<Protocol>)
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
       assertThat(expected.message).isEqualTo("protocols must not contain null")
     }
@@ -422,7 +422,7 @@ class OkHttpClientTest {
     val builder = OkHttpClient.Builder()
     try {
       builder.minWebSocketMessageToCompress(-1024)
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
       assertThat(expected.message)
         .isEqualTo("minWebSocketMessageToCompress must be positive: -1024")

@@ -18,6 +18,7 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
+import assertk.fail
 import java.io.IOException
 import java.io.InputStreamReader
 import java.io.Reader
@@ -302,7 +303,7 @@ class ResponseBodyJvmTest {
     }
     try {
       body.bytes()
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo(
         "Content-Length (10) and stream length (5) disagree"
@@ -327,7 +328,7 @@ class ResponseBodyJvmTest {
     }
     try {
       body.bytes()
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo(
         "Cannot buffer entire body for content length: 2147483648"
@@ -393,7 +394,7 @@ class ResponseBodyJvmTest {
     }
     try {
       body.byteString()
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo(
         "Content-Length (10) and stream length (5) disagree"
@@ -418,7 +419,7 @@ class ResponseBodyJvmTest {
     }
     try {
       body.byteString()
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo(
         "Cannot buffer entire body for content length: 2147483648"

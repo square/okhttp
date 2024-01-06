@@ -20,6 +20,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
+import assertk.fail
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.HttpURLConnection
@@ -33,7 +34,6 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.TestUtil.repeat
 import okhttp3.testing.Flaky
 import okio.BufferedSink
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -87,7 +87,7 @@ class WholeOperationTimeoutTest {
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("timeout")
       assertThat(call.isCanceled()).isTrue()
@@ -136,7 +136,7 @@ class WholeOperationTimeoutTest {
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("timeout")
       assertThat(call.isCanceled()).isTrue()
@@ -190,7 +190,7 @@ class WholeOperationTimeoutTest {
     Thread.sleep(500)
     try {
       response.body.source().readUtf8()
-      fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("timeout")
       assertThat(call.isCanceled()).isTrue()
@@ -225,7 +225,7 @@ class WholeOperationTimeoutTest {
         }
         try {
           response.body.source().readUtf8()
-          fail<Any>()
+          fail("")
         } catch (e: IOException) {
           exceptionRef.set(e)
         } finally {
@@ -283,7 +283,7 @@ class WholeOperationTimeoutTest {
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("timeout")
       assertThat(call.isCanceled()).isTrue()
@@ -309,7 +309,7 @@ class WholeOperationTimeoutTest {
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("timeout")
       assertThat(call.isCanceled()).isTrue()

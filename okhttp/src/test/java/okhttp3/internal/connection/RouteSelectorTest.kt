@@ -41,7 +41,7 @@ import okhttp3.internal.connection.RouteSelector.Companion.socketHost
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -90,13 +90,13 @@ class RouteSelectorTest {
     assertThat(selection.hasNext()).isFalse()
     try {
       selection.next()
-      fail<Any>()
+      fail("")
     } catch (expected: NoSuchElementException) {
     }
     assertThat(routeSelector.hasNext()).isFalse()
     try {
       routeSelector.next()
-      fail<Any>()
+      fail("")
     } catch (expected: NoSuchElementException) {
     }
   }
@@ -115,13 +115,13 @@ class RouteSelectorTest {
     assertThat(selection.hasNext()).isFalse()
     try {
       selection.next()
-      fail<Any>()
+      fail("")
     } catch (expected: NoSuchElementException) {
     }
     assertThat(routeSelector.hasNext()).isFalse()
     try {
       routeSelector.next()
-      fail<Any>()
+      fail("")
     } catch (expected: NoSuchElementException) {
     }
   }
@@ -281,7 +281,7 @@ class RouteSelectorTest {
     dns.clear(proxyBHost)
     try {
       routeSelector.next()
-      fail<Any>()
+      fail("")
     } catch (expected: UnknownHostException) {
     }
     dns.assertRequests(proxyBHost)

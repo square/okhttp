@@ -43,7 +43,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.api.fail
+import assertk.fail
 import org.junitpioneer.jupiter.RetryingTest
 
 @Timeout(30)

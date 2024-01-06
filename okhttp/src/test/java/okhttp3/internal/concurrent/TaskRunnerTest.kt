@@ -26,7 +26,7 @@ import okhttp3.TestLogHandler
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.api.fail
+import assertk.fail
 
 class TaskRunnerTest {
   private val taskFaker = TaskFaker()

@@ -22,7 +22,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import okhttp3.internal.tls.CertificateChainCleaner.Companion.get
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.Test
 
 class CertificateChainCleanerTest {
@@ -62,7 +62,7 @@ class CertificateChainCleanerTest {
     val cleaner = get()
     try {
       cleaner.clean(list(root), "hostname")
-      fail<Any>()
+      fail("")
     } catch (expected: SSLPeerUnverifiedException) {
     }
   }
@@ -278,7 +278,7 @@ class CertificateChainCleanerTest {
     val cleaner = get(root)
     try {
       cleaner.clean(certificates, "hostname")
-      fail<Any>()
+      fail("")
     } catch (expected: SSLPeerUnverifiedException) {
     }
   }

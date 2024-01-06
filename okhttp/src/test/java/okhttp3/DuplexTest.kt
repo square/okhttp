@@ -42,7 +42,7 @@ import okhttp3.testing.PlatformRule
 import okio.BufferedSink
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
@@ -89,7 +89,7 @@ class DuplexTest {
     )
     try {
       call.execute()
-      fail<Any?>()
+      fail("")
     } catch (expected: ProtocolException) {
     }
   }
@@ -372,7 +372,7 @@ class DuplexTest {
     try {
       requestBody.writeUtf8("request body\n")
       requestBody.flush()
-      fail<Any?>()
+      fail("")
     } catch (expected: IOException) {
       assertThat(expected.message)
         .isEqualTo("stream was reset: CANCEL")
@@ -434,7 +434,7 @@ class DuplexTest {
     try {
       requestBody1.writeUtf8("not authenticated\n")
       requestBody1.flush()
-      fail<Any?>()
+      fail("")
     } catch (expected: IOException) {
       assertThat(expected.message)
         .isEqualTo("stream was reset: CANCEL")
@@ -471,7 +471,7 @@ class DuplexTest {
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
     try {
       call.execute()
-      fail<Any?>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("timeout")
       assertTrue(call.isCanceled())
@@ -633,7 +633,7 @@ class DuplexTest {
     val call = client.newCall(request)
     try {
       call.execute()
-      fail<Any?>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("timeout")
     }
@@ -660,7 +660,7 @@ class DuplexTest {
     val response = call.execute()
     try {
       response.body.string()
-      fail<Any?>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("timeout")
     }

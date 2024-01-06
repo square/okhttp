@@ -23,7 +23,7 @@ import assertk.assertions.isTrue
 import java.util.concurrent.TimeUnit
 import okhttp3.CacheControl.Companion.parse
 import okhttp3.Headers.Companion.headersOf
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.Test
 
 class CacheControlJvmTest {
@@ -194,7 +194,7 @@ class CacheControlJvmTest {
     val builder = CacheControl.Builder()
     try {
       builder.maxAge(-1, TimeUnit.SECONDS)
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }

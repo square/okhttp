@@ -97,7 +97,7 @@ import okio.buffer
 import okio.utf8Size
 import org.bouncycastle.tls.TlsFatalAlert
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
@@ -211,7 +211,7 @@ class URLConnectionTest {
     val request = newRequest("/")
     try {
       getResponse(request)
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
   }
@@ -224,7 +224,7 @@ class URLConnectionTest {
     val request = newRequest("/")
     try {
       getResponse(request)
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
   }
@@ -237,7 +237,7 @@ class URLConnectionTest {
     val request = newRequest("/")
     try {
       getResponse(request)
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
   }
@@ -250,7 +250,7 @@ class URLConnectionTest {
     val request = newRequest("/")
     try {
       getResponse(request)
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
   }
@@ -261,7 +261,7 @@ class URLConnectionTest {
     server.shutdown()
     try {
       getResponse(request)
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
   }
@@ -375,7 +375,7 @@ class URLConnectionTest {
           .url("http://1234.1.1.1/index.html".toHttpUrl())
           .build()
       )
-      fail<Any>()
+      fail("")
     } catch (expected: UnknownHostException) {
     }
   }
@@ -584,9 +584,7 @@ class URLConnectionTest {
       .build()
     try {
       getResponse(newRequest("/"))
-      fail<Any>(
-        "without an SSL socket factory, the connection should fail"
-      )
+      fail("without an SSL socket factory, the connection should fail")
     } catch (expected: SSLException) {
     } catch (expected: TlsFatalAlert) {
     }
@@ -634,7 +632,7 @@ class URLConnectionTest {
       .build()
     try {
       getResponse(newRequest("/foo"))
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
       expected.assertSuppressed { throwables: List<Throwable>? ->
         assertThat(throwables!!.size).isEqualTo(1)
@@ -692,7 +690,7 @@ class URLConnectionTest {
     server.enqueue(MockResponse()) // unused
     try {
       getResponse(newRequest("/foo"))
-      fail<Any>()
+      fail("")
     } catch (expected: SSLHandshakeException) {
       // Allow conscrypt to fail in different ways
       if (!platform.isConscrypt()) {
@@ -755,7 +753,7 @@ class URLConnectionTest {
     try {
       val response = getResponse(newRequest("/"))
       response.body.source().readUtf8(5)
-      fail<Any>()
+      fail("")
     } catch (expected: ProtocolException) {
     }
   }
@@ -799,7 +797,7 @@ class URLConnectionTest {
       .build()
     try {
       getResponse(newRequest("/"))
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
     client = client.newBuilder()
@@ -849,7 +847,7 @@ class URLConnectionTest {
     try {
       val response = getResponse(newRequest("/"))
       response.body.source().readUtf8(7)
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
   }
@@ -1127,7 +1125,7 @@ class URLConnectionTest {
 
       // But 'C' shouldn't be buffered (the response is throttled) and this should fail.
       inputStream.read()
-      fail<Any>("Expected a connection closed exception")
+      fail("Expected a connection closed exception")
     } catch (expected: IOException) {
     }
     inputStream.close()
@@ -1151,7 +1149,7 @@ class URLConnectionTest {
     callReference.set(call)
     try {
       call.execute()
-      fail<Any>("Connection should not be established")
+      fail("Connection should not be established")
     } catch (expected: IOException) {
       assertThat(expected.message).isEqualTo("Canceled")
     }
@@ -1166,7 +1164,7 @@ class URLConnectionTest {
     call.cancel()
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
   }
@@ -1221,7 +1219,7 @@ class URLConnectionTest {
     assertThat(readAscii(inputStream, 5)).isEqualTo("ABCDE")
     try {
       inputStream.reset()
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
     assertThat(readAscii(inputStream, Int.MAX_VALUE)).isEqualTo(
@@ -1265,7 +1263,7 @@ class URLConnectionTest {
     try {
       getResponse(newRequest("/")).use { response ->
         response.body.string()
-        fail<Any>()
+        fail("")
       }
     } catch (expected: IOException) {
     }
@@ -1283,7 +1281,7 @@ class URLConnectionTest {
     try {
       getResponse(newRequest("/")).use { response ->
         readAscii(response.body.byteStream(), Int.MAX_VALUE)
-        fail<Any>()
+        fail("")
       }
     } catch (expected: IOException) {
     }
@@ -1314,7 +1312,7 @@ class URLConnectionTest {
     try {
       getResponse(newRequest("/")).use { response ->
         readAscii(response.body.byteStream(), Int.MAX_VALUE)
-        fail<Any>()
+        fail("")
       }
     } catch (expected: IOException) {
     }
@@ -1782,7 +1780,7 @@ class URLConnectionTest {
         .url(server.url("/"))
         .method(requestMethod, "abc".toRequestBody(null))
         .build()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -1801,7 +1799,7 @@ class URLConnectionTest {
         .url(server.url("/"))
         .method(requestMethod, null)
         .build()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -2674,7 +2672,7 @@ class URLConnectionTest {
     }
     try {
       getResponse(newRequest("/0"))
-      fail<Any>()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected.message).isEqualTo(
         "Too many follow-up requests: 21"
@@ -2783,7 +2781,7 @@ class URLConnectionTest {
     assertThat(source.readByte()).isEqualTo('C'.code.toByte())
     try {
       source.readByte() // If Content-Length was accurate, this would return -1 immediately.
-      fail<Any>()
+      fail("")
     } catch (expected: SocketTimeoutException) {
     }
     source.close()
@@ -2833,7 +2831,7 @@ class URLConnectionTest {
     )
     try {
       getResponse(request)
-      fail<Any>()
+      fail("")
     } catch (expected: SocketTimeoutException) {
     }
   }
@@ -2940,7 +2938,7 @@ class URLConnectionTest {
     )
     try {
       getResponse(newRequest("/"))
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
       assertThat(expected.message).isEqualTo("HTTP 204 had non-zero Content-Length: 25")
     }
@@ -3003,13 +3001,13 @@ class URLConnectionTest {
       .isEqualTo("abc")
     try {
       sinkReference.get().flush()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalStateException) {
     }
     try {
       sinkReference.get().write("ghi".toByteArray())
       sinkReference.get().emit()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalStateException) {
     }
   }
@@ -3019,7 +3017,7 @@ class URLConnectionTest {
     server.enqueue(MockResponse(socketPolicy = SocketPolicy.DisconnectAtStart))
     try {
       getResponse(newRequest("/"))
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
   }
@@ -3031,7 +3029,7 @@ class URLConnectionTest {
       .build()
     try {
       getResponse(Request("http://host.unlikelytld".toHttpUrl()))
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
   }
@@ -3040,7 +3038,7 @@ class URLConnectionTest {
   fun malformedUrlThrowsUnknownHostException() {
     try {
       getResponse(Request("http://-/foo.html".toHttpUrl()))
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
   }
@@ -3058,7 +3056,7 @@ class URLConnectionTest {
     server.shutdown()
     try {
       getResponse(newRequest("/"))
-      fail<Any>()
+      fail("")
     } catch (expected: ConnectException) {
     }
   }
@@ -3089,7 +3087,7 @@ class URLConnectionTest {
         .url(server.url("/"))
         .method("GET", "abc".toRequestBody(null))
         .build()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -3168,7 +3166,7 @@ class URLConnectionTest {
         .url(server.url("/"))
         .method("HEAD", "".toRequestBody(null))
         .build()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -3321,7 +3319,7 @@ class URLConnectionTest {
           body = requestBody,
         )
       )
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
   }
@@ -3347,7 +3345,7 @@ class URLConnectionTest {
           body = requestBody,
         )
       )
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
   }
@@ -3356,20 +3354,20 @@ class URLConnectionTest {
   @Disabled
   fun testPooledConnectionsDetectHttp10() {
     // TODO: write a test that shows pooled connections detect HTTP/1.0 (vs. HTTP/1.1)
-    fail<Any>("TODO")
+    fail("TODO")
   }
 
   @Test
   @Disabled
   fun postBodiesRetransmittedOnAuthProblems() {
-    fail<Any>("TODO")
+    fail("TODO")
   }
 
   @Test
   @Disabled
   fun cookiesAndTrailers() {
     // Do cookie headers get processed too many times?
-    fail<Any>("TODO")
+    fail("TODO")
   }
 
   @Test
@@ -3407,7 +3405,7 @@ class URLConnectionTest {
         .url(server.url("/"))
         .header("", "A")
         .build()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -3433,31 +3431,31 @@ class URLConnectionTest {
     try {
       Request.Builder()
         .addHeader("a\tb", "Value")
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
     try {
       Request.Builder()
         .addHeader("Name", "c\u007fd")
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
     try {
       Request.Builder()
         .addHeader("", "Value")
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
     try {
       Request.Builder()
         .addHeader("\ud83c\udf69", "Value")
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
     try {
       Request.Builder()
         .addHeader("Name", "\u2615\ufe0f")
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -3481,19 +3479,19 @@ class URLConnectionTest {
   @Test
   @Disabled
   fun deflateCompression() {
-    fail<Any>("TODO")
+    fail("TODO")
   }
 
   @Test
   @Disabled
   fun postBodiesRetransmittedOnIpAddressProblems() {
-    fail<Any>("TODO")
+    fail("TODO")
   }
 
   @Test
   @Disabled
   fun pooledConnectionProblemsNotReportedToProxySelector() {
-    fail<Any>("TODO")
+    fail("TODO")
   }
 
   @Test
@@ -3609,7 +3607,7 @@ class URLConnectionTest {
       .build()
     try {
       getResponse(newRequest("/"))
-      fail<Any>()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected.message).isEqualTo("Too many follow-up requests: 21")
     }
@@ -3711,7 +3709,7 @@ class URLConnectionTest {
     try {
       OkHttpClient.Builder()
         .protocols(Arrays.asList(Protocol.HTTP_2))
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -3721,7 +3719,7 @@ class URLConnectionTest {
     try {
       OkHttpClient.Builder()
         .protocols(Arrays.asList(Protocol.HTTP_1_1, null))
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -3772,7 +3770,7 @@ class URLConnectionTest {
       .build()
     try {
       getResponse(newRequest("/"))
-      fail<Any>()
+      fail("")
     } catch (expected: SSLProtocolException) {
       // RI response to the FAIL_HANDSHAKE
     } catch (expected: SSLHandshakeException) {
@@ -3870,7 +3868,7 @@ class URLConnectionTest {
   fun urlWithSpaceInHost() {
     try {
       "http://and roid.com/".toHttpUrl()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -3879,7 +3877,7 @@ class URLConnectionTest {
   fun urlWithSpaceInHostViaHttpProxy() {
     try {
       "http://and roid.com/".toHttpUrl()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -3888,7 +3886,7 @@ class URLConnectionTest {
   fun urlHostWithNul() {
     try {
       "http://host\u0000/".toHttpUrl()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -3911,7 +3909,7 @@ class URLConnectionTest {
   fun urlWithBadAsciiHost() {
     try {
       "http://host\u0001/".toHttpUrl()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -3923,7 +3921,7 @@ class URLConnectionTest {
     try {
       client.newBuilder()
         .sslSocketFactory(handshakeCertificates.sslSocketFactory())
-      fail<Any>()
+      fail("")
     } catch (expected: UnsupportedOperationException) {
     }
   }
@@ -3937,7 +3935,7 @@ class URLConnectionTest {
     server.enqueue(MockResponse())
     try {
       getResponse(newRequest("/"))
-      fail<Any>()
+      fail("")
     } catch (expected: RuntimeException) {
       assertThat(expected.message).isEqualTo("boom!")
     }

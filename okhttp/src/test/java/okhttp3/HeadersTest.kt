@@ -33,7 +33,7 @@ class HeadersTest {
   @Test fun ofThrowsOddNumberOfHeaders() {
     try {
       headersOf("User-Agent", "OkHttp", "Content-Length")
-      fail()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -41,7 +41,7 @@ class HeadersTest {
   @Test fun ofThrowsOnEmptyName() {
     try {
       headersOf("", "OkHttp")
-      fail()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -64,7 +64,7 @@ class HeadersTest {
   @Test fun ofRejectsNullChar() {
     try {
       headersOf("User-Agent", "Square\u0000OkHttp")
-      fail()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -72,7 +72,7 @@ class HeadersTest {
   @Test fun ofMapThrowsOnEmptyName() {
     try {
       mapOf("" to "OkHttp").toHeaders()
-      fail()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -80,7 +80,7 @@ class HeadersTest {
   @Test fun ofMapThrowsOnBlankName() {
     try {
       mapOf(" " to "OkHttp").toHeaders()
-      fail()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -111,7 +111,7 @@ class HeadersTest {
   @Test fun ofMapRejectsNullCharInName() {
     try {
       mapOf("User-\u0000Agent" to "OkHttp").toHeaders()
-      fail()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -119,7 +119,7 @@ class HeadersTest {
   @Test fun ofMapRejectsNullCharInValue() {
     try {
       mapOf("User-Agent" to "Square\u0000OkHttp").toHeaders()
-      fail()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -288,14 +288,14 @@ class HeadersTest {
     val headers = headersOf("a", "b", "c", "d")
     try {
       headers.name(-1)
-      fail()
+      fail("")
     } catch (expected: IndexOutOfBoundsException) {
     }
     assertThat(headers.name(0)).isEqualTo("a")
     assertThat(headers.name(1)).isEqualTo("c")
     try {
       headers.name(2)
-      fail()
+      fail("")
     } catch (expected: IndexOutOfBoundsException) {
     }
   }
@@ -304,14 +304,14 @@ class HeadersTest {
     val headers = headersOf("a", "b", "c", "d")
     try {
       headers.value(-1)
-      fail()
+      fail("")
     } catch (expected: IndexOutOfBoundsException) {
     }
     assertThat(headers.value(0)).isEqualTo("b")
     assertThat(headers.value(1)).isEqualTo("d")
     try {
       headers.value(2)
-      fail()
+      fail("")
     } catch (expected: IndexOutOfBoundsException) {
     }
   }

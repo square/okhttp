@@ -40,7 +40,7 @@ import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
 import okio.GzipSink
 import okio.buffer
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.Test
 
 class Http2Test {
@@ -267,7 +267,7 @@ class Http2Test {
     frame.writeInt(2)
     try {
       reader.nextFrame(requireSettings = false, BaseTestHandler())
-      fail<Any>("")
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("PROTOCOL_ERROR SETTINGS_ENABLE_PUSH != 0 or 1")
     }
@@ -312,7 +312,7 @@ class Http2Test {
     frame.writeInt(Int.MIN_VALUE)
     try {
       reader.nextFrame(requireSettings = false, BaseTestHandler())
-      fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo(
         "PROTOCOL_ERROR SETTINGS_INITIAL_WINDOW_SIZE > 2^31 - 1"
@@ -329,7 +329,7 @@ class Http2Test {
     frame.writeInt(Int.MIN_VALUE)
     try {
       reader.nextFrame(requireSettings = false, BaseTestHandler())
-      fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo(
         "PROTOCOL_ERROR SETTINGS_MAX_FRAME_SIZE: -2147483648"
@@ -346,7 +346,7 @@ class Http2Test {
     frame.writeInt(2.0.pow(14.0).toInt() - 1)
     try {
       reader.nextFrame(requireSettings = false, BaseTestHandler())
-      fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("PROTOCOL_ERROR SETTINGS_MAX_FRAME_SIZE: 16383")
     }
@@ -361,7 +361,7 @@ class Http2Test {
     frame.writeInt(2.0.pow(24.0).toInt())
     try {
       reader.nextFrame(requireSettings = false, BaseTestHandler())
-      fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("PROTOCOL_ERROR SETTINGS_MAX_FRAME_SIZE: 16777216")
     }
@@ -421,7 +421,7 @@ class Http2Test {
     frame.write(payload)
     try {
       reader.nextFrame(requireSettings = false, BaseTestHandler())
-      fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("PROTOCOL_ERROR: TYPE_DATA streamId == 0")
     }
@@ -440,7 +440,7 @@ class Http2Test {
     zipped.readAll(frame)
     try {
       reader.nextFrame(requireSettings = false, BaseTestHandler())
-      fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message)
         .isEqualTo("PROTOCOL_ERROR: FLAG_COMPRESSED without SETTINGS_COMPRESS_DATA")
@@ -538,7 +538,7 @@ class Http2Test {
   @Test fun tooLargeDataFrame() {
     try {
       sendDataFrame(Buffer().write(ByteArray(0x1000000)))
-      fail<Any>()
+      fail("")
     } catch (e: IllegalArgumentException) {
       assertThat(e.message).isEqualTo("FRAME_SIZE_ERROR length > 16384: 16777216")
     }
@@ -565,14 +565,14 @@ class Http2Test {
   @Test fun badWindowSizeIncrement() {
     try {
       windowUpdate(0)
-      fail<Any>()
+      fail("")
     } catch (e: IllegalArgumentException) {
       assertThat(e.message)
         .isEqualTo("windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL: 0")
     }
     try {
       windowUpdate(0x80000000L)
-      fail<Any>()
+      fail("")
     } catch (e: IllegalArgumentException) {
       assertThat(e.message)
         .isEqualTo("windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL: 2147483648")
@@ -632,7 +632,7 @@ class Http2Test {
     val writer = Http2Writer(Buffer(), true)
     try {
       writer.frameHeader(0, 16777216, Http2.TYPE_DATA, FLAG_NONE)
-      fail<Any>()
+      fail("")
     } catch (e: IllegalArgumentException) {
       // TODO: real max is based on settings between 16384 and 16777215
       assertThat(e.message).isEqualTo("FRAME_SIZE_ERROR length > 16384: 16777216")
@@ -653,7 +653,7 @@ class Http2Test {
       var streamId = 3
       streamId = streamId or (1L shl 31).toInt() // set reserved bit
       writer.frameHeader(streamId, Http2.INITIAL_MAX_FRAME_SIZE, Http2.TYPE_DATA, FLAG_NONE)
-      fail<Any>()
+      fail("")
     } catch (e: IllegalArgumentException) {
       assertThat(e.message).isEqualTo("reserved bit set: -2147483645")
     }

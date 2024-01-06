@@ -26,7 +26,7 @@ import okhttp3.FakeRoutePlanner.ConnectState.TLS_CONNECTED
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.testing.Flaky
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.Test
 import org.junitpioneer.jupiter.RetryingTest
 
@@ -327,7 +327,7 @@ internal class FastFallbackExchangeFinderTest {
     taskRunner.newQueue().execute("connect") {
       try {
         finder.find()
-        fail()
+        fail("")
       } catch (e: IOException) {
         assertThat(e).hasMessage("boom!")
       }
@@ -376,7 +376,7 @@ internal class FastFallbackExchangeFinderTest {
     taskRunner.newQueue().execute("connect") {
       try {
         finder.find()
-        fail()
+        fail("")
       } catch (e: IOException) {
         assertThat(e).hasMessage("boom 0!")
         assertThat(e.suppressed.single()).hasMessage("boom 1!")
@@ -405,7 +405,7 @@ internal class FastFallbackExchangeFinderTest {
     taskRunner.newQueue().execute("connect") {
       try {
         finder.find()
-        fail()
+        fail("")
       } catch (e: IllegalStateException) {
         assertThat(e).hasMessage("boom!")
       }
@@ -429,7 +429,7 @@ internal class FastFallbackExchangeFinderTest {
     taskRunner.newQueue().execute("connect") {
       try {
         finder.find()
-        fail()
+        fail("")
       } catch (e: UnknownServiceException) {
         assertThat(e).hasMessage("boom!")
       }

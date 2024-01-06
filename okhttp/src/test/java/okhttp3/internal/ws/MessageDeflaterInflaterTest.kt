@@ -24,7 +24,7 @@ import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.Test
 
 internal class MessageDeflaterInflaterTest {
@@ -112,7 +112,7 @@ internal class MessageDeflaterInflaterTest {
 
     try {
       deflater.deflate("Hello deflate!".encodeUtf8())
-      fail()
+      fail("")
     } catch (expected: Exception) {
     }
   }
@@ -124,7 +124,7 @@ internal class MessageDeflaterInflaterTest {
 
     try {
       inflater.inflate("f240e30300".decodeHex())
-      fail()
+      fail("")
     } catch (expected: Exception) {
     }
   }

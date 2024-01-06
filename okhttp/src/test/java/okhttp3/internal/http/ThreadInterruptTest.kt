@@ -32,7 +32,7 @@ import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.BufferedSink
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -93,7 +93,7 @@ class ThreadInterruptTest {
               sink.flush()
               sleep(100)
             }
-            fail<Any>("Expected connection to be closed")
+            fail("Expected connection to be closed")
           }
         })
         .build()
@@ -101,7 +101,7 @@ class ThreadInterruptTest {
     interruptLater(500)
     try {
       call.execute()
-      fail<Any>("")
+      fail("")
     } catch (expected: IOException) {
     }
   }
@@ -127,7 +127,7 @@ class ThreadInterruptTest {
     try {
       while (responseBody.read(buffer) != -1) {
       }
-      fail<Any>("Expected connection to be interrupted")
+      fail("Expected connection to be interrupted")
     } catch (expected: IOException) {
     }
     responseBody.close()

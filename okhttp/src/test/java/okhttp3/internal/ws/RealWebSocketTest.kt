@@ -100,7 +100,7 @@ class RealWebSocketTest {
   fun clientCloseWith0Fails() {
     try {
       client.webSocket!!.close(0, null)
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      assertk.fail("")
     } catch (expected: IllegalArgumentException) {
       assertThat("Code must be in range [1000,5000): 0")
         .isEqualTo(expected.message)

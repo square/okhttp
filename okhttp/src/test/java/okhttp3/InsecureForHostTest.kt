@@ -29,7 +29,7 @@ import okhttp3.tls.HeldCertificate
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.api.fail
+import assertk.fail
 
 class InsecureForHostTest {
   @RegisterExtension @JvmField val platform = PlatformRule()

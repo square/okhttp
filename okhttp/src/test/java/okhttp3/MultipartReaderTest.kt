@@ -27,7 +27,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
@@ -118,13 +118,13 @@ class MultipartReaderTest {
     val part = parts.nextPart()!!
     try {
       assertThat(part.body.readUtf8()).isEqualTo("abcd\r\nefgh\r\n")
-      fail()
+      fail("")
     } catch (expected: EOFException) {
     }
 
     try {
       assertThat(parts.nextPart()).isNull()
-      fail()
+      fail("")
     } catch (expected: EOFException) {
     }
   }
@@ -143,7 +143,7 @@ class MultipartReaderTest {
 
     try {
       parts.nextPart()
-      fail()
+      fail("")
     } catch (expected: EOFException) {
     }
   }
@@ -245,7 +245,7 @@ class MultipartReaderTest {
 
     try {
       partAbc.body.request(20)
-      fail()
+      fail("")
     } catch (e: IllegalStateException) {
       assertThat(e).hasMessage("closed")
     }
@@ -273,7 +273,7 @@ class MultipartReaderTest {
 
     try {
       part.body.request(10)
-      fail()
+      fail("")
     } catch (e: IllegalStateException) {
       assertThat(e).hasMessage("closed")
     }
@@ -289,7 +289,7 @@ class MultipartReaderTest {
 
     try {
       parts.nextPart()
-      fail()
+      fail("")
     } catch (e: IllegalStateException) {
       assertThat(e).hasMessage("closed")
     }
@@ -308,7 +308,7 @@ class MultipartReaderTest {
 
     try {
       parts.nextPart()
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("expected at least 1 part")
     }
@@ -417,7 +417,7 @@ class MultipartReaderTest {
 
     try {
       parts.nextPart()
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("unexpected characters after boundary")
     }
@@ -440,7 +440,7 @@ class MultipartReaderTest {
     parts.nextPart()
     try {
       parts.nextPart()
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("unexpected characters after boundary")
     }
@@ -507,7 +507,7 @@ class MultipartReaderTest {
 
     try {
       parts.nextPart()
-      fail()
+      fail("")
     } catch (expected: EOFException) {
     }
   }

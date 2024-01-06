@@ -30,7 +30,7 @@ import okhttp3.internal.applyConnectionSpec
 import okhttp3.internal.platform.Platform.Companion.isAndroid
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion.majorVersion
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -44,7 +44,7 @@ class ConnectionSpecTest {
       ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
         .tlsVersions(*arrayOf<String>())
         .build()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
       assertThat(expected.message)
         .isEqualTo("At least one TLS version is required")
@@ -57,7 +57,7 @@ class ConnectionSpecTest {
       ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
         .cipherSuites(*arrayOf<CipherSuite>())
         .build()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
       assertThat(expected.message)
         .isEqualTo("At least one cipher suite is required")

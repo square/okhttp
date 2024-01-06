@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.api.fail
+import assertk.fail
 
 @Timeout(30)
 @Tag("Slowish")

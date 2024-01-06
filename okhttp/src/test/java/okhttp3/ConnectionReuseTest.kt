@@ -31,7 +31,7 @@ import okhttp3.internal.closeQuietly
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import org.bouncycastle.tls.TlsFatalAlert
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -243,7 +243,7 @@ class ConnectionReuseTest {
     // This client fails to connect because the new SSL socket factory refuses.
     try {
       anotherClient.newCall(request).execute()
-      fail<Any?>()
+      fail("")
     } catch (expected: SSLException) {
     } catch (expected: TlsFatalAlert) {
     }

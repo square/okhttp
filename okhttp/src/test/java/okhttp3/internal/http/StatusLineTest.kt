@@ -20,7 +20,7 @@ import assertk.assertions.isEqualTo
 import java.net.ProtocolException
 import okhttp3.Protocol
 import okhttp3.internal.http.StatusLine.Companion.parse
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.Test
 
 class StatusLineTest {
@@ -119,7 +119,7 @@ class StatusLineTest {
   private fun assertInvalid(statusLine: String) {
     try {
       parse(statusLine)
-      fail<Any>("")
+      fail("")
     } catch (expected: ProtocolException) {
     }
   }

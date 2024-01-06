@@ -19,6 +19,7 @@ import assertk.assertThat
 import assertk.assertions.hasMessage
 import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
+import assertk.fail
 import java.io.IOException
 import java.net.Inet4Address
 import java.net.Inet6Address
@@ -28,7 +29,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import javax.net.SocketFactory
 import kotlin.test.assertFailsWith
-import kotlin.test.fail
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.ResetStreamAtStart

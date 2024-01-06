@@ -40,7 +40,7 @@ import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.newKeyManager
 import okhttp3.tls.internal.TlsUtil.newTrustManager
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -268,7 +268,7 @@ class CertificatePinnerChainValidationTest {
     val call = client.newCall(request)
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (expected: SSLPeerUnverifiedException) {
       // Certificate pinning fails!
       assertThat(expected.message!!).startsWith("Certificate pinning failure!")
@@ -353,7 +353,7 @@ class CertificatePinnerChainValidationTest {
     val call = client.newCall(request)
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (expected: SSLHandshakeException) {
       // On Android, the handshake fails before the certificate pinner runs.
       assertThat(expected.message!!).contains("Could not validate certificate")
@@ -487,7 +487,7 @@ class CertificatePinnerChainValidationTest {
     val call = client.newCall(request)
     try {
       call.execute()
-        .use { response -> fail<Any>("expected connection failure but got $response") }
+        .use { response -> fail("expected connection failure but got $response") }
     } catch (expected: SSLPeerUnverifiedException) {
       // Certificate pinning fails!
       assertThat(expected.message!!).startsWith("Certificate pinning failure!")
@@ -583,7 +583,7 @@ class CertificatePinnerChainValidationTest {
     val call = client.newCall(request)
     try {
       call.execute().use { response ->
-        fail<Any>("expected connection failure but got $response")
+        fail("expected connection failure but got $response")
       }
     } catch (expected: SSLHandshakeException) {
     }

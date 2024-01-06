@@ -26,7 +26,7 @@ import okhttp3.tls.HeldCertificate
 import okio.ByteString.Companion.decodeBase64
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.Test
 
 class CertificatePinnerTest {
@@ -35,7 +35,7 @@ class CertificatePinnerTest {
     val builder = CertificatePinner.Builder()
     try {
       builder.add("example.com", "md5/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -45,7 +45,7 @@ class CertificatePinnerTest {
     val builder = CertificatePinner.Builder()
     try {
       builder.add("example.com", "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw*")
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
     }
   }
@@ -102,7 +102,7 @@ class CertificatePinnerTest {
       .build()
     try {
       certificatePinner.check("example.com", certB1.certificate)
-      fail<Any>()
+      fail("")
     } catch (expected: SSLPeerUnverifiedException) {
     }
   }
@@ -158,7 +158,7 @@ class CertificatePinnerTest {
       .build()
     try {
       certificatePinner.check("a.example.com", listOf(certB1.certificate))
-      fail<Any>()
+      fail("")
     } catch (expected: SSLPeerUnverifiedException) {
     }
   }
@@ -190,7 +190,7 @@ class CertificatePinnerTest {
       .build()
     try {
       certificatePinner.check("a.example.com", listOf(certC1.certificate))
-      fail<Any>()
+      fail("")
     } catch (expected: SSLPeerUnverifiedException) {
     }
   }
@@ -204,22 +204,22 @@ class CertificatePinnerTest {
     // Should be pinned:
     try {
       certificatePinner.check("example.co.uk", listOf(certB1.certificate))
-      fail<Any>()
+      fail("")
     } catch (expected: SSLPeerUnverifiedException) {
     }
     try {
       certificatePinner.check("foo.example.co.uk", listOf(certB1.certificate))
-      fail<Any>()
+      fail("")
     } catch (expected: SSLPeerUnverifiedException) {
     }
     try {
       certificatePinner.check("foo.bar.example.co.uk", listOf(certB1.certificate))
-      fail<Any>()
+      fail("")
     } catch (expected: SSLPeerUnverifiedException) {
     }
     try {
       certificatePinner.check("foo.bar.baz.example.co.uk", listOf(certB1.certificate))
-      fail<Any>()
+      fail("")
     } catch (expected: SSLPeerUnverifiedException) {
     }
 
@@ -237,7 +237,7 @@ class CertificatePinnerTest {
         "example.co.uk",
         "sha256/a"
       )
-      fail<Any>()
+      fail("")
     } catch (iae: IllegalArgumentException) {
       // expected
     }
@@ -250,7 +250,7 @@ class CertificatePinnerTest {
         "example.co.uk",
         "sha512/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
       )
-      fail<Any>()
+      fail("")
     } catch (iae: IllegalArgumentException) {
       // expected
     }
@@ -263,7 +263,7 @@ class CertificatePinnerTest {
         "example.*",
         "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
       )
-      fail<Any>()
+      fail("")
     } catch (iae: IllegalArgumentException) {
       // expected
     }

@@ -78,7 +78,7 @@ import org.hamcrest.Matcher
 import org.hamcrest.MatcherAssert
 import org.junit.Assume
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -223,7 +223,7 @@ class EventListenerTest {
     )
     try {
       call.execute()
-      fail<Any?>()
+      fail("")
     } catch (expected: IOException) {
       assertThat(expected.message).isIn("timeout", "Read timed out")
     }
@@ -256,7 +256,7 @@ class EventListenerTest {
     val response = call.execute()
     try {
       response.body.string()
-      fail<Any?>()
+      fail("")
     } catch (expected: IOException) {
       assertThat(expected.message).isEqualTo("unexpected end of stream")
     }
@@ -281,7 +281,7 @@ class EventListenerTest {
     call.cancel()
     try {
       call.execute()
-      fail<Any?>()
+      fail("")
     } catch (expected: IOException) {
       assertThat(expected.message).isEqualTo("Canceled")
     }
@@ -620,7 +620,7 @@ class EventListenerTest {
     )
     try {
       call.execute()
-      fail<Any?>()
+      fail("")
     } catch (expected: IOException) {
     }
     listener.removeUpToEvent<DnsStart>()
@@ -642,7 +642,7 @@ class EventListenerTest {
     )
     try {
       call.execute()
-      fail<Any?>()
+      fail("")
     } catch (expected: IOException) {
     }
     listener.removeUpToEvent<DnsStart>()
@@ -691,7 +691,7 @@ class EventListenerTest {
     )
     try {
       call.execute()
-      fail<Any?>()
+      fail("")
     } catch (expected: IOException) {
     }
     val address = client.dns.lookup(server.hostName)[0]
@@ -862,7 +862,7 @@ class EventListenerTest {
     )
     try {
       call.execute()
-      fail<Any?>()
+      fail("")
     } catch (expected: IOException) {
     }
     val secureStart = listener.removeUpToEvent<SecureConnectStart>()
@@ -1095,7 +1095,7 @@ class EventListenerTest {
     assertThat(response.protocol).isEqualTo(expectedProtocol)
     try {
       response.body.string()
-      fail<Any?>()
+      fail("")
     } catch (expected: IOException) {
     }
     val callFailed = listener.removeUpToEvent<CallFailed>()
@@ -1211,7 +1211,7 @@ class EventListenerTest {
     )
     try {
       call.execute()
-      fail<Any?>()
+      fail("")
     } catch (expected: IOException) {
     }
     if (expectedProtocol != null) {
@@ -1287,7 +1287,7 @@ class EventListenerTest {
     )
     try {
       call.execute()
-      fail<Any?>()
+      fail("")
     } catch (expected: IOException) {
     }
     assertThat(listener.recordedEventTypes()).containsExactly(

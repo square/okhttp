@@ -24,6 +24,7 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import assertk.fail
 import java.io.IOException
 import java.net.CookieManager
 import java.net.HttpURLConnection
@@ -59,7 +60,6 @@ import okio.Path.Companion.toPath
 import okio.buffer
 import okio.fakefilesystem.FakeFileSystem
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -694,7 +694,7 @@ class CacheTest {
     assertThat(bodySource.readUtf8Line()).isEqualTo("ABCDE")
     try {
       bodySource.readUtf8(21)
-      fail<Any>("This implementation silently ignored a truncated HTTP body.")
+      fail("This implementation silently ignored a truncated HTTP body.")
     } catch (expected: IOException) {
     } finally {
       bodySource.close()
@@ -739,7 +739,7 @@ class CacheTest {
     `in`.close()
     try {
       `in`.readByte()
-      fail<Any>("Expected an IllegalStateException because the source is closed.")
+      fail("Expected an IllegalStateException because the source is closed.")
     } catch (expected: IllegalStateException) {
     }
     assertThat(cache.writeAbortCount()).isEqualTo(1)
@@ -2918,7 +2918,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     assertThat(i.hasNext()).isFalse()
     try {
       i.next()
-      fail<Any>()
+      fail("")
     } catch (expected: NoSuchElementException) {
     }
   }
@@ -2963,7 +2963,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     assertThat(i.hasNext()).isTrue()
     try {
       i.remove()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalStateException) {
     }
   }
@@ -2985,7 +2985,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     // Too many calls to remove().
     try {
       i.remove()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalStateException) {
     }
   }
@@ -3030,7 +3030,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     assertThat(i.hasNext()).isFalse()
     try {
       i.next()
-      fail<Any>()
+      fail("")
     } catch (expected: NoSuchElementException) {
     }
   }

@@ -27,7 +27,7 @@ import okio.buffer
 import okio.sink
 import okio.source
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -167,7 +167,7 @@ class FileOperatorTest {
     val buffer = Buffer()
     try {
       operator.read(0, buffer, -1L)
-      fail<Any>()
+      fail("")
     } catch (expected: IndexOutOfBoundsException) {
     }
   }
@@ -180,12 +180,12 @@ class FileOperatorTest {
     val buffer = Buffer().writeUtf8("abc")
     try {
       operator.write(0, buffer, -1L)
-      fail<Any>()
+      fail("")
     } catch (expected: IndexOutOfBoundsException) {
     }
     try {
       operator.write(0, buffer, 4L)
-      fail<Any>()
+      fail("")
     } catch (expected: IndexOutOfBoundsException) {
     }
   }

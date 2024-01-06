@@ -25,6 +25,7 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.isLessThan
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
+import assertk.fail
 import java.io.EOFException
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -609,7 +610,7 @@ class WebSocketHttpTest {
     val reason = repeat('X', 124)
     try {
       webSocket.close(1000, reason)
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail("")
     } catch (expected: IllegalArgumentException) {
       assertThat(expected.message).isEqualTo("reason.size() > 123: $reason")
     }

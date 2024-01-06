@@ -23,6 +23,7 @@ import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThan
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import assertk.fail
 import java.net.CookieHandler
 import java.net.CookieManager
 import java.net.CookiePolicy
@@ -35,7 +36,6 @@ import mockwebserver3.MockWebServer
 import okhttp3.Cookie.Companion.parse
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.java.net.cookiejar.JavaNetCookieJar
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -252,7 +252,7 @@ class CookiesTest {
     assertThat(request.headers["Cookie"]).isEqualTo("c=cookie")
     for (header in redirectTarget.takeRequest().headers.names()) {
       if (header.startsWith("Cookie")) {
-        fail<Any>(header)
+        fail(header)
       }
     }
   }

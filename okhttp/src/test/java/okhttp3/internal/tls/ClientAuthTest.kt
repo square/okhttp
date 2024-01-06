@@ -20,6 +20,7 @@ import assertk.assertions.endsWith
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import assertk.assertions.startsWith
+import assertk.fail
 import java.io.IOException
 import java.net.SocketException
 import java.security.GeneralSecurityException
@@ -48,7 +49,6 @@ import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.newKeyManager
 import okhttp3.tls.internal.TlsUtil.newTrustManager
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -212,7 +212,7 @@ class ClientAuthTest {
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (expected: SSLHandshakeException) {
       // JDK 11+
     } catch (expected: SSLException) {
@@ -239,7 +239,7 @@ class ClientAuthTest {
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (expected: SSLPeerUnverifiedException) {
     }
   }
@@ -259,7 +259,7 @@ class ClientAuthTest {
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (expected: SSLHandshakeException) {
       // JDK 11+
     } catch (expected: SSLException) {
@@ -298,7 +298,7 @@ class ClientAuthTest {
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
 

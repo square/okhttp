@@ -165,7 +165,7 @@ class RelayTest {
     assertThat(relay1.isClosed).isTrue()
     try {
       read(file)
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      assertk.fail("")
     } catch (expected: IOException) {
       assertThat(expected.message).isEqualTo("unreadable cache file")
     }

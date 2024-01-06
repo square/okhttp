@@ -48,7 +48,7 @@ import okio.GzipSink
 import okio.Sink
 import okio.Source
 import okio.buffer
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -111,7 +111,7 @@ class InterceptorTest {
       .build()
     try {
       client.newCall(request).execute()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalStateException) {
       assertThat(expected.message).isEqualTo(
         "network interceptor $interceptor must call proceed() exactly once"
@@ -135,7 +135,7 @@ class InterceptorTest {
       .build()
     try {
       client.newCall(request).execute()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalStateException) {
       assertThat(expected.message).isEqualTo(
         "network interceptor $interceptor must call proceed() exactly once"
@@ -168,7 +168,7 @@ class InterceptorTest {
       .build()
     try {
       client.newCall(request).execute()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalStateException) {
       assertThat(expected.message).isEqualTo(
         "network interceptor $interceptor must retain the same host and port"
@@ -493,7 +493,7 @@ class InterceptorTest {
       .build()
     try {
       client.newCall(request).execute()
-      fail<Any>()
+      fail("")
     } catch (expected: RuntimeException) {
       assertThat(expected.message).isEqualTo("boom!")
     }
@@ -607,7 +607,7 @@ class InterceptorTest {
     val startNanos = System.nanoTime()
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (expected: SocketTimeoutException) {
     }
     val elapsedNanos = System.nanoTime() - startNanos
@@ -648,7 +648,7 @@ class InterceptorTest {
     val body = response.body
     try {
       body.string()
-      fail<Any>()
+      fail("")
     } catch (expected: SocketTimeoutException) {
     }
   }
@@ -665,7 +665,7 @@ class InterceptorTest {
     val call = client.newCall(request1)
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalStateException) {
       assertThat(expected.message)
         .isEqualTo("Timeouts can't be adjusted in a network interceptor")
@@ -684,7 +684,7 @@ class InterceptorTest {
     val call = client.newCall(request1)
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalStateException) {
       assertThat(expected.message)
         .isEqualTo("Timeouts can't be adjusted in a network interceptor")
@@ -703,7 +703,7 @@ class InterceptorTest {
     val call = client.newCall(request1)
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (expected: IllegalStateException) {
       assertThat(expected.message)
         .isEqualTo("Timeouts can't be adjusted in a network interceptor")
@@ -741,7 +741,7 @@ class InterceptorTest {
     val call = client.newCall(request1)
     try {
       call.execute() // we want this call to throw a SocketTimeoutException
-      fail<Any>()
+      fail("")
     } catch (expected: SocketTimeoutException) {
     }
   }
@@ -766,7 +766,7 @@ class InterceptorTest {
     val call = client.newCall(request)
     try {
       call.execute()
-      fail<Any>()
+      fail("")
     } catch (expected: IOException) {
     }
     assertThat(callRef.get()).isSameAs(call)

@@ -19,6 +19,7 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
+import assertk.fail
 import java.io.IOException
 import java.util.Arrays
 import okhttp3.TestUtil.headerEntries
@@ -339,7 +340,7 @@ class HpackTest {
     bytesIn.writeByte(0x80) // == Indexed - Add idx = 0
     try {
       hpackReader!!.readHeaders()
-      org.junit.jupiter.api.Assertions.fail<Any>("")
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("index == 0")
     }
@@ -351,7 +352,7 @@ class HpackTest {
     bytesIn.writeShort(0xff00) // == Indexed - Add idx = 127
     try {
       hpackReader!!.readHeaders()
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("Header index too large 127")
     }
@@ -364,7 +365,7 @@ class HpackTest {
     bytesIn.write("8080808008".decodeHex()) // idx = -2147483521
     try {
       hpackReader!!.readHeaders()
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("Header index too large -2147483521")
     }
@@ -391,7 +392,7 @@ class HpackTest {
     bytesIn.writeByte(0x1f)
     try {
       hpackReader!!.readHeaders()
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("Invalid dynamic table size update 4097")
     }
@@ -404,7 +405,7 @@ class HpackTest {
     bytesIn.write("e1ffffff07".decodeHex()) // count = -2147483648
     try {
       hpackReader!!.readHeaders()
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message)
         .isEqualTo("Invalid dynamic table size update -2147483648")
@@ -485,7 +486,7 @@ class HpackTest {
     bytesIn.writeUtf8("www.example.com")
     try {
       hpackReader!!.readHeaders()
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo("Header index too large 78")
     }
@@ -831,7 +832,7 @@ class HpackTest {
           'R'.code
         )
       ).readHeaders()
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail("")
     } catch (e: IOException) {
       assertThat(e.message).isEqualTo(
         "PROTOCOL_ERROR response malformed: mixed case name: Foo"
