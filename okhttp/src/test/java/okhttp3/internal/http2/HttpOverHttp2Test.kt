@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 import javax.net.ssl.SSLException
+import kotlin.test.assertFailsWith
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -659,10 +660,8 @@ class HttpOverHttp2Test {
       )
     val response1 = call1.execute()
     assertThat(response1.body.string()).isEqualTo("A")
-    try {
+    assertFailsWith<IOException> {
       call2.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
 
     // Confirm that the connection was reused.
@@ -1487,10 +1486,8 @@ class HttpOverHttp2Test {
 
     // The second call times out because it uses the same bad connection.
     val call2 = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<SocketTimeoutException> {
       call2.execute()
-      fail("")
-    } catch (expected: SocketTimeoutException) {
     }
 
     // But after the degraded pong timeout, that connection is abandoned.

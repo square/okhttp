@@ -20,6 +20,7 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import java.time.Instant
 import java.util.Date
+import kotlin.test.assertFailsWith
 import kotlin.test.fail
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.internal.EMPTY_HEADERS
@@ -98,31 +99,23 @@ class HeadersJvmTest {
   }
 
   @Test fun addThrowsOnEmptyName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add(": bar")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add(" : bar")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test fun addThrowsOnNoColon() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add("foo bar")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test fun addThrowsOnMultiColon() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add(":status: 200 OK")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -146,10 +139,8 @@ class HeadersJvmTest {
 
   // Fails on JS, ClassCastException: Illegal cast
   @Test fun ofMapThrowsOnNull() {
-    try {
+    assertFailsWith<NullPointerException> {
       (mapOf("User-Agent" to null) as Map<String, String>).toHeaders()
-      fail("")
-    } catch (expected: NullPointerException) {
     }
   }
 

@@ -26,7 +26,7 @@ import java.io.File
 import java.io.FileWriter
 import java.net.URI
 import java.util.UUID
-import kotlin.test.fail
+import kotlin.test.assertFailsWith
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -264,15 +264,11 @@ class RequestTest {
   @Test
   fun emptyNameForbidden() {
     val builder = Request.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.header("", "Value")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.addHeader("", "Value")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -280,10 +276,8 @@ class RequestTest {
   fun headerAllowsTabOnlyInValues() {
     val builder = Request.Builder()
     builder.header("key", "sample\tvalue")
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.header("sample\tkey", "value")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -300,25 +294,17 @@ class RequestTest {
 
   private fun assertForbiddenHeader(s: String) {
     val builder = Request.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.header(s, "Value")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.addHeader(s, "Value")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.header("Name", s)
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.addHeader("Name", s)
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 

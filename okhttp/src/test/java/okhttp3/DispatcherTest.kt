@@ -14,6 +14,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -44,19 +45,15 @@ class DispatcherTest {
 
   @Test
   fun maxRequestsZero() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       dispatcher.maxRequests = 0
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test
   fun maxPerHostZero() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       dispatcher.maxRequestsPerHost = 0
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 

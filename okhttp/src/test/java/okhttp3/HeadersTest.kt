@@ -19,6 +19,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 import kotlin.test.fail
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Headers.Companion.toHeaders
@@ -31,18 +32,14 @@ class HeadersTest {
   }
 
   @Test fun ofThrowsOddNumberOfHeaders() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       headersOf("User-Agent", "OkHttp", "Content-Length")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test fun ofThrowsOnEmptyName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       headersOf("", "OkHttp")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -62,26 +59,20 @@ class HeadersTest {
   }
 
   @Test fun ofRejectsNullChar() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       headersOf("User-Agent", "Square\u0000OkHttp")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test fun ofMapThrowsOnEmptyName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       mapOf("" to "OkHttp").toHeaders()
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test fun ofMapThrowsOnBlankName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       mapOf(" " to "OkHttp").toHeaders()
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -109,18 +100,14 @@ class HeadersTest {
   }
 
   @Test fun ofMapRejectsNullCharInName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       mapOf("User-\u0000Agent" to "OkHttp").toHeaders()
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test fun ofMapRejectsNullCharInValue() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       mapOf("User-Agent" to "Square\u0000OkHttp").toHeaders()
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -286,33 +273,25 @@ class HeadersTest {
 
   @Test fun nameIndexesAreStrict() {
     val headers = headersOf("a", "b", "c", "d")
-    try {
+    assertFailsWith<IndexOutOfBoundsException> {
       headers.name(-1)
-      fail("")
-    } catch (expected: IndexOutOfBoundsException) {
     }
     assertThat(headers.name(0)).isEqualTo("a")
     assertThat(headers.name(1)).isEqualTo("c")
-    try {
+    assertFailsWith<IndexOutOfBoundsException> {
       headers.name(2)
-      fail("")
-    } catch (expected: IndexOutOfBoundsException) {
     }
   }
 
   @Test fun valueIndexesAreStrict() {
     val headers = headersOf("a", "b", "c", "d")
-    try {
+    assertFailsWith<IndexOutOfBoundsException> {
       headers.value(-1)
-      fail("")
-    } catch (expected: IndexOutOfBoundsException) {
     }
     assertThat(headers.value(0)).isEqualTo("b")
     assertThat(headers.value(1)).isEqualTo("d")
-    try {
+    assertFailsWith<IndexOutOfBoundsException> {
       headers.value(2)
-      fail("")
-    } catch (expected: IndexOutOfBoundsException) {
     }
   }
 }

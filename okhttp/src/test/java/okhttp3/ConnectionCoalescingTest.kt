@@ -37,6 +37,7 @@ import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -255,10 +256,8 @@ class ConnectionCoalescingTest {
     server.enqueue(MockResponse())
     assert200Http2Response(execute(url), server.hostName)
     val differentDnsUrl = url.newBuilder().host("differentdns.com").build()
-    try {
+    assertFailsWith<IOException> {
       execute(differentDnsUrl)
-      fail("expected a failed attempt to connect")
-    } catch (expected: IOException) {
     }
   }
 
@@ -275,11 +274,9 @@ class ConnectionCoalescingTest {
         .body("unexpected call")
         .build()
     )
-    try {
+    assertFailsWith<IOException> {
       val response = execute(url)
       response.close()
-      fail("expected a failed attempt to connect")
-    } catch (expected: IOException) {
     }
   }
 
@@ -290,10 +287,8 @@ class ConnectionCoalescingTest {
     server.enqueue(MockResponse())
     assert200Http2Response(execute(url), server.hostName)
     val nonsanUrl = url.newBuilder().host("nonsan.com").build()
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       execute(nonsanUrl)
-      fail("expected a failed attempt to connect")
-    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
@@ -306,11 +301,9 @@ class ConnectionCoalescingTest {
         .build()
     )
     server.enqueue(MockResponse())
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       val response = execute(url)
       response.close()
-      fail("expected a failed attempt to connect")
-    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
@@ -339,10 +332,8 @@ class ConnectionCoalescingTest {
     server.enqueue(MockResponse())
     assert200Http2Response(execute(url), server.hostName)
     val sanUrl = url.newBuilder().host("san.com").build()
-    try {
+    assertFailsWith<IOException> {
       execute(sanUrl)
-      fail("expected a failed attempt to connect")
-    } catch (expected: IOException) {
     }
   }
 
@@ -359,10 +350,8 @@ class ConnectionCoalescingTest {
         .build()
     )
     server.enqueue(MockResponse())
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       execute(url)
-      fail("expected a failed attempt to connect")
-    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 

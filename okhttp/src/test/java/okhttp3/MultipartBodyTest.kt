@@ -27,6 +27,7 @@ import okio.Buffer
 import okio.BufferedSink
 import okio.utf8Size
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Test
 
 class MultipartBodyTest {
@@ -241,26 +242,22 @@ class MultipartBodyTest {
   @Test
   fun contentTypeHeaderIsForbidden() {
     val multipart = MultipartBody.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       multipart.addPart(
         headersOf("Content-Type", "text/plain"),
         "Hello, World!".toRequestBody(null)
       )
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test
   fun contentLengthHeaderIsForbidden() {
     val multipart = MultipartBody.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       multipart.addPart(
         headersOf("Content-Length", "13"),
         "Hello, World!".toRequestBody(null)
       )
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 

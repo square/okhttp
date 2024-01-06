@@ -28,6 +28,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
@@ -116,16 +117,12 @@ class MultipartReaderTest {
     )
 
     val part = parts.nextPart()!!
-    try {
+    assertFailsWith<EOFException> {
       assertThat(part.body.readUtf8()).isEqualTo("abcd\r\nefgh\r\n")
-      fail("")
-    } catch (expected: EOFException) {
     }
 
-    try {
+    assertFailsWith<EOFException> {
       assertThat(parts.nextPart()).isNull()
-      fail("")
-    } catch (expected: EOFException) {
     }
   }
 
@@ -141,10 +138,8 @@ class MultipartReaderTest {
       source = Buffer().writeUtf8(multipart)
     )
 
-    try {
+    assertFailsWith<EOFException> {
       parts.nextPart()
-      fail("")
-    } catch (expected: EOFException) {
     }
   }
 
@@ -505,10 +500,8 @@ class MultipartReaderTest {
       source = Buffer()
     )
 
-    try {
+    assertFailsWith<EOFException> {
       parts.nextPart()
-      fail("")
-    } catch (expected: EOFException) {
     }
   }
 

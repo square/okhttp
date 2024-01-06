@@ -28,6 +28,7 @@ import okio.sink
 import okio.source
 import org.junit.jupiter.api.AfterEach
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -165,10 +166,8 @@ class FileOperatorTest {
       randomAccessFile!!.getChannel()
     )
     val buffer = Buffer()
-    try {
+    assertFailsWith<IndexOutOfBoundsException> {
       operator.read(0, buffer, -1L)
-      fail("")
-    } catch (expected: IndexOutOfBoundsException) {
     }
   }
 
@@ -178,15 +177,11 @@ class FileOperatorTest {
       randomAccessFile!!.getChannel()
     )
     val buffer = Buffer().writeUtf8("abc")
-    try {
+    assertFailsWith<IndexOutOfBoundsException> {
       operator.write(0, buffer, -1L)
-      fail("")
-    } catch (expected: IndexOutOfBoundsException) {
     }
-    try {
+    assertFailsWith<IndexOutOfBoundsException> {
       operator.write(0, buffer, 4L)
-      fail("")
-    } catch (expected: IndexOutOfBoundsException) {
     }
   }
 

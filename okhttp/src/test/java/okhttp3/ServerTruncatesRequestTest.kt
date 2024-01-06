@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
 import assertk.fail
+import kotlin.test.assertFailsWith
 
 @Timeout(30)
 @Tag("Slowish")
@@ -152,15 +153,11 @@ class ServerTruncatesRequestTest {
     call.execute().use { response ->
       assertThat(response.body.string()).isEqualTo("abc")
       val requestBodyOut = requestBody.takeSink()
-      try {
+      assertFailsWith<IOException> {
         SlowRequestBody.writeTo(requestBodyOut)
-        fail("")
-      } catch (expected: IOException) {
       }
-      try {
+      assertFailsWith<IOException> {
         requestBodyOut.close()
-        fail("")
-      } catch (expected: IOException) {
       }
     }
 

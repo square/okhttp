@@ -27,6 +27,7 @@ import java.net.UnknownHostException
 import java.time.Duration
 import java.util.Arrays
 import java.util.concurrent.TimeUnit
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.FailHandshake
@@ -220,10 +221,8 @@ open class ConnectionListenerTest {
     val call = client.newCall(Request.Builder()
       .url(server!!.url("/"))
       .build())
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
     val address = client.dns.lookup(server!!.hostName)[0]
     val expectedAddress = InetSocketAddress(address, server!!.port)

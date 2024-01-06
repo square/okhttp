@@ -49,6 +49,7 @@ import okio.Sink
 import okio.Source
 import okio.buffer
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -605,10 +606,8 @@ class InterceptorTest {
       .build()
     val call = client.newCall(request1)
     val startNanos = System.nanoTime()
-    try {
+    assertFailsWith<SocketTimeoutException> {
       call.execute()
-      fail("")
-    } catch (expected: SocketTimeoutException) {
     }
     val elapsedNanos = System.nanoTime() - startNanos
     org.junit.jupiter.api.Assertions.assertTrue(
@@ -646,10 +645,8 @@ class InterceptorTest {
     val call = client.newCall(request1)
     val response = call.execute()
     val body = response.body
-    try {
+    assertFailsWith<SocketTimeoutException> {
       body.string()
-      fail("")
-    } catch (expected: SocketTimeoutException) {
     }
   }
 
@@ -739,10 +736,8 @@ class InterceptorTest {
       .post(data.toRequestBody("text/plain".toMediaType()))
       .build()
     val call = client.newCall(request1)
-    try {
+    assertFailsWith<SocketTimeoutException> {
       call.execute() // we want this call to throw a SocketTimeoutException
-      fail("")
-    } catch (expected: SocketTimeoutException) {
     }
   }
 
@@ -764,10 +759,8 @@ class InterceptorTest {
       .url(server.url("/"))
       .build()
     val call = client.newCall(request)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
     assertThat(callRef.get()).isSameAs(call)
   }

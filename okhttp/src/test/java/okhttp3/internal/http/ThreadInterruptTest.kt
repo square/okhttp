@@ -33,6 +33,7 @@ import okio.Buffer
 import okio.BufferedSink
 import org.junit.jupiter.api.AfterEach
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -99,10 +100,8 @@ class ThreadInterruptTest {
         .build()
     )
     interruptLater(500)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 
@@ -124,11 +123,9 @@ class ThreadInterruptTest {
     interruptLater(500)
     val responseBody = response.body.byteStream()
     val buffer = ByteArray(1024)
-    try {
+    assertFailsWith<IOException> {
       while (responseBody.read(buffer) != -1) {
       }
-      fail("Expected connection to be interrupted")
-    } catch (expected: IOException) {
     }
     responseBody.close()
   }

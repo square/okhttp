@@ -18,35 +18,32 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
+import assertk.fail
 import java.util.Arrays
 import javax.net.ssl.SSLPeerUnverifiedException
+import kotlin.test.assertFailsWith
 import okhttp3.CertificatePinner.Companion.pin
 import okhttp3.CertificatePinner.Companion.sha1Hash
 import okhttp3.tls.HeldCertificate
 import okio.ByteString.Companion.decodeBase64
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
-import assertk.fail
 import org.junit.jupiter.api.Test
 
 class CertificatePinnerTest {
   @Test
   fun malformedPin() {
     val builder = CertificatePinner.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.add("example.com", "md5/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test
   fun malformedBase64() {
     val builder = CertificatePinner.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.add("example.com", "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw*")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -100,10 +97,8 @@ class CertificatePinnerTest {
     val certificatePinner = CertificatePinner.Builder()
       .add("example.com", certA1Sha256Pin)
       .build()
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       certificatePinner.check("example.com", certB1.certificate)
-      fail("")
-    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
@@ -156,10 +151,8 @@ class CertificatePinnerTest {
     val certificatePinner = CertificatePinner.Builder()
       .add("*.example.com", certA1Sha256Pin)
       .build()
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       certificatePinner.check("a.example.com", listOf(certB1.certificate))
-      fail("")
-    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
@@ -188,10 +181,8 @@ class CertificatePinnerTest {
       .add("*.example.com", certA1Sha256Pin)
       .add("a.example.com", certB1Sha256Pin)
       .build()
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       certificatePinner.check("a.example.com", listOf(certC1.certificate))
-      fail("")
-    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
@@ -202,25 +193,17 @@ class CertificatePinnerTest {
       .build()
 
     // Should be pinned:
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       certificatePinner.check("example.co.uk", listOf(certB1.certificate))
-      fail("")
-    } catch (expected: SSLPeerUnverifiedException) {
     }
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       certificatePinner.check("foo.example.co.uk", listOf(certB1.certificate))
-      fail("")
-    } catch (expected: SSLPeerUnverifiedException) {
     }
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       certificatePinner.check("foo.bar.example.co.uk", listOf(certB1.certificate))
-      fail("")
-    } catch (expected: SSLPeerUnverifiedException) {
     }
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       certificatePinner.check("foo.bar.baz.example.co.uk", listOf(certB1.certificate))
-      fail("")
-    } catch (expected: SSLPeerUnverifiedException) {
     }
 
     // Should not be pinned:

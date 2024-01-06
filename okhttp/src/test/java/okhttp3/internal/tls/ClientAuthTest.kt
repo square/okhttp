@@ -35,6 +35,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.security.auth.x500.X500Principal
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.internal.MockWebServerExtension
@@ -237,10 +238,8 @@ class ClientAuthTest {
     server.useHttps(socketFactory)
     server.requireClientAuth()
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       call.execute()
-      fail("")
-    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
@@ -296,10 +295,8 @@ class ClientAuthTest {
     server.useHttps(socketFactory)
     server.requireClientAuth()
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
 
     // Observed Events are variable

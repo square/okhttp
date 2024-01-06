@@ -79,6 +79,7 @@ import org.hamcrest.MatcherAssert
 import org.junit.Assume
 import org.junit.jupiter.api.AfterEach
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -618,10 +619,8 @@ class EventListenerTest {
         .url("http://fakeurl/")
         .build()
     )
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
     listener.removeUpToEvent<DnsStart>()
     val callFailed: CallFailed = listener.removeUpToEvent<CallFailed>()
@@ -640,10 +639,8 @@ class EventListenerTest {
         .url("http://fakeurl/")
         .build()
     )
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
     listener.removeUpToEvent<DnsStart>()
     val callFailed: CallFailed = listener.removeUpToEvent<CallFailed>()
@@ -689,10 +686,8 @@ class EventListenerTest {
         .url(server.url("/"))
         .build()
     )
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
     val address = client.dns.lookup(server.hostName)[0]
     val expectedAddress = InetSocketAddress(address, server.port)
@@ -860,10 +855,8 @@ class EventListenerTest {
         .url(server.url("/"))
         .build()
     )
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
     val secureStart = listener.removeUpToEvent<SecureConnectStart>()
     assertThat(secureStart.call).isSameAs(call)
@@ -1093,10 +1086,8 @@ class EventListenerTest {
       Assume.assumeThat(response, matchesProtocol(Protocol.HTTP_2))
     }
     assertThat(response.protocol).isEqualTo(expectedProtocol)
-    try {
+    assertFailsWith<IOException> {
       response.body.string()
-      fail("")
-    } catch (expected: IOException) {
     }
     val callFailed = listener.removeUpToEvent<CallFailed>()
     assertThat(callFailed.ioe).isNotNull()
@@ -1209,10 +1200,8 @@ class EventListenerTest {
         .post(request)
         .build()
     )
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
     if (expectedProtocol != null) {
       val connectionAcquired = listener.removeUpToEvent<ConnectionAcquired>()
@@ -1285,10 +1274,8 @@ class EventListenerTest {
         .post(requestBody)
         .build()
     )
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
     assertThat(listener.recordedEventTypes()).containsExactly(
       "CallStart",

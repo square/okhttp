@@ -21,6 +21,7 @@ import java.net.ProtocolException
 import okhttp3.Protocol
 import okhttp3.internal.http.StatusLine.Companion.parse
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Test
 
 class StatusLineTest {
@@ -117,10 +118,8 @@ class StatusLineTest {
   }
 
   private fun assertInvalid(statusLine: String) {
-    try {
+    assertFailsWith<ProtocolException> {
       parse(statusLine)
-      fail("")
-    } catch (expected: ProtocolException) {
     }
   }
 }

@@ -21,9 +21,9 @@ import assertk.assertions.isFalse
 import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
 import java.util.concurrent.TimeUnit
+import kotlin.test.assertFailsWith
 import okhttp3.CacheControl.Companion.parse
 import okhttp3.Headers.Companion.headersOf
-import assertk.fail
 import org.junit.jupiter.api.Test
 
 class CacheControlJvmTest {
@@ -192,10 +192,8 @@ class CacheControlJvmTest {
   @Throws(Exception::class)
   fun secondsMustBeNonNegative() {
     val builder = CacheControl.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.maxAge(-1, TimeUnit.SECONDS)
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 

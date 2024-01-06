@@ -110,6 +110,7 @@ import okio.fakefilesystem.FakeFileSystem
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -268,10 +269,8 @@ open class CallTest {
   @Test
   fun getWithRequestBody() {
     server.enqueue(MockResponse())
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Request.Builder().method("GET", "abc".toRequestBody("text/plain".toMediaType()))
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -947,11 +946,9 @@ open class CallTest {
       .readTimeout(Duration.ofMillis(100))
       .build()
     val request = Request.Builder().url(server.url("/")).build()
-    try {
+    assertFailsWith<InterruptedIOException> {
       // If this succeeds, too many requests were made.
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: InterruptedIOException) {
     }
   }
 
@@ -1281,10 +1278,8 @@ open class CallTest {
       .hostnameVerifier(RecordingHostnameVerifier())
       .build()
     val request = Request.Builder().url(server.url("/")).build()
-    try {
+    assertFailsWith<SSLHandshakeException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: SSLHandshakeException) {
     }
     val firstSocket = clientSocketFactory.socketsCreated[0]
     assertThat(firstSocket.enabledCipherSuites)
@@ -2473,10 +2468,8 @@ open class CallTest {
   fun canceledBeforeExecute() {
     val call = client.newCall(Request.Builder().url(server.url("/a")).build())
     call.cancel()
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
     assertThat(server.requestCount).isEqualTo(0)
   }
@@ -2500,10 +2493,8 @@ open class CallTest {
     val call = client.newCall(Request(server.url("/").newBuilder().scheme(scheme!!).build()))
     cancelLater(call, cancelDelayMillis)
     val startNanos = System.nanoTime()
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
     val elapsedNanos = System.nanoTime() - startNanos
     assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toFloat())
@@ -2554,10 +2545,8 @@ open class CallTest {
     }
     client = client.newBuilder().eventListener(listener).build()
     val call = client.newCall(Request(server.url("/a")))
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 
@@ -2578,10 +2567,8 @@ open class CallTest {
     val result = executor.submit<Response?> { call.execute() }
     Thread.sleep(100) // wait for it to go in flight.
     call.cancel()
-    try {
+    assertFailsWith<IOException> {
       result.get()!!.body.bytes()
-      fail("")
-    } catch (expected: IOException) {
     }
     assertThat(server.requestCount).isEqualTo(1)
   }
@@ -2596,10 +2583,8 @@ open class CallTest {
         return MockResponse(body = "A")
       }
     }
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
     assertThat(server.takeRequest().path).isEqualTo("/a")
   }
@@ -2746,10 +2731,8 @@ open class CallTest {
       .build()
     val call = client.newCall(Request(server.url("/a")))
     call.cancel()
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
     assertThat(server.requestCount).isEqualTo(0)
   }
@@ -2938,10 +2921,8 @@ open class CallTest {
       .post("abc".toRequestBody("text/plain".toMediaType()))
       .build()
     val call = client.newCall(request)
-    try {
+    assertFailsWith<SocketTimeoutException> {
       call.execute()
-      fail("")
-    } catch (expected: SocketTimeoutException) {
     }
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("")
@@ -3045,10 +3026,8 @@ open class CallTest {
       body = "abc".toRequestBody("text/plain".toMediaType()),
     )
     val call = client.newCall(request)
-    try {
+    assertFailsWith<SocketTimeoutException> {
       call.execute()
-      fail("")
-    } catch (expected: SocketTimeoutException) {
     }
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
@@ -3409,10 +3388,8 @@ open class CallTest {
       .hostnameVerifier(RecordingHostnameVerifier())
       .build()
     val request = Request("https://android.com/foo".toHttpUrl())
-    try {
+    assertFailsWith<ProtocolException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: ProtocolException) {
     }
   }
 
@@ -3543,10 +3520,8 @@ open class CallTest {
       .proxy(server.toProxyAddress())
       .build()
     val request = Request(server.url("/"))
-    try {
+    assertFailsWith<IOException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 

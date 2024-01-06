@@ -43,6 +43,7 @@ import okio.BufferedSink
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
@@ -87,10 +88,8 @@ class DuplexTest {
         .post(AsyncRequestBody())
         .build()
     )
-    try {
+    assertFailsWith<ProtocolException> {
       call.execute()
-      fail("")
-    } catch (expected: ProtocolException) {
     }
   }
 

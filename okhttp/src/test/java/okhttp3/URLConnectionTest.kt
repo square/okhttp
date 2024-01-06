@@ -98,6 +98,7 @@ import okio.utf8Size
 import org.bouncycastle.tls.TlsFatalAlert
 import org.junit.jupiter.api.AfterEach
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
@@ -209,10 +210,8 @@ class URLConnectionTest {
       .status("HTP/1.1 200 OK")
       .build())
     val request = newRequest("/")
-    try {
+    assertFailsWith<IOException> {
       getResponse(request)
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 
@@ -222,10 +221,8 @@ class URLConnectionTest {
       .status("HTTP/1.1 2147483648 OK")
       .build())
     val request = newRequest("/")
-    try {
+    assertFailsWith<IOException> {
       getResponse(request)
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 
@@ -235,10 +232,8 @@ class URLConnectionTest {
       .status("HTTP/1.1 00a OK")
       .build())
     val request = newRequest("/")
-    try {
+    assertFailsWith<IOException> {
       getResponse(request)
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 
@@ -248,10 +243,8 @@ class URLConnectionTest {
       .status(" HTTP/1.1 2147483648 OK")
       .build())
     val request = newRequest("/")
-    try {
+    assertFailsWith<IOException> {
       getResponse(request)
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 
@@ -259,10 +252,8 @@ class URLConnectionTest {
   fun connectRetriesUntilConnectedOrFailed() {
     val request = newRequest("/foo")
     server.shutdown()
-    try {
+    assertFailsWith<IOException> {
       getResponse(request)
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 
@@ -369,14 +360,12 @@ class URLConnectionTest {
     client = client.newBuilder()
       .dns(FakeDns())
       .build()
-    try {
+    assertFailsWith<UnknownHostException> {
       getResponse(
         Request.Builder()
           .url("http://1234.1.1.1/index.html".toHttpUrl())
           .build()
       )
-      fail("")
-    } catch (expected: UnknownHostException) {
     }
   }
 
@@ -750,11 +739,9 @@ class URLConnectionTest {
         .setHeader("Content-Length", "5")
         .socketPolicy(DisconnectAtEnd)
         .build())
-    try {
+    assertFailsWith<ProtocolException> {
       val response = getResponse(newRequest("/"))
       response.body.source().readUtf8(5)
-      fail("")
-    } catch (expected: ProtocolException) {
     }
   }
 
@@ -795,10 +782,8 @@ class URLConnectionTest {
     client = client.newBuilder()
       .socketFactory(uselessSocketFactory)
       .build()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       getResponse(newRequest("/"))
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
     client = client.newBuilder()
       .socketFactory(SocketFactory.getDefault())
@@ -844,11 +829,9 @@ class URLConnectionTest {
     builder.addHeader("Transfer-encoding: chunked")
     builder.socketPolicy(DisconnectAtEnd)
     server.enqueue(builder.build())
-    try {
+    assertFailsWith<IOException> {
       val response = getResponse(newRequest("/"))
       response.body.source().readUtf8(7)
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 
@@ -1119,14 +1102,12 @@ class URLConnectionTest {
     val inputStream = response.body.byteStream()
     assertThat(inputStream.read().toChar()).isEqualTo('A')
     call.cancel()
-    try {
+    assertFailsWith<IOException> {
       // Reading 'B' may succeed if it's buffered.
       inputStream.read()
 
       // But 'C' shouldn't be buffered (the response is throttled) and this should fail.
       inputStream.read()
-      fail("Expected a connection closed exception")
-    } catch (expected: IOException) {
     }
     inputStream.close()
   }
@@ -1162,10 +1143,8 @@ class URLConnectionTest {
     )
     val call = client.newCall(newRequest("/"))
     call.cancel()
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 
@@ -1217,10 +1196,8 @@ class URLConnectionTest {
       .isFalse()
     inputStream.mark(5)
     assertThat(readAscii(inputStream, 5)).isEqualTo("ABCDE")
-    try {
+    assertFailsWith<IOException> {
       inputStream.reset()
-      fail("")
-    } catch (expected: IOException) {
     }
     assertThat(readAscii(inputStream, Int.MAX_VALUE)).isEqualTo(
       "FGHIJKLMNOPQRSTUVWXYZ"
@@ -1775,13 +1752,11 @@ class URLConnectionTest {
   }
 
   private fun assertMethodForbidsRequestBody(requestMethod: String) {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Request.Builder()
         .url(server.url("/"))
         .method(requestMethod, "abc".toRequestBody(null))
         .build()
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -1794,13 +1769,11 @@ class URLConnectionTest {
   }
 
   private fun assertMethodForbidsNoRequestBody(requestMethod: String) {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Request.Builder()
         .url(server.url("/"))
         .method(requestMethod, null)
         .build()
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -2779,10 +2752,8 @@ class URLConnectionTest {
     assertThat(source.readByte()).isEqualTo('A'.code.toByte())
     assertThat(source.readByte()).isEqualTo('B'.code.toByte())
     assertThat(source.readByte()).isEqualTo('C'.code.toByte())
-    try {
+    assertFailsWith<SocketTimeoutException> {
       source.readByte() // If Content-Length was accurate, this would return -1 immediately.
-      fail("")
-    } catch (expected: SocketTimeoutException) {
     }
     source.close()
   }
@@ -2829,10 +2800,8 @@ class URLConnectionTest {
         }
       },
     )
-    try {
+    assertFailsWith<SocketTimeoutException> {
       getResponse(request)
-      fail("")
-    } catch (expected: SocketTimeoutException) {
     }
   }
 
@@ -2999,26 +2968,20 @@ class URLConnectionTest {
     )
     assertThat(readAscii(response.body.byteStream(), Int.MAX_VALUE))
       .isEqualTo("abc")
-    try {
+    assertFailsWith<IllegalStateException> {
       sinkReference.get().flush()
-      fail("")
-    } catch (expected: IllegalStateException) {
     }
-    try {
+    assertFailsWith<IllegalStateException> {
       sinkReference.get().write("ghi".toByteArray())
       sinkReference.get().emit()
-      fail("")
-    } catch (expected: IllegalStateException) {
     }
   }
 
   @Test
   fun getHeadersThrows() {
     server.enqueue(MockResponse(socketPolicy = SocketPolicy.DisconnectAtStart))
-    try {
+    assertFailsWith<IOException> {
       getResponse(newRequest("/"))
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 
@@ -3027,19 +2990,15 @@ class URLConnectionTest {
     client = client.newBuilder()
       .dns(FakeDns())
       .build()
-    try {
+    assertFailsWith<IOException> {
       getResponse(Request("http://host.unlikelytld".toHttpUrl()))
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 
   @Test
   fun malformedUrlThrowsUnknownHostException() {
-    try {
+    assertFailsWith<IOException> {
       getResponse(Request("http://-/foo.html".toHttpUrl()))
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 
@@ -3054,10 +3013,8 @@ class URLConnectionTest {
     source1.timeout().timeout(100, TimeUnit.MILLISECONDS)
     assertThat(readAscii(source1.inputStream(), Int.MAX_VALUE)).isEqualTo("ABC")
     server.shutdown()
-    try {
+    assertFailsWith<ConnectException> {
       getResponse(newRequest("/"))
-      fail("")
-    } catch (expected: ConnectException) {
     }
   }
 
@@ -3082,13 +3039,11 @@ class URLConnectionTest {
 
   @Test
   fun getOutputStreamOnGetFails() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Request.Builder()
         .url(server.url("/"))
         .method("GET", "abc".toRequestBody(null))
         .build()
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -3161,13 +3116,11 @@ class URLConnectionTest {
 
   @Test
   fun doOutputForMethodThatDoesntSupportOutput() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Request.Builder()
         .url(server.url("/"))
         .method("HEAD", "".toRequestBody(null))
         .build()
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -3312,15 +3265,13 @@ class URLConnectionTest {
         sink.writeUtf8("abc")
       }
     }
-    try {
+    assertFailsWith<IOException> {
       getResponse(
         Request(
           url = server.url("/b"),
           body = requestBody,
         )
       )
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 
@@ -3338,15 +3289,13 @@ class URLConnectionTest {
         sink.writeUtf8("abcd")
       }
     }
-    try {
+    assertFailsWith<IOException> {
       getResponse(
         Request(
           url = server.url("/b"),
           body = requestBody,
         )
       )
-      fail("")
-    } catch (expected: IOException) {
     }
   }
 
@@ -3400,13 +3349,11 @@ class URLConnectionTest {
 
   @Test
   fun emptyRequestHeaderNameIsStrict() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Request.Builder()
         .url(server.url("/"))
         .header("", "A")
         .build()
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -3428,35 +3375,25 @@ class URLConnectionTest {
 
   @Test
   fun requestHeaderValidationIsStrict() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Request.Builder()
         .addHeader("a\tb", "Value")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Request.Builder()
         .addHeader("Name", "c\u007fd")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Request.Builder()
         .addHeader("", "Value")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Request.Builder()
         .addHeader("\ud83c\udf69", "Value")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Request.Builder()
         .addHeader("Name", "\u2615\ufe0f")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -3706,21 +3643,17 @@ class URLConnectionTest {
 
   @Test
   fun setProtocolsWithoutHttp11() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       OkHttpClient.Builder()
         .protocols(Arrays.asList(Protocol.HTTP_2))
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test
   fun setProtocolsWithNull() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       OkHttpClient.Builder()
         .protocols(Arrays.asList(Protocol.HTTP_1_1, null))
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -3866,28 +3799,22 @@ class URLConnectionTest {
 
   @Test
   fun urlWithSpaceInHost() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       "http://and roid.com/".toHttpUrl()
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test
   fun urlWithSpaceInHostViaHttpProxy() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       "http://and roid.com/".toHttpUrl()
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test
   fun urlHostWithNul() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       "http://host\u0000/".toHttpUrl()
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -3907,10 +3834,8 @@ class URLConnectionTest {
 
   @Test
   fun urlWithBadAsciiHost() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       "http://host\u0001/".toHttpUrl()
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -3918,11 +3843,9 @@ class URLConnectionTest {
   @Test
   fun setSslSocketFactoryFailsOnJdk9() {
     platform.assumeJdk9()
-    try {
+    assertFailsWith<UnsupportedOperationException> {
       client.newBuilder()
         .sslSocketFactory(handshakeCertificates.sslSocketFactory())
-      fail("")
-    } catch (expected: UnsupportedOperationException) {
     }
   }
 

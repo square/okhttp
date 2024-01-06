@@ -44,6 +44,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -154,10 +155,8 @@ class OkHttpClientTest {
 
   @Test fun setProtocolsRejectsHttp10() {
     val builder = OkHttpClient.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.protocols(listOf(Protocol.HTTP_1_0, Protocol.HTTP_1_1))
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -234,10 +233,8 @@ class OkHttpClientTest {
 
   @Test fun sslSocketFactorySetAsSocketFactory() {
     val builder = OkHttpClient.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.socketFactory(SSLSocketFactory.getDefault())
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -245,10 +242,8 @@ class OkHttpClientTest {
     val client = OkHttpClient.Builder()
       .connectionSpecs(listOf(ConnectionSpec.CLEARTEXT))
       .build()
-    try {
+    assertFailsWith<IllegalStateException> {
       client.sslSocketFactory
-      fail("")
-    } catch (expected: IllegalStateException) {
     }
   }
 

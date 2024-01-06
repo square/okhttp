@@ -19,10 +19,10 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import java.security.cert.Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
+import kotlin.test.assertFailsWith
 import okhttp3.internal.tls.CertificateChainCleaner.Companion.get
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
-import assertk.fail
 import org.junit.jupiter.api.Test
 
 class CertificateChainCleanerTest {
@@ -60,10 +60,8 @@ class CertificateChainCleanerTest {
       .serialNumber(1L)
       .build()
     val cleaner = get()
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       cleaner.clean(list(root), "hostname")
-      fail("")
-    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
@@ -276,10 +274,8 @@ class CertificateChainCleanerTest {
     }
     val root = heldCertificates[heldCertificates.size - 1].certificate
     val cleaner = get(root)
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       cleaner.clean(certificates, "hostname")
-      fail("")
-    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 

@@ -17,6 +17,7 @@ package okhttp3
 
 import assertk.assertThat
 import assertk.assertions.startsWith
+import kotlin.test.assertFailsWith
 import kotlin.test.fail
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.idn.Punycode
@@ -142,10 +143,8 @@ class UrlComponentEncodingTester private constructor() {
 
   private fun testForbidden(codePoint: Int, codePointString: String, component: Component) {
     val builder = "http://host/".toHttpUrl().newBuilder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       component[builder] = codePointString
-      fail("Accepted forbidden code point $component $codePoint")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 

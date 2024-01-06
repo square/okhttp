@@ -19,12 +19,12 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isLessThan
 import java.io.EOFException
+import kotlin.test.assertFailsWith
 import okhttp3.TestUtil.fragmentBuffer
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
-import assertk.fail
 import org.junit.jupiter.api.Test
 
 internal class MessageDeflaterInflaterTest {
@@ -110,10 +110,8 @@ internal class MessageDeflaterInflaterTest {
     val deflater = MessageDeflater(true)
     deflater.close()
 
-    try {
+    assertFailsWith<Exception> {
       deflater.deflate("Hello deflate!".encodeUtf8())
-      fail("")
-    } catch (expected: Exception) {
     }
   }
 
@@ -122,10 +120,8 @@ internal class MessageDeflaterInflaterTest {
 
     inflater.close()
 
-    try {
+    assertFailsWith<Exception> {
       inflater.inflate("f240e30300".decodeHex())
-      fail("")
-    } catch (expected: Exception) {
     }
   }
 
