@@ -28,6 +28,7 @@ import assertk.assertions.isLessThan
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import assertk.fail
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -64,6 +65,7 @@ import javax.net.ssl.SSLProtocolException
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
@@ -97,8 +99,6 @@ import okio.buffer
 import okio.utf8Size
 import org.bouncycastle.tls.TlsFatalAlert
 import org.junit.jupiter.api.AfterEach
-import assertk.fail
-import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
@@ -1235,12 +1235,10 @@ class URLConnectionTest {
         .addHeader("Transfer-encoding: chunked")
         .build()
     )
-    try {
+    assertFailsWith<IOException> {
       getResponse(newRequest("/")).use { response ->
         response.body.string()
-        fail("")
       }
-    } catch (expected: IOException) {
     }
   }
 
@@ -1253,12 +1251,10 @@ class URLConnectionTest {
         .addHeader("Transfer-encoding: chunked")
         .build()
     )
-    try {
+    assertFailsWith<IOException> {
       getResponse(newRequest("/")).use { response ->
         readAscii(response.body.byteStream(), Int.MAX_VALUE)
-        fail("")
       }
-    } catch (expected: IOException) {
     }
   }
 
@@ -1284,12 +1280,10 @@ class URLConnectionTest {
         .socketPolicy(DisconnectAtEnd)
         .build()
     )
-    try {
+    assertFailsWith<IOException> {
       getResponse(newRequest("/")).use { response ->
         readAscii(response.body.byteStream(), Int.MAX_VALUE)
-        fail("")
       }
-    } catch (expected: IOException) {
     }
   }
 

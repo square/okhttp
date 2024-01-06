@@ -1508,12 +1508,10 @@ class HttpOverHttp2Test {
 
     // The first call times out.
     val call1 = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<SocketTimeoutException> {
       call1.execute().use { response ->
         response.body.string()
-        fail("")
       }
-    } catch (expected: SocketTimeoutException) {
     }
 
     // The second call succeeds.

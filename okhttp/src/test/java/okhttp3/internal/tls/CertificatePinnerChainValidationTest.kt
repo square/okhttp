@@ -581,11 +581,8 @@ class CertificatePinnerChainValidationTest {
       .url(server.url("/"))
       .build()
     val call = client.newCall(request)
-    try {
-      call.execute().use { response ->
-        fail("expected connection failure but got $response")
-      }
-    } catch (expected: SSLHandshakeException) {
+    assertFailsWith<SSLHandshakeException> {
+      call.execute()
     }
   }
 
