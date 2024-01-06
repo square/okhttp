@@ -40,6 +40,7 @@ import java.util.Arrays
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.net.ssl.HttpsURLConnection
+import kotlin.test.assertFailsWith
 import okhttp3.Headers
 import okhttp3.Protocol
 import okhttp3.RecordingHostnameVerifier
@@ -500,11 +501,10 @@ class MockWebServerTest {
     val connection = url.openConnection() as HttpURLConnection
     assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK)
     val refusedConnection = url.openConnection() as HttpURLConnection
-    try {
+    assertFailsWith<ConnectException> {
       refusedConnection.getResponseCode()
-      fail<Any>("Second connection should be refused")
-    } catch (e: ConnectException) {
-      assertThat(e.message!!).contains("refused")
+    }.also { expected ->
+      assertThat(expected.message!!).contains("refused")
     }
   }
 

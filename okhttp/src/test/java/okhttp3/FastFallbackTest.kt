@@ -241,11 +241,10 @@ class FastFallbackTest {
       .callTimeout(1_000, TimeUnit.MILLISECONDS)
       .build()
     val call = client.newCall(Request(url))
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("expected a timeout")
-    } catch (e: IOException) {
-      assertThat(e).hasMessage("timeout")
+    }.also { expected ->
+      assertThat(expected).hasMessage("timeout")
     }
   }
 

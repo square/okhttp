@@ -24,6 +24,7 @@ import java.io.InputStreamReader
 import java.io.Reader
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.test.assertFailsWith
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.internal.and
@@ -301,11 +302,10 @@ class ResponseBodyJvmTest {
         return Buffer().writeUtf8("hello")
       }
     }
-    try {
+    assertFailsWith<IOException> {
       body.bytes()
-      fail("")
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo(
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo(
         "Content-Length (10) and stream length (5) disagree"
       )
     }
@@ -326,11 +326,10 @@ class ResponseBodyJvmTest {
         throw AssertionError()
       }
     }
-    try {
+    assertFailsWith<IOException> {
       body.bytes()
-      fail("")
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo(
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo(
         "Cannot buffer entire body for content length: 2147483648"
       )
     }
@@ -392,11 +391,10 @@ class ResponseBodyJvmTest {
         return Buffer().writeUtf8("hello")
       }
     }
-    try {
+    assertFailsWith<IOException> {
       body.byteString()
-      fail("")
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo(
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo(
         "Content-Length (10) and stream length (5) disagree"
       )
     }
@@ -417,11 +415,10 @@ class ResponseBodyJvmTest {
         throw AssertionError()
       }
     }
-    try {
+    assertFailsWith<IOException> {
       body.byteString()
-      fail("")
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo(
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo(
         "Cannot buffer entire body for content length: 2147483648"
       )
     }

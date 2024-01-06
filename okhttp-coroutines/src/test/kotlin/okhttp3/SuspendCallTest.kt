@@ -24,6 +24,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -141,15 +142,12 @@ class SuspendCallTest {
 
       val call = client.newCall(request)
 
-      try {
+      assertFailsWith<IOException> {
         call.executeAsync().use {
           withContext(Dispatchers.IO) {
             it.body.string()
           }
         }
-        fail("No expected to get response")
-      } catch (ioe: IOException) {
-        // expected
       }
     }
   }

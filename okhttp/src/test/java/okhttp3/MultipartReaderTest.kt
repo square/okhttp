@@ -238,11 +238,10 @@ class MultipartReaderTest {
     val partAbc = parts.nextPart()!!
     val partMno = parts.nextPart()!!
 
-    try {
+    assertFailsWith<IllegalStateException> {
       partAbc.body.request(20)
-      fail("")
-    } catch (e: IllegalStateException) {
-      assertThat(e).hasMessage("closed")
+    }.also { expected ->
+      assertThat(expected).hasMessage("closed")
     }
 
     assertThat(partMno.body.readUtf8()).isEqualTo("mnop")
@@ -266,11 +265,10 @@ class MultipartReaderTest {
     val part = parts.nextPart()!!
     parts.close()
 
-    try {
+    assertFailsWith<IllegalStateException> {
       part.body.request(10)
-      fail("")
-    } catch (e: IllegalStateException) {
-      assertThat(e).hasMessage("closed")
+    }.also { expected ->
+      assertThat(expected).hasMessage("closed")
     }
   }
 
@@ -282,11 +280,10 @@ class MultipartReaderTest {
 
     parts.close()
 
-    try {
+    assertFailsWith<IllegalStateException> {
       parts.nextPart()
-      fail("")
-    } catch (e: IllegalStateException) {
-      assertThat(e).hasMessage("closed")
+    }.also { expected ->
+      assertThat(expected).hasMessage("closed")
     }
   }
 

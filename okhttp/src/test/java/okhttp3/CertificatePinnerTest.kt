@@ -215,40 +215,31 @@ class CertificatePinnerTest {
 
   @Test
   fun testBadPin() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       CertificatePinner.Pin(
         "example.co.uk",
         "sha256/a"
       )
-      fail("")
-    } catch (iae: IllegalArgumentException) {
-      // expected
     }
   }
 
   @Test
   fun testBadAlgorithm() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       CertificatePinner.Pin(
         "example.co.uk",
         "sha512/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
       )
-      fail("")
-    } catch (iae: IllegalArgumentException) {
-      // expected
     }
   }
 
   @Test
   fun testBadHost() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       CertificatePinner.Pin(
         "example.*",
         "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
       )
-      fail("")
-    } catch (iae: IllegalArgumentException) {
-      // expected
     }
   }
 

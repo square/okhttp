@@ -677,17 +677,15 @@ open class CallTest {
     val call = client.newCall(request)
     val response = call.execute()
     response.body.close()
-    try {
+    assertFailsWith<IllegalStateException> {
       call.execute()
-      fail("")
-    } catch (e: IllegalStateException) {
-      assertThat(e.message).isEqualTo("Already Executed")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Already Executed")
     }
-    try {
+    assertFailsWith<IllegalStateException> {
       call.enqueue(callback)
-      fail("")
-    } catch (e: IllegalStateException) {
-      assertThat(e.message).isEqualTo("Already Executed")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Already Executed")
     }
     assertThat(server.takeRequest().headers["User-Agent"]).isEqualTo("SyncApiTest")
   }
@@ -706,17 +704,15 @@ open class CallTest {
       .build()
     val call = client.newCall(request)
     call.enqueue(callback)
-    try {
+    assertFailsWith<IllegalStateException> {
       call.execute()
-      fail("")
-    } catch (e: IllegalStateException) {
-      assertThat(e.message).isEqualTo("Already Executed")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Already Executed")
     }
-    try {
+    assertFailsWith<IllegalStateException> {
       call.enqueue(callback)
-      fail("")
-    } catch (e: IllegalStateException) {
-      assertThat(e.message).isEqualTo("Already Executed")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Already Executed")
     }
     assertThat(server.takeRequest().headers["User-Agent"]).isEqualTo("SyncApiTest")
     callback.await(request.url).assertSuccessful()
@@ -1540,12 +1536,10 @@ open class CallTest {
       url = server.url("/"),
       body = "body!".toRequestBody("text/plain".toMediaType()),
     )
-    try {
+    assertFailsWith<IOException> {
       client.newCall(request2).execute()
-      fail("")
-    } catch (e: IOException) {
-      assertThat(e.message!!).startsWith("unexpected end of stream on http://")
-      // expected
+    }.also { expected ->
+      assertThat(expected.message!!).startsWith("unexpected end of stream on http://")
     }
 
     assertThat(listener.recordedEventTypes()).containsExactly(

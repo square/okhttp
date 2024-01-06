@@ -8,6 +8,8 @@ dependencies {
   api(projects.okhttp)
   api(projects.okhttpTls)
   api(libs.assertk)
+  implementation(libs.kotlin.test.common)
+  implementation(libs.kotlin.test.junit)
   api(libs.bouncycastle.bcprov)
   implementation(libs.bouncycastle.bcpkix)
   implementation(libs.bouncycastle.bctls)

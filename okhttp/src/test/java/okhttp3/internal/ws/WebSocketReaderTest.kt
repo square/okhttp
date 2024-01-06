@@ -24,6 +24,7 @@ import java.io.EOFException
 import java.io.IOException
 import java.net.ProtocolException
 import java.util.Random
+import kotlin.test.assertFailsWith
 import okhttp3.internal.format
 import okio.Buffer
 import okio.ByteString
@@ -75,92 +76,83 @@ class WebSocketReaderTest {
 
   @Test fun controlFramesMustBeFinal() {
     data.write("0a00".decodeHex()) // Empty pong.
-    try {
+    assertFailsWith<ProtocolException> {
       clientReader.processNextFrame()
-      fail("")
-    } catch (e: ProtocolException) {
-      assertThat(e.message)
+    }.also { expected ->
+      assertThat(expected.message)
         .isEqualTo("Control frames must be final.")
     }
   }
 
   @Test fun reservedFlag1IsUnsupportedWithNoCompression() {
     data.write("ca00".decodeHex()) // Empty pong, flag 1 set.
-    try {
+    assertFailsWith<ProtocolException> {
       clientReader.processNextFrame()
-      fail("")
-    } catch (e: ProtocolException) {
-      assertThat(e.message).isEqualTo("Unexpected rsv1 flag")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Unexpected rsv1 flag")
     }
   }
 
   @Test fun reservedFlag1IsUnsupportedForControlFrames() {
     data.write("ca00".decodeHex()) // Empty pong, flag 1 set.
-    try {
+    assertFailsWith<ProtocolException> {
       clientReaderWithCompression.processNextFrame()
-      fail("")
-    } catch (e: ProtocolException) {
-      assertThat(e.message).isEqualTo("Unexpected rsv1 flag")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Unexpected rsv1 flag")
     }
   }
 
   @Test fun reservedFlag1IsUnsupportedForContinuationFrames() {
     data.write("c000".decodeHex()) // Empty continuation, flag 1 set.
-    try {
+    assertFailsWith<ProtocolException> {
       clientReaderWithCompression.processNextFrame()
-      fail("")
-    } catch (e: ProtocolException) {
-      assertThat(e.message).isEqualTo("Unexpected rsv1 flag")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Unexpected rsv1 flag")
     }
   }
 
   @Test fun reservedFlags2and3AreUnsupported() {
     data.write("aa00".decodeHex()) // Empty pong, flag 2 set.
-    try {
+    assertFailsWith<ProtocolException> {
       clientReader.processNextFrame()
-      fail("")
-    } catch (e: ProtocolException) {
-      assertThat(e.message).isEqualTo("Unexpected rsv2 flag")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Unexpected rsv2 flag")
     }
     data.clear()
     data.write("9a00".decodeHex()) // Empty pong, flag 3 set.
-    try {
+    assertFailsWith<ProtocolException> {
       clientReader.processNextFrame()
-      fail("")
-    } catch (e: ProtocolException) {
-      assertThat(e.message).isEqualTo("Unexpected rsv3 flag")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Unexpected rsv3 flag")
     }
   }
 
   @Test fun clientSentFramesMustBeMasked() {
     data.write("8100".decodeHex())
-    try {
+    assertFailsWith<ProtocolException> {
       serverReader.processNextFrame()
-      fail("")
-    } catch (e: ProtocolException) {
-      assertThat(e.message)
+    }.also { expected ->
+      assertThat(expected.message)
         .isEqualTo("Client-sent frames must be masked.")
     }
   }
 
   @Test fun serverSentFramesMustNotBeMasked() {
-    data.write("8180".decodeHex())
-    try {
+      data.write("8180".decodeHex())
+    assertFailsWith<ProtocolException> {
       clientReader.processNextFrame()
-      fail("")
-    } catch (e: ProtocolException) {
-      assertThat(e.message)
+    }.also { expected ->
+      assertThat(expected.message)
         .isEqualTo("Server-sent frames must not be masked.")
     }
   }
 
   @Test fun controlFramePayloadMax() {
     data.write("8a7e007e".decodeHex())
-    try {
+    assertFailsWith<ProtocolException> {
       clientReader.processNextFrame()
-      fail("")
-    } catch (e: ProtocolException) {
-      assertThat(e.message)
+    }.also { expected ->
+      assertThat(expected.message)
         .isEqualTo("Control frame must be less than 125B.")
     }
   }
@@ -215,11 +207,10 @@ class WebSocketReaderTest {
 
   @Test fun clientFramePayloadTooLongThrows() {
     data.write("817f8000000000000000".decodeHex())
-    try {
+    assertFailsWith<ProtocolException> {
       clientReader.processNextFrame()
-      fail("")
-    } catch (e: ProtocolException) {
-      assertThat(e.message).isEqualTo(
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo(
         "Frame length 0x8000000000000000 > 0x7FFFFFFFFFFFFFFF"
       )
     }
@@ -299,46 +290,36 @@ class WebSocketReaderTest {
 
   @Test fun clientIncompleteMessageBodyThrows() {
     data.write("810548656c".decodeHex()) // Length = 5, "Hel"
-    try {
+    assertFailsWith<EOFException> {
       clientReader.processNextFrame()
-      fail("")
-    } catch (ignored: EOFException) {
     }
   }
 
   @Test fun clientUncompressedMessageWithCompressedFlagThrows() {
     data.write("c10548656c6c6f".decodeHex()) // Uncompressed 'Hello', flag 1 set
-    try {
+    assertFailsWith<IOException> {
       clientReaderWithCompression.processNextFrame()
-      fail("")
-    } catch (ignored: IOException) {
     }
   }
 
   @Test fun clientIncompleteControlFrameBodyThrows() {
     data.write("8a0548656c".decodeHex()) // Length = 5, "Hel"
-    try {
+    assertFailsWith<EOFException> {
       clientReader.processNextFrame()
-      fail("")
-    } catch (ignored: EOFException) {
     }
   }
 
   @Test fun serverIncompleteMessageBodyThrows() {
     data.write("818537fa213d7f9f4d".decodeHex()) // Length = 5, "Hel"
-    try {
+    assertFailsWith<EOFException> {
       serverReader.processNextFrame()
-      fail("")
-    } catch (ignored: EOFException) {
     }
   }
 
   @Test fun serverIncompleteControlFrameBodyThrows() {
     data.write("8a8537fa213d7f9f4d".decodeHex()) // Length = 5, "Hel"
-    try {
+    assertFailsWith<EOFException> {
       serverReader.processNextFrame()
-      fail("")
-    } catch (ignored: EOFException) {
     }
   }
 
@@ -361,11 +342,10 @@ class WebSocketReaderTest {
     val bytes = binaryData(200)
     data.write("0264".decodeHex()).write(bytes, 0, 100)
     data.write("8264".decodeHex()).write(bytes, 100, 100)
-    try {
+    assertFailsWith<ProtocolException> {
       clientReader.processNextFrame()
-      fail("")
-    } catch (e: ProtocolException) {
-      assertThat(e.message)
+    }.also { expected ->
+      assertThat(expected.message)
         .isEqualTo("Expected continuation opcode. Got: 2")
     }
   }
@@ -390,11 +370,10 @@ class WebSocketReaderTest {
 
   @Test fun closeLengthOfOneThrows() {
     data.write("880100".decodeHex()) // Close with invalid 1-byte payload
-    try {
+    assertFailsWith<ProtocolException> {
       clientReader.processNextFrame()
-      fail("")
-    } catch (e: ProtocolException) {
-      assertThat(e.message)
+    }.also { expected ->
+      assertThat(expected.message)
         .isEqualTo("Malformed close payload length of 1.")
     }
   }
@@ -414,19 +393,17 @@ class WebSocketReaderTest {
 
   @Test fun closeOutOfRangeThrows() {
     data.write("88020001".decodeHex()) // Close with code 1
-    try {
+    assertFailsWith<ProtocolException> {
       clientReader.processNextFrame()
-      fail("")
-    } catch (e: ProtocolException) {
-      assertThat(e.message)
+    }.also { expected ->
+      assertThat(expected.message)
         .isEqualTo("Code must be in range [1000,5000): 1")
     }
     data.write("88021388".decodeHex()) // Close with code 5000
-    try {
+    assertFailsWith<ProtocolException> {
       clientReader.processNextFrame()
-      fail("")
-    } catch (e: ProtocolException) {
-      assertThat(e.message)
+    }.also { expected ->
+      assertThat(expected.message)
         .isEqualTo("Code must be in range [1000,5000): 5000")
     }
   }
@@ -440,11 +417,10 @@ class WebSocketReaderTest {
     }
     var count = 0
     while (!data.exhausted()) {
-      try {
+      assertFailsWith<ProtocolException> {
         clientReader.processNextFrame()
-        fail("")
-      } catch (e: ProtocolException) {
-        assertThat(e.message!!)
+      }.also { expected ->
+        assertThat(expected.message!!)
           .matches(Regex("Code \\d+ is reserved and may not be used."))
       }
       count++
@@ -458,11 +434,10 @@ class WebSocketReaderTest {
     callback.assertTextMessage("Hello")
     data.write("c107f248cdc9c90700".decodeHex()) // Hello
     clientReaderWithCompression.close()
-    try {
+    assertFailsWith<Exception> {
       clientReaderWithCompression.processNextFrame()
-      fail("")
-    } catch (e: Exception) {
-      assertThat(e.message!!).contains("closed")
+    }.also { expected ->
+      assertThat(expected.message!!).contains("closed")
     }
   }
 

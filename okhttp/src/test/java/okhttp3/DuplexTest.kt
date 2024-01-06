@@ -466,11 +466,10 @@ class DuplexTest {
       .build()
     val call = client.newCall(request)
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("timeout")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("timeout")
       assertTrue(call.isCanceled())
     }
   }
@@ -628,11 +627,10 @@ class DuplexTest {
       .readTimeout(1000, TimeUnit.MILLISECONDS)
       .build()
     val call = client.newCall(request)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("timeout")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("timeout")
     }
   }
 
@@ -655,11 +653,10 @@ class DuplexTest {
       .build()
     val call = client.newCall(request)
     val response = call.execute()
-    try {
+    assertFailsWith<IOException> {
       response.body.string()
-      fail("")
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("timeout")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("timeout")
     }
   }
 

@@ -161,11 +161,8 @@ class CallKotlinTest {
         .header("Content-Type", "application/xml")
         .put(ErringRequestBody())
         .build()
-    try {
+    assertFailsWith<IOException> {
       client.newCall(request).execute()
-      fail("test should always throw exception")
-    } catch (_: IOException) {
-      // NOTE: expected
     }
 
     request = Request.Builder()

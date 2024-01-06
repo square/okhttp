@@ -25,7 +25,6 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.isLessThan
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
-import assertk.fail
 import java.io.EOFException
 import java.io.IOException
 import java.io.InterruptedIOException

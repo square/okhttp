@@ -38,6 +38,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.HttpsURLConnection
+import kotlin.test.assertFailsWith
 import mockwebserver3.SocketPolicy.DisconnectAtStart
 import mockwebserver3.SocketPolicy.DisconnectDuringRequestBody
 import mockwebserver3.SocketPolicy.DisconnectDuringResponseBody
@@ -496,11 +497,10 @@ class MockWebServerTest {
     val connection = url.openConnection() as HttpURLConnection
     assertThat(connection.responseCode).isEqualTo(HttpURLConnection.HTTP_OK)
     val refusedConnection = url.openConnection() as HttpURLConnection
-    try {
+    assertFailsWith<ConnectException> {
       refusedConnection.responseCode
-      fail<Any?>("Second connection should be refused")
-    } catch (e: ConnectException) {
-      assertThat(e.message!!).contains("refused")
+    }.also { expected ->
+      assertThat(expected.message!!).contains("refused")
     }
   }
 

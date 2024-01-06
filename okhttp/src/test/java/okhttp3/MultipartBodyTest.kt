@@ -19,6 +19,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import java.io.IOException
 import java.nio.charset.StandardCharsets
+import kotlin.test.assertFailsWith
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -26,18 +27,15 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import okio.BufferedSink
 import okio.utf8Size
-import assertk.fail
-import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Test
 
 class MultipartBodyTest {
   @Test
   fun onePartRequired() {
-    try {
+    assertFailsWith<IllegalStateException> {
       MultipartBody.Builder().build()
-      fail("")
-    } catch (e: IllegalStateException) {
-      assertThat(e.message)
+    }.also { expected ->
+      assertThat(expected.message)
         .isEqualTo("Multipart body must have at least one part.")
     }
   }
