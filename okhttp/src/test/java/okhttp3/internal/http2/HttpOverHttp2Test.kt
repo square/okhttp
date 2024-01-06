@@ -88,6 +88,7 @@ import okio.Buffer
 import okio.BufferedSink
 import okio.GzipSink
 import okio.buffer
+import org.bouncycastle.tls.TlsFatalAlert
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -1472,10 +1473,10 @@ class HttpOverHttp2Test {
     assertFailsWith<IOException> {
       call1.execute()
     }.also { expected ->
-      assertThat(expected::class).isIn(
-        SocketTimeoutException::class,
-        SSLException::class,
-      )
+      when (expected) {
+        is SocketTimeoutException, is SSLException -> {}
+        else -> throw expected
+      }
     }
 
     // The second call times out because it uses the same bad connection.

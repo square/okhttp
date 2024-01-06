@@ -574,10 +574,10 @@ class URLConnectionTest {
     assertFailsWith<IOException> {
       getResponse(newRequest("/"))
     }.also { expected ->
-      assertThat(expected::class).isIn(
-        SSLException::class,
-        TlsFatalAlert::class,
-      )
+      when (expected) {
+        is SSLException, is TlsFatalAlert -> {}
+        else -> throw expected
+      }
     }
   }
 

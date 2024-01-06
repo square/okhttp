@@ -21,6 +21,7 @@ import assertk.assertions.isIn
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLException
+import kotlin.math.exp
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -246,10 +247,10 @@ class ConnectionReuseTest {
     assertFailsWith<IOException> {
       anotherClient.newCall(request).execute()
     }.also { expected ->
-      assertThat(expected::class).isIn(
-        SSLException::class,
-        TlsFatalAlert::class,
-      )
+      when (expected) {
+        is SSLException, is TlsFatalAlert -> {}
+        else -> throw expected
+      }
     }
   }
 
