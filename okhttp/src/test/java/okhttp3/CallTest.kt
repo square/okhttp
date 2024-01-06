@@ -31,6 +31,7 @@ import assertk.assertions.isNotSameAs
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.assertions.startsWith
+import assertk.fail
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -60,6 +61,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLProtocolException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.QueueDispatcher
@@ -107,11 +109,9 @@ import okio.GzipSink
 import okio.Path.Companion.toPath
 import okio.buffer
 import okio.fakefilesystem.FakeFileSystem
+import okio.use
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
-import assertk.fail
-import kotlin.test.assertFailsWith
-import okio.use
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -1318,17 +1318,23 @@ open class CallTest {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse(socketPolicy = FailHandshake))
     val request = Request.Builder().url(server.url("/")).build()
-    try {
+    assertFailsWith<IOException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: SSLProtocolException) {
-      // RI response to the FAIL_HANDSHAKE
-    } catch (expected: SSLHandshakeException) {
-      // Android's response to the FAIL_HANDSHAKE
-    } catch (expected: SSLException) {
-      // JDK 11 response to the FAIL_HANDSHAKE
-      val jvmVersion = System.getProperty("java.specification.version")
-      assertThat(jvmVersion).isEqualTo("11")
+    }.also { expected ->
+      when (expected) {
+        is SSLProtocolException -> {
+          // RI response to the FAIL_HANDSHAKE
+        }
+        is SSLHandshakeException -> {
+          // Android's response to the FAIL_HANDSHAKE
+        }
+        is SSLException -> {
+          // JDK 11 response to the FAIL_HANDSHAKE
+          val jvmVersion = System.getProperty("java.specification.version")
+          assertThat(jvmVersion).isEqualTo("11")
+        }
+        else -> throw expected
+      }
     }
   }
 

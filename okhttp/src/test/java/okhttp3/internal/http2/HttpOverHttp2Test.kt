@@ -21,6 +21,7 @@ import assertk.assertions.hasMessage
 import assertk.assertions.isCloseTo
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isIn
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.fail
@@ -1468,11 +1469,13 @@ class HttpOverHttp2Test {
 
     // The first call times out.
     val call1 = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<IOException> {
       call1.execute()
-      fail("")
-    } catch (expected: SocketTimeoutException) {
-    } catch (expected: SSLException) {
+    }.also { expected ->
+      assertThat(expected::class).isIn(
+        SocketTimeoutException::class,
+        SSLException::class,
+      )
     }
 
     // The second call times out because it uses the same bad connection.

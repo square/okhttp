@@ -20,7 +20,6 @@ import assertk.assertions.endsWith
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import assertk.assertions.startsWith
-import assertk.fail
 import java.io.IOException
 import java.net.SocketException
 import java.security.GeneralSecurityException
@@ -211,17 +210,23 @@ class ClientAuthTest {
     server.useHttps(socketFactory)
     server.requireClientAuth()
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: SSLHandshakeException) {
-      // JDK 11+
-    } catch (expected: SSLException) {
-      // javax.net.ssl.SSLException: readRecord
-    } catch (expected: SocketException) {
-      // Conscrypt, JDK 8 (>= 292), JDK 9
-    } catch (expected: IOException) {
-      assertThat(expected.message).isEqualTo("exhausted all routes")
+    }.also { expected ->
+      when (expected) {
+        is SSLHandshakeException -> {
+          // JDK 11+
+        }
+        is SSLException -> {
+          // javax.net.ssl.SSLException: readRecord
+        }
+        is SocketException -> {
+          // Conscrypt, JDK 8 (>= 292), JDK 9
+        }
+        else -> {
+          assertThat(expected.message).isEqualTo("exhausted all routes")
+        }
+      }
     }
   }
 
@@ -256,19 +261,26 @@ class ClientAuthTest {
     server.useHttps(socketFactory)
     server.requireClientAuth()
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: SSLHandshakeException) {
-      // JDK 11+
-    } catch (expected: SSLException) {
-      // javax.net.ssl.SSLException: readRecord
-    } catch (expected: SocketException) {
-      // Conscrypt, JDK 8 (>= 292), JDK 9
-    } catch (expected: ConnectionShutdownException) {
-      // It didn't fail until it reached the application layer.
-    } catch (expected: IOException) {
-      assertThat(expected.message).isEqualTo("exhausted all routes")
+    }.also { expected ->
+      when (expected) {
+        is SSLHandshakeException -> {
+          // JDK 11+
+        }
+        is SSLException -> {
+          // javax.net.ssl.SSLException: readRecord
+        }
+        is SocketException -> {
+          // Conscrypt, JDK 8 (>= 292), JDK 9
+        }
+        is ConnectionShutdownException -> {
+          // It didn't fail until it reached the application layer.
+        }
+        else -> {
+          assertThat(expected.message).isEqualTo("exhausted all routes")
+        }
+      }
     }
   }
 

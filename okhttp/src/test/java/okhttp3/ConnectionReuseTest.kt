@@ -17,9 +17,11 @@ package okhttp3
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import assertk.fail
+import assertk.assertions.isIn
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLException
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.DisconnectAfterRequest
@@ -241,11 +243,13 @@ class ConnectionReuseTest {
       .build()
 
     // This client fails to connect because the new SSL socket factory refuses.
-    try {
+    assertFailsWith<IOException> {
       anotherClient.newCall(request).execute()
-      fail("")
-    } catch (expected: SSLException) {
-    } catch (expected: TlsFatalAlert) {
+    }.also { expected ->
+      assertThat(expected::class).isIn(
+        SSLException::class,
+        TlsFatalAlert::class,
+      )
     }
   }
 

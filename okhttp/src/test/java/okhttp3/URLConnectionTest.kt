@@ -571,11 +571,13 @@ class URLConnectionTest {
     client = client.newBuilder()
       .sslSocketFactory(sslSocketFactory2, trustManager)
       .build()
-    try {
+    assertFailsWith<IOException> {
       getResponse(newRequest("/"))
-      fail("without an SSL socket factory, the connection should fail")
-    } catch (expected: SSLException) {
-    } catch (expected: TlsFatalAlert) {
+    }.also { expected ->
+      assertThat(expected::class).isIn(
+        SSLException::class,
+        TlsFatalAlert::class,
+      )
     }
   }
 
@@ -676,15 +678,19 @@ class URLConnectionTest {
     // Flaky https://github.com/square/okhttp/issues/5222
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse()) // unused
-    try {
+    assertFailsWith<IOException> {
       getResponse(newRequest("/foo"))
-      fail("")
-    } catch (expected: SSLHandshakeException) {
-      // Allow conscrypt to fail in different ways
-      if (!platform.isConscrypt()) {
-        assertThat(expected.cause!!).isInstanceOf<CertificateException>()
+    }.also { expected ->
+      when (expected) {
+        is SSLHandshakeException -> {
+          // Allow conscrypt to fail in different ways
+          if (!platform.isConscrypt()) {
+            assertThat(expected.cause!!).isInstanceOf<CertificateException>()
+          }
+        }
+        is TlsFatalAlert -> {}
+        else -> throw expected
       }
-    } catch (expected: TlsFatalAlert) {
     }
     assertThat(server.requestCount).isEqualTo(0)
   }
@@ -3690,18 +3696,25 @@ class URLConnectionTest {
         handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
       )
       .build()
-    try {
+    assertFailsWith<IOException> {
       getResponse(newRequest("/"))
-      fail("")
-    } catch (expected: SSLProtocolException) {
-      // RI response to the FAIL_HANDSHAKE
-    } catch (expected: SSLHandshakeException) {
-      // Android's response to the FAIL_HANDSHAKE
-    } catch (expected: SSLException) {
-      // JDK 1.9 response to the FAIL_HANDSHAKE
-      // javax.net.ssl.SSLException: Unexpected handshake message: client_hello
-    } catch (expected: SocketException) {
-      // Conscrypt's response to the FAIL_HANDSHAKE
+    }.also { expected ->
+      when (expected) {
+        is SSLProtocolException -> {
+          // RI response to the FAIL_HANDSHAKE
+        }
+        is SSLHandshakeException -> {
+          // Android's response to the FAIL_HANDSHAKE
+        }
+        is SSLException -> {
+          // JDK 1.9 response to the FAIL_HANDSHAKE
+          // javax.net.ssl.SSLException: Unexpected handshake message: client_hello
+        }
+        is SocketException -> {
+          // Conscrypt's response to the FAIL_HANDSHAKE
+        }
+        else -> throw expected
+      }
     }
   }
 
