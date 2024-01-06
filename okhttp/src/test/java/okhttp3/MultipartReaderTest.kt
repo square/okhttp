@@ -301,10 +301,9 @@ class MultipartReaderTest {
       source = Buffer().writeUtf8(multipart)
     )
 
-    try {
+    assertFailsWith<ProtocolException> {
       parts.nextPart()
-      fail("")
-    } catch (expected: ProtocolException) {
+    }.also { expected ->
       assertThat(expected).hasMessage("expected at least 1 part")
     }
   }
@@ -410,10 +409,9 @@ class MultipartReaderTest {
       source = Buffer().writeUtf8(multipart)
     )
 
-    try {
+    assertFailsWith<ProtocolException> {
       parts.nextPart()
-      fail("")
-    } catch (expected: ProtocolException) {
+    }.also { expected ->
       assertThat(expected).hasMessage("unexpected characters after boundary")
     }
   }
@@ -433,10 +431,9 @@ class MultipartReaderTest {
     )
 
     parts.nextPart()
-    try {
+    assertFailsWith<ProtocolException> {
       parts.nextPart()
-      fail("")
-    } catch (expected: ProtocolException) {
+    }.also { expected ->
       assertThat(expected).hasMessage("unexpected characters after boundary")
     }
   }

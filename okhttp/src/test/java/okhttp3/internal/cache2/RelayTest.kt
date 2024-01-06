@@ -24,6 +24,7 @@ import java.io.File
 import java.io.IOException
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
+import kotlin.test.assertFailsWith
 import okhttp3.internal.cache2.Relay.Companion.edit
 import okhttp3.internal.cache2.Relay.Companion.read
 import okio.Buffer
@@ -163,10 +164,9 @@ class RelayTest {
     assertThat(source1.readUtf8(10)).isEqualTo("abcdefghij")
     source1.close() // Not exhausted!
     assertThat(relay1.isClosed).isTrue()
-    try {
+    assertFailsWith<IOException> {
       read(file)
-      assertk.fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("unreadable cache file")
     }
     assertFile(Relay.PREFIX_DIRTY, -1L, -1, null, null)

@@ -263,10 +263,9 @@ class ServerTruncatesRequestTest {
       )
     )
 
-    try {
+    assertFailsWith<IOException> {
       callA.execute()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected).hasMessage("boom")
     }
 

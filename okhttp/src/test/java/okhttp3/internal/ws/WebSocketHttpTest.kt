@@ -39,6 +39,7 @@ import java.util.Random
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.assertFailsWith
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -608,10 +609,9 @@ class WebSocketHttpTest {
     val server = serverListener.assertOpen()
     clientListener.assertOpen()
     val reason = repeat('X', 124)
-    try {
+    assertFailsWith<IllegalArgumentException> {
       webSocket.close(1000, reason)
-      fail("")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("reason.size() > 123: $reason")
     }
     webSocket.close(1000, null)

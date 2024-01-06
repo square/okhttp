@@ -44,6 +44,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junitpioneer.jupiter.RetryingTest
 
 @Timeout(30)
@@ -229,10 +230,9 @@ class CallKotlinTest {
         .build()
 
     val request = Request(server.url("/"))
-    try {
+    assertFailsWith<IOException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       expected.assertSuppressed {
         val suppressed = it.single()
         assertThat(suppressed).isInstanceOf(IOException::class.java)
@@ -251,10 +251,9 @@ class CallKotlinTest {
         .build()
 
     val request = Request(server.url("/"))
-    try {
+    assertFailsWith<IOException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       expected.assertSuppressed {
         val suppressed = it.single()
         assertThat(suppressed).isInstanceOf(IOException::class.java)

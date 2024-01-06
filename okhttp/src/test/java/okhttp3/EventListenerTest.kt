@@ -222,10 +222,9 @@ class EventListenerTest {
         .url(server.url("/"))
         .build()
     )
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isIn("timeout", "Read timed out")
     }
     assertThat(listener.recordedEventTypes()).containsExactly(
@@ -255,10 +254,9 @@ class EventListenerTest {
         .build()
     )
     val response = call.execute()
-    try {
+    assertFailsWith<IOException> {
       response.body.string()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("unexpected end of stream")
     }
     assertThat(listener.recordedEventTypes()).containsExactly(
@@ -280,10 +278,9 @@ class EventListenerTest {
         .build()
     )
     call.cancel()
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("Canceled")
     }
     assertThat(listener.recordedEventTypes()).containsExactly(

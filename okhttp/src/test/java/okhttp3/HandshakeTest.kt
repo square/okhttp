@@ -26,6 +26,7 @@ import java.security.cert.Certificate
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.tls.HeldCertificate
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Test
 
 class HandshakeTest {
@@ -89,10 +90,9 @@ class HandshakeTest {
         null
     )
 
-    try {
+    assertFailsWith<IOException> {
       sslSession.handshake()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected).hasMessage("cipherSuite == SSL_NULL_WITH_NULL_NULL")
     }
   }
@@ -106,10 +106,9 @@ class HandshakeTest {
         null
     )
 
-    try {
+    assertFailsWith<IOException> {
       sslSession.handshake()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected).hasMessage("cipherSuite == TLS_NULL_WITH_NULL_NULL")
     }
   }

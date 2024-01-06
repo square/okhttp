@@ -547,10 +547,9 @@ class HttpOverHttp2Test {
 
     // Make a call expecting a timeout reading the response headers.
     val call1 = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<SocketTimeoutException> {
       call1.execute()
-      fail("Should have timed out!")
-    } catch (expected: SocketTimeoutException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("timeout")
     }
 
@@ -614,10 +613,9 @@ class HttpOverHttp2Test {
     // Make a call expecting a timeout reading the response body.
     val call1 = client.newCall(Request(server.url("/")))
     val response1 = call1.execute()
-    try {
+    assertFailsWith<SocketTimeoutException> {
       response1.body.string()
-      fail("Should have timed out!")
-    } catch (expected: SocketTimeoutException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("timeout")
     }
 
@@ -824,10 +822,9 @@ class HttpOverHttp2Test {
     )
     server.enqueue(MockResponse(body = "abc"))
     val call = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<StreamResetException> {
       call.execute()
-      fail("")
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
     }
   }
@@ -875,10 +872,9 @@ class HttpOverHttp2Test {
     )
 
     val request = Request(server.url("/"))
-    try {
+    assertFailsWith<StreamResetException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
     }
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0) // New connection.
@@ -898,10 +894,9 @@ class HttpOverHttp2Test {
     val request = Request(server.url("/"))
 
     // First call fails because it only has one route.
-    try {
+    assertFailsWith<StreamResetException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
     }
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
@@ -928,10 +923,9 @@ class HttpOverHttp2Test {
     val request = Request(server.url("/"))
 
     // First call makes a new connection and fails because it is the only route.
-    try {
+    assertFailsWith<StreamResetException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
     }
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0) // New connection.
@@ -967,10 +961,9 @@ class HttpOverHttp2Test {
       MockResponse(body = "abc")
     )
     val call = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<StreamResetException> {
       call.execute()
-      fail("")
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
     }
   }
@@ -1193,10 +1186,9 @@ class HttpOverHttp2Test {
       .retryOnConnectionFailure(false)
       .build()
     val call = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<StreamResetException> {
       call.execute()
-      fail("")
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(errorCode)
     }
   }
@@ -1439,10 +1431,9 @@ class HttpOverHttp2Test {
     // Make a call. It'll fail as soon as our pings detect a problem.
     val call = client.newCall(Request(server.url("/")))
     val executeAtNanos = System.nanoTime()
-    try {
+    assertFailsWith<StreamResetException> {
       call.execute()
-      fail("")
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo(
         "stream was reset: PROTOCOL_ERROR"
       )
@@ -1927,10 +1918,9 @@ class HttpOverHttp2Test {
       )
     )
     callReference.set(call)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(call.isCanceled()).isTrue()
     }
     val recordedRequest = server.takeRequest()

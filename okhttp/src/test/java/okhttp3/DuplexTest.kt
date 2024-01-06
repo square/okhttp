@@ -368,11 +368,10 @@ class DuplexTest {
         .isEqualTo("this is /b")
     }
     val requestBody = (call.request().body as AsyncRequestBody?)!!.takeSink()
-    try {
+    assertFailsWith<IOException> {
       requestBody.writeUtf8("request body\n")
       requestBody.flush()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("stream was reset: CANCEL")
     }
@@ -430,11 +429,10 @@ class DuplexTest {
 
     // First duplex request is detached with violence.
     val requestBody1 = (call.request().body as AsyncRequestBody?)!!.takeSink()
-    try {
+    assertFailsWith<IOException> {
       requestBody1.writeUtf8("not authenticated\n")
       requestBody1.flush()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("stream was reset: CANCEL")
     }

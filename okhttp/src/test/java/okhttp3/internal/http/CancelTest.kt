@@ -28,6 +28,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import javax.net.ServerSocketFactory
 import javax.net.SocketFactory
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.Call
@@ -168,10 +169,9 @@ class CancelTest {
       )
     )
     cancelLater(call, 500)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertEquals(cancelMode == INTERRUPT, Thread.interrupted())
     }
   }
@@ -195,11 +195,10 @@ class CancelTest {
     cancelLater(call, 500)
     val responseBody = response.body.byteStream()
     val buffer = ByteArray(1024)
-    try {
+    assertFailsWith<IOException> {
       while (responseBody.read(buffer) != -1) {
       }
-      fail("Expected connection to be closed")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertEquals(cancelMode == INTERRUPT, Thread.interrupted())
     }
     responseBody.close()
@@ -227,11 +226,10 @@ class CancelTest {
     val cancelLatch = cancelLater(call, 500)
     val responseBody = response.body.byteStream()
     val buffer = ByteArray(1024)
-    try {
+    assertFailsWith<IOException> {
       while (responseBody.read(buffer) != -1) {
       }
-      fail("Expected connection to be closed")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertEquals(cancelMode == INTERRUPT, Thread.interrupted())
     }
     responseBody.close()
@@ -244,7 +242,7 @@ class CancelTest {
 
     assertThat(events).startsWith("CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired")
     if (cancelMode == CANCEL) {
-       assertThat(events).contains("Canceled")
+      assertThat(events).contains("Canceled")
     } else {
       assertThat(events).doesNotContain("Canceled")
     }

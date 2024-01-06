@@ -112,91 +112,81 @@ class HeadersTest {
   }
 
   @Test fun builderRejectsUnicodeInHeaderName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add("héader1", "value1")
-      fail("Should have complained about invalid name")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 1 in header name: héader1")
     }
   }
 
   @Test fun builderRejectsUnicodeInHeaderValue() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add("header1", "valué1")
-      fail("Should have complained about invalid value")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 4 in header1 value: valué1")
     }
   }
 
   @Test fun varargFactoryRejectsUnicodeInHeaderName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       headersOf("héader1", "value1")
-      fail("Should have complained about invalid value")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 1 in header name: héader1")
     }
   }
 
   @Test fun varargFactoryRejectsUnicodeInHeaderValue() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       headersOf("header1", "valué1")
-      fail("Should have complained about invalid value")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 4 in header1 value: valué1")
     }
   }
 
   @Test fun mapFactoryRejectsUnicodeInHeaderName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       mapOf("héader1" to "value1").toHeaders()
-      fail("Should have complained about invalid value")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 1 in header name: héader1")
     }
   }
 
   @Test fun mapFactoryRejectsUnicodeInHeaderValue() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       mapOf("header1" to "valué1").toHeaders()
-      fail("Should have complained about invalid value")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 4 in header1 value: valué1")
     }
   }
 
   @Test fun sensitiveHeadersNotIncludedInExceptions() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add("Authorization", "valué1")
-      fail("Should have complained about invalid name")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 4 in Authorization value")
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add("Cookie", "valué1")
-      fail("Should have complained about invalid name")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 4 in Cookie value")
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add("Proxy-Authorization", "valué1")
-      fail("Should have complained about invalid name")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 4 in Proxy-Authorization value")
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add("Set-Cookie", "valué1")
-      fail("Should have complained about invalid name")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 4 in Set-Cookie value")
     }

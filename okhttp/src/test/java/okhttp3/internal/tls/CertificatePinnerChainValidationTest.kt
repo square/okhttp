@@ -41,6 +41,7 @@ import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.newKeyManager
 import okhttp3.tls.internal.TlsUtil.newTrustManager
 import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -266,10 +267,9 @@ class CertificatePinnerChainValidationTest {
       .url(server.url("/"))
       .build()
     val call = client.newCall(request)
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       call.execute()
-      fail("")
-    } catch (expected: SSLPeerUnverifiedException) {
+    }.also { expected ->
       // Certificate pinning fails!
       assertThat(expected.message!!).startsWith("Certificate pinning failure!")
     }

@@ -110,10 +110,9 @@ class InterceptorTest {
     val request = Request.Builder()
       .url(server.url("/"))
       .build()
-    try {
+    assertFailsWith<IllegalStateException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo(
         "network interceptor $interceptor must call proceed() exactly once"
       )
@@ -134,10 +133,9 @@ class InterceptorTest {
     val request = Request.Builder()
       .url(server.url("/"))
       .build()
-    try {
+    assertFailsWith<IllegalStateException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo(
         "network interceptor $interceptor must call proceed() exactly once"
       )
@@ -167,10 +165,9 @@ class InterceptorTest {
     val request = Request.Builder()
       .url(server.url("/"))
       .build()
-    try {
+    assertFailsWith<IllegalStateException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo(
         "network interceptor $interceptor must retain the same host and port"
       )
@@ -492,10 +489,9 @@ class InterceptorTest {
     val request = Request.Builder()
       .url(server.url("/"))
       .build()
-    try {
+    assertFailsWith<RuntimeException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: RuntimeException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("boom!")
     }
   }
@@ -660,10 +656,9 @@ class InterceptorTest {
     }
     val request1 = Request.Builder().url(server.url("/")).build()
     val call = client.newCall(request1)
-    try {
+    assertFailsWith<IllegalStateException> {
       call.execute()
-      fail("")
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Timeouts can't be adjusted in a network interceptor")
     }
@@ -679,10 +674,9 @@ class InterceptorTest {
     }
     val request1 = Request.Builder().url(server.url("/")).build()
     val call = client.newCall(request1)
-    try {
+    assertFailsWith<IllegalStateException> {
       call.execute()
-      fail("")
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Timeouts can't be adjusted in a network interceptor")
     }
@@ -698,10 +692,9 @@ class InterceptorTest {
     }
     val request1 = Request.Builder().url(server.url("/")).build()
     val call = client.newCall(request1)
-    try {
+    assertFailsWith<IllegalStateException> {
       call.execute()
-      fail("")
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Timeouts can't be adjusted in a network interceptor")
     }

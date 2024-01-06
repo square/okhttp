@@ -619,10 +619,9 @@ class URLConnectionTest {
         suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager
       )
       .build()
-    try {
+    assertFailsWith<IOException> {
       getResponse(newRequest("/foo"))
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       expected.assertSuppressed { throwables: List<Throwable>? ->
         assertThat(throwables!!.size).isEqualTo(1)
       }
@@ -1128,10 +1127,9 @@ class URLConnectionTest {
       .build()
     val call = client.newCall(newRequest("/"))
     callReference.set(call)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("Connection should not be established")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("Canceled")
     }
   }
@@ -2643,10 +2641,9 @@ class URLConnectionTest {
         )
       )
     }
-    try {
+    assertFailsWith<ProtocolException> {
       getResponse(newRequest("/0"))
-      fail("")
-    } catch (expected: ProtocolException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo(
         "Too many follow-up requests: 21"
       )
@@ -2905,10 +2902,9 @@ class URLConnectionTest {
         body = "This body is not allowed!",
       )
     )
-    try {
+    assertFailsWith<IOException> {
       getResponse(newRequest("/"))
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("HTTP 204 had non-zero Content-Length: 25")
     }
   }
@@ -3542,10 +3538,9 @@ class URLConnectionTest {
     client = client.newBuilder()
       .authenticator(RecordingOkAuthenticator(credential, null))
       .build()
-    try {
+    assertFailsWith<ProtocolException> {
       getResponse(newRequest("/"))
-      fail("")
-    } catch (expected: ProtocolException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("Too many follow-up requests: 21")
     }
   }
@@ -3856,10 +3851,9 @@ class URLConnectionTest {
       .dns { hostname: String? -> throw RuntimeException("boom!") }
       .build()
     server.enqueue(MockResponse())
-    try {
+    assertFailsWith<RuntimeException> {
       getResponse(newRequest("/"))
-      fail("")
-    } catch (expected: RuntimeException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("boom!")
     }
   }

@@ -120,12 +120,11 @@ class HeadersJvmTest {
   }
 
   @Test fun addUnsafeNonAsciiRejectsUnicodeName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder()
         .addUnsafeNonAscii("héader1", "value1")
         .build()
-      fail("Should have complained about invalid value")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("Unexpected char 0xe9 at 1 in header name: héader1")
     }
   }

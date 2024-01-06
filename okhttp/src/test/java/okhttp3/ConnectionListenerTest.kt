@@ -105,10 +105,9 @@ open class ConnectionListenerTest {
     val call = client.newCall(Request.Builder()
       .url(server!!.url("/"))
       .build())
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isIn("timeout", "Read timed out")
     }
     assertThat(listener.recordedEventTypes()).containsExactly(
