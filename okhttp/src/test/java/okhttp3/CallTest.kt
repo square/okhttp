@@ -31,6 +31,7 @@ import assertk.assertions.isNotSameAs
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.assertions.startsWith
+import assertk.fail
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -60,6 +61,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLProtocolException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.QueueDispatcher
@@ -107,9 +109,9 @@ import okio.GzipSink
 import okio.Path.Companion.toPath
 import okio.buffer
 import okio.fakefilesystem.FakeFileSystem
+import okio.use
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -203,10 +205,9 @@ open class CallTest {
   @Test
   fun invalidScheme() {
     val requestBuilder = Request.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       requestBuilder.url("ftp://hostname/path")
-      fail<Unit>()
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("Expected URL scheme 'http' or 'https' but was 'ftp'")
     }
   }
@@ -214,10 +215,9 @@ open class CallTest {
   @Test
   fun invalidPort() {
     val requestBuilder = Request.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       requestBuilder.url("http://localhost:65536/")
-      fail<Unit>()
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("Invalid URL port: \"65536\"")
     }
   }
@@ -268,10 +268,8 @@ open class CallTest {
   @Test
   fun getWithRequestBody() {
     server.enqueue(MockResponse())
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Request.Builder().method("GET", "abc".toRequestBody("text/plain".toMediaType()))
-      fail<Unit>()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -499,10 +497,9 @@ open class CallTest {
     client = client.newBuilder()
       .authenticator(RecordingOkAuthenticator(credential, null))
       .build()
-    try {
+    assertFailsWith<IOException> {
       client.newCall(Request.Builder().url(server.url("/0")).build()).execute()
-      fail<Unit>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("Too many follow-up requests: 21")
     }
   }
@@ -680,17 +677,15 @@ open class CallTest {
     val call = client.newCall(request)
     val response = call.execute()
     response.body.close()
-    try {
+    assertFailsWith<IllegalStateException> {
       call.execute()
-      fail<Unit>()
-    } catch (e: IllegalStateException) {
-      assertThat(e.message).isEqualTo("Already Executed")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Already Executed")
     }
-    try {
+    assertFailsWith<IllegalStateException> {
       call.enqueue(callback)
-      fail<Unit>()
-    } catch (e: IllegalStateException) {
-      assertThat(e.message).isEqualTo("Already Executed")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Already Executed")
     }
     assertThat(server.takeRequest().headers["User-Agent"]).isEqualTo("SyncApiTest")
   }
@@ -709,17 +704,15 @@ open class CallTest {
       .build()
     val call = client.newCall(request)
     call.enqueue(callback)
-    try {
+    assertFailsWith<IllegalStateException> {
       call.execute()
-      fail<Unit>()
-    } catch (e: IllegalStateException) {
-      assertThat(e.message).isEqualTo("Already Executed")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Already Executed")
     }
-    try {
+    assertFailsWith<IllegalStateException> {
       call.enqueue(callback)
-      fail<Unit>()
-    } catch (e: IllegalStateException) {
-      assertThat(e.message).isEqualTo("Already Executed")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Already Executed")
     }
     assertThat(server.takeRequest().headers["User-Agent"]).isEqualTo("SyncApiTest")
     callback.await(request.url).assertSuccessful()
@@ -782,7 +775,7 @@ open class CallTest {
     val request = Request(server.url("/secret"))
     client.newCall(request).enqueue(object : Callback {
       override fun onFailure(call: Call, e: IOException) {
-        fail<Unit>()
+        fail("")
       }
 
       override fun onResponse(call: Call, response: Response) {
@@ -924,16 +917,15 @@ open class CallTest {
 
     // The second byte of this request will be delayed by 750ms so we should time out after 250ms.
     val startNanos = System.nanoTime()
-    try {
-      bodySource.readByte()
-      fail<Unit>()
-    } catch (expected: IOException) {
-      // Timed out as expected.
-      val elapsedNanos = System.nanoTime() - startNanos
-      val elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanos)
-      assertThat(elapsedMillis).isLessThan(500)
-    } finally {
-      bodySource.close()
+    bodySource.use {
+      assertFailsWith<IOException> {
+        bodySource.readByte()
+      }.also { expected ->
+        // Timed out as expected.
+        val elapsedNanos = System.nanoTime() - startNanos
+        val elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanos)
+        assertThat(elapsedMillis).isLessThan(500)
+      }
     }
   }
 
@@ -947,11 +939,9 @@ open class CallTest {
       .readTimeout(Duration.ofMillis(100))
       .build()
     val request = Request.Builder().url(server.url("/")).build()
-    try {
+    assertFailsWith<InterruptedIOException> {
       // If this succeeds, too many requests were made.
       client.newCall(request).execute()
-      fail<Unit>()
-    } catch (expected: InterruptedIOException) {
     }
   }
 
@@ -1007,10 +997,9 @@ open class CallTest {
         val response = chain.proceed(
           chain.request()
         )
-        try {
+        assertFailsWith<IllegalStateException> {
           chain.proceed(chain.request())
-          fail<Unit>()
-        } catch (expected: IllegalStateException) {
+        }.also { expected ->
           assertThat(expected.message!!).contains("please call response.close()")
         }
         response
@@ -1281,10 +1270,8 @@ open class CallTest {
       .hostnameVerifier(RecordingHostnameVerifier())
       .build()
     val request = Request.Builder().url(server.url("/")).build()
-    try {
+    assertFailsWith<SSLHandshakeException> {
       client.newCall(request).execute()
-      fail<Unit>()
-    } catch (expected: SSLHandshakeException) {
     }
     val firstSocket = clientSocketFactory.socketsCreated[0]
     assertThat(firstSocket.enabledCipherSuites)
@@ -1331,17 +1318,23 @@ open class CallTest {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse(socketPolicy = FailHandshake))
     val request = Request.Builder().url(server.url("/")).build()
-    try {
+    assertFailsWith<IOException> {
       client.newCall(request).execute()
-      fail<Unit>()
-    } catch (expected: SSLProtocolException) {
-      // RI response to the FAIL_HANDSHAKE
-    } catch (expected: SSLHandshakeException) {
-      // Android's response to the FAIL_HANDSHAKE
-    } catch (expected: SSLException) {
-      // JDK 11 response to the FAIL_HANDSHAKE
-      val jvmVersion = System.getProperty("java.specification.version")
-      assertThat(jvmVersion).isEqualTo("11")
+    }.also { expected ->
+      when (expected) {
+        is SSLProtocolException -> {
+          // RI response to the FAIL_HANDSHAKE
+        }
+        is SSLHandshakeException -> {
+          // Android's response to the FAIL_HANDSHAKE
+        }
+        is SSLException -> {
+          // JDK 11 response to the FAIL_HANDSHAKE
+          val jvmVersion = System.getProperty("java.specification.version")
+          assertThat(jvmVersion).isEqualTo("11")
+        }
+        else -> throw expected
+      }
     }
   }
 
@@ -1416,10 +1409,9 @@ open class CallTest {
       .build()
     server.enqueue(MockResponse())
     val request = Request.Builder().url(server.url("/")).build()
-    try {
+    assertFailsWith<UnknownServiceException> {
       client.newCall(request).execute()
-      fail<Unit>()
-    } catch (expected: UnknownServiceException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo(
         "CLEARTEXT communication not enabled for client"
       )
@@ -1434,10 +1426,9 @@ open class CallTest {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse())
     val call = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<UnknownServiceException> {
       call.execute()
-      fail<Unit>()
-    } catch (expected: UnknownServiceException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("H2_PRIOR_KNOWLEDGE cannot be used with HTTPS")
     }
   }
@@ -1506,10 +1497,9 @@ open class CallTest {
 
     // When we pin the wrong certificate, connectivity fails.
     val request = Request.Builder().url(server.url("/")).build()
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       client.newCall(request).execute()
-      fail<Unit>()
-    } catch (expected: SSLPeerUnverifiedException) {
+    }.also { expected ->
       assertThat(expected.message!!).startsWith("Certificate pinning failure!")
     }
   }
@@ -1552,12 +1542,10 @@ open class CallTest {
       url = server.url("/"),
       body = "body!".toRequestBody("text/plain".toMediaType()),
     )
-    try {
+    assertFailsWith<IOException> {
       client.newCall(request2).execute()
-      fail()
-    } catch (e: IOException) {
-      assertThat(e.message!!).startsWith("unexpected end of stream on http://")
-      // expected
+    }.also { expected ->
+      assertThat(expected.message!!).startsWith("unexpected end of stream on http://")
     }
 
     assertThat(listener.recordedEventTypes()).containsExactly(
@@ -2401,10 +2389,9 @@ open class CallTest {
         )
       )
     }
-    try {
+    assertFailsWith<IOException> {
       client.newCall(Request.Builder().url(server.url("/0")).build()).execute()
-      fail<Unit>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("Too many follow-up requests: 21")
     }
   }
@@ -2473,10 +2460,8 @@ open class CallTest {
   fun canceledBeforeExecute() {
     val call = client.newCall(Request.Builder().url(server.url("/a")).build())
     call.cancel()
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Unit>()
-    } catch (expected: IOException) {
     }
     assertThat(server.requestCount).isEqualTo(0)
   }
@@ -2500,10 +2485,8 @@ open class CallTest {
     val call = client.newCall(Request(server.url("/").newBuilder().scheme(scheme!!).build()))
     cancelLater(call, cancelDelayMillis)
     val startNanos = System.nanoTime()
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Unit>()
-    } catch (expected: IOException) {
     }
     val elapsedNanos = System.nanoTime() - startNanos
     assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toFloat())
@@ -2554,10 +2537,8 @@ open class CallTest {
     }
     client = client.newBuilder().eventListener(listener).build()
     val call = client.newCall(Request(server.url("/a")))
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Unit>()
-    } catch (expected: IOException) {
     }
   }
 
@@ -2578,10 +2559,8 @@ open class CallTest {
     val result = executor.submit<Response?> { call.execute() }
     Thread.sleep(100) // wait for it to go in flight.
     call.cancel()
-    try {
+    assertFailsWith<IOException> {
       result.get()!!.body.bytes()
-      fail<Unit>()
-    } catch (expected: IOException) {
     }
     assertThat(server.requestCount).isEqualTo(1)
   }
@@ -2596,10 +2575,8 @@ open class CallTest {
         return MockResponse(body = "A")
       }
     }
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Unit>()
-    } catch (expected: IOException) {
     }
     assertThat(server.takeRequest().path).isEqualTo("/a")
   }
@@ -2746,10 +2723,8 @@ open class CallTest {
       .build()
     val call = client.newCall(Request(server.url("/a")))
     call.cancel()
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Unit>()
-    } catch (expected: IOException) {
     }
     assertThat(server.requestCount).isEqualTo(0)
   }
@@ -2938,10 +2913,8 @@ open class CallTest {
       .post("abc".toRequestBody("text/plain".toMediaType()))
       .build()
     val call = client.newCall(request)
-    try {
+    assertFailsWith<SocketTimeoutException> {
       call.execute()
-      fail<Unit>()
-    } catch (expected: SocketTimeoutException) {
     }
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("")
@@ -3045,10 +3018,8 @@ open class CallTest {
       body = "abc".toRequestBody("text/plain".toMediaType()),
     )
     val call = client.newCall(request)
-    try {
+    assertFailsWith<SocketTimeoutException> {
       call.execute()
-      fail<Unit>()
-    } catch (expected: SocketTimeoutException) {
     }
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
@@ -3265,10 +3236,9 @@ open class CallTest {
       .hostnameVerifier(hostnameVerifier)
       .build()
     val request = Request("https://android.com/foo".toHttpUrl())
-    try {
+    assertFailsWith<IOException> {
       client.newCall(request).execute()
-      fail<Unit>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected).hasMessage("unexpected end of stream")
     }
   }
@@ -3409,10 +3379,8 @@ open class CallTest {
       .hostnameVerifier(RecordingHostnameVerifier())
       .build()
     val request = Request("https://android.com/foo".toHttpUrl())
-    try {
+    assertFailsWith<ProtocolException> {
       client.newCall(request).execute()
-      fail<Unit>()
-    } catch (expected: ProtocolException) {
     }
   }
 
@@ -3543,10 +3511,8 @@ open class CallTest {
       .proxy(server.toProxyAddress())
       .build()
     val request = Request(server.url("/"))
-    try {
+    assertFailsWith<IOException> {
       client.newCall(request).execute()
-      fail<Unit>()
-    } catch (expected: IOException) {
     }
   }
 
@@ -3613,20 +3579,18 @@ open class CallTest {
 
   @Test
   fun requestHeaderNameWithSpaceForbidden() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Request.Builder().addHeader("a b", "c")
-      fail<Unit>()
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("Unexpected char 0x20 at 1 in header name: a b")
     }
   }
 
   @Test
   fun requestHeaderNameWithTabForbidden() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Request.Builder().addHeader("a\tb", "c")
-      fail<Unit>()
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("Unexpected char 0x09 at 1 in header name: a\tb")
     }
   }
@@ -3974,7 +3938,7 @@ open class CallTest {
     val latch = CountDownLatch(1)
     client.newCall(request).enqueue(object : Callback {
       override fun onFailure(call: Call, e: IOException) {
-        fail<Unit>()
+        fail("")
       }
 
       override fun onResponse(call: Call, response: Response) {
@@ -4242,10 +4206,9 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("this is the redirect target")
     assertThat(response.priorResponse?.body?.contentType())
       .isEqualTo("text/plain; charset=UTF-8".toMediaType())
-    try {
+    assertFailsWith<IllegalStateException> {
       response.priorResponse?.body?.string()
-      fail<Unit>()
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message!!).contains("Unreadable ResponseBody!")
     }
   }
@@ -4270,10 +4233,9 @@ open class CallTest {
         body = requestBody,
       )
     )
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Unit>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("write body fail!")
     }
   }

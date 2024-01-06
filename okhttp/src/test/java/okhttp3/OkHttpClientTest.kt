@@ -43,7 +43,8 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -154,10 +155,8 @@ class OkHttpClientTest {
 
   @Test fun setProtocolsRejectsHttp10() {
     val builder = OkHttpClient.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.protocols(listOf(Protocol.HTTP_1_0, Protocol.HTTP_1_1))
-      fail<Any>()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -170,10 +169,9 @@ class OkHttpClientTest {
   @Test fun nullInterceptorInList() {
     val builder = OkHttpClient.Builder()
     builder.interceptors().addAll(listOf(null) as List<Interceptor>)
-    try {
+    assertFailsWith<IllegalStateException> {
       builder.build()
-      fail<Any>()
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("Null interceptor: [null]")
     }
   }
@@ -181,20 +179,18 @@ class OkHttpClientTest {
   @Test fun nullNetworkInterceptorInList() {
     val builder = OkHttpClient.Builder()
     builder.networkInterceptors().addAll(listOf(null) as List<Interceptor>)
-    try {
+    assertFailsWith<IllegalStateException> {
       builder.build()
-      fail<Any>()
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("Null network interceptor: [null]")
     }
   }
 
   @Test fun testH2PriorKnowledgeOkHttpClientConstructionFallback() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       OkHttpClient.Builder()
         .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1))
-      fail<Any>()
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo(
         "protocols containing h2_prior_knowledge cannot use other protocols: "
           + "[h2_prior_knowledge, http/1.1]"
@@ -203,11 +199,10 @@ class OkHttpClientTest {
   }
 
   @Test fun testH2PriorKnowledgeOkHttpClientConstructionDuplicates() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       OkHttpClient.Builder()
         .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.H2_PRIOR_KNOWLEDGE))
-      fail<Any>()
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo(
         "protocols containing h2_prior_knowledge cannot use other protocols: "
           + "[h2_prior_knowledge, h2_prior_knowledge]"
@@ -234,10 +229,8 @@ class OkHttpClientTest {
 
   @Test fun sslSocketFactorySetAsSocketFactory() {
     val builder = OkHttpClient.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.socketFactory(SSLSocketFactory.getDefault())
-      fail<Any>()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -245,10 +238,8 @@ class OkHttpClientTest {
     val client = OkHttpClient.Builder()
       .connectionSpecs(listOf(ConnectionSpec.CLEARTEXT))
       .build()
-    try {
+    assertFailsWith<IllegalStateException> {
       client.sslSocketFactory
-      fail<Any>()
-    } catch (expected: IllegalStateException) {
     }
   }
 
@@ -281,11 +272,10 @@ class OkHttpClientTest {
       Protocol.HTTP_1_1,
       null
     )
-    try {
+    assertFailsWith<IllegalArgumentException> {
       OkHttpClient.Builder()
         .protocols(protocols as List<Protocol>)
-      fail<Any>()
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("protocols must not contain null")
     }
   }
@@ -420,10 +410,9 @@ class OkHttpClientTest {
 
   @Test fun minWebSocketMessageToCompressNegative() {
     val builder = OkHttpClient.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.minWebSocketMessageToCompress(-1024)
-      fail<Any>()
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("minWebSocketMessageToCompress must be positive: -1024")
     }

@@ -27,6 +27,8 @@ dependencies {
   compileOnly(libs.findbugs.jsr305)
   compileOnly(libs.robolectric.android)
 
+  testImplementation(libs.kotlin.test.common)
+  testImplementation(libs.kotlin.test.junit)
 }
 
 animalsniffer {

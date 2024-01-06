@@ -17,7 +17,7 @@ package okhttp3.internal.http2
 
 import okio.BufferedSource
 import okio.ByteString
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
 
 internal open class BaseTestHandler : Http2Reader.Handler {
   override fun data(
@@ -26,7 +26,7 @@ internal open class BaseTestHandler : Http2Reader.Handler {
     source: BufferedSource,
     length: Int,
   ) {
-    fail<Any>()
+    fail("")
   }
 
   override fun headers(
@@ -35,25 +35,25 @@ internal open class BaseTestHandler : Http2Reader.Handler {
     associatedStreamId: Int,
     headerBlock: List<Header>,
   ) {
-    fail<Any>()
+    fail("")
   }
 
   override fun rstStream(
     streamId: Int,
     errorCode: ErrorCode,
   ) {
-    fail<Any>()
+    fail("")
   }
 
   override fun settings(
     clearPrevious: Boolean,
     settings: Settings,
   ) {
-    fail<Any>()
+    fail("")
   }
 
   override fun ackSettings() {
-    fail<Any>()
+    fail("")
   }
 
   override fun ping(
@@ -61,7 +61,7 @@ internal open class BaseTestHandler : Http2Reader.Handler {
     payload1: Int,
     payload2: Int,
   ) {
-    fail<Any>()
+    fail("")
   }
 
   override fun goAway(
@@ -69,14 +69,14 @@ internal open class BaseTestHandler : Http2Reader.Handler {
     errorCode: ErrorCode,
     debugData: ByteString,
   ) {
-    fail<Any>()
+    fail("")
   }
 
   override fun windowUpdate(
     streamId: Int,
     windowSizeIncrement: Long,
   ) {
-    fail<Any>()
+    fail("")
   }
 
   override fun priority(
@@ -85,7 +85,7 @@ internal open class BaseTestHandler : Http2Reader.Handler {
     weight: Int,
     exclusive: Boolean,
   ) {
-    fail<Any>()
+    fail("")
   }
 
   override fun pushPromise(
@@ -93,7 +93,7 @@ internal open class BaseTestHandler : Http2Reader.Handler {
     associatedStreamId: Int,
     headerBlock: List<Header>,
   ) {
-    fail<Any>()
+    fail("")
   }
 
   override fun alternateService(
@@ -104,6 +104,6 @@ internal open class BaseTestHandler : Http2Reader.Handler {
     port: Int,
     maxAge: Long,
   ) {
-    fail<Any>()
+    fail("")
   }
 }

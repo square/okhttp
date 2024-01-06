@@ -20,7 +20,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import kotlin.test.assertEquals
-import kotlin.test.fail
+import kotlin.test.assertFailsWith
 import okhttp3.internal.toCanonicalHost
 import okio.Buffer
 import okio.FileSystem
@@ -157,17 +157,14 @@ class PublicSuffixDatabaseTest {
       path = "/xxx.gz".toPath()
     )
     lateinit var firstFailure: Exception
-    try {
+    assertFailsWith<Exception> {
       badPublicSuffixDatabase.getEffectiveTldPlusOne("squareup.com")
-      fail("Read shouldn't have worked")
-    } catch (e: Exception) {
+    }.also { e ->
       firstFailure = e
     }
-    try {
+    assertFailsWith<Exception> {
       badPublicSuffixDatabase.getEffectiveTldPlusOne("squareup.com")
-      fail("Read shouldn't have worked")
-    } catch (e: Exception) {
-      // expected
+    }.also { e ->
       assertEquals(firstFailure.toString(), e.toString())
     }
   }

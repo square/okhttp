@@ -20,12 +20,14 @@ import assertk.assertions.containsExactly
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isIn
+import assertk.fail
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
 import java.time.Duration
 import java.util.Arrays
 import java.util.concurrent.TimeUnit
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.FailHandshake
@@ -103,10 +105,9 @@ open class ConnectionListenerTest {
     val call = client.newCall(Request.Builder()
       .url(server!!.url("/"))
       .build())
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      org.junit.jupiter.api.Assertions.fail<Any>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isIn("timeout", "Read timed out")
     }
     assertThat(listener.recordedEventTypes()).containsExactly(
@@ -219,10 +220,8 @@ open class ConnectionListenerTest {
     val call = client.newCall(Request.Builder()
       .url(server!!.url("/"))
       .build())
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      org.junit.jupiter.api.Assertions.fail<Any>()
-    } catch (expected: IOException) {
     }
     val address = client.dns.lookup(server!!.hostName)[0]
     val expectedAddress = InetSocketAddress(address, server!!.port)

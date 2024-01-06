@@ -21,8 +21,10 @@ import assertk.assertions.hasMessage
 import assertk.assertions.isCloseTo
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isIn
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import assertk.fail
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -38,6 +40,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 import javax.net.ssl.SSLException
+import kotlin.test.assertFailsWith
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -85,9 +88,9 @@ import okio.Buffer
 import okio.BufferedSink
 import okio.GzipSink
 import okio.buffer
+import org.bouncycastle.tls.TlsFatalAlert
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
@@ -546,10 +549,9 @@ class HttpOverHttp2Test {
 
     // Make a call expecting a timeout reading the response headers.
     val call1 = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<SocketTimeoutException> {
       call1.execute()
-      fail<Any?>("Should have timed out!")
-    } catch (expected: SocketTimeoutException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("timeout")
     }
 
@@ -613,10 +615,9 @@ class HttpOverHttp2Test {
     // Make a call expecting a timeout reading the response body.
     val call1 = client.newCall(Request(server.url("/")))
     val response1 = call1.execute()
-    try {
+    assertFailsWith<SocketTimeoutException> {
       response1.body.string()
-      fail<Any?>("Should have timed out!")
-    } catch (expected: SocketTimeoutException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("timeout")
     }
 
@@ -659,10 +660,8 @@ class HttpOverHttp2Test {
       )
     val response1 = call1.execute()
     assertThat(response1.body.string()).isEqualTo("A")
-    try {
+    assertFailsWith<IOException> {
       call2.execute()
-      fail<Any?>()
-    } catch (expected: IOException) {
     }
 
     // Confirm that the connection was reused.
@@ -825,10 +824,9 @@ class HttpOverHttp2Test {
     )
     server.enqueue(MockResponse(body = "abc"))
     val call = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<StreamResetException> {
       call.execute()
-      fail<Any?>()
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
     }
   }
@@ -876,10 +874,9 @@ class HttpOverHttp2Test {
     )
 
     val request = Request(server.url("/"))
-    try {
+    assertFailsWith<StreamResetException> {
       client.newCall(request).execute()
-      fail<Any?>()
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
     }
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0) // New connection.
@@ -899,10 +896,9 @@ class HttpOverHttp2Test {
     val request = Request(server.url("/"))
 
     // First call fails because it only has one route.
-    try {
+    assertFailsWith<StreamResetException> {
       client.newCall(request).execute()
-      fail<Any?>()
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
     }
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
@@ -929,10 +925,9 @@ class HttpOverHttp2Test {
     val request = Request(server.url("/"))
 
     // First call makes a new connection and fails because it is the only route.
-    try {
+    assertFailsWith<StreamResetException> {
       client.newCall(request).execute()
-      fail<Any?>()
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
     }
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0) // New connection.
@@ -968,10 +963,9 @@ class HttpOverHttp2Test {
       MockResponse(body = "abc")
     )
     val call = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<StreamResetException> {
       call.execute()
-      fail<Any?>()
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
     }
   }
@@ -1150,7 +1144,7 @@ class HttpOverHttp2Test {
       }
 
       override fun onResponse(call: Call, response: Response) {
-        fail<Any?>()
+        fail("")
       }
     })
     assertThat(server.takeRequest().sequenceNumber)
@@ -1194,10 +1188,9 @@ class HttpOverHttp2Test {
       .retryOnConnectionFailure(false)
       .build()
     val call = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<StreamResetException> {
       call.execute()
-      fail<Any?>()
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(errorCode)
     }
   }
@@ -1235,7 +1228,7 @@ class HttpOverHttp2Test {
       .build()
     val callback: Callback = object : Callback {
       override fun onFailure(call: Call, e: IOException) {
-        fail<Any?>()
+        fail("")
       }
 
       override fun onResponse(call: Call, response: Response) {
@@ -1440,10 +1433,9 @@ class HttpOverHttp2Test {
     // Make a call. It'll fail as soon as our pings detect a problem.
     val call = client.newCall(Request(server.url("/")))
     val executeAtNanos = System.nanoTime()
-    try {
+    assertFailsWith<StreamResetException> {
       call.execute()
-      fail<Any?>()
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo(
         "stream was reset: PROTOCOL_ERROR"
       )
@@ -1478,19 +1470,19 @@ class HttpOverHttp2Test {
 
     // The first call times out.
     val call1 = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<IOException> {
       call1.execute()
-      fail<Any?>()
-    } catch (expected: SocketTimeoutException) {
-    } catch (expected: SSLException) {
+    }.also { expected ->
+      when (expected) {
+        is SocketTimeoutException, is SSLException -> {}
+        else -> throw expected
+      }
     }
 
     // The second call times out because it uses the same bad connection.
     val call2 = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<SocketTimeoutException> {
       call2.execute()
-      fail<Any?>()
-    } catch (expected: SocketTimeoutException) {
     }
 
     // But after the degraded pong timeout, that connection is abandoned.
@@ -1520,12 +1512,10 @@ class HttpOverHttp2Test {
 
     // The first call times out.
     val call1 = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<SocketTimeoutException> {
       call1.execute().use { response ->
         response.body.string()
-        fail<Any?>()
       }
-    } catch (expected: SocketTimeoutException) {
     }
 
     // The second call succeeds.
@@ -1881,7 +1871,7 @@ class HttpOverHttp2Test {
     val latch = CountDownLatch(2)
     val callback: Callback = object : Callback {
       override fun onResponse(call: Call, response: Response) {
-        fail<Any?>()
+        fail("")
       }
 
       override fun onFailure(call: Call, e: IOException) {
@@ -1897,7 +1887,7 @@ class HttpOverHttp2Test {
               server.shutdown()
             }
           } catch (e: IOException) {
-            fail<Any?>()
+            fail("")
           }
         }
       })).build()
@@ -1930,10 +1920,9 @@ class HttpOverHttp2Test {
       )
     )
     callReference.set(call)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Any?>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(call.isCanceled()).isTrue()
     }
     val recordedRequest = server.takeRequest()

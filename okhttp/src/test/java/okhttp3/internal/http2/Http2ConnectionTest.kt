@@ -46,7 +46,8 @@ import okio.Source
 import okio.buffer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -237,19 +238,16 @@ class Http2ConnectionTest {
     val sink1 = stream1.getSink().buffer()
     val sink2 = stream2.getSink().buffer()
     sink1.writeUtf8("abc")
-    try {
+    assertFailsWith<IOException> {
       sink2.writeUtf8("abc")
       sink2.flush()
-      fail<Any?>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("stream was reset: REFUSED_STREAM")
     }
     sink1.writeUtf8("def")
     sink1.close()
-    try {
+    assertFailsWith<ConnectionShutdownException> {
       connection.newStream(headerEntries("c", "cola"), true)
-      fail<Any?>()
-    } catch (expected: ConnectionShutdownException) {
     }
     assertThat(stream1.isOpen).isTrue()
     assertThat(stream2.isOpen).isFalse()
@@ -494,15 +492,11 @@ class Http2ConnectionTest {
       .build()
     connection.start( /* sendConnectionPreface = */false)
     socket.shutdownOutput()
-    try {
+    assertFailsWith<IOException> {
       connection.newStream(headerEntries("a", longString), false)
-      fail<Any?>()
-    } catch (expected: IOException) {
     }
-    try {
+    assertFailsWith<IOException> {
       connection.newStream(headerEntries("b", longString), false)
-      fail<Any?>()
-    } catch (expected: IOException) {
     }
   }
 
@@ -676,10 +670,9 @@ class Http2ConnectionTest {
     connection.writePingAndAwaitPong()
     val sink = stream.getSink().buffer()
     sink.writeUtf8("abc")
-    try {
+    assertFailsWith<StreamResetException> {
       sink.close()
-      fail<Any?>()
-    } catch (expected: StreamResetException) {
+    }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(ErrorCode.NO_ERROR)
     }
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
@@ -746,10 +739,8 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("a", "artichaut"), true)
     connection.writePingAndAwaitPong()
-    try {
+    assertFailsWith<IllegalStateException> {
       stream.trailers()
-      fail<Any?>()
-    } catch (expected: IllegalStateException) {
     }
   }
 
@@ -767,10 +758,8 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("a", "artichaut"), true)
     connection.writePingAndAwaitPong()
-    try {
+    assertFailsWith<StreamResetException> {
       stream.trailers()
-      fail<Any?>()
-    } catch (expected: StreamResetException) {
     }
   }
 
@@ -788,10 +777,8 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries("a", "android"), true)
     // finish the stream
     stream.writeHeaders(headerEntries("b", "berserk"), true, false)
-    try {
+    assertFailsWith<IllegalStateException> {
       stream.enqueueTrailers(headersOf("trailers", "boom"))
-      fail<Any?>()
-    } catch (expected: IllegalStateException) {
     }
   }
 
@@ -1092,18 +1079,15 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries("a", "android"), true)
     val out = stream.getSink().buffer()
     connection.writePingAndAwaitPong() // Ensure that the RST_CANCEL has been received.
-    try {
+    assertFailsWith<IOException> {
       out.writeUtf8("square")
       out.flush()
-      fail<Any?>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("stream was reset: CANCEL")
     }
-    try {
+    // Close throws because buffered data wasn't flushed.
+    assertFailsWith<IOException> {
       out.close()
-      fail<Any?>()
-    } catch (expected: IOException) {
-      // Close throws because buffered data wasn't flushed.
     }
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
@@ -1133,17 +1117,15 @@ class Http2ConnectionTest {
     val source = stream.getSource()
     val out = stream.getSink().buffer()
     source.close()
-    try {
+    assertFailsWith<IOException> {
       source.read(Buffer(), 1)
-      fail<Any?>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("stream closed")
     }
-    try {
+    assertFailsWith<IOException> {
       out.writeUtf8("a")
       out.flush()
-      fail<Any?>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("stream finished")
     }
     assertThat(connection.openStreamCount()).isEqualTo(0)
@@ -1177,10 +1159,9 @@ class Http2ConnectionTest {
     val source = stream.getSource()
     val out = stream.getSink().buffer()
     source.close()
-    try {
+    assertFailsWith<IOException> {
       source.read(Buffer(), 1)
-      fail<Any?>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("stream closed")
     }
     out.writeUtf8("square")
@@ -1327,10 +1308,9 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("a", "android"), false)
-    try {
+    assertFailsWith<IOException> {
       stream.takeHeaders()
-      fail<Any?>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("stream was reset: REFUSED_STREAM")
     }
     assertThat(connection.openStreamCount()).isEqualTo(0)
@@ -1363,19 +1343,16 @@ class Http2ConnectionTest {
     val sink1 = stream1.getSink().buffer()
     val sink2 = stream2.getSink().buffer()
     sink1.writeUtf8("abc")
-    try {
+    assertFailsWith<IOException> {
       sink2.writeUtf8("abc")
       sink2.flush()
-      fail<Any?>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("stream was reset: REFUSED_STREAM")
     }
     sink1.writeUtf8("def")
     sink1.close()
-    try {
+    assertFailsWith<ConnectionShutdownException> {
       connection.newStream(headerEntries("c", "cola"), false)
-      fail<Any?>()
-    } catch (expected: ConnectionShutdownException) {
     }
     assertThat(stream1.isOpen).isTrue()
     assertThat(stream2.isOpen).isFalse()
@@ -1444,23 +1421,19 @@ class Http2ConnectionTest {
     assertThat(connection.openStreamCount()).isEqualTo(1)
     connection.close()
     assertThat(connection.openStreamCount()).isEqualTo(0)
-    try {
+    assertFailsWith<ConnectionShutdownException> {
       connection.newStream(headerEntries("b", "banana"), false)
-      fail<Any?>()
-    } catch (expected: ConnectionShutdownException) {
     }
     val sink = stream.getSink().buffer()
-    try {
+    assertFailsWith<IOException> {
       sink.writeByte(0)
       sink.flush()
-      fail<Any?>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("stream finished")
     }
-    try {
+    assertFailsWith<IOException> {
       stream.getSource().read(Buffer(), 1)
-      fail<Any?>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("stream was reset: CANCEL")
     }
 
@@ -1487,10 +1460,8 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries("b", "banana"), false)
     stream.readTimeout().timeout(500, TimeUnit.MILLISECONDS)
     val startNanos = System.nanoTime()
-    try {
+    assertFailsWith<InterruptedIOException> {
       stream.takeHeaders()
-      fail<Any?>()
-    } catch (expected: InterruptedIOException) {
     }
     val elapsedNanos = System.nanoTime() - startNanos
     awaitWatchdogIdle()
@@ -1530,10 +1501,8 @@ class Http2ConnectionTest {
     val source = stream.getSource().buffer()
     source.require(3)
     val startNanos = System.nanoTime()
-    try {
+    assertFailsWith<InterruptedIOException> {
       source.require(4)
-      fail<Any?>()
-    } catch (expected: InterruptedIOException) {
     }
     val elapsedNanos = System.nanoTime() - startNanos
     awaitWatchdogIdle()
@@ -1583,10 +1552,8 @@ class Http2ConnectionTest {
     stream.writeTimeout().timeout(500, TimeUnit.MILLISECONDS)
     val startNanos = System.nanoTime()
     sink.write(Buffer().writeUtf8("f"), 1)
-    try {
+    assertFailsWith<InterruptedIOException> {
       sink.flush() // This will time out waiting on the write window.
-      fail<Any?>()
-    } catch (expected: InterruptedIOException) {
     }
     val elapsedNanos = System.nanoTime() - startNanos
     awaitWatchdogIdle()
@@ -1628,10 +1595,8 @@ class Http2ConnectionTest {
     stream.writeTimeout().timeout(500, TimeUnit.MILLISECONDS)
     sink.write(Buffer().writeUtf8("abcdef"), 6)
     val startNanos = System.nanoTime()
-    try {
+    assertFailsWith<InterruptedIOException> {
       sink.flush() // This will time out waiting on the write window.
-      fail<Any?>()
-    } catch (expected: InterruptedIOException) {
     }
     val elapsedNanos = System.nanoTime() - startNanos
     awaitWatchdogIdle()
@@ -1835,10 +1800,8 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries("b", "banana"), false)
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
     val source = stream.getSource()
-    try {
+    assertFailsWith<EOFException> {
       source.buffer().readByteString(101)
-      fail<Any?>()
-    } catch (expected: EOFException) {
     }
   }
 
@@ -1914,10 +1877,9 @@ class Http2ConnectionTest {
       .build()
     connection.start( /* sendConnectionPreface = */false)
     val stream = connection.newStream(headerEntries("b", "banana"), false)
-    try {
+    assertFailsWith<IOException> {
       stream.takeHeaders()
-      fail<Any?>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("Expected a SETTINGS frame but was HEADERS")
     }
 

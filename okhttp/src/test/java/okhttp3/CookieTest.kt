@@ -32,7 +32,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.UTC
 import okhttp3.internal.http.MAX_DATE
 import okhttp3.internal.parseCookie
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
@@ -446,18 +447,14 @@ class CookieTest {
   }
 
   @Test fun builderNameValidation() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Cookie.Builder().name(" a ")
-      fail<Any>()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test fun builderValueValidation() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Cookie.Builder().value(" b ")
-      fail<Any>()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -492,10 +489,8 @@ class CookieTest {
   }
 
   @Test fun builderDomainValidation() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Cookie.Builder().hostOnlyDomain("a/b")
-      fail<Any>()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -520,10 +515,8 @@ class CookieTest {
   }
 
   @Test fun builderPathValidation() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Cookie.Builder().path("foo")
-      fail<Any>()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 

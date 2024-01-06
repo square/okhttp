@@ -42,7 +42,8 @@ import okhttp3.testing.PlatformRule
 import okio.BufferedSink
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
@@ -87,10 +88,8 @@ class DuplexTest {
         .post(AsyncRequestBody())
         .build()
     )
-    try {
+    assertFailsWith<ProtocolException> {
       call.execute()
-      fail<Any?>()
-    } catch (expected: ProtocolException) {
     }
   }
 
@@ -369,11 +368,10 @@ class DuplexTest {
         .isEqualTo("this is /b")
     }
     val requestBody = (call.request().body as AsyncRequestBody?)!!.takeSink()
-    try {
+    assertFailsWith<IOException> {
       requestBody.writeUtf8("request body\n")
       requestBody.flush()
-      fail<Any?>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("stream was reset: CANCEL")
     }
@@ -431,11 +429,10 @@ class DuplexTest {
 
     // First duplex request is detached with violence.
     val requestBody1 = (call.request().body as AsyncRequestBody?)!!.takeSink()
-    try {
+    assertFailsWith<IOException> {
       requestBody1.writeUtf8("not authenticated\n")
       requestBody1.flush()
-      fail<Any?>()
-    } catch (expected: IOException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("stream was reset: CANCEL")
     }
@@ -469,11 +466,10 @@ class DuplexTest {
       .build()
     val call = client.newCall(request)
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Any?>()
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("timeout")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("timeout")
       assertTrue(call.isCanceled())
     }
   }
@@ -631,11 +627,10 @@ class DuplexTest {
       .readTimeout(1000, TimeUnit.MILLISECONDS)
       .build()
     val call = client.newCall(request)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Any?>()
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("timeout")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("timeout")
     }
   }
 
@@ -658,11 +653,10 @@ class DuplexTest {
       .build()
     val call = client.newCall(request)
     val response = call.execute()
-    try {
+    assertFailsWith<IOException> {
       response.body.string()
-      fail<Any?>()
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("timeout")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("timeout")
     }
   }
 

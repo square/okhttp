@@ -26,7 +26,8 @@ import okhttp3.FakeRoutePlanner.ConnectState.TLS_CONNECTED
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.testing.Flaky
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Test
 import org.junitpioneer.jupiter.RetryingTest
 
@@ -325,11 +326,10 @@ internal class FastFallbackExchangeFinderTest {
     plan0.tcpConnectThrowable = IOException("boom!")
 
     taskRunner.newQueue().execute("connect") {
-      try {
+      assertFailsWith<IOException> {
         finder.find()
-        fail()
-      } catch (e: IOException) {
-        assertThat(e).hasMessage("boom!")
+      }.also { expected ->
+        assertThat(expected).hasMessage("boom!")
       }
     }
 
@@ -374,12 +374,11 @@ internal class FastFallbackExchangeFinderTest {
     plan1.tcpConnectThrowable = IOException("boom 1!")
 
     taskRunner.newQueue().execute("connect") {
-      try {
+      assertFailsWith<IOException> {
         finder.find()
-        fail()
-      } catch (e: IOException) {
-        assertThat(e).hasMessage("boom 0!")
-        assertThat(e.suppressed.single()).hasMessage("boom 1!")
+      }.also { expected ->
+        assertThat(expected).hasMessage("boom 0!")
+        assertThat(expected.suppressed.single()).hasMessage("boom 1!")
       }
     }
 
@@ -403,11 +402,10 @@ internal class FastFallbackExchangeFinderTest {
     routePlanner.addPlan() // This plan should not be used.
 
     taskRunner.newQueue().execute("connect") {
-      try {
+      assertFailsWith<IllegalStateException> {
         finder.find()
-        fail()
-      } catch (e: IllegalStateException) {
-        assertThat(e).hasMessage("boom!")
+      }.also { expected ->
+        assertThat(expected).hasMessage("boom!")
       }
     }
 
@@ -427,11 +425,10 @@ internal class FastFallbackExchangeFinderTest {
     plan0.planningThrowable = UnknownServiceException("boom!")
 
     taskRunner.newQueue().execute("connect") {
-      try {
+      assertFailsWith<UnknownServiceException> {
         finder.find()
-        fail()
-      } catch (e: UnknownServiceException) {
-        assertThat(e).hasMessage("boom!")
+      }.also { expected ->
+        assertThat(expected).hasMessage("boom!")
       }
     }
 

@@ -19,6 +19,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 import kotlin.test.fail
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Headers.Companion.toHeaders
@@ -31,18 +32,14 @@ class HeadersTest {
   }
 
   @Test fun ofThrowsOddNumberOfHeaders() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       headersOf("User-Agent", "OkHttp", "Content-Length")
-      fail()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test fun ofThrowsOnEmptyName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       headersOf("", "OkHttp")
-      fail()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -62,26 +59,20 @@ class HeadersTest {
   }
 
   @Test fun ofRejectsNullChar() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       headersOf("User-Agent", "Square\u0000OkHttp")
-      fail()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test fun ofMapThrowsOnEmptyName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       mapOf("" to "OkHttp").toHeaders()
-      fail()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test fun ofMapThrowsOnBlankName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       mapOf(" " to "OkHttp").toHeaders()
-      fail()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -109,107 +100,93 @@ class HeadersTest {
   }
 
   @Test fun ofMapRejectsNullCharInName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       mapOf("User-\u0000Agent" to "OkHttp").toHeaders()
-      fail()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test fun ofMapRejectsNullCharInValue() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       mapOf("User-Agent" to "Square\u0000OkHttp").toHeaders()
-      fail()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test fun builderRejectsUnicodeInHeaderName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add("héader1", "value1")
-      fail("Should have complained about invalid name")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 1 in header name: héader1")
     }
   }
 
   @Test fun builderRejectsUnicodeInHeaderValue() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add("header1", "valué1")
-      fail("Should have complained about invalid value")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 4 in header1 value: valué1")
     }
   }
 
   @Test fun varargFactoryRejectsUnicodeInHeaderName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       headersOf("héader1", "value1")
-      fail("Should have complained about invalid value")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 1 in header name: héader1")
     }
   }
 
   @Test fun varargFactoryRejectsUnicodeInHeaderValue() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       headersOf("header1", "valué1")
-      fail("Should have complained about invalid value")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 4 in header1 value: valué1")
     }
   }
 
   @Test fun mapFactoryRejectsUnicodeInHeaderName() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       mapOf("héader1" to "value1").toHeaders()
-      fail("Should have complained about invalid value")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 1 in header name: héader1")
     }
   }
 
   @Test fun mapFactoryRejectsUnicodeInHeaderValue() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       mapOf("header1" to "valué1").toHeaders()
-      fail("Should have complained about invalid value")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 4 in header1 value: valué1")
     }
   }
 
   @Test fun sensitiveHeadersNotIncludedInExceptions() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add("Authorization", "valué1")
-      fail("Should have complained about invalid name")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 4 in Authorization value")
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add("Cookie", "valué1")
-      fail("Should have complained about invalid name")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 4 in Cookie value")
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add("Proxy-Authorization", "valué1")
-      fail("Should have complained about invalid name")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 4 in Proxy-Authorization value")
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       Headers.Builder().add("Set-Cookie", "valué1")
-      fail("Should have complained about invalid name")
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Unexpected char 0xe9 at 4 in Set-Cookie value")
     }
@@ -286,33 +263,25 @@ class HeadersTest {
 
   @Test fun nameIndexesAreStrict() {
     val headers = headersOf("a", "b", "c", "d")
-    try {
+    assertFailsWith<IndexOutOfBoundsException> {
       headers.name(-1)
-      fail()
-    } catch (expected: IndexOutOfBoundsException) {
     }
     assertThat(headers.name(0)).isEqualTo("a")
     assertThat(headers.name(1)).isEqualTo("c")
-    try {
+    assertFailsWith<IndexOutOfBoundsException> {
       headers.name(2)
-      fail()
-    } catch (expected: IndexOutOfBoundsException) {
     }
   }
 
   @Test fun valueIndexesAreStrict() {
     val headers = headersOf("a", "b", "c", "d")
-    try {
+    assertFailsWith<IndexOutOfBoundsException> {
       headers.value(-1)
-      fail()
-    } catch (expected: IndexOutOfBoundsException) {
     }
     assertThat(headers.value(0)).isEqualTo("b")
     assertThat(headers.value(1)).isEqualTo("d")
-    try {
+    assertFailsWith<IndexOutOfBoundsException> {
       headers.value(2)
-      fail()
-    } catch (expected: IndexOutOfBoundsException) {
     }
   }
 }

@@ -29,6 +29,7 @@ import java.net.ProxySelector
 import java.net.SocketAddress
 import java.net.URI
 import java.net.UnknownHostException
+import kotlin.test.assertFailsWith
 import okhttp3.Address
 import okhttp3.Call
 import okhttp3.EventListener
@@ -41,7 +42,6 @@ import okhttp3.internal.connection.RouteSelector.Companion.socketHost
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -88,16 +88,12 @@ class RouteSelectorTest {
     assertRoute(selection.next(), address, Proxy.NO_PROXY, dns.lookup(uriHost, 0), uriPort)
     dns.assertRequests(uriHost)
     assertThat(selection.hasNext()).isFalse()
-    try {
+    assertFailsWith<NoSuchElementException> {
       selection.next()
-      fail<Any>()
-    } catch (expected: NoSuchElementException) {
     }
     assertThat(routeSelector.hasNext()).isFalse()
-    try {
+    assertFailsWith<NoSuchElementException> {
       routeSelector.next()
-      fail<Any>()
-    } catch (expected: NoSuchElementException) {
     }
   }
 
@@ -113,16 +109,12 @@ class RouteSelectorTest {
     selection = routeSelector.next()
     assertRoute(selection.next(), address, Proxy.NO_PROXY, dns.lookup(uriHost, 0), uriPort)
     assertThat(selection.hasNext()).isFalse()
-    try {
+    assertFailsWith<NoSuchElementException> {
       selection.next()
-      fail<Any>()
-    } catch (expected: NoSuchElementException) {
     }
     assertThat(routeSelector.hasNext()).isFalse()
-    try {
+    assertFailsWith<NoSuchElementException> {
       routeSelector.next()
-      fail<Any>()
-    } catch (expected: NoSuchElementException) {
     }
   }
 
@@ -279,10 +271,8 @@ class RouteSelectorTest {
     assertThat(selection1.hasNext()).isFalse()
     assertThat(routeSelector.hasNext()).isTrue()
     dns.clear(proxyBHost)
-    try {
+    assertFailsWith<UnknownHostException> {
       routeSelector.next()
-      fail<Any>()
-    } catch (expected: UnknownHostException) {
     }
     dns.assertRequests(proxyBHost)
     assertThat(routeSelector.hasNext()).isTrue()

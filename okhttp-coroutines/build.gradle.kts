@@ -20,8 +20,9 @@ dependencies {
   api(libs.squareup.okio)
   api(libs.kotlin.stdlib)
 
-  testImplementation(libs.kotlin.test.common)
   testImplementation(libs.kotlin.test.annotations)
+  testImplementation(libs.kotlin.test.common)
+  testImplementation(libs.kotlin.test.junit)
   testApi(libs.assertk)
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(libs.kotlinx.coroutines.test)

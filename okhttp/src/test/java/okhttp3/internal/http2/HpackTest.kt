@@ -19,8 +19,10 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
+import assertk.fail
 import java.io.IOException
 import java.util.Arrays
+import kotlin.test.assertFailsWith
 import okhttp3.TestUtil.headerEntries
 import okio.Buffer
 import okio.ByteString
@@ -337,11 +339,10 @@ class HpackTest {
   @Test
   fun readIndexedHeaderFieldIndex0() {
     bytesIn.writeByte(0x80) // == Indexed - Add idx = 0
-    try {
+    assertFailsWith<IOException> {
       hpackReader!!.readHeaders()
-      org.junit.jupiter.api.Assertions.fail<Any>("")
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("index == 0")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("index == 0")
     }
   }
 
@@ -349,11 +350,10 @@ class HpackTest {
   @Test
   fun readIndexedHeaderFieldTooLargeIndex() {
     bytesIn.writeShort(0xff00) // == Indexed - Add idx = 127
-    try {
+    assertFailsWith<IOException> {
       hpackReader!!.readHeaders()
-      org.junit.jupiter.api.Assertions.fail<Any>()
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("Header index too large 127")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Header index too large 127")
     }
   }
 
@@ -362,11 +362,10 @@ class HpackTest {
   fun readIndexedHeaderFieldInsidiousIndex() {
     bytesIn.writeByte(0xff) // == Indexed - Add ==
     bytesIn.write("8080808008".decodeHex()) // idx = -2147483521
-    try {
+    assertFailsWith<IOException> {
       hpackReader!!.readHeaders()
-      org.junit.jupiter.api.Assertions.fail<Any>()
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("Header index too large -2147483521")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Header index too large -2147483521")
     }
   }
 
@@ -389,11 +388,10 @@ class HpackTest {
     bytesIn.writeByte(0x3f) // encode size 4097
     bytesIn.writeByte(0xe2)
     bytesIn.writeByte(0x1f)
-    try {
+    assertFailsWith<IOException> {
       hpackReader!!.readHeaders()
-      org.junit.jupiter.api.Assertions.fail<Any>()
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("Invalid dynamic table size update 4097")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Invalid dynamic table size update 4097")
     }
   }
 
@@ -402,11 +400,10 @@ class HpackTest {
   fun readHeaderTableStateChangeInsidiousMaxHeaderByteCount() {
     bytesIn.writeByte(0x3f)
     bytesIn.write("e1ffffff07".decodeHex()) // count = -2147483648
-    try {
+    assertFailsWith<IOException> {
       hpackReader!!.readHeaders()
-      org.junit.jupiter.api.Assertions.fail<Any>()
-    } catch (e: IOException) {
-      assertThat(e.message)
+    }.also { expected ->
+      assertThat(expected.message)
         .isEqualTo("Invalid dynamic table size update -2147483648")
     }
   }
@@ -483,11 +480,10 @@ class HpackTest {
     // Indexed name (idx = 4) -> :authority
     bytesIn.writeByte(0x0f) // Literal value (len = 15)
     bytesIn.writeUtf8("www.example.com")
-    try {
+    assertFailsWith<IOException> {
       hpackReader!!.readHeaders()
-      org.junit.jupiter.api.Assertions.fail<Any>()
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("Header index too large 78")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("Header index too large 78")
     }
   }
 
@@ -817,7 +813,7 @@ class HpackTest {
 
   @Test
   fun mixedCaseHeaderNameIsMalformed() {
-    try {
+    assertFailsWith<IOException> {
       newReader(
         byteStream(
           0,
@@ -831,9 +827,8 @@ class HpackTest {
           'R'.code
         )
       ).readHeaders()
-      org.junit.jupiter.api.Assertions.fail<Any>()
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo(
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo(
         "PROTOCOL_ERROR response malformed: mixed case name: Foo"
       )
     }

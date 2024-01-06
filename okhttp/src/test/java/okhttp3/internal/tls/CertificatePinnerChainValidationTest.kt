@@ -19,6 +19,7 @@ import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.isEqualTo
 import assertk.assertions.startsWith
+import java.io.IOException
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import javax.net.ssl.KeyManager
@@ -26,6 +27,7 @@ import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.DisconnectAtEnd
@@ -40,7 +42,6 @@ import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.newKeyManager
 import okhttp3.tls.internal.TlsUtil.newTrustManager
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -266,10 +267,9 @@ class CertificatePinnerChainValidationTest {
       .url(server.url("/"))
       .build()
     val call = client.newCall(request)
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       call.execute()
-      fail<Any>()
-    } catch (expected: SSLPeerUnverifiedException) {
+    }.also { expected ->
       // Certificate pinning fails!
       assertThat(expected.message!!).startsWith("Certificate pinning failure!")
     }
@@ -351,15 +351,20 @@ class CertificatePinnerChainValidationTest {
       .url(server.url("/"))
       .build()
     val call = client.newCall(request)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Any>()
-    } catch (expected: SSLHandshakeException) {
-      // On Android, the handshake fails before the certificate pinner runs.
-      assertThat(expected.message!!).contains("Could not validate certificate")
-    } catch (expected: SSLPeerUnverifiedException) {
-      // On OpenJDK, the handshake succeeds but the certificate pinner fails.
-      assertThat(expected.message!!).startsWith("Certificate pinning failure!")
+    }.also { expected ->
+      when (expected) {
+        is SSLHandshakeException -> {
+          // On Android, the handshake fails before the certificate pinner runs.
+          assertThat(expected.message!!).contains("Could not validate certificate")
+        }
+        is SSLPeerUnverifiedException -> {
+          // On OpenJDK, the handshake succeeds but the certificate pinner fails.
+          assertThat(expected.message!!).startsWith("Certificate pinning failure!")
+        }
+        else -> throw expected
+      }
     }
   }
 
@@ -485,15 +490,20 @@ class CertificatePinnerChainValidationTest {
       .url(server.url("/"))
       .build()
     val call = client.newCall(request)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-        .use { response -> fail<Any>("expected connection failure but got $response") }
-    } catch (expected: SSLPeerUnverifiedException) {
-      // Certificate pinning fails!
-      assertThat(expected.message!!).startsWith("Certificate pinning failure!")
-    } catch (expected: SSLHandshakeException) {
-      // We didn't have the opportunity to do certificate pinning because the handshake failed.
-      assertThat(expected.message!!).contains("this is not a CA certificate")
+    }.also { expected ->
+      when (expected) {
+        is SSLPeerUnverifiedException -> {
+          // Certificate pinning fails!
+          assertThat(expected.message!!).startsWith("Certificate pinning failure!")
+        }
+        is SSLHandshakeException -> {
+          // We didn't have the opportunity to do certificate pinning because the handshake failed.
+          assertThat(expected.message!!).contains("this is not a CA certificate")
+        }
+        else -> throw expected
+      }
     }
   }
 
@@ -581,11 +591,8 @@ class CertificatePinnerChainValidationTest {
       .url(server.url("/"))
       .build()
     val call = client.newCall(request)
-    try {
-      call.execute().use { response ->
-        fail<Any>("expected connection failure but got $response")
-      }
-    } catch (expected: SSLHandshakeException) {
+    assertFailsWith<SSLHandshakeException> {
+      call.execute()
     }
   }
 

@@ -22,6 +22,7 @@ import assertk.assertions.isEqualTo
 import assertk.fail
 import java.net.InetAddress
 import java.net.UnknownHostException
+import kotlin.test.assertFailsWith
 import okhttp3.AsyncDns.Companion.TYPE_A
 import okhttp3.AsyncDns.Companion.TYPE_AAAA
 import okhttp3.dnsoverhttps.DnsRecordCodec.decodeAnswers
@@ -80,16 +81,15 @@ class DnsRecordCodecTest {
 
   @Test
   fun testGoogleDotComDecodingNxdomainFailure() {
-    try {
+    assertFailsWith<UnknownHostException> {
       decodeAnswers(
         hostname = "sdflkhfsdlkjdf.ee",
         byteString = ("0000818300010000000100000e7364666c6b686673646c6b6a64660265650000010001c01b" +
           "00060001000007070038026e7303746c64c01b0a686f73746d61737465720d6565737469696e7465726e65" +
           "74c01b5adb12c100000e10000003840012750000000e10").decodeHex()
       )
-      fail("")
-    } catch (uhe: UnknownHostException) {
-      assertThat(uhe.message).isEqualTo("sdflkhfsdlkjdf.ee: NXDOMAIN")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("sdflkhfsdlkjdf.ee: NXDOMAIN")
     }
   }
 }

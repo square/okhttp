@@ -21,6 +21,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import javax.net.ssl.SSLException
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.testing.PlatformRule
@@ -29,7 +30,6 @@ import okhttp3.tls.HeldCertificate
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.api.fail
 
 class InsecureForHostTest {
   @RegisterExtension @JvmField val platform = PlatformRule()
@@ -90,10 +90,8 @@ class InsecureForHostTest {
         .build()
 
     val call = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<SSLException> {
       call.execute()
-      fail("")
-    } catch (expected: SSLException) {
     }
   }
 
@@ -112,10 +110,8 @@ class InsecureForHostTest {
         .build()
 
     val call = client.newCall(Request(server.url("/")))
-    try {
+    assertFailsWith<SSLException> {
       call.execute()
-      fail("")
-    } catch (expected: SSLException) {
     }
   }
 }

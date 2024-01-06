@@ -24,6 +24,7 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import assertk.fail
 import java.io.IOException
 import java.net.CookieManager
 import java.net.HttpURLConnection
@@ -36,6 +37,7 @@ import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import javax.net.ssl.HostnameVerifier
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
@@ -58,8 +60,8 @@ import okio.Path
 import okio.Path.Companion.toPath
 import okio.buffer
 import okio.fakefilesystem.FakeFileSystem
+import okio.use
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -692,12 +694,10 @@ class CacheTest {
     )
     val bodySource = get(server.url("/")).body.source()
     assertThat(bodySource.readUtf8Line()).isEqualTo("ABCDE")
-    try {
-      bodySource.readUtf8(21)
-      fail<Any>("This implementation silently ignored a truncated HTTP body.")
-    } catch (expected: IOException) {
-    } finally {
-      bodySource.close()
+    bodySource.use {
+      assertFailsWith<IOException> {
+        bodySource.readUtf8(21)
+      }
     }
     assertThat(cache.writeAbortCount()).isEqualTo(1)
     assertThat(cache.writeSuccessCount()).isEqualTo(0)
@@ -737,10 +737,8 @@ class CacheTest {
     val `in` = response1.body.source()
     assertThat(`in`.readUtf8(5)).isEqualTo("ABCDE")
     `in`.close()
-    try {
+    assertFailsWith<IllegalStateException> {
       `in`.readByte()
-      fail<Any>("Expected an IllegalStateException because the source is closed.")
-    } catch (expected: IllegalStateException) {
     }
     assertThat(cache.writeAbortCount()).isEqualTo(1)
     assertThat(cache.writeSuccessCount()).isEqualTo(0)
@@ -2916,10 +2914,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
     // ... and nothing else.
     assertThat(i.hasNext()).isFalse()
-    try {
+    assertFailsWith<NoSuchElementException> {
       i.next()
-      fail<Any>()
-    } catch (expected: NoSuchElementException) {
     }
   }
 
@@ -2961,10 +2957,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     assertThat(get(url).body.string()).isEqualTo("a")
     val i = cache.urls()
     assertThat(i.hasNext()).isTrue()
-    try {
+    assertFailsWith<IllegalStateException> {
       i.remove()
-      fail<Any>()
-    } catch (expected: IllegalStateException) {
     }
   }
 
@@ -2983,10 +2977,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     i.remove()
 
     // Too many calls to remove().
-    try {
+    assertFailsWith<IllegalStateException> {
       i.remove()
-      fail<Any>()
-    } catch (expected: IllegalStateException) {
     }
   }
 
@@ -3028,10 +3020,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
     // The URL was evicted before hasNext() made any promises.
     assertThat(i.hasNext()).isFalse()
-    try {
+    assertFailsWith<NoSuchElementException> {
       i.next()
-      fail<Any>()
-    } catch (expected: NoSuchElementException) {
     }
   }
 

@@ -27,7 +27,8 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
@@ -116,16 +117,12 @@ class MultipartReaderTest {
     )
 
     val part = parts.nextPart()!!
-    try {
+    assertFailsWith<EOFException> {
       assertThat(part.body.readUtf8()).isEqualTo("abcd\r\nefgh\r\n")
-      fail()
-    } catch (expected: EOFException) {
     }
 
-    try {
+    assertFailsWith<EOFException> {
       assertThat(parts.nextPart()).isNull()
-      fail()
-    } catch (expected: EOFException) {
     }
   }
 
@@ -141,10 +138,8 @@ class MultipartReaderTest {
       source = Buffer().writeUtf8(multipart)
     )
 
-    try {
+    assertFailsWith<EOFException> {
       parts.nextPart()
-      fail()
-    } catch (expected: EOFException) {
     }
   }
 
@@ -243,11 +238,10 @@ class MultipartReaderTest {
     val partAbc = parts.nextPart()!!
     val partMno = parts.nextPart()!!
 
-    try {
+    assertFailsWith<IllegalStateException> {
       partAbc.body.request(20)
-      fail()
-    } catch (e: IllegalStateException) {
-      assertThat(e).hasMessage("closed")
+    }.also { expected ->
+      assertThat(expected).hasMessage("closed")
     }
 
     assertThat(partMno.body.readUtf8()).isEqualTo("mnop")
@@ -271,11 +265,10 @@ class MultipartReaderTest {
     val part = parts.nextPart()!!
     parts.close()
 
-    try {
+    assertFailsWith<IllegalStateException> {
       part.body.request(10)
-      fail()
-    } catch (e: IllegalStateException) {
-      assertThat(e).hasMessage("closed")
+    }.also { expected ->
+      assertThat(expected).hasMessage("closed")
     }
   }
 
@@ -287,11 +280,10 @@ class MultipartReaderTest {
 
     parts.close()
 
-    try {
+    assertFailsWith<IllegalStateException> {
       parts.nextPart()
-      fail()
-    } catch (e: IllegalStateException) {
-      assertThat(e).hasMessage("closed")
+    }.also { expected ->
+      assertThat(expected).hasMessage("closed")
     }
   }
 
@@ -306,10 +298,9 @@ class MultipartReaderTest {
       source = Buffer().writeUtf8(multipart)
     )
 
-    try {
+    assertFailsWith<ProtocolException> {
       parts.nextPart()
-      fail()
-    } catch (expected: ProtocolException) {
+    }.also { expected ->
       assertThat(expected).hasMessage("expected at least 1 part")
     }
   }
@@ -415,10 +406,9 @@ class MultipartReaderTest {
       source = Buffer().writeUtf8(multipart)
     )
 
-    try {
+    assertFailsWith<ProtocolException> {
       parts.nextPart()
-      fail()
-    } catch (expected: ProtocolException) {
+    }.also { expected ->
       assertThat(expected).hasMessage("unexpected characters after boundary")
     }
   }
@@ -438,10 +428,9 @@ class MultipartReaderTest {
     )
 
     parts.nextPart()
-    try {
+    assertFailsWith<ProtocolException> {
       parts.nextPart()
-      fail()
-    } catch (expected: ProtocolException) {
+    }.also { expected ->
       assertThat(expected).hasMessage("unexpected characters after boundary")
     }
   }
@@ -505,10 +494,8 @@ class MultipartReaderTest {
       source = Buffer()
     )
 
-    try {
+    assertFailsWith<EOFException> {
       parts.nextPart()
-      fail()
-    } catch (expected: EOFException) {
     }
   }
 

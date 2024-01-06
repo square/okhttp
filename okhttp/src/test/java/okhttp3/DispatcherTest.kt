@@ -13,7 +13,8 @@ import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -44,19 +45,15 @@ class DispatcherTest {
 
   @Test
   fun maxRequestsZero() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       dispatcher.maxRequests = 0
-      fail<Any>()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
   @Test
   fun maxPerHostZero() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       dispatcher.maxRequestsPerHost = 0
-      fail<Any>()
-    } catch (expected: IllegalArgumentException) {
     }
   }
 

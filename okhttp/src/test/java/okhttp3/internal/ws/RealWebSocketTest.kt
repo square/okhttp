@@ -26,6 +26,7 @@ import java.io.IOException
 import java.net.ProtocolException
 import java.net.SocketTimeoutException
 import java.util.Random
+import kotlin.test.assertFailsWith
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Protocol
@@ -98,10 +99,9 @@ class RealWebSocketTest {
 
   @Test
   fun clientCloseWith0Fails() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       client.webSocket!!.close(0, null)
-      org.junit.jupiter.api.Assertions.fail<Any>()
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat("Code must be in range [1000,5000): 0")
         .isEqualTo(expected.message)
     }

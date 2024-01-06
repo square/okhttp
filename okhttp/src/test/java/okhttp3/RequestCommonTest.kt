@@ -22,8 +22,8 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
-import assertk.fail
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -146,15 +146,11 @@ class RequestCommonTest {
   @Test
   fun emptyNameForbidden() {
     val builder = Request.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.header("", "Value")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.addHeader("", "Value")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -162,10 +158,8 @@ class RequestCommonTest {
   fun headerAllowsTabOnlyInValues() {
     val builder = Request.Builder()
     builder.header("key", "sample\tvalue")
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.header("sample\tkey", "value")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 
@@ -182,25 +176,17 @@ class RequestCommonTest {
 
   private fun assertForbiddenHeader(s: String) {
     val builder = Request.Builder()
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.header(s, "Value")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.addHeader(s, "Value")
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.header("Name", s)
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       builder.addHeader("Name", s)
-      fail("")
-    } catch (expected: IllegalArgumentException) {
     }
   }
 

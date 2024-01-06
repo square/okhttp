@@ -41,7 +41,8 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Timeout
-import org.junit.jupiter.api.fail
+import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -129,10 +130,8 @@ class DiskLruCacheTest {
     cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
       toClose.add(it)
     }
-    try {
+    assertFailsWith<IOException> {
       cache["k1"]
-      fail("")
-    } catch (_: IOException) {
     }
 
     // Now let it operate normally.
@@ -146,49 +145,43 @@ class DiskLruCacheTest {
   @ArgumentsSource(FileSystemParamProvider::class)
   fun validateKey(parameters: Pair<FileSystem, Boolean>) {
     setUp(parameters.first, parameters.second)
-    var key: String? = null
-    try {
+    var key = ""
+    assertFailsWith<IllegalArgumentException> {
       key = "has_space "
       cache.edit(key)
-      fail("Expecting an IllegalArgumentException as the key was invalid.")
-    } catch (iae: IllegalArgumentException) {
-      assertThat(iae.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       key = "has_CR\r"
       cache.edit(key)
-      fail("Expecting an IllegalArgumentException as the key was invalid.")
-    } catch (iae: IllegalArgumentException) {
-      assertThat(iae.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       key = "has_LF\n"
       cache.edit(key)
-      fail("Expecting an IllegalArgumentException as the key was invalid.")
-    } catch (iae: IllegalArgumentException) {
-      assertThat(iae.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       key = "has_invalid/"
       cache.edit(key)
-      fail("Expecting an IllegalArgumentException as the key was invalid.")
-    } catch (iae: IllegalArgumentException) {
-      assertThat(iae.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       key = "has_invalid\u2603"
       cache.edit(key)
-      fail("Expecting an IllegalArgumentException as the key was invalid.")
-    } catch (iae: IllegalArgumentException) {
-      assertThat(iae.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
     }
-    try {
+    assertFailsWith<IllegalArgumentException> {
       key = ("this_is_way_too_long_this_is_way_too_long_this_is_way_too_long_" +
           "this_is_way_too_long_this_is_way_too_long_this_is_way_too_long")
       cache.edit(key)
-      fail("Expecting an IllegalArgumentException as the key was too long.")
-    } catch (iae: IllegalArgumentException) {
-      assertThat(iae.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
     }
 
     // Test valid cases.
@@ -544,10 +537,8 @@ class DiskLruCacheTest {
   @ArgumentsSource(FileSystemParamProvider::class)
   fun keyWithSpaceNotPermitted(parameters: Pair<FileSystem, Boolean>) {
     setUp(parameters.first, parameters.second)
-    try {
+    assertFailsWith<IllegalArgumentException> {
       cache.edit("my key")
-      fail("")
-    } catch (_: IllegalArgumentException) {
     }
   }
 
@@ -555,10 +546,8 @@ class DiskLruCacheTest {
   @ArgumentsSource(FileSystemParamProvider::class)
   fun keyWithNewlineNotPermitted(parameters: Pair<FileSystem, Boolean>) {
     setUp(parameters.first, parameters.second)
-    try {
+    assertFailsWith<IllegalArgumentException> {
       cache.edit("my\nkey")
-      fail("")
-    } catch (_: IllegalArgumentException) {
     }
   }
 
@@ -566,10 +555,8 @@ class DiskLruCacheTest {
   @ArgumentsSource(FileSystemParamProvider::class)
   fun keyWithCarriageReturnNotPermitted(parameters: Pair<FileSystem, Boolean>) {
     setUp(parameters.first, parameters.second)
-    try {
+    assertFailsWith<IllegalArgumentException> {
       cache.edit("my\rkey")
-      fail("")
-    } catch (_: IllegalArgumentException) {
     }
   }
 
@@ -579,10 +566,8 @@ class DiskLruCacheTest {
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
     creator.setString(1, "A")
-    try {
+    assertFailsWith<IllegalStateException> {
       creator.commit()
-      fail("")
-    } catch (_: IllegalStateException) {
     }
     assertThat(filesystem.exists(getCleanFile("k1", 0))).isFalse()
     assertThat(filesystem.exists(getCleanFile("k1", 1))).isFalse()
@@ -789,10 +774,8 @@ class DiskLruCacheTest {
   @ArgumentsSource(FileSystemParamProvider::class)
   fun constructorDoesNotAllowZeroCacheSize(parameters: Pair<FileSystem, Boolean>) {
     setUp(parameters.first, parameters.second)
-    try {
+    assertFailsWith<IllegalArgumentException> {
       DiskLruCache(filesystem, cacheDir, appVersion, 2, 0, taskRunner)
-      fail("")
-    } catch (_: IllegalArgumentException) {
     }
   }
 
@@ -800,10 +783,8 @@ class DiskLruCacheTest {
   @ArgumentsSource(FileSystemParamProvider::class)
   fun constructorDoesNotAllowZeroValuesPerEntry(parameters: Pair<FileSystem, Boolean>) {
     setUp(parameters.first, parameters.second)
-    try {
+    assertFailsWith<IllegalArgumentException> {
       DiskLruCache(filesystem, cacheDir, appVersion, 0, 10, taskRunner)
-      fail("")
-    } catch (_: IllegalArgumentException) {
     }
   }
 
@@ -1426,10 +1407,8 @@ class DiskLruCacheTest {
       it.assertValue(1, "c2")
     }
     assertThat(iterator.hasNext()).isFalse()
-    try {
+    assertFailsWith<NoSuchElementException> {
       iterator.next()
-      fail("")
-    } catch (_: NoSuchElementException) {
     }
   }
 
@@ -1500,10 +1479,8 @@ class DiskLruCacheTest {
     setUp(parameters.first, parameters.second)
     set("a", "a1", "a2")
     val iterator = cache.snapshots()
-    try {
+    assertFailsWith<IllegalStateException> {
       iterator.remove()
-      fail("")
-    } catch (_: IllegalStateException) {
     }
   }
 
@@ -1516,10 +1493,8 @@ class DiskLruCacheTest {
     iterator.next().use {
       iterator.remove()
     }
-    try {
+    assertFailsWith<IllegalStateException> {
       iterator.remove()
-      fail("")
-    } catch (_: IllegalStateException) {
     }
   }
 
@@ -2322,30 +2297,20 @@ class DiskLruCacheTest {
   private fun sourceAsString(source: Source) = source.buffer().readUtf8()
 
   private fun Editor.assertInoperable() {
-    try {
+    assertFailsWith<IllegalStateException> {
       setString(0, "A")
-      fail("")
-    } catch (_: IllegalStateException) {
     }
-    try {
+    assertFailsWith<IllegalStateException> {
       newSource(0)
-      fail("")
-    } catch (_: IllegalStateException) {
     }
-    try {
+    assertFailsWith<IllegalStateException> {
       newSink(0)
-      fail("")
-    } catch (_: IllegalStateException) {
     }
-    try {
+    assertFailsWith<IllegalStateException> {
       commit()
-      fail("")
-    } catch (_: IllegalStateException) {
     }
-    try {
+    assertFailsWith<IllegalStateException> {
       abort()
-      fail("")
-    } catch (_: IllegalStateException) {
     }
   }
 

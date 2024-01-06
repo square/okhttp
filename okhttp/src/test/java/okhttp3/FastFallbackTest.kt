@@ -19,6 +19,7 @@ import assertk.assertThat
 import assertk.assertions.hasMessage
 import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
+import assertk.fail
 import java.io.IOException
 import java.net.Inet4Address
 import java.net.Inet6Address
@@ -28,7 +29,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import javax.net.SocketFactory
 import kotlin.test.assertFailsWith
-import kotlin.test.fail
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.ResetStreamAtStart
@@ -241,11 +241,10 @@ class FastFallbackTest {
       .callTimeout(1_000, TimeUnit.MILLISECONDS)
       .build()
     val call = client.newCall(Request(url))
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail("expected a timeout")
-    } catch (e: IOException) {
-      assertThat(e).hasMessage("timeout")
+    }.also { expected ->
+      assertThat(expected).hasMessage("timeout")
     }
   }
 

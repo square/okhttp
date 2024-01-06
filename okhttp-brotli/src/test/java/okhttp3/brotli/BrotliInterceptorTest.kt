@@ -21,6 +21,7 @@ import assertk.assertions.hasMessage
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import java.io.IOException
+import kotlin.test.assertFailsWith
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
 import okhttp3.Request
@@ -32,7 +33,6 @@ import okio.ByteString.Companion.EMPTY
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.fail
 
 class BrotliInterceptorTest {
   @Test
@@ -90,12 +90,10 @@ class BrotliInterceptorTest {
       header("Content-Encoding", "br")
     }
 
-    try {
+    assertFailsWith<IOException> {
       val failingResponse = uncompress(response)
       failingResponse.body.string()
-
-      fail("expected uncompress error")
-    } catch (ioe: IOException) {
+    }.also { ioe ->
       assertThat(ioe).hasMessage("Brotli stream decoding failed")
       assertThat(ioe.cause?.javaClass?.simpleName).isEqualTo("BrotliRuntimeException")
     }

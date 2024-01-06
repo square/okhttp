@@ -26,11 +26,11 @@ import assertk.assertions.isTrue
 import java.util.concurrent.CopyOnWriteArraySet
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
+import kotlin.test.assertFailsWith
 import okhttp3.internal.applyConnectionSpec
 import okhttp3.internal.platform.Platform.Companion.isAndroid
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion.majorVersion
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -40,12 +40,11 @@ class ConnectionSpecTest {
 
   @Test
   fun noTlsVersions() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
         .tlsVersions(*arrayOf<String>())
         .build()
-      fail<Any>()
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("At least one TLS version is required")
     }
@@ -53,12 +52,11 @@ class ConnectionSpecTest {
 
   @Test
   fun noCipherSuites() {
-    try {
+    assertFailsWith<IllegalArgumentException> {
       ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
         .cipherSuites(*arrayOf<CipherSuite>())
         .build()
-      fail<Any>()
-    } catch (expected: IllegalArgumentException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("At least one cipher suite is required")
     }

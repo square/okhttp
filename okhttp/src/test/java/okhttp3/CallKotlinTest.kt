@@ -43,7 +43,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.api.fail
+import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junitpioneer.jupiter.RetryingTest
 
 @Timeout(30)
@@ -160,11 +161,8 @@ class CallKotlinTest {
         .header("Content-Type", "application/xml")
         .put(ErringRequestBody())
         .build()
-    try {
+    assertFailsWith<IOException> {
       client.newCall(request).execute()
-      fail("test should always throw exception")
-    } catch (_: IOException) {
-      // NOTE: expected
     }
 
     request = Request.Builder()
@@ -229,10 +227,9 @@ class CallKotlinTest {
         .build()
 
     val request = Request(server.url("/"))
-    try {
+    assertFailsWith<IOException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       expected.assertSuppressed {
         val suppressed = it.single()
         assertThat(suppressed).isInstanceOf(IOException::class.java)
@@ -251,10 +248,9 @@ class CallKotlinTest {
         .build()
 
     val request = Request(server.url("/"))
-    try {
+    assertFailsWith<IOException> {
       client.newCall(request).execute()
-      fail("")
-    } catch (expected: IOException) {
+    }.also { expected ->
       expected.assertSuppressed {
         val suppressed = it.single()
         assertThat(suppressed).isInstanceOf(IOException::class.java)

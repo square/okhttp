@@ -34,6 +34,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.security.auth.x500.X500Principal
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.internal.MockWebServerExtension
@@ -48,7 +49,6 @@ import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.newKeyManager
 import okhttp3.tls.internal.TlsUtil.newTrustManager
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -210,17 +210,23 @@ class ClientAuthTest {
     server.useHttps(socketFactory)
     server.requireClientAuth()
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Any>()
-    } catch (expected: SSLHandshakeException) {
-      // JDK 11+
-    } catch (expected: SSLException) {
-      // javax.net.ssl.SSLException: readRecord
-    } catch (expected: SocketException) {
-      // Conscrypt, JDK 8 (>= 292), JDK 9
-    } catch (expected: IOException) {
-      assertThat(expected.message).isEqualTo("exhausted all routes")
+    }.also { expected ->
+      when (expected) {
+        is SSLHandshakeException -> {
+          // JDK 11+
+        }
+        is SSLException -> {
+          // javax.net.ssl.SSLException: readRecord
+        }
+        is SocketException -> {
+          // Conscrypt, JDK 8 (>= 292), JDK 9
+        }
+        else -> {
+          assertThat(expected.message).isEqualTo("exhausted all routes")
+        }
+      }
     }
   }
 
@@ -237,10 +243,8 @@ class ClientAuthTest {
     server.useHttps(socketFactory)
     server.requireClientAuth()
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
-    try {
+    assertFailsWith<SSLPeerUnverifiedException> {
       call.execute()
-      fail<Any>()
-    } catch (expected: SSLPeerUnverifiedException) {
     }
   }
 
@@ -257,19 +261,26 @@ class ClientAuthTest {
     server.useHttps(socketFactory)
     server.requireClientAuth()
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Any>()
-    } catch (expected: SSLHandshakeException) {
-      // JDK 11+
-    } catch (expected: SSLException) {
-      // javax.net.ssl.SSLException: readRecord
-    } catch (expected: SocketException) {
-      // Conscrypt, JDK 8 (>= 292), JDK 9
-    } catch (expected: ConnectionShutdownException) {
-      // It didn't fail until it reached the application layer.
-    } catch (expected: IOException) {
-      assertThat(expected.message).isEqualTo("exhausted all routes")
+    }.also { expected ->
+      when (expected) {
+        is SSLHandshakeException -> {
+          // JDK 11+
+        }
+        is SSLException -> {
+          // javax.net.ssl.SSLException: readRecord
+        }
+        is SocketException -> {
+          // Conscrypt, JDK 8 (>= 292), JDK 9
+        }
+        is ConnectionShutdownException -> {
+          // It didn't fail until it reached the application layer.
+        }
+        else -> {
+          assertThat(expected.message).isEqualTo("exhausted all routes")
+        }
+      }
     }
   }
 
@@ -296,10 +307,8 @@ class ClientAuthTest {
     server.useHttps(socketFactory)
     server.requireClientAuth()
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Any>()
-    } catch (expected: IOException) {
     }
 
     // Observed Events are variable

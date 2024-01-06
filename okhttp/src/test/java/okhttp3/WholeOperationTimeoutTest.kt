@@ -27,13 +27,13 @@ import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.TestUtil.repeat
 import okhttp3.testing.Flaky
 import okio.BufferedSink
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -85,11 +85,10 @@ class WholeOperationTimeoutTest {
       .build()
     val call = client.newCall(request)
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Any>()
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("timeout")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("timeout")
       assertThat(call.isCanceled()).isTrue()
     }
   }
@@ -134,11 +133,10 @@ class WholeOperationTimeoutTest {
       .build()
     val call = client.newCall(request)
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Any>()
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("timeout")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("timeout")
       assertThat(call.isCanceled()).isTrue()
     }
   }
@@ -188,11 +186,10 @@ class WholeOperationTimeoutTest {
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
     val response = call.execute()
     Thread.sleep(500)
-    try {
+    assertFailsWith<IOException> {
       response.body.source().readUtf8()
-      fail<Any>()
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("timeout")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("timeout")
       assertThat(call.isCanceled()).isTrue()
     }
   }
@@ -223,12 +220,10 @@ class WholeOperationTimeoutTest {
         } catch (e: InterruptedException) {
           throw AssertionError()
         }
-        try {
+        assertFailsWith<IOException> {
           response.body.source().readUtf8()
-          fail<Any>()
-        } catch (e: IOException) {
-          exceptionRef.set(e)
-        } finally {
+        }.also { expected ->
+          exceptionRef.set(expected)
           latch.countDown()
         }
       }
@@ -281,11 +276,10 @@ class WholeOperationTimeoutTest {
       .build()
     val call = client.newCall(request)
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Any>()
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("timeout")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("timeout")
       assertThat(call.isCanceled()).isTrue()
     }
   }
@@ -307,11 +301,10 @@ class WholeOperationTimeoutTest {
     val request = Request.Builder().url(server.url("/")).build()
     val call = client.newCall(request)
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Any>()
-    } catch (e: IOException) {
-      assertThat(e.message).isEqualTo("timeout")
+    }.also { expected ->
+      assertThat(expected.message).isEqualTo("timeout")
       assertThat(call.isCanceled()).isTrue()
     }
   }

@@ -48,7 +48,8 @@ import okio.GzipSink
 import okio.Sink
 import okio.Source
 import okio.buffer
-import org.junit.jupiter.api.Assertions.fail
+import assertk.fail
+import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -109,10 +110,9 @@ class InterceptorTest {
     val request = Request.Builder()
       .url(server.url("/"))
       .build()
-    try {
+    assertFailsWith<IllegalStateException> {
       client.newCall(request).execute()
-      fail<Any>()
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo(
         "network interceptor $interceptor must call proceed() exactly once"
       )
@@ -133,10 +133,9 @@ class InterceptorTest {
     val request = Request.Builder()
       .url(server.url("/"))
       .build()
-    try {
+    assertFailsWith<IllegalStateException> {
       client.newCall(request).execute()
-      fail<Any>()
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo(
         "network interceptor $interceptor must call proceed() exactly once"
       )
@@ -166,10 +165,9 @@ class InterceptorTest {
     val request = Request.Builder()
       .url(server.url("/"))
       .build()
-    try {
+    assertFailsWith<IllegalStateException> {
       client.newCall(request).execute()
-      fail<Any>()
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo(
         "network interceptor $interceptor must retain the same host and port"
       )
@@ -491,10 +489,9 @@ class InterceptorTest {
     val request = Request.Builder()
       .url(server.url("/"))
       .build()
-    try {
+    assertFailsWith<RuntimeException> {
       client.newCall(request).execute()
-      fail<Any>()
-    } catch (expected: RuntimeException) {
+    }.also { expected ->
       assertThat(expected.message).isEqualTo("boom!")
     }
   }
@@ -605,10 +602,8 @@ class InterceptorTest {
       .build()
     val call = client.newCall(request1)
     val startNanos = System.nanoTime()
-    try {
+    assertFailsWith<SocketTimeoutException> {
       call.execute()
-      fail<Any>()
-    } catch (expected: SocketTimeoutException) {
     }
     val elapsedNanos = System.nanoTime() - startNanos
     org.junit.jupiter.api.Assertions.assertTrue(
@@ -646,10 +641,8 @@ class InterceptorTest {
     val call = client.newCall(request1)
     val response = call.execute()
     val body = response.body
-    try {
+    assertFailsWith<SocketTimeoutException> {
       body.string()
-      fail<Any>()
-    } catch (expected: SocketTimeoutException) {
     }
   }
 
@@ -663,10 +656,9 @@ class InterceptorTest {
     }
     val request1 = Request.Builder().url(server.url("/")).build()
     val call = client.newCall(request1)
-    try {
+    assertFailsWith<IllegalStateException> {
       call.execute()
-      fail<Any>()
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Timeouts can't be adjusted in a network interceptor")
     }
@@ -682,10 +674,9 @@ class InterceptorTest {
     }
     val request1 = Request.Builder().url(server.url("/")).build()
     val call = client.newCall(request1)
-    try {
+    assertFailsWith<IllegalStateException> {
       call.execute()
-      fail<Any>()
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Timeouts can't be adjusted in a network interceptor")
     }
@@ -701,10 +692,9 @@ class InterceptorTest {
     }
     val request1 = Request.Builder().url(server.url("/")).build()
     val call = client.newCall(request1)
-    try {
+    assertFailsWith<IllegalStateException> {
       call.execute()
-      fail<Any>()
-    } catch (expected: IllegalStateException) {
+    }.also { expected ->
       assertThat(expected.message)
         .isEqualTo("Timeouts can't be adjusted in a network interceptor")
     }
@@ -739,10 +729,8 @@ class InterceptorTest {
       .post(data.toRequestBody("text/plain".toMediaType()))
       .build()
     val call = client.newCall(request1)
-    try {
+    assertFailsWith<SocketTimeoutException> {
       call.execute() // we want this call to throw a SocketTimeoutException
-      fail<Any>()
-    } catch (expected: SocketTimeoutException) {
     }
   }
 
@@ -764,10 +752,8 @@ class InterceptorTest {
       .url(server.url("/"))
       .build()
     val call = client.newCall(request)
-    try {
+    assertFailsWith<IOException> {
       call.execute()
-      fail<Any>()
-    } catch (expected: IOException) {
     }
     assertThat(callRef.get()).isSameAs(call)
   }

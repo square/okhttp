@@ -17,8 +17,12 @@ package okhttp3
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isIn
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLException
+import kotlin.math.exp
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.DisconnectAfterRequest
@@ -31,7 +35,6 @@ import okhttp3.internal.closeQuietly
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import org.bouncycastle.tls.TlsFatalAlert
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -241,11 +244,13 @@ class ConnectionReuseTest {
       .build()
 
     // This client fails to connect because the new SSL socket factory refuses.
-    try {
+    assertFailsWith<IOException> {
       anotherClient.newCall(request).execute()
-      fail<Any?>()
-    } catch (expected: SSLException) {
-    } catch (expected: TlsFatalAlert) {
+    }.also { expected ->
+      when (expected) {
+        is SSLException, is TlsFatalAlert -> {}
+        else -> throw expected
+      }
     }
   }
 
