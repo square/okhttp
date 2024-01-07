@@ -847,13 +847,15 @@ class HpackTest {
     hpackWriter!!.resizeHeaderTable(2048)
     hpackWriter!!.writeHeaders(listOf(Header("foo", "bar")))
     assertBytes(
-      0x3F, 0xE1, 0xF,  // Dynamic table size update (size = 2048).
+      // Dynamic table size update (size = 2048).
+      0x3F, 0xE1, 0xF,
       0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code
     )
     hpackWriter!!.resizeHeaderTable(8192)
     hpackWriter!!.writeHeaders(listOf(Header("bar", "foo")))
     assertBytes(
-      0x3F, 0xE1, 0x3F,  // Dynamic table size update (size = 8192).
+      // Dynamic table size update (size = 8192).
+      0x3F, 0xE1, 0x3F,
       0x40, 3, 'b'.code, 'a'.code, 'r'.code, 3, 'f'.code, 'o'.code, 'o'.code
     )
 
@@ -876,7 +878,8 @@ class HpackTest {
     hpackWriter!!.resizeHeaderTable(16384)
     hpackWriter!!.writeHeaders(listOf(Header("foo", "bar")))
     assertBytes(
-      0x3F, 0xE1, 0x7F,  // Dynamic table size update (size = 16384).
+      // Dynamic table size update (size = 16384).
+      0x3F, 0xE1, 0x7F,
       0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code
     )
   }
@@ -887,7 +890,8 @@ class HpackTest {
     hpackWriter!!.resizeHeaderTable(0)
     hpackWriter!!.writeHeaders(listOf(Header("foo", "bar")))
     assertBytes(
-      0x20,  // Dynamic size update (size = 0).
+      // Dynamic size update (size = 0).
+      0x20,
       0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code
     )
   }
@@ -901,8 +905,10 @@ class HpackTest {
     hpackWriter!!.resizeHeaderTable(2048)
     hpackWriter!!.writeHeaders(listOf(Header("foo", "bar")))
     assertBytes(
-      0x20,  // Dynamic size update (size = 0).
-      0x3F, 0xE1, 0xF,  // Dynamic size update (size = 2048).
+      // Dynamic size update (size = 0).
+      0x20,
+      // Dynamic size update (size = 2048).
+      0x3F, 0xE1, 0xF,
       0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code
     )
   }

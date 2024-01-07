@@ -71,7 +71,8 @@ class Request internal constructor(builder: Builder) {
   constructor(
     url: HttpUrl,
     headers: Headers = headersOf(),
-    method: String = "\u0000", // Sentinel value chooses based on what the body is.
+    // '\u0000' is a sentinel value that'll choose based on what the body is:
+    method: String = "\u0000",
     body: RequestBody? = null,
   ) : this(
     Builder()

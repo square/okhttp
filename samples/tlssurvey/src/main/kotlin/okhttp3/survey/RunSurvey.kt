@@ -25,6 +25,7 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 import org.conscrypt.Conscrypt
 
+@Suppress("ktlint:standard:property-naming")
 suspend fun main() {
   val includeConscrypt = false
 

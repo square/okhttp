@@ -41,6 +41,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @ExtendWith(MockWebServerExtension::class)
+@Suppress("ktlint:standard:max-line-length")
 class LoggingEventListenerTest {
   @RegisterExtension
   val platform = PlatformRule()

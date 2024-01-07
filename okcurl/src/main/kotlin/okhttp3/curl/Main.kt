@@ -23,7 +23,7 @@ import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import java.security.cert.X509Certificate
-import java.util.*
+import java.util.Properties
 import java.util.concurrent.TimeUnit.SECONDS
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory

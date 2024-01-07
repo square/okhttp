@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("ktlint:standard:filename")
 package okhttp3.internal
 
-import kotlin.jvm.JvmField
 import okhttp3.Headers
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -46,11 +46,20 @@ val EMPTY_BYTE_ARRAY: ByteArray = ByteArray(0)
 
 /** Byte order marks. */
 internal val UNICODE_BOMS = Options.of(
-  "efbbbf".decodeHex(), // UTF-8
-  "feff".decodeHex(), // UTF-16BE
-  "fffe".decodeHex(), // UTF-16LE
-  "0000ffff".decodeHex(), // UTF-32BE
-  "ffff0000".decodeHex() // UTF-32LE
+   // UTF-8.
+  "efbbbf".decodeHex(),
+
+   // UTF-16BE.
+  "feff".decodeHex(),
+
+   // UTF-16LE.
+  "fffe".decodeHex(),
+
+   // UTF-32BE.
+  "0000ffff".decodeHex(),
+
+  // UTF-32LE.
+  "ffff0000".decodeHex(),
 )
 
 /**
@@ -364,7 +373,7 @@ internal inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List
   return result
 }
 
-internal const val userAgent: String = "okhttp/${CONST_VERSION}"
+internal const val USER_AGENT: String = "okhttp/${CONST_VERSION}"
 
 internal fun checkOffsetAndCount(arrayLength: Long, offset: Long, count: Long) {
   if (offset or count < 0L || offset > arrayLength || arrayLength - offset < count) {

@@ -142,7 +142,6 @@ object Http2 {
    * Looks up valid string representing flags from the table. Invalid combinations are represented
    * in binary.
    */
-  // Visible for testing.
   fun formatFlags(type: Int, flags: Int): String {
     if (flags == 0) return ""
     when (type) {

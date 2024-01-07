@@ -502,13 +502,14 @@ class DiskLruCacheTest {
     writeFile(getCleanFile("k1", 1), "B")
     filesystem.write(journalFile) {
       writeUtf8(
+        // No trailing newline.
         """
-          |${DiskLruCache.MAGIC}
-          |${DiskLruCache.VERSION_1}
-          |100
-          |2
-          |
-          |CLEAN k1 1 1""".trimMargin() // no trailing newline
+        |${DiskLruCache.MAGIC}
+        |${DiskLruCache.VERSION_1}
+        |100
+        |2
+        |
+        |CLEAN k1 1 1""".trimMargin()
       )
     }
     createNewCache()

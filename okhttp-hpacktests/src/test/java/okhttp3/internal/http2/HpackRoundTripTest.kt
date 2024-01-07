@@ -25,10 +25,11 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 
 /**
  * Tests for round-tripping headers through hpack.
+ *
+ * TODO: update hpack-test-case with the output of our encoder.
+ * This test will hide complementary bugs in the encoder and decoder,
+ * We should test that the encoder is producing responses that are
  */
-// TODO: update hpack-test-case with the output of our encoder.
-// This test will hide complementary bugs in the encoder and decoder,
-// We should test that the encoder is producing responses that are
 class HpackRoundTripTest : HpackDecodeTestBase() {
   internal class StoriesTestProvider : SimpleProvider() {
     override fun arguments(): List<Any> = createStories(RAW_DATA)

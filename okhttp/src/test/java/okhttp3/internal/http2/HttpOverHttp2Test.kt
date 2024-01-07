@@ -1035,7 +1035,8 @@ class HttpOverHttp2Test {
   fun recoverFromCancelReusesConnection(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     val responseDequeuedLatches = listOf(
-      CountDownLatch(1), // No synchronization for the last request, which is not canceled.
+      // No synchronization for the last request, which is not canceled:
+      CountDownLatch(1),
       CountDownLatch(0)
     )
     val requestCanceledLatches = listOf(
@@ -1070,7 +1071,8 @@ class HttpOverHttp2Test {
     setUp(protocol, mockWebServer)
     val responseDequeuedLatches = Arrays.asList(
       CountDownLatch(1),
-      CountDownLatch(1), // No synchronization for the last request, which is not canceled.
+      // No synchronization for the last request, which is not canceled:
+      CountDownLatch(1),
       CountDownLatch(0)
     )
     val requestCanceledLatches = Arrays.asList(

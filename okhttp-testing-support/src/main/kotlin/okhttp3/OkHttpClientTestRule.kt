@@ -62,7 +62,24 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   var recordFrames = false
   var recordSslDebug = false
 
-  private val sslExcludeFilter = "^(?:Inaccessible trust store|trustStore is|Reload the trust store|Reload trust certs|Reloaded|adding as trusted certificates|Ignore disabled cipher suite|Ignore unsupported cipher suite).*".toRegex()
+  private val sslExcludeFilter = Regex(
+    buildString {
+      append("^(?:")
+      append(
+        listOf(
+          "Inaccessible trust store",
+          "trustStore is",
+          "Reload the trust store",
+          "Reload trust certs",
+          "Reloaded",
+          "adding as trusted certificates",
+          "Ignore disabled cipher suite",
+          "Ignore unsupported cipher suite",
+        ).joinToString(separator = "|")
+      )
+      append(").*")
+    }
+  )
 
   private val testLogHandler = object : Handler() {
     override fun publish(record: LogRecord) {
@@ -139,7 +156,12 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
     val taskRunner = TaskRunner(backend)
 
     OkHttpClient.Builder()
-      .connectionPool(buildConnectionPool(connectionListener = connectionListener, taskRunner = taskRunner))
+      .connectionPool(
+        buildConnectionPool(
+          connectionListener = connectionListener,
+          taskRunner = taskRunner,
+        )
+      )
       .dispatcher(Dispatcher(backend.executor))
       .taskRunnerInternal(taskRunner)
   } else {
@@ -150,7 +172,9 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   private fun loomThreadFactory(): ThreadFactory {
     val ofVirtual = Thread::class.java.getMethod("ofVirtual").invoke(null)
 
-    return Class.forName("java.lang.Thread\$Builder").getMethod("factory").invoke(ofVirtual) as ThreadFactory
+    return Class.forName("java.lang.Thread\$Builder")
+      .getMethod("factory")
+      .invoke(ofVirtual) as ThreadFactory
   }
 
   private fun isLoom(): Boolean {

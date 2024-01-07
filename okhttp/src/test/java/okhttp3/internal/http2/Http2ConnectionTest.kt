@@ -30,6 +30,7 @@ import java.io.InterruptedIOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.assertFailsWith
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.TestUtil.headerEntries
 import okhttp3.TestUtil.repeat
@@ -46,8 +47,6 @@ import okio.Source
 import okio.buffer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
-import assertk.fail
-import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -490,7 +489,7 @@ class Http2ConnectionTest {
       .socket(socket)
       .pushObserver(IGNORE)
       .build()
-    connection.start( /* sendConnectionPreface = */false)
+    connection.start(sendConnectionPreface = false)
     socket.shutdownOutput()
     assertFailsWith<IOException> {
       connection.newStream(headerEntries("a", longString), false)
@@ -1875,7 +1874,7 @@ class Http2ConnectionTest {
     val connection = Http2Connection.Builder(true, TaskRunner.INSTANCE)
       .socket(peer.openSocket())
       .build()
-    connection.start( /* sendConnectionPreface = */false)
+    connection.start(sendConnectionPreface = false)
     val stream = connection.newStream(headerEntries("b", "banana"), false)
     assertFailsWith<IOException> {
       stream.takeHeaders()

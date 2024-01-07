@@ -30,17 +30,16 @@ import java.util.TimeZone
 import kotlin.test.assertFailsWith
 import okhttp3.tls.internal.der.CertificateAdapters.generalNameDnsName
 import okhttp3.tls.internal.der.CertificateAdapters.generalNameIpAddress
-import okhttp3.tls.internal.der.ObjectIdentifiers.basicConstraints
-import okhttp3.tls.internal.der.ObjectIdentifiers.commonName
-import okhttp3.tls.internal.der.ObjectIdentifiers.sha256WithRSAEncryption
-import okhttp3.tls.internal.der.ObjectIdentifiers.subjectAlternativeName
+import okhttp3.tls.internal.der.ObjectIdentifiers.BASIC_CONSTRAINTS
+import okhttp3.tls.internal.der.ObjectIdentifiers.COMMON_NAME
+import okhttp3.tls.internal.der.ObjectIdentifiers.SHA256_WITH_RSA_ENCRYPTION
+import okhttp3.tls.internal.der.ObjectIdentifiers.SUBJECT_ALTERNATIVE_NAME
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.fail
 
 internal class DerTest {
   @Test fun `decode tag and length`() {
@@ -740,8 +739,8 @@ internal class DerTest {
 
   @Test fun `decode object identifier`() {
     val bytes = "06092a864886f70d01010b".decodeHex()
-    assertThat(Adapters.OBJECT_IDENTIFIER.fromDer(bytes)).isEqualTo(sha256WithRSAEncryption)
-    assertThat(Adapters.OBJECT_IDENTIFIER.toDer(sha256WithRSAEncryption)).isEqualTo(bytes)
+    assertThat(Adapters.OBJECT_IDENTIFIER.fromDer(bytes)).isEqualTo(SHA256_WITH_RSA_ENCRYPTION)
+    assertThat(Adapters.OBJECT_IDENTIFIER.toDer(SHA256_WITH_RSA_ENCRYPTION)).isEqualTo(bytes)
   }
 
   @Test fun `null value`() {
@@ -753,7 +752,7 @@ internal class DerTest {
   @Test fun `sequence algorithm`() {
     val bytes = "300d06092a864886f70d01010b0500".decodeHex()
     val algorithmIdentifier = AlgorithmIdentifier(
-        algorithm = sha256WithRSAEncryption,
+        algorithm = SHA256_WITH_RSA_ENCRYPTION,
         parameters = null
     )
     assertThat(CertificateAdapters.algorithmIdentifier.fromDer(bytes))
@@ -856,7 +855,7 @@ internal class DerTest {
 
   @Test fun `extension with type hint for basic constraints`() {
     val extension = Extension(
-        basicConstraints,
+        BASIC_CONSTRAINTS,
         false,
         BasicConstraints(true, 4)
     )
@@ -870,7 +869,7 @@ internal class DerTest {
 
   @Test fun `extension with type hint for subject alternative names`() {
     val extension = Extension(
-        subjectAlternativeName,
+        SUBJECT_ALTERNATIVE_NAME,
         false,
         listOf(
             generalNameDnsName to "cash.app",
@@ -887,7 +886,8 @@ internal class DerTest {
 
   @Test fun `extension with unknown type hint`() {
     val extension = Extension(
-        commonName, // common name is not an extension.
+        // common name is not an extension.
+        COMMON_NAME,
         false,
         "3006800109810109".decodeHex()
     )

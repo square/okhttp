@@ -30,8 +30,10 @@ val avoidedTests = setOf(
   "okhttp3.internal.platform.PlatformTest",
   "okhttp3.internal.platform.android.AndroidSocketAdapterTest",
   "okhttp3.osgi.OsgiTest",
-  "okhttp3.CookiesTest", // hanging
-  "okhttp3.WholeOperationTimeoutTest", // hanging
+  // Hanging.
+  "okhttp3.CookiesTest",
+  // Hanging.
+  "okhttp3.WholeOperationTimeoutTest",
 )
 
 /**

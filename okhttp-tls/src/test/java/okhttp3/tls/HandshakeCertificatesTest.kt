@@ -155,7 +155,7 @@ class HandshakeCertificatesTest {
           rawSocket,
           rawSocket.inetAddress.hostAddress,
           rawSocket.port,
-          true /* autoClose */
+          true
         ) as SSLSocket
         sslSocket.use {
           sslSocket.useClientMode = false
@@ -177,7 +177,7 @@ class HandshakeCertificatesTest {
           rawSocket,
           rawSocket.inetAddress.hostAddress,
           rawSocket.port,
-          true /* autoClose */
+          true
         ) as SSLSocket
         sslSocket.use {
           sslSocket.startHandshake()

@@ -103,13 +103,19 @@ class StringprepTablesReader(
 }
 
 private val optionsSemicolon = Options.of(
-  ";".encodeUtf8(), // 0 is ';'.
+  // 0 is ';'.
+  ";".encodeUtf8(),
 )
 
 private val optionsSemicolonOrNewlineOrDash = Options.of(
-  ";".encodeUtf8(),  // 0 is ';'.
-  "\n".encodeUtf8(), // 1 is '\n'.
-  "-".encodeUtf8(),  // 2 is '-'.
+  // 0 is ';'.
+  ";".encodeUtf8(),
+
+  // 1 is '\n'.
+  "\n".encodeUtf8(),
+
+  // 2 is '-'.
+  "-".encodeUtf8(),
 )
 
 internal fun BufferedSource.readCodePointSet(): RangeListCodePointSet {

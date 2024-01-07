@@ -394,7 +394,9 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     synchronized(this) {
       awaitPingsSent++
     }
-    writePing(false, AWAIT_PING, 0x4f4b6f6b /* "OKok" */)
+
+    /* 0x4f 0x4b 0x6f 0x6b is "OKok". */
+    writePing(false, AWAIT_PING, 0x4f4b6f6b)
   }
 
   /** For testing: awaits a pong. */

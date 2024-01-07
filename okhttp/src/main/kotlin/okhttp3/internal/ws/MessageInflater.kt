@@ -27,7 +27,12 @@ class MessageInflater(
   private val noContextTakeover: Boolean
 ) : Closeable {
   private val deflatedBytes = Buffer()
-  private val inflater = Inflater(true /* omit zlib header */)
+
+  private val inflater = Inflater(
+    // nowrap (omits zlib header):
+    true,
+  )
+
   private val inflaterSource = InflaterSource(deflatedBytes, inflater)
 
   /** Inflates [buffer] in place as described in RFC 7692 section 7.2.2. */

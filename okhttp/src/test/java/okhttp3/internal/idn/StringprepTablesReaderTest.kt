@@ -49,9 +49,14 @@ class StringprepTablesReaderTest {
     assertEquals(
       listOf(
         0x0221..0x0221,
+
         0x0234..0x024f,
-        0x0000..0x001f, // [CONTROL CHARACTERS]
-        0x007f..0x007f, // DELETE
+
+        // [CONTROL CHARACTERS].
+        0x0000..0x001f,
+
+        // DELETE.
+        0x007f..0x007f,
       ),
       rangeList.ranges
     )
@@ -70,9 +75,14 @@ class StringprepTablesReaderTest {
     val mappings = buffer.readCodePointMappings()
     assertEquals(
       mapOf(
-        0x180c to "", // Map to nothing
-        'A'.code to "a", // Case map
-        'ΐ'.code to "\u03B9\u0308\u0301" // Case map
+        // Map to nothing.
+        0x180c to "",
+
+        // Case map.
+        'A'.code to "a",
+
+        // Case map.
+        'ΐ'.code to "\u03B9\u0308\u0301"
       ),
       mappings.mappings
     )

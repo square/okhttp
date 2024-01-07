@@ -200,10 +200,17 @@ class MultipartReader @Throws(IOException::class) constructor(
   internal companion object {
     /** These options follow the boundary. */
     val afterBoundaryOptions = Options.of(
-        "\r\n".encodeUtf8(), // 0.  "\r\n"  More parts.
-        "--".encodeUtf8(), //   1.  "--"    No more parts.
-        " ".encodeUtf8(), //    2.  " "     Optional whitespace. Only used if there are more parts.
-        "\t".encodeUtf8() //    3.  "\t"    Optional whitespace. Only used if there are more parts.
+      // 0.  "\r\n"  More parts.
+      "\r\n".encodeUtf8(),
+
+      // 1.  "--"    No more parts.
+      "--".encodeUtf8(),
+
+      // 2.  " "     Optional whitespace. Only used if there are more parts.
+      " ".encodeUtf8(),
+
+      // 3.  "\t"    Optional whitespace. Only used if there are more parts.
+      "\t".encodeUtf8(),
     )
   }
 }

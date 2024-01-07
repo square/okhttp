@@ -272,9 +272,12 @@ class TaskRunner(
 
   class RealBackend(threadFactory: ThreadFactory) : Backend {
     val executor = ThreadPoolExecutor(
-      0, // corePoolSize.
-      Int.MAX_VALUE, // maximumPoolSize.
-      60L, TimeUnit.SECONDS, // keepAliveTime.
+      // corePoolSize:
+      0,
+      // maximumPoolSize:
+      Int.MAX_VALUE,
+      // keepAliveTime:
+      60L, TimeUnit.SECONDS,
       SynchronousQueue(),
       threadFactory
     )

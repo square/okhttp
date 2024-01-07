@@ -25,7 +25,8 @@ class CacheResponse(cacheDirectory: File) {
   private val client: OkHttpClient = OkHttpClient.Builder()
       .cache(Cache(
           directory = cacheDirectory,
-          maxSize = 10L * 1024L * 1024L // 1 MiB
+          // 1 MiB.
+          maxSize = 10L * 1024L * 1024L
       ))
       .build()
 

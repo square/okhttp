@@ -26,13 +26,11 @@
 
 package okhttp3.internal.http
 
-/**
- * HTTP Status Codes
- *
- * https://datatracker.ietf.org/doc/html/rfc7231#page-47
- *
- * From https://github.com/apache/httpcomponents-core/blob/master/httpcore5/src/main/java/org/apache/hc/core5/http/HttpStatus.java
- */
+// HTTP Status Codes
+//
+// https://datatracker.ietf.org/doc/html/rfc7231#page-47
+//
+// From https://github.com/apache/httpcomponents-core/blob/master/httpcore5/src/main/java/org/apache/hc/core5/http/HttpStatus.java
 
 // --- 1xx Informational ---
 // /** `100 1xx Informational` (HTTP/1.1 - RFC 7231)  */

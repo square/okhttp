@@ -184,7 +184,8 @@ class ConnectPlan(
           rawSocket,
           route.address.url.host,
           route.address.url.port,
-          true /* autoClose */
+          // autoClose:
+          true
         ) as SSLSocket
 
         val tlsEquipPlan = planWithCurrentOrInitialConnectionSpec(connectionSpecs, sslSocket)
@@ -409,7 +410,8 @@ class ConnectPlan(
       val source = this.source!!
       val sink = this.sink!!
       val tunnelCodec = Http1ExchangeCodec(
-        client = null, // No client for CONNECT tunnels.
+        // No client for CONNECT tunnels:
+        client = null,
         carrier = this,
         source = source,
         sink = sink

@@ -22,6 +22,7 @@ import java.net.Inet4Address
 import java.net.Inet6Address
 import org.junit.jupiter.api.Test
 
+@Suppress("ktlint:standard:property-naming")
 class InetAddressOrderTest {
   val ipv4_10_0_0_6 = Inet4Address.getByName("10.0.0.6")
   val ipv4_10_0_0_1 = Inet4Address.getByName("10.0.0.1")

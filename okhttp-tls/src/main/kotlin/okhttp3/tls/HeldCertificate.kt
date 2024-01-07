@@ -43,11 +43,11 @@ import okhttp3.tls.internal.der.CertificateAdapters.generalNameDnsName
 import okhttp3.tls.internal.der.CertificateAdapters.generalNameIpAddress
 import okhttp3.tls.internal.der.Extension
 import okhttp3.tls.internal.der.ObjectIdentifiers
-import okhttp3.tls.internal.der.ObjectIdentifiers.basicConstraints
-import okhttp3.tls.internal.der.ObjectIdentifiers.organizationalUnitName
-import okhttp3.tls.internal.der.ObjectIdentifiers.sha256WithRSAEncryption
-import okhttp3.tls.internal.der.ObjectIdentifiers.sha256withEcdsa
-import okhttp3.tls.internal.der.ObjectIdentifiers.subjectAlternativeName
+import okhttp3.tls.internal.der.ObjectIdentifiers.BASIC_CONSTRAINTS
+import okhttp3.tls.internal.der.ObjectIdentifiers.ORGANIZATIONAL_UNIT_NAME
+import okhttp3.tls.internal.der.ObjectIdentifiers.SHA256_WITH_RSA_ENCRYPTION
+import okhttp3.tls.internal.der.ObjectIdentifiers.SHA256_WITH_ECDSA
+import okhttp3.tls.internal.der.ObjectIdentifiers.SUBJECT_ALTERNATIVE_NAME
 import okhttp3.tls.internal.der.TbsCertificate
 import okhttp3.tls.internal.der.Validity
 import okio.ByteString
@@ -346,7 +346,8 @@ class HeldCertificate(
 
       // Subset of certificate data that's covered by the signature.
       val tbsCertificate = TbsCertificate(
-          version = 2L, // v3.
+          // v3:
+          version = 2L,
           serialNumber = serialNumber ?: BigInteger.ONE,
           signature = signatureAlgorithm,
           issuer = issuer,
@@ -383,13 +384,13 @@ class HeldCertificate(
 
       if (organizationalUnit != null) {
         result += listOf(AttributeTypeAndValue(
-            type = organizationalUnitName,
+            type = ORGANIZATIONAL_UNIT_NAME,
             value = organizationalUnit
         ))
       }
 
       result += listOf(AttributeTypeAndValue(
-          type = ObjectIdentifiers.commonName,
+          type = ObjectIdentifiers.COMMON_NAME,
           value = commonName ?: UUID.randomUUID().toString()
       ))
 
@@ -410,7 +411,7 @@ class HeldCertificate(
 
       if (maxIntermediateCas != -1) {
         result += Extension(
-            id = basicConstraints,
+            id = BASIC_CONSTRAINTS,
             critical = true,
             value = BasicConstraints(
                 ca = true,
@@ -431,7 +432,7 @@ class HeldCertificate(
           }
         }
         result += Extension(
-            id = subjectAlternativeName,
+            id = SUBJECT_ALTERNATIVE_NAME,
             critical = true,
             value = extensionValue
         )
@@ -443,11 +444,11 @@ class HeldCertificate(
     private fun signatureAlgorithm(signedByKeyPair: KeyPair): AlgorithmIdentifier {
       return when (signedByKeyPair.private) {
         is RSAPrivateKey -> AlgorithmIdentifier(
-            algorithm = sha256WithRSAEncryption,
+            algorithm = SHA256_WITH_RSA_ENCRYPTION,
             parameters = null
         )
         else -> AlgorithmIdentifier(
-            algorithm = sha256withEcdsa,
+            algorithm = SHA256_WITH_ECDSA,
             parameters = ByteString.EMPTY
         )
       }

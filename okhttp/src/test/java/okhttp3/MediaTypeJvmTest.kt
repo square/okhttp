@@ -15,7 +15,7 @@
  */
 package okhttp3
 
-import java.util.*
+import java.util.Locale
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import okhttp3.MediaType.Companion.toMediaType
