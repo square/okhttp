@@ -1515,7 +1515,7 @@ class Http2ConnectionTest {
     val elapsedNanos = System.nanoTime() - startNanos
     awaitWatchdogIdle()
     // 200ms delta
-      assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
       .isCloseTo(500.0, 200.0)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
@@ -1567,7 +1567,7 @@ class Http2ConnectionTest {
     val elapsedNanos = System.nanoTime() - startNanos
     awaitWatchdogIdle()
     // 200ms delta
-      assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
       .isCloseTo(500.0, 200.0)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
@@ -1611,7 +1611,7 @@ class Http2ConnectionTest {
     val elapsedNanos = System.nanoTime() - startNanos
     awaitWatchdogIdle()
     // 200ms delta
-      assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
       .isCloseTo(500.0, 200.0)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
