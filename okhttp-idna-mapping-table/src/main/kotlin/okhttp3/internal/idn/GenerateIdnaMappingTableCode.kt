@@ -61,11 +61,11 @@ fun generateMappingTableFile(data: IdnaMappingTableData): FileSpec {
         .addModifiers(KModifier.INTERNAL)
         .initializer(
           """
-        |%T(⇥
-        |sections = "%L",
-        |ranges = "%L",
-        |mappings = "%L",
-        |⇤)
+          |%T(⇥
+          |sections = "%L",
+          |ranges = "%L",
+          |mappings = "%L",
+          |⇤)
           """.trimMargin(),
           idnaMappingTable,
           data.sections.escapeDataString(),

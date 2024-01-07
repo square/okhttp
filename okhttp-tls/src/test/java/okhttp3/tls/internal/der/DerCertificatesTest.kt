@@ -65,24 +65,24 @@ internal class DerCertificatesTest {
   fun `decode simple certificate`() {
     val certificateBase64 =
       """
-        |MIIBmjCCAQOgAwIBAgIBATANBgkqhkiG9w0BAQsFADATMREwDwYDVQQDEwhjYXNo
-        |LmFwcDAeFw03MDAxMDEwMDAwMDBaFw03MDAxMDEwMDAwMDFaMBMxETAPBgNVBAMT
-        |CGNhc2guYXBwMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCApFHhtrLan28q
-        |+oMolZuaTfWBA0V5aMIvq32BsloQu6LlvX1wJ4YEoUCjDlPOtpht7XLbUmBnbIzN
-        |89XK4UJVM6Sqp3K88Km8z7gMrdrfTom/274wL25fICR+yDEQ5fUVYBmJAKXZF1ao
-        |I0mIoEx0xFsQhIJ637v2MxJDupd61wIDAQABMA0GCSqGSIb3DQEBCwUAA4GBADam
-        |UVwKh5Ry7es3OxtY3IgQunPUoLc0Gw71gl9Z+7t2FJ5VkcI5gWfutmdxZ2bDXCI8
-        |8V0vxo1pHXnbBrnxhS/Z3TBerw8RyQqcaWOdp+pBXyIWmR+jHk9cHZCqQveTIBsY
-        |jaA9VEhgdaVhxBsT2qzUNDsXlOzGsliznDfoqETb
-        |
+      |MIIBmjCCAQOgAwIBAgIBATANBgkqhkiG9w0BAQsFADATMREwDwYDVQQDEwhjYXNo
+      |LmFwcDAeFw03MDAxMDEwMDAwMDBaFw03MDAxMDEwMDAwMDFaMBMxETAPBgNVBAMT
+      |CGNhc2guYXBwMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCApFHhtrLan28q
+      |+oMolZuaTfWBA0V5aMIvq32BsloQu6LlvX1wJ4YEoUCjDlPOtpht7XLbUmBnbIzN
+      |89XK4UJVM6Sqp3K88Km8z7gMrdrfTom/274wL25fICR+yDEQ5fUVYBmJAKXZF1ao
+      |I0mIoEx0xFsQhIJ637v2MxJDupd61wIDAQABMA0GCSqGSIb3DQEBCwUAA4GBADam
+      |UVwKh5Ry7es3OxtY3IgQunPUoLc0Gw71gl9Z+7t2FJ5VkcI5gWfutmdxZ2bDXCI8
+      |8V0vxo1pHXnbBrnxhS/Z3TBerw8RyQqcaWOdp+pBXyIWmR+jHk9cHZCqQveTIBsY
+      |jaA9VEhgdaVhxBsT2qzUNDsXlOzGsliznDfoqETb
+      |
       """.trimMargin()
     val certificateByteString = certificateBase64.decodeBase64()!!
     val certificatePem =
       """
-        |-----BEGIN CERTIFICATE-----
-        |$certificateBase64
-        |-----END CERTIFICATE-----
-        |
+      |-----BEGIN CERTIFICATE-----
+      |$certificateBase64
+      |-----END CERTIFICATE-----
+      |
       """.trimMargin()
 
     val javaCertificate = certificatePem.decodeCertificatePem()
@@ -178,42 +178,42 @@ internal class DerCertificatesTest {
   fun `decode CA certificate`() {
     val certificateBase64 =
       """
-        |MIIE/zCCA+egAwIBAgIEUdNARDANBgkqhkiG9w0BAQsFADCBsDELMAkGA1UEBhMC
-        |VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xOTA3BgNVBAsTMHd3dy5lbnRydXN0
-        |Lm5ldC9DUFMgaXMgaW5jb3Jwb3JhdGVkIGJ5IHJlZmVyZW5jZTEfMB0GA1UECxMW
-        |KGMpIDIwMDYgRW50cnVzdCwgSW5jLjEtMCsGA1UEAxMkRW50cnVzdCBSb290IENl
-        |cnRpZmljYXRpb24gQXV0aG9yaXR5MB4XDTE0MDkyMjE3MTQ1N1oXDTI0MDkyMzAx
-        |MzE1M1owgb4xCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1FbnRydXN0LCBJbmMuMSgw
-        |JgYDVQQLEx9TZWUgd3d3LmVudHJ1c3QubmV0L2xlZ2FsLXRlcm1zMTkwNwYDVQQL
-        |EzAoYykgMjAwOSBFbnRydXN0LCBJbmMuIC0gZm9yIGF1dGhvcml6ZWQgdXNlIG9u
-        |bHkxMjAwBgNVBAMTKUVudHJ1c3QgUm9vdCBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0
-        |eSAtIEcyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuoS2ctueDGvi
-        |mekwAad26jK4lUEaydphTlhyz/72gnm/c2EGCqUn2LNf00VOHHLWTjLycooP94MZ
-        |0GqAgABFHrDH55q/ElcnHKNoLwqHvWprDl5l8xx31dSFjXAhtLMy54ui1YY5ArG4
-        |0kfO5MlJxDun3vtUfVe+8OhuwnmyOgtV4lCYFjITXC94VsHClLPyWuQnmp8k18bs
-        |0JslguPMwsRFxYyXegZrKhGfqQpuSDtv29QRGUL3jwe/9VNfnD70FyzmaaxOMkxi
-        |d+q36OW7NLwZi66cUee3frVTsTMi5W3PcDwa+uKbZ7aD9I2lr2JMTeBYrGQ0EgP4
-        |to2UYySkcQIDAQABo4IBDzCCAQswDgYDVR0PAQH/BAQDAgEGMBIGA1UdEwEB/wQI
-        |MAYBAf8CAQEwMwYIKwYBBQUHAQEEJzAlMCMGCCsGAQUFBzABhhdodHRwOi8vb2Nz
-        |cC5lbnRydXN0Lm5ldDAzBgNVHR8ELDAqMCigJqAkhiJodHRwOi8vY3JsLmVudHJ1
-        |c3QubmV0L3Jvb3RjYTEuY3JsMDsGA1UdIAQ0MDIwMAYEVR0gADAoMCYGCCsGAQUF
-        |BwIBFhpodHRwOi8vd3d3LmVudHJ1c3QubmV0L0NQUzAdBgNVHQ4EFgQUanImetAe
-        |733nO2lR1GyNn5ASZqswHwYDVR0jBBgwFoAUaJDkZ6SmU4DHhmak8fdLQ/uEvW0w
-        |DQYJKoZIhvcNAQELBQADggEBAGkzg/woem99751V68U+ep11s8zDODbZNKIoaBjq
-        |HmnTvefQd9q4AINOSs9v0fHBIj905PeYSZ6btp7h25h3LVY0sag82f3Azce/BQPU
-        |AsXx5cbaCKUTx2IjEdFhMB1ghEXveajGJpOkt800uGnFE/aRs8lFc3a2kvZ2Clvh
-        |A0e36SlMkTIjN0qcNdh4/R0f5IOJJICtt/nP5F2l1HHEhVtwH9s/HAHrGkUmMRTM
-        |Zb9n3srMM2XlQZHXN75BGpad5oqXnafOrE6aPb0BoGrZTyIAi0TVaWJ7LuvMuueS
-        |fWlnPfy4fN5Bh9Bp6roKGHoalUOzeXEodm2h+1dK7E3IDhA=
-        |
+      |MIIE/zCCA+egAwIBAgIEUdNARDANBgkqhkiG9w0BAQsFADCBsDELMAkGA1UEBhMC
+      |VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xOTA3BgNVBAsTMHd3dy5lbnRydXN0
+      |Lm5ldC9DUFMgaXMgaW5jb3Jwb3JhdGVkIGJ5IHJlZmVyZW5jZTEfMB0GA1UECxMW
+      |KGMpIDIwMDYgRW50cnVzdCwgSW5jLjEtMCsGA1UEAxMkRW50cnVzdCBSb290IENl
+      |cnRpZmljYXRpb24gQXV0aG9yaXR5MB4XDTE0MDkyMjE3MTQ1N1oXDTI0MDkyMzAx
+      |MzE1M1owgb4xCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1FbnRydXN0LCBJbmMuMSgw
+      |JgYDVQQLEx9TZWUgd3d3LmVudHJ1c3QubmV0L2xlZ2FsLXRlcm1zMTkwNwYDVQQL
+      |EzAoYykgMjAwOSBFbnRydXN0LCBJbmMuIC0gZm9yIGF1dGhvcml6ZWQgdXNlIG9u
+      |bHkxMjAwBgNVBAMTKUVudHJ1c3QgUm9vdCBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0
+      |eSAtIEcyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuoS2ctueDGvi
+      |mekwAad26jK4lUEaydphTlhyz/72gnm/c2EGCqUn2LNf00VOHHLWTjLycooP94MZ
+      |0GqAgABFHrDH55q/ElcnHKNoLwqHvWprDl5l8xx31dSFjXAhtLMy54ui1YY5ArG4
+      |0kfO5MlJxDun3vtUfVe+8OhuwnmyOgtV4lCYFjITXC94VsHClLPyWuQnmp8k18bs
+      |0JslguPMwsRFxYyXegZrKhGfqQpuSDtv29QRGUL3jwe/9VNfnD70FyzmaaxOMkxi
+      |d+q36OW7NLwZi66cUee3frVTsTMi5W3PcDwa+uKbZ7aD9I2lr2JMTeBYrGQ0EgP4
+      |to2UYySkcQIDAQABo4IBDzCCAQswDgYDVR0PAQH/BAQDAgEGMBIGA1UdEwEB/wQI
+      |MAYBAf8CAQEwMwYIKwYBBQUHAQEEJzAlMCMGCCsGAQUFBzABhhdodHRwOi8vb2Nz
+      |cC5lbnRydXN0Lm5ldDAzBgNVHR8ELDAqMCigJqAkhiJodHRwOi8vY3JsLmVudHJ1
+      |c3QubmV0L3Jvb3RjYTEuY3JsMDsGA1UdIAQ0MDIwMAYEVR0gADAoMCYGCCsGAQUF
+      |BwIBFhpodHRwOi8vd3d3LmVudHJ1c3QubmV0L0NQUzAdBgNVHQ4EFgQUanImetAe
+      |733nO2lR1GyNn5ASZqswHwYDVR0jBBgwFoAUaJDkZ6SmU4DHhmak8fdLQ/uEvW0w
+      |DQYJKoZIhvcNAQELBQADggEBAGkzg/woem99751V68U+ep11s8zDODbZNKIoaBjq
+      |HmnTvefQd9q4AINOSs9v0fHBIj905PeYSZ6btp7h25h3LVY0sag82f3Azce/BQPU
+      |AsXx5cbaCKUTx2IjEdFhMB1ghEXveajGJpOkt800uGnFE/aRs8lFc3a2kvZ2Clvh
+      |A0e36SlMkTIjN0qcNdh4/R0f5IOJJICtt/nP5F2l1HHEhVtwH9s/HAHrGkUmMRTM
+      |Zb9n3srMM2XlQZHXN75BGpad5oqXnafOrE6aPb0BoGrZTyIAi0TVaWJ7LuvMuueS
+      |fWlnPfy4fN5Bh9Bp6roKGHoalUOzeXEodm2h+1dK7E3IDhA=
+      |
       """.trimMargin()
     val certificateByteString = certificateBase64.decodeBase64()!!
     val certificatePem =
       """
-        |-----BEGIN CERTIFICATE-----
-        |$certificateBase64
-        |-----END CERTIFICATE-----
-        |
+      |-----BEGIN CERTIFICATE-----
+      |$certificateBase64
+      |-----END CERTIFICATE-----
+      |
       """.trimMargin()
 
     val javaCertificate = certificatePem.decodeCertificatePem()
@@ -416,54 +416,54 @@ internal class DerCertificatesTest {
   fun `decode typical certificate`() {
     val certificateBase64 =
       """
-        |MIIHHTCCBgWgAwIBAgIRAL5oALmpH7l6AAAAAFTRMh0wDQYJKoZIhvcNAQELBQAw
-        |gboxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1FbnRydXN0LCBJbmMuMSgwJgYDVQQL
-        |Ex9TZWUgd3d3LmVudHJ1c3QubmV0L2xlZ2FsLXRlcm1zMTkwNwYDVQQLEzAoYykg
-        |MjAxNCBFbnRydXN0LCBJbmMuIC0gZm9yIGF1dGhvcml6ZWQgdXNlIG9ubHkxLjAs
-        |BgNVBAMTJUVudHJ1c3QgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgLSBMMU0wHhcN
-        |MjAwNDEzMTMyNTQ5WhcNMjEwNDEyMTM1NTQ5WjCBxTELMAkGA1UEBhMCVVMxEzAR
-        |BgNVBAgTCkNhbGlmb3JuaWExFjAUBgNVBAcTDVNhbiBGcmFuY2lzY28xEzARBgsr
-        |BgEEAYI3PAIBAxMCVVMxGTAXBgsrBgEEAYI3PAIBAhMIRGVsYXdhcmUxFTATBgNV
-        |BAoTDFNxdWFyZSwgSW5jLjEdMBsGA1UEDxMUUHJpdmF0ZSBPcmdhbml6YXRpb24x
-        |EDAOBgNVBAUTBzQ2OTk4NTUxETAPBgNVBAMTCGNhc2guYXBwMIIBIjANBgkqhkiG
-        |9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqv2iSwWvb6ys/Ru4LtSz0R4wDaxklrFIGqdJ
-        |rxxYdAdLQjyjHyJsfkNQdt2u4JYPRKaRTVYR9VIIeWUx/IjhZhsGPstPMjYT3cN1
-        |VsphSDtrRVuxYlmkrvHar0HoadNr1MHd96Ach3g1QJlV8uyUJ7JXpPCNJ8EMiH52
-        |n8bVzpjDjXwoYg3oOYvceteA0GJ5VWYACDgfmkeoaN1Cx31O9qcSiUk5AY8HfAnP
-        |h20VcrnPo2dJmm7fkUKohIxrMjtpwi5esWhCBZJk50FveKrgdeSe4XxNL7uJPD89
-        |SJtKmX7jxoNQSY3mrPssLdadwltUOhzc4Lcmoj4Ob24JxuVw8QIDAQABo4IDDzCC
-        |AwswIQYDVR0RBBowGIIIY2FzaC5hcHCCDHd3dy5jYXNoLmFwcDCCAX8GCisGAQQB
-        |1nkCBAIEggFvBIIBawFpAHcAVhQGmi/XwuzT9eG9RLI+x0Z2ubyZEVzA75SYVdaJ
-        |0N0AAAFxc9MmmwAABAMASDBGAiEAqeWK3uWt9LX1p3l0gPgNxYBB142oqtRMnMBB
-        |anTKy2ICIQDrRj7PRsVyXf1QRxgE5MZl6K6XkBKbaXBlAqPpb8z2hQB3AId1v+dZ
-        |fPiMQ5lfvfNu/1aNR1Y2/0q1YMG06v9eoIMPAAABcXPTJq0AAAQDAEgwRgIhANRS
-        |wAmVQLXhhxbbUTSKIA6P0Q6EmNABCNSJjSK5Q0ItAiEA88hnegYqVaykbbsQSSI0
-        |gP/+Odnm/Thso6HEJFXvYGcAdQB9PvL4j/+IVWgkwsDKnlKJeSvFDngJfy5ql2iZ
-        |fiLw1wAAAXFz0yazAAAEAwBGMEQCIH4RLAKbk+DbFdHeQO3bmqelXutLSM6MlN34
-        |7XEzHpMeAiB4KB48OcjmQ7kBwrxsRwqg7TrQG/F/DyB9wPilq1QacDAOBgNVHQ8B
-        |Af8EBAMCBaAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMGgGCCsGAQUF
-        |BwEBBFwwWjAjBggrBgEFBQcwAYYXaHR0cDovL29jc3AuZW50cnVzdC5uZXQwMwYI
-        |KwYBBQUHMAKGJ2h0dHA6Ly9haWEuZW50cnVzdC5uZXQvbDFtLWNoYWluMjU2LmNl
-        |cjAzBgNVHR8ELDAqMCigJqAkhiJodHRwOi8vY3JsLmVudHJ1c3QubmV0L2xldmVs
-        |MW0uY3JsMEoGA1UdIARDMEEwNgYKYIZIAYb6bAoBAjAoMCYGCCsGAQUFBwIBFhpo
-        |dHRwOi8vd3d3LmVudHJ1c3QubmV0L3JwYTAHBgVngQwBATAfBgNVHSMEGDAWgBTD
-        |99C1KjCtrw2RIXA5VN28iXDHOjAdBgNVHQ4EFgQUdf0kwt9ZJZnjLzNz4YwEUN0b
-        |h7YwCQYDVR0TBAIwADANBgkqhkiG9w0BAQsFAAOCAQEAYLX6TSuQqSAEu37pJ+au
-        |9IlRiAEhtdybxr3mhuII0zImejhLuo2knO2SD59avCDBPivITsSvh2aewOUmeKj1
-        |GYI7v16xCOCTQz3k31sCAX2L7DozHtbrY4wG7hUSA9dSv/aYJEtebkwim3lgHwv3
-        |NHA3iiW3raH1DPJThQmxFJrnT1zL0LQbM1nRQMXaBVfQEEhIYnrU672x6D/cya6r
-        |5UwWye3TOZCH0Lh+YaZqtuKx9lEIEXaxjD3jpGlwRLuE/fI6fXg+0kMvaqNVLmpN
-        |aJT7WeHs5bkf0dU7rtDefr0iKeqIxrlURPgbeWZF8GAkpdNaCwWMDAFO8DG04K+t
-        |Aw==
-        |
+      |MIIHHTCCBgWgAwIBAgIRAL5oALmpH7l6AAAAAFTRMh0wDQYJKoZIhvcNAQELBQAw
+      |gboxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1FbnRydXN0LCBJbmMuMSgwJgYDVQQL
+      |Ex9TZWUgd3d3LmVudHJ1c3QubmV0L2xlZ2FsLXRlcm1zMTkwNwYDVQQLEzAoYykg
+      |MjAxNCBFbnRydXN0LCBJbmMuIC0gZm9yIGF1dGhvcml6ZWQgdXNlIG9ubHkxLjAs
+      |BgNVBAMTJUVudHJ1c3QgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgLSBMMU0wHhcN
+      |MjAwNDEzMTMyNTQ5WhcNMjEwNDEyMTM1NTQ5WjCBxTELMAkGA1UEBhMCVVMxEzAR
+      |BgNVBAgTCkNhbGlmb3JuaWExFjAUBgNVBAcTDVNhbiBGcmFuY2lzY28xEzARBgsr
+      |BgEEAYI3PAIBAxMCVVMxGTAXBgsrBgEEAYI3PAIBAhMIRGVsYXdhcmUxFTATBgNV
+      |BAoTDFNxdWFyZSwgSW5jLjEdMBsGA1UEDxMUUHJpdmF0ZSBPcmdhbml6YXRpb24x
+      |EDAOBgNVBAUTBzQ2OTk4NTUxETAPBgNVBAMTCGNhc2guYXBwMIIBIjANBgkqhkiG
+      |9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqv2iSwWvb6ys/Ru4LtSz0R4wDaxklrFIGqdJ
+      |rxxYdAdLQjyjHyJsfkNQdt2u4JYPRKaRTVYR9VIIeWUx/IjhZhsGPstPMjYT3cN1
+      |VsphSDtrRVuxYlmkrvHar0HoadNr1MHd96Ach3g1QJlV8uyUJ7JXpPCNJ8EMiH52
+      |n8bVzpjDjXwoYg3oOYvceteA0GJ5VWYACDgfmkeoaN1Cx31O9qcSiUk5AY8HfAnP
+      |h20VcrnPo2dJmm7fkUKohIxrMjtpwi5esWhCBZJk50FveKrgdeSe4XxNL7uJPD89
+      |SJtKmX7jxoNQSY3mrPssLdadwltUOhzc4Lcmoj4Ob24JxuVw8QIDAQABo4IDDzCC
+      |AwswIQYDVR0RBBowGIIIY2FzaC5hcHCCDHd3dy5jYXNoLmFwcDCCAX8GCisGAQQB
+      |1nkCBAIEggFvBIIBawFpAHcAVhQGmi/XwuzT9eG9RLI+x0Z2ubyZEVzA75SYVdaJ
+      |0N0AAAFxc9MmmwAABAMASDBGAiEAqeWK3uWt9LX1p3l0gPgNxYBB142oqtRMnMBB
+      |anTKy2ICIQDrRj7PRsVyXf1QRxgE5MZl6K6XkBKbaXBlAqPpb8z2hQB3AId1v+dZ
+      |fPiMQ5lfvfNu/1aNR1Y2/0q1YMG06v9eoIMPAAABcXPTJq0AAAQDAEgwRgIhANRS
+      |wAmVQLXhhxbbUTSKIA6P0Q6EmNABCNSJjSK5Q0ItAiEA88hnegYqVaykbbsQSSI0
+      |gP/+Odnm/Thso6HEJFXvYGcAdQB9PvL4j/+IVWgkwsDKnlKJeSvFDngJfy5ql2iZ
+      |fiLw1wAAAXFz0yazAAAEAwBGMEQCIH4RLAKbk+DbFdHeQO3bmqelXutLSM6MlN34
+      |7XEzHpMeAiB4KB48OcjmQ7kBwrxsRwqg7TrQG/F/DyB9wPilq1QacDAOBgNVHQ8B
+      |Af8EBAMCBaAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMGgGCCsGAQUF
+      |BwEBBFwwWjAjBggrBgEFBQcwAYYXaHR0cDovL29jc3AuZW50cnVzdC5uZXQwMwYI
+      |KwYBBQUHMAKGJ2h0dHA6Ly9haWEuZW50cnVzdC5uZXQvbDFtLWNoYWluMjU2LmNl
+      |cjAzBgNVHR8ELDAqMCigJqAkhiJodHRwOi8vY3JsLmVudHJ1c3QubmV0L2xldmVs
+      |MW0uY3JsMEoGA1UdIARDMEEwNgYKYIZIAYb6bAoBAjAoMCYGCCsGAQUFBwIBFhpo
+      |dHRwOi8vd3d3LmVudHJ1c3QubmV0L3JwYTAHBgVngQwBATAfBgNVHSMEGDAWgBTD
+      |99C1KjCtrw2RIXA5VN28iXDHOjAdBgNVHQ4EFgQUdf0kwt9ZJZnjLzNz4YwEUN0b
+      |h7YwCQYDVR0TBAIwADANBgkqhkiG9w0BAQsFAAOCAQEAYLX6TSuQqSAEu37pJ+au
+      |9IlRiAEhtdybxr3mhuII0zImejhLuo2knO2SD59avCDBPivITsSvh2aewOUmeKj1
+      |GYI7v16xCOCTQz3k31sCAX2L7DozHtbrY4wG7hUSA9dSv/aYJEtebkwim3lgHwv3
+      |NHA3iiW3raH1DPJThQmxFJrnT1zL0LQbM1nRQMXaBVfQEEhIYnrU672x6D/cya6r
+      |5UwWye3TOZCH0Lh+YaZqtuKx9lEIEXaxjD3jpGlwRLuE/fI6fXg+0kMvaqNVLmpN
+      |aJT7WeHs5bkf0dU7rtDefr0iKeqIxrlURPgbeWZF8GAkpdNaCwWMDAFO8DG04K+t
+      |Aw==
+      |
       """.trimMargin()
     val certificateByteString = certificateBase64.decodeBase64()!!
     val certificatePem =
       """
-        |-----BEGIN CERTIFICATE-----
-        |$certificateBase64
-        |-----END CERTIFICATE-----
-        |
+      |-----BEGIN CERTIFICATE-----
+      |$certificateBase64
+      |-----END CERTIFICATE-----
+      |
       """.trimMargin()
 
     val javaCertificate = certificatePem.decodeCertificatePem()

@@ -36,20 +36,20 @@ class MultipartReaderTest {
   @Test fun `parse multipart`() {
     val multipart =
       """
-        |--simple boundary
-        |Content-Type: text/plain; charset=utf-8
-        |Content-ID: abc
-        |
-        |abcd
-        |efgh
-        |--simple boundary
-        |Content-Type: text/plain; charset=utf-8
-        |Content-ID: ijk
-        |
-        |ijkl
-        |mnop
-        |
-        |--simple boundary--
+      |--simple boundary
+      |Content-Type: text/plain; charset=utf-8
+      |Content-ID: abc
+      |
+      |abcd
+      |efgh
+      |--simple boundary
+      |Content-Type: text/plain; charset=utf-8
+      |Content-ID: ijk
+      |
+      |ijkl
+      |mnop
+      |
+      |--simple boundary--
       """.trimMargin()
         .replace("\n", "\r\n")
 
@@ -88,10 +88,10 @@ class MultipartReaderTest {
   @Test fun `parse from response body`() {
     val multipart =
       """
-        |--simple boundary
-        |
-        |abcd
-        |--simple boundary--
+      |--simple boundary
+      |
+      |abcd
+      |--simple boundary--
       """.trimMargin()
         .replace("\n", "\r\n")
 
@@ -112,11 +112,11 @@ class MultipartReaderTest {
   @Test fun `truncated multipart`() {
     val multipart =
       """
-        |--simple boundary
-        |
-        |abcd
-        |efgh
-        |
+      |--simple boundary
+      |
+      |abcd
+      |efgh
+      |
       """.trimMargin()
         .replace("\n", "\r\n")
 
@@ -139,9 +139,9 @@ class MultipartReaderTest {
   @Test fun `malformed headers`() {
     val multipart =
       """
-        |--simple boundary
-        |abcd
-        |
+      |--simple boundary
+      |abcd
+      |
       """.trimMargin()
         .replace("\n", "\r\n")
 
@@ -159,13 +159,13 @@ class MultipartReaderTest {
   @Test fun `lf instead of crlf boundary is not honored`() {
     val multipart =
       """
-        |--simple boundary
-        |
-        |abcd
-        |--simple boundary
-        |
-        |efgh
-        |--simple boundary--
+      |--simple boundary
+      |
+      |abcd
+      |--simple boundary
+      |
+      |efgh
+      |--simple boundary--
       """.trimMargin()
         .replace("\n", "\r\n")
         .replace(Regex("(?m)abcd\r\n"), "abcd\n")
@@ -185,13 +185,13 @@ class MultipartReaderTest {
   @Test fun `partial boundary is not honored`() {
     val multipart =
       """
-        |--simple boundary
-        |
-        |abcd
-        |--simple boundar
-        |
-        |efgh
-        |--simple boundary--
+      |--simple boundary
+      |
+      |abcd
+      |--simple boundar
+      |
+      |efgh
+      |--simple boundary--
       """.trimMargin()
         .replace("\n", "\r\n")
 
@@ -210,15 +210,15 @@ class MultipartReaderTest {
   @Test fun `do not need to read entire part`() {
     val multipart =
       """
-        |--simple boundary
-        |
-        |abcd
-        |efgh
-        |ijkl
-        |--simple boundary
-        |
-        |mnop
-        |--simple boundary--
+      |--simple boundary
+      |
+      |abcd
+      |efgh
+      |ijkl
+      |--simple boundary
+      |
+      |mnop
+      |--simple boundary--
       """.trimMargin()
         .replace("\n", "\r\n")
 
@@ -238,15 +238,15 @@ class MultipartReaderTest {
   @Test fun `cannot read part after calling nextPart`() {
     val multipart =
       """
-        |--simple boundary
-        |
-        |abcd
-        |efgh
-        |ijkl
-        |--simple boundary
-        |
-        |mnop
-        |--simple boundary--
+      |--simple boundary
+      |
+      |abcd
+      |efgh
+      |ijkl
+      |--simple boundary
+      |
+      |mnop
+      |--simple boundary--
       """.trimMargin()
         .replace("\n", "\r\n")
 
@@ -272,10 +272,10 @@ class MultipartReaderTest {
   @Test fun `cannot read part after calling close`() {
     val multipart =
       """
-        |--simple boundary
-        |
-        |abcd
-        |--simple boundary--
+      |--simple boundary
+      |
+      |abcd
+      |--simple boundary--
       """.trimMargin()
         .replace("\n", "\r\n")
 
@@ -314,7 +314,7 @@ class MultipartReaderTest {
   @Test fun `zero parts`() {
     val multipart =
       """
-        |--simple boundary--
+      |--simple boundary--
       """.trimMargin()
         .replace("\n", "\r\n")
 
@@ -334,12 +334,12 @@ class MultipartReaderTest {
   @Test fun `skip preamble`() {
     val multipart =
       """
-        |this is the preamble! it is invisible to application code
-        |
-        |--simple boundary
-        |
-        |abcd
-        |--simple boundary--
+      |this is the preamble! it is invisible to application code
+      |
+      |--simple boundary
+      |
+      |abcd
+      |--simple boundary--
       """.trimMargin()
         .replace("\n", "\r\n")
 
@@ -359,12 +359,12 @@ class MultipartReaderTest {
   @Test fun `skip epilogue`() {
     val multipart =
       """
-        |--simple boundary
-        |
-        |abcd
-        |--simple boundary--
-        |this is the epilogue! it is also invisible to application code
-        |
+      |--simple boundary
+      |
+      |abcd
+      |--simple boundary--
+      |this is the epilogue! it is also invisible to application code
+      |
       """.trimMargin()
         .replace("\n", "\r\n")
 
@@ -384,10 +384,10 @@ class MultipartReaderTest {
   @Test fun `skip whitespace after boundary`() {
     val multipart =
       """
-        |--simple boundary
-        |
-        |abcd
-        |--simple boundary--
+      |--simple boundary
+      |
+      |abcd
+      |--simple boundary--
       """.trimMargin()
         .replace(Regex("(?m)simple boundary$"), "simple boundary \t \t")
         .replace("\n", "\r\n")
@@ -408,10 +408,10 @@ class MultipartReaderTest {
   @Test fun `skip whitespace after close delimiter`() {
     val multipart =
       """
-        |--simple boundary
-        |
-        |abcd
-        |--simple boundary--
+      |--simple boundary
+      |
+      |abcd
+      |--simple boundary--
       """.trimMargin()
         .replace(Regex("(?m)simple boundary--$"), "simple boundary-- \t \t")
         .replace("\n", "\r\n")
@@ -432,7 +432,7 @@ class MultipartReaderTest {
   @Test fun `other characters after boundary`() {
     val multipart =
       """
-        |--simple boundary hi
+      |--simple boundary hi
       """.trimMargin()
         .replace(Regex("(?m)simple boundary$"), "simple boundary ")
         .replace("\n", "\r\n")
@@ -453,10 +453,10 @@ class MultipartReaderTest {
   @Test fun `whitespace before close delimiter`() {
     val multipart =
       """
-        |--simple boundary
-        |
-        |abcd
-        |--simple boundary  --
+      |--simple boundary
+      |
+      |abcd
+      |--simple boundary  --
       """.trimMargin()
         .replace("\n", "\r\n")
 
@@ -478,15 +478,15 @@ class MultipartReaderTest {
   @Test fun `dash boundary`() {
     val multipart =
       """
-        |---
-        |Content-ID: abc
-        |
-        |abcd
-        |---
-        |Content-ID: efg
-        |
-        |efgh
-        |-----
+      |---
+      |Content-ID: abc
+      |
+      |abcd
+      |---
+      |Content-ID: efg
+      |
+      |efgh
+      |-----
       """.trimMargin()
         .replace("\n", "\r\n")
 
@@ -510,13 +510,13 @@ class MultipartReaderTest {
   @Test fun `no more parts is idempotent`() {
     val multipart =
       """
-        |--simple boundary
-        |
-        |abcd
-        |--simple boundary--
-        |
-        |efgh
-        |--simple boundary--
+      |--simple boundary
+      |
+      |abcd
+      |--simple boundary--
+      |
+      |efgh
+      |--simple boundary--
       """.trimMargin()
         .replace("\n", "\r\n")
 
