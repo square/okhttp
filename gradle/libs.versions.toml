@@ -45,6 +45,7 @@ gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", ve
 gradlePlugin-kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.26.0"
 gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:8.0.0"
+gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.23.3"
 guava-jre = "com.google.guava:guava:32.1.3-jre"
 hamcrestLibrary = "org.hamcrest:hamcrest-library:2.2"
 httpClient5 = "org.apache.httpcomponents.client5:httpclient5:5.2.3"
@@ -87,6 +88,3 @@ squareup-okhttp-icu = "com.squareup.okhttpicu:okhttp-icu:0.2.0"
 squareup-kotlinPoet = "com.squareup:kotlinpoet:1.15.3"
 squareup-okio = { module = "com.squareup.okio:okio", version.ref = "com-squareup-okio" }
 squareup-okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "com-squareup-okio" }
-
-[plugins]
-spotless = { id = "com.diffplug.spotless", version = "6.23.3" }
