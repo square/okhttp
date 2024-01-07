@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+
 package okhttp3.internal.http
 
 import assertk.assertThat
@@ -42,7 +43,11 @@ class RecordingProxySelector : ProxySelector() {
     requestedUris.clear()
   }
 
-  override fun connectFailed(uri: URI, sa: SocketAddress, ioe: IOException) {
+  override fun connectFailed(
+    uri: URI,
+    sa: SocketAddress,
+    ioe: IOException,
+  ) {
     val socketAddress = sa as InetSocketAddress
     failures.add(format("%s %s:%d %s", uri, socketAddress, socketAddress.port, ioe.message!!))
   }

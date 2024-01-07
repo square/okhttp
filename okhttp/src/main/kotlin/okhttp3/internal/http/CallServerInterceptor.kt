@@ -26,7 +26,6 @@ import okio.buffer
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
 class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
-
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
     val realChain = chain as RealInterceptorChain
@@ -97,7 +96,8 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           invokeStartEvent = false
         }
       }
-      var response = responseBuilder
+      var response =
+        responseBuilder
           .request(request)
           .handshake(exchange.connection.handshake())
           .sentRequestAtMillis(sentRequestMillis)
@@ -110,7 +110,8 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
         if (invokeStartEvent) {
           exchange.responseHeadersStart()
         }
-        response = responseBuilder
+        response =
+          responseBuilder
             .request(request)
             .handshake(exchange.connection.handshake())
             .sentRequestAtMillis(sentRequestMillis)
@@ -121,21 +122,24 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
 
       exchange.responseHeadersEnd(response)
 
-      response = if (forWebSocket && code == 101) {
-        // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
-        response.stripBody()
-      } else {
-        response.newBuilder()
+      response =
+        if (forWebSocket && code == 101) {
+          // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
+          response.stripBody()
+        } else {
+          response.newBuilder()
             .body(exchange.openResponseBody(response))
             .build()
-      }
+        }
       if ("close".equals(response.request.header("Connection"), ignoreCase = true) ||
-          "close".equals(response.header("Connection"), ignoreCase = true)) {
+        "close".equals(response.header("Connection"), ignoreCase = true)
+      ) {
         exchange.noNewExchangesOnConnection()
       }
       if ((code == 204 || code == 205) && response.body.contentLength() > 0L) {
         throw ProtocolException(
-            "HTTP $code had non-zero Content-Length: ${response.body.contentLength()}")
+          "HTTP $code had non-zero Content-Length: ${response.body.contentLength()}",
+        )
       }
       return response
     } catch (e: IOException) {
@@ -147,16 +151,20 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
     }
   }
 
-  private fun shouldIgnoreAndWaitForRealResponse(code: Int, exchange: Exchange): Boolean = when {
-    // Server sent a 100-continue even though we did not request one. Try again to read the
-    // actual response status.
-    code == 100 -> true
+  private fun shouldIgnoreAndWaitForRealResponse(
+    code: Int,
+    exchange: Exchange,
+  ): Boolean =
+    when {
+      // Server sent a 100-continue even though we did not request one. Try again to read the
+      // actual response status.
+      code == 100 -> true
 
-    // Handle Processing (102) & Early Hints (103) and any new codes without failing
-    // 100 and 101 are the exceptions with different meanings
-    // But Early Hints not currently exposed
-    code in (102 until 200) -> true
+      // Handle Processing (102) & Early Hints (103) and any new codes without failing
+      // 100 and 101 are the exceptions with different meanings
+      // But Early Hints not currently exposed
+      code in (102 until 200) -> true
 
-    else -> false
-  }
+      else -> false
+    }
 }

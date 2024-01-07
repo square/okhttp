@@ -37,7 +37,10 @@ interface CookieJar {
    * includes a trailer. For this obscure HTTP feature, [cookies] contains only the trailer's
    * cookies.
    */
-  fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>)
+  fun saveFromResponse(
+    url: HttpUrl,
+    cookies: List<Cookie>,
+  )
 
   /**
    * Load cookies from the jar for an HTTP request to [url]. This method returns a possibly
@@ -52,8 +55,12 @@ interface CookieJar {
     /** A cookie jar that never accepts any cookies. */
     @JvmField
     val NO_COOKIES: CookieJar = NoCookies()
+
     private class NoCookies : CookieJar {
-      override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+      override fun saveFromResponse(
+        url: HttpUrl,
+        cookies: List<Cookie>,
+      ) {
       }
 
       override fun loadForRequest(url: HttpUrl): List<Cookie> {

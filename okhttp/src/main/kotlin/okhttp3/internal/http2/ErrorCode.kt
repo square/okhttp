@@ -44,7 +44,8 @@ enum class ErrorCode constructor(val httpCode: Int) {
 
   INADEQUATE_SECURITY(0xc),
 
-  HTTP_1_1_REQUIRED(0xd);
+  HTTP_1_1_REQUIRED(0xd),
+  ;
 
   companion object {
     fun fromHttp2(code: Int): ErrorCode? = values().find { it.httpCode == code }

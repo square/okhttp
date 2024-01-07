@@ -15,13 +15,15 @@
  *  limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal
 
 import okhttp3.Headers
 
 internal fun Headers.commonName(index: Int): String = namesAndValues.getOrNull(index * 2) ?: throw IndexOutOfBoundsException("name[$index]")
 
-internal fun Headers.commonValue(index: Int): String = namesAndValues.getOrNull(index * 2 + 1) ?: throw IndexOutOfBoundsException("value[$index]")
+internal fun Headers.commonValue(index: Int): String =
+  namesAndValues.getOrNull(index * 2 + 1) ?: throw IndexOutOfBoundsException("value[$index]")
 
 internal fun Headers.commonValues(name: String): List<String> {
   var result: MutableList<String>? = null
@@ -63,7 +65,10 @@ internal fun Headers.commonToString(): String {
   }
 }
 
-internal fun commonHeadersGet(namesAndValues: Array<String>, name: String): String? {
+internal fun commonHeadersGet(
+  namesAndValues: Array<String>,
+  name: String,
+): String? {
   for (i in namesAndValues.size - 2 downTo 0 step 2) {
     if (name.equals(namesAndValues[i], ignoreCase = true)) {
       return namesAndValues[i + 1]
@@ -72,40 +77,51 @@ internal fun commonHeadersGet(namesAndValues: Array<String>, name: String): Stri
   return null
 }
 
-internal fun Headers.Builder.commonAdd(name: String, value: String) = apply {
+internal fun Headers.Builder.commonAdd(
+  name: String,
+  value: String,
+) = apply {
   headersCheckName(name)
   headersCheckValue(value, name)
   commonAddLenient(name, value)
 }
 
-internal fun Headers.Builder.commonAddAll(headers: Headers) = apply {
-  for (i in 0 until headers.size) {
-    commonAddLenient(headers.name(i), headers.value(i))
+internal fun Headers.Builder.commonAddAll(headers: Headers) =
+  apply {
+    for (i in 0 until headers.size) {
+      commonAddLenient(headers.name(i), headers.value(i))
+    }
   }
-}
 
-internal fun Headers.Builder.commonAddLenient(name: String, value: String) = apply {
+internal fun Headers.Builder.commonAddLenient(
+  name: String,
+  value: String,
+) = apply {
   namesAndValues.add(name)
   namesAndValues.add(value.trim())
 }
 
-internal fun Headers.Builder.commonRemoveAll(name: String) = apply {
-  var i = 0
-  while (i < namesAndValues.size) {
-    if (name.equals(namesAndValues[i], ignoreCase = true)) {
-      namesAndValues.removeAt(i) // name
-      namesAndValues.removeAt(i) // value
-      i -= 2
+internal fun Headers.Builder.commonRemoveAll(name: String) =
+  apply {
+    var i = 0
+    while (i < namesAndValues.size) {
+      if (name.equals(namesAndValues[i], ignoreCase = true)) {
+        namesAndValues.removeAt(i) // name
+        namesAndValues.removeAt(i) // value
+        i -= 2
+      }
+      i += 2
     }
-    i += 2
   }
-}
 
 /**
  * Set a field with the specified value. If the field is not found, it is added. If the field is
  * found, the existing values are replaced.
  */
-internal fun Headers.Builder.commonSet(name: String, value: String) = apply {
+internal fun Headers.Builder.commonSet(
+  name: String,
+  value: String,
+) = apply {
   headersCheckName(name)
   headersCheckValue(value, name)
   removeAll(name)
@@ -134,7 +150,10 @@ internal fun headersCheckName(name: String) {
   }
 }
 
-internal fun headersCheckValue(value: String, name: String) {
+internal fun headersCheckValue(
+  value: String,
+  name: String,
+) {
   for (i in value.indices) {
     val c = value[i]
     require(c == '\t' || c in '\u0020'..'\u007e') {
@@ -144,13 +163,14 @@ internal fun headersCheckValue(value: String, name: String) {
   }
 }
 
-private fun Char.charCode() = code.toString(16).let {
-  if (it.length < 2) {
-    "0$it"
-  } else {
-    it
+private fun Char.charCode() =
+  code.toString(16).let {
+    if (it.length < 2) {
+      "0$it"
+    } else {
+      it
+    }
   }
-}
 
 internal fun commonHeadersOf(vararg inputNamesAndValues: String): Headers {
   require(inputNamesAndValues.size % 2 == 0) { "Expected alternating header names and values" }

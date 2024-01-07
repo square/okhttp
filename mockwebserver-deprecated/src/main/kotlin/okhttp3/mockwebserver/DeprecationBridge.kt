@@ -36,9 +36,7 @@ internal fun Dispatcher.wrap(): mockwebserver3.Dispatcher {
 
   val delegate = this
   return object : mockwebserver3.Dispatcher() {
-    override fun dispatch(
-      request: mockwebserver3.RecordedRequest
-    ): mockwebserver3.MockResponse {
+    override fun dispatch(request: mockwebserver3.RecordedRequest): mockwebserver3.MockResponse {
       return delegate.dispatch(request.unwrap()).wrap()
     }
 
@@ -70,17 +68,18 @@ internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
   result.status = status
   result.headers(headers)
   result.trailers(trailers)
-  result.socketPolicy = when (socketPolicy) {
-    SocketPolicy.EXPECT_CONTINUE, SocketPolicy.CONTINUE_ALWAYS -> {
-      result.add100Continue()
-      KeepOpen
+  result.socketPolicy =
+    when (socketPolicy) {
+      SocketPolicy.EXPECT_CONTINUE, SocketPolicy.CONTINUE_ALWAYS -> {
+        result.add100Continue()
+        KeepOpen
+      }
+      SocketPolicy.UPGRADE_TO_SSL_AT_END -> {
+        result.inTunnel()
+        KeepOpen
+      }
+      else -> wrapSocketPolicy()
     }
-    SocketPolicy.UPGRADE_TO_SSL_AT_END -> {
-      result.inTunnel()
-      KeepOpen
-    }
-    else -> wrapSocketPolicy()
-  }
   result.throttleBody(throttleBytesPerPeriod, getThrottlePeriod(MILLISECONDS), MILLISECONDS)
   result.bodyDelay(getBodyDelay(MILLISECONDS), MILLISECONDS)
   result.headersDelay(getHeadersDelay(MILLISECONDS), MILLISECONDS)
@@ -92,7 +91,7 @@ private fun PushPromise.wrap(): mockwebserver3.PushPromise {
     method = method,
     path = path,
     headers = headers,
-    response = response.wrap()
+    response = response.wrap(),
   )
 }
 
@@ -108,7 +107,7 @@ internal fun mockwebserver3.RecordedRequest.unwrap(): RecordedRequest {
     method = method,
     path = path,
     handshake = handshake,
-    requestUrl = requestUrl
+    requestUrl = requestUrl,
   )
 }
 

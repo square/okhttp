@@ -38,7 +38,7 @@ class RecordingCookieJar : CookieJar {
 
   override fun saveFromResponse(
     url: HttpUrl,
-    cookies: List<Cookie>
+    cookies: List<Cookie>,
   ) {
     responseCookies.add(cookies)
   }

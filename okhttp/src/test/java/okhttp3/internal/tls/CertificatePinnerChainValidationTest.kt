@@ -67,51 +67,60 @@ class CertificatePinnerChainValidationTest {
   @Test
   fun pinRootNotPresentInChain() {
     // Fails on 11.0.1 https://github.com/square/okhttp/issues/4703
-    val rootCa = HeldCertificate.Builder()
-      .serialNumber(1L)
-      .certificateAuthority(1)
-      .commonName("root")
-      .build()
-    val intermediateCa = HeldCertificate.Builder()
-      .signedBy(rootCa)
-      .certificateAuthority(0)
-      .serialNumber(2L)
-      .commonName("intermediate_ca")
-      .build()
-    val certificate = HeldCertificate.Builder()
-      .signedBy(intermediateCa)
-      .serialNumber(3L)
-      .commonName(server.hostName)
-      .build()
-    val certificatePinner = CertificatePinner.Builder()
-      .add(server.hostName, pin(rootCa.certificate))
-      .build()
-    val handshakeCertificates = HandshakeCertificates.Builder()
-      .addTrustedCertificate(rootCa.certificate)
-      .build()
-    val client = clientTestRule.newClientBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .hostnameVerifier(RecordingHostnameVerifier())
-      .certificatePinner(certificatePinner)
-      .build()
-    val serverHandshakeCertificates = HandshakeCertificates.Builder()
-      .heldCertificate(certificate, intermediateCa.certificate)
-      .build()
+    val rootCa =
+      HeldCertificate.Builder()
+        .serialNumber(1L)
+        .certificateAuthority(1)
+        .commonName("root")
+        .build()
+    val intermediateCa =
+      HeldCertificate.Builder()
+        .signedBy(rootCa)
+        .certificateAuthority(0)
+        .serialNumber(2L)
+        .commonName("intermediate_ca")
+        .build()
+    val certificate =
+      HeldCertificate.Builder()
+        .signedBy(intermediateCa)
+        .serialNumber(3L)
+        .commonName(server.hostName)
+        .build()
+    val certificatePinner =
+      CertificatePinner.Builder()
+        .add(server.hostName, pin(rootCa.certificate))
+        .build()
+    val handshakeCertificates =
+      HandshakeCertificates.Builder()
+        .addTrustedCertificate(rootCa.certificate)
+        .build()
+    val client =
+      clientTestRule.newClientBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        )
+        .hostnameVerifier(RecordingHostnameVerifier())
+        .certificatePinner(certificatePinner)
+        .build()
+    val serverHandshakeCertificates =
+      HandshakeCertificates.Builder()
+        .heldCertificate(certificate, intermediateCa.certificate)
+        .build()
     server.useHttps(serverHandshakeCertificates.sslSocketFactory())
 
     // The request should complete successfully.
     server.enqueue(
       MockResponse.Builder()
         .body("abc")
-        .build()
+        .build(),
     )
-    val call1 = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
+    val call1 =
+      client.newCall(
+        Request.Builder()
+          .url(server.url("/"))
+          .build(),
+      )
     val response1 = call1.execute()
     assertThat(response1.body.string()).isEqualTo("abc")
   }
@@ -122,38 +131,46 @@ class CertificatePinnerChainValidationTest {
   @Test
   fun pinIntermediatePresentInChain() {
     // Fails on 11.0.1 https://github.com/square/okhttp/issues/4703
-    val rootCa = HeldCertificate.Builder()
-      .serialNumber(1L)
-      .certificateAuthority(1)
-      .commonName("root")
-      .build()
-    val intermediateCa = HeldCertificate.Builder()
-      .signedBy(rootCa)
-      .certificateAuthority(0)
-      .serialNumber(2L)
-      .commonName("intermediate_ca")
-      .build()
-    val certificate = HeldCertificate.Builder()
-      .signedBy(intermediateCa)
-      .serialNumber(3L)
-      .commonName(server.hostName)
-      .build()
-    val certificatePinner = CertificatePinner.Builder()
-      .add(server.hostName, pin(intermediateCa.certificate))
-      .build()
-    val handshakeCertificates = HandshakeCertificates.Builder()
-      .addTrustedCertificate(rootCa.certificate)
-      .build()
-    val client = clientTestRule.newClientBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .hostnameVerifier(RecordingHostnameVerifier())
-      .certificatePinner(certificatePinner)
-      .build()
-    val serverHandshakeCertificates = HandshakeCertificates.Builder()
-      .heldCertificate(certificate, intermediateCa.certificate)
-      .build()
+    val rootCa =
+      HeldCertificate.Builder()
+        .serialNumber(1L)
+        .certificateAuthority(1)
+        .commonName("root")
+        .build()
+    val intermediateCa =
+      HeldCertificate.Builder()
+        .signedBy(rootCa)
+        .certificateAuthority(0)
+        .serialNumber(2L)
+        .commonName("intermediate_ca")
+        .build()
+    val certificate =
+      HeldCertificate.Builder()
+        .signedBy(intermediateCa)
+        .serialNumber(3L)
+        .commonName(server.hostName)
+        .build()
+    val certificatePinner =
+      CertificatePinner.Builder()
+        .add(server.hostName, pin(intermediateCa.certificate))
+        .build()
+    val handshakeCertificates =
+      HandshakeCertificates.Builder()
+        .addTrustedCertificate(rootCa.certificate)
+        .build()
+    val client =
+      clientTestRule.newClientBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        )
+        .hostnameVerifier(RecordingHostnameVerifier())
+        .certificatePinner(certificatePinner)
+        .build()
+    val serverHandshakeCertificates =
+      HandshakeCertificates.Builder()
+        .heldCertificate(certificate, intermediateCa.certificate)
+        .build()
     server.useHttps(serverHandshakeCertificates.sslSocketFactory())
 
     // The request should complete successfully.
@@ -161,13 +178,14 @@ class CertificatePinnerChainValidationTest {
       MockResponse.Builder()
         .body("abc")
         .socketPolicy(DisconnectAtEnd)
-        .build()
+        .build(),
     )
-    val call1 = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
+    val call1 =
+      client.newCall(
+        Request.Builder()
+          .url(server.url("/"))
+          .build(),
+      )
     val response1 = call1.execute()
     assertThat(response1.body.string()).isEqualTo("abc")
     response1.close()
@@ -180,13 +198,14 @@ class CertificatePinnerChainValidationTest {
       MockResponse.Builder()
         .body("def")
         .socketPolicy(DisconnectAtEnd)
-        .build()
+        .build(),
     )
-    val call2 = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
+    val call2 =
+      client.newCall(
+        Request.Builder()
+          .url(server.url("/"))
+          .build(),
+      )
     val response2 = call2.execute()
     assertThat(response2.body.string()).isEqualTo("def")
     response2.close()
@@ -200,72 +219,84 @@ class CertificatePinnerChainValidationTest {
     platform.expectFailureOnLoomPlatform()
 
     // Start with a trusted root CA certificate.
-    val rootCa = HeldCertificate.Builder()
-      .serialNumber(1L)
-      .certificateAuthority(1)
-      .commonName("root")
-      .build()
+    val rootCa =
+      HeldCertificate.Builder()
+        .serialNumber(1L)
+        .certificateAuthority(1)
+        .commonName("root")
+        .build()
 
     // Add a good intermediate CA, and have that issue a good certificate to localhost. Prepare an
     // SSL context for an HTTP client under attack. It includes the trusted CA and a pinned
     // certificate.
-    val goodIntermediateCa = HeldCertificate.Builder()
-      .signedBy(rootCa)
-      .certificateAuthority(0)
-      .serialNumber(2L)
-      .commonName("good_intermediate_ca")
-      .build()
-    val goodCertificate = HeldCertificate.Builder()
-      .signedBy(goodIntermediateCa)
-      .serialNumber(3L)
-      .commonName(server.hostName)
-      .build()
-    val certificatePinner = CertificatePinner.Builder()
-      .add(server.hostName, pin(goodCertificate.certificate))
-      .build()
-    val handshakeCertificates = HandshakeCertificates.Builder()
-      .addTrustedCertificate(rootCa.certificate)
-      .build()
-    val client = clientTestRule.newClientBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .hostnameVerifier(RecordingHostnameVerifier())
-      .certificatePinner(certificatePinner)
-      .build()
+    val goodIntermediateCa =
+      HeldCertificate.Builder()
+        .signedBy(rootCa)
+        .certificateAuthority(0)
+        .serialNumber(2L)
+        .commonName("good_intermediate_ca")
+        .build()
+    val goodCertificate =
+      HeldCertificate.Builder()
+        .signedBy(goodIntermediateCa)
+        .serialNumber(3L)
+        .commonName(server.hostName)
+        .build()
+    val certificatePinner =
+      CertificatePinner.Builder()
+        .add(server.hostName, pin(goodCertificate.certificate))
+        .build()
+    val handshakeCertificates =
+      HandshakeCertificates.Builder()
+        .addTrustedCertificate(rootCa.certificate)
+        .build()
+    val client =
+      clientTestRule.newClientBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        )
+        .hostnameVerifier(RecordingHostnameVerifier())
+        .certificatePinner(certificatePinner)
+        .build()
 
     // Add a bad intermediate CA and have that issue a rogue certificate for localhost. Prepare
     // an SSL context for an attacking webserver. It includes both these rogue certificates plus the
     // trusted good certificate above. The attack is that by including the good certificate in the
     // chain, we may trick the certificate pinner into accepting the rouge certificate.
-    val compromisedIntermediateCa = HeldCertificate.Builder()
-      .signedBy(rootCa)
-      .certificateAuthority(0)
-      .serialNumber(4L)
-      .commonName("bad_intermediate_ca")
-      .build()
-    val rogueCertificate = HeldCertificate.Builder()
-      .serialNumber(5L)
-      .signedBy(compromisedIntermediateCa)
-      .commonName(server.hostName)
-      .build()
-    val socketFactory = newServerSocketFactory(
-      rogueCertificate,
-      compromisedIntermediateCa.certificate, goodCertificate.certificate
-    )
+    val compromisedIntermediateCa =
+      HeldCertificate.Builder()
+        .signedBy(rootCa)
+        .certificateAuthority(0)
+        .serialNumber(4L)
+        .commonName("bad_intermediate_ca")
+        .build()
+    val rogueCertificate =
+      HeldCertificate.Builder()
+        .serialNumber(5L)
+        .signedBy(compromisedIntermediateCa)
+        .commonName(server.hostName)
+        .build()
+    val socketFactory =
+      newServerSocketFactory(
+        rogueCertificate,
+        compromisedIntermediateCa.certificate,
+        goodCertificate.certificate,
+      )
     server.useHttps(socketFactory)
     server.enqueue(
       MockResponse.Builder()
         .body("abc")
         .addHeader("Content-Type: text/plain")
-        .build()
+        .build(),
     )
 
     // Make a request from client to server. It should succeed certificate checks (unfortunately the
     // rogue CA is trusted) but it should fail certificate pinning.
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
     val call = client.newCall(request)
     assertFailsWith<SSLPeerUnverifiedException> {
       call.execute()
@@ -283,73 +314,85 @@ class CertificatePinnerChainValidationTest {
     platform.expectFailureOnLoomPlatform()
 
     // Start with two root CA certificates, one is good and the other is compromised.
-    val rootCa = HeldCertificate.Builder()
-      .serialNumber(1L)
-      .certificateAuthority(1)
-      .commonName("root")
-      .build()
-    val compromisedRootCa = HeldCertificate.Builder()
-      .serialNumber(2L)
-      .certificateAuthority(1)
-      .commonName("compromised_root")
-      .build()
+    val rootCa =
+      HeldCertificate.Builder()
+        .serialNumber(1L)
+        .certificateAuthority(1)
+        .commonName("root")
+        .build()
+    val compromisedRootCa =
+      HeldCertificate.Builder()
+        .serialNumber(2L)
+        .certificateAuthority(1)
+        .commonName("compromised_root")
+        .build()
 
     // Add a good intermediate CA, and have that issue a good certificate to localhost. Prepare an
     // SSL context for an HTTP client under attack. It includes the trusted CA and a pinned
     // certificate.
-    val goodIntermediateCa = HeldCertificate.Builder()
-      .signedBy(rootCa)
-      .certificateAuthority(0)
-      .serialNumber(3L)
-      .commonName("intermediate_ca")
-      .build()
-    val certificatePinner = CertificatePinner.Builder()
-      .add(server.hostName, pin(goodIntermediateCa.certificate))
-      .build()
-    val handshakeCertificates = HandshakeCertificates.Builder()
-      .addTrustedCertificate(rootCa.certificate)
-      .addTrustedCertificate(compromisedRootCa.certificate)
-      .build()
-    val client = clientTestRule.newClientBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .hostnameVerifier(RecordingHostnameVerifier())
-      .certificatePinner(certificatePinner)
-      .build()
+    val goodIntermediateCa =
+      HeldCertificate.Builder()
+        .signedBy(rootCa)
+        .certificateAuthority(0)
+        .serialNumber(3L)
+        .commonName("intermediate_ca")
+        .build()
+    val certificatePinner =
+      CertificatePinner.Builder()
+        .add(server.hostName, pin(goodIntermediateCa.certificate))
+        .build()
+    val handshakeCertificates =
+      HandshakeCertificates.Builder()
+        .addTrustedCertificate(rootCa.certificate)
+        .addTrustedCertificate(compromisedRootCa.certificate)
+        .build()
+    val client =
+      clientTestRule.newClientBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        )
+        .hostnameVerifier(RecordingHostnameVerifier())
+        .certificatePinner(certificatePinner)
+        .build()
 
     // The attacker compromises the root CA, issues an intermediate with the same common name
     // "intermediate_ca" as the good CA. This signs a rogue certificate for localhost. The server
     // serves the good CAs certificate in the chain, which means the certificate pinner sees a
     // different set of certificates than the SSL verifier.
-    val compromisedIntermediateCa = HeldCertificate.Builder()
-      .signedBy(compromisedRootCa)
-      .certificateAuthority(0)
-      .serialNumber(4L)
-      .commonName("intermediate_ca")
-      .build()
-    val rogueCertificate = HeldCertificate.Builder()
-      .serialNumber(5L)
-      .signedBy(compromisedIntermediateCa)
-      .commonName(server.hostName)
-      .build()
-    val socketFactory = newServerSocketFactory(
-      rogueCertificate,
-      goodIntermediateCa.certificate, compromisedIntermediateCa.certificate
-    )
+    val compromisedIntermediateCa =
+      HeldCertificate.Builder()
+        .signedBy(compromisedRootCa)
+        .certificateAuthority(0)
+        .serialNumber(4L)
+        .commonName("intermediate_ca")
+        .build()
+    val rogueCertificate =
+      HeldCertificate.Builder()
+        .serialNumber(5L)
+        .signedBy(compromisedIntermediateCa)
+        .commonName(server.hostName)
+        .build()
+    val socketFactory =
+      newServerSocketFactory(
+        rogueCertificate,
+        goodIntermediateCa.certificate,
+        compromisedIntermediateCa.certificate,
+      )
     server.useHttps(socketFactory)
     server.enqueue(
       MockResponse.Builder()
         .body("abc")
         .addHeader("Content-Type: text/plain")
-        .build()
+        .build(),
     )
 
     // Make a request from client to server. It should succeed certificate checks (unfortunately the
     // rogue CA is trusted) but it should fail certificate pinning.
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
     val call = client.newCall(request)
     assertFailsWith<IOException> {
       call.execute()
@@ -422,73 +465,85 @@ class CertificatePinnerChainValidationTest {
    */
   @Test
   fun signersMustHaveCaBitSet() {
-    val attackerCa = HeldCertificate.Builder()
-      .serialNumber(1L)
-      .certificateAuthority(4)
-      .commonName("attacker ca")
-      .build()
-    val attackerIntermediate = HeldCertificate.Builder()
-      .serialNumber(2L)
-      .certificateAuthority(3)
-      .commonName("attacker")
-      .signedBy(attackerCa)
-      .build()
-    val pinnedRoot = HeldCertificate.Builder()
-      .serialNumber(3L)
-      .certificateAuthority(2)
-      .commonName("pinned root")
-      .signedBy(attackerIntermediate)
-      .build()
-    val pinnedIntermediate = HeldCertificate.Builder()
-      .serialNumber(4L)
-      .certificateAuthority(1)
-      .commonName("pinned intermediate")
-      .signedBy(pinnedRoot)
-      .build()
-    val attackerSwitch = HeldCertificate.Builder()
-      .serialNumber(5L)
-      .keyPair(attackerIntermediate.keyPair) // share keys between compromised CA and leaf!
-      .commonName("attacker")
-      .addSubjectAlternativeName("attacker.com")
-      .signedBy(pinnedIntermediate)
-      .build()
-    val phonyVictim = HeldCertificate.Builder()
-      .serialNumber(6L)
-      .signedBy(attackerSwitch)
-      .addSubjectAlternativeName("victim.com")
-      .commonName("victim")
-      .build()
-    val certificatePinner = CertificatePinner.Builder()
-      .add(server.hostName, pin(pinnedRoot.certificate))
-      .build()
-    val handshakeCertificates = HandshakeCertificates.Builder()
-      .addTrustedCertificate(pinnedRoot.certificate)
-      .addTrustedCertificate(attackerCa.certificate)
-      .build()
-    val client = clientTestRule.newClientBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .hostnameVerifier(RecordingHostnameVerifier())
-      .certificatePinner(certificatePinner)
-      .build()
-    val serverHandshakeCertificates = HandshakeCertificates.Builder()
-      .heldCertificate(
-        phonyVictim,
-        attackerSwitch.certificate,
-        pinnedIntermediate.certificate,
-        pinnedRoot.certificate,
-        attackerIntermediate.certificate
-      )
-      .build()
+    val attackerCa =
+      HeldCertificate.Builder()
+        .serialNumber(1L)
+        .certificateAuthority(4)
+        .commonName("attacker ca")
+        .build()
+    val attackerIntermediate =
+      HeldCertificate.Builder()
+        .serialNumber(2L)
+        .certificateAuthority(3)
+        .commonName("attacker")
+        .signedBy(attackerCa)
+        .build()
+    val pinnedRoot =
+      HeldCertificate.Builder()
+        .serialNumber(3L)
+        .certificateAuthority(2)
+        .commonName("pinned root")
+        .signedBy(attackerIntermediate)
+        .build()
+    val pinnedIntermediate =
+      HeldCertificate.Builder()
+        .serialNumber(4L)
+        .certificateAuthority(1)
+        .commonName("pinned intermediate")
+        .signedBy(pinnedRoot)
+        .build()
+    val attackerSwitch =
+      HeldCertificate.Builder()
+        .serialNumber(5L)
+        .keyPair(attackerIntermediate.keyPair) // share keys between compromised CA and leaf!
+        .commonName("attacker")
+        .addSubjectAlternativeName("attacker.com")
+        .signedBy(pinnedIntermediate)
+        .build()
+    val phonyVictim =
+      HeldCertificate.Builder()
+        .serialNumber(6L)
+        .signedBy(attackerSwitch)
+        .addSubjectAlternativeName("victim.com")
+        .commonName("victim")
+        .build()
+    val certificatePinner =
+      CertificatePinner.Builder()
+        .add(server.hostName, pin(pinnedRoot.certificate))
+        .build()
+    val handshakeCertificates =
+      HandshakeCertificates.Builder()
+        .addTrustedCertificate(pinnedRoot.certificate)
+        .addTrustedCertificate(attackerCa.certificate)
+        .build()
+    val client =
+      clientTestRule.newClientBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        )
+        .hostnameVerifier(RecordingHostnameVerifier())
+        .certificatePinner(certificatePinner)
+        .build()
+    val serverHandshakeCertificates =
+      HandshakeCertificates.Builder()
+        .heldCertificate(
+          phonyVictim,
+          attackerSwitch.certificate,
+          pinnedIntermediate.certificate,
+          pinnedRoot.certificate,
+          attackerIntermediate.certificate,
+        )
+        .build()
     server.useHttps(serverHandshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse())
 
     // Make a request from client to server. It should succeed certificate checks (unfortunately the
     // rogue CA is trusted) but it should fail certificate pinning.
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
     val call = client.newCall(request)
     assertFailsWith<IOException> {
       call.execute()
@@ -531,65 +586,76 @@ class CertificatePinnerChainValidationTest {
    */
   @Test
   fun intermediateMustNotHaveMoreIntermediatesThanSigner() {
-    val attackerCa = HeldCertificate.Builder()
-      .serialNumber(1L)
-      .certificateAuthority(2)
-      .commonName("attacker ca")
-      .build()
-    val pinnedRoot = HeldCertificate.Builder()
-      .serialNumber(2L)
-      .certificateAuthority(1)
-      .commonName("pinned root")
-      .signedBy(attackerCa)
-      .build()
-    val compromisedIntermediate = HeldCertificate.Builder()
-      .serialNumber(3L)
-      .certificateAuthority(0)
-      .commonName("compromised intermediate")
-      .signedBy(pinnedRoot)
-      .build()
-    val attackerIntermediate = HeldCertificate.Builder()
-      .keyPair(attackerCa.keyPair) // Share keys between compromised CA and intermediate!
-      .serialNumber(4L)
-      .certificateAuthority(0) // More intermediates than permitted by signer!
-      .commonName("attacker intermediate")
-      .signedBy(compromisedIntermediate)
-      .build()
-    val phonyVictim = HeldCertificate.Builder()
-      .serialNumber(5L)
-      .signedBy(attackerIntermediate)
-      .addSubjectAlternativeName("victim.com")
-      .commonName("victim")
-      .build()
-    val certificatePinner = CertificatePinner.Builder()
-      .add(server.hostName, pin(pinnedRoot.certificate))
-      .build()
-    val handshakeCertificates = HandshakeCertificates.Builder()
-      .addTrustedCertificate(pinnedRoot.certificate)
-      .addTrustedCertificate(attackerCa.certificate)
-      .build()
-    val client = clientTestRule.newClientBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .hostnameVerifier(RecordingHostnameVerifier())
-      .certificatePinner(certificatePinner)
-      .build()
-    val serverHandshakeCertificates = HandshakeCertificates.Builder()
-      .heldCertificate(
-        phonyVictim,
-        attackerIntermediate.certificate,
-        compromisedIntermediate.certificate,
-        pinnedRoot.certificate
-      )
-      .build()
+    val attackerCa =
+      HeldCertificate.Builder()
+        .serialNumber(1L)
+        .certificateAuthority(2)
+        .commonName("attacker ca")
+        .build()
+    val pinnedRoot =
+      HeldCertificate.Builder()
+        .serialNumber(2L)
+        .certificateAuthority(1)
+        .commonName("pinned root")
+        .signedBy(attackerCa)
+        .build()
+    val compromisedIntermediate =
+      HeldCertificate.Builder()
+        .serialNumber(3L)
+        .certificateAuthority(0)
+        .commonName("compromised intermediate")
+        .signedBy(pinnedRoot)
+        .build()
+    val attackerIntermediate =
+      HeldCertificate.Builder()
+        .keyPair(attackerCa.keyPair) // Share keys between compromised CA and intermediate!
+        .serialNumber(4L)
+        .certificateAuthority(0) // More intermediates than permitted by signer!
+        .commonName("attacker intermediate")
+        .signedBy(compromisedIntermediate)
+        .build()
+    val phonyVictim =
+      HeldCertificate.Builder()
+        .serialNumber(5L)
+        .signedBy(attackerIntermediate)
+        .addSubjectAlternativeName("victim.com")
+        .commonName("victim")
+        .build()
+    val certificatePinner =
+      CertificatePinner.Builder()
+        .add(server.hostName, pin(pinnedRoot.certificate))
+        .build()
+    val handshakeCertificates =
+      HandshakeCertificates.Builder()
+        .addTrustedCertificate(pinnedRoot.certificate)
+        .addTrustedCertificate(attackerCa.certificate)
+        .build()
+    val client =
+      clientTestRule.newClientBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        )
+        .hostnameVerifier(RecordingHostnameVerifier())
+        .certificatePinner(certificatePinner)
+        .build()
+    val serverHandshakeCertificates =
+      HandshakeCertificates.Builder()
+        .heldCertificate(
+          phonyVictim,
+          attackerIntermediate.certificate,
+          compromisedIntermediate.certificate,
+          pinnedRoot.certificate,
+        )
+        .build()
     server.useHttps(serverHandshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse())
 
     // Make a request from client to server. It should not succeed certificate checks.
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
     val call = client.newCall(request)
     assertFailsWith<SSLHandshakeException> {
       call.execute()
@@ -598,46 +664,53 @@ class CertificatePinnerChainValidationTest {
 
   @Test
   fun lonePinnedCertificate() {
-    val onlyCertificate = HeldCertificate.Builder()
-      .serialNumber(1L)
-      .commonName("root")
-      .build()
-    val certificatePinner = CertificatePinner.Builder()
-      .add(server.hostName, pin(onlyCertificate.certificate))
-      .build()
-    val handshakeCertificates = HandshakeCertificates.Builder()
-      .addTrustedCertificate(onlyCertificate.certificate)
-      .build()
-    val client = clientTestRule.newClientBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .hostnameVerifier(RecordingHostnameVerifier())
-      .certificatePinner(certificatePinner)
-      .build()
-    val serverHandshakeCertificates = HandshakeCertificates.Builder()
-      .heldCertificate(onlyCertificate)
-      .build()
+    val onlyCertificate =
+      HeldCertificate.Builder()
+        .serialNumber(1L)
+        .commonName("root")
+        .build()
+    val certificatePinner =
+      CertificatePinner.Builder()
+        .add(server.hostName, pin(onlyCertificate.certificate))
+        .build()
+    val handshakeCertificates =
+      HandshakeCertificates.Builder()
+        .addTrustedCertificate(onlyCertificate.certificate)
+        .build()
+    val client =
+      clientTestRule.newClientBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        )
+        .hostnameVerifier(RecordingHostnameVerifier())
+        .certificatePinner(certificatePinner)
+        .build()
+    val serverHandshakeCertificates =
+      HandshakeCertificates.Builder()
+        .heldCertificate(onlyCertificate)
+        .build()
     server.useHttps(serverHandshakeCertificates.sslSocketFactory())
 
     // The request should complete successfully.
     server.enqueue(
       MockResponse.Builder()
         .body("abc")
-        .build()
+        .build(),
     )
-    val call1 = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
+    val call1 =
+      client.newCall(
+        Request.Builder()
+          .url(server.url("/"))
+          .build(),
+      )
     val response1 = call1.execute()
     assertThat(response1.body.string()).isEqualTo("abc")
   }
 
   private fun newServerSocketFactory(
     heldCertificate: HeldCertificate,
-    vararg intermediates: X509Certificate
+    vararg intermediates: X509Certificate,
   ): SSLSocketFactory {
     // Test setup fails on JDK9
     // java.security.KeyStoreException: Certificate chain is not valid
@@ -646,13 +719,17 @@ class CertificatePinnerChainValidationTest {
     // http://hg.openjdk.java.net/jdk9/jdk9/jdk/file/2c1c21d11e58/src/share/classes/sun/security/pkcs12/PKCS12KeyStore.java#l596
     val keystoreType = if (platform.isJdk9()) "JKS" else null
     val x509KeyManager = newKeyManager(keystoreType, heldCertificate, *intermediates)
-    val trustManager = newTrustManager(
-      keystoreType, emptyList(), emptyList()
-    )
+    val trustManager =
+      newTrustManager(
+        keystoreType,
+        emptyList(),
+        emptyList(),
+      )
     val sslContext = get().newSSLContext()
     sslContext.init(
-      arrayOf<KeyManager>(x509KeyManager), arrayOf<TrustManager>(trustManager),
-      SecureRandom()
+      arrayOf<KeyManager>(x509KeyManager),
+      arrayOf<TrustManager>(trustManager),
+      SecureRandom(),
     )
     return sslContext.socketFactory
   }

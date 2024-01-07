@@ -22,10 +22,14 @@ import okhttp3.MediaType.Companion.toMediaType
 open class MediaTypeGetTest : MediaTypeTest() {
   override fun parse(string: String): MediaType = string.toMediaType()
 
-  override fun assertInvalid(string: String, exceptionMessage: String?) {
-    val e = assertFailsWith<IllegalArgumentException> {
-      parse(string)
-    }
+  override fun assertInvalid(
+    string: String,
+    exceptionMessage: String?,
+  ) {
+    val e =
+      assertFailsWith<IllegalArgumentException> {
+        parse(string)
+      }
     assertEquals(exceptionMessage, e.message)
   }
 }

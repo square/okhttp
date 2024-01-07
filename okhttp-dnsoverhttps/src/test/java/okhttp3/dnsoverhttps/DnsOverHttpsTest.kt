@@ -55,9 +55,10 @@ class DnsOverHttpsTest {
   private lateinit var server: MockWebServer
   private lateinit var dns: Dns
   private val cacheFs = FakeFileSystem()
-  private val bootstrapClient = OkHttpClient.Builder()
-    .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-    .build()
+  private val bootstrapClient =
+    OkHttpClient.Builder()
+      .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+      .build()
 
   @BeforeEach
   fun setUp(server: MockWebServer) {
@@ -72,8 +73,8 @@ class DnsOverHttpsTest {
       dnsResponse(
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
           "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
-          "0003b00049df00112"
-      )
+          "0003b00049df00112",
+      ),
     )
     val result = dns.lookup("google.com")
     assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
@@ -89,15 +90,15 @@ class DnsOverHttpsTest {
       dnsResponse(
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c0005000" +
           "100000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c0420001000" +
-          "10000003b00049df00112"
-      )
+          "10000003b00049df00112",
+      ),
     )
     server.enqueue(
       dnsResponse(
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d00001c0001c00c0005000" +
           "100000a1b000603617069c012c0300005000100000b1f000c04737461720463313072c012c042001c000" +
-          "10000003b00102a032880f0290011faceb00c00000002"
-      )
+          "10000003b00102a032880f0290011faceb00c00000002",
+      ),
     )
     dns = buildLocalhost(bootstrapClient, true)
     val result = dns.lookup("google.com")
@@ -111,7 +112,7 @@ class DnsOverHttpsTest {
     assertThat(listOf(request1.path, request2.path))
       .containsExactlyInAnyOrder(
         "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
-        "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AABwAAQ"
+        "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AABwAAQ",
       )
   }
 
@@ -121,8 +122,8 @@ class DnsOverHttpsTest {
       dnsResponse(
         "0000818300010000000100000e7364666c6b686673646c6b6a64660265650000010001c01b00060001000" +
           "007070038026e7303746c64c01b0a686f73746d61737465720d6565737469696e7465726e6574c01b5adb1" +
-          "2c100000e10000003840012750000000e10"
-      )
+          "2c100000e10000003840012750000000e10",
+      ),
     )
     try {
       dns.lookup("google.com")
@@ -179,11 +180,11 @@ class DnsOverHttpsTest {
       dnsResponse(
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
           "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
-          "0003b00049df00112"
+          "0003b00049df00112",
       )
         .newBuilder()
         .setHeader("cache-control", "private, max-age=298")
-        .build()
+        .build(),
     )
     var result = cachedDns.lookup("google.com")
     assertThat(result).containsExactly(address("157.240.1.18"))
@@ -204,29 +205,29 @@ class DnsOverHttpsTest {
       dnsResponse(
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
           "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
-          "0003b00049df00112"
+          "0003b00049df00112",
       )
         .newBuilder()
         .setHeader("cache-control", "max-age=1")
-        .build()
+        .build(),
     )
     var result = cachedDns.lookup("google.com")
     assertThat(result).containsExactly(address("157.240.1.18"))
     var recordedRequest = server.takeRequest(0, TimeUnit.SECONDS)
     assertThat(recordedRequest!!.method).isEqualTo("GET")
     assertThat(recordedRequest.path).isEqualTo(
-      "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ"
+      "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
     )
     Thread.sleep(2000)
     server.enqueue(
       dnsResponse(
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
           "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
-          "0003b00049df00112"
+          "0003b00049df00112",
       )
         .newBuilder()
         .setHeader("cache-control", "max-age=1")
-        .build()
+        .build(),
     )
     result = cachedDns.lookup("google.com")
     assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
@@ -244,7 +245,10 @@ class DnsOverHttpsTest {
       .build()
   }
 
-  private fun buildLocalhost(bootstrapClient: OkHttpClient, includeIPv6: Boolean): DnsOverHttps {
+  private fun buildLocalhost(
+    bootstrapClient: OkHttpClient,
+    includeIPv6: Boolean,
+  ): DnsOverHttps {
     val url = server.url("/lookup?ct")
     return DnsOverHttps.Builder().client(bootstrapClient)
       .includeIPv6(includeIPv6)

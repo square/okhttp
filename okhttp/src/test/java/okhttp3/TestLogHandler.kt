@@ -39,17 +39,18 @@ class TestLogHandler(
 
   private val logs = LinkedBlockingQueue<String>()
 
-  private val handler = object : Handler() {
-    override fun publish(logRecord: LogRecord) {
-      logs += "${logRecord.level}: ${logRecord.message}"
-    }
+  private val handler =
+    object : Handler() {
+      override fun publish(logRecord: LogRecord) {
+        logs += "${logRecord.level}: ${logRecord.message}"
+      }
 
-    override fun flush() {
-    }
+      override fun flush() {
+      }
 
-    override fun close() {
+      override fun close() {
+      }
     }
-  }
 
   private var previousLevel: Level? = null
 

@@ -85,7 +85,7 @@ class FakeRoutePlanner(
   }
 
   inner class FakePlan(
-    val id: Int
+    val id: Int,
   ) : RoutePlanner.Plan {
     var planningThrowable: Throwable? = null
     var canceled = false

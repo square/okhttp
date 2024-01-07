@@ -38,14 +38,15 @@ class RealConnectionPool(
   private val maxIdleConnections: Int,
   keepAliveDuration: Long,
   timeUnit: TimeUnit,
-  internal val connectionListener: ConnectionListener
+  internal val connectionListener: ConnectionListener,
 ) {
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
 
   private val cleanupQueue: TaskQueue = taskRunner.newQueue()
-  private val cleanupTask = object : Task("$okHttpName ConnectionPool") {
-    override fun runOnce(): Long = cleanup(System.nanoTime())
-  }
+  private val cleanupTask =
+    object : Task("$okHttpName ConnectionPool") {
+      override fun runOnce(): Long = cleanup(System.nanoTime())
+    }
 
   /**
    * Holding the lock of the connection being added or removed when mutating this, and check its
@@ -86,20 +87,21 @@ class RealConnectionPool(
     address: Address,
     call: RealCall,
     routes: List<Route>?,
-    requireMultiplexed: Boolean
+    requireMultiplexed: Boolean,
   ): RealConnection? {
     for (connection in connections) {
       // In the first synchronized block, acquire the connection if it can satisfy this call.
-      val acquired = synchronized(connection) {
-        when {
-          requireMultiplexed && !connection.isMultiplexed -> false
-          !connection.isEligible(address, routes) -> false
-          else -> {
-            call.acquireConnectionNoEvents(connection)
-            true
+      val acquired =
+        synchronized(connection) {
+          when {
+            requireMultiplexed && !connection.isMultiplexed -> false
+            !connection.isEligible(address, routes) -> false
+            else -> {
+              call.acquireConnectionNoEvents(connection)
+              true
+            }
           }
         }
-      }
       if (!acquired) continue
 
       // Confirm the connection is healthy and return it.
@@ -108,11 +110,12 @@ class RealConnectionPool(
       // In the second synchronized block, release the unhealthy acquired connection. We're also on
       // the hook to close this connection if it's no longer in use.
       val noNewExchangesEvent: Boolean
-      val toClose: Socket? = synchronized(connection) {
-        noNewExchangesEvent = !connection.noNewExchanges
-        connection.noNewExchanges = true
-        call.releaseConnectionNoEvents()
-      }
+      val toClose: Socket? =
+        synchronized(connection) {
+          noNewExchangesEvent = !connection.noNewExchanges
+          connection.noNewExchanges = true
+          call.releaseConnectionNoEvents()
+        }
       if (toClose != null) {
         toClose.closeQuietly()
         connectionListener.connectionClosed(connection)
@@ -153,15 +156,16 @@ class RealConnectionPool(
     val i = connections.iterator()
     while (i.hasNext()) {
       val connection = i.next()
-      val socketToClose = synchronized(connection) {
-        if (connection.calls.isEmpty()) {
-          i.remove()
-          connection.noNewExchanges = true
-          return@synchronized connection.socket()
-        } else {
-          return@synchronized  null
+      val socketToClose =
+        synchronized(connection) {
+          if (connection.calls.isEmpty()) {
+            i.remove()
+            connection.noNewExchanges = true
+            return@synchronized connection.socket()
+          } else {
+            return@synchronized null
+          }
         }
-      }
       if (socketToClose != null) {
         socketToClose.closeQuietly()
         connectionListener.connectionClosed(connection)
@@ -198,14 +202,16 @@ class RealConnectionPool(
           if (idleDurationNs > longestIdleDurationNs) {
             longestIdleDurationNs = idleDurationNs
             longestIdleConnection = connection
-          } else Unit
+          } else {
+            Unit
+          }
         }
       }
     }
 
     when {
-      longestIdleDurationNs >= this.keepAliveDurationNs
-          || idleConnectionCount > this.maxIdleConnections -> {
+      longestIdleDurationNs >= this.keepAliveDurationNs ||
+        idleConnectionCount > this.maxIdleConnections -> {
         // We've chosen a connection to evict. Confirm it's still okay to be evict, then close it.
         val connection = longestIdleConnection!!
         synchronized(connection) {
@@ -245,7 +251,10 @@ class RealConnectionPool(
    * Calls are leaked if the connection is tracking them but the application code has abandoned
    * them. Leak detection is imprecise and relies on garbage collection.
    */
-  private fun pruneAndGetAllocationCount(connection: RealConnection, now: Long): Int {
+  private fun pruneAndGetAllocationCount(
+    connection: RealConnection,
+    now: Long,
+  ): Int {
     connection.assertThreadHoldsLock()
 
     val references = connection.calls
@@ -260,7 +269,8 @@ class RealConnectionPool(
 
       // We've discovered a leaked call. This is an application bug.
       val callReference = reference as CallReference
-      val message = "A connection to ${connection.route().address.url} was leaked. " +
+      val message =
+        "A connection to ${connection.route().address.url} was leaked. " +
           "Did you forget to close a response body?"
       Platform.get().logCloseableLeak(message, callReference.callStackTrace)
 

@@ -44,10 +44,8 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 class Cookie private constructor(
   /** Returns a non-empty string with this cookie's name. */
   @get:JvmName("name") val name: String,
-
   /** Returns a possibly-empty string with this cookie's value. */
   @get:JvmName("value") val value: String,
-
   /**
    * Returns the time that this cookie expires, in the same format as [System.currentTimeMillis].
    * This is December 31, 9999 if the cookie is not [persistent], in which case it will expire at the
@@ -58,36 +56,30 @@ class Cookie private constructor(
    * that may or may not themselves be expired.
    */
   @get:JvmName("expiresAt") val expiresAt: Long,
-
   /**
    * Returns the cookie's domain. If [hostOnly] returns true this is the only domain that matches
    * this cookie; otherwise it matches this domain and all subdomains.
    */
   @get:JvmName("domain") val domain: String,
-
   /**
    * Returns this cookie's path. This cookie matches URLs prefixed with path segments that match
    * this path's segments. For example, if this path is `/foo` this cookie matches requests to
    * `/foo` and `/foo/bar`, but not `/` or `/football`.
    */
   @get:JvmName("path") val path: String,
-
   /** Returns true if this cookie should be limited to only HTTPS requests. */
   @get:JvmName("secure") val secure: Boolean,
-
   /**
    * Returns true if this cookie should be limited to only HTTP APIs. In web browsers this prevents
    * the cookie from being accessible to scripts.
    */
   @get:JvmName("httpOnly") val httpOnly: Boolean,
-
   /**
    * Returns true if this cookie does not expire at the end of the current session.
    *
    * This is true if either 'expires' or 'max-age' is present.
    */
   @get:JvmName("persistent") val persistent: Boolean,
-
   /**
    * Returns true if this cookie's domain should be interpreted as a single host name, or false if
    * it should be interpreted as a pattern. This flag will be false if its `Set-Cookie` header
@@ -100,7 +92,6 @@ class Cookie private constructor(
    * This is true unless 'domain' is present.
    */
   @get:JvmName("hostOnly") val hostOnly: Boolean,
-
   /**
    * Returns a string describing whether this cookie is sent for cross-site calls.
    *
@@ -128,17 +119,17 @@ class Cookie private constructor(
    */
   @get:JvmName("sameSite") val sameSite: String?,
 ) {
-
   /**
    * Returns true if this cookie should be included on a request to [url]. In addition to this
    * check callers should also confirm that this cookie has not expired.
    */
   fun matches(url: HttpUrl): Boolean {
-    val domainMatch = if (hostOnly) {
-      url.host == domain
-    } else {
-      domainMatch(url.host, domain)
-    }
+    val domainMatch =
+      if (hostOnly) {
+        url.host == domain
+      } else {
+        domainMatch(url.host, domain)
+      }
     if (!domainMatch) return false
 
     if (!pathMatch(url, path)) return false
@@ -182,63 +173,72 @@ class Cookie private constructor(
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "name"),
-    level = DeprecationLevel.ERROR)
+    level = DeprecationLevel.ERROR,
+  )
   fun name(): String = name
 
   @JvmName("-deprecated_value")
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "value"),
-    level = DeprecationLevel.ERROR)
+    level = DeprecationLevel.ERROR,
+  )
   fun value(): String = value
 
   @JvmName("-deprecated_persistent")
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "persistent"),
-    level = DeprecationLevel.ERROR)
+    level = DeprecationLevel.ERROR,
+  )
   fun persistent(): Boolean = persistent
 
   @JvmName("-deprecated_expiresAt")
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "expiresAt"),
-    level = DeprecationLevel.ERROR)
+    level = DeprecationLevel.ERROR,
+  )
   fun expiresAt(): Long = expiresAt
 
   @JvmName("-deprecated_hostOnly")
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "hostOnly"),
-    level = DeprecationLevel.ERROR)
+    level = DeprecationLevel.ERROR,
+  )
   fun hostOnly(): Boolean = hostOnly
 
   @JvmName("-deprecated_domain")
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "domain"),
-    level = DeprecationLevel.ERROR)
+    level = DeprecationLevel.ERROR,
+  )
   fun domain(): String = domain
 
   @JvmName("-deprecated_path")
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "path"),
-    level = DeprecationLevel.ERROR)
+    level = DeprecationLevel.ERROR,
+  )
   fun path(): String = path
 
   @JvmName("-deprecated_httpOnly")
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "httpOnly"),
-    level = DeprecationLevel.ERROR)
+    level = DeprecationLevel.ERROR,
+  )
   fun httpOnly(): Boolean = httpOnly
 
   @JvmName("-deprecated_secure")
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "secure"),
-    level = DeprecationLevel.ERROR)
+    level = DeprecationLevel.ERROR,
+  )
   fun secure(): Boolean = secure
 
   /**
@@ -317,23 +317,26 @@ class Cookie private constructor(
       this.sameSite = cookie.sameSite
     }
 
-    fun name(name: String) = apply {
-      require(name.trim() == name) { "name is not trimmed" }
-      this.name = name
-    }
+    fun name(name: String) =
+      apply {
+        require(name.trim() == name) { "name is not trimmed" }
+        this.name = name
+      }
 
-    fun value(value: String) = apply {
-      require(value.trim() == value) { "value is not trimmed" }
-      this.value = value
-    }
+    fun value(value: String) =
+      apply {
+        require(value.trim() == value) { "value is not trimmed" }
+        this.value = value
+      }
 
-    fun expiresAt(expiresAt: Long) = apply {
-      var expiresAt = expiresAt
-      if (expiresAt <= 0L) expiresAt = Long.MIN_VALUE
-      if (expiresAt > MAX_DATE) expiresAt = MAX_DATE
-      this.expiresAt = expiresAt
-      this.persistent = true
-    }
+    fun expiresAt(expiresAt: Long) =
+      apply {
+        var expiresAt = expiresAt
+        if (expiresAt <= 0L) expiresAt = Long.MIN_VALUE
+        if (expiresAt > MAX_DATE) expiresAt = MAX_DATE
+        this.expiresAt = expiresAt
+        this.persistent = true
+      }
 
     /**
      * Set the domain pattern for this cookie. The cookie will match [domain] and all of its
@@ -347,33 +350,40 @@ class Cookie private constructor(
      */
     fun hostOnlyDomain(domain: String): Builder = domain(domain, true)
 
-    private fun domain(domain: String, hostOnly: Boolean) = apply {
-      val canonicalDomain = domain.toCanonicalHost()
-        ?: throw IllegalArgumentException("unexpected domain: $domain")
+    private fun domain(
+      domain: String,
+      hostOnly: Boolean,
+    ) = apply {
+      val canonicalDomain =
+        domain.toCanonicalHost()
+          ?: throw IllegalArgumentException("unexpected domain: $domain")
       this.domain = canonicalDomain
       this.hostOnly = hostOnly
     }
 
-    fun path(path: String) = apply {
-      require(path.startsWith("/")) { "path must start with '/'" }
-      this.path = path
-    }
+    fun path(path: String) =
+      apply {
+        require(path.startsWith("/")) { "path must start with '/'" }
+        this.path = path
+      }
 
-    fun secure() = apply {
-      this.secure = true
-    }
+    fun secure() =
+      apply {
+        this.secure = true
+      }
 
-    fun httpOnly() = apply {
-      this.httpOnly = true
-    }
+    fun httpOnly() =
+      apply {
+        this.httpOnly = true
+      }
 
-    fun sameSite(sameSite: String) = apply {
-      require(sameSite.trim() == sameSite) { "sameSite is not trimmed" }
-      this.sameSite = sameSite
-    }
+    fun sameSite(sameSite: String) =
+      apply {
+        require(sameSite.trim() == sameSite) { "sameSite is not trimmed" }
+        this.sameSite = sameSite
+      }
 
     fun build(): Cookie {
-
       return Cookie(
         name ?: throw NullPointerException("builder.name == null"),
         value ?: throw NullPointerException("builder.value == null"),
@@ -384,7 +394,7 @@ class Cookie private constructor(
         httpOnly,
         persistent,
         hostOnly,
-        sameSite
+        sameSite,
       )
     }
   }
@@ -397,7 +407,10 @@ class Cookie private constructor(
     private val DAY_OF_MONTH_PATTERN = Pattern.compile("(\\d{1,2})[^\\d]*")
     private val TIME_PATTERN = Pattern.compile("(\\d{1,2}):(\\d{1,2}):(\\d{1,2})[^\\d]*")
 
-    private fun domainMatch(urlHost: String, domain: String): Boolean {
+    private fun domainMatch(
+      urlHost: String,
+      domain: String,
+    ): Boolean {
       if (urlHost == domain) {
         return true // As in 'example.com' matching 'example.com'.
       }
@@ -407,7 +420,10 @@ class Cookie private constructor(
         !urlHost.canParseAsIpAddress()
     }
 
-    private fun pathMatch(url: HttpUrl, path: String): Boolean {
+    private fun pathMatch(
+      url: HttpUrl,
+      path: String,
+    ): Boolean {
       val urlPath = url.encodedPath
 
       if (urlPath == path) {
@@ -427,10 +443,16 @@ class Cookie private constructor(
      * [setCookie] is not a well-formed cookie.
      */
     @JvmStatic
-    fun parse(url: HttpUrl, setCookie: String): Cookie? =
-      parse(System.currentTimeMillis(), url, setCookie)
+    fun parse(
+      url: HttpUrl,
+      setCookie: String,
+    ): Cookie? = parse(System.currentTimeMillis(), url, setCookie)
 
-    internal fun parse(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? {
+    internal fun parse(
+      currentTimeMillis: Long,
+      url: HttpUrl,
+      setCookie: String,
+    ): Cookie? {
       val cookiePairEnd = setCookie.delimiterOffset(';')
 
       val pairEqualsSign = setCookie.delimiterOffset('=', endIndex = cookiePairEnd)
@@ -459,11 +481,12 @@ class Cookie private constructor(
 
         val attributeEqualsSign = setCookie.delimiterOffset('=', pos, attributePairEnd)
         val attributeName = setCookie.trimSubstring(pos, attributeEqualsSign)
-        val attributeValue = if (attributeEqualsSign < attributePairEnd) {
-          setCookie.trimSubstring(attributeEqualsSign + 1, attributePairEnd)
-        } else {
-          ""
-        }
+        val attributeValue =
+          if (attributeEqualsSign < attributePairEnd) {
+            setCookie.trimSubstring(attributeEqualsSign + 1, attributePairEnd)
+          } else {
+            ""
+          }
 
         when {
           attributeName.equals("expires", ignoreCase = true) -> {
@@ -512,11 +535,12 @@ class Cookie private constructor(
       if (deltaSeconds == Long.MIN_VALUE) {
         expiresAt = Long.MIN_VALUE
       } else if (deltaSeconds != -1L) {
-        val deltaMilliseconds = if (deltaSeconds <= Long.MAX_VALUE / 1000) {
-          deltaSeconds * 1000
-        } else {
-          Long.MAX_VALUE
-        }
+        val deltaMilliseconds =
+          if (deltaSeconds <= Long.MAX_VALUE / 1000) {
+            deltaSeconds * 1000
+          } else {
+            Long.MAX_VALUE
+          }
         expiresAt = currentTimeMillis + deltaMilliseconds
         if (expiresAt < currentTimeMillis || expiresAt > MAX_DATE) {
           expiresAt = MAX_DATE // Handle overflow & limit the date range.
@@ -533,7 +557,8 @@ class Cookie private constructor(
 
       // If the domain is a suffix of the url host, it must not be a public suffix.
       if (urlHost.length != domain.length &&
-        PublicSuffixDatabase.get().getEffectiveTldPlusOne(domain) == null) {
+        PublicSuffixDatabase.get().getEffectiveTldPlusOne(domain) == null
+      ) {
         return null
       }
 
@@ -545,12 +570,18 @@ class Cookie private constructor(
         path = if (lastSlash != 0) encodedPath.substring(0, lastSlash) else "/"
       }
 
-      return Cookie(cookieName, cookieValue, expiresAt, domain, path, secureOnly, httpOnly,
-        persistent, hostOnly, sameSite)
+      return Cookie(
+        cookieName, cookieValue, expiresAt, domain, path, secureOnly, httpOnly,
+        persistent, hostOnly, sameSite,
+      )
     }
 
     /** Parse a date as specified in RFC 6265, section 5.1.1. */
-    private fun parseExpires(s: String, pos: Int, limit: Int): Long {
+    private fun parseExpires(
+      s: String,
+      pos: Int,
+      limit: Int,
+    ): Long {
       var pos = pos
       pos = dateCharacterOffset(s, pos, limit, false)
 
@@ -617,14 +648,21 @@ class Cookie private constructor(
      * Returns the index of the next date character in `input`, or if `invert` the index
      * of the next non-date character in `input`.
      */
-    private fun dateCharacterOffset(input: String, pos: Int, limit: Int, invert: Boolean): Int {
+    private fun dateCharacterOffset(
+      input: String,
+      pos: Int,
+      limit: Int,
+      invert: Boolean,
+    ): Int {
       for (i in pos until limit) {
         val c = input[i].code
-        val dateCharacter = (c < ' '.code && c != '\t'.code || c >= '\u007f'.code ||
-          c in '0'.code..'9'.code ||
-          c in 'a'.code..'z'.code ||
-          c in 'A'.code..'Z'.code ||
-          c == ':'.code)
+        val dateCharacter = (
+          c < ' '.code && c != '\t'.code || c >= '\u007f'.code ||
+            c in '0'.code..'9'.code ||
+            c in 'a'.code..'z'.code ||
+            c in 'A'.code..'Z'.code ||
+            c == ':'.code
+        )
         if (dateCharacter == !invert) return i
       }
       return limit
@@ -660,7 +698,10 @@ class Cookie private constructor(
 
     /** Returns all of the cookies from a set of HTTP response headers. */
     @JvmStatic
-    fun parseAll(url: HttpUrl, headers: Headers): List<Cookie> {
+    fun parseAll(
+      url: HttpUrl,
+      headers: Headers,
+    ): List<Cookie> {
       val cookieStrings = headers.values("Set-Cookie")
       var cookies: MutableList<Cookie>? = null
 

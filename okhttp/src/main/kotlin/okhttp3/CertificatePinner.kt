@@ -135,7 +135,7 @@ import okio.ByteString.Companion.toByteString
 @Suppress("NAME_SHADOWING")
 class CertificatePinner internal constructor(
   val pins: Set<Pin>,
-  internal val certificateChainCleaner: CertificateChainCleaner? = null
+  internal val certificateChainCleaner: CertificateChainCleaner? = null,
 ) {
   /**
    * Confirms that at least one of the certificates pinned for `hostname` is in `peerCertificates`.
@@ -146,14 +146,20 @@ class CertificatePinner internal constructor(
    *     for `hostname`.
    */
   @Throws(SSLPeerUnverifiedException::class)
-  fun check(hostname: String, peerCertificates: List<Certificate>) {
+  fun check(
+    hostname: String,
+    peerCertificates: List<Certificate>,
+  ) {
     return check(hostname) {
       (certificateChainCleaner?.clean(peerCertificates, hostname) ?: peerCertificates)
-          .map { it as X509Certificate }
+        .map { it as X509Certificate }
     }
   }
 
-  internal fun check(hostname: String, cleanedPeerCertificatesFn: () -> List<X509Certificate>) {
+  internal fun check(
+    hostname: String,
+    cleanedPeerCertificatesFn: () -> List<X509Certificate>,
+  ) {
     val pins = findMatchingPins(hostname)
     if (pins.isEmpty()) return
 
@@ -180,32 +186,36 @@ class CertificatePinner internal constructor(
     }
 
     // If we couldn't find a matching pin, format a nice exception.
-    val message = buildString {
-      append("Certificate pinning failure!")
-      append("\n  Peer certificate chain:")
-      for (element in peerCertificates) {
-        append("\n    ")
-        append(pin(element))
-        append(": ")
-        append(element.subjectDN.name)
+    val message =
+      buildString {
+        append("Certificate pinning failure!")
+        append("\n  Peer certificate chain:")
+        for (element in peerCertificates) {
+          append("\n    ")
+          append(pin(element))
+          append(": ")
+          append(element.subjectDN.name)
+        }
+        append("\n  Pinned certificates for ")
+        append(hostname)
+        append(":")
+        for (pin in pins) {
+          append("\n    ")
+          append(pin)
+        }
       }
-      append("\n  Pinned certificates for ")
-      append(hostname)
-      append(":")
-      for (pin in pins) {
-        append("\n    ")
-        append(pin)
-      }
-    }
     throw SSLPeerUnverifiedException(message)
   }
 
   @Deprecated(
-      "replaced with {@link #check(String, List)}.",
-      ReplaceWith("check(hostname, peerCertificates.toList())")
+    "replaced with {@link #check(String, List)}.",
+    ReplaceWith("check(hostname, peerCertificates.toList())"),
   )
   @Throws(SSLPeerUnverifiedException::class)
-  fun check(hostname: String, vararg peerCertificates: Certificate) {
+  fun check(
+    hostname: String,
+    vararg peerCertificates: Certificate,
+  ) {
     check(hostname, peerCertificates.toList())
   }
 
@@ -216,9 +226,7 @@ class CertificatePinner internal constructor(
   fun findMatchingPins(hostname: String): List<Pin> = pins.filterList { matchesHostname(hostname) }
 
   /** Returns a certificate pinner that uses `certificateChainCleaner`. */
-  internal fun withCertificateChainCleaner(
-    certificateChainCleaner: CertificateChainCleaner
-  ): CertificatePinner {
+  internal fun withCertificateChainCleaner(certificateChainCleaner: CertificateChainCleaner): CertificatePinner {
     return if (this.certificateChainCleaner == certificateChainCleaner) {
       this
     } else {
@@ -228,8 +236,8 @@ class CertificatePinner internal constructor(
 
   override fun equals(other: Any?): Boolean {
     return other is CertificatePinner &&
-        other.pins == pins &&
-        other.certificateChainCleaner == certificateChainCleaner
+      other.pins == pins &&
+      other.certificateChainCleaner == certificateChainCleaner
   }
 
   override fun hashCode(): Int {
@@ -251,9 +259,11 @@ class CertificatePinner internal constructor(
     val hash: ByteString
 
     init {
-      require((pattern.startsWith("*.") && pattern.indexOf("*", 1) == -1) ||
+      require(
+        (pattern.startsWith("*.") && pattern.indexOf("*", 1) == -1) ||
           (pattern.startsWith("**.") && pattern.indexOf("*", 2) == -1) ||
-          pattern.indexOf("*") == -1) {
+          pattern.indexOf("*") == -1,
+      ) {
         "Unexpected pattern: $pattern"
       }
 
@@ -280,25 +290,25 @@ class CertificatePinner internal constructor(
           val suffixLength = pattern.length - 3
           val prefixLength = hostname.length - suffixLength
           hostname.regionMatches(hostname.length - suffixLength, pattern, 3, suffixLength) &&
-              (prefixLength == 0 || hostname[prefixLength - 1] == '.')
+            (prefixLength == 0 || hostname[prefixLength - 1] == '.')
         }
         pattern.startsWith("*.") -> {
           // With * there must be a prefix so include the dot in regionMatches().
           val suffixLength = pattern.length - 1
           val prefixLength = hostname.length - suffixLength
           hostname.regionMatches(hostname.length - suffixLength, pattern, 1, suffixLength) &&
-              hostname.lastIndexOf('.', prefixLength - 1) == -1
+            hostname.lastIndexOf('.', prefixLength - 1) == -1
         }
         else -> hostname == pattern
       }
     }
 
     fun matchesCertificate(certificate: X509Certificate): Boolean {
-        return when (hashAlgorithm) {
-          "sha256" -> hash == certificate.sha256Hash()
-          "sha1" -> hash == certificate.sha1Hash()
-          else -> false
-        }
+      return when (hashAlgorithm) {
+        "sha256" -> hash == certificate.sha256Hash()
+        "sha1" -> hash == certificate.sha1Hash()
+        else -> false
+      }
     }
 
     override fun toString(): String = "$hashAlgorithm/${hash.base64()}"
@@ -333,7 +343,10 @@ class CertificatePinner internal constructor(
      * @param pins SHA-256 or SHA-1 hashes. Each pin is a hash of a certificate's Subject Public Key
      *     Info, base64-encoded and prefixed with either `sha256/` or `sha1/`.
      */
-    fun add(pattern: String, vararg pins: String) = apply {
+    fun add(
+      pattern: String,
+      vararg pins: String,
+    ) = apply {
       for (pin in pins) {
         this.pins.add(Pin(pattern, pin))
       }
@@ -347,12 +360,10 @@ class CertificatePinner internal constructor(
     val DEFAULT = Builder().build()
 
     @JvmStatic
-    fun X509Certificate.sha1Hash(): ByteString =
-      publicKey.encoded.toByteString().sha1()
+    fun X509Certificate.sha1Hash(): ByteString = publicKey.encoded.toByteString().sha1()
 
     @JvmStatic
-    fun X509Certificate.sha256Hash(): ByteString =
-      publicKey.encoded.toByteString().sha256()
+    fun X509Certificate.sha256Hash(): ByteString = publicKey.encoded.toByteString().sha256()
 
     /**
      * Returns the SHA-256 of `certificate`'s public key.

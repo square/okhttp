@@ -49,7 +49,7 @@ class SettingsTest {
     settings[Settings.MAX_HEADER_LIST_SIZE] = 16777215
     assertThat(settings.getMaxHeaderListSize(-1)).isEqualTo(16777215)
     assertThat(settings.initialWindowSize).isEqualTo(
-      Settings.DEFAULT_INITIAL_WINDOW_SIZE
+      Settings.DEFAULT_INITIAL_WINDOW_SIZE,
     )
     settings[Settings.INITIAL_WINDOW_SIZE] = 108
     assertThat(settings.initialWindowSize).isEqualTo(108)

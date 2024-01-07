@@ -37,8 +37,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 class JSSETest {
-  @JvmField @RegisterExtension var platform = PlatformRule()
-  @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
+  @JvmField @RegisterExtension
+  var platform = PlatformRule()
+
+  @JvmField @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
 
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
@@ -81,7 +84,7 @@ class JSSETest {
       }
 
       assertThat(response.connection.socket().javaClass.name).isEqualTo(
-        "sun.security.ssl.SSLSocketImpl"
+        "sun.security.ssl.SSLSocketImpl",
       )
     }
   }
@@ -93,21 +96,29 @@ class JSSETest {
     val s = factory.createSocket() as SSLSocket
 
     when {
-      PlatformVersion.majorVersion > 11 -> assertThat(s.enabledProtocols.toList()).containsExactly(
-        "TLSv1.3", "TLSv1.2"
-      )
+      PlatformVersion.majorVersion > 11 ->
+        assertThat(s.enabledProtocols.toList()).containsExactly(
+          "TLSv1.3",
+          "TLSv1.2",
+        )
       // Not much we can guarantee on JDK 11.
-      PlatformVersion.majorVersion == 11 -> assertThat(s.enabledProtocols.toList()).contains(
-        "TLSv1.2"
-      )
+      PlatformVersion.majorVersion == 11 ->
+        assertThat(s.enabledProtocols.toList()).contains(
+          "TLSv1.2",
+        )
       // JDK 8 291 removed older versions
       // See https://java.com/en/jre-jdk-cryptoroadmap.html
-      PlatformVersion.majorVersion == 8 -> assertThat(s.enabledProtocols.toList()).contains(
-        "TLSv1.2"
-      )
-      else -> assertThat(s.enabledProtocols.toList()).containsExactly(
-        "TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1"
-      )
+      PlatformVersion.majorVersion == 8 ->
+        assertThat(s.enabledProtocols.toList()).contains(
+          "TLSv1.2",
+        )
+      else ->
+        assertThat(s.enabledProtocols.toList()).containsExactly(
+          "TLSv1.3",
+          "TLSv1.2",
+          "TLSv1.1",
+          "TLSv1",
+        )
     }
   }
 
@@ -118,15 +129,23 @@ class JSSETest {
 
     assumeNetwork()
 
-    client = client.newBuilder()
-      .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
-        override fun connectionAcquired(call: Call, connection: Connection) {
-          val sslSocket = connection.socket() as SSLSocket
+    client =
+      client.newBuilder()
+        .eventListenerFactory(
+          clientTestRule.wrap(
+            object : EventListener() {
+              override fun connectionAcquired(
+                call: Call,
+                connection: Connection,
+              ) {
+                val sslSocket = connection.socket() as SSLSocket
 
-          sessionIds.add(sslSocket.session.id.toByteString().hex())
-        }
-      }))
-      .build()
+                sessionIds.add(sslSocket.session.id.toByteString().hex())
+              }
+            },
+          ),
+        )
+        .build()
 
     val request = Request.Builder().url("https://facebook.com/robots.txt").build()
 
@@ -149,11 +168,12 @@ class JSSETest {
   }
 
   private fun enableTls() {
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .build()
+    client =
+      client.newBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+        )
+        .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 }

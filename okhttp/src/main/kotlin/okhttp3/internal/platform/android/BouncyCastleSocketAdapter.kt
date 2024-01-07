@@ -41,7 +41,7 @@ class BouncyCastleSocketAdapter : SocketAdapter {
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
-    protocols: List<Protocol>
+    protocols: List<Protocol>,
   ) {
     // No TLS extensions if the socket class is custom.
     if (matchesSocket(sslSocket)) {
@@ -57,11 +57,13 @@ class BouncyCastleSocketAdapter : SocketAdapter {
   }
 
   companion object {
-    val factory = object : DeferredSocketAdapter.Factory {
-      override fun matchesSocket(sslSocket: SSLSocket): Boolean {
-        return BouncyCastlePlatform.isSupported && sslSocket is BCSSLSocket
+    val factory =
+      object : DeferredSocketAdapter.Factory {
+        override fun matchesSocket(sslSocket: SSLSocket): Boolean {
+          return BouncyCastlePlatform.isSupported && sslSocket is BCSSLSocket
+        }
+
+        override fun create(sslSocket: SSLSocket): SocketAdapter = BouncyCastleSocketAdapter()
       }
-      override fun create(sslSocket: SSLSocket): SocketAdapter = BouncyCastleSocketAdapter()
-    }
   }
 }

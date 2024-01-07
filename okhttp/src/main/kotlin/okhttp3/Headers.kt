@@ -64,7 +64,7 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
  */
 @Suppress("NAME_SHADOWING")
 class Headers internal constructor(
-  internal val namesAndValues: Array<String>
+  internal val namesAndValues: Array<String>,
 ) : Iterable<Pair<String, String>> {
   /** Returns the last value corresponding to the specified field, or null. */
   operator fun get(name: String): String? = commonHeadersGet(namesAndValues, name)
@@ -85,14 +85,16 @@ class Headers internal constructor(
   }
 
   /** Returns the number of field values. */
-  @get:JvmName("size") val size: Int
+  @get:JvmName("size")
+  val size: Int
     get() = namesAndValues.size / 2
 
   @JvmName("-deprecated_size")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "size"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "size"),
+    level = DeprecationLevel.ERROR,
+  )
   fun size(): Int = size
 
   /** Returns the field at `position`. */
@@ -208,41 +210,49 @@ class Headers internal constructor(
      * Add a header line without any validation. Only appropriate for headers from the remote peer
      * or cache.
      */
-    internal fun addLenient(line: String) = apply {
-      val index = line.indexOf(':', 1)
-      when {
-        index != -1 -> {
-          addLenient(line.substring(0, index), line.substring(index + 1))
-        }
-        line[0] == ':' -> {
-          // Work around empty header names and header names that start with a colon (created by old
-          // broken SPDY versions of the response cache).
-          addLenient("", line.substring(1)) // Empty header name.
-        }
-        else -> {
-          // No header name.
-          addLenient("", line)
+    internal fun addLenient(line: String) =
+      apply {
+        val index = line.indexOf(':', 1)
+        when {
+          index != -1 -> {
+            addLenient(line.substring(0, index), line.substring(index + 1))
+          }
+          line[0] == ':' -> {
+            // Work around empty header names and header names that start with a colon (created by old
+            // broken SPDY versions of the response cache).
+            addLenient("", line.substring(1)) // Empty header name.
+          }
+          else -> {
+            // No header name.
+            addLenient("", line)
+          }
         }
       }
-    }
 
     /** Add an header line containing a field name, a literal colon, and a value. */
-    fun add(line: String) = apply {
-      val index = line.indexOf(':')
-      require(index != -1) { "Unexpected header: $line" }
-      add(line.substring(0, index).trim(), line.substring(index + 1))
-    }
+    fun add(line: String) =
+      apply {
+        val index = line.indexOf(':')
+        require(index != -1) { "Unexpected header: $line" }
+        add(line.substring(0, index).trim(), line.substring(index + 1))
+      }
 
     /**
      * Add a header with the specified name and value. Does validation of header names and values.
      */
-    fun add(name: String, value: String) = commonAdd(name, value)
+    fun add(
+      name: String,
+      value: String,
+    ) = commonAdd(name, value)
 
     /**
      * Add a header with the specified name and value. Does validation of header names, allowing
      * non-ASCII values.
      */
-    fun addUnsafeNonAscii(name: String, value: String) = apply {
+    fun addUnsafeNonAscii(
+      name: String,
+      value: String,
+    ) = apply {
       headersCheckName(name)
       addLenient(name, value)
     }
@@ -256,20 +266,29 @@ class Headers internal constructor(
      * Add a header with the specified name and formatted date. Does validation of header names and
      * value.
      */
-    fun add(name: String, value: Date) = add(name, value.toHttpDateString())
+    fun add(
+      name: String,
+      value: Date,
+    ) = add(name, value.toHttpDateString())
 
     /**
      * Add a header with the specified name and formatted instant. Does validation of header names
      * and value.
      */
     @IgnoreJRERequirement // Only programs that already have Instant will use this.
-    fun add(name: String, value: Instant) = add(name, Date.from(value))
+    fun add(
+      name: String,
+      value: Instant,
+    ) = add(name, Date.from(value))
 
     /**
      * Set a field with the specified date. If the field is not found, it is added. If the field is
      * found, the existing values are replaced.
      */
-    operator fun set(name: String, value: Date) = set(name, value.toHttpDateString())
+    operator fun set(
+      name: String,
+      value: Date,
+    ) = set(name, value.toHttpDateString())
 
     /**
      * Set a field with the specified instant. If the field is not found, it is added. If the field
@@ -282,7 +301,10 @@ class Headers internal constructor(
      * Add a field with the specified value without any validation. Only appropriate for headers
      * from the remote peer or cache.
      */
-    internal fun addLenient(name: String, value: String) = commonAddLenient(name, value)
+    internal fun addLenient(
+      name: String,
+      value: String,
+    ) = commonAddLenient(name, value)
 
     fun removeAll(name: String) = commonRemoveAll(name)
 
@@ -290,7 +312,10 @@ class Headers internal constructor(
      * Set a field with the specified value. If the field is not found, it is added. If the field is
      * found, the existing values are replaced.
      */
-    operator fun set(name: String, value: String) = commonSet(name, value)
+    operator fun set(
+      name: String,
+      value: String,
+    ) = commonSet(name, value)
 
     /** Equivalent to `build().get(name)`, but potentially faster. */
     operator fun get(name: String): String? = commonGet(name)
@@ -309,9 +334,10 @@ class Headers internal constructor(
 
     @JvmName("-deprecated_of")
     @Deprecated(
-        message = "function name changed",
-        replaceWith = ReplaceWith(expression = "headersOf(*namesAndValues)"),
-        level = DeprecationLevel.ERROR)
+      message = "function name changed",
+      replaceWith = ReplaceWith(expression = "headersOf(*namesAndValues)"),
+      level = DeprecationLevel.ERROR,
+    )
     fun of(vararg namesAndValues: String): Headers {
       return headersOf(*namesAndValues)
     }
@@ -323,9 +349,10 @@ class Headers internal constructor(
 
     @JvmName("-deprecated_of")
     @Deprecated(
-        message = "function moved to extension",
-        replaceWith = ReplaceWith(expression = "headers.toHeaders()"),
-        level = DeprecationLevel.ERROR)
+      message = "function moved to extension",
+      replaceWith = ReplaceWith(expression = "headers.toHeaders()"),
+      level = DeprecationLevel.ERROR,
+    )
     fun of(headers: Map<String, String>): Headers {
       return headers.toHeaders()
     }

@@ -61,13 +61,14 @@ class EventSourcesHttpTest {
           |data: hey
           |
           |
-          """.trimMargin()
+          """.trimMargin(),
         ).setHeader("content-type", "text/event-stream")
-        .build()
+        .build(),
     )
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
     val response = client.newCall(request).execute()
     processResponse(response, listener)
     listener.assertOpen()
@@ -84,14 +85,15 @@ class EventSourcesHttpTest {
           |data: hey
           |
           |
-          """.trimMargin()
+          """.trimMargin(),
         ).setHeader("content-type", "text/event-stream")
-        .build()
+        .build(),
     )
     listener.enqueueCancel() // Will cancel in onOpen().
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
     val response = client.newCall(request).execute()
     processResponse(response, listener)
     listener.assertOpen()

@@ -17,5 +17,4 @@ package okhttp.android.testapp
 
 import android.app.Application
 
-class TestApplication: Application() {
-}
+class TestApplication : Application()

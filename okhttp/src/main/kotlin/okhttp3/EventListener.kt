@@ -66,9 +66,7 @@ abstract class EventListener {
    * This will be invoked only once for a single [Call]. Retries of different routes or redirects
    * will be handled within the boundaries of a single [callStart] and [callEnd]/[callFailed] pair.
    */
-  open fun callStart(
-    call: Call
-  ) {
+  open fun callStart(call: Call) {
   }
 
   /**
@@ -81,7 +79,7 @@ abstract class EventListener {
    */
   open fun proxySelectStart(
     call: Call,
-    url: HttpUrl
+    url: HttpUrl,
   ) {
   }
 
@@ -103,7 +101,7 @@ abstract class EventListener {
   open fun proxySelectEnd(
     call: Call,
     url: HttpUrl,
-    proxies: List<@JvmSuppressWildcards Proxy>
+    proxies: List<@JvmSuppressWildcards Proxy>,
   ) {
   }
 
@@ -118,7 +116,7 @@ abstract class EventListener {
    */
   open fun dnsStart(
     call: Call,
-    domainName: String
+    domainName: String,
   ) {
   }
 
@@ -130,7 +128,7 @@ abstract class EventListener {
   open fun dnsEnd(
     call: Call,
     domainName: String,
-    inetAddressList: List<@JvmSuppressWildcards InetAddress>
+    inetAddressList: List<@JvmSuppressWildcards InetAddress>,
   ) {
   }
 
@@ -145,7 +143,7 @@ abstract class EventListener {
   open fun connectStart(
     call: Call,
     inetSocketAddress: InetSocketAddress,
-    proxy: Proxy
+    proxy: Proxy,
   ) {
   }
 
@@ -161,9 +159,7 @@ abstract class EventListener {
    * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
    * [Call.request] is a redirect to a different address, or a connection is retried.
    */
-  open fun secureConnectStart(
-    call: Call
-  ) {
+  open fun secureConnectStart(call: Call) {
   }
 
   /**
@@ -173,7 +169,7 @@ abstract class EventListener {
    */
   open fun secureConnectEnd(
     call: Call,
-    handshake: Handshake?
+    handshake: Handshake?,
   ) {
   }
 
@@ -187,7 +183,7 @@ abstract class EventListener {
     call: Call,
     inetSocketAddress: InetSocketAddress,
     proxy: Proxy,
-    protocol: Protocol?
+    protocol: Protocol?,
   ) {
   }
 
@@ -203,7 +199,7 @@ abstract class EventListener {
     inetSocketAddress: InetSocketAddress,
     proxy: Proxy,
     protocol: Protocol?,
-    ioe: IOException
+    ioe: IOException,
   ) {
   }
 
@@ -215,7 +211,7 @@ abstract class EventListener {
    */
   open fun connectionAcquired(
     call: Call,
-    connection: Connection
+    connection: Connection,
   ) {
   }
 
@@ -229,7 +225,7 @@ abstract class EventListener {
    */
   open fun connectionReleased(
     call: Call,
-    connection: Connection
+    connection: Connection,
   ) {
   }
 
@@ -241,9 +237,7 @@ abstract class EventListener {
    * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
    * [Call.request] is a redirect to a different address.
    */
-  open fun requestHeadersStart(
-    call: Call
-  ) {
+  open fun requestHeadersStart(call: Call) {
   }
 
   /**
@@ -254,7 +248,10 @@ abstract class EventListener {
    * @param request the request sent over the network. It is an error to access the body of this
    *     request.
    */
-  open fun requestHeadersEnd(call: Call, request: Request) {
+  open fun requestHeadersEnd(
+    call: Call,
+    request: Request,
+  ) {
   }
 
   /**
@@ -266,9 +263,7 @@ abstract class EventListener {
    * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
    * [Call.request] is a redirect to a different address.
    */
-  open fun requestBodyStart(
-    call: Call
-  ) {
+  open fun requestBodyStart(call: Call) {
   }
 
   /**
@@ -278,7 +273,7 @@ abstract class EventListener {
    */
   open fun requestBodyEnd(
     call: Call,
-    byteCount: Long
+    byteCount: Long,
   ) {
   }
 
@@ -290,7 +285,7 @@ abstract class EventListener {
    */
   open fun requestFailed(
     call: Call,
-    ioe: IOException
+    ioe: IOException,
   ) {
   }
 
@@ -305,9 +300,7 @@ abstract class EventListener {
    * Prior to OkHttp 4.3 this was incorrectly invoked when the client was ready to read headers.
    * This was misleading for tracing because it was too early.
    */
-  open fun responseHeadersStart(
-    call: Call
-  ) {
+  open fun responseHeadersStart(call: Call) {
   }
 
   /**
@@ -320,7 +313,7 @@ abstract class EventListener {
    */
   open fun responseHeadersEnd(
     call: Call,
-    response: Response
+    response: Response,
   ) {
   }
 
@@ -341,9 +334,7 @@ abstract class EventListener {
    * Prior to OkHttp 4.3 this was incorrectly invoked when the client was ready to read the response
    * body. This was misleading for tracing because it was too early.
    */
-  open fun responseBodyStart(
-    call: Call
-  ) {
+  open fun responseBodyStart(call: Call) {
   }
 
   /**
@@ -360,7 +351,7 @@ abstract class EventListener {
    */
   open fun responseBodyEnd(
     call: Call,
-    byteCount: Long
+    byteCount: Long,
   ) {
   }
 
@@ -375,7 +366,7 @@ abstract class EventListener {
    */
   open fun responseFailed(
     call: Call,
-    ioe: IOException
+    ioe: IOException,
   ) {
   }
 
@@ -385,9 +376,7 @@ abstract class EventListener {
    *
    * This method is always invoked after [callStart].
    */
-  open fun callEnd(
-    call: Call
-  ) {
+  open fun callEnd(call: Call) {
   }
 
   /**
@@ -397,7 +386,7 @@ abstract class EventListener {
    */
   open fun callFailed(
     call: Call,
-    ioe: IOException
+    ioe: IOException,
   ) {
   }
 
@@ -417,16 +406,17 @@ abstract class EventListener {
    * This is invoked at most once, even if [Call.cancel] is invoked multiple times. It may be
    * invoked at any point in a call's life, including before [callStart] and after [callEnd].
    */
-  open fun canceled(
-    call: Call
-  ) {
+  open fun canceled(call: Call) {
   }
 
   /**
    * Invoked when a call fails due to cache rules.
    * For example, we're forbidden from using the network and the cache is insufficient
    */
-  open fun satisfactionFailure(call: Call, response: Response) {
+  open fun satisfactionFailure(
+    call: Call,
+    response: Response,
+  ) {
   }
 
   /**
@@ -435,7 +425,10 @@ abstract class EventListener {
    *
    * This event will only be received when a Cache is configured for the client.
    */
-  open fun cacheHit(call: Call, response: Response) {
+  open fun cacheHit(
+    call: Call,
+    response: Response,
+  ) {
   }
 
   /**
@@ -454,7 +447,10 @@ abstract class EventListener {
    *
    * This event will only be received when a Cache is configured for the client.
    */
-  open fun cacheConditionalHit(call: Call, cachedResponse: Response) {
+  open fun cacheConditionalHit(
+    call: Call,
+    cachedResponse: Response,
+  ) {
   }
 
   fun interface Factory {
@@ -472,7 +468,8 @@ abstract class EventListener {
 
   companion object {
     @JvmField
-    val NONE: EventListener = object : EventListener() {
-    }
+    val NONE: EventListener =
+      object : EventListener() {
+      }
   }
 }

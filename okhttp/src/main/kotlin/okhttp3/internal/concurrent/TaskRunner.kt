@@ -43,7 +43,7 @@ import okhttp3.internal.threadFactory
  */
 class TaskRunner(
   val backend: Backend,
-  internal val logger: Logger = TaskRunner.logger
+  internal val logger: Logger = TaskRunner.logger,
 ) {
   val lock: ReentrantLock = ReentrantLock()
   val condition: Condition = lock.newCondition()
@@ -58,30 +58,32 @@ class TaskRunner(
   /** Queues not in [busyQueues] that have non-empty [TaskQueue.futureTasks]. */
   private val readyQueues = mutableListOf<TaskQueue>()
 
-  private val runnable: Runnable = object : Runnable {
-    override fun run() {
-      while (true) {
-        val task = this@TaskRunner.lock.withLock {
-          awaitTaskToRun()
-        } ?: return
+  private val runnable: Runnable =
+    object : Runnable {
+      override fun run() {
+        while (true) {
+          val task =
+            this@TaskRunner.lock.withLock {
+              awaitTaskToRun()
+            } ?: return
 
-        logger.logElapsed(task, task.queue!!) {
-          var completedNormally = false
-          try {
-            runTask(task)
-            completedNormally = true
-          } finally {
-            // If the task is crashing start another thread to service the queues.
-            if (!completedNormally) {
-              lock.withLock {
-                backend.execute(this@TaskRunner, this)
+          logger.logElapsed(task, task.queue!!) {
+            var completedNormally = false
+            try {
+              runTask(task)
+              completedNormally = true
+            } finally {
+              // If the task is crashing start another thread to service the queues.
+              if (!completedNormally) {
+                lock.withLock {
+                  backend.execute(this@TaskRunner, this)
+                }
               }
             }
           }
         }
       }
     }
-  }
 
   internal fun kickCoordinator(taskQueue: TaskQueue) {
     lock.assertHeld()
@@ -128,7 +130,10 @@ class TaskRunner(
     }
   }
 
-  private fun afterRun(task: Task, delayNanos: Long) {
+  private fun afterRun(
+    task: Task,
+    delayNanos: Long,
+  ) {
     lock.assertHeld()
 
     val queue = task.queue!!
@@ -264,23 +269,35 @@ class TaskRunner(
 
   interface Backend {
     fun nanoTime(): Long
+
     fun coordinatorNotify(taskRunner: TaskRunner)
-    fun coordinatorWait(taskRunner: TaskRunner, nanos: Long)
+
+    fun coordinatorWait(
+      taskRunner: TaskRunner,
+      nanos: Long,
+    )
+
     fun <T> decorate(queue: BlockingQueue<T>): BlockingQueue<T>
-    fun execute(taskRunner: TaskRunner, runnable: Runnable)
+
+    fun execute(
+      taskRunner: TaskRunner,
+      runnable: Runnable,
+    )
   }
 
   class RealBackend(threadFactory: ThreadFactory) : Backend {
-    val executor = ThreadPoolExecutor(
-      // corePoolSize:
-      0,
-      // maximumPoolSize:
-      Int.MAX_VALUE,
-      // keepAliveTime:
-      60L, TimeUnit.SECONDS,
-      SynchronousQueue(),
-      threadFactory
-    )
+    val executor =
+      ThreadPoolExecutor(
+        // corePoolSize:
+        0,
+        // maximumPoolSize:
+        Int.MAX_VALUE,
+        // keepAliveTime:
+        60L,
+        TimeUnit.SECONDS,
+        SynchronousQueue(),
+        threadFactory,
+      )
 
     override fun nanoTime() = System.nanoTime()
 
@@ -294,7 +311,10 @@ class TaskRunner(
      */
     @Throws(InterruptedException::class)
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-    override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
+    override fun coordinatorWait(
+      taskRunner: TaskRunner,
+      nanos: Long,
+    ) {
       taskRunner.lock.assertHeld()
       if (nanos > 0) {
         taskRunner.condition.awaitNanos(nanos)
@@ -303,7 +323,10 @@ class TaskRunner(
 
     override fun <T> decorate(queue: BlockingQueue<T>) = queue
 
-    override fun execute(taskRunner: TaskRunner, runnable: Runnable) {
+    override fun execute(
+      taskRunner: TaskRunner,
+      runnable: Runnable,
+    ) {
       executor.execute(runnable)
     }
 

@@ -39,11 +39,12 @@ class PublicInternalApiTest {
   @Test
   fun hasBody() {
     val request = Request.Builder().url("http://example.com").build()
-    val response = Response.Builder().code(200)
-      .message("OK")
-      .request(request)
-      .protocol(Protocol.HTTP_2)
-      .build()
+    val response =
+      Response.Builder().code(200)
+        .message("OK")
+        .request(request)
+        .protocol(Protocol.HTTP_2)
+        .build()
     assertTrue(hasBody(response))
   }
 }

@@ -30,12 +30,15 @@ import okio.Buffer
  * each [FileOperator] should not be.
  */
 internal class FileOperator(
-  private val fileChannel: FileChannel
+  private val fileChannel: FileChannel,
 ) {
-
   /** Write [byteCount] bytes from [source] to the file at [pos]. */
   @Throws(IOException::class)
-  fun write(pos: Long, source: Buffer, byteCount: Long) {
+  fun write(
+    pos: Long,
+    source: Buffer,
+    byteCount: Long,
+  ) {
     if (byteCount < 0L || byteCount > source.size) {
       throw IndexOutOfBoundsException()
     }
@@ -54,7 +57,11 @@ internal class FileOperator(
    * caller's responsibility to make sure there are sufficient bytes to read: if there aren't this
    * method throws an `EOFException`.
    */
-  fun read(pos: Long, sink: Buffer, byteCount: Long) {
+  fun read(
+    pos: Long,
+    sink: Buffer,
+    byteCount: Long,
+  ) {
     if (byteCount < 0L) {
       throw IndexOutOfBoundsException()
     }

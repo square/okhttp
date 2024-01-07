@@ -17,11 +17,9 @@ package okhttp3
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import assertk.assertions.isIn
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLException
-import kotlin.math.exp
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -71,10 +69,11 @@ class ConnectionReuseTest {
   fun connectionsAreReusedForPosts() {
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse(body = "b"))
-    val request = Request(
-      url = server.url("/"),
-      body = "request body".toRequestBody("text/plain".toMediaType()),
-    )
+    val request =
+      Request(
+        url = server.url("/"),
+        body = "request body".toRequestBody("text/plain".toMediaType()),
+      )
     assertConnectionReused(request, request)
   }
 
@@ -91,10 +90,11 @@ class ConnectionReuseTest {
   fun connectionsAreNotReusedWithRequestConnectionClose() {
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse(body = "b"))
-    val requestA = Request.Builder()
-      .url(server.url("/"))
-      .header("Connection", "close")
-      .build()
+    val requestA =
+      Request.Builder()
+        .url(server.url("/"))
+        .header("Connection", "close")
+        .build()
     val requestB = Request(server.url("/"))
     assertConnectionNotReused(requestA, requestB)
   }
@@ -105,7 +105,7 @@ class ConnectionReuseTest {
       MockResponse(
         headers = headersOf("Connection", "close"),
         body = "a",
-      )
+      ),
     )
     server.enqueue(MockResponse(body = "b"))
     val requestA = Request(server.url("/"))
@@ -120,7 +120,7 @@ class ConnectionReuseTest {
         .body("a")
         .clearHeaders()
         .socketPolicy(DisconnectAtEnd)
-        .build()
+        .build(),
     )
     server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
@@ -129,9 +129,10 @@ class ConnectionReuseTest {
 
   @Test
   fun connectionsAreNotReusedIfPoolIsSizeZero() {
-    client = client.newBuilder()
-      .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
-      .build()
+    client =
+      client.newBuilder()
+        .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
+        .build()
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
@@ -140,15 +141,16 @@ class ConnectionReuseTest {
 
   @Test
   fun connectionsReusedWithRedirectEvenIfPoolIsSizeZero() {
-    client = client.newBuilder()
-      .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
-      .build()
+    client =
+      client.newBuilder()
+        .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
+        .build()
     server.enqueue(
       MockResponse(
         code = 301,
         headers = headersOf("Location", "/b"),
-        body = "a"
-      )
+        body = "a",
+      ),
     )
     server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
@@ -160,16 +162,18 @@ class ConnectionReuseTest {
 
   @Test
   fun connectionsNotReusedWithRedirectIfDiscardingResponseIsSlow() {
-    client = client.newBuilder()
-      .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
-      .build()
+    client =
+      client.newBuilder()
+        .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
+        .build()
     server.enqueue(
       MockResponse.Builder()
         .code(301)
         .addHeader("Location: /b")
         .bodyDelay(1, TimeUnit.SECONDS)
         .body("a")
-        .build())
+        .build(),
+    )
     server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
@@ -211,9 +215,10 @@ class ConnectionReuseTest {
   fun connectionsAreEvicted() {
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse(body = "b"))
-    client = client.newBuilder()
-      .connectionPool(ConnectionPool(5, 250, TimeUnit.MILLISECONDS))
-      .build()
+    client =
+      client.newBuilder()
+        .connectionPool(ConnectionPool(5, 250, TimeUnit.MILLISECONDS))
+        .build()
     val request = Request(server.url("/"))
     val response1 = client.newCall(request).execute()
     assertThat(response1.body.string()).isEqualTo("a")
@@ -237,11 +242,13 @@ class ConnectionReuseTest {
 
     // This client shares a connection pool but has a different SSL socket factory.
     val handshakeCertificates2 = HandshakeCertificates.Builder().build()
-    val anotherClient = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates2.sslSocketFactory(), handshakeCertificates2.trustManager
-      )
-      .build()
+    val anotherClient =
+      client.newBuilder()
+        .sslSocketFactory(
+          handshakeCertificates2.sslSocketFactory(),
+          handshakeCertificates2.trustManager,
+        )
+        .build()
 
     // This client fails to connect because the new SSL socket factory refuses.
     assertFailsWith<IOException> {
@@ -264,9 +271,10 @@ class ConnectionReuseTest {
     response1.body.close()
 
     // This client shares a connection pool but has a different SSL socket factory.
-    val anotherClient = client.newBuilder()
-      .hostnameVerifier(RecordingHostnameVerifier())
-      .build()
+    val anotherClient =
+      client.newBuilder()
+        .hostnameVerifier(RecordingHostnameVerifier())
+        .build()
     val response2 = anotherClient.newCall(request).execute()
     response2.body.close()
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
@@ -292,32 +300,35 @@ class ConnectionReuseTest {
         // Since this test knowingly leaks a connection, avoid using the default shared connection
         // pool, which should remain clean for subsequent tests.
         .connectionPool(ConnectionPool())
-        .addNetworkInterceptor(Interceptor { chain: Interceptor.Chain? ->
-          val response = chain!!.proceed(
-            chain.request()
-          )
-          responsesNotClosed.add(response)
-          response
-            .newBuilder()
-            .body("unrelated response body!".toResponseBody(null))
-            .build()
-        })
+        .addNetworkInterceptor(
+          Interceptor { chain: Interceptor.Chain? ->
+            val response =
+              chain!!.proceed(
+                chain.request(),
+              )
+            responsesNotClosed.add(response)
+            response
+              .newBuilder()
+              .body("unrelated response body!".toResponseBody(null))
+              .build()
+          },
+        )
         .build()
     server.enqueue(
       MockResponse(
         code = 301,
         headers = headersOf("Location", "/b"),
         body = "/a has moved!",
-      )
+      ),
     )
     server.enqueue(
-      MockResponse(body = "/b is here")
+      MockResponse(body = "/b is here"),
     )
     val request = Request(server.url("/"))
     val call = client.newCall(request)
     call.execute().use { response ->
       assertThat(
-        response.body.string()
+        response.body.string(),
       ).isEqualTo("unrelated response body!")
     }
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
@@ -338,14 +349,15 @@ class ConnectionReuseTest {
   }
 
   private fun enableHttpsAndAlpn(vararg protocols: Protocol) {
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(),
-        handshakeCertificates.trustManager
-      )
-      .hostnameVerifier(RecordingHostnameVerifier())
-      .protocols(protocols.toList())
-      .build()
+    client =
+      client.newBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        )
+        .hostnameVerifier(RecordingHostnameVerifier())
+        .protocols(protocols.toList())
+        .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.protocols = client.protocols
   }

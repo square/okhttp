@@ -45,7 +45,7 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
-    protocols: List<Protocol>
+    protocols: List<Protocol>,
   ) {
     // No TLS extensions if the socket class is custom.
     if (matchesSocket(sslSocket)) {
@@ -61,8 +61,8 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
 
         // Enable ALPN.
         setAlpnProtocols.invoke(
-            sslSocket,
-            Platform.concatLengthPrefixed(protocols)
+          sslSocket,
+          Platform.concatLengthPrefixed(protocols),
         )
       } catch (e: IllegalAccessException) {
         throw AssertionError(e)
@@ -110,7 +110,7 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
 
         if (possibleClass == null) {
           throw AssertionError(
-              "No OpenSSLSocketImpl superclass of socket of type $actualSSLSocketClass"
+            "No OpenSSLSocketImpl superclass of socket of type $actualSSLSocketClass",
           )
         }
       }
@@ -120,8 +120,7 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
 
     fun factory(packageName: String): DeferredSocketAdapter.Factory {
       return object : DeferredSocketAdapter.Factory {
-        override fun matchesSocket(sslSocket: SSLSocket): Boolean =
-          sslSocket.javaClass.name.startsWith("$packageName.")
+        override fun matchesSocket(sslSocket: SSLSocket): Boolean = sslSocket.javaClass.name.startsWith("$packageName.")
 
         override fun create(sslSocket: SSLSocket): SocketAdapter {
           return build(sslSocket.javaClass)

@@ -36,7 +36,10 @@ open class HttpUrlTest {
     return url.toHttpUrl()
   }
 
-  protected open fun assertInvalid(string: String, exceptionMessage: String?) {
+  protected open fun assertInvalid(
+    string: String,
+    exceptionMessage: String?,
+  ) {
     try {
       val result = string.toHttpUrl()
       if (exceptionMessage != null) {
@@ -44,7 +47,7 @@ open class HttpUrlTest {
       } else {
         fail("Expected failure but got $result")
       }
-    } catch(iae: IllegalArgumentException) {
+    } catch (iae: IllegalArgumentException) {
       iae.printStackTrace()
       if (exceptionMessage != null) {
         assertThat(iae).hasMessage(exceptionMessage)
@@ -436,7 +439,7 @@ open class HttpUrlTest {
         '\''.code,
         ';'.code,
         '='.code,
-        '@'.code
+        '@'.code,
       )
       .override(
         Encoding.SKIP,
@@ -444,7 +447,7 @@ open class HttpUrlTest {
         '/'.code,
         '\\'.code,
         '?'.code,
-        '#'.code
+        '#'.code,
       )
       .test(UrlComponentEncodingTester.Component.USER)
   }
@@ -465,14 +468,14 @@ open class HttpUrlTest {
         ':'.code,
         ';'.code,
         '='.code,
-        '@'.code
+        '@'.code,
       )
       .override(
         Encoding.SKIP,
         '/'.code,
         '\\'.code,
         '?'.code,
-        '#'.code
+        '#'.code,
       )
       .test(UrlComponentEncodingTester.Component.PASSWORD)
   }
@@ -546,7 +549,7 @@ open class HttpUrlTest {
         '\n'.code,
         '\u000c'.code,
         '\r'.code,
-        ' '.code
+        ' '.code,
       )
       .override(
         Encoding.FORBIDDEN,
@@ -558,11 +561,11 @@ open class HttpUrlTest {
         '@'.code,
         '['.code,
         '\\'.code,
-        ']'.code
+        ']'.code,
       )
       .override(
         // java.net.URL got stricter
-        if (PlatformVersion.majorVersion >= 21)  Encoding.SKIP else Encoding.IDENTITY,
+        if (PlatformVersion.majorVersion >= 21) Encoding.SKIP else Encoding.IDENTITY,
         '\"'.code,
         '<'.code,
         '>'.code,
@@ -570,7 +573,7 @@ open class HttpUrlTest {
         '`'.code,
         '{'.code,
         '|'.code,
-        '}'.code
+        '}'.code,
       )
       .test(UrlComponentEncodingTester.Component.HOST)
   }
@@ -631,7 +634,7 @@ open class HttpUrlTest {
   fun hostIpv6AddressTooManyDigitsInGroup() {
     assertInvalid(
       "http://[00000:0000:0000:0000:0000:0000:0000:0001]",
-      "Invalid URL host: \"[00000:0000:0000:0000:0000:0000:0000:0001]\""
+      "Invalid URL host: \"[00000:0000:0000:0000:0000:0000:0000:0001]\"",
     )
     assertInvalid("http://[::00001]", "Invalid URL host: \"[::00001]\"")
   }
@@ -640,36 +643,36 @@ open class HttpUrlTest {
   fun hostIpv6AddressMisplacedColons() {
     assertInvalid(
       "http://[:0000:0000:0000:0000:0000:0000:0000:0001]",
-      "Invalid URL host: \"[:0000:0000:0000:0000:0000:0000:0000:0001]\""
+      "Invalid URL host: \"[:0000:0000:0000:0000:0000:0000:0000:0001]\"",
     )
     assertInvalid(
       "http://[:::0000:0000:0000:0000:0000:0000:0000:0001]",
-      "Invalid URL host: \"[:::0000:0000:0000:0000:0000:0000:0000:0001]\""
+      "Invalid URL host: \"[:::0000:0000:0000:0000:0000:0000:0000:0001]\"",
     )
     assertInvalid("http://[:1]", "Invalid URL host: \"[:1]\"")
     assertInvalid("http://[:::1]", "Invalid URL host: \"[:::1]\"")
     assertInvalid(
       "http://[0000:0000:0000:0000:0000:0000:0001:]",
-      "Invalid URL host: \"[0000:0000:0000:0000:0000:0000:0001:]\""
+      "Invalid URL host: \"[0000:0000:0000:0000:0000:0000:0001:]\"",
     )
     assertInvalid(
       "http://[0000:0000:0000:0000:0000:0000:0000:0001:]",
-      "Invalid URL host: \"[0000:0000:0000:0000:0000:0000:0000:0001:]\""
+      "Invalid URL host: \"[0000:0000:0000:0000:0000:0000:0000:0001:]\"",
     )
     assertInvalid(
       "http://[0000:0000:0000:0000:0000:0000:0000:0001::]",
-      "Invalid URL host: \"[0000:0000:0000:0000:0000:0000:0000:0001::]\""
+      "Invalid URL host: \"[0000:0000:0000:0000:0000:0000:0000:0001::]\"",
     )
     assertInvalid(
       "http://[0000:0000:0000:0000:0000:0000:0000:0001:::]",
-      "Invalid URL host: \"[0000:0000:0000:0000:0000:0000:0000:0001:::]\""
+      "Invalid URL host: \"[0000:0000:0000:0000:0000:0000:0000:0001:::]\"",
     )
     assertInvalid("http://[1:]", "Invalid URL host: \"[1:]\"")
     assertInvalid("http://[1:::]", "Invalid URL host: \"[1:::]\"")
     assertInvalid("http://[1:::1]", "Invalid URL host: \"[1:::1]\"")
     assertInvalid(
       "http://[0000:0000:0000:0000::0000:0000:0000:0001]",
-      "Invalid URL host: \"[0000:0000:0000:0000::0000:0000:0000:0001]\""
+      "Invalid URL host: \"[0000:0000:0000:0000::0000:0000:0000:0001]\"",
     )
   }
 
@@ -677,7 +680,7 @@ open class HttpUrlTest {
   fun hostIpv6AddressTooManyGroups() {
     assertInvalid(
       "http://[0000:0000:0000:0000:0000:0000:0000:0000:0001]",
-      "Invalid URL host: \"[0000:0000:0000:0000:0000:0000:0000:0000:0001]\""
+      "Invalid URL host: \"[0000:0000:0000:0000:0000:0000:0000:0000:0001]\"",
     )
   }
 
@@ -685,11 +688,11 @@ open class HttpUrlTest {
   fun hostIpv6AddressTooMuchCompression() {
     assertInvalid(
       "http://[0000::0000:0000:0000:0000::0001]",
-      "Invalid URL host: \"[0000::0000:0000:0000:0000::0001]\""
+      "Invalid URL host: \"[0000::0000:0000:0000:0000::0001]\"",
     )
     assertInvalid(
       "http://[::0000:0000:0000:0000::0001]",
-      "Invalid URL host: \"[::0000:0000:0000:0000::0001]\""
+      "Invalid URL host: \"[::0000:0000:0000:0000::0001]\"",
     )
   }
 
@@ -704,7 +707,7 @@ open class HttpUrlTest {
     // Guava's been buggy on this case. https://github.com/google/guava/issues/3116
     assertInvalid(
       "http://[2001:db8:0:0:1:0:0:00001]",
-      "Invalid URL host: \"[2001:db8:0:0:1:0:0:00001]\""
+      "Invalid URL host: \"[2001:db8:0:0:1:0:0:00001]\"",
     )
   }
 
@@ -720,15 +723,15 @@ open class HttpUrlTest {
     // Chrome interprets a leading '0' as octal; Firefox rejects them. (We reject them.)
     assertInvalid(
       "http://[0:0:0:0:0:1:0.0.0.000000]/",
-      "Invalid URL host: \"[0:0:0:0:0:1:0.0.0.000000]\""
+      "Invalid URL host: \"[0:0:0:0:0:1:0.0.0.000000]\"",
     )
     assertInvalid(
       "http://[0:0:0:0:0:1:0.010.0.010]/",
-      "Invalid URL host: \"[0:0:0:0:0:1:0.010.0.010]\""
+      "Invalid URL host: \"[0:0:0:0:0:1:0.010.0.010]\"",
     )
     assertInvalid(
       "http://[0:0:0:0:0:1:0.0.0.000001]/",
-      "Invalid URL host: \"[0:0:0:0:0:1:0.0.0.000001]\""
+      "Invalid URL host: \"[0:0:0:0:0:1:0.0.0.000001]\"",
     )
   }
 
@@ -737,7 +740,7 @@ open class HttpUrlTest {
     // Chrome interprets a leading '0x' as hexadecimal; Firefox rejects them. (We reject them.)
     assertInvalid(
       "http://[0:0:0:0:0:1:0.0x10.0.0x10]/",
-      "Invalid URL host: \"[0:0:0:0:0:1:0.0x10.0.0x10]\""
+      "Invalid URL host: \"[0:0:0:0:0:1:0.0x10.0.0x10]\"",
     )
   }
 
@@ -745,55 +748,55 @@ open class HttpUrlTest {
   fun hostIpv6WithMalformedIpv4Suffix() {
     assertInvalid(
       "http://[0:0:0:0:0:1:0.0:0.0]/",
-      "Invalid URL host: \"[0:0:0:0:0:1:0.0:0.0]\""
+      "Invalid URL host: \"[0:0:0:0:0:1:0.0:0.0]\"",
     )
     assertInvalid(
       "http://[0:0:0:0:0:1:0.0-0.0]/",
-      "Invalid URL host: \"[0:0:0:0:0:1:0.0-0.0]\""
+      "Invalid URL host: \"[0:0:0:0:0:1:0.0-0.0]\"",
     )
     assertInvalid(
       "http://[0:0:0:0:0:1:.255.255.255]/",
-      "Invalid URL host: \"[0:0:0:0:0:1:.255.255.255]\""
+      "Invalid URL host: \"[0:0:0:0:0:1:.255.255.255]\"",
     )
     assertInvalid(
       "http://[0:0:0:0:0:1:255..255.255]/",
-      "Invalid URL host: \"[0:0:0:0:0:1:255..255.255]\""
+      "Invalid URL host: \"[0:0:0:0:0:1:255..255.255]\"",
     )
     assertInvalid(
       "http://[0:0:0:0:0:1:255.255..255]/",
-      "Invalid URL host: \"[0:0:0:0:0:1:255.255..255]\""
+      "Invalid URL host: \"[0:0:0:0:0:1:255.255..255]\"",
     )
     assertInvalid(
       "http://[0:0:0:0:0:0:1:255.255]/",
-      "Invalid URL host: \"[0:0:0:0:0:0:1:255.255]\""
+      "Invalid URL host: \"[0:0:0:0:0:0:1:255.255]\"",
     )
     assertInvalid(
       "http://[0:0:0:0:0:1:256.255.255.255]/",
-      "Invalid URL host: \"[0:0:0:0:0:1:256.255.255.255]\""
+      "Invalid URL host: \"[0:0:0:0:0:1:256.255.255.255]\"",
     )
     assertInvalid(
       "http://[0:0:0:0:0:1:ff.255.255.255]/",
-      "Invalid URL host: \"[0:0:0:0:0:1:ff.255.255.255]\""
+      "Invalid URL host: \"[0:0:0:0:0:1:ff.255.255.255]\"",
     )
     assertInvalid(
       "http://[0:0:0:0:0:0:1:255.255.255.255]/",
-      "Invalid URL host: \"[0:0:0:0:0:0:1:255.255.255.255]\""
+      "Invalid URL host: \"[0:0:0:0:0:0:1:255.255.255.255]\"",
     )
     assertInvalid(
       "http://[0:0:0:0:1:255.255.255.255]/",
-      "Invalid URL host: \"[0:0:0:0:1:255.255.255.255]\""
+      "Invalid URL host: \"[0:0:0:0:1:255.255.255.255]\"",
     )
     assertInvalid(
       "http://[0:0:0:0:1:0.0.0.0:1]/",
-      "Invalid URL host: \"[0:0:0:0:1:0.0.0.0:1]\""
+      "Invalid URL host: \"[0:0:0:0:1:0.0.0.0:1]\"",
     )
     assertInvalid(
       "http://[0:0.0.0.0:1:0:0:0:0:1]/",
-      "Invalid URL host: \"[0:0.0.0.0:1:0:0:0:0:1]\""
+      "Invalid URL host: \"[0:0.0.0.0:1:0:0:0:0:1]\"",
     )
     assertInvalid(
       "http://[0.0.0.0:0:0:0:0:0:1]/",
-      "Invalid URL host: \"[0.0.0.0:0:0:0:0:0:1]\""
+      "Invalid URL host: \"[0.0.0.0:0:0:0:0:0:1]\"",
     )
   }
 
@@ -802,11 +805,11 @@ open class HttpUrlTest {
     // To Chrome & Safari these are well-formed; Firefox disagrees. (We're consistent with Firefox).
     assertInvalid(
       "http://[0:0:0:0:0:1:255.255.255.]/",
-      "Invalid URL host: \"[0:0:0:0:0:1:255.255.255.]\""
+      "Invalid URL host: \"[0:0:0:0:0:1:255.255.255.]\"",
     )
     assertInvalid(
       "http://[0:0:0:0:0:1:255.255.255]/",
-      "Invalid URL host: \"[0:0:0:0:0:1:255.255.255]\""
+      "Invalid URL host: \"[0:0:0:0:0:1:255.255.255]\"",
     )
   }
 
@@ -864,13 +867,13 @@ open class HttpUrlTest {
         '^'.code,
         '{'.code,
         '}'.code,
-        '|'.code
+        '|'.code,
       )
       .override(
         Encoding.SKIP,
         '\\'.code,
         '?'.code,
-        '#'.code
+        '#'.code,
       )
       .test(UrlComponentEncodingTester.Component.PATH)
   }
@@ -906,7 +909,7 @@ open class HttpUrlTest {
         '<'.code,
         '>'.code,
         '?'.code,
-        '`'.code
+        '`'.code,
       )
       .nonAscii(Encoding.IDENTITY)
       .test(UrlComponentEncodingTester.Component.FRAGMENT)
@@ -1050,13 +1053,15 @@ open class HttpUrlTest {
 
   @Test
   fun incompleteUrlComposition() {
-    val noHost = assertFailsWith<IllegalStateException> {
-      HttpUrl.Builder().scheme("http").build()
-    }
+    val noHost =
+      assertFailsWith<IllegalStateException> {
+        HttpUrl.Builder().scheme("http").build()
+      }
     assertThat(noHost.message).isEqualTo("host == null")
-    val noScheme = assertFailsWith<IllegalStateException> {
-      HttpUrl.Builder().host("host").build()
-    }
+    val noScheme =
+      assertFailsWith<IllegalStateException> {
+        HttpUrl.Builder().host("host").build()
+      }
     assertThat(noScheme.message).isEqualTo("scheme == null")
   }
 
@@ -1073,7 +1078,7 @@ open class HttpUrlTest {
     assertThat(HttpUrl.Builder().host("host.com").encodedPath("/path").toString())
       .isEqualTo("//host.com/path")
     assertThat(
-      HttpUrl.Builder().host("host.com").encodedPath("/path").port(8080).toString()
+      HttpUrl.Builder().host("host.com").encodedPath("/path").port(8080).toString(),
     )
       .isEqualTo("//host.com:8080/path")
   }
@@ -1084,36 +1089,37 @@ open class HttpUrlTest {
       parse("http://example.com")
         .newBuilder()
         .scheme("https")
-        .build().port
+        .build().port,
     ).isEqualTo(443)
     assertThat(
       parse("https://example.com")
         .newBuilder()
         .scheme("http")
-        .build().port
+        .build().port,
     ).isEqualTo(80)
     assertThat(
       parse("https://example.com:1234")
         .newBuilder()
         .scheme("http")
-        .build().port
+        .build().port,
     ).isEqualTo(1234)
   }
 
   @Test
   fun composeEncodesWhitespace() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .username("a\r\n\u000c\t b")
-      .password("c\r\n\u000c\t d")
-      .host("host")
-      .addPathSegment("e\r\n\u000c\t f")
-      .query("g\r\n\u000c\t h")
-      .fragment("i\r\n\u000c\t j")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .username("a\r\n\u000c\t b")
+        .password("c\r\n\u000c\t d")
+        .host("host")
+        .addPathSegment("e\r\n\u000c\t f")
+        .query("g\r\n\u000c\t h")
+        .fragment("i\r\n\u000c\t j")
+        .build()
     assertThat(url.toString()).isEqualTo(
-      "http://a%0D%0A%0C%09%20b:c%0D%0A%0C%09%20d@host"
-        + "/e%0D%0A%0C%09%20f?g%0D%0A%0C%09%20h#i%0D%0A%0C%09 j"
+      "http://a%0D%0A%0C%09%20b:c%0D%0A%0C%09%20d@host" +
+        "/e%0D%0A%0C%09%20f?g%0D%0A%0C%09%20h#i%0D%0A%0C%09 j",
     )
     assertThat(url.username).isEqualTo("a\r\n\u000c\t b")
     assertThat(url.password).isEqualTo("c\r\n\u000c\t d")
@@ -1124,20 +1130,21 @@ open class HttpUrlTest {
 
   @Test
   fun composeFromUnencodedComponents() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .username("a:\u0001@/\\?#%b")
-      .password("c:\u0001@/\\?#%d")
-      .host("ef")
-      .port(8080)
-      .addPathSegment("g:\u0001@/\\?#%h")
-      .query("i:\u0001@/\\?#%j")
-      .fragment("k:\u0001@/\\?#%l")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .username("a:\u0001@/\\?#%b")
+        .password("c:\u0001@/\\?#%d")
+        .host("ef")
+        .port(8080)
+        .addPathSegment("g:\u0001@/\\?#%h")
+        .query("i:\u0001@/\\?#%j")
+        .fragment("k:\u0001@/\\?#%l")
+        .build()
     assertThat(url.toString())
       .isEqualTo(
-        "http://a%3A%01%40%2F%5C%3F%23%25b:c%3A%01%40%2F%5C%3F%23%25d@ef:8080/"
-          + "g:%01@%2F%5C%3F%23%25h?i:%01@/\\?%23%25j#k:%01@/\\?#%25l"
+        "http://a%3A%01%40%2F%5C%3F%23%25b:c%3A%01%40%2F%5C%3F%23%25d@ef:8080/" +
+          "g:%01@%2F%5C%3F%23%25h?i:%01@/\\?%23%25j#k:%01@/\\?#%25l",
       )
     assertThat(url.scheme).isEqualTo("http")
     assertThat(url.username).isEqualTo("a:\u0001@/\\?#%b")
@@ -1154,20 +1161,21 @@ open class HttpUrlTest {
 
   @Test
   fun composeFromEncodedComponents() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .encodedUsername("a:\u0001@/\\?#%25b")
-      .encodedPassword("c:\u0001@/\\?#%25d")
-      .host("ef")
-      .port(8080)
-      .addEncodedPathSegment("g:\u0001@/\\?#%25h")
-      .encodedQuery("i:\u0001@/\\?#%25j")
-      .encodedFragment("k:\u0001@/\\?#%25l")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .encodedUsername("a:\u0001@/\\?#%25b")
+        .encodedPassword("c:\u0001@/\\?#%25d")
+        .host("ef")
+        .port(8080)
+        .addEncodedPathSegment("g:\u0001@/\\?#%25h")
+        .encodedQuery("i:\u0001@/\\?#%25j")
+        .encodedFragment("k:\u0001@/\\?#%25l")
+        .build()
     assertThat(url.toString())
       .isEqualTo(
-        "http://a%3A%01%40%2F%5C%3F%23%25b:c%3A%01%40%2F%5C%3F%23%25d@ef:8080/"
-          + "g:%01@%2F%5C%3F%23%25h?i:%01@/\\?%23%25j#k:%01@/\\?#%25l"
+        "http://a%3A%01%40%2F%5C%3F%23%25b:c%3A%01%40%2F%5C%3F%23%25d@ef:8080/" +
+          "g:%01@%2F%5C%3F%23%25h?i:%01@/\\?%23%25j#k:%01@/\\?#%25l",
       )
     assertThat(url.scheme).isEqualTo("http")
     assertThat(url.username).isEqualTo("a:\u0001@/\\?#%b")
@@ -1184,11 +1192,12 @@ open class HttpUrlTest {
 
   @Test
   fun composeWithEncodedPath() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .host("host")
-      .encodedPath("/a%2Fb/c")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .encodedPath("/a%2Fb/c")
+        .build()
     assertThat(url.toString()).isEqualTo("http://host/a%2Fb/c")
     assertThat(url.encodedPath).isEqualTo("/a%2Fb/c")
     assertThat(url.pathSegments).containsExactly("a/b", "c")
@@ -1196,13 +1205,14 @@ open class HttpUrlTest {
 
   @Test
   fun composeMixingPathSegments() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .host("host")
-      .encodedPath("/a%2fb/c")
-      .addPathSegment("d%25e")
-      .addEncodedPathSegment("f%25g")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .encodedPath("/a%2fb/c")
+        .addPathSegment("d%25e")
+        .addEncodedPathSegment("f%25g")
+        .build()
     assertThat(url.toString()).isEqualTo("http://host/a%2fb/c/d%2525e/f%25g")
     assertThat(url.encodedPath).isEqualTo("/a%2fb/c/d%2525e/f%25g")
     assertThat(url.encodedPathSegments)
@@ -1213,28 +1223,38 @@ open class HttpUrlTest {
   @Test
   fun composeWithAddSegment() {
     val base = parse("http://host/a/b/c")
-    assertThat(base.newBuilder()
-      .addPathSegment("")
-      .build().encodedPath)
+    assertThat(
+      base.newBuilder()
+        .addPathSegment("")
+        .build().encodedPath,
+    )
       .isEqualTo("/a/b/c/")
-    assertThat(base.newBuilder()
-      .addPathSegment("")
-      .addPathSegment("d")
-      .build().encodedPath)
+    assertThat(
+      base.newBuilder()
+        .addPathSegment("")
+        .addPathSegment("d")
+        .build().encodedPath,
+    )
       .isEqualTo("/a/b/c/d")
-    assertThat(base.newBuilder()
-      .addPathSegment("..")
-      .build().encodedPath)
+    assertThat(
+      base.newBuilder()
+        .addPathSegment("..")
+        .build().encodedPath,
+    )
       .isEqualTo("/a/b/")
-    assertThat(base.newBuilder()
-      .addPathSegment("")
-      .addPathSegment("..")
-      .build().encodedPath)
+    assertThat(
+      base.newBuilder()
+        .addPathSegment("")
+        .addPathSegment("..")
+        .build().encodedPath,
+    )
       .isEqualTo("/a/b/")
-    assertThat(base.newBuilder()
-      .addPathSegment("")
-      .addPathSegment("")
-      .build().encodedPath)
+    assertThat(
+      base.newBuilder()
+        .addPathSegment("")
+        .addPathSegment("")
+        .build().encodedPath,
+    )
       .isEqualTo("/a/b/c/")
   }
 
@@ -1320,7 +1340,7 @@ open class HttpUrlTest {
   fun addEncodedPathSegments() {
     val base = parse("http://host/a/b/c")
     assertThat(
-      base.newBuilder().addEncodedPathSegments("d/e/%20/\n").build().encodedPath as Any
+      base.newBuilder().addEncodedPathSegments("d/e/%20/\n").build().encodedPath as Any,
     ).isEqualTo("/a/b/c/d/e/%20/")
   }
 
@@ -1485,20 +1505,22 @@ open class HttpUrlTest {
   @Test
   fun removePathSegment() {
     val base = parse("http://host/a/b/c")
-    val url = base.newBuilder()
-      .removePathSegment(0)
-      .build()
+    val url =
+      base.newBuilder()
+        .removePathSegment(0)
+        .build()
     assertThat(url.encodedPath).isEqualTo("/b/c")
   }
 
   @Test
   fun removePathSegmentDoesntRemovePath() {
     val base = parse("http://host/a/b/c")
-    val url = base.newBuilder()
-      .removePathSegment(0)
-      .removePathSegment(0)
-      .removePathSegment(0)
-      .build()
+    val url =
+      base.newBuilder()
+        .removePathSegment(0)
+        .removePathSegment(0)
+        .removePathSegment(0)
+        .build()
     assertThat(url.pathSegments).containsExactly("")
     assertThat(url.encodedPath).isEqualTo("/")
   }
@@ -1512,11 +1534,12 @@ open class HttpUrlTest {
 
   @Test
   fun queryCharactersEncodedWhenComposed() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .host("host")
-      .addQueryParameter("a", "!$(),/:;?@[]\\^`{|}~")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .addQueryParameter("a", "!$(),/:;?@[]\\^`{|}~")
+        .build()
     assertThat(url.toString())
       .isEqualTo("http://host/?a=%21%24%28%29%2C%2F%3A%3B%3F%40%5B%5D%5C%5E%60%7B%7C%7D%7E")
     assertThat(url.queryParameter("a")).isEqualTo("!$(),/:;?@[]\\^`{|}~")
@@ -1528,11 +1551,12 @@ open class HttpUrlTest {
    */
   @Test
   fun queryCharactersNotReencodedWhenComposedWithAddEncoded() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .host("host")
-      .addEncodedQueryParameter("a", "!$(),/:;?@[]\\^`{|}~")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .addEncodedQueryParameter("a", "!$(),/:;?@[]\\^`{|}~")
+        .build()
     assertThat(url.toString()).isEqualTo("http://host/?a=!$(),/:;?@[]\\^`{|}~")
     assertThat(url.queryParameter("a")).isEqualTo("!$(),/:;?@[]\\^`{|}~")
   }
@@ -1568,59 +1592,65 @@ open class HttpUrlTest {
   @Test
   fun composeQueryWithEncodedComponents() {
     val base = parse("http://host/")
-    val url = base.newBuilder()
-      .addEncodedQueryParameter("a+=& b", "c+=& d")
-      .build()
+    val url =
+      base.newBuilder()
+        .addEncodedQueryParameter("a+=& b", "c+=& d")
+        .build()
     assertThat(url.toString()).isEqualTo("http://host/?a+%3D%26%20b=c+%3D%26%20d")
     assertThat(url.queryParameter("a =& b")).isEqualTo("c =& d")
   }
 
   @Test
   fun composeQueryRemoveQueryParameter() {
-    val url = parse("http://host/").newBuilder()
-      .addQueryParameter("a+=& b", "c+=& d")
-      .removeAllQueryParameters("a+=& b")
-      .build()
+    val url =
+      parse("http://host/").newBuilder()
+        .addQueryParameter("a+=& b", "c+=& d")
+        .removeAllQueryParameters("a+=& b")
+        .build()
     assertThat(url.toString()).isEqualTo("http://host/")
     assertThat(url.queryParameter("a+=& b")).isNull()
   }
 
   @Test
   fun composeQueryRemoveEncodedQueryParameter() {
-    val url = parse("http://host/").newBuilder()
-      .addEncodedQueryParameter("a+=& b", "c+=& d")
-      .removeAllEncodedQueryParameters("a+=& b")
-      .build()
+    val url =
+      parse("http://host/").newBuilder()
+        .addEncodedQueryParameter("a+=& b", "c+=& d")
+        .removeAllEncodedQueryParameters("a+=& b")
+        .build()
     assertThat(url.toString()).isEqualTo("http://host/")
     assertThat(url.queryParameter("a =& b")).isNull()
   }
 
   @Test
   fun composeQuerySetQueryParameter() {
-    val url = parse("http://host/").newBuilder()
-      .addQueryParameter("a+=& b", "c+=& d")
-      .setQueryParameter("a+=& b", "ef")
-      .build()
+    val url =
+      parse("http://host/").newBuilder()
+        .addQueryParameter("a+=& b", "c+=& d")
+        .setQueryParameter("a+=& b", "ef")
+        .build()
     assertThat(url.toString()).isEqualTo("http://host/?a%2B%3D%26%20b=ef")
     assertThat(url.queryParameter("a+=& b")).isEqualTo("ef")
   }
 
   @Test
   fun composeQuerySetEncodedQueryParameter() {
-    val url = parse("http://host/").newBuilder()
-      .addEncodedQueryParameter("a+=& b", "c+=& d")
-      .setEncodedQueryParameter("a+=& b", "ef")
-      .build()
+    val url =
+      parse("http://host/").newBuilder()
+        .addEncodedQueryParameter("a+=& b", "c+=& d")
+        .setEncodedQueryParameter("a+=& b", "ef")
+        .build()
     assertThat(url.toString()).isEqualTo("http://host/?a+%3D%26%20b=ef")
     assertThat(url.queryParameter("a =& b")).isEqualTo("ef")
   }
 
   @Test
   fun composeQueryMultipleEncodedValuesForParameter() {
-    val url = parse("http://host/").newBuilder()
-      .addQueryParameter("a+=& b", "c+=& d")
-      .addQueryParameter("a+=& b", "e+=& f")
-      .build()
+    val url =
+      parse("http://host/").newBuilder()
+        .addQueryParameter("a+=& b", "c+=& d")
+        .addQueryParameter("a+=& b", "e+=& f")
+        .build()
     assertThat(url.toString())
       .isEqualTo("http://host/?a%2B%3D%26%20b=c%2B%3D%26%20d&a%2B%3D%26%20b=e%2B%3D%26%20f")
     assertThat(url.querySize).isEqualTo(2)
@@ -1631,17 +1661,19 @@ open class HttpUrlTest {
 
   @Test
   fun absentQueryIsZeroNameValuePairs() {
-    val url = parse("http://host/").newBuilder()
-      .query(null)
-      .build()
+    val url =
+      parse("http://host/").newBuilder()
+        .query(null)
+        .build()
     assertThat(url.querySize).isEqualTo(0)
   }
 
   @Test
   fun emptyQueryIsSingleNameValuePairWithEmptyKey() {
-    val url = parse("http://host/").newBuilder()
-      .query("")
-      .build()
+    val url =
+      parse("http://host/").newBuilder()
+        .query("")
+        .build()
     assertThat(url.querySize).isEqualTo(1)
     assertThat(url.queryParameterName(0)).isEqualTo("")
     assertThat(url.queryParameterValue(0)).isNull()
@@ -1649,9 +1681,10 @@ open class HttpUrlTest {
 
   @Test
   fun ampersandQueryIsTwoNameValuePairsWithEmptyKeys() {
-    val url = parse("http://host/").newBuilder()
-      .query("&")
-      .build()
+    val url =
+      parse("http://host/").newBuilder()
+        .query("&")
+        .build()
     assertThat(url.querySize).isEqualTo(2)
     assertThat(url.queryParameterName(0)).isEqualTo("")
     assertThat(url.queryParameterValue(0)).isNull()
@@ -1661,10 +1694,11 @@ open class HttpUrlTest {
 
   @Test
   fun removeAllDoesNotRemoveQueryIfNoParametersWereRemoved() {
-    val url = parse("http://host/").newBuilder()
-      .query("")
-      .removeAllQueryParameters("a")
-      .build()
+    val url =
+      parse("http://host/").newBuilder()
+        .query("")
+        .removeAllQueryParameters("a")
+        .build()
     assertThat(url.toString()).isEqualTo("http://host/?")
   }
 
@@ -1724,15 +1758,16 @@ open class HttpUrlTest {
 
   @Test
   fun roundTripBuilder() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .username("%")
-      .password("%")
-      .host("host")
-      .addPathSegment("%")
-      .query("%")
-      .fragment("%")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .username("%")
+        .password("%")
+        .host("host")
+        .addPathSegment("%")
+        .query("%")
+        .fragment("%")
+        .build()
     assertThat(url.toString()).isEqualTo("http://%25:%25@host/%25?%25#%25")
     assertThat(url.newBuilder().build().toString())
       .isEqualTo("http://%25:%25@host/%25?%25#%25")
@@ -1761,10 +1796,11 @@ open class HttpUrlTest {
 
   @Test
   fun clearFragment() {
-    val url = parse("http://host/#fragment")
-      .newBuilder()
-      .fragment(null)
-      .build()
+    val url =
+      parse("http://host/#fragment")
+        .newBuilder()
+        .fragment(null)
+        .build()
     assertThat(url.toString()).isEqualTo("http://host/")
     assertThat(url.fragment).isNull()
     assertThat(url.encodedFragment).isNull()
@@ -1772,10 +1808,11 @@ open class HttpUrlTest {
 
   @Test
   fun clearEncodedFragment() {
-    val url = parse("http://host/#fragment")
-      .newBuilder()
-      .encodedFragment(null)
-      .build()
+    val url =
+      parse("http://host/#fragment")
+        .newBuilder()
+        .encodedFragment(null)
+        .build()
     assertThat(url.toString()).isEqualTo("http://host/")
     assertThat(url.fragment).isNull()
     assertThat(url.encodedFragment).isNull()

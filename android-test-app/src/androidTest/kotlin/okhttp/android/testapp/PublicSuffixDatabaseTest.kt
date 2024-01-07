@@ -24,7 +24,6 @@ import org.junit.Test
  * Run with "./gradlew :android-test-app:connectedCheck -PandroidBuild=true" and make sure ANDROID_SDK_ROOT is set.
  */
 class PublicSuffixDatabaseTest {
-
   @Test
   fun testTopLevelDomain() {
     assertThat("https://www.google.com/robots.txt".toHttpUrl().topPrivateDomain()).isEqualTo("google.com")

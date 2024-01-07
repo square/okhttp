@@ -26,7 +26,8 @@ class CancelCall {
   private val client = OkHttpClient()
 
   fun run() {
-    val request = Request.Builder()
+    val request =
+      Request.Builder()
         .url("http://httpbin.org/delay/2") // This URL is served with a 2 second delay.
         .build()
 
@@ -43,12 +44,18 @@ class CancelCall {
     System.out.printf("%.2f Executing call.%n", (System.nanoTime() - startNanos) / 1e9f)
     try {
       call.execute().use { response ->
-        System.out.printf("%.2f Call was expected to fail, but completed: %s%n",
-            (System.nanoTime() - startNanos) / 1e9f, response)
+        System.out.printf(
+          "%.2f Call was expected to fail, but completed: %s%n",
+          (System.nanoTime() - startNanos) / 1e9f,
+          response,
+        )
       }
     } catch (e: IOException) {
-      System.out.printf("%.2f Call failed as expected: %s%n",
-          (System.nanoTime() - startNanos) / 1e9f, e)
+      System.out.printf(
+        "%.2f Call failed as expected: %s%n",
+        (System.nanoTime() - startNanos) / 1e9f,
+        e,
+      )
     }
   }
 }

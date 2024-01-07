@@ -15,14 +15,13 @@
  */
 package okhttp3
 
+import kotlin.jvm.Throws
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
-import kotlin.jvm.Throws
 
-abstract class SimpleProvider: ArgumentsProvider {
-  override fun provideArguments(context: ExtensionContext) =
-    arguments().map { Arguments.of(it) }.stream()
+abstract class SimpleProvider : ArgumentsProvider {
+  override fun provideArguments(context: ExtensionContext) = arguments().map { Arguments.of(it) }.stream()
 
   @Throws(Exception::class)
   abstract fun arguments(): List<Any>

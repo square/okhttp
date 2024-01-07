@@ -27,13 +27,14 @@ import org.junit.Test
 class StringprepTest {
   private val reader = StringprepTablesReader(FileSystem.RESOURCES)
   private val rfc3491 = reader.readNameprep("/okhttp3/internal/idn".toPath())
-  private val stringPrep = Stringprep(
-    unassigned = RangeListCodePointSet(listOf()),
-    mapping = rfc3491.mapping,
-    prohibitSet = rfc3491.prohibitSet,
-    randalcatSet = rfc3491.randalcatSet,
-    lcatSet = rfc3491.lcatSet,
-  )
+  private val stringPrep =
+    Stringprep(
+      unassigned = RangeListCodePointSet(listOf()),
+      mapping = rfc3491.mapping,
+      prohibitSet = rfc3491.prohibitSet,
+      randalcatSet = rfc3491.randalcatSet,
+      lcatSet = rfc3491.lcatSet,
+    )
 
   @Test fun mappedToNothing() {
     assertThat(stringPrep("a\u00ADz")).isEqualTo("az")

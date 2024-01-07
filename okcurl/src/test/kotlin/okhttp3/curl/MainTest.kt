@@ -15,14 +15,14 @@
  */
 package okhttp3.curl
 
-import java.io.IOException
-import okhttp3.RequestBody
-import okio.Buffer
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import assertk.assertions.startsWith
+import java.io.IOException
 import kotlin.test.Test
+import okhttp3.RequestBody
+import okio.Buffer
 
 class MainTest {
   @Test
@@ -34,7 +34,8 @@ class MainTest {
   }
 
   @Test
-  @Throws(IOException::class) fun put() {
+  @Throws(IOException::class)
+  fun put() {
     val request = fromArgs("-X", "PUT", "-d", "foo", "http://example.com").createRequest()
     assertThat(request.method).isEqualTo("PUT")
     assertThat(request.url.toString()).isEqualTo("http://example.com/")
@@ -48,7 +49,7 @@ class MainTest {
     assertThat(request.method).isEqualTo("POST")
     assertThat(request.url.toString()).isEqualTo("http://example.com/")
     assertThat(body!!.contentType().toString()).isEqualTo(
-      "application/x-www-form-urlencoded; charset=utf-8"
+      "application/x-www-form-urlencoded; charset=utf-8",
     )
     assertThat(bodyAsString(body)).isEqualTo("foo")
   }
@@ -60,17 +61,21 @@ class MainTest {
     assertThat(request.method).isEqualTo("PUT")
     assertThat(request.url.toString()).isEqualTo("http://example.com/")
     assertThat(body!!.contentType().toString()).isEqualTo(
-      "application/x-www-form-urlencoded; charset=utf-8"
+      "application/x-www-form-urlencoded; charset=utf-8",
     )
     assertThat(bodyAsString(body)).isEqualTo("foo")
   }
 
   @Test
   fun contentTypeHeader() {
-    val request = fromArgs(
-      "-d", "foo", "-H", "Content-Type: application/json",
-      "http://example.com"
-    ).createRequest()
+    val request =
+      fromArgs(
+        "-d",
+        "foo",
+        "-H",
+        "Content-Type: application/json",
+        "http://example.com",
+      ).createRequest()
     val body = request.body
     assertThat(request.method).isEqualTo("POST")
     assertThat(request.url.toString()).isEqualTo("http://example.com/")
@@ -105,12 +110,14 @@ class MainTest {
 
   @Test
   fun headerSplitWithDate() {
-    val request = fromArgs(
-      "-H", "If-Modified-Since: Mon, 18 Aug 2014 15:16:06 GMT",
-      "http://example.com"
-    ).createRequest()
+    val request =
+      fromArgs(
+        "-H",
+        "If-Modified-Since: Mon, 18 Aug 2014 15:16:06 GMT",
+        "http://example.com",
+      ).createRequest()
     assertThat(request.header("If-Modified-Since")).isEqualTo(
-      "Mon, 18 Aug 2014 15:16:06 GMT"
+      "Mon, 18 Aug 2014 15:16:06 GMT",
     )
   }
 

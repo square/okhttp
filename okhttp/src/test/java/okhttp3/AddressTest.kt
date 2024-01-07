@@ -24,10 +24,11 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
 class AddressTest {
-  private val factory = TestValueFactory().apply {
-    uriHost = "example.com"
-    uriPort = 80
-  }
+  private val factory =
+    TestValueFactory().apply {
+      uriHost = "example.com"
+      uriPort = 80
+    }
 
   @AfterEach fun tearDown() {
     factory.close()

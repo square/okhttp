@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal
 
 import okhttp3.MediaType
@@ -44,8 +45,9 @@ private val PARAMETER = Regex(";\\s*(?:$TOKEN=(?:$TOKEN|$QUOTED))?")
  * @throws IllegalArgumentException if this is not a well-formed media type.
  */
 internal fun String.commonToMediaType(): MediaType {
-  val typeSubtype: MatchResult = TYPE_SUBTYPE.matchAtPolyfill(this, 0)
-    ?: throw IllegalArgumentException("No subtype found for: \"$this\"")
+  val typeSubtype: MatchResult =
+    TYPE_SUBTYPE.matchAtPolyfill(this, 0)
+      ?: throw IllegalArgumentException("No subtype found for: \"$this\"")
   val type = typeSubtype.groupValues[1].lowercase()
   val subtype = typeSubtype.groupValues[2].lowercase()
 
@@ -64,17 +66,18 @@ internal fun String.commonToMediaType(): MediaType {
     }
 
     val token = parameter.groups[2]?.value
-    val value = when {
-      token == null -> {
-        // Value is "double-quoted". That's valid and our regex group already strips the quotes.
-        parameter.groups[3]!!.value
+    val value =
+      when {
+        token == null -> {
+          // Value is "double-quoted". That's valid and our regex group already strips the quotes.
+          parameter.groups[3]!!.value
+        }
+        token.startsWith("'") && token.endsWith("'") && token.length > 2 -> {
+          // If the token is 'single-quoted' it's invalid! But we're lenient and strip the quotes.
+          token.substring(1, token.length - 1)
+        }
+        else -> token
       }
-      token.startsWith("'") && token.endsWith("'") && token.length > 2 -> {
-        // If the token is 'single-quoted' it's invalid! But we're lenient and strip the quotes.
-        token.substring(1, token.length - 1)
-      }
-      else -> token
-    }
 
     parameterNamesAndValues += name
     parameterNamesAndValues += value

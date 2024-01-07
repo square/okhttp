@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal
 
 internal const val CONST_VERSION = "$projectVersion"

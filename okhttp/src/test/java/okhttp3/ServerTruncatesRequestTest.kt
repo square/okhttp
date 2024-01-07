@@ -19,7 +19,9 @@ import assertk.assertThat
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
+import assertk.fail
 import javax.net.ssl.SSLSocket
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.DoNotReadRequestBody
@@ -36,8 +38,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
-import assertk.fail
-import kotlin.test.assertFailsWith
 
 @Timeout(30)
 @Tag("Slowish")
@@ -45,6 +45,7 @@ class ServerTruncatesRequestTest {
   @RegisterExtension
   @JvmField
   val platform = PlatformRule()
+
   @RegisterExtension
   @JvmField
   var clientTestRule = OkHttpClientTestRule()
@@ -52,9 +53,10 @@ class ServerTruncatesRequestTest {
   private val listener = RecordingEventListener()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
-  private var client = clientTestRule.newClientBuilder()
-    .eventListenerFactory(clientTestRule.wrap(listener))
-    .build()
+  private var client =
+    clientTestRule.newClientBuilder()
+      .eventListenerFactory(clientTestRule.wrap(listener))
+      .build()
 
   private lateinit var server: MockWebServer
 
@@ -81,15 +83,16 @@ class ServerTruncatesRequestTest {
       MockResponse(
         body = "abc",
         socketPolicy = DoNotReadRequestBody(ErrorCode.NO_ERROR.httpCode),
-      )
+      ),
     )
 
-    val call = client.newCall(
-      Request(
-        url = server.url("/"),
-        body = SlowRequestBody,
+    val call =
+      client.newCall(
+        Request(
+          url = server.url("/"),
+          body = SlowRequestBody,
+        ),
       )
-    )
 
     call.execute().use { response ->
       assertThat(response.body.string()).isEqualTo("abc")
@@ -138,17 +141,18 @@ class ServerTruncatesRequestTest {
       MockResponse(
         body = "abc",
         socketPolicy = DoNotReadRequestBody(ErrorCode.NO_ERROR.httpCode),
-      )
+      ),
     )
 
     val requestBody = AsyncRequestBody()
 
-    val call = client.newCall(
-      Request(
-        url = server.url("/"),
-        body = requestBody,
+    val call =
+      client.newCall(
+        Request(
+          url = server.url("/"),
+          body = requestBody,
+        ),
       )
-    )
 
     call.execute().use { response ->
       assertThat(response.body.string()).isEqualTo("abc")
@@ -177,9 +181,10 @@ class ServerTruncatesRequestTest {
   }
 
   private fun serverTruncatesRequestButTrailersCanStillBeRead(http2: Boolean) {
-    val mockResponse = MockResponse.Builder()
-      .socketPolicy(DoNotReadRequestBody(ErrorCode.NO_ERROR.httpCode))
-      .trailers(headersOf("caboose", "xyz"))
+    val mockResponse =
+      MockResponse.Builder()
+        .socketPolicy(DoNotReadRequestBody(ErrorCode.NO_ERROR.httpCode))
+        .trailers(headersOf("caboose", "xyz"))
 
     // Trailers always work for HTTP/2, but only for chunked bodies in HTTP/1.
     if (http2) {
@@ -190,12 +195,13 @@ class ServerTruncatesRequestTest {
 
     server.enqueue(mockResponse.build())
 
-    val call = client.newCall(
-      Request(
-        url = server.url("/"),
-        body = SlowRequestBody,
+    val call =
+      client.newCall(
+        Request(
+          url = server.url("/"),
+          body = SlowRequestBody,
+        ),
       )
-    )
 
     call.execute().use { response ->
       assertThat(response.body.string()).isEqualTo("abc")
@@ -211,20 +217,24 @@ class ServerTruncatesRequestTest {
     server.enqueue(MockResponse(code = 200, body = "Req1"))
     server.enqueue(MockResponse(code = 200, body = "Req2"))
 
-    val eventListener = object : EventListener() {
-      var socket: SSLSocket? = null
-      var closed = false
+    val eventListener =
+      object : EventListener() {
+        var socket: SSLSocket? = null
+        var closed = false
 
-      override fun connectionAcquired(call: Call, connection: Connection) {
-        socket = connection.socket() as SSLSocket
-      }
+        override fun connectionAcquired(
+          call: Call,
+          connection: Connection,
+        ) {
+          socket = connection.socket() as SSLSocket
+        }
 
-      override fun requestHeadersStart(call: Call) {
-        if (closed) {
-          throw IOException("fake socket failure")
+        override fun requestHeadersStart(call: Call) {
+          if (closed) {
+            throw IOException("fake socket failure")
+          }
         }
       }
-    }
     val localClient = client.newBuilder().eventListener(eventListener).build()
 
     val call1 = localClient.newCall(Request(server.url("/")))
@@ -248,20 +258,22 @@ class ServerTruncatesRequestTest {
   fun noAttemptToReadResponseIfLoadingRequestBodyIsSourceOfFailure() {
     server.enqueue(MockResponse(body = "abc"))
 
-    val requestBody = object : RequestBody() {
-      override fun contentType(): MediaType? = null
+    val requestBody =
+      object : RequestBody() {
+        override fun contentType(): MediaType? = null
 
-      override fun writeTo(sink: BufferedSink) {
-        throw IOException("boom") // Despite this exception, 'sink' is healthy.
+        override fun writeTo(sink: BufferedSink) {
+          throw IOException("boom") // Despite this exception, 'sink' is healthy.
+        }
       }
-    }
 
-    val callA = client.newCall(
-      Request(
-        url = server.url("/"),
-        body = requestBody,
+    val callA =
+      client.newCall(
+        Request(
+          url = server.url("/"),
+          body = requestBody,
+        ),
       )
-    )
 
     assertFailsWith<IOException> {
       callA.execute()
@@ -289,20 +301,22 @@ class ServerTruncatesRequestTest {
 
   private fun enableProtocol(protocol: Protocol) {
     enableTls()
-    client = client.newBuilder()
-      .protocols(listOf(protocol, Protocol.HTTP_1_1))
-      .build()
+    client =
+      client.newBuilder()
+        .protocols(listOf(protocol, Protocol.HTTP_1_1))
+        .build()
     server.protocols = client.protocols
   }
 
   private fun enableTls() {
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(),
-        handshakeCertificates.trustManager
-      )
-      .hostnameVerifier(RecordingHostnameVerifier())
-      .build()
+    client =
+      client.newBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        )
+        .hostnameVerifier(RecordingHostnameVerifier())
+        .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 

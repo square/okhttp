@@ -33,9 +33,10 @@ fun main(vararg args: String) {
 
 fun loadIdnaMappingTableData(): IdnaMappingTableData {
   val path = "/okhttp3/internal/idna/IdnaMappingTable.txt".toPath()
-  val table = FileSystem.RESOURCES.read(path) {
-    readPlainTextIdnaMappingTable()
-  }
+  val table =
+    FileSystem.RESOURCES.read(path) {
+      readPlainTextIdnaMappingTable()
+    }
   return buildIdnaMappingTableData(table)
 }
 
@@ -65,13 +66,13 @@ fun generateMappingTableFile(data: IdnaMappingTableData): FileSpec {
         |ranges = "%L",
         |mappings = "%L",
         |⇤)
-        """.trimMargin(),
+          """.trimMargin(),
           idnaMappingTable,
           data.sections.escapeDataString(),
           data.ranges.escapeDataString(),
           data.mappings.escapeDataString(),
         )
-        .build()
+        .build(),
     )
     .build()
 }
@@ -89,7 +90,8 @@ fun String.escapeDataString(): String {
         '$'.code,
         '\\'.code,
         '·'.code,
-        127 -> append(String.format("\\u%04x", codePoint))
+        127,
+        -> append(String.format("\\u%04x", codePoint))
 
         else -> appendCodePoint(codePoint)
       }

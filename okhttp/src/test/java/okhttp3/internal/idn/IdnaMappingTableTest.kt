@@ -35,16 +35,18 @@ class IdnaMappingTableTest {
   @BeforeEach
   fun setUp() {
     val path = "/okhttp3/internal/idna/IdnaMappingTable.txt".toPath()
-    val plainTable = FileSystem.RESOURCES.read(path) {
-      readPlainTextIdnaMappingTable()
-    }
+    val plainTable =
+      FileSystem.RESOURCES.read(path) {
+        readPlainTextIdnaMappingTable()
+      }
     table = plainTable
     val data = buildIdnaMappingTableData(plainTable)
-    compactTable = IdnaMappingTable(
-      sections = data.sections,
-      ranges = data.ranges,
-      mappings = data.mappings,
-    )
+    compactTable =
+      IdnaMappingTable(
+        sections = data.sections,
+        ranges = data.ranges,
+        mappings = data.mappings,
+      )
   }
 
   @Test fun regularMappings() {
@@ -88,10 +90,11 @@ class IdnaMappingTableTest {
     // Check the ranges.
     for (r in 0 until rangesOffsets.size) {
       val rangePos = rangesOffsets[r] * 4
-      val rangeLimit = when {
-        r + 1 < rangesOffsets.size -> rangesOffsets[r + 1] * 4
-        else -> rangesOffsets.size * 4
-      }
+      val rangeLimit =
+        when {
+          r + 1 < rangesOffsets.size -> rangesOffsets[r + 1] * 4
+          else -> rangesOffsets.size * 4
+        }
 
       // Confirm this range starts with byte 0.
       assertThat(compactTable.ranges[rangePos].code).isEqualTo(0)

@@ -47,13 +47,12 @@ class CacheStrategy internal constructor(
   /** The request to send on the network, or null if this call doesn't use the network. */
   val networkRequest: Request?,
   /** The cached response to return or validate; or null if this call doesn't use a cache. */
-  val cacheResponse: Response?
+  val cacheResponse: Response?,
 ) {
-
   class Factory(
     private val nowMillis: Long,
     internal val request: Request,
-    private val cacheResponse: Response?
+    private val cacheResponse: Response?,
   ) {
     /** The server's time when the cached response was served, if known. */
     private var servedDate: Date? = null
@@ -219,7 +218,8 @@ class CacheStrategy internal constructor(
       val conditionalRequestHeaders = request.headers.newBuilder()
       conditionalRequestHeaders.addLenient(conditionName, conditionValue!!)
 
-      val conditionalRequest = request.newBuilder()
+      val conditionalRequest =
+        request.newBuilder()
           .headers(conditionalRequestHeaders.build())
           .build()
       return CacheStrategy(conditionalRequest, cacheResponse)
@@ -260,17 +260,19 @@ class CacheStrategy internal constructor(
      */
     private fun cacheResponseAge(): Long {
       val servedDate = this.servedDate
-      val apparentReceivedAge = if (servedDate != null) {
-        maxOf(0, receivedResponseMillis - servedDate.time)
-      } else {
-        0
-      }
+      val apparentReceivedAge =
+        if (servedDate != null) {
+          maxOf(0, receivedResponseMillis - servedDate.time)
+        } else {
+          0
+        }
 
-      val receivedAge = if (ageSeconds != -1) {
-        maxOf(apparentReceivedAge, SECONDS.toMillis(ageSeconds.toLong()))
-      } else {
-        apparentReceivedAge
-      }
+      val receivedAge =
+        if (ageSeconds != -1) {
+          maxOf(apparentReceivedAge, SECONDS.toMillis(ageSeconds.toLong()))
+        } else {
+          apparentReceivedAge
+        }
 
       val responseDuration = maxOf(0, receivedResponseMillis - sentRequestMillis)
       val residentDuration = maxOf(0, nowMillis - receivedResponseMillis)
@@ -283,12 +285,15 @@ class CacheStrategy internal constructor(
      * response cache won't be used.
      */
     private fun hasConditions(request: Request): Boolean =
-        request.header("If-Modified-Since") != null || request.header("If-None-Match") != null
+      request.header("If-Modified-Since") != null || request.header("If-None-Match") != null
   }
 
   companion object {
     /** Returns true if [response] can be stored to later serve another request. */
-    fun isCacheable(response: Response, request: Request): Boolean {
+    fun isCacheable(
+      response: Response,
+      request: Request,
+    ): Boolean {
       // Always go to network for uncacheable response codes (RFC 7231 section 6.1), This
       // implementation doesn't support caching partial content.
       when (response.code) {
@@ -302,19 +307,22 @@ class CacheStrategy internal constructor(
         HTTP_GONE,
         HTTP_REQ_TOO_LONG,
         HTTP_NOT_IMPLEMENTED,
-        HTTP_PERM_REDIRECT -> {
+        HTTP_PERM_REDIRECT,
+        -> {
           // These codes can be cached unless headers forbid it.
         }
 
         HTTP_MOVED_TEMP,
-        HTTP_TEMP_REDIRECT -> {
+        HTTP_TEMP_REDIRECT,
+        -> {
           // These codes can only be cached with the right response headers.
           // http://tools.ietf.org/html/rfc7234#section-3
           // s-maxage is not checked because OkHttp is a private cache that should ignore s-maxage.
           if (response.header("Expires") == null &&
-              response.cacheControl.maxAgeSeconds == -1 &&
-              !response.cacheControl.isPublic &&
-              !response.cacheControl.isPrivate) {
+            response.cacheControl.maxAgeSeconds == -1 &&
+            !response.cacheControl.isPublic &&
+            !response.cacheControl.isPrivate
+          ) {
             return false
           }
         }

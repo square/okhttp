@@ -33,7 +33,7 @@ import okio.ByteString.Companion.encodeUtf8
 class MultipartBody internal constructor(
   private val boundaryByteString: ByteString,
   @get:JvmName("type") val type: MediaType,
-  @get:JvmName("parts") val parts: List<Part>
+  @get:JvmName("parts") val parts: List<Part>,
 ) : RequestBody() {
   private val contentType: MediaType = "$type; boundary=$boundary".toMediaType()
   private var contentLength = -1L
@@ -60,7 +60,7 @@ class MultipartBody internal constructor(
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "type"),
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.ERROR,
   )
   fun type(): MediaType = type
 
@@ -68,7 +68,7 @@ class MultipartBody internal constructor(
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "boundary"),
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.ERROR,
   )
   fun boundary(): String = boundary
 
@@ -76,7 +76,7 @@ class MultipartBody internal constructor(
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "size"),
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.ERROR,
   )
   fun size(): Int = size
 
@@ -84,7 +84,7 @@ class MultipartBody internal constructor(
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "parts"),
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.ERROR,
   )
   fun parts(): List<Part> = parts
 
@@ -112,7 +112,7 @@ class MultipartBody internal constructor(
   @Throws(IOException::class)
   private fun writeOrCountBytes(
     sink: BufferedSink?,
-    countBytes: Boolean
+    countBytes: Boolean,
   ): Long {
     var sink = sink
     var byteCount = 0L
@@ -181,14 +181,13 @@ class MultipartBody internal constructor(
 
   class Part private constructor(
     @get:JvmName("headers") val headers: Headers?,
-    @get:JvmName("body") val body: RequestBody
+    @get:JvmName("body") val body: RequestBody,
   ) {
-
     @JvmName("-deprecated_headers")
     @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "headers"),
-      level = DeprecationLevel.ERROR
+      level = DeprecationLevel.ERROR,
     )
     fun headers(): Headers? = headers
 
@@ -196,7 +195,7 @@ class MultipartBody internal constructor(
     @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "body"),
-      level = DeprecationLevel.ERROR
+      level = DeprecationLevel.ERROR,
     )
     fun body(): RequestBody = body
 
@@ -205,82 +204,108 @@ class MultipartBody internal constructor(
       fun create(body: RequestBody): Part = create(null, body)
 
       @JvmStatic
-      fun create(headers: Headers?, body: RequestBody): Part {
+      fun create(
+        headers: Headers?,
+        body: RequestBody,
+      ): Part {
         require(headers?.get("Content-Type") == null) { "Unexpected header: Content-Type" }
         require(headers?.get("Content-Length") == null) { "Unexpected header: Content-Length" }
         return Part(headers, body)
       }
 
       @JvmStatic
-      fun createFormData(name: String, value: String): Part =
-        createFormData(name, null, value.toRequestBody())
+      fun createFormData(
+        name: String,
+        value: String,
+      ): Part = createFormData(name, null, value.toRequestBody())
 
       @JvmStatic
-      fun createFormData(name: String, filename: String?, body: RequestBody): Part {
-        val disposition = buildString {
-          append("form-data; name=")
-          appendQuotedString(name)
+      fun createFormData(
+        name: String,
+        filename: String?,
+        body: RequestBody,
+      ): Part {
+        val disposition =
+          buildString {
+            append("form-data; name=")
+            appendQuotedString(name)
 
-          if (filename != null) {
-            append("; filename=")
-            appendQuotedString(filename)
+            if (filename != null) {
+              append("; filename=")
+              appendQuotedString(filename)
+            }
           }
-        }
 
-        val headers = Headers.Builder()
-          .addUnsafeNonAscii("Content-Disposition", disposition)
-          .build()
+        val headers =
+          Headers.Builder()
+            .addUnsafeNonAscii("Content-Disposition", disposition)
+            .build()
 
         return create(headers, body)
       }
     }
   }
 
-  class Builder @JvmOverloads constructor(boundary: String = UUID.randomUUID().toString()) {
-    private val boundary: ByteString = boundary.encodeUtf8()
-    private var type = MIXED
-    private val parts = mutableListOf<Part>()
+  class Builder
+    @JvmOverloads
+    constructor(boundary: String = UUID.randomUUID().toString()) {
+      private val boundary: ByteString = boundary.encodeUtf8()
+      private var type = MIXED
+      private val parts = mutableListOf<Part>()
 
-    /**
-     * Set the MIME type. Expected values for `type` are [MIXED] (the default), [ALTERNATIVE],
-     * [DIGEST], [PARALLEL] and [FORM].
-     */
-    fun setType(type: MediaType) = apply {
-      require(type.type == "multipart") { "multipart != $type" }
-      this.type = type
-    }
+      /**
+       * Set the MIME type. Expected values for `type` are [MIXED] (the default), [ALTERNATIVE],
+       * [DIGEST], [PARALLEL] and [FORM].
+       */
+      fun setType(type: MediaType) =
+        apply {
+          require(type.type == "multipart") { "multipart != $type" }
+          this.type = type
+        }
 
-    /** Add a part to the body. */
-    fun addPart(body: RequestBody) = apply {
-      addPart(Part.create(body))
-    }
+      /** Add a part to the body. */
+      fun addPart(body: RequestBody) =
+        apply {
+          addPart(Part.create(body))
+        }
 
-    /** Add a part to the body. */
-    fun addPart(headers: Headers?, body: RequestBody) = apply {
-      addPart(Part.create(headers, body))
-    }
+      /** Add a part to the body. */
+      fun addPart(
+        headers: Headers?,
+        body: RequestBody,
+      ) = apply {
+        addPart(Part.create(headers, body))
+      }
 
-    /** Add a form data part to the body. */
-    fun addFormDataPart(name: String, value: String) = apply {
-      addPart(Part.createFormData(name, value))
-    }
+      /** Add a form data part to the body. */
+      fun addFormDataPart(
+        name: String,
+        value: String,
+      ) = apply {
+        addPart(Part.createFormData(name, value))
+      }
 
-    /** Add a form data part to the body. */
-    fun addFormDataPart(name: String, filename: String?, body: RequestBody) = apply {
-      addPart(Part.createFormData(name, filename, body))
-    }
+      /** Add a form data part to the body. */
+      fun addFormDataPart(
+        name: String,
+        filename: String?,
+        body: RequestBody,
+      ) = apply {
+        addPart(Part.createFormData(name, filename, body))
+      }
 
-    /** Add a part to the body. */
-    fun addPart(part: Part) = apply {
-      parts += part
-    }
+      /** Add a part to the body. */
+      fun addPart(part: Part) =
+        apply {
+          parts += part
+        }
 
-    /** Assemble the specified parts into a request body. */
-    fun build(): MultipartBody {
-      check(parts.isNotEmpty()) { "Multipart body must have at least one part." }
-      return MultipartBody(boundary, type, parts.toImmutableList())
+      /** Assemble the specified parts into a request body. */
+      fun build(): MultipartBody {
+        check(parts.isNotEmpty()) { "Multipart body must have at least one part." }
+        return MultipartBody(boundary, type, parts.toImmutableList())
+      }
     }
-  }
 
   companion object {
     /**

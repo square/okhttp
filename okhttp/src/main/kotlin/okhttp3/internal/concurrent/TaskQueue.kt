@@ -30,7 +30,7 @@ import okhttp3.internal.okHttpName
  */
 class TaskQueue internal constructor(
   internal val taskRunner: TaskRunner,
-  internal val name: String
+  internal val name: String,
 ) {
   val lock: ReentrantLock = ReentrantLock()
 
@@ -62,7 +62,10 @@ class TaskQueue internal constructor(
    *
    * @throws RejectedExecutionException if the queue is shut down and the task is not cancelable.
    */
-  fun schedule(task: Task, delayNanos: Long = 0L) {
+  fun schedule(
+    task: Task,
+    delayNanos: Long = 0L,
+  ) {
     taskRunner.lock.withLock {
       if (shutdown) {
         if (task.cancelable) {
@@ -87,13 +90,16 @@ class TaskQueue internal constructor(
   fun schedule(
     name: String,
     delayNanos: Long = 0L,
-    block: () -> Long
+    block: () -> Long,
   ) {
-    schedule(object : Task(name) {
-      override fun runOnce(): Long {
-        return block()
-      }
-    }, delayNanos)
+    schedule(
+      object : Task(name) {
+        override fun runOnce(): Long {
+          return block()
+        }
+      },
+      delayNanos,
+    )
   }
 
   /**
@@ -105,14 +111,17 @@ class TaskQueue internal constructor(
     name: String,
     delayNanos: Long = 0L,
     cancelable: Boolean = true,
-    block: () -> Unit
+    block: () -> Unit,
   ) {
-    schedule(object : Task(name, cancelable) {
-      override fun runOnce(): Long {
-        block()
-        return -1L
-      }
-    }, delayNanos)
+    schedule(
+      object : Task(name, cancelable) {
+        override fun runOnce(): Long {
+          block()
+          return -1L
+        }
+      },
+      delayNanos,
+    )
   }
 
   /** Returns a latch that reaches 0 when the queue is next idle. */
@@ -154,7 +163,11 @@ class TaskQueue internal constructor(
   }
 
   /** Adds [task] to run in [delayNanos]. Returns true if the coordinator is impacted. */
-  internal fun scheduleAndDecide(task: Task, delayNanos: Long, recurrence: Boolean): Boolean {
+  internal fun scheduleAndDecide(
+    task: Task,
+    delayNanos: Long,
+    recurrence: Boolean,
+  ): Boolean {
     task.initQueue(this)
 
     val now = taskRunner.backend.nanoTime()
@@ -171,8 +184,11 @@ class TaskQueue internal constructor(
     }
     task.nextExecuteNanoTime = executeNanoTime
     taskRunner.logger.taskLog(task, this) {
-      if (recurrence) "run again after ${formatDuration(executeNanoTime - now)}"
-      else "scheduled after ${formatDuration(executeNanoTime - now)}"
+      if (recurrence) {
+        "run again after ${formatDuration(executeNanoTime - now)}"
+      } else {
+        "scheduled after ${formatDuration(executeNanoTime - now)}"
+      }
     }
 
     // Insert in chronological order. Always compare deltas because nanoTime() is permitted to wrap.

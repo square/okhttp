@@ -15,5 +15,4 @@
  */
 package okhttp3.survey.types
 
-
 data class Record(val java: String, val android: String)

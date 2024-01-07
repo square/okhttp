@@ -19,17 +19,19 @@ import java.net.Authenticator
 import java.net.PasswordAuthentication
 
 class RecordingAuthenticator(
-  private val authentication: PasswordAuthentication? = PasswordAuthentication(
-    "username",
-    "password".toCharArray()
-  )
+  private val authentication: PasswordAuthentication? =
+    PasswordAuthentication(
+      "username",
+      "password".toCharArray(),
+    ),
 ) : Authenticator() {
   val calls = mutableListOf<String>()
 
   override fun getPasswordAuthentication(): PasswordAuthentication? {
-    calls.add("host=$requestingHost port=$requestingPort site=${requestingSite.hostName} " +
-      "url=$requestingURL type=$requestorType prompt=$requestingPrompt " +
-      "protocol=$requestingProtocol scheme=$requestingScheme"
+    calls.add(
+      "host=$requestingHost port=$requestingPort site=${requestingSite.hostName} " +
+        "url=$requestingURL type=$requestorType prompt=$requestingPrompt " +
+        "protocol=$requestingProtocol scheme=$requestingScheme",
     )
     return authentication
   }

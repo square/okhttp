@@ -47,9 +47,10 @@ class EventSourceHttpTest {
   val clientTestRule = OkHttpClientTestRule()
   private val eventListener = RecordingEventListener()
   private val listener = EventSourceRecorder()
-  private var client = clientTestRule.newClientBuilder()
-    .eventListenerFactory(clientTestRule.wrap(eventListener))
-    .build()
+  private var client =
+    clientTestRule.newClientBuilder()
+      .eventListenerFactory(clientTestRule.wrap(eventListener))
+      .build()
 
   @BeforeEach
   fun before(server: MockWebServer) {
@@ -70,9 +71,9 @@ class EventSourceHttpTest {
           |data: hey
           |
           |
-          """.trimMargin()
+          """.trimMargin(),
         ).setHeader("content-type", "text/event-stream")
-        .build()
+        .build(),
     )
     val source = newEventSource()
     assertThat(source.request().url.encodedPath).isEqualTo("/")
@@ -90,9 +91,9 @@ class EventSourceHttpTest {
           |data: hey
           |
           |
-          """.trimMargin()
+          """.trimMargin(),
         ).setHeader("content-type", "text/event-stream")
-        .build()
+        .build(),
     )
     listener.enqueueCancel() // Will cancel in onOpen().
     newEventSource()
@@ -109,9 +110,9 @@ class EventSourceHttpTest {
           |data: hey
           |
           |
-          """.trimMargin()
+          """.trimMargin(),
         ).setHeader("content-type", "text/plain")
-        .build()
+        .build(),
     )
     newEventSource()
     listener.assertFailure("Invalid content-type: text/plain")
@@ -126,11 +127,11 @@ class EventSourceHttpTest {
           |data: hey
           |
           |
-          """.trimMargin()
+          """.trimMargin(),
         )
         .setHeader("content-type", "text/event-stream")
         .code(401)
-        .build()
+        .build(),
     )
     newEventSource()
     listener.assertFailure(null)
@@ -138,15 +139,16 @@ class EventSourceHttpTest {
 
   @Test
   fun fullCallTimeoutDoesNotApplyOnceConnected() {
-    client = client.newBuilder()
-      .callTimeout(250, TimeUnit.MILLISECONDS)
-      .build()
+    client =
+      client.newBuilder()
+        .callTimeout(250, TimeUnit.MILLISECONDS)
+        .build()
     server.enqueue(
       MockResponse.Builder()
         .bodyDelay(500, TimeUnit.MILLISECONDS)
         .setHeader("content-type", "text/event-stream")
         .body("data: hey\n\n")
-        .build()
+        .build(),
     )
     val source = newEventSource()
     assertThat(source.request().url.encodedPath).isEqualTo("/")
@@ -157,15 +159,16 @@ class EventSourceHttpTest {
 
   @Test
   fun fullCallTimeoutAppliesToSetup() {
-    client = client.newBuilder()
-      .callTimeout(250, TimeUnit.MILLISECONDS)
-      .build()
+    client =
+      client.newBuilder()
+        .callTimeout(250, TimeUnit.MILLISECONDS)
+        .build()
     server.enqueue(
       MockResponse.Builder()
         .headersDelay(500, TimeUnit.MILLISECONDS)
         .setHeader("content-type", "text/event-stream")
         .body("data: hey\n\n")
-        .build()
+        .build(),
     )
     newEventSource()
     listener.assertFailure("timeout")
@@ -180,10 +183,10 @@ class EventSourceHttpTest {
           |data: hey
           |
           |
-          """.trimMargin()
+          """.trimMargin(),
         )
         .setHeader("content-type", "text/event-stream")
-        .build()
+        .build(),
     )
     newEventSource("text/plain")
     listener.assertOpen()
@@ -201,9 +204,9 @@ class EventSourceHttpTest {
           |data: hey
           |
           |
-          """.trimMargin()
+          """.trimMargin(),
         ).setHeader("content-type", "text/event-stream")
-        .build()
+        .build(),
     )
     newEventSource()
     listener.assertOpen()
@@ -222,9 +225,9 @@ class EventSourceHttpTest {
           |data: hey
           |
           |
-          """.trimMargin()
+          """.trimMargin(),
         ).setHeader("content-type", "text/event-stream")
-        .build()
+        .build(),
     )
     val source = newEventSource()
     assertThat(source.request().url.encodedPath).isEqualTo("/")
@@ -247,13 +250,14 @@ class EventSourceHttpTest {
       "ResponseBodyStart",
       "ResponseBodyEnd",
       "ConnectionReleased",
-      "CallEnd"
+      "CallEnd",
     )
   }
 
   private fun newEventSource(accept: String? = null): EventSource {
-    val builder = Request.Builder()
-      .url(server.url("/"))
+    val builder =
+      Request.Builder()
+        .url(server.url("/"))
     if (accept != null) {
       builder.header("Accept", accept)
     }

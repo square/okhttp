@@ -20,72 +20,77 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.UrlComponentEncodingTester.Component
 
-fun urlComponentEncodingTesterJvmPlatform(
-  component: Component,
-): UrlComponentEncodingTester.Platform {
+fun urlComponentEncodingTesterJvmPlatform(component: Component): UrlComponentEncodingTester.Platform {
   return when (component) {
-    Component.USER -> UrlComponentEncodingTesterJvmPlatform()
-      .escapeForUri('%'.code)
+    Component.USER ->
+      UrlComponentEncodingTesterJvmPlatform()
+        .escapeForUri('%'.code)
 
-    Component.PASSWORD -> UrlComponentEncodingTesterJvmPlatform()
-      .escapeForUri('%'.code)
+    Component.PASSWORD ->
+      UrlComponentEncodingTesterJvmPlatform()
+        .escapeForUri('%'.code)
 
-    Component.HOST -> UrlComponentEncodingTesterJvmPlatform()
-      .stripForUri(
-        '\"'.code,
-        '<'.code,
-        '>'.code,
-        '^'.code,
-        '`'.code,
-        '{'.code,
-        '|'.code,
-        '}'.code
-      )
+    Component.HOST ->
+      UrlComponentEncodingTesterJvmPlatform()
+        .stripForUri(
+          '\"'.code,
+          '<'.code,
+          '>'.code,
+          '^'.code,
+          '`'.code,
+          '{'.code,
+          '|'.code,
+          '}'.code,
+        )
 
-    Component.PATH -> UrlComponentEncodingTesterJvmPlatform()
-      .escapeForUri(
-        '%'.code,
-        '['.code,
-        ']'.code,
-      )
+    Component.PATH ->
+      UrlComponentEncodingTesterJvmPlatform()
+        .escapeForUri(
+          '%'.code,
+          '['.code,
+          ']'.code,
+        )
 
-    Component.QUERY -> UrlComponentEncodingTesterJvmPlatform()
-      .escapeForUri(
-        '%'.code,
-        '\\'.code,
-        '^'.code,
-        '`'.code,
-        '{'.code,
-        '|'.code,
-        '}'.code
-      )
+    Component.QUERY ->
+      UrlComponentEncodingTesterJvmPlatform()
+        .escapeForUri(
+          '%'.code,
+          '\\'.code,
+          '^'.code,
+          '`'.code,
+          '{'.code,
+          '|'.code,
+          '}'.code,
+        )
 
-    Component.QUERY_VALUE -> UrlComponentEncodingTesterJvmPlatform()
-      .escapeForUri(
-        '%'.code,
-        '\\'.code,
-        '^'.code,
-        '`'.code,
-        '{'.code,
-        '|'.code,
-        '}'.code
-      )
+    Component.QUERY_VALUE ->
+      UrlComponentEncodingTesterJvmPlatform()
+        .escapeForUri(
+          '%'.code,
+          '\\'.code,
+          '^'.code,
+          '`'.code,
+          '{'.code,
+          '|'.code,
+          '}'.code,
+        )
 
-    Component.FRAGMENT -> UrlComponentEncodingTesterJvmPlatform()
-      .escapeForUri(
-        '%'.code,
-        ' '.code,
-        '"'.code,
-        '#'.code,
-        '<'.code,
-        '>'.code,
-        '\\'.code,
-        '^'.code,
-        '`'.code,
-        '{'.code,
-        '|'.code,
-        '}'.code
-      )
+    Component.FRAGMENT ->
+      UrlComponentEncodingTesterJvmPlatform()
+        .escapeForUri(
+          '%'.code,
+          ' '.code,
+          '"'.code,
+          '#'.code,
+          '<'.code,
+          '>'.code,
+          '\\'.code,
+          '^'.code,
+          '`'.code,
+          '{'.code,
+          '|'.code,
+          '}'.code,
+        )
   }
 }
 
@@ -97,23 +102,25 @@ private class UrlComponentEncodingTesterJvmPlatform : UrlComponentEncodingTester
    * Configure code points to be escaped for conversion to `java.net.URI`. That class is more
    * strict than the others.
    */
-  fun escapeForUri(vararg codePoints: Int) = apply {
-    uriEscapedCodePoints.append(String(*codePoints))
-  }
+  fun escapeForUri(vararg codePoints: Int) =
+    apply {
+      uriEscapedCodePoints.append(String(*codePoints))
+    }
 
   /**
    * Configure code points to be stripped in conversion to `java.net.URI`. That class is more
    * strict than the others.
    */
-  fun stripForUri(vararg codePoints: Int) = apply {
-    uriStrippedCodePoints.append(String(*codePoints))
-  }
+  fun stripForUri(vararg codePoints: Int) =
+    apply {
+      uriStrippedCodePoints.append(String(*codePoints))
+    }
 
   override fun test(
     codePoint: Int,
     codePointString: String,
     encoding: UrlComponentEncodingTester.Encoding,
-    component: Component
+    component: Component,
   ) {
     testToUrl(codePoint, encoding, component)
     testFromUrl(codePoint, encoding, component)

@@ -31,7 +31,10 @@ interface ExchangeCodec {
 
   /** Returns an output stream where the request body can be streamed. */
   @Throws(IOException::class)
-  fun createRequestBody(request: Request, contentLength: Long): Sink
+  fun createRequestBody(
+    request: Request,
+    contentLength: Long,
+  ): Sink
 
   /** This should update the HTTP engine's sentRequestMillis field. */
   @Throws(IOException::class)
@@ -76,8 +79,14 @@ interface ExchangeCodec {
    */
   interface Carrier {
     val route: Route
-    fun trackFailure(call: RealCall, e: IOException?)
+
+    fun trackFailure(
+      call: RealCall,
+      e: IOException?,
+    )
+
     fun noNewExchanges()
+
     fun cancel()
   }
 

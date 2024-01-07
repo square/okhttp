@@ -42,7 +42,7 @@ class ServerSentEventIteratorTest {
       |data: 10
       |
       |
-      """.trimMargin()
+      """.trimMargin(),
     )
     assertThat(callbacks.remove()).isEqualTo(Event(null, null, "YHOO\n+2\n10"))
   }
@@ -56,7 +56,7 @@ class ServerSentEventIteratorTest {
       |data: 10
       |
       |
-      """.trimMargin().replace("\n", "\r")
+      """.trimMargin().replace("\n", "\r"),
     )
     assertThat(callbacks.remove()).isEqualTo(Event(null, null, "YHOO\n+2\n10"))
   }
@@ -70,7 +70,7 @@ class ServerSentEventIteratorTest {
       |data: 10
       |
       |
-      """.trimMargin().replace("\n", "\r\n")
+      """.trimMargin().replace("\n", "\r\n"),
     )
     assertThat(callbacks.remove()).isEqualTo(Event(null, null, "YHOO\n+2\n10"))
   }
@@ -89,7 +89,7 @@ class ServerSentEventIteratorTest {
       |data: 113411
       |
       |
-      """.trimMargin()
+      """.trimMargin(),
     )
     assertThat(callbacks.remove()).isEqualTo(Event(null, "add", "73857293"))
     assertThat(callbacks.remove()).isEqualTo(Event(null, "remove", "2153"))
@@ -106,7 +106,7 @@ class ServerSentEventIteratorTest {
       |id: 1
       |
       |
-      """.trimMargin()
+      """.trimMargin(),
     )
     assertThat(callbacks.remove()).isEqualTo(Event("1", null, "first event"))
   }
@@ -124,7 +124,7 @@ class ServerSentEventIteratorTest {
       |data: third event
       |
       |
-      """.trimMargin()
+      """.trimMargin(),
     )
     assertThat(callbacks.remove()).isEqualTo(Event("1", null, "first event"))
     assertThat(callbacks.remove()).isEqualTo(Event(null, null, "second event"))
@@ -142,7 +142,7 @@ class ServerSentEventIteratorTest {
       |
       |data:
       |
-      """.trimMargin()
+      """.trimMargin(),
     )
     assertThat(callbacks.remove()).isEqualTo(Event(null, null, ""))
     assertThat(callbacks.remove()).isEqualTo(Event(null, null, "\n"))
@@ -157,7 +157,7 @@ class ServerSentEventIteratorTest {
       |data: test
       |
       |
-      """.trimMargin()
+      """.trimMargin(),
     )
     assertThat(callbacks.remove()).isEqualTo(Event(null, null, "test"))
     assertThat(callbacks.remove()).isEqualTo(Event(null, null, "test"))
@@ -170,7 +170,7 @@ class ServerSentEventIteratorTest {
       |data:  test
       |
       |
-      """.trimMargin()
+      """.trimMargin(),
     )
     assertThat(callbacks.remove()).isEqualTo(Event(null, null, " test"))
   }
@@ -188,7 +188,7 @@ class ServerSentEventIteratorTest {
       |data: third event
       |
       |
-      """.trimMargin()
+      """.trimMargin(),
     )
     assertThat(callbacks.remove()).isEqualTo(Event("1", null, "first event"))
     assertThat(callbacks.remove()).isEqualTo(Event("1", null, "second event"))
@@ -207,7 +207,7 @@ class ServerSentEventIteratorTest {
       |data: second event
       |
       |
-      """.trimMargin()
+      """.trimMargin(),
     )
     assertThat(callbacks.remove()).isEqualTo(Event("1", null, "first event"))
     assertThat(callbacks.remove()).isEqualTo(Event("1", null, "second event"))
@@ -223,7 +223,7 @@ class ServerSentEventIteratorTest {
       |id: 1
       |
       |
-      """.trimMargin()
+      """.trimMargin(),
     )
     assertThat(callbacks.remove()).isEqualTo(22L)
     assertThat(callbacks.remove()).isEqualTo(Event("1", null, "first event"))
@@ -237,7 +237,7 @@ class ServerSentEventIteratorTest {
       |
       |retry: hey
       |
-      """.trimMargin()
+      """.trimMargin(),
     )
     assertThat(callbacks.remove()).isEqualTo(22L)
   }
@@ -253,7 +253,7 @@ class ServerSentEventIteratorTest {
       |retrying
       |
       |
-      """.trimMargin()
+      """.trimMargin(),
     )
     assertThat(callbacks.remove()).isEqualTo(Event(null, null, "a"))
   }
@@ -270,7 +270,7 @@ class ServerSentEventIteratorTest {
       |data
       |
       |
-      """.trimMargin()
+      """.trimMargin(),
     )
     assertThat(callbacks.remove()).isEqualTo(Event(null, null, "c\n"))
   }
@@ -281,21 +281,26 @@ class ServerSentEventIteratorTest {
       """
       |retry
       |
-      """.trimMargin()
+      """.trimMargin(),
     )
     assertThat(callbacks).isEmpty()
   }
 
   private fun consumeEvents(source: String) {
-    val callback: ServerSentEventReader.Callback = object : ServerSentEventReader.Callback {
-      override fun onEvent(id: String?, type: String?, data: String) {
-        callbacks.add(Event(id, type, data))
-      }
+    val callback: ServerSentEventReader.Callback =
+      object : ServerSentEventReader.Callback {
+        override fun onEvent(
+          id: String?,
+          type: String?,
+          data: String,
+        ) {
+          callbacks.add(Event(id, type, data))
+        }
 
-      override fun onRetryChange(timeMs: Long) {
-        callbacks.add(timeMs)
+        override fun onRetryChange(timeMs: Long) {
+          callbacks.add(timeMs)
+        }
       }
-    }
     val buffer = Buffer().writeUtf8(source)
     val reader = ServerSentEventReader(buffer, callback)
     while (reader.processNextEvent()) {

@@ -38,12 +38,13 @@ import org.junit.jupiter.api.extension.ParameterResolver
  * - The test lifecycle default (passed into test method, plus @BeforeEach, @AfterEach)
  * - named instances with @MockWebServerInstance.
  */
-class MockWebServerExtension
-  : BeforeEachCallback, AfterEachCallback, ParameterResolver {
+class MockWebServerExtension :
+  BeforeEachCallback, AfterEachCallback, ParameterResolver {
   private val ExtensionContext.resource: ServersForTest
-    get() = getStore(namespace).getOrComputeIfAbsent(this.uniqueId) {
-      ServersForTest()
-    } as ServersForTest
+    get() =
+      getStore(namespace).getOrComputeIfAbsent(this.uniqueId) {
+        ServersForTest()
+      } as ServersForTest
 
   private class ServersForTest {
     private val servers = mutableMapOf<String, MockWebServer>()
@@ -80,24 +81,25 @@ class MockWebServerExtension
   @IgnoreJRERequirement
   override fun supportsParameter(
     parameterContext: ParameterContext,
-    extensionContext: ExtensionContext
+    extensionContext: ExtensionContext,
   ): Boolean {
     // Not supported on constructors, or static contexts
-    return parameterContext.parameter.type === MockWebServer::class.java
-      && extensionContext.testMethod.isPresent
+    return parameterContext.parameter.type === MockWebServer::class.java &&
+      extensionContext.testMethod.isPresent
   }
 
   @Suppress("NewApi")
   override fun resolveParameter(
     parameterContext: ParameterContext,
-    extensionContext: ExtensionContext
+    extensionContext: ExtensionContext,
   ): Any {
     val nameAnnotation = parameterContext.findAnnotation(MockWebServerInstance::class.java)
-    val name = if (nameAnnotation.isPresent) {
-      nameAnnotation.get().name
-    } else {
-      defaultName
-    }
+    val name =
+      if (nameAnnotation.isPresent) {
+        nameAnnotation.get().name
+      } else {
+        defaultName
+      }
     return extensionContext.resource.server(name)
   }
 

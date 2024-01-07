@@ -78,44 +78,50 @@ class ClientAuthTest {
     this.server = server
     platform.assumeNotOpenJSSE()
     platform.assumeNotBouncyCastle()
-    serverRootCa = HeldCertificate.Builder()
-      .serialNumber(1L)
-      .certificateAuthority(1)
-      .commonName("root")
-      .addSubjectAlternativeName("root_ca.com")
-      .build()
-    serverIntermediateCa = HeldCertificate.Builder()
-      .signedBy(serverRootCa)
-      .certificateAuthority(0)
-      .serialNumber(2L)
-      .commonName("intermediate_ca")
-      .addSubjectAlternativeName("intermediate_ca.com")
-      .build()
-    serverCert = HeldCertificate.Builder()
-      .signedBy(serverIntermediateCa)
-      .serialNumber(3L)
-      .commonName("Local Host")
-      .addSubjectAlternativeName(server.hostName)
-      .build()
-    clientRootCa = HeldCertificate.Builder()
-      .serialNumber(1L)
-      .certificateAuthority(1)
-      .commonName("root")
-      .addSubjectAlternativeName("root_ca.com")
-      .build()
-    clientIntermediateCa = HeldCertificate.Builder()
-      .signedBy(serverRootCa)
-      .certificateAuthority(0)
-      .serialNumber(2L)
-      .commonName("intermediate_ca")
-      .addSubjectAlternativeName("intermediate_ca.com")
-      .build()
-    clientCert = HeldCertificate.Builder()
-      .signedBy(clientIntermediateCa)
-      .serialNumber(4L)
-      .commonName("Jethro Willis")
-      .addSubjectAlternativeName("jethrowillis.com")
-      .build()
+    serverRootCa =
+      HeldCertificate.Builder()
+        .serialNumber(1L)
+        .certificateAuthority(1)
+        .commonName("root")
+        .addSubjectAlternativeName("root_ca.com")
+        .build()
+    serverIntermediateCa =
+      HeldCertificate.Builder()
+        .signedBy(serverRootCa)
+        .certificateAuthority(0)
+        .serialNumber(2L)
+        .commonName("intermediate_ca")
+        .addSubjectAlternativeName("intermediate_ca.com")
+        .build()
+    serverCert =
+      HeldCertificate.Builder()
+        .signedBy(serverIntermediateCa)
+        .serialNumber(3L)
+        .commonName("Local Host")
+        .addSubjectAlternativeName(server.hostName)
+        .build()
+    clientRootCa =
+      HeldCertificate.Builder()
+        .serialNumber(1L)
+        .certificateAuthority(1)
+        .commonName("root")
+        .addSubjectAlternativeName("root_ca.com")
+        .build()
+    clientIntermediateCa =
+      HeldCertificate.Builder()
+        .signedBy(serverRootCa)
+        .certificateAuthority(0)
+        .serialNumber(2L)
+        .commonName("intermediate_ca")
+        .addSubjectAlternativeName("intermediate_ca.com")
+        .build()
+    clientCert =
+      HeldCertificate.Builder()
+        .signedBy(clientIntermediateCa)
+        .serialNumber(4L)
+        .commonName("Jethro Willis")
+        .addSubjectAlternativeName("jethrowillis.com")
+        .build()
   }
 
   @Test
@@ -127,7 +133,7 @@ class ClientAuthTest {
     server.enqueue(
       MockResponse.Builder()
         .body("abc")
-        .build()
+        .build(),
     )
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     val response = call.execute()
@@ -147,15 +153,15 @@ class ClientAuthTest {
     server.enqueue(
       MockResponse.Builder()
         .body("abc")
-        .build()
+        .build(),
     )
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     val response = call.execute()
     assertThat(response.handshake!!.peerPrincipal).isEqualTo(
-      X500Principal("CN=Local Host")
+      X500Principal("CN=Local Host"),
     )
     assertThat(response.handshake!!.localPrincipal).isEqualTo(
-      X500Principal("CN=Jethro Willis")
+      X500Principal("CN=Jethro Willis"),
     )
     assertThat(response.body.string()).isEqualTo("abc")
   }
@@ -169,12 +175,12 @@ class ClientAuthTest {
     server.enqueue(
       MockResponse.Builder()
         .body("abc")
-        .build()
+        .build(),
     )
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     val response = call.execute()
     assertThat(response.handshake!!.peerPrincipal).isEqualTo(
-      X500Principal("CN=Local Host")
+      X500Principal("CN=Local Host"),
     )
     assertThat(response.handshake!!.localPrincipal).isNull()
     assertThat(response.body.string()).isEqualTo("abc")
@@ -189,12 +195,12 @@ class ClientAuthTest {
     server.enqueue(
       MockResponse.Builder()
         .body("abc")
-        .build()
+        .build(),
     )
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     val response = call.execute()
     assertThat(response.handshake!!.peerPrincipal).isEqualTo(
-      X500Principal("CN=Local Host")
+      X500Principal("CN=Local Host"),
     )
     assertThat(response.handshake!!.localPrincipal).isNull()
     assertThat(response.body.string()).isEqualTo("abc")
@@ -232,12 +238,13 @@ class ClientAuthTest {
 
   @Test
   fun commonNameIsNotTrusted() {
-    serverCert = HeldCertificate.Builder()
-      .signedBy(serverIntermediateCa)
-      .serialNumber(3L)
-      .commonName(server.hostName)
-      .addSubjectAlternativeName("different-host.com")
-      .build()
+    serverCert =
+      HeldCertificate.Builder()
+        .signedBy(serverIntermediateCa)
+        .serialNumber(3L)
+        .commonName(server.hostName)
+        .addSubjectAlternativeName("different-host.com")
+        .build()
     val client = buildClient(clientCert, clientIntermediateCa.certificate)
     val socketFactory = buildServerSslSocketFactory()
     server.useHttps(socketFactory)
@@ -252,10 +259,11 @@ class ClientAuthTest {
   fun invalidClientAuthFails() {
     // Fails with https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
-    val clientCert2 = HeldCertificate.Builder()
-      .serialNumber(4L)
-      .commonName("Jethro Willis")
-      .build()
+    val clientCert2 =
+      HeldCertificate.Builder()
+        .serialNumber(4L)
+        .commonName("Jethro Willis")
+        .build()
     val client = buildClient(clientCert2)
     val socketFactory = buildServerSslSocketFactory()
     server.useHttps(socketFactory)
@@ -289,20 +297,22 @@ class ClientAuthTest {
     server.enqueue(
       MockResponse.Builder()
         .body("abc")
-        .build()
+        .build(),
     )
-    clientCert = HeldCertificate.Builder()
-      .signedBy(clientIntermediateCa)
-      .serialNumber(4L)
-      .commonName("Jethro Willis")
-      .addSubjectAlternativeName("jethrowillis.com")
-      .validityInterval(1, 2)
-      .build()
+    clientCert =
+      HeldCertificate.Builder()
+        .signedBy(clientIntermediateCa)
+        .serialNumber(4L)
+        .commonName("Jethro Willis")
+        .addSubjectAlternativeName("jethrowillis.com")
+        .validityInterval(1, 2)
+        .build()
     var client = buildClient(clientCert, clientIntermediateCa.certificate)
     val listener = RecordingEventListener()
-    client = client.newBuilder()
-      .eventListener(listener)
-      .build()
+    client =
+      client.newBuilder()
+        .eventListener(listener)
+        .build()
     val socketFactory = buildServerSslSocketFactory()
     server.useHttps(socketFactory)
     server.requireClientAuth()
@@ -330,23 +340,26 @@ class ClientAuthTest {
       "DnsStart",
       "DnsEnd",
       "ConnectStart",
-      "SecureConnectStart"
+      "SecureConnectStart",
     )
     assertThat(recordedEventTypes).endsWith("CallFailed")
   }
 
   private fun buildClient(
-    heldCertificate: HeldCertificate?, vararg intermediates: X509Certificate
+    heldCertificate: HeldCertificate?,
+    vararg intermediates: X509Certificate,
   ): OkHttpClient {
-    val builder = HandshakeCertificates.Builder()
-      .addTrustedCertificate(serverRootCa.certificate)
+    val builder =
+      HandshakeCertificates.Builder()
+        .addTrustedCertificate(serverRootCa.certificate)
     if (heldCertificate != null) {
       builder.heldCertificate(heldCertificate, *intermediates)
     }
     val handshakeCertificates = builder.build()
     return clientTestRule.newClientBuilder()
       .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
+        handshakeCertificates.sslSocketFactory(),
+        handshakeCertificates.trustManager,
       )
       .build()
   }
@@ -355,17 +368,23 @@ class ClientAuthTest {
     // The test uses JDK default SSL Context instead of the Platform provided one
     // as Conscrypt seems to have some differences, we only want to test client side here.
     return try {
-      val keyManager = newKeyManager(
-        null, serverCert, serverIntermediateCa.certificate
-      )
-      val trustManager = newTrustManager(
-        null,
-        Arrays.asList(serverRootCa.certificate, clientRootCa.certificate), emptyList()
-      )
+      val keyManager =
+        newKeyManager(
+          null,
+          serverCert,
+          serverIntermediateCa.certificate,
+        )
+      val trustManager =
+        newTrustManager(
+          null,
+          Arrays.asList(serverRootCa.certificate, clientRootCa.certificate),
+          emptyList(),
+        )
       val sslContext = SSLContext.getInstance("TLS")
       sslContext.init(
-        arrayOf<KeyManager>(keyManager), arrayOf<TrustManager>(trustManager),
-        SecureRandom()
+        arrayOf<KeyManager>(keyManager),
+        arrayOf<TrustManager>(trustManager),
+        SecureRandom(),
       )
       sslContext.socketFactory
     } catch (e: GeneralSecurityException) {

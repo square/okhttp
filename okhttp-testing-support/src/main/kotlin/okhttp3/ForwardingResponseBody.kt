@@ -19,6 +19,7 @@ import okio.BufferedSource
 
 open class ForwardingResponseBody(delegate: ResponseBody?) : ResponseBody() {
   private val delegate: ResponseBody
+
   fun delegate(): ResponseBody {
     return delegate
   }

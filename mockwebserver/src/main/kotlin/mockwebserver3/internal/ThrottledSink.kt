@@ -29,7 +29,11 @@ internal class ThrottledSink(
   private val periodDelayNanos: Long,
 ) : Sink by delegate {
   private var bytesWrittenSinceLastDelay = 0L
-  override fun write(source: Buffer, byteCount: Long) {
+
+  override fun write(
+    source: Buffer,
+    byteCount: Long,
+  ) {
     var bytesLeft = byteCount
 
     while (bytesLeft > 0) {

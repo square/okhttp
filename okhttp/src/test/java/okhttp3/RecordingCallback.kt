@@ -25,13 +25,19 @@ class RecordingCallback : Callback {
   private val responses = mutableListOf<RecordedResponse>()
 
   @Synchronized
-  override fun onFailure(call: Call, e: IOException) {
+  override fun onFailure(
+    call: Call,
+    e: IOException,
+  ) {
     responses.add(RecordedResponse(call.request(), null, null, null, e))
     (this as Object).notifyAll()
   }
 
   @Synchronized
-  override fun onResponse(call: Call, response: Response) {
+  override fun onResponse(
+    call: Call,
+    response: Response,
+  ) {
     val body = response.body.string()
     responses.add(RecordedResponse(call.request(), response, null, body, null))
     (this as Object).notifyAll()

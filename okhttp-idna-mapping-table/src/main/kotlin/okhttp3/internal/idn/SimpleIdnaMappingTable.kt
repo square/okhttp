@@ -42,14 +42,18 @@ class SimpleIdnaMappingTable internal constructor(
   /**
    * Returns true if the [codePoint] was applied successfully. Returns false if it was disallowed.
    */
-  fun map(codePoint: Int, sink: BufferedSink): Boolean {
-    val index = mappings.binarySearch {
-      when {
-        it.sourceCodePoint1 < codePoint -> -1
-        it.sourceCodePoint0 > codePoint -> 1
-        else -> 0
+  fun map(
+    codePoint: Int,
+    sink: BufferedSink,
+  ): Boolean {
+    val index =
+      mappings.binarySearch {
+        when {
+          it.sourceCodePoint1 < codePoint -> -1
+          it.sourceCodePoint0 > codePoint -> 1
+          else -> 0
+        }
       }
-    }
 
     // Code points must be in 0..0x10ffff.
     require(index in mappings.indices) { "unexpected code point: $codePoint" }
@@ -77,24 +81,25 @@ class SimpleIdnaMappingTable internal constructor(
   }
 }
 
+private val optionsDelimiter =
+  Options.of(
+    // 0.
+    ".".encodeUtf8(),
+    // 1.
+    " ".encodeUtf8(),
+    // 2.
+    ";".encodeUtf8(),
+    // 3.
+    "#".encodeUtf8(),
+    // 4.
+    "\n".encodeUtf8(),
+  )
 
-private val optionsDelimiter = Options.of(
-  // 0.
-  ".".encodeUtf8(),
-  // 1.
-  " ".encodeUtf8(),
-  // 2.
-  ";".encodeUtf8(),
-  // 3.
-  "#".encodeUtf8(),
-  // 4.
-  "\n".encodeUtf8(),
-)
-
-private val optionsDot = Options.of(
-  // 0.
-  ".".encodeUtf8(),
-)
+private val optionsDot =
+  Options.of(
+    // 0.
+    ".".encodeUtf8(),
+  )
 
 private const val DELIMITER_DOT = 0
 private const val DELIMITER_SPACE = 1
@@ -102,22 +107,23 @@ private const val DELIMITER_SEMICOLON = 2
 private const val DELIMITER_HASH = 3
 private const val DELIMITER_NEWLINE = 4
 
-private val optionsType = Options.of(
-  // 0.
-  "deviation ".encodeUtf8(),
-  // 1.
-  "disallowed ".encodeUtf8(),
-  // 2.
-  "disallowed_STD3_mapped ".encodeUtf8(),
-  // 3.
-  "disallowed_STD3_valid ".encodeUtf8(),
-  // 4.
-  "ignored ".encodeUtf8(),
-  // 5.
-  "mapped ".encodeUtf8(),
-  // 6.
-  "valid ".encodeUtf8(),
-)
+private val optionsType =
+  Options.of(
+    // 0.
+    "deviation ".encodeUtf8(),
+    // 1.
+    "disallowed ".encodeUtf8(),
+    // 2.
+    "disallowed_STD3_mapped ".encodeUtf8(),
+    // 3.
+    "disallowed_STD3_valid ".encodeUtf8(),
+    // 4.
+    "ignored ".encodeUtf8(),
+    // 5.
+    "mapped ".encodeUtf8(),
+    // 6.
+    "valid ".encodeUtf8(),
+  )
 
 internal const val TYPE_DEVIATION = 0
 internal const val TYPE_DISALLOWED = 1
@@ -182,14 +188,15 @@ fun BufferedSource.readPlainTextIdnaMappingTable(): SimpleIdnaMappingTable {
 
     // "002F" or "0000..002C"
     val sourceCodePoint0 = readHexadecimalUnsignedLong()
-    val sourceCodePoint1 = when (select(optionsDot)) {
-      DELIMITER_DOT -> {
-        if (readByte() != '.'.code.toByte()) throw IOException("expected '..'")
-        readHexadecimalUnsignedLong()
-      }
+    val sourceCodePoint1 =
+      when (select(optionsDot)) {
+        DELIMITER_DOT -> {
+          if (readByte() != '.'.code.toByte()) throw IOException("expected '..'")
+          readHexadecimalUnsignedLong()
+        }
 
-      else -> sourceCodePoint0
-    }
+        else -> sourceCodePoint0
+      }
 
     skipWhitespace()
     if (readByte() != ';'.code.toByte()) throw IOException("expected ';'")
@@ -228,12 +235,13 @@ fun BufferedSource.readPlainTextIdnaMappingTable(): SimpleIdnaMappingTable {
 
     skipRestOfLine()
 
-    result += Mapping(
-      sourceCodePoint0.toInt(),
-      sourceCodePoint1.toInt(),
-      type,
-      mappedTo.readByteString(),
-    )
+    result +=
+      Mapping(
+        sourceCodePoint0.toInt(),
+        sourceCodePoint1.toInt(),
+        type,
+        mappedTo.readByteString(),
+      )
   }
 
   return SimpleIdnaMappingTable(result)

@@ -76,8 +76,8 @@ object Punycode {
     string: String,
     pos: Int,
     limit: Int,
-    result: Buffer
-  ) : Boolean {
+    result: Buffer,
+  ): Boolean {
     if (!string.requiresEncode(pos, limit)) {
       result.writeUtf8(string, pos, limit)
       return true
@@ -120,11 +120,12 @@ object Punycode {
           var q = delta
 
           for (k in BASE until Int.MAX_VALUE step BASE) {
-            val t = when {
-              k <= bias -> TMIN
-              k >= bias + TMAX -> TMAX
-              else -> k - bias
-            }
+            val t =
+              when {
+                k <= bias -> TMIN
+                k >= bias + TMAX -> TMAX
+                else -> k - bias
+              }
             if (q < t) break
             result.writeByte((t + ((q - t) % (BASE - t))).punycodeDigit)
             q = (q - t) / (BASE - t)
@@ -179,7 +180,7 @@ object Punycode {
     string: String,
     pos: Int,
     limit: Int,
-    result: Buffer
+    result: Buffer,
   ): Boolean {
     if (!string.regionMatches(pos, PREFIX_STRING, 0, 4, ignoreCase = true)) {
       result.writeUtf8(string, pos, limit)
@@ -218,20 +219,22 @@ object Punycode {
       for (k in BASE until Int.MAX_VALUE step BASE) {
         if (pos == limit) return false // Malformed.
         val c = string[pos++]
-        val digit = when (c) {
-          in 'a'..'z' -> c - 'a'
-          in 'A'..'Z' -> c - 'A'
-          in '0'..'9' -> c - '0' + 26
-          else -> return false // Malformed.
-        }
+        val digit =
+          when (c) {
+            in 'a'..'z' -> c - 'a'
+            in 'A'..'Z' -> c - 'A'
+            in '0'..'9' -> c - '0' + 26
+            else -> return false // Malformed.
+          }
         val deltaI = digit * w
         if (i > Int.MAX_VALUE - deltaI) return false // Prevent overflow.
         i += deltaI
-        val t = when {
-          k <= bias -> TMIN
-          k >= bias + TMAX -> TMAX
-          else -> k - bias
-        }
+        val t =
+          when {
+            k <= bias -> TMIN
+            k >= bias + TMAX -> TMAX
+            else -> k - bias
+          }
         if (digit < t) break
         val scaleW = BASE - t
         if (w > Int.MAX_VALUE / scaleW) return false // Prevent overflow.
@@ -258,11 +261,16 @@ object Punycode {
   }
 
   /** Returns a new bias. */
-  private fun adapt(delta: Int, numpoints: Int, first: Boolean): Int {
-    var delta = when {
-      first -> delta / DAMP
-      else -> delta / 2
-    }
+  private fun adapt(
+    delta: Int,
+    numpoints: Int,
+    first: Boolean,
+  ): Int {
+    var delta =
+      when {
+        first -> delta / DAMP
+        else -> delta / 2
+      }
     delta += (delta / numpoints)
     var k = 0
     while (delta > ((BASE - TMIN) * TMAX) / 2) {
@@ -272,40 +280,48 @@ object Punycode {
     return k + (((BASE - TMIN + 1) * delta) / (delta + SKEW))
   }
 
-  private fun String.requiresEncode(pos: Int, limit: Int): Boolean {
+  private fun String.requiresEncode(
+    pos: Int,
+    limit: Int,
+  ): Boolean {
     for (i in pos until limit) {
       if (this[i].code >= INITIAL_N) return true
     }
     return false
   }
 
-  private fun String.codePoints(pos: Int, limit: Int): List<Int> {
+  private fun String.codePoints(
+    pos: Int,
+    limit: Int,
+  ): List<Int> {
     val result = mutableListOf<Int>()
     var i = pos
     while (i < limit) {
       val c = this[i]
-      result += when {
-        c.isSurrogate() -> {
-          val low = (if (i + 1 < limit) this[i + 1] else '\u0000')
-          if (c.isLowSurrogate() || !low.isLowSurrogate()) {
-            '?'.code
-          } else {
-            i++
-            0x010000 + (c.code and 0x03ff shl 10 or (low.code and 0x03ff))
+      result +=
+        when {
+          c.isSurrogate() -> {
+            val low = (if (i + 1 < limit) this[i + 1] else '\u0000')
+            if (c.isLowSurrogate() || !low.isLowSurrogate()) {
+              '?'.code
+            } else {
+              i++
+              0x010000 + (c.code and 0x03ff shl 10 or (low.code and 0x03ff))
+            }
           }
-        }
 
-        else -> c.code
-      }
+          else -> c.code
+        }
       i++
     }
     return result
   }
 
   private val Int.punycodeDigit: Int
-    get() = when {
-      this < 26 -> this + 'a'.code
-      this < 36 -> (this - 26) + '0'.code
-      else -> error("unexpected digit: $this")
-    }
+    get() =
+      when {
+        this < 26 -> this + 'a'.code
+        this < 36 -> (this - 26) + '0'.code
+        else -> error("unexpected digit: $this")
+      }
 }

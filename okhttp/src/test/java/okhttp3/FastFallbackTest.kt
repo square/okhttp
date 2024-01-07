@@ -19,7 +19,6 @@ import assertk.assertThat
 import assertk.assertions.hasMessage
 import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
-import assertk.fail
 import java.io.IOException
 import java.net.Inet4Address
 import java.net.Inet6Address
@@ -87,21 +86,24 @@ class FastFallbackTest {
     serverIpv6 = MockWebServer()
     serverIpv6.start(localhostIpv6, serverIpv4.port) // Pick the same port as the IPv4 server.
 
-    dnsResults = listOf(
-      localhostIpv4,
-      localhostIpv6,
-    )
+    dnsResults =
+      listOf(
+        localhostIpv4,
+        localhostIpv6,
+      )
 
-    client = clientTestRule.newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(listener))
-      .connectTimeout(60, TimeUnit.SECONDS) // Deliberately exacerbate slow fallbacks.
-      .dns { dnsResults }
-      .fastFallback(true)
-      .build()
-    url = serverIpv4.url("/")
-      .newBuilder()
-      .host("localhost")
-      .build()
+    client =
+      clientTestRule.newClientBuilder()
+        .eventListenerFactory(clientTestRule.wrap(listener))
+        .connectTimeout(60, TimeUnit.SECONDS) // Deliberately exacerbate slow fallbacks.
+        .dns { dnsResults }
+        .fastFallback(true)
+        .build()
+    url =
+      serverIpv4.url("/")
+        .newBuilder()
+        .host("localhost")
+        .build()
   }
 
   @AfterEach
@@ -112,15 +114,16 @@ class FastFallbackTest {
 
   @Test
   fun callIpv6FirstEvenWhenIpv4IpIsListedFirst() {
-    dnsResults = listOf(
-      localhostIpv4,
-      localhostIpv6,
-    )
+    dnsResults =
+      listOf(
+        localhostIpv4,
+        localhostIpv6,
+      )
     serverIpv4.enqueue(
-      MockResponse(body = "unexpected call to IPv4")
+      MockResponse(body = "unexpected call to IPv4"),
     )
     serverIpv6.enqueue(
-      MockResponse(body = "hello from IPv6")
+      MockResponse(body = "hello from IPv6"),
     )
 
     val call = client.newCall(Request(url))
@@ -135,15 +138,16 @@ class FastFallbackTest {
   @Test
   fun callIpv6WhenBothServersAreReachable() {
     // Flip DNS results to prefer IPv6.
-    dnsResults = listOf(
-      localhostIpv6,
-      localhostIpv4,
-    )
+    dnsResults =
+      listOf(
+        localhostIpv6,
+        localhostIpv4,
+      )
     serverIpv4.enqueue(
-      MockResponse(body = "unexpected call to IPv4")
+      MockResponse(body = "unexpected call to IPv4"),
     )
     serverIpv6.enqueue(
-      MockResponse(body = "hello from IPv6")
+      MockResponse(body = "hello from IPv6"),
     )
 
     val call = client.newCall(Request(url))
@@ -159,7 +163,7 @@ class FastFallbackTest {
   fun reachesIpv4WhenIpv6IsDown() {
     serverIpv6.shutdown()
     serverIpv4.enqueue(
-      MockResponse(body = "hello from IPv4")
+      MockResponse(body = "hello from IPv4"),
     )
 
     val call = client.newCall(Request(url))
@@ -176,7 +180,7 @@ class FastFallbackTest {
   fun reachesIpv6WhenIpv4IsDown() {
     serverIpv4.shutdown()
     serverIpv6.enqueue(
-      MockResponse(body = "hello from IPv6")
+      MockResponse(body = "hello from IPv6"),
     )
 
     val call = client.newCall(Request(url))
@@ -207,13 +211,14 @@ class FastFallbackTest {
   @RetryingTest(5)
   @Flaky
   fun reachesIpv4AfterUnreachableIpv6Address() {
-    dnsResults = listOf(
-      TestUtil.UNREACHABLE_ADDRESS_IPV6.address,
-      localhostIpv4,
-    )
+    dnsResults =
+      listOf(
+        TestUtil.UNREACHABLE_ADDRESS_IPV6.address,
+        localhostIpv4,
+      )
     serverIpv6.shutdown()
     serverIpv4.enqueue(
-      MockResponse(body = "hello from IPv4")
+      MockResponse(body = "hello from IPv4"),
     )
 
     val call = client.newCall(Request(url))
@@ -227,19 +232,21 @@ class FastFallbackTest {
 
   @Test
   fun timesOutWithFastFallbackDisabled() {
-    dnsResults = listOf(
-      TestUtil.UNREACHABLE_ADDRESS_IPV4.address,
-      localhostIpv6,
-    )
+    dnsResults =
+      listOf(
+        TestUtil.UNREACHABLE_ADDRESS_IPV4.address,
+        localhostIpv6,
+      )
     serverIpv4.shutdown()
     serverIpv6.enqueue(
-      MockResponse(body = "hello from IPv6")
+      MockResponse(body = "hello from IPv6"),
     )
 
-    client = client.newBuilder()
-      .fastFallback(false)
-      .callTimeout(1_000, TimeUnit.MILLISECONDS)
-      .build()
+    client =
+      client.newBuilder()
+        .fastFallback(false)
+        .callTimeout(1_000, TimeUnit.MILLISECONDS)
+        .build()
     val call = client.newCall(Request(url))
     assertFailsWith<IOException> {
       call.execute()
@@ -258,49 +265,54 @@ class FastFallbackTest {
   @Test
   fun preferCallConnectionOverDeferredConnection() {
     // Make sure we have enough connection options to permit retries.
-    dnsResults = listOf(
-      localhostIpv4,
-      localhostIpv6,
-      TestUtil.UNREACHABLE_ADDRESS_IPV4.address,
-    )
+    dnsResults =
+      listOf(
+        localhostIpv4,
+        localhostIpv6,
+        TestUtil.UNREACHABLE_ADDRESS_IPV4.address,
+      )
     serverIpv4.protocols = listOf(Protocol.H2_PRIOR_KNOWLEDGE)
     serverIpv6.protocols = listOf(Protocol.H2_PRIOR_KNOWLEDGE)
 
     // Yield the first IP address so the second IP address completes first.
     val firstConnectLatch = CountDownLatch(1)
-    val socketFactory = object : DelegatingSocketFactory(SocketFactory.getDefault()) {
-      var first = true
+    val socketFactory =
+      object : DelegatingSocketFactory(SocketFactory.getDefault()) {
+        var first = true
 
-      override fun createSocket(): Socket {
-        if (first) {
-          first = false
-          firstConnectLatch.await()
+        override fun createSocket(): Socket {
+          if (first) {
+            first = false
+            firstConnectLatch.await()
+          }
+          return super.createSocket()
         }
-        return super.createSocket()
       }
-    }
 
-    client = client.newBuilder()
-      .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE))
-      .socketFactory(socketFactory)
-      .addNetworkInterceptor(Interceptor { chain ->
-        try {
-          chain.proceed(chain.request())
-        } finally {
-          firstConnectLatch.countDown()
-        }
-      })
-      .build()
+    client =
+      client.newBuilder()
+        .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE))
+        .socketFactory(socketFactory)
+        .addNetworkInterceptor(
+          Interceptor { chain ->
+            try {
+              chain.proceed(chain.request())
+            } finally {
+              firstConnectLatch.countDown()
+            }
+          },
+        )
+        .build()
 
     // Set up a same-connection retry.
     serverIpv4.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode))
+      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode)),
     )
     serverIpv4.enqueue(
-      MockResponse(body = "this was the 2nd request on IPv4")
+      MockResponse(body = "this was the 2nd request on IPv4"),
     )
     serverIpv6.enqueue(
-      MockResponse(body = "unexpected call to IPv6")
+      MockResponse(body = "unexpected call to IPv6"),
     )
 
     // Confirm the retry succeeds on the same connection.

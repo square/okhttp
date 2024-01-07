@@ -29,19 +29,19 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.RequestBody.Companion.toRequestBody
 
 class RequestCommonTest {
-
   @Test
   fun constructorNormal() {
     val url = "https://example.com/".toHttpUrl()
     val body = "hello".toRequestBody()
     val headers = headersOf("User-Agent", "RequestTest")
     val method = "PUT"
-    val request = Request(
-      url = url,
-      headers = headers,
-      method = method,
-      body = body
-    )
+    val request =
+      Request(
+        url = url,
+        headers = headers,
+        method = method,
+        body = body,
+      )
     assertThat(request.url).isEqualTo(url)
     assertThat(request.headers).isEqualTo(headers)
     assertThat(request.method).isEqualTo(method)
@@ -53,10 +53,11 @@ class RequestCommonTest {
   fun constructorNoBodyNoMethod() {
     val url = "https://example.com/".toHttpUrl()
     val headers = headersOf("User-Agent", "RequestTest")
-    val request = Request(
-      url = url,
-      headers = headers,
-    )
+    val request =
+      Request(
+        url = url,
+        headers = headers,
+      )
     assertThat(request.url).isEqualTo(url)
     assertThat(request.headers).isEqualTo(headers)
     assertThat(request.method).isEqualTo("GET")
@@ -69,11 +70,12 @@ class RequestCommonTest {
     val url = "https://example.com/".toHttpUrl()
     val body = "hello".toRequestBody()
     val headers = headersOf("User-Agent", "RequestTest")
-    val request = Request(
-      url = url,
-      headers = headers,
-      body = body
-    )
+    val request =
+      Request(
+        url = url,
+        headers = headers,
+        body = body,
+      )
     assertThat(request.url).isEqualTo(url)
     assertThat(request.headers).isEqualTo(headers)
     assertThat(request.method).isEqualTo("POST")
@@ -86,11 +88,12 @@ class RequestCommonTest {
     val url = "https://example.com/".toHttpUrl()
     val headers = headersOf("User-Agent", "RequestTest")
     val method = "DELETE"
-    val request = Request(
-      url = url,
-      headers = headers,
-      method = method,
-    )
+    val request =
+      Request(
+        url = url,
+        headers = headers,
+        method = method,
+      )
     assertThat(request.url).isEqualTo(url)
     assertThat(request.headers).isEqualTo(headers)
     assertThat(request.method).isEqualTo(method)
@@ -103,36 +106,41 @@ class RequestCommonTest {
     val requestWithoutCache = Request.Builder().url("http://localhost/api").build()
     val builtRequestWithoutCache = requestWithoutCache.newBuilder().url("http://localhost/api/foo").build()
     assertThat(builtRequestWithoutCache.url).isEqualTo(
-      "http://localhost/api/foo".toHttpUrl())
-    val requestWithCache = Request.Builder()
-      .url("http://localhost/api")
-      .build()
+      "http://localhost/api/foo".toHttpUrl(),
+    )
+    val requestWithCache =
+      Request.Builder()
+        .url("http://localhost/api")
+        .build()
     // cache url object
     requestWithCache.url
-    val builtRequestWithCache = requestWithCache.newBuilder()
-      .url("http://localhost/api/foo")
-      .build()
+    val builtRequestWithCache =
+      requestWithCache.newBuilder()
+        .url("http://localhost/api/foo")
+        .build()
     assertThat(builtRequestWithCache.url)
       .isEqualTo("http://localhost/api/foo".toHttpUrl())
   }
 
   @Test
   fun cacheControl() {
-    val request = Request.Builder()
-      .cacheControl(CacheControl.Builder().noCache().build())
-      .url("https://square.com")
-      .build()
+    val request =
+      Request.Builder()
+        .cacheControl(CacheControl.Builder().noCache().build())
+        .url("https://square.com")
+        .build()
     assertThat(request.headers("Cache-Control")).containsExactly("no-cache")
     assertThat(request.cacheControl.noCache).isTrue()
   }
 
   @Test
   fun emptyCacheControlClearsAllCacheControlHeaders() {
-    val request = Request.Builder()
-      .header("Cache-Control", "foo")
-      .cacheControl(CacheControl.Builder().build())
-      .url("https://square.com")
-      .build()
+    val request =
+      Request.Builder()
+        .header("Cache-Control", "foo")
+        .cacheControl(CacheControl.Builder().build())
+        .url("https://square.com")
+        .build()
     assertThat(request.headers("Cache-Control")).isEmpty()
   }
 
@@ -192,9 +200,10 @@ class RequestCommonTest {
 
   @Test
   fun noTag() {
-    val request = Request.Builder()
-      .url("https://square.com")
-      .build()
+    val request =
+      Request.Builder()
+        .url("https://square.com")
+        .build()
     assertThat(request.tag<Any>()).isNull()
     assertThat(request.tag(Any::class)).isNull()
     assertThat(request.tag(String::class)).isNull()
@@ -207,10 +216,11 @@ class RequestCommonTest {
   @Test
   fun defaultTag() {
     val tag = "1234"
-    val request = Request.Builder()
-      .url("https://square.com")
-      .tag(tag as Any)
-      .build()
+    val request =
+      Request.Builder()
+        .url("https://square.com")
+        .tag(tag as Any)
+        .build()
     assertThat(request.tag<Any>()).isSameAs(tag)
     assertThat(request.tag(Any::class)).isSameAs(tag)
     assertThat(request.tag(String::class)).isNull()
@@ -222,30 +232,33 @@ class RequestCommonTest {
 
   @Test
   fun nullRemovesTag() {
-    val request = Request.Builder()
-      .url("https://square.com")
-      .tag("a" as Any)
-      .tag(null)
-      .build()
+    val request =
+      Request.Builder()
+        .url("https://square.com")
+        .tag("a" as Any)
+        .tag(null)
+        .build()
     assertThat(request.tag<Any>()).isNull()
   }
 
   @Test
   fun removeAbsentTag() {
-    val request = Request.Builder()
-      .url("https://square.com")
-      .tag(null)
-      .build()
+    val request =
+      Request.Builder()
+        .url("https://square.com")
+        .tag(null)
+        .build()
     assertThat(request.tag<String>()).isNull()
   }
 
   @Test
   fun objectTag() {
     val tag = "1234"
-    val request = Request.Builder()
-      .url("https://square.com")
-      .tag(Any::class, tag)
-      .build()
+    val request =
+      Request.Builder()
+        .url("https://square.com")
+        .tag(Any::class, tag)
+        .build()
     assertThat(request.tag<Any>()).isSameAs(tag)
     assertThat(request.tag(Any::class)).isSameAs(tag)
     assertThat(request.tag(String::class)).isNull()
@@ -258,10 +271,11 @@ class RequestCommonTest {
   @Test
   fun kotlinReifiedTag() {
     val uuidTag = "1234"
-    val request = Request.Builder()
-      .url("https://square.com")
-      .tag<String>(uuidTag) // Use the type parameter.
-      .build()
+    val request =
+      Request.Builder()
+        .url("https://square.com")
+        .tag<String>(uuidTag) // Use the type parameter.
+        .build()
     assertThat(request.tag<String>()).isSameAs("1234")
     assertThat(request.tag<Any>()).isNull()
 
@@ -272,10 +286,11 @@ class RequestCommonTest {
   @Test
   fun kotlinClassTag() {
     val uuidTag = "1234"
-    val request = Request.Builder()
-      .url("https://square.com")
-      .tag(String::class, uuidTag) // Use the KClass<*> parameter.
-      .build()
+    val request =
+      Request.Builder()
+        .url("https://square.com")
+        .tag(String::class, uuidTag) // Use the KClass<*> parameter.
+        .build()
     assertThat(request.tag(Any::class)).isNull()
     assertThat(request.tag(String::class)).isSameAs("1234")
 
@@ -288,11 +303,12 @@ class RequestCommonTest {
   fun replaceOnlyTag() {
     val uuidTag1 = "1234"
     val uuidTag2 = "4321"
-    val request = Request.Builder()
-      .url("https://square.com")
-      .tag(String::class, uuidTag1)
-      .tag(String::class, uuidTag2)
-      .build()
+    val request =
+      Request.Builder()
+        .url("https://square.com")
+        .tag(String::class, uuidTag1)
+        .tag(String::class, uuidTag2)
+        .build()
     assertThat(request.tag(String::class)).isSameAs(uuidTag2)
   }
 
@@ -301,12 +317,13 @@ class RequestCommonTest {
     val stringTag = "dilophosaurus"
     val longTag = 20170815L as Long?
     val objectTag = Any()
-    val request = Request.Builder()
-      .url("https://square.com")
-      .tag(Any::class, objectTag)
-      .tag(String::class, stringTag)
-      .tag(Long::class, longTag)
-      .build()
+    val request =
+      Request.Builder()
+        .url("https://square.com")
+        .tag(Any::class, objectTag)
+        .tag(String::class, stringTag)
+        .tag(Long::class, longTag)
+        .build()
     assertThat(request.tag<Any>()).isSameAs(objectTag)
     assertThat(request.tag(Any::class)).isSameAs(objectTag)
     assertThat(request.tag(String::class)).isSameAs(stringTag)
@@ -318,8 +335,9 @@ class RequestCommonTest {
   /** Confirm that we don't accidentally share the backing map between objects. */
   @Test
   fun tagsAreImmutable() {
-    val builder = Request.Builder()
-      .url("https://square.com")
+    val builder =
+      Request.Builder()
+        .url("https://square.com")
     val requestA = builder.tag(String::class, "a").build()
     val requestB = builder.tag(String::class, "b").build()
     val requestC = requestA.newBuilder().tag(String::class, "c").build()
@@ -330,18 +348,20 @@ class RequestCommonTest {
 
   @Test
   fun requestToStringRedactsSensitiveHeaders() {
-    val headers = Headers.Builder()
-      .add("content-length", "99")
-      .add("authorization", "peanutbutter")
-      .add("proxy-authorization", "chocolate")
-      .add("cookie", "drink=coffee")
-      .add("set-cookie", "accessory=sugar")
-      .add("user-agent", "OkHttp")
-      .build()
-    val request = Request(
-      "https://square.com".toHttpUrl(),
-      headers
-    )
+    val headers =
+      Headers.Builder()
+        .add("content-length", "99")
+        .add("authorization", "peanutbutter")
+        .add("proxy-authorization", "chocolate")
+        .add("cookie", "drink=coffee")
+        .add("set-cookie", "accessory=sugar")
+        .add("user-agent", "OkHttp")
+        .build()
+    val request =
+      Request(
+        "https://square.com".toHttpUrl(),
+        headers,
+      )
     assertThat(request.toString()).isEqualTo(
       "Request{method=GET, url=https://square.com/, headers=[" +
         "content-length:99," +
@@ -350,7 +370,7 @@ class RequestCommonTest {
         " cookie:██," +
         " set-cookie:██," +
         " user-agent:OkHttp" +
-        "]}"
+        "]}",
     )
   }
 }

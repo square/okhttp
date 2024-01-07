@@ -21,13 +21,12 @@ import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import java.io.IOException
 import java.net.UnknownServiceException
+import kotlin.test.assertFailsWith
 import okhttp3.FakeRoutePlanner
 import okhttp3.FakeRoutePlanner.ConnectState.TLS_CONNECTED
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.testing.Flaky
 import org.junit.jupiter.api.AfterEach
-import assertk.fail
-import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Test
 import org.junitpioneer.jupiter.RetryingTest
 
@@ -302,7 +301,7 @@ internal class FastFallbackExchangeFinderTest {
       "plan 0 cancel",
       "plan 1 TLS connecting...",
       "plan 1 TLS connected",
-      "plan 2 TCP connecting..."
+      "plan 2 TCP connecting...",
     )
 
     taskFaker.advanceUntil(270.ms)
@@ -820,7 +819,7 @@ internal class FastFallbackExchangeFinderTest {
     taskFaker.runTasks()
     assertEvents(
       "plan 0 TCP connected",
-      "plan 0 cancel"
+      "plan 0 cancel",
     )
   }
 

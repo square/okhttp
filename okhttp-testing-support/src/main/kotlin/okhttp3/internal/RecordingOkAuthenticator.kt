@@ -23,7 +23,7 @@ import okhttp3.Route
 
 class RecordingOkAuthenticator(
   val credential: String?,
-  val scheme: String?
+  val scheme: String?,
 ) : Authenticator {
   val responses = mutableListOf<Response>()
   val routes = mutableListOf<Route>()
@@ -35,16 +35,17 @@ class RecordingOkAuthenticator(
   @Throws(IOException::class)
   override fun authenticate(
     route: Route?,
-    response: Response
+    response: Response,
   ): Request? {
     if (route == null) throw NullPointerException("route == null")
     responses += response
     routes += route
     if (!schemeMatches(response) || credential == null) return null
-    val header = when (response.code) {
-      407 -> "Proxy-Authorization"
-      else -> "Authorization"
-    }
+    val header =
+      when (response.code) {
+        407 -> "Proxy-Authorization"
+        else -> "Authorization"
+      }
     return response.request.newBuilder()
       .addHeader(header, credential)
       .build()

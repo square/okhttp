@@ -28,7 +28,7 @@ class HpackDecodeInteropTest : HpackDecodeTestBase() {
   fun testGoodDecoderInterop(story: Story) {
     assumeFalse(
       story === Story.MISSING,
-      "Test stories missing, checkout git submodule"
+      "Test stories missing, checkout git submodule",
     )
     testDecoder(story)
   }

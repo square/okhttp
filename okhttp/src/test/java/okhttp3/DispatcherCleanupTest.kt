@@ -23,12 +23,20 @@ class DispatcherCleanupTest {
   @Test
   fun testFinish(server: MockWebServer) {
     val okhttp = OkHttpClient()
-    val callback = object : Callback {
-      override fun onFailure(call: Call, e: IOException) {}
-      override fun onResponse(call: Call, response: Response) {
-        response.close()
+    val callback =
+      object : Callback {
+        override fun onFailure(
+          call: Call,
+          e: IOException,
+        ) {}
+
+        override fun onResponse(
+          call: Call,
+          response: Response,
+        ) {
+          response.close()
+        }
       }
-    }
     repeat(10_000) {
       okhttp.newCall(Request.Builder().url(server.url("/")).build()).enqueue(callback)
     }

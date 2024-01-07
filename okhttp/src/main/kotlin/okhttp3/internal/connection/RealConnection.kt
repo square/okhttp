@@ -64,10 +64,8 @@ class RealConnection(
   val taskRunner: TaskRunner,
   val connectionPool: RealConnectionPool,
   override val route: Route,
-
   /** The low-level TCP socket. */
   private var rawSocket: Socket?,
-
   /**
    * The application layer socket. Either an [SSLSocket] layered over [rawSocket], or [rawSocket]
    * itself if this connection does not use SSL.
@@ -78,7 +76,7 @@ class RealConnection(
   private var source: BufferedSource?,
   private var sink: BufferedSink?,
   private val pingIntervalMillis: Int,
-  internal val connectionListener: ConnectionListener
+  internal val connectionListener: ConnectionListener,
 ) : Http2Connection.Listener(), Connection, ExchangeCodec.Carrier {
   private var http2Connection: Http2Connection? = null
 
@@ -160,12 +158,13 @@ class RealConnection(
     val sink = this.sink!!
     socket.soTimeout = 0 // HTTP/2 connection timeouts are set per-stream.
     val flowControlListener = connectionListener as? FlowControlListener ?: FlowControlListener.None
-    val http2Connection = Http2Connection.Builder(client = true, taskRunner)
-      .socket(socket, route.address.url.host, source, sink)
-      .listener(this)
-      .pingIntervalMillis(pingIntervalMillis)
-      .flowControlListener(flowControlListener)
-      .build()
+    val http2Connection =
+      Http2Connection.Builder(client = true, taskRunner)
+        .socket(socket, route.address.url.host, source, sink)
+        .listener(this)
+        .pingIntervalMillis(pingIntervalMillis)
+        .flowControlListener(flowControlListener)
+        .build()
     this.http2Connection = http2Connection
     this.allocationLimit = Http2Connection.DEFAULT_SETTINGS.getMaxConcurrentStreams()
     http2Connection.start()
@@ -175,7 +174,10 @@ class RealConnection(
    * Returns true if this connection can carry a stream allocation to `address`. If non-null
    * `route` is the resolved route for a connection.
    */
-  internal fun isEligible(address: Address, routes: List<Route>?): Boolean {
+  internal fun isEligible(
+    address: Address,
+    routes: List<Route>?,
+  ): Boolean {
     assertThreadHoldsLock()
 
     // If this connection is not accepting new exchanges, we're done.
@@ -245,7 +247,10 @@ class RealConnection(
     return !noCoalescedConnections && handshake != null && certificateSupportHost(url, handshake!!)
   }
 
-  private fun certificateSupportHost(url: HttpUrl, handshake: Handshake): Boolean {
+  private fun certificateSupportHost(
+    url: HttpUrl,
+    handshake: Handshake,
+  ): Boolean {
     val peerCertificates = handshake.peerCertificates
 
     return peerCertificates.isNotEmpty() &&
@@ -253,7 +258,10 @@ class RealConnection(
   }
 
   @Throws(SocketException::class)
-  internal fun newCodec(client: OkHttpClient, chain: RealInterceptorChain): ExchangeCodec {
+  internal fun newCodec(
+    client: OkHttpClient,
+    chain: RealInterceptorChain,
+  ): ExchangeCodec {
     val socket = this.socket!!
     val source = this.source!!
     val sink = this.sink!!
@@ -281,6 +289,7 @@ class RealConnection(
       override fun close() {
         exchange.bodyComplete<IOException?>(-1L, responseDone = true, requestDone = true, e = null)
       }
+
       override fun cancel() {
         exchange.cancel()
       }
@@ -306,7 +315,8 @@ class RealConnection(
     val socket = this.socket!!
     val source = this.source!!
     if (rawSocket.isClosed || socket.isClosed || socket.isInputShutdown ||
-      socket.isOutputShutdown) {
+      socket.isOutputShutdown
+    ) {
       return false
     }
 
@@ -330,19 +340,28 @@ class RealConnection(
   }
 
   /** When settings are received, adjust the allocation limit. */
-  @Synchronized override fun onSettings(connection: Http2Connection, settings: Settings) {
+  @Synchronized override fun onSettings(
+    connection: Http2Connection,
+    settings: Settings,
+  ) {
     allocationLimit = settings.getMaxConcurrentStreams()
   }
 
   override fun handshake(): Handshake? = handshake
 
   /** Track a bad route in the route database. Other routes will be attempted first. */
-  internal fun connectFailed(client: OkHttpClient, failedRoute: Route, failure: IOException) {
+  internal fun connectFailed(
+    client: OkHttpClient,
+    failedRoute: Route,
+    failure: IOException,
+  ) {
     // Tell the proxy selector when we fail to connect on a fresh connection.
     if (failedRoute.proxy.type() != Proxy.Type.DIRECT) {
       val address = failedRoute.address
       address.proxySelector.connectFailed(
-        address.url.toUri(), failedRoute.proxy.address(), failure
+        address.url.toUri(),
+        failedRoute.proxy.address(),
+        failure,
       )
     }
 
@@ -353,7 +372,10 @@ class RealConnection(
    * Track a failure using this connection. This may prevent both the connection and its route from
    * being used for future exchanges.
    */
-  override fun trackFailure(call: RealCall, e: IOException?) {
+  override fun trackFailure(
+    call: RealCall,
+    e: IOException?,
+  ) {
     var noNewExchangesEvent = false
     synchronized(this) {
       if (e is StreamResetException) {
@@ -418,21 +440,22 @@ class RealConnection(
       connectionPool: RealConnectionPool,
       route: Route,
       socket: Socket,
-      idleAtNs: Long
+      idleAtNs: Long,
     ): RealConnection {
-      val result = RealConnection(
-        taskRunner = taskRunner,
-        connectionPool = connectionPool,
-        route = route,
-        rawSocket = null,
-        socket = socket,
-        handshake = null,
-        protocol = null,
-        source = null,
-        sink = null,
-        pingIntervalMillis = 0,
-        ConnectionListener.NONE
-      )
+      val result =
+        RealConnection(
+          taskRunner = taskRunner,
+          connectionPool = connectionPool,
+          route = route,
+          rawSocket = null,
+          socket = socket,
+          handshake = null,
+          protocol = null,
+          source = null,
+          sink = null,
+          pingIntervalMillis = 0,
+          ConnectionListener.NONE,
+        )
       result.idleAtNs = idleAtNs
       return result
     }

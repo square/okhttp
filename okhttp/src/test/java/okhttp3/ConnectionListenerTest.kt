@@ -20,7 +20,6 @@ import assertk.assertions.containsExactly
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isIn
-import assertk.fail
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
@@ -60,10 +59,11 @@ open class ConnectionListenerTest {
 
   open val fastFallback: Boolean get() = true
 
-  private var client: OkHttpClient = clientTestRule.newClientBuilder()
-    .connectionPool(ConnectionPool(connectionListener = listener))
-    .fastFallback(fastFallback)
-    .build()
+  private var client: OkHttpClient =
+    clientTestRule.newClientBuilder()
+      .connectionPool(ConnectionPool(connectionListener = listener))
+      .fastFallback(fastFallback)
+      .build()
 
   @BeforeEach
   fun setUp(server: MockWebServer?) {
@@ -78,9 +78,12 @@ open class ConnectionListenerTest {
   @ValueSource(booleans = [true, false])
   fun successfulCallEventSequence() {
     server!!.enqueue(MockResponse(body = "abc"))
-    val call = client.newCall(Request.Builder()
-      .url(server!!.url("/"))
-      .build())
+    val call =
+      client.newCall(
+        Request.Builder()
+          .url(server!!.url("/"))
+          .build(),
+      )
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body.string()).isEqualTo("abc")
@@ -89,22 +92,27 @@ open class ConnectionListenerTest {
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
-      "ConnectionReleased"
+      "ConnectionReleased",
     )
   }
 
   @Test
   fun failedCallEventSequence() {
-    server!!.enqueue(MockResponse.Builder()
-      .headersDelay(2, TimeUnit.SECONDS)
-      .build()
+    server!!.enqueue(
+      MockResponse.Builder()
+        .headersDelay(2, TimeUnit.SECONDS)
+        .build(),
     )
-    client = client.newBuilder()
-      .readTimeout(Duration.ofMillis(250))
-      .build()
-    val call = client.newCall(Request.Builder()
-      .url(server!!.url("/"))
-      .build())
+    client =
+      client.newBuilder()
+        .readTimeout(Duration.ofMillis(250))
+        .build()
+    val call =
+      client.newCall(
+        Request.Builder()
+          .url(server!!.url("/"))
+          .build(),
+      )
     assertFailsWith<IOException> {
       call.execute()
     }.also { expected ->
@@ -122,9 +130,12 @@ open class ConnectionListenerTest {
 
   @Throws(IOException::class)
   private fun assertSuccessfulEventOrder() {
-    val call = client.newCall(Request.Builder()
-      .url(server!!.url("/"))
-      .build())
+    val call =
+      client.newCall(
+        Request.Builder()
+          .url(server!!.url("/"))
+          .build(),
+      )
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.body.string()
@@ -133,7 +144,7 @@ open class ConnectionListenerTest {
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
-      "ConnectionReleased"
+      "ConnectionReleased",
     )
   }
 
@@ -157,7 +168,7 @@ open class ConnectionListenerTest {
       "ConnectionAcquired",
       "ConnectionReleased",
       "ConnectionAcquired",
-      "ConnectionReleased"
+      "ConnectionReleased",
     )
   }
 
@@ -173,20 +184,26 @@ open class ConnectionListenerTest {
   @Test
   @Throws(IOException::class)
   fun multipleDnsLookupsForSingleCall() {
-    server!!.enqueue(MockResponse(
-      code = 301,
-      headers = headersOf("Location", "http://www.fakeurl:" + server!!.port)
-    ))
+    server!!.enqueue(
+      MockResponse(
+        code = 301,
+        headers = headersOf("Location", "http://www.fakeurl:" + server!!.port),
+      ),
+    )
     server!!.enqueue(MockResponse())
     val dns = FakeDns()
     dns["fakeurl"] = client.dns.lookup(server!!.hostName)
     dns["www.fakeurl"] = client.dns.lookup(server!!.hostName)
-    client = client.newBuilder()
-      .dns(dns)
-      .build()
-    val call = client.newCall(Request.Builder()
-      .url("http://fakeurl:" + server!!.port)
-      .build())
+    client =
+      client.newBuilder()
+        .dns(dns)
+        .build()
+    val call =
+      client.newCall(
+        Request.Builder()
+          .url("http://fakeurl:" + server!!.port)
+          .build(),
+      )
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.body.close()
@@ -200,9 +217,12 @@ open class ConnectionListenerTest {
   @Throws(IOException::class)
   fun successfulConnect() {
     server!!.enqueue(MockResponse())
-    val call = client.newCall(Request.Builder()
-      .url(server!!.url("/"))
-      .build())
+    val call =
+      client.newCall(
+        Request.Builder()
+          .url(server!!.url("/"))
+          .build(),
+      )
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.body.close()
@@ -217,9 +237,12 @@ open class ConnectionListenerTest {
   fun failedConnect() {
     enableTls()
     server!!.enqueue(MockResponse(socketPolicy = FailHandshake))
-    val call = client.newCall(Request.Builder()
-      .url(server!!.url("/"))
-      .build())
+    val call =
+      client.newCall(
+        Request.Builder()
+          .url(server!!.url("/"))
+          .build(),
+      )
     assertFailsWith<IOException> {
       call.execute()
     }
@@ -240,12 +263,16 @@ open class ConnectionListenerTest {
     enableTls()
     server!!.enqueue(MockResponse(socketPolicy = FailHandshake))
     server!!.enqueue(MockResponse())
-    client = client.newBuilder()
-      .dns(DoubleInetAddressDns())
-      .build()
-    val call = client.newCall(Request.Builder()
-      .url(server!!.url("/"))
-      .build())
+    client =
+      client.newBuilder()
+        .dns(DoubleInetAddressDns())
+        .build()
+    val call =
+      client.newCall(
+        Request.Builder()
+          .url(server!!.url("/"))
+          .build(),
+      )
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.body.close()
@@ -255,7 +282,7 @@ open class ConnectionListenerTest {
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
-      "ConnectionReleased"
+      "ConnectionReleased",
     )
   }
 
@@ -264,12 +291,16 @@ open class ConnectionListenerTest {
   fun successfulHttpProxyConnect() {
     server!!.enqueue(MockResponse())
     val proxy = server!!.toProxyAddress()
-    client = client.newBuilder()
-      .proxy(proxy)
-      .build()
-    val call = client.newCall(Request.Builder()
-      .url("http://www.fakeurl")
-      .build())
+    client =
+      client.newBuilder()
+        .proxy(proxy)
+        .build()
+    val call =
+      client.newCall(
+        Request.Builder()
+          .url("http://www.fakeurl")
+          .build(),
+      )
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.body.close()
@@ -277,17 +308,20 @@ open class ConnectionListenerTest {
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
-      "ConnectionReleased")
+      "ConnectionReleased",
+    )
     val event = listener.removeUpToEvent(ConnectionEvent.ConnectEnd::class.java)
     assertThat(event.connection.route().proxy).isEqualTo(proxy)
   }
 
   private fun enableTls() {
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
-      .hostnameVerifier(RecordingHostnameVerifier())
-      .build()
+    client =
+      client.newBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+        )
+        .hostnameVerifier(RecordingHostnameVerifier())
+        .build()
     server!!.useHttps(handshakeCertificates.sslSocketFactory())
   }
 }
@@ -295,6 +329,6 @@ open class ConnectionListenerTest {
 @Flaky // STDOUT logging enabled for test
 @Timeout(30)
 @Tag("Slow")
-class ConnectionListenerLegacyTest: ConnectionListenerTest() {
+class ConnectionListenerLegacyTest : ConnectionListenerTest() {
   override val fastFallback get() = false
 }

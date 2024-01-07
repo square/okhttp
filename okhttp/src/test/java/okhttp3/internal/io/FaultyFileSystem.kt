@@ -28,7 +28,10 @@ class FaultyFileSystem constructor(delegate: FileSystem?) : ForwardingFileSystem
   private val deleteFaults: MutableSet<Path> = LinkedHashSet()
   private val renameFaults: MutableSet<Path> = LinkedHashSet()
 
-  fun setFaultyWrite(file: Path, faulty: Boolean) {
+  fun setFaultyWrite(
+    file: Path,
+    faulty: Boolean,
+  ) {
     if (faulty) {
       writeFaults.add(file)
     } else {
@@ -36,7 +39,10 @@ class FaultyFileSystem constructor(delegate: FileSystem?) : ForwardingFileSystem
     }
   }
 
-  fun setFaultyDelete(file: Path, faulty: Boolean) {
+  fun setFaultyDelete(
+    file: Path,
+    faulty: Boolean,
+  ) {
     if (faulty) {
       deleteFaults.add(file)
     } else {
@@ -44,7 +50,10 @@ class FaultyFileSystem constructor(delegate: FileSystem?) : ForwardingFileSystem
     }
   }
 
-  fun setFaultyRename(file: Path, faulty: Boolean) {
+  fun setFaultyRename(
+    file: Path,
+    faulty: Boolean,
+  ) {
     if (faulty) {
       renameFaults.add(file)
     } else {
@@ -53,31 +62,47 @@ class FaultyFileSystem constructor(delegate: FileSystem?) : ForwardingFileSystem
   }
 
   @Throws(IOException::class)
-  override fun atomicMove(source: Path, target: Path) {
+  override fun atomicMove(
+    source: Path,
+    target: Path,
+  ) {
     if (renameFaults.contains(source) || renameFaults.contains(target)) throw IOException("boom!")
     super.atomicMove(source, target)
   }
 
   @Throws(IOException::class)
-  override fun delete(path: Path, mustExist: Boolean) {
+  override fun delete(
+    path: Path,
+    mustExist: Boolean,
+  ) {
     if (deleteFaults.contains(path)) throw IOException("boom!")
     super.delete(path, mustExist)
   }
 
   @Throws(IOException::class)
-  override fun deleteRecursively(fileOrDirectory: Path, mustExist: Boolean) {
+  override fun deleteRecursively(
+    fileOrDirectory: Path,
+    mustExist: Boolean,
+  ) {
     if (deleteFaults.contains(fileOrDirectory)) throw IOException("boom!")
     super.deleteRecursively(fileOrDirectory, mustExist)
   }
 
-  override fun appendingSink(file: Path, mustExist: Boolean): Sink =
-    FaultySink(super.appendingSink(file, mustExist), file)
+  override fun appendingSink(
+    file: Path,
+    mustExist: Boolean,
+  ): Sink = FaultySink(super.appendingSink(file, mustExist), file)
 
-  override fun sink(file: Path, mustCreate: Boolean): Sink =
-    FaultySink(super.sink(file, mustCreate), file)
+  override fun sink(
+    file: Path,
+    mustCreate: Boolean,
+  ): Sink = FaultySink(super.sink(file, mustCreate), file)
 
   inner class FaultySink(sink: Sink, private val file: Path) : ForwardingSink(sink) {
-    override fun write(source: Buffer, byteCount: Long) {
+    override fun write(
+      source: Buffer,
+      byteCount: Long,
+    ) {
       if (writeFaults.contains(file)) {
         throw IOException("boom!")
       } else {

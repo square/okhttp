@@ -84,8 +84,8 @@ class Request internal constructor(builder: Builder) {
           body != null -> "POST"
           else -> "GET"
         },
-        body
-      )
+        body,
+      ),
   )
 
   fun header(name: String): String? = commonHeader(name)
@@ -123,7 +123,8 @@ class Request internal constructor(builder: Builder) {
    * Returns the cache control directives for this response. This is never null, even if this
    * response contains no `Cache-Control` header.
    */
-  @get:JvmName("cacheControl") val cacheControl: CacheControl
+  @get:JvmName("cacheControl")
+  val cacheControl: CacheControl
     get() {
       var result = lazyCacheControl
       if (result == null) {
@@ -135,37 +136,42 @@ class Request internal constructor(builder: Builder) {
 
   @JvmName("-deprecated_url")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "url"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "url"),
+    level = DeprecationLevel.ERROR,
+  )
   fun url(): HttpUrl = url
 
   @JvmName("-deprecated_method")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "method"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "method"),
+    level = DeprecationLevel.ERROR,
+  )
   fun method(): String = method
 
   @JvmName("-deprecated_headers")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "headers"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "headers"),
+    level = DeprecationLevel.ERROR,
+  )
   fun headers(): Headers = headers
 
   @JvmName("-deprecated_body")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "body"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "body"),
+    level = DeprecationLevel.ERROR,
+  )
   fun body(): RequestBody? = body
 
   @JvmName("-deprecated_cacheControl")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "cacheControl"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "cacheControl"),
+    level = DeprecationLevel.ERROR,
+  )
   fun cacheControl(): CacheControl = cacheControl
 
   override fun toString(): String = commonToString()
@@ -175,6 +181,7 @@ class Request internal constructor(builder: Builder) {
     internal var method: String
     internal var headers: Headers.Builder
     internal var body: RequestBody? = null
+
     /** A mutable map of tags, or an immutable empty map if we don't have any. */
     internal var tags = mapOf<KClass<*>, Any>()
 
@@ -187,16 +194,18 @@ class Request internal constructor(builder: Builder) {
       this.url = request.url
       this.method = request.method
       this.body = request.body
-      this.tags = when {
-        request.tags.isEmpty() -> mapOf()
-        else -> request.tags.toMutableMap()
-      }
+      this.tags =
+        when {
+          request.tags.isEmpty() -> mapOf()
+          else -> request.tags.toMutableMap()
+        }
       this.headers = request.headers.newBuilder()
     }
 
-    open fun url(url: HttpUrl): Builder = apply {
-      this.url = url
-    }
+    open fun url(url: HttpUrl): Builder =
+      apply {
+        this.url = url
+      }
 
     /**
      * Sets the URL target of this request.
@@ -219,7 +228,10 @@ class Request internal constructor(builder: Builder) {
      * Sets the header named [name] to [value]. If this request already has any headers
      * with that name, they are all replaced.
      */
-    open fun header(name: String, value: String) = commonHeader(name, value)
+    open fun header(
+      name: String,
+      value: String,
+    ) = commonHeader(name, value)
 
     /**
      * Adds a header with [name] and [value]. Prefer this method for multiply-valued
@@ -228,7 +240,10 @@ class Request internal constructor(builder: Builder) {
      * Note that for some headers including `Content-Length` and `Content-Encoding`,
      * OkHttp may replace [value] with a header derived from the request body.
      */
-    open fun addHeader(name: String, value: String) = commonAddHeader(name, value)
+    open fun addHeader(
+      name: String,
+      value: String,
+    ) = commonAddHeader(name, value)
 
     /** Removes all headers named [name] on this builder. */
     open fun removeHeader(name: String) = commonRemoveHeader(name)
@@ -256,7 +271,10 @@ class Request internal constructor(builder: Builder) {
 
     open fun patch(body: RequestBody): Builder = commonPatch(body)
 
-    open fun method(method: String, body: RequestBody?): Builder = commonMethod(method, body)
+    open fun method(
+      method: String,
+      body: RequestBody?,
+    ): Builder = commonMethod(method, body)
 
     /**
      * Attaches [tag] to the request using [T] as a key. Tags can be read from a request using
@@ -275,7 +293,10 @@ class Request internal constructor(builder: Builder) {
      * Use this API to attach timing, debugging, or other application data to a request so that
      * you may read it in interceptors, event listeners, or callbacks.
      */
-    fun <T : Any> tag(type: KClass<T>, tag: T?): Builder = commonTag(type, type.cast(tag))
+    fun <T : Any> tag(
+      type: KClass<T>,
+      tag: T?,
+    ): Builder = commonTag(type, type.cast(tag))
 
     /** Attaches [tag] to the request using `Object.class` as a key. */
     open fun tag(tag: Any?): Builder = commonTag(Any::class, tag)
@@ -287,7 +308,10 @@ class Request internal constructor(builder: Builder) {
      * Use this API to attach timing, debugging, or other application data to a request so that
      * you may read it in interceptors, event listeners, or callbacks.
      */
-    open fun <T> tag(type: Class<in T>, tag: T?) = commonTag(type.kotlin, tag)
+    open fun <T> tag(
+      type: Class<in T>,
+      tag: T?,
+    ) = commonTag(type.kotlin, tag)
 
     open fun build(): Request = Request(this)
   }

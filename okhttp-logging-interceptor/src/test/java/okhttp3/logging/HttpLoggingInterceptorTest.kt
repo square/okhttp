@@ -72,21 +72,24 @@ class HttpLoggingInterceptorTest {
   @BeforeEach
   fun setUp(server: MockWebServer) {
     this.server = server
-    client = OkHttpClient.Builder()
-      .addNetworkInterceptor(Interceptor { chain ->
-        when {
-          extraNetworkInterceptor != null -> extraNetworkInterceptor!!.intercept(chain)
-          else -> chain.proceed(chain.request())
-        }
-      })
-      .addNetworkInterceptor(networkInterceptor)
-      .addInterceptor(applicationInterceptor)
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(),
-        handshakeCertificates.trustManager,
-      )
-      .hostnameVerifier(hostnameVerifier)
-      .build()
+    client =
+      OkHttpClient.Builder()
+        .addNetworkInterceptor(
+          Interceptor { chain ->
+            when {
+              extraNetworkInterceptor != null -> extraNetworkInterceptor!!.intercept(chain)
+              else -> chain.proceed(chain.request())
+            }
+          },
+        )
+        .addNetworkInterceptor(networkInterceptor)
+        .addInterceptor(applicationInterceptor)
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        )
+        .hostnameVerifier(hostnameVerifier)
+        .build()
     host = "${server.hostName}:${server.port}"
     url = server.url("/")
   }
@@ -153,7 +156,7 @@ class HttpLoggingInterceptorTest {
       MockResponse.Builder()
         .body("Hello!")
         .setHeader("Content-Type", PLAIN)
-        .build()
+        .build(),
     )
     val response = client.newCall(request().build()).execute()
     response.body.close()
@@ -174,7 +177,7 @@ class HttpLoggingInterceptorTest {
       MockResponse.Builder()
         .chunkedBody("Hello!", 2)
         .setHeader("Content-Type", PLAIN)
-        .build()
+        .build(),
     )
     val response = client.newCall(request().build()).execute()
     response.body.close()
@@ -278,13 +281,14 @@ class HttpLoggingInterceptorTest {
   fun headersPostNoLength() {
     setLevel(Level.HEADERS)
     server.enqueue(MockResponse())
-    val body: RequestBody = object : RequestBody() {
-      override fun contentType() = PLAIN
+    val body: RequestBody =
+      object : RequestBody() {
+        override fun contentType() = PLAIN
 
-      override fun writeTo(sink: BufferedSink) {
-        sink.writeUtf8("Hi!")
+        override fun writeTo(sink: BufferedSink) {
+          sink.writeUtf8("Hi!")
+        }
       }
-    }
     val response = client.newCall(request().post(body).build()).execute()
     response.body.close()
     applicationLogs
@@ -313,20 +317,21 @@ class HttpLoggingInterceptorTest {
   @Test
   fun headersPostWithHeaderOverrides() {
     setLevel(Level.HEADERS)
-    extraNetworkInterceptor = Interceptor { chain: Interceptor.Chain ->
-      chain.proceed(
-        chain.request()
-          .newBuilder()
-          .header("Content-Length", "2")
-          .header("Content-Type", "text/plain-ish")
-          .build()
-      )
-    }
+    extraNetworkInterceptor =
+      Interceptor { chain: Interceptor.Chain ->
+        chain.proceed(
+          chain.request()
+            .newBuilder()
+            .header("Content-Length", "2")
+            .header("Content-Type", "text/plain-ish")
+            .build(),
+        )
+      }
     server.enqueue(MockResponse())
     client.newCall(
       request()
         .post("Hi?".toRequestBody(PLAIN))
-        .build()
+        .build(),
     ).execute()
     applicationLogs
       .assertLogEqual("--> POST $url")
@@ -359,7 +364,7 @@ class HttpLoggingInterceptorTest {
       MockResponse.Builder()
         .body("Hello!")
         .setHeader("Content-Type", PLAIN)
-        .build()
+        .build(),
     )
     val response = client.newCall(request().build()).execute()
     response.body.close()
@@ -427,7 +432,7 @@ class HttpLoggingInterceptorTest {
     server.enqueue(
       MockResponse.Builder()
         .status("HTTP/1.1 $code No Content")
-        .build()
+        .build(),
     )
     val response = client.newCall(request().build()).execute()
     response.body.close()
@@ -493,7 +498,7 @@ class HttpLoggingInterceptorTest {
       MockResponse.Builder()
         .body("Hello!")
         .setHeader("Content-Type", PLAIN)
-        .build()
+        .build(),
     )
     val response = client.newCall(request().build()).execute()
     response.body.close()
@@ -530,7 +535,7 @@ class HttpLoggingInterceptorTest {
       MockResponse.Builder()
         .chunkedBody("Hello!", 2)
         .setHeader("Content-Type", PLAIN)
-        .build()
+        .build(),
     )
     val response = client.newCall(request().build()).execute()
     response.body.close()
@@ -567,14 +572,15 @@ class HttpLoggingInterceptorTest {
       MockResponse.Builder()
         .setHeader("Content-Type", PLAIN)
         .body(Buffer().writeUtf8("Uncompressed"))
-        .build()
+        .build(),
     )
-    val response = client.newCall(
-      request()
-        .addHeader("Content-Encoding", "gzip")
-        .post("Uncompressed".toRequestBody().gzip())
-        .build()
-    ).execute()
+    val response =
+      client.newCall(
+        request()
+          .addHeader("Content-Encoding", "gzip")
+          .post("Uncompressed".toRequestBody().gzip())
+          .build(),
+      ).execute()
     val responseBody = response.body
     assertThat(responseBody.string(), "Expected response body to be valid")
       .isEqualTo("Uncompressed")
@@ -606,7 +612,7 @@ class HttpLoggingInterceptorTest {
         .setHeader("Content-Encoding", "gzip")
         .setHeader("Content-Type", PLAIN)
         .body(Buffer().write("H4sIAAAAAAAAAPNIzcnJ11HwQKIAdyO+9hMAAAA=".decodeBase64()!!))
-        .build()
+        .build(),
     )
     val response = client.newCall(request().build()).execute()
     val responseBody = response.body
@@ -647,7 +653,7 @@ class HttpLoggingInterceptorTest {
         .setHeader("Content-Encoding", "br")
         .setHeader("Content-Type", PLAIN)
         .body(Buffer().write("iwmASGVsbG8sIEhlbGxvLCBIZWxsbwoD".decodeBase64()!!))
-        .build()
+        .build(),
     )
     val response = client.newCall(request().build()).execute()
     response.body.close()
@@ -693,9 +699,10 @@ class HttpLoggingInterceptorTest {
           |data: 113411
           |
           |
-          """.trimMargin(), 8
+          """.trimMargin(),
+          8,
         )
-        .build()
+        .build(),
     )
     val response = client.newCall(request().build()).execute()
     response.body.close()
@@ -728,7 +735,7 @@ class HttpLoggingInterceptorTest {
       MockResponse.Builder()
         .setHeader("Content-Type", "text/html; charset=0")
         .body("Body with unknown charset")
-        .build()
+        .build(),
     )
     val response = client.newCall(request().build()).execute()
     response.body.close()
@@ -774,7 +781,7 @@ class HttpLoggingInterceptorTest {
       MockResponse.Builder()
         .body(buffer)
         .setHeader("Content-Type", "image/png; charset=utf-8")
-        .build()
+        .build(),
     )
     val response = client.newCall(request().build()).execute()
     response.body.close()
@@ -805,10 +812,11 @@ class HttpLoggingInterceptorTest {
   @Test
   fun connectFail() {
     setLevel(Level.BASIC)
-    client = OkHttpClient.Builder()
-      .dns { hostname: String? -> throw UnknownHostException("reason") }
-      .addInterceptor(applicationInterceptor)
-      .build()
+    client =
+      OkHttpClient.Builder()
+        .dns { hostname: String? -> throw UnknownHostException("reason") }
+        .addInterceptor(applicationInterceptor)
+        .build()
     try {
       client.newCall(request().build()).execute()
       fail<Any>()
@@ -840,31 +848,35 @@ class HttpLoggingInterceptorTest {
 
   @Test
   fun headersAreRedacted() {
-    val networkInterceptor = HttpLoggingInterceptor(networkLogs).setLevel(
-      Level.HEADERS
-    )
+    val networkInterceptor =
+      HttpLoggingInterceptor(networkLogs).setLevel(
+        Level.HEADERS,
+      )
     networkInterceptor.redactHeader("sEnSiTiVe")
-    val applicationInterceptor = HttpLoggingInterceptor(applicationLogs).setLevel(
-      Level.HEADERS
-    )
+    val applicationInterceptor =
+      HttpLoggingInterceptor(applicationLogs).setLevel(
+        Level.HEADERS,
+      )
     applicationInterceptor.redactHeader("sEnSiTiVe")
-    client = OkHttpClient.Builder()
-      .addNetworkInterceptor(networkInterceptor)
-      .addInterceptor(applicationInterceptor)
-      .build()
+    client =
+      OkHttpClient.Builder()
+        .addNetworkInterceptor(networkInterceptor)
+        .addInterceptor(applicationInterceptor)
+        .build()
     server.enqueue(
       MockResponse.Builder()
         .addHeader("SeNsItIvE", "Value").addHeader("Not-Sensitive", "Value")
-        .build()
+        .build(),
     )
-    val response = client
-      .newCall(
-        request()
-          .addHeader("SeNsItIvE", "Value")
-          .addHeader("Not-Sensitive", "Value")
-          .build()
-      )
-      .execute()
+    val response =
+      client
+        .newCall(
+          request()
+            .addHeader("SeNsItIvE", "Value")
+            .addHeader("Not-Sensitive", "Value")
+            .build(),
+        )
+        .execute()
     response.body.close()
     applicationLogs
       .assertLogEqual("--> GET $url")
@@ -903,25 +915,27 @@ class HttpLoggingInterceptorTest {
     server.enqueue(
       MockResponse.Builder()
         .body("Hello response!")
-        .build()
+        .build(),
     )
-    val asyncRequestBody: RequestBody = object : RequestBody() {
-      override fun contentType(): MediaType? {
-        return null
-      }
+    val asyncRequestBody: RequestBody =
+      object : RequestBody() {
+        override fun contentType(): MediaType? {
+          return null
+        }
 
-      override fun writeTo(sink: BufferedSink) {
-        sink.writeUtf8("Hello request!")
-        sink.close()
-      }
+        override fun writeTo(sink: BufferedSink) {
+          sink.writeUtf8("Hello request!")
+          sink.close()
+        }
 
-      override fun isDuplex(): Boolean {
-        return true
+        override fun isDuplex(): Boolean {
+          return true
+        }
       }
-    }
-    val request = request()
-      .post(asyncRequestBody)
-      .build()
+    val request =
+      request()
+        .post(asyncRequestBody)
+        .build()
     val response = client.newCall(request).execute()
     Assumptions.assumeTrue(response.protocol == Protocol.HTTP_2)
     assertThat(response.body.string()).isEqualTo("Hello response!")
@@ -943,25 +957,27 @@ class HttpLoggingInterceptorTest {
     server.enqueue(
       MockResponse.Builder()
         .body("Hello response!")
-        .build()
+        .build(),
     )
-    val asyncRequestBody: RequestBody = object : RequestBody() {
-      var counter = 0
+    val asyncRequestBody: RequestBody =
+      object : RequestBody() {
+        var counter = 0
 
-      override fun contentType() = null
+        override fun contentType() = null
 
-      override fun writeTo(sink: BufferedSink) {
-        counter++
-        assertThat(counter).isLessThanOrEqualTo(1)
-        sink.writeUtf8("Hello request!")
-        sink.close()
+        override fun writeTo(sink: BufferedSink) {
+          counter++
+          assertThat(counter).isLessThanOrEqualTo(1)
+          sink.writeUtf8("Hello request!")
+          sink.close()
+        }
+
+        override fun isOneShot() = true
       }
-
-      override fun isOneShot() = true
-    }
-    val request = request()
-      .post(asyncRequestBody)
-      .build()
+    val request =
+      request()
+        .post(asyncRequestBody)
+        .build()
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("Hello response!")
     applicationLogs
@@ -985,19 +1001,21 @@ class HttpLoggingInterceptorTest {
     private val logs = mutableListOf<String>()
     private var index = 0
 
-    fun assertLogEqual(expected: String) = apply {
-      assertThat(index, "No more messages found")
-        .isLessThan(logs.size)
-      assertThat(logs[index++]).isEqualTo(expected)
-      return this
-    }
+    fun assertLogEqual(expected: String) =
+      apply {
+        assertThat(index, "No more messages found")
+          .isLessThan(logs.size)
+        assertThat(logs[index++]).isEqualTo(expected)
+        return this
+      }
 
-    fun assertLogMatch(regex: Regex) = apply {
-      assertThat(index, "No more messages found")
-        .isLessThan(logs.size)
-      assertThat(logs[index++])
-        .matches(Regex(prefix.pattern + regex.pattern, RegexOption.DOT_MATCHES_ALL))
-    }
+    fun assertLogMatch(regex: Regex) =
+      apply {
+        assertThat(index, "No more messages found")
+          .isLessThan(logs.size)
+        assertThat(logs[index++])
+          .matches(Regex(prefix.pattern + regex.pattern, RegexOption.DOT_MATCHES_ALL))
+      }
 
     fun assertNoMoreLogs() {
       assertThat(logs.size, "More messages remain: ${logs.subList(index, logs.size)}")

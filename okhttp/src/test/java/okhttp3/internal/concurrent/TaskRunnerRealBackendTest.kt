@@ -39,16 +39,18 @@ import org.junit.jupiter.api.Test
 class TaskRunnerRealBackendTest {
   private val log = LinkedBlockingDeque<String>()
 
-  private val loggingUncaughtExceptionHandler = UncaughtExceptionHandler { _, throwable ->
-    log.put("uncaught exception: $throwable")
-  }
-
-  private val threadFactory = ThreadFactory { runnable ->
-    Thread(runnable, "TaskRunnerRealBackendTest").apply {
-      isDaemon = true
-      uncaughtExceptionHandler = loggingUncaughtExceptionHandler
+  private val loggingUncaughtExceptionHandler =
+    UncaughtExceptionHandler { _, throwable ->
+      log.put("uncaught exception: $throwable")
     }
-  }
+
+  private val threadFactory =
+    ThreadFactory { runnable ->
+      Thread(runnable, "TaskRunnerRealBackendTest").apply {
+        isDaemon = true
+        uncaughtExceptionHandler = loggingUncaughtExceptionHandler
+      }
+    }
 
   private val backend = TaskRunner.RealBackend(threadFactory)
   private val taskRunner = TaskRunner(backend)

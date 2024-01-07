@@ -91,7 +91,8 @@ enum class Protocol(private val protocol: String) {
    * HTTP/3 is not natively supported by OkHttp, but provided to allow a theoretical interceptor
    * that provides support.
    */
-  HTTP_3("h3");
+  HTTP_3("h3"),
+  ;
 
   /**
    * Returns the string used to identify this protocol for ALPN, like "http/1.1", "spdy/3.1" or

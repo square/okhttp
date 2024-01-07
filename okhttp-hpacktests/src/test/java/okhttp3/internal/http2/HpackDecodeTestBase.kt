@@ -36,7 +36,7 @@ open class HpackDecodeTestBase {
       assertSetEquals(
         "seqno=$testCase.seqno",
         testCase.headersList,
-        hpackReader.getAndResetHeaderList()
+        hpackReader.getAndResetHeaderList(),
       )
     }
   }

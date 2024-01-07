@@ -15,9 +15,9 @@
  */
 package okhttp3.internal.http2
 
+import assertk.fail
 import okio.BufferedSource
 import okio.ByteString
-import assertk.fail
 
 internal open class BaseTestHandler : Http2Reader.Handler {
   override fun data(

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal
 
 import kotlin.jvm.JvmStatic
@@ -23,7 +24,6 @@ import okhttp3.internal.HttpUrlCommon.writePercentDecoded
 import okio.Buffer
 
 internal object CommonHttpUrl {
-
   internal val HEX_DIGITS =
     charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')
   private const val USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"
@@ -172,7 +172,6 @@ internal object CommonHttpUrl {
       .toString()
   }
 
-
   fun HttpUrl.commonResolve(link: String): HttpUrl? = newBuilder(link)?.build()
 
   fun HttpUrl.commonNewBuilder(): HttpUrl.Builder {
@@ -206,7 +205,6 @@ internal object CommonHttpUrl {
 
   fun HttpUrl.commonToString(): String = url
 
-
   /** Returns 80 if `scheme.equals("http")`, 443 if `scheme.equals("https")` and -1 otherwise. */
   @JvmStatic
   fun commonDefaultPort(scheme: String): Int {
@@ -217,54 +215,62 @@ internal object CommonHttpUrl {
     }
   }
 
-
   /**
    * @param scheme either "http" or "https".
    */
-  fun HttpUrl.Builder.commonScheme(scheme: String) = apply {
-    when {
-      scheme.equals("http", ignoreCase = true) -> this.scheme = "http"
-      scheme.equals("https", ignoreCase = true) -> this.scheme = "https"
-      else -> throw IllegalArgumentException("unexpected scheme: $scheme")
+  fun HttpUrl.Builder.commonScheme(scheme: String) =
+    apply {
+      when {
+        scheme.equals("http", ignoreCase = true) -> this.scheme = "http"
+        scheme.equals("https", ignoreCase = true) -> this.scheme = "https"
+        else -> throw IllegalArgumentException("unexpected scheme: $scheme")
+      }
     }
-  }
 
-  fun HttpUrl.Builder.commonUsername(username: String) = apply {
-    this.encodedUsername = username.canonicalize(encodeSet = USERNAME_ENCODE_SET)
-  }
+  fun HttpUrl.Builder.commonUsername(username: String) =
+    apply {
+      this.encodedUsername = username.canonicalize(encodeSet = USERNAME_ENCODE_SET)
+    }
 
-  fun HttpUrl.Builder.commonEncodedUsername(encodedUsername: String) = apply {
-    this.encodedUsername = encodedUsername.canonicalize(
-      encodeSet = USERNAME_ENCODE_SET,
-      alreadyEncoded = true
-    )
-  }
+  fun HttpUrl.Builder.commonEncodedUsername(encodedUsername: String) =
+    apply {
+      this.encodedUsername =
+        encodedUsername.canonicalize(
+          encodeSet = USERNAME_ENCODE_SET,
+          alreadyEncoded = true,
+        )
+    }
 
-  fun HttpUrl.Builder.commonPassword(password: String) = apply {
-    this.encodedPassword = password.canonicalize(encodeSet = PASSWORD_ENCODE_SET)
-  }
+  fun HttpUrl.Builder.commonPassword(password: String) =
+    apply {
+      this.encodedPassword = password.canonicalize(encodeSet = PASSWORD_ENCODE_SET)
+    }
 
-  fun HttpUrl.Builder.commonEncodedPassword(encodedPassword: String) = apply {
-    this.encodedPassword = encodedPassword.canonicalize(
-      encodeSet = PASSWORD_ENCODE_SET,
-      alreadyEncoded = true
-    )
-  }
+  fun HttpUrl.Builder.commonEncodedPassword(encodedPassword: String) =
+    apply {
+      this.encodedPassword =
+        encodedPassword.canonicalize(
+          encodeSet = PASSWORD_ENCODE_SET,
+          alreadyEncoded = true,
+        )
+    }
 
   /**
    * @param host either a regular hostname, International Domain Name, IPv4 address, or IPv6
    * address.
    */
-  fun HttpUrl.Builder.commonHost(host: String) = apply {
-    val encoded = host.percentDecode().toCanonicalHost()
-      ?: throw IllegalArgumentException("unexpected host: $host")
-    this.host = encoded
-  }
+  fun HttpUrl.Builder.commonHost(host: String) =
+    apply {
+      val encoded =
+        host.percentDecode().toCanonicalHost()
+          ?: throw IllegalArgumentException("unexpected host: $host")
+      this.host = encoded
+    }
 
   internal fun String.percentDecode(
     pos: Int = 0,
     limit: Int = length,
-    plusIsSpace: Boolean = false
+    plusIsSpace: Boolean = false,
   ): String {
     for (i in pos until limit) {
       val c = this[i]
@@ -281,15 +287,16 @@ internal object CommonHttpUrl {
     return substring(pos, limit)
   }
 
-  fun HttpUrl.Builder.commonPort(port: Int) = apply {
-    require(port in 1..65535) { "unexpected port: $port" }
-    this.port = port
-  }
+  fun HttpUrl.Builder.commonPort(port: Int) =
+    apply {
+      require(port in 1..65535) { "unexpected port: $port" }
+      this.port = port
+    }
 
-
-  fun HttpUrl.Builder.commonAddPathSegment(pathSegment: String) = apply {
-    push(pathSegment, 0, pathSegment.length, addTrailingSlash = false, alreadyEncoded = false)
-  }
+  fun HttpUrl.Builder.commonAddPathSegment(pathSegment: String) =
+    apply {
+      push(pathSegment, 0, pathSegment.length, addTrailingSlash = false, alreadyEncoded = false)
+    }
 
   /**
    * Adds a set of path segments separated by a slash (either `\` or `/`). If `pathSegments`
@@ -297,10 +304,16 @@ internal object CommonHttpUrl {
    */
   fun HttpUrl.Builder.commonAddPathSegments(pathSegments: String): HttpUrl.Builder = commonAddPathSegments(pathSegments, false)
 
-  fun HttpUrl.Builder.commonAddEncodedPathSegment(encodedPathSegment: String) = apply {
-    push(encodedPathSegment, 0, encodedPathSegment.length, addTrailingSlash = false,
-      alreadyEncoded = true)
-  }
+  fun HttpUrl.Builder.commonAddEncodedPathSegment(encodedPathSegment: String) =
+    apply {
+      push(
+        encodedPathSegment,
+        0,
+        encodedPathSegment.length,
+        addTrailingSlash = false,
+        alreadyEncoded = true,
+      )
+    }
 
   /**
    * Adds a set of encoded path segments separated by a slash (either `\` or `/`). If
@@ -309,7 +322,10 @@ internal object CommonHttpUrl {
   fun HttpUrl.Builder.commonAddEncodedPathSegments(encodedPathSegments: String): HttpUrl.Builder =
     commonAddPathSegments(encodedPathSegments, true)
 
-  private fun HttpUrl.Builder.commonAddPathSegments(pathSegments: String, alreadyEncoded: Boolean) = apply {
+  private fun HttpUrl.Builder.commonAddPathSegments(
+    pathSegments: String,
+    alreadyEncoded: Boolean,
+  ) = apply {
     var offset = 0
     do {
       val segmentEnd = pathSegments.delimiterOffset("/\\", offset, pathSegments.length)
@@ -319,7 +335,10 @@ internal object CommonHttpUrl {
     } while (offset <= pathSegments.length)
   }
 
-  fun HttpUrl.Builder.commonSetPathSegment(index: Int, pathSegment: String) = apply {
+  fun HttpUrl.Builder.commonSetPathSegment(
+    index: Int,
+    pathSegment: String,
+  ) = apply {
     val canonicalPathSegment = pathSegment.canonicalize(encodeSet = PATH_SEGMENT_ENCODE_SET)
     require(!isDot(canonicalPathSegment) && !isDotDot(canonicalPathSegment)) {
       "unexpected path segment: $pathSegment"
@@ -327,99 +346,134 @@ internal object CommonHttpUrl {
     encodedPathSegments[index] = canonicalPathSegment
   }
 
-  fun HttpUrl.Builder.commonSetEncodedPathSegment(index: Int, encodedPathSegment: String) = apply {
-    val canonicalPathSegment = encodedPathSegment.canonicalize(
-      encodeSet = PATH_SEGMENT_ENCODE_SET,
-      alreadyEncoded = true
-    )
+  fun HttpUrl.Builder.commonSetEncodedPathSegment(
+    index: Int,
+    encodedPathSegment: String,
+  ) = apply {
+    val canonicalPathSegment =
+      encodedPathSegment.canonicalize(
+        encodeSet = PATH_SEGMENT_ENCODE_SET,
+        alreadyEncoded = true,
+      )
     encodedPathSegments[index] = canonicalPathSegment
     require(!isDot(canonicalPathSegment) && !isDotDot(canonicalPathSegment)) {
       "unexpected path segment: $encodedPathSegment"
     }
   }
 
-  fun HttpUrl.Builder.commonRemovePathSegment(index: Int) = apply {
-    encodedPathSegments.removeAt(index)
-    if (encodedPathSegments.isEmpty()) {
-      encodedPathSegments.add("") // Always leave at least one '/'.
+  fun HttpUrl.Builder.commonRemovePathSegment(index: Int) =
+    apply {
+      encodedPathSegments.removeAt(index)
+      if (encodedPathSegments.isEmpty()) {
+        encodedPathSegments.add("") // Always leave at least one '/'.
+      }
     }
-  }
 
-  fun HttpUrl.Builder.commonEncodedPath(encodedPath: String) = apply {
-    require(encodedPath.startsWith("/")) { "unexpected encodedPath: $encodedPath" }
-    resolvePath(encodedPath, 0, encodedPath.length)
-  }
+  fun HttpUrl.Builder.commonEncodedPath(encodedPath: String) =
+    apply {
+      require(encodedPath.startsWith("/")) { "unexpected encodedPath: $encodedPath" }
+      resolvePath(encodedPath, 0, encodedPath.length)
+    }
 
-  fun HttpUrl.Builder.commonQuery(query: String?) = apply {
-    this.encodedQueryNamesAndValues = query?.canonicalize(
-      encodeSet = QUERY_ENCODE_SET,
-      plusIsSpace = true
-    )?.toQueryNamesAndValues()
-  }
+  fun HttpUrl.Builder.commonQuery(query: String?) =
+    apply {
+      this.encodedQueryNamesAndValues =
+        query?.canonicalize(
+          encodeSet = QUERY_ENCODE_SET,
+          plusIsSpace = true,
+        )?.toQueryNamesAndValues()
+    }
 
-  fun HttpUrl.Builder.commonEncodedQuery(encodedQuery: String?) = apply {
-    this.encodedQueryNamesAndValues = encodedQuery?.canonicalize(
-      encodeSet = QUERY_ENCODE_SET,
-      alreadyEncoded = true,
-      plusIsSpace = true
-    )?.toQueryNamesAndValues()
-  }
+  fun HttpUrl.Builder.commonEncodedQuery(encodedQuery: String?) =
+    apply {
+      this.encodedQueryNamesAndValues =
+        encodedQuery?.canonicalize(
+          encodeSet = QUERY_ENCODE_SET,
+          alreadyEncoded = true,
+          plusIsSpace = true,
+        )?.toQueryNamesAndValues()
+    }
 
   /** Encodes the query parameter using UTF-8 and adds it to this URL's query string. */
-  fun HttpUrl.Builder.commonAddQueryParameter(name: String, value: String?) = apply {
+  fun HttpUrl.Builder.commonAddQueryParameter(
+    name: String,
+    value: String?,
+  ) = apply {
     if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = mutableListOf()
-    encodedQueryNamesAndValues!!.add(name.canonicalize(
-      encodeSet = QUERY_COMPONENT_ENCODE_SET,
-      plusIsSpace = true
-    ))
-    encodedQueryNamesAndValues!!.add(value?.canonicalize(
-      encodeSet = QUERY_COMPONENT_ENCODE_SET,
-      plusIsSpace = true
-    ))
+    encodedQueryNamesAndValues!!.add(
+      name.canonicalize(
+        encodeSet = QUERY_COMPONENT_ENCODE_SET,
+        plusIsSpace = true,
+      ),
+    )
+    encodedQueryNamesAndValues!!.add(
+      value?.canonicalize(
+        encodeSet = QUERY_COMPONENT_ENCODE_SET,
+        plusIsSpace = true,
+      ),
+    )
   }
 
   /** Adds the pre-encoded query parameter to this URL's query string. */
-  fun HttpUrl.Builder.commonAddEncodedQueryParameter(encodedName: String, encodedValue: String?) = apply {
+  fun HttpUrl.Builder.commonAddEncodedQueryParameter(
+    encodedName: String,
+    encodedValue: String?,
+  ) = apply {
     if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = mutableListOf()
-    encodedQueryNamesAndValues!!.add(encodedName.canonicalize(
-      encodeSet = QUERY_COMPONENT_REENCODE_SET,
-      alreadyEncoded = true,
-      plusIsSpace = true
-    ))
-    encodedQueryNamesAndValues!!.add(encodedValue?.canonicalize(
-      encodeSet = QUERY_COMPONENT_REENCODE_SET,
-      alreadyEncoded = true,
-      plusIsSpace = true
-    ))
+    encodedQueryNamesAndValues!!.add(
+      encodedName.canonicalize(
+        encodeSet = QUERY_COMPONENT_REENCODE_SET,
+        alreadyEncoded = true,
+        plusIsSpace = true,
+      ),
+    )
+    encodedQueryNamesAndValues!!.add(
+      encodedValue?.canonicalize(
+        encodeSet = QUERY_COMPONENT_REENCODE_SET,
+        alreadyEncoded = true,
+        plusIsSpace = true,
+      ),
+    )
   }
 
-  fun HttpUrl.Builder.commonSetQueryParameter(name: String, value: String?) = apply {
+  fun HttpUrl.Builder.commonSetQueryParameter(
+    name: String,
+    value: String?,
+  ) = apply {
     removeAllQueryParameters(name)
     addQueryParameter(name, value)
   }
 
-  fun HttpUrl.Builder.commonSetEncodedQueryParameter(encodedName: String, encodedValue: String?) = apply {
+  fun HttpUrl.Builder.commonSetEncodedQueryParameter(
+    encodedName: String,
+    encodedValue: String?,
+  ) = apply {
     removeAllEncodedQueryParameters(encodedName)
     addEncodedQueryParameter(encodedName, encodedValue)
   }
 
-  fun HttpUrl.Builder.commonRemoveAllQueryParameters(name: String) = apply {
-    if (encodedQueryNamesAndValues == null) return this
-    val nameToRemove = name.canonicalize(
-      encodeSet = QUERY_COMPONENT_ENCODE_SET,
-      plusIsSpace = true
-    )
-    commonRemoveAllCanonicalQueryParameters(nameToRemove)
-  }
+  fun HttpUrl.Builder.commonRemoveAllQueryParameters(name: String) =
+    apply {
+      if (encodedQueryNamesAndValues == null) return this
+      val nameToRemove =
+        name.canonicalize(
+          encodeSet = QUERY_COMPONENT_ENCODE_SET,
+          plusIsSpace = true,
+        )
+      commonRemoveAllCanonicalQueryParameters(nameToRemove)
+    }
 
-  fun HttpUrl.Builder.commonRemoveAllEncodedQueryParameters(encodedName: String) = apply {
-    if (encodedQueryNamesAndValues == null) return this
-    commonRemoveAllCanonicalQueryParameters(encodedName.canonicalize(
-      encodeSet = QUERY_COMPONENT_REENCODE_SET,
-      alreadyEncoded = true,
-      plusIsSpace = true
-    ))
-  }
+  fun HttpUrl.Builder.commonRemoveAllEncodedQueryParameters(encodedName: String) =
+    apply {
+      if (encodedQueryNamesAndValues == null) return this
+      commonRemoveAllCanonicalQueryParameters(
+        encodedName.canonicalize(
+          encodeSet = QUERY_COMPONENT_REENCODE_SET,
+          alreadyEncoded = true,
+          plusIsSpace = true,
+        ),
+      )
+    }
 
   fun HttpUrl.Builder.commonRemoveAllCanonicalQueryParameters(canonicalName: String) {
     for (i in encodedQueryNamesAndValues!!.size - 2 downTo 0 step 2) {
@@ -434,21 +488,24 @@ internal object CommonHttpUrl {
     }
   }
 
-  fun HttpUrl.Builder.commonFragment(fragment: String?) = apply {
-    this.encodedFragment = fragment?.canonicalize(
-      encodeSet = FRAGMENT_ENCODE_SET,
-      unicodeAllowed = true
-    )
-  }
+  fun HttpUrl.Builder.commonFragment(fragment: String?) =
+    apply {
+      this.encodedFragment =
+        fragment?.canonicalize(
+          encodeSet = FRAGMENT_ENCODE_SET,
+          unicodeAllowed = true,
+        )
+    }
 
-  fun HttpUrl.Builder.commonEncodedFragment(encodedFragment: String?) = apply {
-    this.encodedFragment = encodedFragment?.canonicalize(
-      encodeSet = FRAGMENT_ENCODE_SET,
-      alreadyEncoded = true,
-      unicodeAllowed = true
-    )
-  }
-
+  fun HttpUrl.Builder.commonEncodedFragment(encodedFragment: String?) =
+    apply {
+      this.encodedFragment =
+        encodedFragment?.canonicalize(
+          encodeSet = FRAGMENT_ENCODE_SET,
+          alreadyEncoded = true,
+          unicodeAllowed = true,
+        )
+    }
 
   /** Adds a path segment. If the input is ".." or equivalent, this pops a path segment. */
   internal fun HttpUrl.Builder.push(
@@ -456,14 +513,15 @@ internal object CommonHttpUrl {
     pos: Int,
     limit: Int,
     addTrailingSlash: Boolean,
-    alreadyEncoded: Boolean
+    alreadyEncoded: Boolean,
   ) {
-    val segment = input.canonicalize(
-      pos = pos,
-      limit = limit,
-      encodeSet = PATH_SEGMENT_ENCODE_SET,
-      alreadyEncoded = alreadyEncoded
-    )
+    val segment =
+      input.canonicalize(
+        pos = pos,
+        limit = limit,
+        encodeSet = PATH_SEGMENT_ENCODE_SET,
+        alreadyEncoded = alreadyEncoded,
+      )
     if (isDot(segment)) {
       return // Skip '.' path segments.
     }
@@ -513,7 +571,11 @@ internal object CommonHttpUrl {
     }
   }
 
-  internal fun HttpUrl.Builder.resolvePath(input: String, startPos: Int, limit: Int) {
+  internal fun HttpUrl.Builder.resolvePath(
+    input: String,
+    startPos: Int,
+    limit: Int,
+  ) {
     var pos = startPos
     // Read a delimiter.
     if (pos == limit) {
@@ -578,13 +640,14 @@ internal object CommonHttpUrl {
       pathSegments = encodedPathSegments.map { it.percentDecode() },
       queryNamesAndValues = encodedQueryNamesAndValues?.map { it?.percentDecode(plusIsSpace = true) },
       fragment = encodedFragment?.percentDecode(),
-      url = toString()
+      url = toString(),
     )
   }
 
   internal fun HttpUrl.Builder.effectivePort(): Int {
     return if (port != -1) port else HttpUrl.defaultPort(scheme!!)
   }
+
   internal fun HttpUrl.Builder.commonToString(): String {
     return buildString {
       if (scheme != null) {
@@ -644,7 +707,10 @@ internal object CommonHttpUrl {
     }
   }
 
-  internal fun HttpUrl.Builder.commonParse(base: HttpUrl?, input: String): HttpUrl.Builder {
+  internal fun HttpUrl.Builder.commonParse(
+    base: HttpUrl?,
+    input: String,
+  ): HttpUrl.Builder {
     var pos = input.indexOfFirstNonAsciiWhitespace()
     val limit = input.indexOfLastNonAsciiWhitespace(pos)
 
@@ -660,15 +726,18 @@ internal object CommonHttpUrl {
           this.scheme = "http"
           pos += "http:".length
         }
-        else -> throw IllegalArgumentException("Expected URL scheme 'http' or 'https' but was '" +
-          input.substring(0, schemeDelimiterOffset) + "'")
+        else -> throw IllegalArgumentException(
+          "Expected URL scheme 'http' or 'https' but was '" +
+            input.substring(0, schemeDelimiterOffset) + "'",
+        )
       }
     } else if (base != null) {
       this.scheme = base.scheme
     } else {
       val truncated = if (input.length > 6) input.take(6) + "..." else input
       throw IllegalArgumentException(
-        "Expected URL scheme 'http' or 'https' but no scheme was found for $truncated")
+        "Expected URL scheme 'http' or 'https' but no scheme was found for $truncated",
+      )
     }
 
     // Authority.
@@ -688,44 +757,49 @@ internal object CommonHttpUrl {
       pos += slashCount
       authority@ while (true) {
         val componentDelimiterOffset = input.delimiterOffset("@/\\?#", pos, limit)
-        val c = if (componentDelimiterOffset != limit) {
-          input[componentDelimiterOffset].code
-        } else {
-          -1
-        }
+        val c =
+          if (componentDelimiterOffset != limit) {
+            input[componentDelimiterOffset].code
+          } else {
+            -1
+          }
         when (c) {
           '@'.code -> {
             // User info precedes.
             if (!hasPassword) {
               val passwordColonOffset = input.delimiterOffset(':', pos, componentDelimiterOffset)
-              val canonicalUsername = input.canonicalize(
-                pos = pos,
-                limit = passwordColonOffset,
-                encodeSet = USERNAME_ENCODE_SET,
-                alreadyEncoded = true
-              )
-              this.encodedUsername = if (hasUsername) {
-                this.encodedUsername + "%40" + canonicalUsername
-              } else {
-                canonicalUsername
-              }
+              val canonicalUsername =
+                input.canonicalize(
+                  pos = pos,
+                  limit = passwordColonOffset,
+                  encodeSet = USERNAME_ENCODE_SET,
+                  alreadyEncoded = true,
+                )
+              this.encodedUsername =
+                if (hasUsername) {
+                  this.encodedUsername + "%40" + canonicalUsername
+                } else {
+                  canonicalUsername
+                }
               if (passwordColonOffset != componentDelimiterOffset) {
                 hasPassword = true
-                this.encodedPassword = input.canonicalize(
-                  pos = passwordColonOffset + 1,
-                  limit = componentDelimiterOffset,
-                  encodeSet = PASSWORD_ENCODE_SET,
-                  alreadyEncoded = true
-                )
+                this.encodedPassword =
+                  input.canonicalize(
+                    pos = passwordColonOffset + 1,
+                    limit = componentDelimiterOffset,
+                    encodeSet = PASSWORD_ENCODE_SET,
+                    alreadyEncoded = true,
+                  )
               }
               hasUsername = true
             } else {
-              this.encodedPassword = this.encodedPassword + "%40" + input.canonicalize(
-                pos = pos,
-                limit = componentDelimiterOffset,
-                encodeSet = PASSWORD_ENCODE_SET,
-                alreadyEncoded = true
-              )
+              this.encodedPassword = this.encodedPassword + "%40" +
+                input.canonicalize(
+                  pos = pos,
+                  limit = componentDelimiterOffset,
+                  encodeSet = PASSWORD_ENCODE_SET,
+                  alreadyEncoded = true,
+                )
             }
             pos = componentDelimiterOffset + 1
           }
@@ -737,8 +811,10 @@ internal object CommonHttpUrl {
               host = input.percentDecode(pos = pos, limit = portColonOffset).toCanonicalHost()
               port = parsePort(input, portColonOffset + 1, componentDelimiterOffset)
               require(port != -1) {
-                "Invalid URL port: \"${input.substring(portColonOffset + 1,
-                  componentDelimiterOffset)}\""
+                "Invalid URL port: \"${input.substring(
+                  portColonOffset + 1,
+                  componentDelimiterOffset,
+                )}\""
               }
             } else {
               host = input.percentDecode(pos = pos, limit = portColonOffset).toCanonicalHost()
@@ -773,36 +849,43 @@ internal object CommonHttpUrl {
     // Query.
     if (pos < limit && input[pos] == '?') {
       val queryDelimiterOffset = input.delimiterOffset('#', pos, limit)
-      this.encodedQueryNamesAndValues = input.canonicalize(
-        pos = pos + 1,
-        limit = queryDelimiterOffset,
-        encodeSet = QUERY_ENCODE_SET,
-        alreadyEncoded = true,
-        plusIsSpace = true
-      ).toQueryNamesAndValues()
+      this.encodedQueryNamesAndValues =
+        input.canonicalize(
+          pos = pos + 1,
+          limit = queryDelimiterOffset,
+          encodeSet = QUERY_ENCODE_SET,
+          alreadyEncoded = true,
+          plusIsSpace = true,
+        ).toQueryNamesAndValues()
       pos = queryDelimiterOffset
     }
 
     // Fragment.
     if (pos < limit && input[pos] == '#') {
-      this.encodedFragment = input.canonicalize(
-        pos = pos + 1,
-        limit = limit,
-        encodeSet = FRAGMENT_ENCODE_SET,
-        alreadyEncoded = true,
-        unicodeAllowed = true
-      )
+      this.encodedFragment =
+        input.canonicalize(
+          pos = pos + 1,
+          limit = limit,
+          encodeSet = FRAGMENT_ENCODE_SET,
+          alreadyEncoded = true,
+          unicodeAllowed = true,
+        )
     }
 
     return this
   }
+
   internal const val INVALID_HOST = "Invalid URL host"
 
   /**
    * Returns the index of the ':' in `input` that is after scheme characters. Returns -1 if
    * `input` does not have a scheme that starts at `pos`.
    */
-  internal fun schemeDelimiterOffset(input: String, pos: Int, limit: Int): Int {
+  internal fun schemeDelimiterOffset(
+    input: String,
+    pos: Int,
+    limit: Int,
+  ): Int {
     if (limit - pos < 2) return -1
 
     val c0 = input[pos]
@@ -825,7 +908,10 @@ internal object CommonHttpUrl {
   }
 
   /** Returns the number of '/' and '\' slashes in this, starting at `pos`. */
-  internal fun String.slashCount(pos: Int, limit: Int): Int {
+  internal fun String.slashCount(
+    pos: Int,
+    limit: Int,
+  ): Int {
     var slashCount = 0
     for (i in pos until limit) {
       val c = this[i]
@@ -839,7 +925,11 @@ internal object CommonHttpUrl {
   }
 
   /** Finds the first ':' in `input`, skipping characters between square braces "[...]". */
-  internal fun portColonOffset(input: String, pos: Int, limit: Int): Int {
+  internal fun portColonOffset(
+    input: String,
+    pos: Int,
+    limit: Int,
+  ): Int {
     var i = pos
     while (i < limit) {
       when (input[i]) {
@@ -855,7 +945,11 @@ internal object CommonHttpUrl {
     return limit // No colon.
   }
 
-  internal fun parsePort(input: String, pos: Int, limit: Int): Int {
+  internal fun parsePort(
+    input: String,
+    pos: Int,
+    limit: Int,
+  ): Int {
     return try {
       // Canonicalize the port string to skip '\n' etc.
       val portString = input.canonicalize(pos = pos, limit = limit, encodeSet = "")
@@ -866,14 +960,17 @@ internal object CommonHttpUrl {
     }
   }
 
-  internal fun String.isPercentEncoded(pos: Int, limit: Int): Boolean {
+  internal fun String.isPercentEncoded(
+    pos: Int,
+    limit: Int,
+  ): Boolean {
     return pos + 2 < limit &&
       this[pos] == '%' &&
       this[pos + 1].parseHexDigit() != -1 &&
       this[pos + 2].parseHexDigit() != -1
   }
 
-  internal  fun String.commonToHttpUrl(): HttpUrl = HttpUrl.Builder().parse(null, this).build()
+  internal fun String.commonToHttpUrl(): HttpUrl = HttpUrl.Builder().parse(null, this).build()
 
   internal fun String.commonToHttpUrlOrNull(): HttpUrl? {
     return try {

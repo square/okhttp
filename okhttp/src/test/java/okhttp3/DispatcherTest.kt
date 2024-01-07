@@ -13,7 +13,6 @@ import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import assertk.fail
 import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
@@ -26,15 +25,17 @@ class DispatcherTest {
   val clientTestRule = OkHttpClientTestRule()
   private val executor = RecordingExecutor(this)
   val callback = RecordingCallback()
-  val webSocketListener = object : WebSocketListener() {
-  }
+  val webSocketListener =
+    object : WebSocketListener() {
+    }
   val dispatcher = Dispatcher(executor)
   val listener = RecordingEventListener()
-  var client = clientTestRule.newClientBuilder()
-    .dns { throw UnknownHostException() }
-    .dispatcher(dispatcher)
-    .eventListenerFactory(clientTestRule.wrap(listener))
-    .build()
+  var client =
+    clientTestRule.newClientBuilder()
+      .dns { throw UnknownHostException() }
+      .dispatcher(dispatcher)
+      .eventListenerFactory(clientTestRule.wrap(listener))
+      .build()
 
   @BeforeEach
   fun setUp() {
@@ -197,17 +198,20 @@ class DispatcherTest {
   fun synchronousCallAccessors() {
     val ready = CountDownLatch(2)
     val waiting = CountDownLatch(1)
-    client = client.newBuilder()
-      .addInterceptor(Interceptor { chain: Interceptor.Chain? ->
-        try {
-          ready.countDown()
-          waiting.await()
-        } catch (e: InterruptedException) {
-          throw AssertionError()
-        }
-        throw IOException()
-      })
-      .build()
+    client =
+      client.newBuilder()
+        .addInterceptor(
+          Interceptor { chain: Interceptor.Chain? ->
+            try {
+              ready.countDown()
+              waiting.await()
+            } catch (e: InterruptedException) {
+              throw AssertionError()
+            }
+            throw IOException()
+          },
+        )
+        .build()
     val a1 = client.newCall(newRequest("http://a/1"))
     val a2 = client.newCall(newRequest("http://a/2"))
     val a3 = client.newCall(newRequest("http://a/3"))
@@ -260,17 +264,20 @@ class DispatcherTest {
     assertThat(idle.get()).isFalse()
     val ready = CountDownLatch(1)
     val proceed = CountDownLatch(1)
-    client = client.newBuilder()
-      .addInterceptor(Interceptor { chain: Interceptor.Chain ->
-        ready.countDown()
-        try {
-          proceed.await(5, TimeUnit.SECONDS)
-        } catch (e: InterruptedException) {
-          throw RuntimeException(e)
-        }
-        chain.proceed(chain.request())
-      })
-      .build()
+    client =
+      client.newBuilder()
+        .addInterceptor(
+          Interceptor { chain: Interceptor.Chain ->
+            ready.countDown()
+            try {
+              proceed.await(5, TimeUnit.SECONDS)
+            } catch (e: InterruptedException) {
+              throw RuntimeException(e)
+            }
+            chain.proceed(chain.request())
+          },
+        )
+        .build()
     val t1 = makeSynchronousCall(client.newCall(newRequest("http://a/3")))
     ready.await(5, TimeUnit.SECONDS)
     executor.finishJob("http://a/2")
@@ -333,13 +340,14 @@ class DispatcherTest {
   }
 
   private fun makeSynchronousCall(call: Call): Thread {
-    val thread = Thread {
-      try {
-        call.execute()
-        throw AssertionError()
-      } catch (expected: IOException) {
+    val thread =
+      Thread {
+        try {
+          call.execute()
+          throw AssertionError()
+        } catch (expected: IOException) {
+        }
       }
-    }
     thread.start()
     return thread
   }
@@ -348,7 +356,10 @@ class DispatcherTest {
     return Request.Builder().url(url).build()
   }
 
-  private fun newRequest(url: String, tag: String): Request {
+  private fun newRequest(
+    url: String,
+    tag: String,
+  ): Request {
     return Request.Builder().url(url).tag(tag).build()
   }
 }

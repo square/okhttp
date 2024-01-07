@@ -35,8 +35,11 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
 class SessionReuseTest {
-  @JvmField @RegisterExtension var platform = PlatformRule()
-  @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
+  @JvmField @RegisterExtension
+  var platform = PlatformRule()
+
+  @JvmField @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
 
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
@@ -69,35 +72,45 @@ class SessionReuseTest {
     enableTls()
 
     val tlsVersion = TlsVersion.forJavaName(tlsVersion)
-    val spec = ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
-      .tlsVersions(tlsVersion)
-      .build()
+    val spec =
+      ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+        .tlsVersions(tlsVersion)
+        .build()
 
     var reuseSession = false
 
     val sslContext = handshakeCertificates.sslContext()
     val systemSslSocketFactory = sslContext.socketFactory
-    val sslSocketFactory = object : DelegatingSSLSocketFactory(systemSslSocketFactory) {
-      override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
-        return sslSocket.apply {
-          if (reuseSession) {
-            this.enableSessionCreation = false
+    val sslSocketFactory =
+      object : DelegatingSSLSocketFactory(systemSslSocketFactory) {
+        override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
+          return sslSocket.apply {
+            if (reuseSession) {
+              this.enableSessionCreation = false
+            }
           }
         }
       }
-    }
 
-    client = client.newBuilder()
-      .connectionSpecs(listOf(spec))
-      .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
-        override fun connectionAcquired(call: Call, connection: Connection) {
-          val sslSocket = connection.socket() as SSLSocket
+    client =
+      client.newBuilder()
+        .connectionSpecs(listOf(spec))
+        .eventListenerFactory(
+          clientTestRule.wrap(
+            object : EventListener() {
+              override fun connectionAcquired(
+                call: Call,
+                connection: Connection,
+              ) {
+                val sslSocket = connection.socket() as SSLSocket
 
-          sessionIds.add(sslSocket.session.id.toByteString().hex())
-        }
-      }))
-      .sslSocketFactory(sslSocketFactory, handshakeCertificates.trustManager)
-      .build()
+                sessionIds.add(sslSocket.session.id.toByteString().hex())
+              }
+            },
+          ),
+        )
+        .sslSocketFactory(sslSocketFactory, handshakeCertificates.trustManager)
+        .build()
 
     server.enqueue(MockResponse(body = "abc1"))
     server.enqueue(MockResponse(body = "abc2"))
@@ -156,11 +169,12 @@ class SessionReuseTest {
   }
 
   private fun enableTls() {
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .build()
+    client =
+      client.newBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+        )
+        .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 }

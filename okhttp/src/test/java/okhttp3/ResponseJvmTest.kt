@@ -38,10 +38,11 @@ class ResponseJvmTest {
 
   @Test
   fun testFailsIfTrailersNotSet() {
-    val response = newResponse("".toResponseBody()) {
-      // All live paths (Http1, Http2) in OkHttp do this
-      trailers { error("trailers not available") }
-    }
+    val response =
+      newResponse("".toResponseBody()) {
+        // All live paths (Http1, Http2) in OkHttp do this
+        trailers { error("trailers not available") }
+      }
 
     assertFailsWith<IllegalStateException>(message = "trailers not available") {
       response.trailers()
@@ -50,11 +51,12 @@ class ResponseJvmTest {
 
   @Test
   fun worksIfTrailersSet() {
-    val response = newResponse("".toResponseBody()) {
-      trailers {
-        Headers.headersOf("a", "b")
+    val response =
+      newResponse("".toResponseBody()) {
+        trailers {
+          Headers.headersOf("a", "b")
+        }
       }
-    }
 
     assertThat(response.trailers()["a"]).isEqualTo("b")
   }
@@ -74,34 +76,39 @@ class ResponseJvmTest {
    */
   private fun responseBody(content: String): ResponseBody {
     val data = Buffer().writeUtf8(content)
-    val source: Source = object : Source {
-      var closed = false
-      override fun close() {
-        closed = true
-      }
+    val source: Source =
+      object : Source {
+        var closed = false
 
-      override fun read(sink: Buffer, byteCount: Long): Long {
-        check(!closed)
-        return data.read(sink, byteCount)
-      }
+        override fun close() {
+          closed = true
+        }
 
-      override fun timeout(): Timeout {
-        return Timeout.NONE
+        override fun read(
+          sink: Buffer,
+          byteCount: Long,
+        ): Long {
+          check(!closed)
+          return data.read(sink, byteCount)
+        }
+
+        override fun timeout(): Timeout {
+          return Timeout.NONE
+        }
       }
-    }
     return source.buffer().asResponseBody(null, -1)
   }
 
   private fun newResponse(
     responseBody: ResponseBody,
     code: Int = 200,
-    fn: Response.Builder.() -> Unit = {}
+    fn: Response.Builder.() -> Unit = {},
   ): Response {
     return Response.Builder()
       .request(
         Request.Builder()
           .url("https://example.com/")
-          .build()
+          .build(),
       )
       .protocol(Protocol.HTTP_1_1)
       .code(code)

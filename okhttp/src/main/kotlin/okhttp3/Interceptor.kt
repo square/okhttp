@@ -71,8 +71,7 @@ fun interface Interceptor {
      * }
      * ```
      */
-    inline operator fun invoke(crossinline block: (chain: Chain) -> Response): Interceptor =
-      Interceptor { block(it) }
+    inline operator fun invoke(crossinline block: (chain: Chain) -> Response): Interceptor = Interceptor { block(it) }
   }
 
   interface Chain {
@@ -91,14 +90,23 @@ fun interface Interceptor {
 
     fun connectTimeoutMillis(): Int
 
-    fun withConnectTimeout(timeout: Int, unit: TimeUnit): Chain
+    fun withConnectTimeout(
+      timeout: Int,
+      unit: TimeUnit,
+    ): Chain
 
     fun readTimeoutMillis(): Int
 
-    fun withReadTimeout(timeout: Int, unit: TimeUnit): Chain
+    fun withReadTimeout(
+      timeout: Int,
+      unit: TimeUnit,
+    ): Chain
 
     fun writeTimeoutMillis(): Int
 
-    fun withWriteTimeout(timeout: Int, unit: TimeUnit): Chain
+    fun withWriteTimeout(
+      timeout: Int,
+      unit: TimeUnit,
+    ): Chain
   }
 }

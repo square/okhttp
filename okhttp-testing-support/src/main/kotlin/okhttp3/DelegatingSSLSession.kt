@@ -24,7 +24,6 @@ import javax.security.cert.X509Certificate
 
 /** An [SSLSession] that delegates all calls.  */
 abstract class DelegatingSSLSession(protected val delegate: SSLSession?) : SSLSession {
-
   override fun getId(): ByteArray {
     return delegate!!.id
   }
@@ -49,7 +48,10 @@ abstract class DelegatingSSLSession(protected val delegate: SSLSession?) : SSLSe
     return delegate!!.isValid
   }
 
-  override fun putValue(s: String, o: Any) {
+  override fun putValue(
+    s: String,
+    o: Any,
+  ) {
     delegate!!.putValue(s, o)
   }
 

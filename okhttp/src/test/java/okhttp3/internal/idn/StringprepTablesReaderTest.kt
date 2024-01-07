@@ -42,23 +42,21 @@ class StringprepTablesReaderTest {
       |  0234-024F
       |  0000-001F; [CONTROL CHARACTERS]
       |  007F; DELETE
-      |""".trimMargin()
+      |
+      """.trimMargin(),
     )
 
     val rangeList = buffer.readCodePointSet()
     assertEquals(
       listOf(
         0x0221..0x0221,
-
         0x0234..0x024f,
-
         // [CONTROL CHARACTERS].
         0x0000..0x001f,
-
         // DELETE.
         0x007f..0x007f,
       ),
-      rangeList.ranges
+      rangeList.ranges,
     )
   }
 
@@ -69,7 +67,8 @@ class StringprepTablesReaderTest {
       |    180C; ; Map to nothing
       |    0041; 0061; Case map
       |    0390; 03B9 0308 0301; Case map
-      |""".trimMargin()
+      |
+      """.trimMargin(),
     )
 
     val mappings = buffer.readCodePointMappings()
@@ -77,14 +76,12 @@ class StringprepTablesReaderTest {
       mapOf(
         // Map to nothing.
         0x180c to "",
-
         // Case map.
         'A'.code to "a",
-
         // Case map.
-        'ΐ'.code to "\u03B9\u0308\u0301"
+        'ΐ'.code to "\u03B9\u0308\u0301",
       ),
-      mappings.mappings
+      mappings.mappings,
     )
   }
 }

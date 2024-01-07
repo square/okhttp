@@ -37,7 +37,9 @@ class RequestBodyTest {
   private lateinit var filePath: okio.Path
 
   @BeforeEach
-  fun setup(@TempDir tempDir: Path) {
+  fun setup(
+    @TempDir tempDir: Path,
+  ) {
     filePath = tempDir.toOkioPath() / "file.txt"
   }
 
@@ -117,7 +119,10 @@ class RequestBodyTest {
     }
   }
 
-  private inline fun <T> assertOnFileDescriptor(content: String? = null, fn: (FileDescriptor) -> T): T {
+  private inline fun <T> assertOnFileDescriptor(
+    content: String? = null,
+    fn: (FileDescriptor) -> T,
+  ): T {
     return assertOnPath(content) {
       FileInputStream(filePath.toFile()).use { fis ->
         fn(fis.fd)
@@ -125,7 +130,10 @@ class RequestBodyTest {
     }
   }
 
-  private inline fun <T> assertOnPath(content: String? = null, fn: (okio.Path) -> T): T {
+  private inline fun <T> assertOnPath(
+    content: String? = null,
+    fn: (okio.Path) -> T,
+  ): T {
     FileSystem.SYSTEM.write(filePath) {
       if (content != null) {
         writeUtf8(content)

@@ -42,19 +42,20 @@ import okhttp3.internal.tls.TrustRootIndex
 /** Android 5 to 9 (API 21 to 28). */
 @SuppressSignatureCheck
 class AndroidPlatform : Platform() {
-  private val socketAdapters = listOfNotNull(
+  private val socketAdapters =
+    listOfNotNull(
       StandardAndroidSocketAdapter.buildIfSupported(),
       DeferredSocketAdapter(AndroidSocketAdapter.playProviderFactory),
       // Delay and Defer any initialisation of Conscrypt and BouncyCastle
       DeferredSocketAdapter(ConscryptSocketAdapter.factory),
-      DeferredSocketAdapter(BouncyCastleSocketAdapter.factory)
-  ).filter { it.isSupported() }
+      DeferredSocketAdapter(BouncyCastleSocketAdapter.factory),
+    ).filter { it.isSupported() }
 
   @Throws(IOException::class)
   override fun connectSocket(
     socket: Socket,
     address: InetSocketAddress,
-    connectTimeout: Int
+    connectTimeout: Int,
   ) {
     try {
       socket.connect(address, connectTimeout)
@@ -70,42 +71,47 @@ class AndroidPlatform : Platform() {
   }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
-      socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
-          ?.trustManager(sslSocketFactory)
+    socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
+      ?.trustManager(sslSocketFactory)
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
-    protocols: List<@JvmSuppressWildcards Protocol>
+    protocols: List<@JvmSuppressWildcards Protocol>,
   ) {
     // No TLS extensions if the socket class is custom.
     socketAdapters.find { it.matchesSocket(sslSocket) }
-        ?.configureTlsExtensions(sslSocket, hostname, protocols)
+      ?.configureTlsExtensions(sslSocket, hostname, protocols)
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
-      // No TLS extensions if the socket class is custom.
-      socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
+    // No TLS extensions if the socket class is custom.
+    socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
 
-  override fun isCleartextTrafficPermitted(hostname: String): Boolean = when {
-    Build.VERSION.SDK_INT >= 24 -> NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
-    Build.VERSION.SDK_INT >= 23 -> NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted
-    else -> true
-  }
+  override fun isCleartextTrafficPermitted(hostname: String): Boolean =
+    when {
+      Build.VERSION.SDK_INT >= 24 -> NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
+      Build.VERSION.SDK_INT >= 23 -> NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted
+      else -> true
+    }
 
   override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
-        AndroidCertificateChainCleaner.buildIfSupported(trustManager) ?: super.buildCertificateChainCleaner(trustManager)
+    AndroidCertificateChainCleaner.buildIfSupported(trustManager) ?: super.buildCertificateChainCleaner(trustManager)
 
-  override fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex = try {
-    // From org.conscrypt.TrustManagerImpl, we want the method with this signature:
-    // private TrustAnchor findTrustAnchorByIssuerAndSignature(X509Certificate lastCert);
-    val method = trustManager.javaClass.getDeclaredMethod(
-        "findTrustAnchorByIssuerAndSignature", X509Certificate::class.java)
-    method.isAccessible = true
-    CustomTrustRootIndex(trustManager, method)
-  } catch (e: NoSuchMethodException) {
-    super.buildTrustRootIndex(trustManager)
-  }
+  override fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex =
+    try {
+      // From org.conscrypt.TrustManagerImpl, we want the method with this signature:
+      // private TrustAnchor findTrustAnchorByIssuerAndSignature(X509Certificate lastCert);
+      val method =
+        trustManager.javaClass.getDeclaredMethod(
+          "findTrustAnchorByIssuerAndSignature",
+          X509Certificate::class.java,
+        )
+      method.isAccessible = true
+      CustomTrustRootIndex(trustManager, method)
+    } catch (e: NoSuchMethodException) {
+      super.buildTrustRootIndex(trustManager)
+    }
 
   override fun getHandshakeServerNames(sslSocket: SSLSocket): List<String> {
     // The superclass implementation requires APIs not available until API 24+.
@@ -122,12 +128,15 @@ class AndroidPlatform : Platform() {
    */
   internal data class CustomTrustRootIndex(
     private val trustManager: X509TrustManager,
-    private val findByIssuerAndSignatureMethod: Method
+    private val findByIssuerAndSignatureMethod: Method,
   ) : TrustRootIndex {
     override fun findByIssuerAndSignature(cert: X509Certificate): X509Certificate? {
       return try {
-        val trustAnchor = findByIssuerAndSignatureMethod.invoke(
-            trustManager, cert) as TrustAnchor
+        val trustAnchor =
+          findByIssuerAndSignatureMethod.invoke(
+            trustManager,
+            cert,
+          ) as TrustAnchor
         trustAnchor.trustedCert
       } catch (e: IllegalAccessException) {
         throw AssertionError("unable to get issues and signature", e)
@@ -138,17 +147,19 @@ class AndroidPlatform : Platform() {
   }
 
   companion object {
-    val isSupported: Boolean = when {
-      !isAndroid -> false
-      Build.VERSION.SDK_INT >= 30 -> false // graylisted methods are banned
-      else -> {
-        // Fail Fast
-        check(
-            Build.VERSION.SDK_INT >= 21) { "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}" }
+    val isSupported: Boolean =
+      when {
+        !isAndroid -> false
+        Build.VERSION.SDK_INT >= 30 -> false // graylisted methods are banned
+        else -> {
+          // Fail Fast
+          check(
+            Build.VERSION.SDK_INT >= 21,
+          ) { "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}" }
 
-        true
+          true
+        }
       }
-    }
 
     fun buildIfSupported(): Platform? = if (isSupported) AndroidPlatform() else null
   }

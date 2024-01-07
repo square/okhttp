@@ -44,18 +44,19 @@ class CacheControlTest {
   @Test
   @Throws(Exception::class)
   fun completeBuilder() {
-    val cacheControl = CacheControl.Builder()
-      .noCache()
-      .noStore()
-      .maxAge(1, DurationUnit.SECONDS)
-      .maxStale(2, DurationUnit.SECONDS)
-      .minFresh(3, DurationUnit.SECONDS)
-      .onlyIfCached()
-      .noTransform()
-      .immutable()
-      .build()
+    val cacheControl =
+      CacheControl.Builder()
+        .noCache()
+        .noStore()
+        .maxAge(1, DurationUnit.SECONDS)
+        .maxStale(2, DurationUnit.SECONDS)
+        .minFresh(3, DurationUnit.SECONDS)
+        .onlyIfCached()
+        .noTransform()
+        .immutable()
+        .build()
     assertThat(cacheControl.toString()).isEqualTo(
-      "no-cache, no-store, max-age=1, max-stale=2, min-fresh=3, only-if-cached, no-transform, immutable"
+      "no-cache, no-store, max-age=1, max-stale=2, min-fresh=3, only-if-cached, no-transform, immutable",
     )
     assertThat(cacheControl.noCache).isTrue()
     assertThat(cacheControl.noStore).isTrue()

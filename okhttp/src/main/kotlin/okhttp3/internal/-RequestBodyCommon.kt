@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal
 
 import okhttp3.MediaType
@@ -24,7 +25,7 @@ import okio.ByteString
 fun ByteArray.commonToRequestBody(
   contentType: MediaType?,
   offset: Int,
-  byteCount: Int
+  byteCount: Int,
 ): RequestBody {
   checkOffsetAndCount(size.toLong(), offset.toLong(), byteCount.toLong())
   return object : RequestBody() {

@@ -41,9 +41,8 @@ class RealInterceptorChain(
   internal val request: Request,
   internal val connectTimeoutMillis: Int,
   internal val readTimeoutMillis: Int,
-  internal val writeTimeoutMillis: Int
+  internal val writeTimeoutMillis: Int,
 ) : Interceptor.Chain {
-
   private var calls: Int = 0
 
   internal fun copy(
@@ -52,15 +51,26 @@ class RealInterceptorChain(
     request: Request = this.request,
     connectTimeoutMillis: Int = this.connectTimeoutMillis,
     readTimeoutMillis: Int = this.readTimeoutMillis,
-    writeTimeoutMillis: Int = this.writeTimeoutMillis
-  ) = RealInterceptorChain(call, interceptors, index, exchange, request, connectTimeoutMillis,
-      readTimeoutMillis, writeTimeoutMillis)
+    writeTimeoutMillis: Int = this.writeTimeoutMillis,
+  ) = RealInterceptorChain(
+    call,
+    interceptors,
+    index,
+    exchange,
+    request,
+    connectTimeoutMillis,
+    readTimeoutMillis,
+    writeTimeoutMillis,
+  )
 
   override fun connection(): Connection? = exchange?.connection
 
   override fun connectTimeoutMillis(): Int = connectTimeoutMillis
 
-  override fun withConnectTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain {
+  override fun withConnectTimeout(
+    timeout: Int,
+    unit: TimeUnit,
+  ): Interceptor.Chain {
     check(exchange == null) { "Timeouts can't be adjusted in a network interceptor" }
 
     return copy(connectTimeoutMillis = checkDuration("connectTimeout", timeout.toLong(), unit))
@@ -68,7 +78,10 @@ class RealInterceptorChain(
 
   override fun readTimeoutMillis(): Int = readTimeoutMillis
 
-  override fun withReadTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain {
+  override fun withReadTimeout(
+    timeout: Int,
+    unit: TimeUnit,
+  ): Interceptor.Chain {
     check(exchange == null) { "Timeouts can't be adjusted in a network interceptor" }
 
     return copy(readTimeoutMillis = checkDuration("readTimeout", timeout.toLong(), unit))
@@ -76,7 +89,10 @@ class RealInterceptorChain(
 
   override fun writeTimeoutMillis(): Int = writeTimeoutMillis
 
-  override fun withWriteTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain {
+  override fun withWriteTimeout(
+    timeout: Int,
+    unit: TimeUnit,
+  ): Interceptor.Chain {
     check(exchange == null) { "Timeouts can't be adjusted in a network interceptor" }
 
     return copy(writeTimeoutMillis = checkDuration("writeTimeout", timeout.toLong(), unit))
@@ -106,8 +122,10 @@ class RealInterceptorChain(
     val interceptor = interceptors[index]
 
     @Suppress("USELESS_ELVIS")
-    val response = interceptor.intercept(next) ?: throw NullPointerException(
-        "interceptor $interceptor returned null")
+    val response =
+      interceptor.intercept(next) ?: throw NullPointerException(
+        "interceptor $interceptor returned null",
+      )
 
     if (exchange != null) {
       check(index + 1 >= interceptors.size || next.calls == 1) {

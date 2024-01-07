@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp.android.test.alpn;
+package okhttp.android.test.alpn
 
 import android.os.Build
 import android.util.Log
@@ -36,9 +36,8 @@ import org.junit.jupiter.api.Test
  */
 @Tag("Remote")
 class AlpnOverrideTest {
-
   class CustomSSLSocketFactory(
-    delegate: SSLSocketFactory
+    delegate: SSLSocketFactory,
   ) : DelegatingSSLSocketFactory(delegate) {
     override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -56,25 +55,34 @@ class AlpnOverrideTest {
 
   @Test
   fun getWithCustomSocketFactory() {
-    client = client.newBuilder()
-      .sslSocketFactory(CustomSSLSocketFactory(client.sslSocketFactory), client.x509TrustManager!!)
-      .connectionSpecs(listOf(
-        ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
-          .supportsTlsExtensions(false)
-          .build()
-      ))
-      .eventListener(object : EventListener() {
-        override fun connectionAcquired(call: Call, connection: Connection) {
-          val sslSocket = connection.socket() as SSLSocket
-          println("Requested " + sslSocket.sslParameters.applicationProtocols.joinToString())
-          println("Negotiated " + sslSocket.applicationProtocol)
-        }
-      })
-      .build()
+    client =
+      client.newBuilder()
+        .sslSocketFactory(CustomSSLSocketFactory(client.sslSocketFactory), client.x509TrustManager!!)
+        .connectionSpecs(
+          listOf(
+            ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+              .supportsTlsExtensions(false)
+              .build(),
+          ),
+        )
+        .eventListener(
+          object : EventListener() {
+            override fun connectionAcquired(
+              call: Call,
+              connection: Connection,
+            ) {
+              val sslSocket = connection.socket() as SSLSocket
+              println("Requested " + sslSocket.sslParameters.applicationProtocols.joinToString())
+              println("Negotiated " + sslSocket.applicationProtocol)
+            }
+          },
+        )
+        .build()
 
-    val request = Request.Builder()
-      .url("https://www.google.com")
-      .build()
+    val request =
+      Request.Builder()
+        .url("https://www.google.com")
+        .build()
     client.newCall(request).execute().use { response ->
       assertThat(response.code).isEqualTo(200)
     }

@@ -54,9 +54,10 @@ class RetryConnectionTest {
   }
 
   @Test fun nonRetryableSSLHandshakeException() {
-    val exception = SSLHandshakeException("Certificate handshake exception").apply {
-      initCause(CertificateException())
-    }
+    val exception =
+      SSLHandshakeException("Certificate handshake exception").apply {
+        initCause(CertificateException())
+      }
     assertThat(retryTlsHandshake(exception)).isFalse()
   }
 
@@ -65,22 +66,25 @@ class RetryConnectionTest {
   }
 
   @Test fun someFallbacksSupported() {
-    val sslV3 = ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
-      .tlsVersions(TlsVersion.SSL_3_0)
-      .build()
+    val sslV3 =
+      ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+        .tlsVersions(TlsVersion.SSL_3_0)
+        .build()
     val routePlanner = factory.newRoutePlanner(client)
     val route = factory.newRoute()
     val connectionSpecs = listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, sslV3)
-    val enabledSocketTlsVersions = arrayOf(
-      TlsVersion.TLS_1_2,
-      TlsVersion.TLS_1_1,
-      TlsVersion.TLS_1_0
-    )
+    val enabledSocketTlsVersions =
+      arrayOf(
+        TlsVersion.TLS_1_2,
+        TlsVersion.TLS_1_1,
+        TlsVersion.TLS_1_0,
+      )
     var socket = createSocketWithEnabledProtocols(*enabledSocketTlsVersions)
 
     // MODERN_TLS is used here.
-    val attempt0 = routePlanner.planConnectToRoute(route)
-      .planWithCurrentOrInitialConnectionSpec(connectionSpecs, socket)
+    val attempt0 =
+      routePlanner.planConnectToRoute(route)
+        .planWithCurrentOrInitialConnectionSpec(connectionSpecs, socket)
     assertThat(attempt0.isTlsFallback).isFalse()
     connectionSpecs[attempt0.connectionSpecIndex].apply(socket, attempt0.isTlsFallback)
     assertEnabledProtocols(socket, TlsVersion.TLS_1_2)
@@ -106,10 +110,12 @@ class RetryConnectionTest {
     }
   }
 
-  private fun assertEnabledProtocols(socket: SSLSocket, vararg required: TlsVersion) {
+  private fun assertEnabledProtocols(
+    socket: SSLSocket,
+    vararg required: TlsVersion,
+  ) {
     assertThat(socket.enabledProtocols.toList()).containsExactlyInAnyOrder(*javaNames(*required))
   }
 
-  private fun javaNames(vararg tlsVersions: TlsVersion) =
-    tlsVersions.map { it.javaName }.toTypedArray()
+  private fun javaNames(vararg tlsVersions: TlsVersion) = tlsVersions.map { it.javaName }.toTypedArray()
 }

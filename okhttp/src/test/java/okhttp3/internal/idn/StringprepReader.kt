@@ -35,27 +35,30 @@ class StringprepTablesReader(
    */
   fun readNameprep(base: Path): Stringprep {
     val unassigned = readCodePointSet(base / "rfc3454.A.1.txt")
-    val mapping = MappingListCodePointMapping(
-      mutableMapOf<Int, String>()
-        .apply {
-          putAll(readCodePointMapping(base / "rfc3454.B.1.txt").mappings)
-          putAll(readCodePointMapping(base / "rfc3454.B.2.txt").mappings)
-        }
-    )
-    val prohibitSet = RangeListCodePointSet(
-      ranges = mutableListOf<IntRange>()
-        .apply {
-          addAll(readCodePointSet(base / "rfc3454.C.1.2.txt").ranges)
-          addAll(readCodePointSet(base / "rfc3454.C.2.2.txt").ranges)
-          addAll(readCodePointSet(base / "rfc3454.C.3.txt").ranges)
-          addAll(readCodePointSet(base / "rfc3454.C.4.txt").ranges)
-          addAll(readCodePointSet(base / "rfc3454.C.5.txt").ranges)
-          addAll(readCodePointSet(base / "rfc3454.C.6.txt").ranges)
-          addAll(readCodePointSet(base / "rfc3454.C.7.txt").ranges)
-          addAll(readCodePointSet(base / "rfc3454.C.8.txt").ranges)
-          addAll(readCodePointSet(base / "rfc3454.C.9.txt").ranges)
-        }
-    )
+    val mapping =
+      MappingListCodePointMapping(
+        mutableMapOf<Int, String>()
+          .apply {
+            putAll(readCodePointMapping(base / "rfc3454.B.1.txt").mappings)
+            putAll(readCodePointMapping(base / "rfc3454.B.2.txt").mappings)
+          },
+      )
+    val prohibitSet =
+      RangeListCodePointSet(
+        ranges =
+          mutableListOf<IntRange>()
+            .apply {
+              addAll(readCodePointSet(base / "rfc3454.C.1.2.txt").ranges)
+              addAll(readCodePointSet(base / "rfc3454.C.2.2.txt").ranges)
+              addAll(readCodePointSet(base / "rfc3454.C.3.txt").ranges)
+              addAll(readCodePointSet(base / "rfc3454.C.4.txt").ranges)
+              addAll(readCodePointSet(base / "rfc3454.C.5.txt").ranges)
+              addAll(readCodePointSet(base / "rfc3454.C.6.txt").ranges)
+              addAll(readCodePointSet(base / "rfc3454.C.7.txt").ranges)
+              addAll(readCodePointSet(base / "rfc3454.C.8.txt").ranges)
+              addAll(readCodePointSet(base / "rfc3454.C.9.txt").ranges)
+            },
+      )
     val randalcatSet = readCodePointSet(base / "rfc3454.D.1.txt")
     val lcatSet = readCodePointSet(base / "rfc3454.D.2.txt")
     return Stringprep(
@@ -63,7 +66,7 @@ class StringprepTablesReader(
       mapping = mapping,
       prohibitSet = prohibitSet,
       randalcatSet = randalcatSet,
-      lcatSet = lcatSet
+      lcatSet = lcatSet,
     )
   }
 
@@ -102,21 +105,21 @@ class StringprepTablesReader(
   }
 }
 
-private val optionsSemicolon = Options.of(
-  // 0 is ';'.
-  ";".encodeUtf8(),
-)
+private val optionsSemicolon =
+  Options.of(
+    // 0 is ';'.
+    ";".encodeUtf8(),
+  )
 
-private val optionsSemicolonOrNewlineOrDash = Options.of(
-  // 0 is ';'.
-  ";".encodeUtf8(),
-
-  // 1 is '\n'.
-  "\n".encodeUtf8(),
-
-  // 2 is '-'.
-  "-".encodeUtf8(),
-)
+private val optionsSemicolonOrNewlineOrDash =
+  Options.of(
+    // 0 is ';'.
+    ";".encodeUtf8(),
+    // 1 is '\n'.
+    "\n".encodeUtf8(),
+    // 2 is '-'.
+    "-".encodeUtf8(),
+  )
 
 internal fun BufferedSource.readCodePointSet(): RangeListCodePointSet {
   val result = mutableListOf<IntRange>()
@@ -124,26 +127,27 @@ internal fun BufferedSource.readCodePointSet(): RangeListCodePointSet {
     skipWhitespace()
     val startCodePoint = readHexadecimalUnsignedLong().toInt()
     skipWhitespace()
-    val intRange = when (select(optionsSemicolonOrNewlineOrDash)) {
-      0 -> {
-        // ;
-        skipRestOfLine()
-        IntRange(startCodePoint, startCodePoint)
+    val intRange =
+      when (select(optionsSemicolonOrNewlineOrDash)) {
+        0 -> {
+          // ;
+          skipRestOfLine()
+          IntRange(startCodePoint, startCodePoint)
+        }
+        1 -> {
+          // '\n'
+          IntRange(startCodePoint, startCodePoint)
+        }
+        2 -> {
+          // '-'
+          val endCodePoint = readHexadecimalUnsignedLong().toInt()
+          skipRestOfLine()
+          IntRange(startCodePoint, endCodePoint)
+        }
+        else -> {
+          throw IOException("expected ';'")
+        }
       }
-      1 -> {
-        // '\n'
-        IntRange(startCodePoint, startCodePoint)
-      }
-      2 -> {
-        // '-'
-        val endCodePoint = readHexadecimalUnsignedLong().toInt()
-        skipRestOfLine()
-        IntRange(startCodePoint, endCodePoint)
-      }
-      else -> {
-        throw IOException("expected ';'")
-      }
-    }
     result += intRange
   }
   return RangeListCodePointSet(result)
@@ -184,13 +188,13 @@ private fun BufferedSource.skipRestOfLine() {
 }
 
 class MappingListCodePointMapping(
-  val mappings: Map<Int, String>
+  val mappings: Map<Int, String>,
 ) : CodePointMapping {
   override fun get(codePoint: Int) = mappings[codePoint]
 }
 
 class RangeListCodePointSet(
   val ranges: List<IntRange>,
-): CodePointSet {
+) : CodePointSet {
   override fun contains(codePoint: Int) = ranges.any { codePoint in it }
 }

@@ -26,31 +26,46 @@ class LoggingFilesystem(fileSystem: FileSystem) : ForwardingFileSystem(fileSyste
     println(line)
   }
 
-  override fun appendingSink(file: Path, mustExist: Boolean): Sink {
+  override fun appendingSink(
+    file: Path,
+    mustExist: Boolean,
+  ): Sink {
     log("appendingSink($file)")
 
     return super.appendingSink(file, mustExist)
   }
 
-  override fun atomicMove(source: Path, target: Path) {
+  override fun atomicMove(
+    source: Path,
+    target: Path,
+  ) {
     log("atomicMove($source, $target)")
 
     super.atomicMove(source, target)
   }
 
-  override fun createDirectory(dir: Path, mustCreate: Boolean) {
+  override fun createDirectory(
+    dir: Path,
+    mustCreate: Boolean,
+  ) {
     log("createDirectory($dir)")
 
     super.createDirectory(dir, mustCreate)
   }
 
-  override fun delete(path: Path, mustExist: Boolean) {
+  override fun delete(
+    path: Path,
+    mustExist: Boolean,
+  ) {
     log("delete($path)")
 
     super.delete(path, mustExist)
   }
 
-  override fun sink(path: Path, mustCreate: Boolean): Sink {
+  override fun sink(
+    path: Path,
+    mustCreate: Boolean,
+  ): Sink {
     log("sink($path)")
 
     return super.sink(path, mustCreate)

@@ -31,17 +31,19 @@ class InetAddressOrderTest {
   val ipv6_fc = Inet6Address.getByName("::fc")
 
   @Test fun prioritiseIpv6Example() {
-    val result = reorderForHappyEyeballs(
-      listOf(
-        ipv4_10_0_0_6,
-        ipv4_10_0_0_1,
-        ipv4_10_0_0_4,
-        ipv6_ab, ipv6_fc
+    val result =
+      reorderForHappyEyeballs(
+        listOf(
+          ipv4_10_0_0_6,
+          ipv4_10_0_0_1,
+          ipv4_10_0_0_4,
+          ipv6_ab,
+          ipv6_fc,
+        ),
       )
-    )
 
     assertThat(result).isEqualTo(
-      listOf(ipv6_ab, ipv4_10_0_0_6, ipv6_fc, ipv4_10_0_0_1, ipv4_10_0_0_4)
+      listOf(ipv6_ab, ipv4_10_0_0_6, ipv6_fc, ipv4_10_0_0_1, ipv4_10_0_0_4),
     )
   }
 
@@ -49,21 +51,22 @@ class InetAddressOrderTest {
     val result = reorderForHappyEyeballs(listOf(ipv6_ab, ipv6_fc))
 
     assertThat(result).isEqualTo(
-      listOf(ipv6_ab, ipv6_fc)
+      listOf(ipv6_ab, ipv6_fc),
     )
   }
 
   @Test fun ipv4Only() {
-    val result = reorderForHappyEyeballs(
-      listOf(
-        ipv4_10_0_0_6,
-        ipv4_10_0_0_1,
-        ipv4_10_0_0_4
+    val result =
+      reorderForHappyEyeballs(
+        listOf(
+          ipv4_10_0_0_6,
+          ipv4_10_0_0_1,
+          ipv4_10_0_0_4,
+        ),
       )
-    )
 
     assertThat(result).isEqualTo(
-      listOf(ipv4_10_0_0_6, ipv4_10_0_0_1, ipv4_10_0_0_4)
+      listOf(ipv4_10_0_0_6, ipv4_10_0_0_1, ipv4_10_0_0_4),
     )
   }
 
@@ -71,7 +74,7 @@ class InetAddressOrderTest {
     val result = reorderForHappyEyeballs(listOf(ipv6_ab))
 
     assertThat(result).isEqualTo(
-      listOf(ipv6_ab)
+      listOf(ipv6_ab),
     )
   }
 
@@ -79,7 +82,7 @@ class InetAddressOrderTest {
     val result = reorderForHappyEyeballs(listOf(ipv4_10_0_0_6))
 
     assertThat(result).isEqualTo(
-      listOf(ipv4_10_0_0_6)
+      listOf(ipv4_10_0_0_6),
     )
   }
 
@@ -87,7 +90,7 @@ class InetAddressOrderTest {
     val result = reorderForHappyEyeballs(listOf(ipv4_10_0_0_6, ipv6_ab))
 
     assertThat(result).isEqualTo(
-      listOf(ipv6_ab, ipv4_10_0_0_6)
+      listOf(ipv6_ab, ipv4_10_0_0_6),
     )
   }
 }

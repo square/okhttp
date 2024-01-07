@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+
 package okhttp3
 
 import android.annotation.SuppressLint
@@ -62,57 +63,60 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   var recordFrames = false
   var recordSslDebug = false
 
-  private val sslExcludeFilter = Regex(
-    buildString {
-      append("^(?:")
-      append(
-        listOf(
-          "Inaccessible trust store",
-          "trustStore is",
-          "Reload the trust store",
-          "Reload trust certs",
-          "Reloaded",
-          "adding as trusted certificates",
-          "Ignore disabled cipher suite",
-          "Ignore unsupported cipher suite",
-        ).joinToString(separator = "|")
-      )
-      append(").*")
-    }
-  )
+  private val sslExcludeFilter =
+    Regex(
+      buildString {
+        append("^(?:")
+        append(
+          listOf(
+            "Inaccessible trust store",
+            "trustStore is",
+            "Reload the trust store",
+            "Reload trust certs",
+            "Reloaded",
+            "adding as trusted certificates",
+            "Ignore disabled cipher suite",
+            "Ignore unsupported cipher suite",
+          ).joinToString(separator = "|"),
+        )
+        append(").*")
+      },
+    )
 
-  private val testLogHandler = object : Handler() {
-    override fun publish(record: LogRecord) {
-      val recorded = when (record.loggerName) {
-        TaskRunner::class.java.name -> recordTaskRunner
-        Http2::class.java.name -> recordFrames
-        "javax.net.ssl" -> recordSslDebug && !sslExcludeFilter.matches(record.message)
-        else -> false
-      }
+  private val testLogHandler =
+    object : Handler() {
+      override fun publish(record: LogRecord) {
+        val recorded =
+          when (record.loggerName) {
+            TaskRunner::class.java.name -> recordTaskRunner
+            Http2::class.java.name -> recordFrames
+            "javax.net.ssl" -> recordSslDebug && !sslExcludeFilter.matches(record.message)
+            else -> false
+          }
 
-      if (recorded) {
-        synchronized(clientEventsList) {
-          clientEventsList.add(record.message)
+        if (recorded) {
+          synchronized(clientEventsList) {
+            clientEventsList.add(record.message)
 
-          if (record.loggerName == "javax.net.ssl") {
-            val parameters = record.parameters
+            if (record.loggerName == "javax.net.ssl") {
+              val parameters = record.parameters
 
-            if (parameters != null) {
-              clientEventsList.add(parameters.first().toString())
+              if (parameters != null) {
+                clientEventsList.add(parameters.first().toString())
+              }
             }
           }
         }
       }
-    }
 
-    override fun flush() {
-    }
+      override fun flush() {
+      }
 
-    override fun close() {
+      override fun close() {
+      }
+    }.apply {
+      level = Level.FINEST
     }
-  }.apply {
-    level = Level.FINEST
-  }
 
   private fun applyLogger(fn: Logger.() -> Unit) {
     Logger.getLogger(OkHttpClient::class.java.`package`.name).fn()
@@ -122,8 +126,7 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
     Logger.getLogger("javax.net.ssl").fn()
   }
 
-  fun wrap(eventListener: EventListener) =
-    EventListener.Factory { ClientRuleEventListener(eventListener, ::addEvent) }
+  fun wrap(eventListener: EventListener) = EventListener.Factory { ClientRuleEventListener(eventListener, ::addEvent) }
 
   fun wrap(eventListenerFactory: EventListener.Factory) =
     EventListener.Factory { call -> ClientRuleEventListener(eventListenerFactory.create(call), ::addEvent) }
@@ -140,10 +143,11 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   fun newClient(): OkHttpClient {
     var client = testClient
     if (client == null) {
-      client = initialClientBuilder()
-        .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
-        .eventListenerFactory { ClientRuleEventListener(logger = ::addEvent) }
-        .build()
+      client =
+        initialClientBuilder()
+          .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
+          .eventListenerFactory { ClientRuleEventListener(logger = ::addEvent) }
+          .build()
       connectionListener.forbidLock(RealConnectionPool.get(client.connectionPool))
       connectionListener.forbidLock(client.dispatcher)
       testClient = client
@@ -151,23 +155,24 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
     return client
   }
 
-  private fun initialClientBuilder(): OkHttpClient.Builder = if (isLoom()) {
-    val backend = TaskRunner.RealBackend(loomThreadFactory())
-    val taskRunner = TaskRunner(backend)
+  private fun initialClientBuilder(): OkHttpClient.Builder =
+    if (isLoom()) {
+      val backend = TaskRunner.RealBackend(loomThreadFactory())
+      val taskRunner = TaskRunner(backend)
 
-    OkHttpClient.Builder()
-      .connectionPool(
-        buildConnectionPool(
-          connectionListener = connectionListener,
-          taskRunner = taskRunner,
+      OkHttpClient.Builder()
+        .connectionPool(
+          buildConnectionPool(
+            connectionListener = connectionListener,
+            taskRunner = taskRunner,
+          ),
         )
-      )
-      .dispatcher(Dispatcher(backend.executor))
-      .taskRunnerInternal(taskRunner)
-  } else {
-    OkHttpClient.Builder()
-      .connectionPool(ConnectionPool(connectionListener = connectionListener))
-  }
+        .dispatcher(Dispatcher(backend.executor))
+        .taskRunnerInternal(taskRunner)
+    } else {
+      OkHttpClient.Builder()
+        .connectionPool(ConnectionPool(connectionListener = connectionListener))
+    }
 
   private fun loomThreadFactory(): ThreadFactory {
     val ofVirtual = Thread::class.java.getMethod("ofVirtual").invoke(null)
@@ -322,10 +327,11 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
      * A network that resolves only one IP address per host. Use this when testing route selection
      * fallbacks to prevent the host machine's various IP addresses from interfering.
      */
-    private val SINGLE_INET_ADDRESS_DNS = Dns { hostname ->
-      val addresses = Dns.SYSTEM.lookup(hostname)
-      listOf(addresses[0])
-    }
+    private val SINGLE_INET_ADDRESS_DNS =
+      Dns { hostname ->
+        val addresses = Dns.SYSTEM.lookup(hostname)
+        listOf(addresses[0])
+      }
 
     private operator fun Throwable?.plus(throwable: Throwable): Throwable {
       if (this != null) {

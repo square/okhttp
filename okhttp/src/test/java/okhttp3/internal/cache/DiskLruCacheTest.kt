@@ -21,10 +21,12 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
+import assertk.fail
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.util.ArrayDeque
+import kotlin.test.assertFailsWith
 import okhttp3.SimpleProvider
 import okhttp3.TestUtil
 import okhttp3.internal.cache.DiskLruCache.Editor
@@ -41,18 +43,17 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Timeout
-import assertk.fail
-import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
-class FileSystemParamProvider: SimpleProvider() {
-  override fun arguments() = listOf(
-    FakeFileSystem().apply { emulateUnix() } to false,
-    FileSystem.SYSTEM to TestUtil.windows,
-    FakeFileSystem().apply { emulateWindows() } to true
-  )
+class FileSystemParamProvider : SimpleProvider() {
+  override fun arguments() =
+    listOf(
+      FakeFileSystem().apply { emulateUnix() } to false,
+      FileSystem.SYSTEM to TestUtil.windows,
+      FakeFileSystem().apply { emulateWindows() } to true,
+    )
 }
 
 @Timeout(60)
@@ -60,6 +61,7 @@ class FileSystemParamProvider: SimpleProvider() {
 class DiskLruCacheTest {
   private lateinit var filesystem: FaultyFileSystem
   private var windows: Boolean = false
+
   @TempDir lateinit var cacheDirFile: File
   lateinit var cacheDir: Path
   private val appVersion = 100
@@ -75,13 +77,17 @@ class DiskLruCacheTest {
   }
 
   private fun createNewCacheWithSize(maxSize: Int) {
-    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, maxSize.toLong(), taskRunner).also {
-      toClose.add(it)
-    }
+    cache =
+      DiskLruCache(filesystem, cacheDir, appVersion, 2, maxSize.toLong(), taskRunner).also {
+        toClose.add(it)
+      }
     synchronized(cache) { cache.initialize() }
   }
 
-  fun setUp(baseFilesystem: FileSystem, windows: Boolean) {
+  fun setUp(
+    baseFilesystem: FileSystem,
+    windows: Boolean,
+  ) {
     this.cacheDir =
       if (baseFilesystem is FakeFileSystem) "/cache".toPath() else cacheDirFile.path.toPath()
     this.filesystem = FaultyFileSystem(baseFilesystem)
@@ -127,9 +133,10 @@ class DiskLruCacheTest {
     // Simulate a severe Filesystem failure on the first initialization.
     filesystem.setFaultyDelete(cacheDir / "k1.0.tmp", true)
     filesystem.setFaultyDelete(cacheDir, true)
-    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
-      toClose.add(it)
-    }
+    cache =
+      DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
+        toClose.add(it)
+      }
     assertFailsWith<IOException> {
       cache["k1"]
     }
@@ -177,8 +184,10 @@ class DiskLruCacheTest {
       assertThat(expected.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
     }
     assertFailsWith<IllegalArgumentException> {
-      key = ("this_is_way_too_long_this_is_way_too_long_this_is_way_too_long_" +
-          "this_is_way_too_long_this_is_way_too_long_this_is_way_too_long")
+      key = (
+        "this_is_way_too_long_this_is_way_too_long_this_is_way_too_long_" +
+          "this_is_way_too_long_this_is_way_too_long_this_is_way_too_long"
+      )
       cache.edit(key)
     }.also { expected ->
       assertThat(expected.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
@@ -187,8 +196,10 @@ class DiskLruCacheTest {
     // Test valid cases.
 
     // Exactly 120.
-    key = ("0123456789012345678901234567890123456789012345678901234567890123456789" +
-        "01234567890123456789012345678901234567890123456789")
+    key = (
+      "0123456789012345678901234567890123456789012345678901234567890123456789" +
+        "01234567890123456789012345678901234567890123456789"
+    )
     cache.edit(key)!!.abort()
     // Contains all valid characters.
     key = "abcdefghijklmnopqrstuvwxyz_0123456789"
@@ -509,7 +520,8 @@ class DiskLruCacheTest {
         |100
         |2
         |
-        |CLEAN k1 1 1""".trimMargin()
+        |CLEAN k1 1 1
+        """.trimMargin(),
       )
     }
     createNewCache()
@@ -1057,7 +1069,8 @@ class DiskLruCacheTest {
 
     // Cause the rebuild action to fail.
     filesystem.setFaultyRename(
-      cacheDir / DiskLruCache.JOURNAL_FILE_BACKUP, true
+      cacheDir / DiskLruCache.JOURNAL_FILE_BACKUP,
+      true,
     )
     taskFaker.runNextTask()
 
@@ -1121,9 +1134,10 @@ class DiskLruCacheTest {
     setUp(parameters.first, parameters.second)
     cache.close()
     val dir = (cacheDir / "testOpenCreatesDirectoryIfNecessary").also { filesystem.createDirectories(it) }
-    cache = DiskLruCache(filesystem, dir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
-      toClose.add(it)
-    }
+    cache =
+      DiskLruCache(filesystem, dir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
+        toClose.add(it)
+      }
     set("a", "a", "a")
     assertThat(filesystem.exists(dir / "a.0")).isTrue()
     assertThat(filesystem.exists(dir / "a.1")).isTrue()
@@ -1514,9 +1528,10 @@ class DiskLruCacheTest {
   fun isClosed_uninitializedCache(parameters: Pair<FileSystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     // Create an uninitialized cache.
-    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
-      toClose.add(it)
-    }
+    cache =
+      DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
+        toClose.add(it)
+      }
     assertThat(cache.isClosed()).isFalse()
     cache.close()
     assertThat(cache.isClosed()).isTrue()
@@ -1539,9 +1554,10 @@ class DiskLruCacheTest {
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
     cache.close()
-    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
-      toClose.add(it)
-    }
+    cache =
+      DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
+        toClose.add(it)
+      }
     assertValue("a", "a", "a")
     assertValue("b", "b", "b")
     assertAbsent("c")
@@ -1572,9 +1588,10 @@ class DiskLruCacheTest {
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
     cache.close()
-    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
-      toClose.add(it)
-    }
+    cache =
+      DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
+        toClose.add(it)
+      }
     assertValue("a", "a", "a")
     assertValue("b", "b", "b")
     assertAbsent("c")
@@ -1601,9 +1618,10 @@ class DiskLruCacheTest {
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
     cache.close()
-    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
-      toClose.add(it)
-    }
+    cache =
+      DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
+        toClose.add(it)
+      }
     assertValue("a", "a", "a")
     assertValue("b", "b", "b")
     assertAbsent("c")
@@ -1624,9 +1642,10 @@ class DiskLruCacheTest {
     // Confirm that the entry was still removed.
     filesystem.setFaultyWrite(journalFile, false)
     cache.close()
-    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
-      toClose.add(it)
-    }
+    cache =
+      DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
+        toClose.add(it)
+      }
     assertAbsent("a")
     assertValue("b", "b", "b")
   }
@@ -2163,14 +2182,18 @@ class DiskLruCacheTest {
 
   private fun assertJournalEquals(vararg expectedBodyLines: String) {
     assertThat(readJournalLines()).isEqualTo(
-      listOf(DiskLruCache.MAGIC, DiskLruCache.VERSION_1, "100", "2", "") + expectedBodyLines
+      listOf(DiskLruCache.MAGIC, DiskLruCache.VERSION_1, "100", "2", "") + expectedBodyLines,
     )
   }
 
   private fun createJournal(vararg bodyLines: String) {
     createJournalWithHeader(
       DiskLruCache.MAGIC,
-      DiskLruCache.VERSION_1, "100", "2", "", *bodyLines
+      DiskLruCache.VERSION_1,
+      "100",
+      "2",
+      "",
+      *bodyLines,
     )
   }
 
@@ -2180,7 +2203,7 @@ class DiskLruCacheTest {
     appVersion: String,
     valueCount: String,
     blank: String,
-    vararg bodyLines: String
+    vararg bodyLines: String,
   ) {
     filesystem.write(journalFile) {
       writeUtf8(
@@ -2190,7 +2213,8 @@ class DiskLruCacheTest {
         |$appVersion
         |$valueCount
         |$blank
-        |""".trimMargin()
+        |
+        """.trimMargin(),
       )
       for (line in bodyLines) {
         writeUtf8(line)
@@ -2210,9 +2234,15 @@ class DiskLruCacheTest {
     return result
   }
 
-  private fun getCleanFile(key: String, index: Int) = cacheDir / "$key.$index"
+  private fun getCleanFile(
+    key: String,
+    index: Int,
+  ) = cacheDir / "$key.$index"
 
-  private fun getDirtyFile(key: String, index: Int) = cacheDir / "$key.$index.tmp"
+  private fun getDirtyFile(
+    key: String,
+    index: Int,
+  ) = cacheDir / "$key.$index.tmp"
 
   private fun readFile(file: Path): String {
     return filesystem.read(file) {
@@ -2230,7 +2260,10 @@ class DiskLruCacheTest {
     }
   }
 
-  fun writeFile(file: Path, content: String) {
+  fun writeFile(
+    file: Path,
+    content: String,
+  ) {
     file.parent?.let {
       filesystem.createDirectories(it)
     }
@@ -2260,7 +2293,11 @@ class DiskLruCacheTest {
     assertThat(filesystem.exists(cacheDir / "dir1")).isFalse()
   }
 
-  private operator fun set(key: String, value0: String, value1: String) {
+  private operator fun set(
+    key: String,
+    value0: String,
+    value1: String,
+  ) {
     val editor = cache.edit(key)!!
     editor.setString(0, value0)
     editor.setString(1, value1)
@@ -2279,7 +2316,11 @@ class DiskLruCacheTest {
     assertThat(filesystem.exists(getDirtyFile(key, 1))).isFalse()
   }
 
-  private fun assertValue(key: String, value0: String, value1: String) {
+  private fun assertValue(
+    key: String,
+    value0: String,
+    value1: String,
+  ) {
     cache[key]!!.use {
       it.assertValue(0, value0)
       it.assertValue(1, value1)
@@ -2288,7 +2329,10 @@ class DiskLruCacheTest {
     }
   }
 
-  private fun Snapshot.assertValue(index: Int, value: String) {
+  private fun Snapshot.assertValue(
+    index: Int,
+    value: String,
+  ) {
     getSource(index).use { source ->
       assertThat(sourceAsString(source)).isEqualTo(value)
       assertThat(getLength(index)).isEqualTo(value.length.toLong())
@@ -2315,7 +2359,10 @@ class DiskLruCacheTest {
     }
   }
 
-  private fun Editor.setString(index: Int, value: String) {
+  private fun Editor.setString(
+    index: Int,
+    value: String,
+  ) {
     newSink(index).buffer().use { writer ->
       writer.writeUtf8(value)
     }

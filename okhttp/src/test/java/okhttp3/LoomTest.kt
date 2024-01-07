@@ -31,6 +31,7 @@ class LoomTest {
   @JvmField
   @RegisterExtension
   val platform = PlatformRule()
+
   @JvmField
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
@@ -40,16 +41,15 @@ class LoomTest {
   private lateinit var client: OkHttpClient
 
   @BeforeEach
-  fun setUp(
-    server: MockWebServer,
-  ) {
+  fun setUp(server: MockWebServer) {
     platform.assumeLoom()
 
     this.server = server
 
-    client = clientTestRule.newClientBuilder()
-      .dispatcher(Dispatcher(newVirtualThreadPerTaskExecutor()))
-      .build()
+    client =
+      clientTestRule.newClientBuilder()
+        .dispatcher(Dispatcher(newVirtualThreadPerTaskExecutor()))
+        .build()
   }
 
   private fun newVirtualThreadPerTaskExecutor(): ExecutorService {

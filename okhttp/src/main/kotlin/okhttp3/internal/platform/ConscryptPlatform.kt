@@ -40,13 +40,14 @@ class ConscryptPlatform private constructor() : Platform() {
   // See release notes https://groups.google.com/forum/#!forum/conscrypt
   // for version differences
   override fun newSSLContext(): SSLContext =
-      // supports TLSv1.3 by default (version api is >= 1.4.0)
-      SSLContext.getInstance("TLS", provider)
+    // supports TLSv1.3 by default (version api is >= 1.4.0)
+    SSLContext.getInstance("TLS", provider)
 
   override fun platformTrustManager(): X509TrustManager {
-    val trustManagers = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
-      init(null as KeyStore?)
-    }.trustManagers!!
+    val trustManagers =
+      TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
+        init(null as KeyStore?)
+      }.trustManagers!!
     check(trustManagers.size == 1 && trustManagers[0] is X509TrustManager) {
       "Unexpected default trust managers: ${trustManagers.contentToString()}"
     }
@@ -59,7 +60,7 @@ class ConscryptPlatform private constructor() : Platform() {
   internal object DisabledHostnameVerifier : ConscryptHostnameVerifier {
     fun verify(
       hostname: String?,
-      session: SSLSession?
+      session: SSLSession?,
     ): Boolean {
       return true
     }
@@ -67,7 +68,7 @@ class ConscryptPlatform private constructor() : Platform() {
     override fun verify(
       certs: Array<out X509Certificate>?,
       hostname: String?,
-      session: SSLSession?
+      session: SSLSession?,
     ): Boolean {
       return true
     }
@@ -78,7 +79,7 @@ class ConscryptPlatform private constructor() : Platform() {
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
-    protocols: List<@JvmSuppressWildcards Protocol>
+    protocols: List<@JvmSuppressWildcards Protocol>,
   ) {
     if (Conscrypt.isConscrypt(sslSocket)) {
       // Enable session tickets.
@@ -93,11 +94,11 @@ class ConscryptPlatform private constructor() : Platform() {
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
-      if (Conscrypt.isConscrypt(sslSocket)) {
-        Conscrypt.getApplicationProtocol(sslSocket)
-      } else {
-        super.getSelectedProtocol(sslSocket)
-      }
+    if (Conscrypt.isConscrypt(sslSocket)) {
+      Conscrypt.getApplicationProtocol(sslSocket)
+    } else {
+      super.getSelectedProtocol(sslSocket)
+    }
 
   override fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
     return newSSLContext().apply {
@@ -106,24 +107,29 @@ class ConscryptPlatform private constructor() : Platform() {
   }
 
   companion object {
-    val isSupported: Boolean = try {
-      // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
-      Class.forName("org.conscrypt.Conscrypt\$Version", false, javaClass.classLoader)
+    val isSupported: Boolean =
+      try {
+        // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
+        Class.forName("org.conscrypt.Conscrypt\$Version", false, javaClass.classLoader)
 
-      when {
-        // Bump this version if we ever have a binary incompatibility
-        Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> true
-        else -> false
+        when {
+          // Bump this version if we ever have a binary incompatibility
+          Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> true
+          else -> false
+        }
+      } catch (e: NoClassDefFoundError) {
+        false
+      } catch (e: ClassNotFoundException) {
+        false
       }
-    } catch (e: NoClassDefFoundError) {
-      false
-    } catch (e: ClassNotFoundException) {
-      false
-    }
 
     fun buildIfSupported(): ConscryptPlatform? = if (isSupported) ConscryptPlatform() else null
 
-    fun atLeastVersion(major: Int, minor: Int = 0, patch: Int = 0): Boolean {
+    fun atLeastVersion(
+      major: Int,
+      minor: Int = 0,
+      patch: Int = 0,
+    ): Boolean {
       val conscryptVersion = Conscrypt.version() ?: return false
 
       if (conscryptVersion.major() != major) {

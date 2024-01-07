@@ -190,11 +190,12 @@ open class HttpUrlJvmTest {
 
   @Test
   fun toUriFragmentSpecialCharacters() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .host("host")
-      .fragment("=[]:;\"~|?#@^/$%*")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .fragment("=[]:;\"~|?#@^/$%*")
+        .build()
     assertThat(url.toString()).isEqualTo("http://host/#=[]:;\"~|?#@^/$%25*")
     assertThat(url.toUri().toString())
       .isEqualTo("http://host/#=[]:;%22~%7C?%23@%5E/$%25*")
@@ -209,22 +210,24 @@ open class HttpUrlJvmTest {
 
   @Test
   fun toUriWithUsernameNoPassword() {
-    val httpUrl = HttpUrl.Builder()
-      .scheme("http")
-      .username("user")
-      .host("host")
-      .build()
+    val httpUrl =
+      HttpUrl.Builder()
+        .scheme("http")
+        .username("user")
+        .host("host")
+        .build()
     assertThat(httpUrl.toString()).isEqualTo("http://user@host/")
     assertThat(httpUrl.toUri().toString()).isEqualTo("http://user@host/")
   }
 
   @Test
   fun toUriUsernameSpecialCharacters() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .host("host")
-      .username("=[]:;\"~|?#@^/$%*")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .username("=[]:;\"~|?#@^/$%*")
+        .build()
     assertThat(url.toString())
       .isEqualTo("http://%3D%5B%5D%3A%3B%22~%7C%3F%23%40%5E%2F$%25*@host/")
     assertThat(url.toUri().toString())
@@ -233,12 +236,13 @@ open class HttpUrlJvmTest {
 
   @Test
   fun toUriPasswordSpecialCharacters() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .host("host")
-      .username("user")
-      .password("=[]:;\"~|?#@^/$%*")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .username("user")
+        .password("=[]:;\"~|?#@^/$%*")
+        .build()
     assertThat(url.toString())
       .isEqualTo("http://user:%3D%5B%5D%3A%3B%22~%7C%3F%23%40%5E%2F$%25*@host/")
     assertThat(url.toUri().toString())
@@ -247,11 +251,12 @@ open class HttpUrlJvmTest {
 
   @Test
   fun toUriPathSpecialCharacters() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .host("host")
-      .addPathSegment("=[]:;\"~|?#@^/$%*")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .addPathSegment("=[]:;\"~|?#@^/$%*")
+        .build()
     assertThat(url.toString())
       .isEqualTo("http://host/=[]:;%22~%7C%3F%23@%5E%2F$%25*")
     assertThat(url.toUri().toString())
@@ -260,11 +265,12 @@ open class HttpUrlJvmTest {
 
   @Test
   fun toUriQueryParameterNameSpecialCharacters() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .host("host")
-      .addQueryParameter("=[]:;\"~|?#@^/$%*", "a")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .addQueryParameter("=[]:;\"~|?#@^/$%*", "a")
+        .build()
     assertThat(url.toString())
       .isEqualTo("http://host/?%3D%5B%5D%3A%3B%22%7E%7C%3F%23%40%5E%2F%24%25*=a")
     assertThat(url.toUri().toString())
@@ -274,11 +280,12 @@ open class HttpUrlJvmTest {
 
   @Test
   fun toUriQueryParameterValueSpecialCharacters() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .host("host")
-      .addQueryParameter("a", "=[]:;\"~|?#@^/$%*")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .addQueryParameter("a", "=[]:;\"~|?#@^/$%*")
+        .build()
     assertThat(url.toString())
       .isEqualTo("http://host/?a=%3D%5B%5D%3A%3B%22%7E%7C%3F%23%40%5E%2F%24%25*")
     assertThat(url.toUri().toString())
@@ -288,11 +295,12 @@ open class HttpUrlJvmTest {
 
   @Test
   fun toUriQueryValueSpecialCharacters() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .host("host")
-      .query("=[]:;\"~|?#@^/$%*")
-      .build()
+    val url =
+      HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .query("=[]:;\"~|?#@^/$%*")
+        .build()
     assertThat(url.toString()).isEqualTo("http://host/?=[]:;%22~|?%23@^/$%25*")
     assertThat(url.toUri().toString())
       .isEqualTo("http://host/?=[]:;%22~%7C?%23@%5E/$%25*")
@@ -339,4 +347,3 @@ open class HttpUrlJvmTest {
     assertThat(url.toUri().toString()).isEqualTo("http://host/#%80")
   }
 }
-

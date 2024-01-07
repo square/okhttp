@@ -113,15 +113,19 @@ internal class IdnaMappingTable internal constructor(
   /**
    * Returns true if the [codePoint] was applied successfully. Returns false if it was disallowed.
    */
-  fun map(codePoint: Int, sink: BufferedSink): Boolean {
+  fun map(
+    codePoint: Int,
+    sink: BufferedSink,
+  ): Boolean {
     val sectionsIndex = findSectionsIndex(codePoint)
 
     val rangesPosition = sections.read14BitInt(sectionsIndex + 2)
 
-    val rangesLimit = when {
-      sectionsIndex + 4 < sections.length -> sections.read14BitInt(sectionsIndex + 6)
-      else -> ranges.length / 4
-    }
+    val rangesLimit =
+      when {
+        sectionsIndex + 4 < sections.length -> sections.read14BitInt(sectionsIndex + 6)
+        else -> ranges.length / 4
+      }
 
     val rangesIndex = findRangesOffset(codePoint, rangesPosition, rangesLimit)
 
@@ -201,14 +205,15 @@ internal class IdnaMappingTable internal constructor(
    */
   private fun findSectionsIndex(codePoint: Int): Int {
     val target = (codePoint and 0x1fff80) shr 7
-    val offset = binarySearch(
+    val offset =
+      binarySearch(
         position = 0,
         limit = sections.length / 4,
-    ) { index ->
+      ) { index ->
         val entryIndex = index * 4
         val b0b1 = sections.read14BitInt(entryIndex)
         return@binarySearch target.compareTo(b0b1)
-    }
+      }
 
     return when {
       offset >= 0 -> offset * 4 // This section was found by binary search.
@@ -222,16 +227,21 @@ internal class IdnaMappingTable internal constructor(
    * This binary searches over 4-byte entries, and so it needs to adjust binary search indices
    * in (by dividing by 4) and out (by multiplying by 4).
    */
-  private fun findRangesOffset(codePoint: Int, position: Int, limit: Int): Int {
+  private fun findRangesOffset(
+    codePoint: Int,
+    position: Int,
+    limit: Int,
+  ): Int {
     val target = codePoint and 0x7f
-    val offset = binarySearch(
+    val offset =
+      binarySearch(
         position = position,
         limit = limit,
-    ) { index ->
+      ) { index ->
         val entryIndex = index * 4
         val b0 = ranges[entryIndex].code
         return@binarySearch target.compareTo(b0)
-    }
+      }
 
     return when {
       offset >= 0 -> offset * 4 // This section was found by binary search.
@@ -253,7 +263,11 @@ internal fun String.read14BitInt(index: Int): Int {
  * @return the index of the match. If no match is found this is `(-1 - insertionPoint)`, where the
  *     inserting the element at `insertionPoint` will retain sorted order.
  */
-inline fun binarySearch(position: Int, limit: Int, compare: (Int) -> Int): Int {
+inline fun binarySearch(
+  position: Int,
+  limit: Int,
+  compare: (Int) -> Int,
+): Int {
   // Do the binary searching bit.
   var low = position
   var high = limit - 1

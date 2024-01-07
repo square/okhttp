@@ -20,7 +20,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 
 class ConfigureTimeouts {
-  private val client: OkHttpClient = OkHttpClient.Builder()
+  private val client: OkHttpClient =
+    OkHttpClient.Builder()
       .connectTimeout(5, TimeUnit.SECONDS)
       .writeTimeout(5, TimeUnit.SECONDS)
       .readTimeout(5, TimeUnit.SECONDS)
@@ -28,7 +29,8 @@ class ConfigureTimeouts {
       .build()
 
   fun run() {
-    val request = Request.Builder()
+    val request =
+      Request.Builder()
         .url("http://httpbin.org/delay/2") // This URL is served with a 2 second delay.
         .build()
 

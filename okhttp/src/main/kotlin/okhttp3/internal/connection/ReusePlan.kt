@@ -19,7 +19,6 @@ package okhttp3.internal.connection
 internal class ReusePlan(
   val connection: RealConnection,
 ) : RoutePlanner.Plan {
-
   override val isReady = true
 
   override fun connectTcp() = error("already connected")

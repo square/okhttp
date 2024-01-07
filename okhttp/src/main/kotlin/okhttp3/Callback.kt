@@ -23,7 +23,10 @@ interface Callback {
    * timeout. Because networks can fail during an exchange, it is possible that the remote server
    * accepted the request before the failure.
    */
-  fun onFailure(call: Call, e: IOException)
+  fun onFailure(
+    call: Call,
+    e: IOException,
+  )
 
   /**
    * Called when the HTTP response was successfully returned by the remote server. The callback may
@@ -36,5 +39,8 @@ interface Callback {
    * response code like 404 or 500.
    */
   @Throws(IOException::class)
-  fun onResponse(call: Call, response: Response)
+  fun onResponse(
+    call: Call,
+    response: Response,
+  )
 }

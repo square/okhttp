@@ -41,7 +41,10 @@ class WebSocketRecorder(
     this.delegate = delegate
   }
 
-  override fun onOpen(webSocket: WebSocket, response: Response) {
+  override fun onOpen(
+    webSocket: WebSocket,
+    response: Response,
+  ) {
     Platform.get().log("[WS $name] onOpen", Platform.INFO, null)
     val delegate = delegate
     if (delegate != null) {
@@ -52,7 +55,10 @@ class WebSocketRecorder(
     }
   }
 
-  override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+  override fun onMessage(
+    webSocket: WebSocket,
+    bytes: ByteString,
+  ) {
     Platform.get().log("[WS $name] onMessage", Platform.INFO, null)
     val delegate = delegate
     if (delegate != null) {
@@ -63,7 +69,10 @@ class WebSocketRecorder(
     }
   }
 
-  override fun onMessage(webSocket: WebSocket, text: String) {
+  override fun onMessage(
+    webSocket: WebSocket,
+    text: String,
+  ) {
     Platform.get().log("[WS $name] onMessage", Platform.INFO, null)
     val delegate = delegate
     if (delegate != null) {
@@ -74,7 +83,11 @@ class WebSocketRecorder(
     }
   }
 
-  override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+  override fun onClosing(
+    webSocket: WebSocket,
+    code: Int,
+    reason: String,
+  ) {
     Platform.get().log("[WS $name] onClosing $code", Platform.INFO, null)
     val delegate = delegate
     if (delegate != null) {
@@ -85,7 +98,11 @@ class WebSocketRecorder(
     }
   }
 
-  override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+  override fun onClosed(
+    webSocket: WebSocket,
+    code: Int,
+    reason: String,
+  ) {
     Platform.get().log("[WS $name] onClosed $code", Platform.INFO, null)
     val delegate = delegate
     if (delegate != null) {
@@ -96,7 +113,11 @@ class WebSocketRecorder(
     }
   }
 
-  override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+  override fun onFailure(
+    webSocket: WebSocket,
+    t: Throwable,
+    response: Response?,
+  ) {
     Platform.get().log("[WS $name] onFailure", Platform.INFO, t)
     val delegate = delegate
     if (delegate != null) {
@@ -128,11 +149,17 @@ class WebSocketRecorder(
     assertThat(nextEvent()).isEqualTo(Pong(payload))
   }
 
-  fun assertClosing(code: Int, reason: String) {
+  fun assertClosing(
+    code: Int,
+    reason: String,
+  ) {
     assertThat(nextEvent()).isEqualTo(Closing(code, reason))
   }
 
-  fun assertClosed(code: Int, reason: String) {
+  fun assertClosed(
+    code: Int,
+    reason: String,
+  ) {
     assertThat(nextEvent()).isEqualTo(Closed(code, reason))
   }
 
@@ -151,7 +178,10 @@ class WebSocketRecorder(
     assertThat(event.t).isSameAs(t)
   }
 
-  fun assertFailure(cls: Class<out IOException?>?, vararg messages: String) {
+  fun assertFailure(
+    cls: Class<out IOException?>?,
+    vararg messages: String,
+  ) {
     val event = nextEvent() as Failure
     assertThat(event.response).isNull()
     assertThat(event.t.javaClass).isEqualTo(cls)
@@ -164,7 +194,12 @@ class WebSocketRecorder(
     nextEvent() as Failure
   }
 
-  fun assertFailure(code: Int, body: String?, cls: Class<out IOException?>?, message: String?) {
+  fun assertFailure(
+    code: Int,
+    body: String?,
+    cls: Class<out IOException?>?,
+    message: String?,
+  ) {
     val event = nextEvent() as Failure
     assertThat(event.response!!.code).isEqualTo(code)
     if (body != null) {
@@ -175,27 +210,31 @@ class WebSocketRecorder(
   }
 
   /** Expose this recorder as a frame callback and shim in "ping" events.  */
-  fun asFrameCallback() = object : WebSocketReader.FrameCallback {
-    override fun onReadMessage(text: String) {
-      events.add(Message(string = text))
-    }
+  fun asFrameCallback() =
+    object : WebSocketReader.FrameCallback {
+      override fun onReadMessage(text: String) {
+        events.add(Message(string = text))
+      }
 
-    override fun onReadMessage(bytes: ByteString) {
-      events.add(Message(bytes = bytes))
-    }
+      override fun onReadMessage(bytes: ByteString) {
+        events.add(Message(bytes = bytes))
+      }
 
-    override fun onReadPing(payload: ByteString) {
-      events.add(Ping(payload))
-    }
+      override fun onReadPing(payload: ByteString) {
+        events.add(Ping(payload))
+      }
 
-    override fun onReadPong(payload: ByteString) {
-      events.add(Pong(payload))
-    }
+      override fun onReadPong(payload: ByteString) {
+        events.add(Pong(payload))
+      }
 
-    override fun onReadClose(code: Int, reason: String) {
-      events.add(Closing(code, reason))
+      override fun onReadClose(
+        code: Int,
+        reason: String,
+      ) {
+        events.add(Closing(code, reason))
+      }
     }
-  }
 
   internal class Open(
     val webSocket: WebSocket,
@@ -206,10 +245,11 @@ class WebSocketRecorder(
     val t: Throwable,
     val response: Response?,
   ) {
-    val responseBody: String? = when {
-      response != null && response.code != 101 -> response.body.string()
-      else -> null
-    }
+    val responseBody: String? =
+      when {
+        response != null && response.code != 101 -> response.body.string()
+        else -> null
+      }
 
     override fun toString(): String {
       return when (response) {

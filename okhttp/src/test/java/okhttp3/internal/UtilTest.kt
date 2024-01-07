@@ -32,57 +32,69 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 class UtilTest {
-    @Test
-    fun socketIsHealthy() {
-        val localhost = InetAddress.getLoopbackAddress()
-        val serverSocket = ServerSocket(0, 1, localhost)
+  @Test
+  fun socketIsHealthy() {
+    val localhost = InetAddress.getLoopbackAddress()
+    val serverSocket = ServerSocket(0, 1, localhost)
 
-        val socket = Socket()
-        socket.connect(serverSocket.localSocketAddress)
-        val socketSource = socket.source().buffer()
+    val socket = Socket()
+    socket.connect(serverSocket.localSocketAddress)
+    val socketSource = socket.source().buffer()
 
-        assertThat(socket.isHealthy(socketSource)).isTrue()
+    assertThat(socket.isHealthy(socketSource)).isTrue()
 
-        serverSocket.close()
-        assertThat(socket.isHealthy(socketSource)).isFalse()
-    }
+    serverSocket.close()
+    assertThat(socket.isHealthy(socketSource)).isFalse()
+  }
 
-    @Test
-    fun testDurationTimeUnit() {
-        assertThat(checkDuration("timeout", 0, TimeUnit.MILLISECONDS)).isEqualTo(0)
-        assertThat(checkDuration("timeout", 1, TimeUnit.MILLISECONDS)).isEqualTo(1)
+  @Test
+  fun testDurationTimeUnit() {
+    assertThat(checkDuration("timeout", 0, TimeUnit.MILLISECONDS)).isEqualTo(0)
+    assertThat(checkDuration("timeout", 1, TimeUnit.MILLISECONDS)).isEqualTo(1)
 
-        assertThat(assertThrows<IllegalStateException> {
-          checkDuration("timeout", -1, TimeUnit.MILLISECONDS)
-        }).hasMessage("timeout < 0")
-        assertThat(assertThrows<IllegalArgumentException> {
-          checkDuration("timeout", 1, TimeUnit.NANOSECONDS)
-        }).hasMessage("timeout too small")
-        assertThat(assertThrows<IllegalArgumentException> {
-          checkDuration(
-            "timeout",
-            1L + Int.MAX_VALUE.toLong(),
-            TimeUnit.MILLISECONDS
-          )
-        }).hasMessage("timeout too large")
-    }
+    assertThat(
+      assertThrows<IllegalStateException> {
+        checkDuration("timeout", -1, TimeUnit.MILLISECONDS)
+      },
+    ).hasMessage("timeout < 0")
+    assertThat(
+      assertThrows<IllegalArgumentException> {
+        checkDuration("timeout", 1, TimeUnit.NANOSECONDS)
+      },
+    ).hasMessage("timeout too small")
+    assertThat(
+      assertThrows<IllegalArgumentException> {
+        checkDuration(
+          "timeout",
+          1L + Int.MAX_VALUE.toLong(),
+          TimeUnit.MILLISECONDS,
+        )
+      },
+    ).hasMessage("timeout too large")
+  }
 
-    @Test
-    fun testDurationDuration() {
-        assertThat(checkDuration("timeout", 0.milliseconds)).isEqualTo(0)
-        assertThat(checkDuration("timeout", 1.milliseconds)).isEqualTo(1)
+  @Test
+  fun testDurationDuration() {
+    assertThat(checkDuration("timeout", 0.milliseconds)).isEqualTo(0)
+    assertThat(checkDuration("timeout", 1.milliseconds)).isEqualTo(1)
 
-        assertThat(assertThrows<IllegalStateException> {
-          checkDuration("timeout", (-1).milliseconds)
-        }).hasMessage("timeout < 0")
-        assertThat(assertThrows<IllegalArgumentException> {
-          checkDuration("timeout", 1.nanoseconds)
-        }).hasMessage("timeout too small")
-        assertThat(assertThrows<IllegalArgumentException> {
-          checkDuration(
-            "timeout",
-            (1L + Int.MAX_VALUE).milliseconds
-          )
-        }).hasMessage("timeout too large")
-    }
+    assertThat(
+      assertThrows<IllegalStateException> {
+        checkDuration("timeout", (-1).milliseconds)
+      },
+    ).hasMessage("timeout < 0")
+    assertThat(
+      assertThrows<IllegalArgumentException> {
+        checkDuration("timeout", 1.nanoseconds)
+      },
+    ).hasMessage("timeout too small")
+    assertThat(
+      assertThrows<IllegalArgumentException> {
+        checkDuration(
+          "timeout",
+          (1L + Int.MAX_VALUE).milliseconds,
+        )
+      },
+    ).hasMessage("timeout too large")
+  }
 }

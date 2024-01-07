@@ -24,7 +24,7 @@ import okhttp3.internal.connection.RealCall
 import okhttp3.internal.finishedAccessor
 
 internal class RecordingExecutor(
-  private val dispatcherTest: DispatcherTest
+  private val dispatcherTest: DispatcherTest,
 ) : AbstractExecutorService() {
   private var shutdown: Boolean = false
   private val calls = mutableListOf<RealCall.AsyncCall>()
@@ -68,7 +68,10 @@ internal class RecordingExecutor(
     throw UnsupportedOperationException()
   }
 
-  override fun awaitTermination(timeout: Long, unit: TimeUnit): Boolean {
+  override fun awaitTermination(
+    timeout: Long,
+    unit: TimeUnit,
+  ): Boolean {
     throw UnsupportedOperationException()
   }
 }

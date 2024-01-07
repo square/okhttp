@@ -135,26 +135,28 @@ internal fun sections(mappings: List<Mapping>): Map<Int, List<MappedRange>> {
 
     val sectionList = result.getOrPut(section) { mutableListOf() }
 
-    sectionList += when (mapping.type) {
-      TYPE_MAPPED -> run {
-        val deltaMapping = inlineDeltaOrNull(mapping)
-        if (deltaMapping != null) {
-          return@run deltaMapping
+    sectionList +=
+      when (mapping.type) {
+        TYPE_MAPPED ->
+          run {
+            val deltaMapping = inlineDeltaOrNull(mapping)
+            if (deltaMapping != null) {
+              return@run deltaMapping
+            }
+
+            when (mapping.mappedTo.size) {
+              1 -> MappedRange.Inline1(rangeStart, mapping.mappedTo)
+              2 -> MappedRange.Inline2(rangeStart, mapping.mappedTo)
+              else -> MappedRange.External(rangeStart, mapping.mappedTo)
+            }
+          }
+
+        TYPE_IGNORED, TYPE_VALID, TYPE_DISALLOWED -> {
+          MappedRange.Constant(rangeStart, mapping.type)
         }
 
-        when (mapping.mappedTo.size) {
-          1 -> MappedRange.Inline1(rangeStart, mapping.mappedTo)
-          2 -> MappedRange.Inline2(rangeStart, mapping.mappedTo)
-          else -> MappedRange.External(rangeStart, mapping.mappedTo)
-        }
+        else -> error("unexpected mapping type: ${mapping.type}")
       }
-
-      TYPE_IGNORED, TYPE_VALID, TYPE_DISALLOWED -> {
-        MappedRange.Constant(rangeStart, mapping.type)
-      }
-
-      else -> error("unexpected mapping type: ${mapping.type}")
-    }
   }
 
   for (sectionList in result.values) {
@@ -202,18 +204,20 @@ internal fun withoutSectionSpans(mappings: List<Mapping>): List<Mapping> {
 
   while (true) {
     if (current.spansSections) {
-      result += Mapping(
-        current.sourceCodePoint0,
-        current.section + 0x7f,
-        current.type,
-        current.mappedTo,
-      )
-      current = Mapping(
-        current.section + 0x80,
-        current.sourceCodePoint1,
-        current.type,
-        current.mappedTo,
-      )
+      result +=
+        Mapping(
+          current.sourceCodePoint0,
+          current.section + 0x7f,
+          current.type,
+          current.mappedTo,
+        )
+      current =
+        Mapping(
+          current.section + 0x80,
+          current.sourceCodePoint1,
+          current.type,
+          current.mappedTo,
+        )
     } else {
       result += current
       current = if (i.hasNext()) i.next() else break
@@ -246,12 +250,13 @@ internal fun mergeAdjacentRanges(mappings: List<Mapping>): List<Mapping> {
       index++
     }
 
-    result += Mapping(
-      sourceCodePoint0 = mapping.sourceCodePoint0,
-      sourceCodePoint1 = unionWith.sourceCodePoint1,
-      type = type,
-      mappedTo = mappedTo,
-    )
+    result +=
+      Mapping(
+        sourceCodePoint0 = mapping.sourceCodePoint0,
+        sourceCodePoint1 = unionWith.sourceCodePoint1,
+        type = type,
+        mappedTo = mappedTo,
+      )
   }
 
   return result
@@ -262,11 +267,13 @@ internal fun canonicalizeType(type: Int): Int {
     TYPE_IGNORED -> TYPE_IGNORED
 
     TYPE_MAPPED,
-    TYPE_DISALLOWED_STD3_MAPPED -> TYPE_MAPPED
+    TYPE_DISALLOWED_STD3_MAPPED,
+    -> TYPE_MAPPED
 
     TYPE_DEVIATION,
     TYPE_DISALLOWED_STD3_VALID,
-    TYPE_VALID -> TYPE_VALID
+    TYPE_VALID,
+    -> TYPE_VALID
 
     TYPE_DISALLOWED -> TYPE_DISALLOWED
 
@@ -279,4 +286,3 @@ internal infix fun Byte.and(mask: Int): Int = toInt() and mask
 internal infix fun Short.and(mask: Int): Int = toInt() and mask
 
 internal infix fun Int.and(mask: Long): Long = toLong() and mask
-

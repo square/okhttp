@@ -20,7 +20,6 @@ package okhttp3.internal.http2
  * Settings are [connection][Http2Connection] scoped.
  */
 class Settings {
-
   /** Bitfield of which flags that values. */
   private var set: Int = 0
 
@@ -45,7 +44,10 @@ class Settings {
     values.fill(0)
   }
 
-  operator fun set(id: Int, value: Int): Settings {
+  operator fun set(
+    id: Int,
+    value: Int,
+  ): Settings {
     if (id < 0 || id >= values.size) {
       return this // Discard unknown settings.
     }
@@ -109,14 +111,19 @@ class Settings {
 
     /** HTTP/2: Size in bytes of the table used to decode the sender's header blocks. */
     const val HEADER_TABLE_SIZE = 1
+
     /** HTTP/2: The peer must not send a PUSH_PROMISE frame when this is 0. */
     const val ENABLE_PUSH = 2
+
     /** Sender's maximum number of concurrent streams. */
     const val MAX_CONCURRENT_STREAMS = 4
+
     /** HTTP/2: Size in bytes of the largest frame payload the sender will accept. */
     const val MAX_FRAME_SIZE = 5
+
     /** HTTP/2: Advisory only. Size in bytes of the largest header list the sender will accept. */
     const val MAX_HEADER_LIST_SIZE = 6
+
     /** Window size in bytes. */
     const val INITIAL_WINDOW_SIZE = 7
 

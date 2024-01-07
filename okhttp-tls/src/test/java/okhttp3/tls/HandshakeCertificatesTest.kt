@@ -59,34 +59,42 @@ class HandshakeCertificatesTest {
     platform.assumeNotConscrypt()
     platform.assumeNotBouncyCastle()
 
-    val clientRoot = HeldCertificate.Builder()
-      .certificateAuthority(1)
-      .build()
-    val clientIntermediate = HeldCertificate.Builder()
-      .certificateAuthority(0)
-      .signedBy(clientRoot)
-      .build()
-    val clientCertificate = HeldCertificate.Builder()
-      .signedBy(clientIntermediate)
-      .build()
-    val serverRoot = HeldCertificate.Builder()
-      .certificateAuthority(1)
-      .build()
-    val serverIntermediate = HeldCertificate.Builder()
-      .certificateAuthority(0)
-      .signedBy(serverRoot)
-      .build()
-    val serverCertificate = HeldCertificate.Builder()
-      .signedBy(serverIntermediate)
-      .build()
-    val server = HandshakeCertificates.Builder()
-      .addTrustedCertificate(clientRoot.certificate)
-      .heldCertificate(serverCertificate, serverIntermediate.certificate)
-      .build()
-    val client = HandshakeCertificates.Builder()
-      .addTrustedCertificate(serverRoot.certificate)
-      .heldCertificate(clientCertificate, clientIntermediate.certificate)
-      .build()
+    val clientRoot =
+      HeldCertificate.Builder()
+        .certificateAuthority(1)
+        .build()
+    val clientIntermediate =
+      HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .signedBy(clientRoot)
+        .build()
+    val clientCertificate =
+      HeldCertificate.Builder()
+        .signedBy(clientIntermediate)
+        .build()
+    val serverRoot =
+      HeldCertificate.Builder()
+        .certificateAuthority(1)
+        .build()
+    val serverIntermediate =
+      HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .signedBy(serverRoot)
+        .build()
+    val serverCertificate =
+      HeldCertificate.Builder()
+        .signedBy(serverIntermediate)
+        .build()
+    val server =
+      HandshakeCertificates.Builder()
+        .addTrustedCertificate(clientRoot.certificate)
+        .heldCertificate(serverCertificate, serverIntermediate.certificate)
+        .build()
+    val client =
+      HandshakeCertificates.Builder()
+        .addTrustedCertificate(serverRoot.certificate)
+        .heldCertificate(clientCertificate, clientIntermediate.certificate)
+        .build()
     val serverAddress = startTlsServer()
     val serverHandshakeFuture = doServerHandshake(server)
     val clientHandshakeFuture = doClientHandshake(client, serverAddress)
@@ -103,36 +111,42 @@ class HandshakeCertificatesTest {
   }
 
   @Test fun keyManager() {
-    val root = HeldCertificate.Builder()
-      .certificateAuthority(1)
-      .build()
-    val intermediate = HeldCertificate.Builder()
-      .certificateAuthority(0)
-      .signedBy(root)
-      .build()
-    val certificate = HeldCertificate.Builder()
-      .signedBy(intermediate)
-      .build()
-    val handshakeCertificates = HandshakeCertificates.Builder()
-      .addTrustedCertificate(root.certificate) // BouncyCastle requires at least one
-      .heldCertificate(certificate, intermediate.certificate)
-      .build()
+    val root =
+      HeldCertificate.Builder()
+        .certificateAuthority(1)
+        .build()
+    val intermediate =
+      HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .signedBy(root)
+        .build()
+    val certificate =
+      HeldCertificate.Builder()
+        .signedBy(intermediate)
+        .build()
+    val handshakeCertificates =
+      HandshakeCertificates.Builder()
+        .addTrustedCertificate(root.certificate) // BouncyCastle requires at least one
+        .heldCertificate(certificate, intermediate.certificate)
+        .build()
     assertPrivateKeysEquals(
       certificate.keyPair.private,
-      handshakeCertificates.keyManager.getPrivateKey("private")
+      handshakeCertificates.keyManager.getPrivateKey("private"),
     )
     assertThat(handshakeCertificates.keyManager.getCertificateChain("private").toList())
       .isEqualTo(listOf(certificate.certificate, intermediate.certificate))
   }
 
   @Test fun platformTrustedCertificates() {
-    val handshakeCertificates = HandshakeCertificates.Builder()
-      .addPlatformTrustedCertificates()
-      .build()
+    val handshakeCertificates =
+      HandshakeCertificates.Builder()
+        .addPlatformTrustedCertificates()
+        .build()
     val acceptedIssuers = handshakeCertificates.trustManager.acceptedIssuers
-    val names = acceptedIssuers
-      .map { it.subjectDN.name }
-      .toSet()
+    val names =
+      acceptedIssuers
+        .map { it.subjectDN.name }
+        .toSet()
 
     // It's safe to assume all platforms will have a major Internet certificate issuer.
     assertThat(names).matchesPredicate { strings ->
@@ -151,12 +165,13 @@ class HandshakeCertificatesTest {
   private fun doServerHandshake(server: HandshakeCertificates): Future<Handshake> {
     return executorService.submit<Handshake> {
       serverSocket!!.accept().use { rawSocket ->
-        val sslSocket = server.sslSocketFactory().createSocket(
-          rawSocket,
-          rawSocket.inetAddress.hostAddress,
-          rawSocket.port,
-          true
-        ) as SSLSocket
+        val sslSocket =
+          server.sslSocketFactory().createSocket(
+            rawSocket,
+            rawSocket.inetAddress.hostAddress,
+            rawSocket.port,
+            true,
+          ) as SSLSocket
         sslSocket.use {
           sslSocket.useClientMode = false
           sslSocket.wantClientAuth = true
@@ -168,17 +183,19 @@ class HandshakeCertificatesTest {
   }
 
   private fun doClientHandshake(
-    client: HandshakeCertificates, serverAddress: InetSocketAddress
+    client: HandshakeCertificates,
+    serverAddress: InetSocketAddress,
   ): Future<Handshake> {
     return executorService.submit<Handshake> {
       SocketFactory.getDefault().createSocket().use { rawSocket ->
         rawSocket.connect(serverAddress)
-        val sslSocket = client.sslSocketFactory().createSocket(
-          rawSocket,
-          rawSocket.inetAddress.hostAddress,
-          rawSocket.port,
-          true
-        ) as SSLSocket
+        val sslSocket =
+          client.sslSocketFactory().createSocket(
+            rawSocket,
+            rawSocket.inetAddress.hostAddress,
+            rawSocket.port,
+            true,
+          ) as SSLSocket
         sslSocket.use {
           sslSocket.startHandshake()
           return@submit sslSocket.session.handshake()
@@ -187,7 +204,10 @@ class HandshakeCertificatesTest {
     }
   }
 
-  private fun assertPrivateKeysEquals(expected: PrivateKey, actual: PrivateKey) {
+  private fun assertPrivateKeysEquals(
+    expected: PrivateKey,
+    actual: PrivateKey,
+  ) {
     assertThat(actual.encoded.toByteString()).isEqualTo(expected.encoded.toByteString())
   }
 }

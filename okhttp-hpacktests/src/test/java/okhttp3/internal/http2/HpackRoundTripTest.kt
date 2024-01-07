@@ -43,7 +43,7 @@ class HpackRoundTripTest : HpackDecodeTestBase() {
   fun testRoundTrip(story: Story) {
     assumeFalse(
       story === Story.MISSING,
-      "Test stories missing, checkout git submodule"
+      "Test stories missing, checkout git submodule",
     )
 
     val newCases = mutableListOf<Case>()

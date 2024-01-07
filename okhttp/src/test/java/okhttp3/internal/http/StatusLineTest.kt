@@ -18,10 +18,9 @@ package okhttp3.internal.http
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import java.net.ProtocolException
+import kotlin.test.assertFailsWith
 import okhttp3.Protocol
 import okhttp3.internal.http.StatusLine.Companion.parse
-import assertk.fail
-import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Test
 
 class StatusLineTest {

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal
 
 import okhttp3.internal.idn.IDNA_MAPPING_TABLE
@@ -45,10 +46,11 @@ internal fun String.containsInvalidLabelLengths(): Boolean {
   var labelStart = 0
   while (true) {
     val dot = indexOf('.', startIndex = labelStart)
-    val labelLength = when (dot) {
-      -1 -> length - labelStart
-      else -> dot - labelStart
-    }
+    val labelLength =
+      when (dot) {
+        -1 -> length - labelStart
+        else -> dot - labelStart
+      }
     if (labelLength !in 1..63) return true
     if (dot == -1) break
     if (dot == length - 1) break // Trailing '.' is allowed.
@@ -78,7 +80,11 @@ internal fun String.containsInvalidHostnameAsciiCodes(): Boolean {
 }
 
 /** Decodes an IPv6 address like 1111:2222:3333:4444:5555:6666:7777:8888 or ::1. */
-internal fun decodeIpv6(input: String, pos: Int, limit: Int): ByteArray? {
+internal fun decodeIpv6(
+  input: String,
+  pos: Int,
+  limit: Int,
+): ByteArray? {
   val address = ByteArray(16)
   var b = 0
   var compress = -1
@@ -151,7 +157,7 @@ internal fun decodeIpv4Suffix(
   pos: Int,
   limit: Int,
   address: ByteArray,
-  addressOffset: Int
+  addressOffset: Int,
 ): Boolean {
   var b = addressOffset
 
@@ -283,11 +289,14 @@ internal fun String.toCanonicalHost(): String? {
   // If the input contains a :, it’s an IPv6 address.
   if (":" in host) {
     // If the input is encased in square braces "[...]", drop 'em.
-    val inetAddressByteArray = (if (host.startsWith("[") && host.endsWith("]")) {
-      decodeIpv6(host, 1, host.length - 1)
-    } else {
-      decodeIpv6(host, 0, host.length)
-    }) ?: return null
+    val inetAddressByteArray =
+      (
+        if (host.startsWith("[") && host.endsWith("]")) {
+          decodeIpv6(host, 1, host.length - 1)
+        } else {
+          decodeIpv6(host, 0, host.length)
+        }
+      ) ?: return null
 
     val address = canonicalizeInetAddress(inetAddressByteArray)
     if (address.size == 16) return inet6AddressToAscii(address)
@@ -310,7 +319,7 @@ internal fun idnToAscii(host: String): String? {
   // 1. Map, from bufferA to bufferB.
   while (!bufferA.exhausted()) {
     val codePoint = bufferA.readUtf8CodePoint()
-    if(!IDNA_MAPPING_TABLE.map(codePoint, bufferB)) return null
+    if (!IDNA_MAPPING_TABLE.map(codePoint, bufferB)) return null
   }
 
   // 2. Normalize, from bufferB to bufferA.
@@ -332,4 +341,3 @@ internal fun idnToAscii(host: String): String? {
 
   return Punycode.encode(decoded)
 }
-

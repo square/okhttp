@@ -42,9 +42,9 @@ class WebPlatformUrlTest {
       return
     }
 
-    if (!testData.base!!.startsWith("https:")
-      && !testData.base!!.startsWith("http:")
-      && testData.base != "about:blank"
+    if (!testData.base!!.startsWith("https:") &&
+      !testData.base!!.startsWith("http:") &&
+      testData.base != "about:blank"
     ) {
       System.err.println("Ignoring unsupported base ${testData.base}")
       return
@@ -66,10 +66,11 @@ class WebPlatformUrlTest {
   }
 
   private fun testHttpUrl(testData: WebPlatformUrlTestData) {
-    val url = when (testData.base) {
-      "about:blank" -> testData.input!!.toHttpUrlOrNull()
-      else -> testData.base!!.toHttpUrl().resolve(testData.input!!)
-    }
+    val url =
+      when (testData.base) {
+        "about:blank" -> testData.input!!.toHttpUrlOrNull()
+        else -> testData.base!!.toHttpUrl().resolve(testData.input!!)
+      }
 
     if (testData.expectParseFailure()) {
       assertThat(url, "Expected URL to fail parsing").isNull()
@@ -78,22 +79,26 @@ class WebPlatformUrlTest {
 
     assertThat(url, "Expected URL to parse successfully, but was null")
       .isNotNull()
-    val effectivePort = when {
-      url!!.port != defaultPort(url.scheme) -> Integer.toString(url.port)
-      else -> ""
-    }
-    val effectiveQuery = when {
-      url.encodedQuery != null -> "?" + url.encodedQuery
-      else -> ""
-    }
-    val effectiveFragment = when {
-      url.encodedFragment != null -> "#" + url.encodedFragment
-      else -> ""
-    }
-    val effectiveHost = when {
-      url.host.contains(":") -> "[" + url.host + "]"
-      else -> url.host
-    }
+    val effectivePort =
+      when {
+        url!!.port != defaultPort(url.scheme) -> Integer.toString(url.port)
+        else -> ""
+      }
+    val effectiveQuery =
+      when {
+        url.encodedQuery != null -> "?" + url.encodedQuery
+        else -> ""
+      }
+    val effectiveFragment =
+      when {
+        url.encodedFragment != null -> "#" + url.encodedFragment
+        else -> ""
+      }
+    val effectiveHost =
+      when {
+        url.host.contains(":") -> "[" + url.host + "]"
+        else -> url.host
+      }
     assertThat(url.scheme, "scheme").isEqualTo(testData.scheme)
     assertThat(effectiveHost, "host").isEqualTo(testData.host)
     assertThat(effectivePort, "port").isEqualTo(testData.port)
@@ -104,22 +109,24 @@ class WebPlatformUrlTest {
 
   companion object {
     private val HTTP_URL_SCHEMES = listOf("http", "https")
-    private val KNOWN_FAILURES = listOf(
-      "Parsing: <http://example\t.\norg> against <http://example.org/foo/bar>",
-      "Parsing: <http://f:0/c> against <http://example.org/foo/bar>",
-      "Parsing: <http://f:00000000000000/c> against <http://example.org/foo/bar>",
-      "Parsing: <http://f:\n/c> against <http://example.org/foo/bar>",
-      "Parsing: <http://f:999999/c> against <http://example.org/foo/bar>",
-      "Parsing: <http://192.0x00A80001> against <about:blank>",
-      "Parsing: <http://%30%78%63%30%2e%30%32%35%30.01> against <http://other.com/>",
-      "Parsing: <http://192.168.0.257> against <http://other.com/>",
-      "Parsing: <http://０Ｘｃ０．０２５０．０１> against <http://other.com/>"
-    )
+    private val KNOWN_FAILURES =
+      listOf(
+        "Parsing: <http://example\t.\norg> against <http://example.org/foo/bar>",
+        "Parsing: <http://f:0/c> against <http://example.org/foo/bar>",
+        "Parsing: <http://f:00000000000000/c> against <http://example.org/foo/bar>",
+        "Parsing: <http://f:\n/c> against <http://example.org/foo/bar>",
+        "Parsing: <http://f:999999/c> against <http://example.org/foo/bar>",
+        "Parsing: <http://192.0x00A80001> against <about:blank>",
+        "Parsing: <http://%30%78%63%30%2e%30%32%35%30.01> against <http://other.com/>",
+        "Parsing: <http://192.168.0.257> against <http://other.com/>",
+        "Parsing: <http://０Ｘｃ０．０２５０．０１> against <http://other.com/>",
+      )
 
     private fun loadTests(): List<WebPlatformUrlTestData> {
-      val resourceAsStream = WebPlatformUrlTest::class.java.getResourceAsStream(
-        "/web-platform-test-urltestdata.txt"
-      )
+      val resourceAsStream =
+        WebPlatformUrlTest::class.java.getResourceAsStream(
+          "/web-platform-test-urltestdata.txt",
+        )
       val source = resourceAsStream.source().buffer()
       return WebPlatformUrlTestData.load(source)
     }

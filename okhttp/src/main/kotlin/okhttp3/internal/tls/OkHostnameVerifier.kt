@@ -16,15 +16,15 @@
  */
 package okhttp3.internal.tls
 
-import okhttp3.internal.canParseAsIpAddress
-import okhttp3.internal.toCanonicalHost
-import okio.utf8Size
 import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import java.util.Locale
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLSession
+import okhttp3.internal.canParseAsIpAddress
+import okhttp3.internal.toCanonicalHost
+import okio.utf8Size
 
 /**
  * A HostnameVerifier consistent with [RFC 2818][rfc_2818].
@@ -36,7 +36,10 @@ object OkHostnameVerifier : HostnameVerifier {
   private const val ALT_DNS_NAME = 2
   private const val ALT_IPA_NAME = 7
 
-  override fun verify(host: String, session: SSLSession): Boolean {
+  override fun verify(
+    host: String,
+    session: SSLSession,
+  ): Boolean {
     return if (!host.isAscii()) {
       false
     } else {
@@ -46,10 +49,12 @@ object OkHostnameVerifier : HostnameVerifier {
         false
       }
     }
-
   }
 
-  fun verify(host: String, certificate: X509Certificate): Boolean {
+  fun verify(
+    host: String,
+    certificate: X509Certificate,
+  ): Boolean {
     return when {
       host.canParseAsIpAddress() -> verifyIpAddress(host, certificate)
       else -> verifyHostname(host, certificate)
@@ -57,7 +62,10 @@ object OkHostnameVerifier : HostnameVerifier {
   }
 
   /** Returns true if [certificate] matches [ipAddress]. */
-  private fun verifyIpAddress(ipAddress: String, certificate: X509Certificate): Boolean {
+  private fun verifyIpAddress(
+    ipAddress: String,
+    certificate: X509Certificate,
+  ): Boolean {
     val canonicalIpAddress = ipAddress.toCanonicalHost()
 
     return getSubjectAltNames(certificate, ALT_IPA_NAME).any {
@@ -66,7 +74,10 @@ object OkHostnameVerifier : HostnameVerifier {
   }
 
   /** Returns true if [certificate] matches [hostname]. */
-  private fun verifyHostname(hostname: String, certificate: X509Certificate): Boolean {
+  private fun verifyHostname(
+    hostname: String,
+    certificate: X509Certificate,
+  ): Boolean {
     val hostname = hostname.asciiToLowercase()
     return getSubjectAltNames(certificate, ALT_DNS_NAME).any {
       verifyHostname(hostname, it)
@@ -95,19 +106,24 @@ object OkHostnameVerifier : HostnameVerifier {
    * @param pattern domain name pattern from certificate. May be a wildcard pattern such as
    *     `*.android.com`.
    */
-  private fun verifyHostname(hostname: String?, pattern: String?): Boolean {
+  private fun verifyHostname(
+    hostname: String?,
+    pattern: String?,
+  ): Boolean {
     var hostname = hostname
     var pattern = pattern
     // Basic sanity checks
     if (hostname.isNullOrEmpty() ||
-        hostname.startsWith(".") ||
-        hostname.endsWith("..")) {
+      hostname.startsWith(".") ||
+      hostname.endsWith("..")
+    ) {
       // Invalid domain name
       return false
     }
     if (pattern.isNullOrEmpty() ||
-        pattern.startsWith(".") ||
-        pattern.endsWith("..")) {
+      pattern.startsWith(".") ||
+      pattern.endsWith("..")
+    ) {
       // Invalid pattern/domain name
       return false
     }
@@ -175,7 +191,8 @@ object OkHostnameVerifier : HostnameVerifier {
     // Check that asterisk did not match across domain name labels.
     val suffixStartIndexInHostname = hostname.length - suffix.length
     if (suffixStartIndexInHostname > 0 &&
-        hostname.lastIndexOf('.', suffixStartIndexInHostname - 1) != -1) {
+      hostname.lastIndexOf('.', suffixStartIndexInHostname - 1) != -1
+    ) {
       return false // Asterisk is matching across domain name labels -- not permitted.
     }
 
@@ -189,7 +206,10 @@ object OkHostnameVerifier : HostnameVerifier {
     return altIpaNames + altDnsNames
   }
 
-  private fun getSubjectAltNames(certificate: X509Certificate, type: Int): List<String> {
+  private fun getSubjectAltNames(
+    certificate: X509Certificate,
+    type: Int,
+  ): List<String> {
     try {
       val subjectAltNames = certificate.subjectAlternativeNames ?: return emptyList()
       val result = mutableListOf<String>()

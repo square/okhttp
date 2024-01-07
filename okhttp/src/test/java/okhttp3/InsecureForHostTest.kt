@@ -32,8 +32,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 class InsecureForHostTest {
-  @RegisterExtension @JvmField val platform = PlatformRule()
-  @RegisterExtension @JvmField val clientTestRule = OkHttpClientTestRule()
+  @RegisterExtension @JvmField
+  val platform = PlatformRule()
+
+  @RegisterExtension @JvmField
+  val clientTestRule = OkHttpClientTestRule()
 
   private lateinit var server: MockWebServer
 
@@ -50,12 +53,14 @@ class InsecureForHostTest {
     server.useHttps(serverCertificates.sslSocketFactory())
     server.enqueue(MockResponse())
 
-    val clientCertificates = HandshakeCertificates.Builder()
+    val clientCertificates =
+      HandshakeCertificates.Builder()
         .addPlatformTrustedCertificates()
         .addInsecureHost(server.hostName)
         .build()
 
-    val client = clientTestRule.newClientBuilder()
+    val client =
+      clientTestRule.newClientBuilder()
         .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
         .build()
 
@@ -71,21 +76,25 @@ class InsecureForHostTest {
   }
 
   @Test fun `bad certificates host in insecureHosts fails with SSLException`() {
-    val heldCertificate = HeldCertificate.Builder()
+    val heldCertificate =
+      HeldCertificate.Builder()
         .addSubjectAlternativeName("example.com")
         .build()
-    val serverCertificates = HandshakeCertificates.Builder()
+    val serverCertificates =
+      HandshakeCertificates.Builder()
         .heldCertificate(heldCertificate)
         .build()
     server.useHttps(serverCertificates.sslSocketFactory())
     server.enqueue(MockResponse())
 
-    val clientCertificates = HandshakeCertificates.Builder()
+    val clientCertificates =
+      HandshakeCertificates.Builder()
         .addPlatformTrustedCertificates()
         .addInsecureHost(server.hostName)
         .build()
 
-    val client = clientTestRule.newClientBuilder()
+    val client =
+      clientTestRule.newClientBuilder()
         .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
         .build()
 
@@ -100,12 +109,14 @@ class InsecureForHostTest {
     server.useHttps(serverCertificates.sslSocketFactory())
     server.enqueue(MockResponse())
 
-    val clientCertificates = HandshakeCertificates.Builder()
+    val clientCertificates =
+      HandshakeCertificates.Builder()
         .addPlatformTrustedCertificates()
         .addInsecureHost("${server.hostName}2")
         .build()
 
-    val client = clientTestRule.newClientBuilder()
+    val client =
+      clientTestRule.newClientBuilder()
         .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
         .build()
 

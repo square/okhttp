@@ -37,7 +37,7 @@ class FakeProxySelector : ProxySelector() {
   override fun connectFailed(
     uri: URI,
     sa: SocketAddress,
-    ioe: IOException
+    ioe: IOException,
   ) {
   }
 }

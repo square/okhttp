@@ -20,6 +20,7 @@ import okio.BufferedSink
 
 open class ForwardingRequestBody(delegate: RequestBody?) : RequestBody() {
   private val delegate: RequestBody
+
   fun delegate(): RequestBody {
     return delegate
   }
@@ -28,7 +29,8 @@ open class ForwardingRequestBody(delegate: RequestBody?) : RequestBody() {
     return delegate.contentType()
   }
 
-  @Throws(IOException::class) override fun contentLength(): Long {
+  @Throws(IOException::class)
+  override fun contentLength(): Long {
     return delegate.contentLength()
   }
 

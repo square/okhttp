@@ -25,11 +25,12 @@ import org.junit.jupiter.api.Test
 class FormBodyTest {
   @Test
   fun urlEncoding() {
-    val body = FormBody.Builder()
-      .add("a+=& b", "c+=& d")
-      .add("space, the", "final frontier")
-      .add("%25", "%25")
-      .build()
+    val body =
+      FormBody.Builder()
+        .add("a+=& b", "c+=& d")
+        .add("space, the", "final frontier")
+        .add("%25", "%25")
+        .build()
     assertThat(body.size).isEqualTo(3)
     assertThat(body.encodedName(0)).isEqualTo("a%2B%3D%26+b")
     assertThat(body.encodedName(1)).isEqualTo("space%2C+the")
@@ -44,7 +45,7 @@ class FormBodyTest {
     assertThat(body.value(1)).isEqualTo("final frontier")
     assertThat(body.value(2)).isEqualTo("%25")
     assertThat(body.contentType().toString()).isEqualTo(
-      "application/x-www-form-urlencoded"
+      "application/x-www-form-urlencoded",
     )
     val expected = "a%2B%3D%26+b=c%2B%3D%26+d&space%2C+the=final+frontier&%2525=%2525"
     assertThat(body.contentLength()).isEqualTo(expected.length.toLong())
@@ -55,11 +56,12 @@ class FormBodyTest {
 
   @Test
   fun addEncoded() {
-    val body = FormBody.Builder()
-      .addEncoded("a+=& b", "c+=& d")
-      .addEncoded("e+=& f", "g+=& h")
-      .addEncoded("%25", "%25")
-      .build()
+    val body =
+      FormBody.Builder()
+        .addEncoded("a+=& b", "c+=& d")
+        .addEncoded("e+=& f", "g+=& h")
+        .addEncoded("%25", "%25")
+        .build()
     val expected = "a+%3D%26+b=c+%3D%26+d&e+%3D%26+f=g+%3D%26+h&%25=%25"
     val out = Buffer()
     body.writeTo(out)
@@ -68,9 +70,10 @@ class FormBodyTest {
 
   @Test
   fun encodedPair() {
-    val body = FormBody.Builder()
-      .add("sim", "ple")
-      .build()
+    val body =
+      FormBody.Builder()
+        .add("sim", "ple")
+        .build()
     val expected = "sim=ple"
     assertThat(body.contentLength()).isEqualTo(expected.length.toLong())
     val buffer = Buffer()
@@ -80,11 +83,12 @@ class FormBodyTest {
 
   @Test
   fun encodeMultiplePairs() {
-    val body = FormBody.Builder()
-      .add("sim", "ple")
-      .add("hey", "there")
-      .add("help", "me")
-      .build()
+    val body =
+      FormBody.Builder()
+        .add("sim", "ple")
+        .add("hey", "there")
+        .add("help", "me")
+        .build()
     val expected = "sim=ple&hey=there&help=me"
     assertThat(body.contentLength()).isEqualTo(expected.length.toLong())
     val buffer = Buffer()
@@ -187,9 +191,10 @@ class FormBodyTest {
   @Throws(IOException::class)
   private fun formEncode(codePoint: Int): String {
     // Wrap the codepoint with regular printable characters to prevent trimming.
-    val body = FormBody.Builder()
-      .add("a", String(intArrayOf('b'.code, codePoint, 'c'.code), 0, 3))
-      .build()
+    val body =
+      FormBody.Builder()
+        .add("a", String(intArrayOf('b'.code, codePoint, 'c'.code), 0, 3))
+        .build()
     val buffer = Buffer()
     body.writeTo(buffer)
     buffer.skip(3) // Skip "a=b" prefix.
@@ -198,9 +203,10 @@ class FormBodyTest {
 
   @Test
   fun manualCharset() {
-    val body = FormBody.Builder(StandardCharsets.ISO_8859_1)
-      .add("name", "Nicolás")
-      .build()
+    val body =
+      FormBody.Builder(StandardCharsets.ISO_8859_1)
+        .add("name", "Nicolás")
+        .build()
     val expected = "name=Nicol%E1s"
     assertThat(body.contentLength()).isEqualTo(expected.length.toLong())
     val out = Buffer()

@@ -25,21 +25,24 @@ import okhttp3.internal.platform.Platform
  * A [SocketFactory] that redirects connections to [defaultAddress] or specific overridden address via [set].
  */
 class SpecificHostSocketFactory(
-  val defaultAddress: InetSocketAddress?
+  val defaultAddress: InetSocketAddress?,
 ) : DelegatingSocketFactory(getDefault()) {
   private val hostMapping = mutableMapOf<InetAddress, InetSocketAddress>()
 
   /** Sets the [real] address for [requested].  */
   operator fun set(
     requested: InetAddress,
-    real: InetSocketAddress
+    real: InetSocketAddress,
   ) {
     hostMapping[requested] = real
   }
 
   override fun createSocket(): Socket {
     return object : Socket() {
-      override fun connect(endpoint: SocketAddress?, timeout: Int) {
+      override fun connect(
+        endpoint: SocketAddress?,
+        timeout: Int,
+      ) {
         val requested = (endpoint as InetSocketAddress)
         val inetSocketAddress = hostMapping[requested.address] ?: defaultAddress ?: requested
         Platform.get().log("Socket connection to: $inetSocketAddress was: $requested")

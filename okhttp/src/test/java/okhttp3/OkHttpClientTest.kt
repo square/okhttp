@@ -34,6 +34,7 @@ import java.time.Duration
 import java.util.AbstractList
 import javax.net.ssl.SSLSession
 import javax.net.ssl.SSLSocketFactory
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.internal.platform.Platform.Companion.get
@@ -43,8 +44,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
-import assertk.fail
-import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -119,9 +118,10 @@ class OkHttpClientTest {
   }
 
   @Test fun clonedInterceptorsListsAreIndependent() {
-    val interceptor = Interceptor { chain: Interceptor.Chain ->
-      chain.proceed(chain.request())
-    }
+    val interceptor =
+      Interceptor { chain: Interceptor.Chain ->
+        chain.proceed(chain.request())
+      }
     val original = clientTestRule.newClient()
     original.newBuilder()
       .addInterceptor(interceptor)
@@ -192,8 +192,8 @@ class OkHttpClientTest {
         .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1))
     }.also { expected ->
       assertThat(expected.message).isEqualTo(
-        "protocols containing h2_prior_knowledge cannot use other protocols: "
-          + "[h2_prior_knowledge, http/1.1]"
+        "protocols containing h2_prior_knowledge cannot use other protocols: " +
+          "[h2_prior_knowledge, http/1.1]",
       )
     }
   }
@@ -204,16 +204,17 @@ class OkHttpClientTest {
         .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.H2_PRIOR_KNOWLEDGE))
     }.also { expected ->
       assertThat(expected.message).isEqualTo(
-        "protocols containing h2_prior_knowledge cannot use other protocols: "
-          + "[h2_prior_knowledge, h2_prior_knowledge]"
+        "protocols containing h2_prior_knowledge cannot use other protocols: " +
+          "[h2_prior_knowledge, h2_prior_knowledge]",
       )
     }
   }
 
   @Test fun testH2PriorKnowledgeOkHttpClientConstructionSuccess() {
-    val okHttpClient = OkHttpClient.Builder()
-      .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE))
-      .build()
+    val okHttpClient =
+      OkHttpClient.Builder()
+        .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE))
+        .build()
     assertThat(okHttpClient.protocols.size).isEqualTo(1)
     assertThat(okHttpClient.protocols[0]).isEqualTo(Protocol.H2_PRIOR_KNOWLEDGE)
   }
@@ -235,43 +236,48 @@ class OkHttpClientTest {
   }
 
   @Test fun noSslSocketFactoryConfigured() {
-    val client = OkHttpClient.Builder()
-      .connectionSpecs(listOf(ConnectionSpec.CLEARTEXT))
-      .build()
+    val client =
+      OkHttpClient.Builder()
+        .connectionSpecs(listOf(ConnectionSpec.CLEARTEXT))
+        .build()
     assertFailsWith<IllegalStateException> {
       client.sslSocketFactory
     }
   }
 
   @Test fun nullHostileProtocolList() {
-    val nullHostileProtocols = object : AbstractList<Protocol?>() {
-      override val size: Int = 1
+    val nullHostileProtocols =
+      object : AbstractList<Protocol?>() {
+        override val size: Int = 1
 
-      override fun get(index: Int) = Protocol.HTTP_1_1
+        override fun get(index: Int) = Protocol.HTTP_1_1
 
-      override fun contains(element: Protocol?): Boolean {
-        if (element == null) throw NullPointerException()
-        return super.contains(element)
-      }
+        override fun contains(element: Protocol?): Boolean {
+          if (element == null) throw NullPointerException()
+          return super.contains(element)
+        }
 
-      override fun indexOf(element: Protocol?): Int {
-        if (element == null) throw NullPointerException()
-        return super.indexOf(element)
-      }
-    } as List<Protocol>
-    val client = OkHttpClient.Builder()
-      .protocols(nullHostileProtocols)
-      .build()
+        override fun indexOf(element: Protocol?): Int {
+          if (element == null) throw NullPointerException()
+          return super.indexOf(element)
+        }
+      } as List<Protocol>
+    val client =
+      OkHttpClient.Builder()
+        .protocols(nullHostileProtocols)
+        .build()
     assertEquals(
-      listOf(Protocol.HTTP_1_1), client.protocols
+      listOf(Protocol.HTTP_1_1),
+      client.protocols,
     )
   }
 
   @Test fun nullProtocolInList() {
-    val protocols = mutableListOf(
-      Protocol.HTTP_1_1,
-      null
-    )
+    val protocols =
+      mutableListOf(
+        Protocol.HTTP_1_1,
+        null,
+      )
     assertFailsWith<IllegalArgumentException> {
       OkHttpClient.Builder()
         .protocols(protocols as List<Protocol>)
@@ -281,13 +287,15 @@ class OkHttpClientTest {
   }
 
   @Test fun spdy3IsRemovedFromProtocols() {
-    val protocols = mutableListOf(
-      Protocol.HTTP_1_1,
-      Protocol.SPDY_3
-    )
-    val client = OkHttpClient.Builder()
-      .protocols(protocols)
-      .build()
+    val protocols =
+      mutableListOf(
+        Protocol.HTTP_1_1,
+        Protocol.SPDY_3,
+      )
+    val client =
+      OkHttpClient.Builder()
+        .protocols(protocols)
+        .build()
     assertThat(client.protocols).containsExactly(Protocol.HTTP_1_1)
   }
 
@@ -296,28 +304,36 @@ class OkHttpClientTest {
     assertThat(client.proxy).isNull()
     assertThat(client.proxySelector)
       .isNotInstanceOf(NullProxySelector::class.java)
-    client = OkHttpClient.Builder()
-      .proxy(Proxy.NO_PROXY)
-      .build()
+    client =
+      OkHttpClient.Builder()
+        .proxy(Proxy.NO_PROXY)
+        .build()
     assertThat(client.proxy).isSameAs(Proxy.NO_PROXY)
     assertThat(client.proxySelector)
       .isInstanceOf(NullProxySelector::class.java)
-    client = OkHttpClient.Builder()
-      .proxySelector(FakeProxySelector())
-      .build()
+    client =
+      OkHttpClient.Builder()
+        .proxySelector(FakeProxySelector())
+        .build()
     assertThat(client.proxy).isNull()
     assertThat(client.proxySelector)
       .isInstanceOf(FakeProxySelector::class.java)
   }
 
   @Test fun sharesRouteDatabase() {
-    val client = OkHttpClient.Builder()
-      .build()
-    val proxySelector: ProxySelector = object : ProxySelector() {
-      override fun select(uri: URI): List<Proxy> = listOf()
+    val client =
+      OkHttpClient.Builder()
+        .build()
+    val proxySelector: ProxySelector =
+      object : ProxySelector() {
+        override fun select(uri: URI): List<Proxy> = listOf()
 
-      override fun connectFailed(uri: URI, socketAddress: SocketAddress, e: IOException) {}
-    }
+        override fun connectFailed(
+          uri: URI,
+          socketAddress: SocketAddress,
+          e: IOException,
+        ) {}
+      }
 
     val trustManager = get().platformTrustManager()
     val sslContext = get().newSSLContext()
@@ -328,7 +344,7 @@ class OkHttpClientTest {
       client.routeDatabase,
       OkHttpClient.Builder()
         .build()
-        .routeDatabase
+        .routeDatabase,
     )
 
     // same client with no change affecting route db
@@ -336,75 +352,79 @@ class OkHttpClientTest {
       client.routeDatabase,
       client.newBuilder()
         .build()
-        .routeDatabase
+        .routeDatabase,
     )
     assertSame(
       client.routeDatabase,
       client.newBuilder()
         .callTimeout(Duration.ofSeconds(5))
         .build()
-        .routeDatabase
+        .routeDatabase,
     )
 
     // logically different scope of client for route db
-    assertNotSame(client.routeDatabase,
+    assertNotSame(
+      client.routeDatabase,
       client.newBuilder()
         .dns { listOf() }
         .build()
-        .routeDatabase
+        .routeDatabase,
     )
-    assertNotSame(client.routeDatabase, client.newBuilder()
-      .proxyAuthenticator { _: Route?, _: Response? -> null }
-      .build()
-      .routeDatabase
+    assertNotSame(
+      client.routeDatabase,
+      client.newBuilder()
+        .proxyAuthenticator { _: Route?, _: Response? -> null }
+        .build()
+        .routeDatabase,
     )
     assertNotSame(
       client.routeDatabase,
       client.newBuilder()
         .protocols(listOf(Protocol.HTTP_1_1))
         .build()
-        .routeDatabase
+        .routeDatabase,
     )
     assertNotSame(
       client.routeDatabase,
       client.newBuilder()
         .connectionSpecs(listOf(ConnectionSpec.COMPATIBLE_TLS))
         .build()
-        .routeDatabase
+        .routeDatabase,
     )
     assertNotSame(
       client.routeDatabase,
       client.newBuilder()
         .proxySelector(proxySelector)
         .build()
-        .routeDatabase
+        .routeDatabase,
     )
     assertNotSame(
       client.routeDatabase,
       client.newBuilder()
         .proxy(Proxy.NO_PROXY)
         .build()
-        .routeDatabase
+        .routeDatabase,
     )
     assertNotSame(
       client.routeDatabase,
       client.newBuilder()
         .sslSocketFactory(sslContext.socketFactory, trustManager)
         .build()
-        .routeDatabase
+        .routeDatabase,
     )
-    assertNotSame(client.routeDatabase,
+    assertNotSame(
+      client.routeDatabase,
       client.newBuilder()
         .hostnameVerifier { _: String?, _: SSLSession? -> false }
         .build()
-        .routeDatabase
+        .routeDatabase,
     )
     assertNotSame(
       client.routeDatabase,
       client.newBuilder()
         .certificatePinner(CertificatePinner.Builder().build())
         .build()
-        .routeDatabase
+        .routeDatabase,
     )
   }
 

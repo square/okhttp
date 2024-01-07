@@ -38,13 +38,20 @@ open class DelegatingServerSocketFactory(private val delegate: ServerSocketFacto
   }
 
   @Throws(IOException::class)
-  override fun createServerSocket(port: Int, backlog: Int): ServerSocket {
+  override fun createServerSocket(
+    port: Int,
+    backlog: Int,
+  ): ServerSocket {
     val serverSocket = delegate.createServerSocket(port, backlog)
     return configureServerSocket(serverSocket)
   }
 
   @Throws(IOException::class)
-  override fun createServerSocket(port: Int, backlog: Int, ifAddress: InetAddress): ServerSocket {
+  override fun createServerSocket(
+    port: Int,
+    backlog: Int,
+    ifAddress: InetAddress,
+  ): ServerSocket {
     val serverSocket = delegate.createServerSocket(port, backlog, ifAddress)
     return configureServerSocket(serverSocket)
   }

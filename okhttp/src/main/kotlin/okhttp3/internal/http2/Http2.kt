@@ -46,19 +46,21 @@ object Http2 {
   const val FLAG_COMPRESSED = 0x20 // Used for data.
 
   /** Lookup table for valid frame types. */
-  private val FRAME_NAMES = arrayOf(
+  private val FRAME_NAMES =
+    arrayOf(
       "DATA", "HEADERS", "PRIORITY", "RST_STREAM", "SETTINGS", "PUSH_PROMISE", "PING", "GOAWAY",
-      "WINDOW_UPDATE", "CONTINUATION"
-  )
+      "WINDOW_UPDATE", "CONTINUATION",
+    )
 
   /**
    * Lookup table for valid flags for DATA, HEADERS, CONTINUATION. Invalid combinations are
    * represented in binary.
    */
   private val FLAGS = arrayOfNulls<String>(0x40) // Highest bit flag is 0x20.
-  private val BINARY = Array(256) {
-    format("%8s", Integer.toBinaryString(it)).replace(' ', '0')
-  }
+  private val BINARY =
+    Array(256) {
+      format("%8s", Integer.toBinaryString(it)).replace(' ', '0')
+    }
 
   init {
     FLAGS[FLAG_NONE] = ""
@@ -80,7 +82,7 @@ object Http2 {
       for (prefixFlag in prefixFlags) {
         FLAGS[prefixFlag or frameFlag] = FLAGS[prefixFlag] + '|'.toString() + FLAGS[frameFlag]
         FLAGS[prefixFlag or frameFlag or FLAG_PADDED] =
-            FLAGS[prefixFlag] + '|'.toString() + FLAGS[frameFlag] + "|PADDED"
+          FLAGS[prefixFlag] + '|'.toString() + FLAGS[frameFlag] + "|PADDED"
       }
     }
 
@@ -110,13 +112,19 @@ object Http2 {
     streamId: Int,
     length: Int,
     type: Int,
-    flags: Int
+    flags: Int,
   ): String {
     val formattedType = formattedType(type)
     val formattedFlags = formatFlags(type, flags)
     val direction = if (inbound) "<<" else ">>"
-    return format("%s 0x%08x %5d %-13s %s",
-        direction, streamId, length, formattedType, formattedFlags)
+    return format(
+      "%s 0x%08x %5d %-13s %s",
+      direction,
+      streamId,
+      length,
+      formattedType,
+      formattedFlags,
+    )
   }
 
   /**
@@ -131,18 +139,26 @@ object Http2 {
   ): String {
     val formattedType = formattedType(TYPE_WINDOW_UPDATE)
     val direction = if (inbound) "<<" else ">>"
-    return format("%s 0x%08x %5d %-13s %d",
-        direction, streamId, length, formattedType, windowSizeIncrement)
+    return format(
+      "%s 0x%08x %5d %-13s %d",
+      direction,
+      streamId,
+      length,
+      formattedType,
+      windowSizeIncrement,
+    )
   }
 
-  internal fun formattedType(type: Int): String =
-    if (type < FRAME_NAMES.size) FRAME_NAMES[type] else format("0x%02x", type)
+  internal fun formattedType(type: Int): String = if (type < FRAME_NAMES.size) FRAME_NAMES[type] else format("0x%02x", type)
 
   /**
    * Looks up valid string representing flags from the table. Invalid combinations are represented
    * in binary.
    */
-  fun formatFlags(type: Int, flags: Int): String {
+  fun formatFlags(
+    type: Int,
+    flags: Int,
+  ): String {
     if (flags == 0) return ""
     when (type) {
       // Special case types that have 0 or 1 flag.

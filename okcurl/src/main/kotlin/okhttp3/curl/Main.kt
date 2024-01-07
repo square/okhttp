@@ -40,35 +40,41 @@ import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.LoggingEventListener
 
 class Main : CliktCommand(name = NAME, help = "A curl for the next-generation web.") {
-  val method: String? by option("-X", "--request", help="Specify request command to use")
+  val method: String? by option("-X", "--request", help = "Specify request command to use")
 
-  val data: String? by option("-d", "--data", help="HTTP POST data")
+  val data: String? by option("-d", "--data", help = "HTTP POST data")
 
-  val headers: List<String>? by option("-H", "--header", help="Custom header to pass to server").multiple()
+  val headers: List<String>? by option("-H", "--header", help = "Custom header to pass to server").multiple()
 
-  val userAgent: String by option("-A", "--user-agent", help="User-Agent to send to server").default(NAME + "/" + versionString())
+  val userAgent: String by option("-A", "--user-agent", help = "User-Agent to send to server").default(NAME + "/" + versionString())
 
-  val connectTimeout: Int by option("--connect-timeout", help="Maximum time allowed for connection (seconds)").int().default(DEFAULT_TIMEOUT)
+  val connectTimeout: Int by option(
+    "--connect-timeout",
+    help = "Maximum time allowed for connection (seconds)",
+  ).int().default(DEFAULT_TIMEOUT)
 
-  val readTimeout: Int by option("--read-timeout", help="Maximum time allowed for reading data (seconds)").int().default(DEFAULT_TIMEOUT)
+  val readTimeout: Int by option("--read-timeout", help = "Maximum time allowed for reading data (seconds)").int().default(DEFAULT_TIMEOUT)
 
-  val callTimeout: Int by option("--call-timeout", help="Maximum time allowed for the entire call (seconds)").int().default(DEFAULT_TIMEOUT)
+  val callTimeout: Int by option(
+    "--call-timeout",
+    help = "Maximum time allowed for the entire call (seconds)",
+  ).int().default(DEFAULT_TIMEOUT)
 
-  val followRedirects: Boolean by option("-L", "--location", help="Follow redirects").flag()
+  val followRedirects: Boolean by option("-L", "--location", help = "Follow redirects").flag()
 
-  val allowInsecure: Boolean by option("-k", "--insecure", help="Allow connections to SSL sites without certs").flag()
+  val allowInsecure: Boolean by option("-k", "--insecure", help = "Allow connections to SSL sites without certs").flag()
 
-  val showHeaders: Boolean by option("-i", "--include", help="Include protocol headers in the output").flag()
+  val showHeaders: Boolean by option("-i", "--include", help = "Include protocol headers in the output").flag()
 
-  val showHttp2Frames: Boolean by option("--frames", help="Log HTTP/2 frames to STDERR").flag()
+  val showHttp2Frames: Boolean by option("--frames", help = "Log HTTP/2 frames to STDERR").flag()
 
-  val referer: String? by option("-e", "--referer", help="Referer URL")
+  val referer: String? by option("-e", "--referer", help = "Referer URL")
 
-  val verbose: Boolean by option("-v", "--verbose", help="Makes $NAME verbose during the operation").flag()
+  val verbose: Boolean by option("-v", "--verbose", help = "Makes $NAME verbose during the operation").flag()
 
-  val sslDebug: Boolean by option(help="Output SSL Debug").flag()
+  val sslDebug: Boolean by option(help = "Output SSL Debug").flag()
 
-  val url: String? by argument(name = "url", help="Remote resource URL")
+  val url: String? by argument(name = "url", help = "Remote resource URL")
 
   var client: Call.Factory? = null
 
@@ -123,20 +129,26 @@ class Main : CliktCommand(name = NAME, help = "A curl for the next-generation we
       return prop.getProperty("version", "dev")
     }
 
-    private fun createInsecureTrustManager(): X509TrustManager = object : X509TrustManager {
-      override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
+    private fun createInsecureTrustManager(): X509TrustManager =
+      object : X509TrustManager {
+        override fun checkClientTrusted(
+          chain: Array<X509Certificate>,
+          authType: String,
+        ) {}
 
-      override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
+        override fun checkServerTrusted(
+          chain: Array<X509Certificate>,
+          authType: String,
+        ) {}
 
-      override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-    }
+        override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+      }
 
     private fun createInsecureSslSocketFactory(trustManager: TrustManager): SSLSocketFactory =
-        Platform.get().newSSLContext().apply {
-          init(null, arrayOf(trustManager), null)
-        }.socketFactory
+      Platform.get().newSSLContext().apply {
+        init(null, arrayOf(trustManager), null)
+      }.socketFactory
 
-    private fun createInsecureHostnameVerifier(): HostnameVerifier =
-        HostnameVerifier { _, _ -> true }
+    private fun createInsecureHostnameVerifier(): HostnameVerifier = HostnameVerifier { _, _ -> true }
   }
 }

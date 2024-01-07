@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal
 
 import java.io.IOException
@@ -50,8 +51,10 @@ import okio.Source
 
 @JvmField
 internal val EMPTY_HEADERS: Headers = commonEmptyHeaders
+
 @JvmField
 internal val EMPTY_REQUEST: RequestBody = commonEmptyRequestBody
+
 @JvmField
 internal val EMPTY_RESPONSE: ResponseBody = commonEmptyResponse
 
@@ -61,19 +64,21 @@ internal val UTC: TimeZone = TimeZone.getTimeZone("GMT")!!
 
 internal fun threadFactory(
   name: String,
-  daemon: Boolean
-): ThreadFactory = ThreadFactory { runnable ->
-  Thread(runnable, name).apply {
-    isDaemon = daemon
+  daemon: Boolean,
+): ThreadFactory =
+  ThreadFactory { runnable ->
+    Thread(runnable, name).apply {
+      isDaemon = daemon
+    }
   }
-}
 
 internal fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
-  val host = if (":" in host) {
-    "[$host]"
-  } else {
-    host
-  }
+  val host =
+    if (":" in host) {
+      "[$host]"
+    } else {
+      host
+    }
   return if (includeDefaultPort || port != commonDefaultPort(scheme)) {
     "$host:$port"
   } else {
@@ -82,7 +87,10 @@ internal fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
 }
 
 /** Returns a [Locale.US] formatted [String]. */
-internal fun format(format: String, vararg args: Any): String {
+internal fun format(
+  format: String,
+  vararg args: Any,
+): String {
   return String.format(Locale.US, format, *args)
 }
 
@@ -99,7 +107,11 @@ internal fun BufferedSource.readBomAsCharset(default: Charset): Charset {
   }
 }
 
-internal fun checkDuration(name: String, duration: Long, unit: TimeUnit): Int {
+internal fun checkDuration(
+  name: String,
+  duration: Long,
+  unit: TimeUnit,
+): Int {
   check(duration >= 0L) { "$name < 0" }
   val millis = unit.toMillis(duration)
   require(millis <= Integer.MAX_VALUE) { "$name too large" }
@@ -107,7 +119,10 @@ internal fun checkDuration(name: String, duration: Long, unit: TimeUnit): Int {
   return millis.toInt()
 }
 
-internal fun checkDuration(name: String, duration: Duration): Int {
+internal fun checkDuration(
+  name: String,
+  duration: Duration,
+): Int {
   check(!duration.isNegative()) { "$name < 0" }
   val millis = duration.inWholeMilliseconds
   require(millis <= Integer.MAX_VALUE) { "$name too large" }
@@ -123,12 +138,14 @@ internal fun List<Header>.toHeaders(): Headers {
   return builder.build()
 }
 
-internal fun Headers.toHeaderList(): List<Header> = (0 until size).map {
-  Header(name(it), value(it))
-}
+internal fun Headers.toHeaderList(): List<Header> =
+  (0 until size).map {
+    Header(name(it), value(it))
+  }
 
 /** Returns true if an HTTP request for this URL and [other] can reuse a connection. */
-internal fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean = host == other.host &&
+internal fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean =
+  host == other.host &&
     port == other.port &&
     scheme == other.scheme
 
@@ -139,13 +156,17 @@ internal fun EventListener.asFactory() = EventListener.Factory { this }
  * deadline if one exists already.
  */
 @Throws(IOException::class)
-internal fun Source.skipAll(duration: Int, timeUnit: TimeUnit): Boolean {
+internal fun Source.skipAll(
+  duration: Int,
+  timeUnit: TimeUnit,
+): Boolean {
   val nowNs = System.nanoTime()
-  val originalDurationNs = if (timeout().hasDeadline()) {
-    timeout().deadlineNanoTime() - nowNs
-  } else {
-    Long.MAX_VALUE
-  }
+  val originalDurationNs =
+    if (timeout().hasDeadline()) {
+      timeout().deadlineNanoTime() - nowNs
+    } else {
+      Long.MAX_VALUE
+    }
   timeout().deadlineNanoTime(nowNs + minOf(originalDurationNs, timeUnit.toNanos(duration.toLong())))
   return try {
     val skipBuffer = Buffer()
@@ -169,11 +190,15 @@ internal fun Source.skipAll(duration: Int, timeUnit: TimeUnit): Boolean {
  * source is helpful, such as when doing so completes a cache body or frees a socket connection for
  * reuse.
  */
-internal fun Source.discard(timeout: Int, timeUnit: TimeUnit): Boolean = try {
-  this.skipAll(timeout, timeUnit)
-} catch (_: IOException) {
-  false
-}
+internal fun Source.discard(
+  timeout: Int,
+  timeUnit: TimeUnit,
+): Boolean =
+  try {
+    this.skipAll(timeout, timeUnit)
+  } catch (_: IOException) {
+    false
+  }
 
 internal fun Socket.peerName(): String {
   val address = remoteSocketAddress
@@ -205,7 +230,10 @@ internal fun Socket.isHealthy(source: BufferedSource): Boolean {
   }
 }
 
-internal inline fun threadName(name: String, block: () -> Unit) {
+internal inline fun threadName(
+  name: String,
+  block: () -> Unit,
+) {
   val currentThread = Thread.currentThread()
   val oldName = currentThread.name
   currentThread.name = name
@@ -272,7 +300,11 @@ internal inline fun Any.notify() = (this as Object).notify()
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
 internal inline fun Any.notifyAll() = (this as Object).notifyAll()
 
-internal fun <T> readFieldOrNull(instance: Any, fieldType: Class<T>, fieldName: String): T? {
+internal fun <T> readFieldOrNull(
+  instance: Any,
+  fieldType: Class<T>,
+  fieldName: String,
+): T? {
   var c: Class<*> = instance.javaClass
   while (c != Any::class.java) {
     try {
@@ -307,7 +339,7 @@ internal val assertionsEnabled: Boolean = OkHttpClient::class.java.desiredAssert
  */
 @JvmField
 internal val okHttpName: String =
-    OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
+  OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun ReentrantLock.assertHeld() {

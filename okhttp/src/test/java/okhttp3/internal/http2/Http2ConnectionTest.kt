@@ -391,16 +391,18 @@ class Http2ConnectionTest {
     peer.acceptFrame() // ACK
     peer.acceptFrame() // SYN_STREAM
     peer.sendFrame().headers(false, 3, headerEntries("a", "android"))
-    val expectedRequestHeaders = listOf(
-      Header(Header.TARGET_METHOD, "GET"),
-      Header(Header.TARGET_SCHEME, "https"),
-      Header(Header.TARGET_AUTHORITY, "squareup.com"),
-      Header(Header.TARGET_PATH, "/cached")
-    )
+    val expectedRequestHeaders =
+      listOf(
+        Header(Header.TARGET_METHOD, "GET"),
+        Header(Header.TARGET_SCHEME, "https"),
+        Header(Header.TARGET_AUTHORITY, "squareup.com"),
+        Header(Header.TARGET_PATH, "/cached"),
+      )
     peer.sendFrame().pushPromise(3, 2, expectedRequestHeaders)
-    val expectedResponseHeaders = listOf(
-      Header(Header.RESPONSE_STATUS, "200")
-    )
+    val expectedResponseHeaders =
+      listOf(
+        Header(Header.RESPONSE_STATUS, "200"),
+      )
     peer.sendFrame().headers(true, 2, expectedResponseHeaders)
     peer.sendFrame().data(true, 3, data(0), 0)
     peer.play()
@@ -444,20 +446,22 @@ class Http2ConnectionTest {
       .pushPromise(
         streamId = 3,
         promisedStreamId = 2,
-        requestHeaders = listOf(
-          Header(Header.TARGET_METHOD, "GET"),
-          Header(Header.TARGET_SCHEME, "https"),
-          Header(Header.TARGET_AUTHORITY, "squareup.com"),
-          Header(Header.TARGET_PATH, "/cached")
-        )
+        requestHeaders =
+          listOf(
+            Header(Header.TARGET_METHOD, "GET"),
+            Header(Header.TARGET_SCHEME, "https"),
+            Header(Header.TARGET_AUTHORITY, "squareup.com"),
+            Header(Header.TARGET_PATH, "/cached"),
+          ),
       )
     peer.sendFrame()
       .headers(
         outFinished = true,
         streamId = 2,
-        headerBlock = listOf(
-          Header(Header.RESPONSE_STATUS, "200")
-        )
+        headerBlock =
+          listOf(
+            Header(Header.RESPONSE_STATUS, "200"),
+          ),
       )
     peer.acceptFrame() // RST_STREAM
     peer.play()
@@ -485,10 +489,11 @@ class Http2ConnectionTest {
     peer.play()
     val longString = repeat('a', Http2.INITIAL_MAX_FRAME_SIZE + 1)
     val socket = peer.openSocket()
-    val connection = Http2Connection.Builder(true, TaskRunner.INSTANCE)
-      .socket(socket)
-      .pushObserver(IGNORE)
-      .build()
+    val connection =
+      Http2Connection.Builder(true, TaskRunner.INSTANCE)
+        .socket(socket)
+        .pushObserver(IGNORE)
+        .build()
     connection.start(sendConnectionPreface = false)
     socket.shutdownOutput()
     assertFailsWith<IOException> {
@@ -948,16 +953,20 @@ class Http2ConnectionTest {
     // Play it back.
     val maxConcurrentStreamsUpdated = CountDownLatch(1)
     val maxConcurrentStreams = AtomicInteger()
-    val listener: Http2Connection.Listener = object : Http2Connection.Listener() {
-      override fun onStream(stream: Http2Stream) {
-        throw AssertionError()
-      }
+    val listener: Http2Connection.Listener =
+      object : Http2Connection.Listener() {
+        override fun onStream(stream: Http2Stream) {
+          throw AssertionError()
+        }
 
-      override fun onSettings(connection: Http2Connection, settings: Settings) {
-        maxConcurrentStreams.set(settings.getMaxConcurrentStreams())
-        maxConcurrentStreamsUpdated.countDown()
+        override fun onSettings(
+          connection: Http2Connection,
+          settings: Settings,
+        ) {
+          maxConcurrentStreams.set(settings.getMaxConcurrentStreams())
+          maxConcurrentStreamsUpdated.countDown()
+        }
       }
-    }
     val connection = connect(peer, IGNORE, listener)
     synchronized(connection) {
       assertThat(connection.peerSettings.getMaxConcurrentStreams()).isEqualTo(10)
@@ -1464,7 +1473,7 @@ class Http2ConnectionTest {
     }
     val elapsedNanos = System.nanoTime() - startNanos
     awaitWatchdogIdle()
-    /* 200ms delta */
+    // 200ms delta
     assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
       .isCloseTo(500.0, 200.0)
     assertThat(connection.openStreamCount()).isEqualTo(0)
@@ -1505,7 +1514,8 @@ class Http2ConnectionTest {
     }
     val elapsedNanos = System.nanoTime() - startNanos
     awaitWatchdogIdle()
-    /* 200ms delta */assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
+    // 200ms delta
+      assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
       .isCloseTo(500.0, 200.0)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
@@ -1556,7 +1566,8 @@ class Http2ConnectionTest {
     }
     val elapsedNanos = System.nanoTime() - startNanos
     awaitWatchdogIdle()
-    /* 200ms delta */assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
+    // 200ms delta
+      assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
       .isCloseTo(500.0, 200.0)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
@@ -1599,7 +1610,8 @@ class Http2ConnectionTest {
     }
     val elapsedNanos = System.nanoTime() - startNanos
     awaitWatchdogIdle()
-    /* 200ms delta */assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
+    // 200ms delta
+      assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedNanos).toDouble())
       .isCloseTo(500.0, 200.0)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
@@ -1871,9 +1883,10 @@ class Http2ConnectionTest {
     peer.sendFrame().headers(false, 3, headerEntries("a", "android"))
     peer.acceptFrame() // GOAWAY
     peer.play()
-    val connection = Http2Connection.Builder(true, TaskRunner.INSTANCE)
-      .socket(peer.openSocket())
-      .build()
+    val connection =
+      Http2Connection.Builder(true, TaskRunner.INSTANCE)
+        .socket(peer.openSocket())
+        .build()
     connection.start(sendConnectionPreface = false)
     val stream = connection.newStream(headerEntries("b", "banana"), false)
     assertFailsWith<IOException> {
@@ -1895,10 +1908,11 @@ class Http2ConnectionTest {
     peer.play()
     val taskRunner = taskFaker.taskRunner
     val socket = peer.openSocket()
-    val connection = Http2Connection.Builder(true, taskRunner)
-      .socket(socket)
-      .pushObserver(IGNORE)
-      .build()
+    val connection =
+      Http2Connection.Builder(true, taskRunner)
+        .socket(socket)
+        .pushObserver(IGNORE)
+        .build()
     connection.start(sendConnectionPreface = false)
     val queues = taskRunner.activeQueues()
     assertThat(queues).hasSize(1)
@@ -1906,7 +1920,10 @@ class Http2ConnectionTest {
 
   private fun data(byteCount: Int): Buffer = Buffer().write(ByteArray(byteCount))
 
-  private fun assertStreamData(expected: String?, source: Source?) {
+  private fun assertStreamData(
+    expected: String?,
+    source: Source?,
+  ) {
     val actual = source!!.buffer().readUtf8()
     assertThat(actual).isEqualTo(expected)
   }
@@ -1918,11 +1935,12 @@ class Http2ConnectionTest {
    */
   private fun awaitWatchdogIdle() {
     val latch = CountDownLatch(1)
-    val watchdogJob: AsyncTimeout = object : AsyncTimeout() {
-      override fun timedOut() {
-        latch.countDown()
+    val watchdogJob: AsyncTimeout =
+      object : AsyncTimeout() {
+        override fun timedOut() {
+          latch.countDown()
+        }
       }
-    }
     watchdogJob.deadlineNanoTime(System.nanoTime()) // Due immediately!
     watchdogJob.enter()
     latch.await()
@@ -1930,7 +1948,7 @@ class Http2ConnectionTest {
 
   private fun connectWithSettings(
     client: Boolean,
-    settings: Settings?
+    settings: Settings?,
   ): Http2Connection {
     peer.setClient(client)
     peer.sendFrame().settings(settings!!)
@@ -1943,13 +1961,14 @@ class Http2ConnectionTest {
   private fun connect(
     peer: MockHttp2Peer,
     pushObserver: PushObserver = IGNORE,
-    listener: Http2Connection.Listener = Http2Connection.Listener.REFUSE_INCOMING_STREAMS
+    listener: Http2Connection.Listener = Http2Connection.Listener.REFUSE_INCOMING_STREAMS,
   ): Http2Connection {
-    val connection = Http2Connection.Builder(true, TaskRunner.INSTANCE)
-      .socket(peer.openSocket())
-      .pushObserver(pushObserver)
-      .listener(listener)
-      .build()
+    val connection =
+      Http2Connection.Builder(true, TaskRunner.INSTANCE)
+        .socket(peer.openSocket())
+        .pushObserver(pushObserver)
+        .listener(listener)
+        .build()
     connection.start(sendConnectionPreface = false)
 
     // verify the peer received the ACK
@@ -1970,7 +1989,10 @@ class Http2ConnectionTest {
       return events.removeAt(0)
     }
 
-    @Synchronized override fun onRequest(streamId: Int, requestHeaders: List<Header>): Boolean {
+    @Synchronized override fun onRequest(
+      streamId: Int,
+      requestHeaders: List<Header>,
+    ): Boolean {
       assertThat(streamId).isEqualTo(2)
       events.add(requestHeaders)
       notifyAll()
@@ -1978,7 +2000,9 @@ class Http2ConnectionTest {
     }
 
     @Synchronized override fun onHeaders(
-      streamId: Int, responseHeaders: List<Header>, last: Boolean
+      streamId: Int,
+      responseHeaders: List<Header>,
+      last: Boolean,
     ): Boolean {
       assertThat(streamId).isEqualTo(2)
       assertThat(last).isTrue()
@@ -1988,39 +2012,58 @@ class Http2ConnectionTest {
     }
 
     @Synchronized override fun onData(
-      streamId: Int, source: BufferedSource, byteCount: Int, last: Boolean
+      streamId: Int,
+      source: BufferedSource,
+      byteCount: Int,
+      last: Boolean,
     ): Boolean {
       events.add(AssertionError("onData"))
       notifyAll()
       return false
     }
 
-    @Synchronized override fun onReset(streamId: Int, errorCode: ErrorCode) {
+    @Synchronized override fun onReset(
+      streamId: Int,
+      errorCode: ErrorCode,
+    ) {
       events.add(AssertionError("onReset"))
       notifyAll()
     }
   }
 
   companion object {
-    fun roundUp(num: Int, divisor: Int): Int = (num + divisor - 1) / divisor
+    fun roundUp(
+      num: Int,
+      divisor: Int,
+    ): Int = (num + divisor - 1) / divisor
 
-    val IGNORE = object : PushObserver {
-      override fun onRequest(streamId: Int, requestHeaders: List<Header>) = false
+    val IGNORE =
+      object : PushObserver {
+        override fun onRequest(
+          streamId: Int,
+          requestHeaders: List<Header>,
+        ) = false
 
-      override fun onHeaders(
-        streamId: Int,
-        responseHeaders: List<Header>,
-        last: Boolean
-      ) = false
+        override fun onHeaders(
+          streamId: Int,
+          responseHeaders: List<Header>,
+          last: Boolean,
+        ) = false
 
-      override fun onData(
-        streamId: Int, source: BufferedSource, byteCount: Int, last: Boolean
-      ): Boolean {
-        source.skip(byteCount.toLong())
-        return false
+        override fun onData(
+          streamId: Int,
+          source: BufferedSource,
+          byteCount: Int,
+          last: Boolean,
+        ): Boolean {
+          source.skip(byteCount.toLong())
+          return false
+        }
+
+        override fun onReset(
+          streamId: Int,
+          errorCode: ErrorCode,
+        ) {}
       }
-
-      override fun onReset(streamId: Int, errorCode: ErrorCode) {}
-    }
   }
 }

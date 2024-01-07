@@ -24,7 +24,6 @@ data class Story(
   val cases: List<Case>,
   val fileName: String? = null,
 ) {
-
   // Used as the test name.
   override fun toString() = fileName ?: "?"
 

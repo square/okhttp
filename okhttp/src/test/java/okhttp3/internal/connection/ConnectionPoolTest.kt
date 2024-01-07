@@ -79,9 +79,10 @@ class ConnectionPoolTest {
     val pool = factory.newConnectionPool()
     val poolApi = ConnectionPool(pool)
     val c1 = factory.newConnection(pool, routeA1, 50L)
-    val client = OkHttpClient.Builder()
-      .connectionPool(poolApi)
-      .build()
+    val client =
+      OkHttpClient.Builder()
+        .connectionPool(poolApi)
+        .build()
     val call = client.newCall(Request(addressA.url)) as RealCall
     call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
     synchronized(c1) { call.acquireConnectionNoEvents(c1) }
@@ -133,9 +134,10 @@ class ConnectionPoolTest {
   }
 
   @Test fun oldestConnectionsEvictedIfIdleLimitExceeded() {
-    val pool = factory.newConnectionPool(
-      maxIdleConnections = 2
-    )
+    val pool =
+      factory.newConnectionPool(
+        maxIdleConnections = 2,
+      )
     val c1 = factory.newConnection(pool, routeA1, 50L)
     val c2 = factory.newConnection(pool, routeB1, 75L)
 
@@ -171,10 +173,11 @@ class ConnectionPoolTest {
 
   @Test fun interruptStopsThread() {
     val realTaskRunner = TaskRunner.INSTANCE
-    val pool = factory.newConnectionPool(
-      taskRunner = TaskRunner.INSTANCE,
-      maxIdleConnections = 2
-    )
+    val pool =
+      factory.newConnectionPool(
+        taskRunner = TaskRunner.INSTANCE,
+        maxIdleConnections = 2,
+      )
     factory.newConnection(pool, routeA1)
     assertThat(realTaskRunner.activeQueues()).isNotEmpty()
     Thread.sleep(100)
@@ -190,10 +193,14 @@ class ConnectionPoolTest {
   }
 
   /** Use a helper method so there's no hidden reference remaining on the stack.  */
-  private fun allocateAndLeakAllocation(pool: ConnectionPool, connection: RealConnection) {
-    val client = OkHttpClient.Builder()
-      .connectionPool(pool)
-      .build()
+  private fun allocateAndLeakAllocation(
+    pool: ConnectionPool,
+    connection: RealConnection,
+  ) {
+    val client =
+      OkHttpClient.Builder()
+        .connectionPool(pool)
+        .build()
     val call = client.newCall(Request(connection.route().address.url)) as RealCall
     call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
     synchronized(connection) { call.acquireConnectionNoEvents(connection) }

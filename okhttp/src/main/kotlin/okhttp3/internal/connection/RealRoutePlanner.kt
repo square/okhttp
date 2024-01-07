@@ -41,7 +41,7 @@ class RealRoutePlanner(
   override val address: Address,
   private val call: RealCall,
   private val chain: RealInterceptorChain,
-  private val connectionListener: ConnectionListener
+  private val connectionListener: ConnectionListener,
 ) : RoutePlanner {
   private val doExtensiveHealthChecks = chain.request.method != "GET"
 
@@ -90,19 +90,20 @@ class RealRoutePlanner(
     // then we're on the hook to close it.
     val healthy = candidate.isHealthy(doExtensiveHealthChecks)
     var noNewExchangesEvent = false
-    val toClose: Socket? = synchronized(candidate) {
-      when {
-        !healthy -> {
-          noNewExchangesEvent = !candidate.noNewExchanges
-          candidate.noNewExchanges = true
-          call.releaseConnectionNoEvents()
+    val toClose: Socket? =
+      synchronized(candidate) {
+        when {
+          !healthy -> {
+            noNewExchangesEvent = !candidate.noNewExchanges
+            candidate.noNewExchanges = true
+            call.releaseConnectionNoEvents()
+          }
+          candidate.noNewExchanges || !sameHostAndPort(candidate.route().address.url) -> {
+            call.releaseConnectionNoEvents()
+          }
+          else -> null
         }
-        candidate.noNewExchanges || !sameHostAndPort(candidate.route().address.url) -> {
-          call.releaseConnectionNoEvents()
-        }
-        else -> null
       }
-    }
 
     // If the call's connection wasn't released, reuse it. We don't call connectionAcquired() here
     // because we already acquired it.
@@ -142,13 +143,14 @@ class RealRoutePlanner(
     // Decide which proxy to use, if any. This may block in ProxySelector.select().
     var newRouteSelector = routeSelector
     if (newRouteSelector == null) {
-      newRouteSelector = RouteSelector(
-        address = address,
-        routeDatabase = call.client.routeDatabase,
-        call = call,
-        fastFallback = client.fastFallback,
-        eventListener = call.eventListener
-      )
+      newRouteSelector =
+        RouteSelector(
+          address = address,
+          routeDatabase = call.client.routeDatabase,
+          call = call,
+          fastFallback = client.fastFallback,
+          eventListener = call.eventListener,
+        )
       routeSelector = newRouteSelector
     }
 
@@ -173,13 +175,14 @@ class RealRoutePlanner(
     planToReplace: ConnectPlan? = null,
     routes: List<Route>? = null,
   ): ReusePlan? {
-    val result = client.connectionPool.delegate.callAcquirePooledConnection(
-      doExtensiveHealthChecks = doExtensiveHealthChecks,
-      address = address,
-      call = call,
-      routes = routes,
-      requireMultiplexed = planToReplace != null && planToReplace.isReady
-    ) ?: return null
+    val result =
+      client.connectionPool.delegate.callAcquirePooledConnection(
+        doExtensiveHealthChecks = doExtensiveHealthChecks,
+        address = address,
+        call = call,
+        routes = routes,
+        requireMultiplexed = planToReplace != null && planToReplace.isReady,
+      ) ?: return null
 
     // If we coalesced our connection, remember the replaced connection's route. That way if the
     // coalesced connection later fails we don't waste a valid route.
@@ -195,7 +198,10 @@ class RealRoutePlanner(
 
   /** Returns a plan for the first attempt at [route]. This throws if no plan is possible. */
   @Throws(IOException::class)
-  internal fun planConnectToRoute(route: Route, routes: List<Route>? = null): ConnectPlan {
+  internal fun planConnectToRoute(
+    route: Route,
+    routes: List<Route>? = null,
+  ): ConnectPlan {
     if (route.address.sslSocketFactory == null) {
       if (ConnectionSpec.CLEARTEXT !in route.address.connectionSpecs) {
         throw UnknownServiceException("CLEARTEXT communication not enabled for client")
@@ -204,7 +210,7 @@ class RealRoutePlanner(
       val host = route.address.url.host
       if (!Platform.get().isCleartextTrafficPermitted(host)) {
         throw UnknownServiceException(
-          "CLEARTEXT communication to $host not permitted by network security policy"
+          "CLEARTEXT communication to $host not permitted by network security policy",
         )
       }
     } else {
@@ -213,10 +219,11 @@ class RealRoutePlanner(
       }
     }
 
-    val tunnelRequest = when {
-      route.requiresTunnel() -> createTunnelRequest(route)
-      else -> null
-    }
+    val tunnelRequest =
+      when {
+        route.requiresTunnel() -> createTunnelRequest(route)
+        else -> null
+      }
 
     return ConnectPlan(
       client = client,
@@ -229,7 +236,7 @@ class RealRoutePlanner(
       tunnelRequest = tunnelRequest,
       connectionSpecIndex = -1,
       isTlsFallback = false,
-      connectionListener = connectionListener
+      connectionListener = connectionListener,
     )
   }
 
@@ -244,26 +251,29 @@ class RealRoutePlanner(
    */
   @Throws(IOException::class)
   private fun createTunnelRequest(route: Route): Request {
-    val proxyConnectRequest = Request.Builder()
-      .url(route.address.url)
-      .method("CONNECT", null)
-      .header("Host", route.address.url.toHostHeader(includeDefaultPort = true))
-      .header("Proxy-Connection", "Keep-Alive") // For HTTP/1.0 proxies like Squid.
-      .header("User-Agent", USER_AGENT)
-      .build()
+    val proxyConnectRequest =
+      Request.Builder()
+        .url(route.address.url)
+        .method("CONNECT", null)
+        .header("Host", route.address.url.toHostHeader(includeDefaultPort = true))
+        .header("Proxy-Connection", "Keep-Alive") // For HTTP/1.0 proxies like Squid.
+        .header("User-Agent", USER_AGENT)
+        .build()
 
-    val fakeAuthChallengeResponse = Response.Builder()
-      .request(proxyConnectRequest)
-      .protocol(Protocol.HTTP_1_1)
-      .code(HttpURLConnection.HTTP_PROXY_AUTH)
-      .message("Preemptive Authenticate")
-      .sentRequestAtMillis(-1L)
-      .receivedResponseAtMillis(-1L)
-      .header("Proxy-Authenticate", "OkHttp-Preemptive")
-      .build()
+    val fakeAuthChallengeResponse =
+      Response.Builder()
+        .request(proxyConnectRequest)
+        .protocol(Protocol.HTTP_1_1)
+        .code(HttpURLConnection.HTTP_PROXY_AUTH)
+        .message("Preemptive Authenticate")
+        .sentRequestAtMillis(-1L)
+        .receivedResponseAtMillis(-1L)
+        .header("Proxy-Authenticate", "OkHttp-Preemptive")
+        .build()
 
-    val authenticatedRequest = route.address.proxyAuthenticator
-      .authenticate(route, fakeAuthChallengeResponse)
+    val authenticatedRequest =
+      route.address.proxyAuthenticator
+        .authenticate(route, fakeAuthChallengeResponse)
 
     return authenticatedRequest ?: proxyConnectRequest
   }

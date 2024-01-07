@@ -25,13 +25,15 @@ class PostForm {
   private val client = OkHttpClient()
 
   fun run() {
-    val formBody = FormBody.Builder()
+    val formBody =
+      FormBody.Builder()
         .add("search", "Jurassic Park")
         .build()
-    val request = Request(
-      url = "https://en.wikipedia.org/w/index.php".toHttpUrl(),
-      body = formBody,
-    )
+    val request =
+      Request(
+        url = "https://en.wikipedia.org/w/index.php".toHttpUrl(),
+        body = formBody,
+      )
 
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")

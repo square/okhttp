@@ -24,7 +24,11 @@ import okhttp3.internal.connection.RealConnection
 import okio.FileSystem
 import okio.Path
 
-internal fun buildCache(file: Path, maxSize: Long, fileSystem: FileSystem): Cache {
+internal fun buildCache(
+  file: Path,
+  maxSize: Long,
+  fileSystem: FileSystem,
+): Cache {
   return Cache(file, maxSize, fileSystem)
 }
 

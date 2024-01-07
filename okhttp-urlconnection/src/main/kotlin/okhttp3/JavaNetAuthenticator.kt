@@ -32,6 +32,8 @@ import okhttp3.Authenticator.Companion.JAVA_NET_AUTHENTICATOR
 @Deprecated(message = "Use okhttp3.Authenticator.Companion.JAVA_NET_AUTHENTICATOR instead")
 class JavaNetAuthenticator : Authenticator {
   @Throws(IOException::class)
-  override fun authenticate(route: Route?, response: Response): Request? =
-    JAVA_NET_AUTHENTICATOR.authenticate(route, response)
+  override fun authenticate(
+    route: Route?,
+    response: Response,
+  ): Request? = JAVA_NET_AUTHENTICATOR.authenticate(route, response)
 }

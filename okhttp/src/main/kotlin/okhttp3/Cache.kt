@@ -24,7 +24,6 @@ import java.security.cert.CertificateEncodingException
 import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
 import java.util.TreeSet
-import java.util.concurrent.TimeUnit
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.EMPTY_HEADERS
@@ -33,7 +32,6 @@ import okhttp3.internal.cache.CacheStrategy
 import okhttp3.internal.cache.DiskLruCache
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.connection.RealConnectionPool
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.platform.Platform
@@ -147,7 +145,7 @@ class Cache internal constructor(
   directory: Path,
   maxSize: Long,
   fileSystem: FileSystem,
-  taskRunner: TaskRunner
+  taskRunner: TaskRunner,
 ) : Closeable, Flushable {
   constructor(
     directory: Path,
@@ -157,17 +155,18 @@ class Cache internal constructor(
     directory,
     maxSize,
     fileSystem,
-    TaskRunner.INSTANCE
+    TaskRunner.INSTANCE,
   )
 
-  internal val cache = DiskLruCache(
-    fileSystem = fileSystem,
-    directory = directory,
-    appVersion = VERSION,
-    valueCount = ENTRY_COUNT,
-    maxSize = maxSize,
-    taskRunner = taskRunner
-  )
+  internal val cache =
+    DiskLruCache(
+      fileSystem = fileSystem,
+      directory = directory,
+      appVersion = VERSION,
+      valueCount = ENTRY_COUNT,
+      maxSize = maxSize,
+      taskRunner = taskRunner,
+    )
 
   // read and write statistics, all guarded by 'this'.
   internal var writeSuccessCount = 0
@@ -181,23 +180,27 @@ class Cache internal constructor(
 
   /** Create a cache of at most [maxSize] bytes in [directory]. */
   constructor(directory: File, maxSize: Long) : this(
-    directory.toOkioPath(), maxSize, FileSystem.SYSTEM
+    directory.toOkioPath(),
+    maxSize,
+    FileSystem.SYSTEM,
   )
 
   internal fun get(request: Request): Response? {
     val key = key(request.url)
-    val snapshot: DiskLruCache.Snapshot = try {
-      cache[key] ?: return null
-    } catch (_: IOException) {
-      return null // Give up because the cache cannot be read.
-    }
+    val snapshot: DiskLruCache.Snapshot =
+      try {
+        cache[key] ?: return null
+      } catch (_: IOException) {
+        return null // Give up because the cache cannot be read.
+      }
 
-    val entry: Entry = try {
-      Entry(snapshot.getSource(ENTRY_METADATA))
-    } catch (_: IOException) {
-      snapshot.closeQuietly()
-      return null
-    }
+    val entry: Entry =
+      try {
+        Entry(snapshot.getSource(ENTRY_METADATA))
+      } catch (_: IOException) {
+        snapshot.closeQuietly()
+        return null
+      }
 
     val response = entry.response(snapshot)
     if (!entry.matches(request, response)) {
@@ -247,7 +250,10 @@ class Cache internal constructor(
     cache.remove(key(request.url))
   }
 
-  internal fun update(cached: Response, network: Response) {
+  internal fun update(
+    cached: Response,
+    network: Response,
+  ) {
     val entry = Entry(network)
     val snapshot = (cached.body as CacheResponseBody).snapshot
     var editor: DiskLruCache.Editor? = null
@@ -373,17 +379,19 @@ class Cache internal constructor(
     cache.close()
   }
 
-  @get:JvmName("directory") val directory: File
+  @get:JvmName("directory")
+  val directory: File
     get() = cache.directory.toFile()
 
-  @get:JvmName("directoryPath") val directoryPath: Path
+  @get:JvmName("directoryPath")
+  val directoryPath: Path
     get() = cache.directory
 
   @JvmName("-deprecated_directory")
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "directory"),
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.ERROR,
   )
   fun directory(): File = cache.directory.toFile()
 
@@ -410,25 +418,26 @@ class Cache internal constructor(
   @Synchronized fun requestCount(): Int = requestCount
 
   private inner class RealCacheRequest(
-    private val editor: DiskLruCache.Editor
+    private val editor: DiskLruCache.Editor,
   ) : CacheRequest {
     private val cacheOut: Sink = editor.newSink(ENTRY_BODY)
     private val body: Sink
     var done = false
 
     init {
-      this.body = object : ForwardingSink(cacheOut) {
-        @Throws(IOException::class)
-        override fun close() {
-          synchronized(this@Cache) {
-            if (done) return
-            done = true
-            writeSuccessCount++
+      this.body =
+        object : ForwardingSink(cacheOut) {
+          @Throws(IOException::class)
+          override fun close() {
+            synchronized(this@Cache) {
+              if (done) return
+              done = true
+              writeSuccessCount++
+            }
+            super.close()
+            editor.commit()
           }
-          super.close()
-          editor.commit()
         }
-      }
     }
 
     override fun abort() {
@@ -510,7 +519,8 @@ class Cache internal constructor(
      * each on their own line. A length of -1 is used to encode a null array. The last line is
      * optional. If present, it contains the TLS version.
      */
-    @Throws(IOException::class) constructor(rawSource: Source) {
+    @Throws(IOException::class)
+    constructor(rawSource: Source) {
       rawSource.use {
         val source = rawSource.buffer()
         val urlLine = source.readUtf8LineStrict()
@@ -553,11 +563,12 @@ class Cache internal constructor(
           val cipherSuite = CipherSuite.forJavaName(cipherSuiteString)
           val peerCertificates = readCertificateList(source)
           val localCertificates = readCertificateList(source)
-          val tlsVersion = if (!source.exhausted()) {
-            TlsVersion.forJavaName(source.readUtf8LineStrict())
-          } else {
-            TlsVersion.SSL_3_0
-          }
+          val tlsVersion =
+            if (!source.exhausted()) {
+              TlsVersion.forJavaName(source.readUtf8LineStrict())
+            } else {
+              TlsVersion.SSL_3_0
+            }
           handshake = Handshake.get(tlsVersion, cipherSuite, peerCertificates, localCertificates)
         } else {
           handshake = null
@@ -640,7 +651,10 @@ class Cache internal constructor(
     }
 
     @Throws(IOException::class)
-    private fun writeCertList(sink: BufferedSink, certificates: List<Certificate>) {
+    private fun writeCertList(
+      sink: BufferedSink,
+      certificates: List<Certificate>,
+    ) {
       try {
         sink.writeDecimalLong(certificates.size.toLong()).writeByte('\n'.code)
         for (element in certificates) {
@@ -653,7 +667,10 @@ class Cache internal constructor(
       }
     }
 
-    fun matches(request: Request, response: Response): Boolean {
+    fun matches(
+      request: Request,
+      response: Response,
+    ): Boolean {
       return url == request.url &&
         requestMethod == request.method &&
         varyMatches(response, varyHeaders, request)
@@ -688,19 +705,20 @@ class Cache internal constructor(
   private class CacheResponseBody(
     val snapshot: DiskLruCache.Snapshot,
     private val contentType: String?,
-    private val contentLength: String?
+    private val contentLength: String?,
   ) : ResponseBody() {
     private val bodySource: BufferedSource
 
     init {
       val source = snapshot.getSource(ENTRY_BODY)
-      bodySource = object : ForwardingSource(source) {
-        @Throws(IOException::class)
-        override fun close() {
-          snapshot.close()
-          super.close()
-        }
-      }.buffer()
+      bodySource =
+        object : ForwardingSource(source) {
+          @Throws(IOException::class)
+          override fun close() {
+            snapshot.close()
+            super.close()
+          }
+        }.buffer()
     }
 
     override fun contentType(): MediaType? = contentType?.toMediaTypeOrNull()
@@ -740,7 +758,7 @@ class Cache internal constructor(
     fun varyMatches(
       cachedResponse: Response,
       cachedRequest: Headers,
-      newRequest: Request
+      newRequest: Request,
     ): Boolean {
       return cachedResponse.headers.varyFields().none {
         cachedRequest.values(it) != newRequest.headers(it)
@@ -786,7 +804,10 @@ class Cache internal constructor(
      * Returns the subset of the headers in [requestHeaders] that impact the content of the
      * response's body.
      */
-    private fun varyHeaders(requestHeaders: Headers, responseHeaders: Headers): Headers {
+    private fun varyHeaders(
+      requestHeaders: Headers,
+      responseHeaders: Headers,
+    ): Headers {
       val varyFields = responseHeaders.varyFields()
       if (varyFields.isEmpty()) return EMPTY_HEADERS
 
