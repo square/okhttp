@@ -124,13 +124,13 @@ class RouteSelectorTest {
     )
     val routeSelector = newRouteSelector(address)
     assertThat(routeSelector.hasNext()).isTrue()
-    dns[proxyAHost] = dns.allocate(2)
+    dns[PROXY_A_HOST] = dns.allocate(2)
     val selection = routeSelector.next()
-    assertRoute(selection.next(), address, proxyA, dns.lookup(proxyAHost, 0), proxyAPort)
-    assertRoute(selection.next(), address, proxyA, dns.lookup(proxyAHost, 1), proxyAPort)
+    assertRoute(selection.next(), address, proxyA, dns.lookup(PROXY_A_HOST, 0), PROXY_A_PORT)
+    assertRoute(selection.next(), address, proxyA, dns.lookup(PROXY_A_HOST, 1), PROXY_A_PORT)
     assertThat(selection.hasNext()).isFalse()
     assertThat(routeSelector.hasNext()).isFalse()
-    dns.assertRequests(proxyAHost)
+    dns.assertRequests(PROXY_A_HOST)
     proxySelector.assertRequests() // No proxy selector requests!
   }
 
@@ -221,19 +221,19 @@ class RouteSelectorTest {
 
     // First try the IP addresses of the first proxy, in sequence.
     assertThat(routeSelector.hasNext()).isTrue()
-    dns[proxyAHost] = dns.allocate(2)
+    dns[PROXY_A_HOST] = dns.allocate(2)
     val selection1 = routeSelector.next()
-    assertRoute(selection1.next(), address, proxyA, dns.lookup(proxyAHost, 0), proxyAPort)
-    assertRoute(selection1.next(), address, proxyA, dns.lookup(proxyAHost, 1), proxyAPort)
-    dns.assertRequests(proxyAHost)
+    assertRoute(selection1.next(), address, proxyA, dns.lookup(PROXY_A_HOST, 0), PROXY_A_PORT)
+    assertRoute(selection1.next(), address, proxyA, dns.lookup(PROXY_A_HOST, 1), PROXY_A_PORT)
+    dns.assertRequests(PROXY_A_HOST)
     assertThat(selection1.hasNext()).isFalse()
 
     // Next try the IP address of the second proxy.
     assertThat(routeSelector.hasNext()).isTrue()
-    dns[proxyBHost] = dns.allocate(1)
+    dns[PROXY_B_HOST] = dns.allocate(1)
     val selection2 = routeSelector.next()
-    assertRoute(selection2.next(), address, proxyB, dns.lookup(proxyBHost, 0), proxyBPort)
-    dns.assertRequests(proxyBHost)
+    assertRoute(selection2.next(), address, proxyB, dns.lookup(PROXY_B_HOST, 0), PROXY_B_PORT)
+    dns.assertRequests(PROXY_B_HOST)
     assertThat(selection2.hasNext()).isFalse()
 
     // No more proxies to try.
@@ -264,22 +264,22 @@ class RouteSelectorTest {
     val routeSelector = newRouteSelector(address)
     proxySelector.assertRequests(address.url.toUri())
     assertThat(routeSelector.hasNext()).isTrue()
-    dns[proxyAHost] = dns.allocate(1)
+    dns[PROXY_A_HOST] = dns.allocate(1)
     val selection1 = routeSelector.next()
-    assertRoute(selection1.next(), address, proxyA, dns.lookup(proxyAHost, 0), proxyAPort)
-    dns.assertRequests(proxyAHost)
+    assertRoute(selection1.next(), address, proxyA, dns.lookup(PROXY_A_HOST, 0), PROXY_A_PORT)
+    dns.assertRequests(PROXY_A_HOST)
     assertThat(selection1.hasNext()).isFalse()
     assertThat(routeSelector.hasNext()).isTrue()
-    dns.clear(proxyBHost)
+    dns.clear(PROXY_B_HOST)
     assertFailsWith<UnknownHostException> {
       routeSelector.next()
     }
-    dns.assertRequests(proxyBHost)
+    dns.assertRequests(PROXY_B_HOST)
     assertThat(routeSelector.hasNext()).isTrue()
-    dns[proxyAHost] = dns.allocate(1)
+    dns[PROXY_A_HOST] = dns.allocate(1)
     val selection2 = routeSelector.next()
-    assertRoute(selection2.next(), address, proxyA, dns.lookup(proxyAHost, 0), proxyAPort)
-    dns.assertRequests(proxyAHost)
+    assertRoute(selection2.next(), address, proxyA, dns.lookup(PROXY_A_HOST, 0), PROXY_A_PORT)
+    dns.assertRequests(PROXY_A_HOST)
     assertThat(selection2.hasNext()).isFalse()
     assertThat(routeSelector.hasNext()).isFalse()
   }
@@ -291,19 +291,19 @@ class RouteSelectorTest {
     val routeSelector = newRouteSelector(address)
 
     // Proxy A
-    dns[proxyAHost] = dns.allocate(2)
+    dns[PROXY_A_HOST] = dns.allocate(2)
     val selection1 = routeSelector.next()
-    assertRoute(selection1.next(), address, proxyA, dns.lookup(proxyAHost, 0), proxyAPort)
-    dns.assertRequests(proxyAHost)
-    assertRoute(selection1.next(), address, proxyA, dns.lookup(proxyAHost, 1), proxyAPort)
+    assertRoute(selection1.next(), address, proxyA, dns.lookup(PROXY_A_HOST, 0), PROXY_A_PORT)
+    dns.assertRequests(PROXY_A_HOST)
+    assertRoute(selection1.next(), address, proxyA, dns.lookup(PROXY_A_HOST, 1), PROXY_A_PORT)
     assertThat(selection1.hasNext()).isFalse()
 
     // Proxy B
-    dns[proxyBHost] = dns.allocate(2)
+    dns[PROXY_B_HOST] = dns.allocate(2)
     val selection2 = routeSelector.next()
-    assertRoute(selection2.next(), address, proxyB, dns.lookup(proxyBHost, 0), proxyBPort)
-    dns.assertRequests(proxyBHost)
-    assertRoute(selection2.next(), address, proxyB, dns.lookup(proxyBHost, 1), proxyBPort)
+    assertRoute(selection2.next(), address, proxyB, dns.lookup(PROXY_B_HOST, 0), PROXY_B_PORT)
+    dns.assertRequests(PROXY_B_HOST)
+    assertRoute(selection2.next(), address, proxyB, dns.lookup(PROXY_B_HOST, 1), PROXY_B_PORT)
     assertThat(selection2.hasNext()).isFalse()
 
     // No more proxies to attempt.
@@ -344,27 +344,27 @@ class RouteSelectorTest {
     proxySelector.proxies.add(proxyA)
     proxySelector.proxies.add(proxyB)
     var routeSelector = newRouteSelector(address)
-    dns[proxyAHost] = dns.allocate(1)
-    dns[proxyBHost] = dns.allocate(1)
+    dns[PROXY_A_HOST] = dns.allocate(1)
+    dns[PROXY_B_HOST] = dns.allocate(1)
 
     // Mark the ProxyA route as failed.
     val selection = routeSelector.next()
-    dns.assertRequests(proxyAHost)
+    dns.assertRequests(PROXY_A_HOST)
     val route = selection.next()
-    assertRoute(route, address, proxyA, dns.lookup(proxyAHost, 0), proxyAPort)
+    assertRoute(route, address, proxyA, dns.lookup(PROXY_A_HOST, 0), PROXY_A_PORT)
     routeDatabase.failed(route)
     routeSelector = newRouteSelector(address)
 
     // Confirm we enumerate both proxies, giving preference to the route from ProxyB.
     val selection2 = routeSelector.next()
-    dns.assertRequests(proxyAHost, proxyBHost)
-    assertRoute(selection2.next(), address, proxyB, dns.lookup(proxyBHost, 0), proxyBPort)
+    dns.assertRequests(PROXY_A_HOST, PROXY_B_HOST)
+    assertRoute(selection2.next(), address, proxyB, dns.lookup(PROXY_B_HOST, 0), PROXY_B_PORT)
     assertThat(selection2.hasNext()).isFalse()
 
     // Confirm the last selection contains the postponed route from ProxyA.
     val selection3 = routeSelector.next()
     dns.assertRequests()
-    assertRoute(selection3.next(), address, proxyA, dns.lookup(proxyAHost, 0), proxyAPort)
+    assertRoute(selection3.next(), address, proxyA, dns.lookup(PROXY_A_HOST, 0), PROXY_A_PORT)
     assertThat(selection3.hasNext()).isFalse()
     assertThat(routeSelector.hasNext()).isFalse()
   }
@@ -544,18 +544,18 @@ class RouteSelectorTest {
   }
 
   companion object {
-    private const val proxyAPort = 1001
-    private const val proxyAHost = "proxya"
+    private const val PROXY_A_PORT = 1001
+    private const val PROXY_A_HOST = "proxya"
     private val proxyA = Proxy(
       Proxy.Type.HTTP,
-      InetSocketAddress.createUnresolved(proxyAHost, proxyAPort)
+      InetSocketAddress.createUnresolved(PROXY_A_HOST, PROXY_A_PORT)
     )
 
-    private const val proxyBPort = 1002
-    private const val proxyBHost = "proxyb"
+    private const val PROXY_B_PORT = 1002
+    private const val PROXY_B_HOST = "proxyb"
     private val proxyB = Proxy(
       Proxy.Type.HTTP,
-      InetSocketAddress.createUnresolved(proxyBHost, proxyBPort)
+      InetSocketAddress.createUnresolved(PROXY_B_HOST, PROXY_B_PORT)
     )
   }
 }

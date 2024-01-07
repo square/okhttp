@@ -29,12 +29,12 @@ import java.util.Date
 import java.util.TimeZone
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.decodeCertificatePem
-import okhttp3.tls.internal.der.ObjectIdentifiers.basicConstraints
-import okhttp3.tls.internal.der.ObjectIdentifiers.commonName
-import okhttp3.tls.internal.der.ObjectIdentifiers.organizationalUnitName
-import okhttp3.tls.internal.der.ObjectIdentifiers.rsaEncryption
-import okhttp3.tls.internal.der.ObjectIdentifiers.sha256WithRSAEncryption
-import okhttp3.tls.internal.der.ObjectIdentifiers.subjectAlternativeName
+import okhttp3.tls.internal.der.ObjectIdentifiers.BASIC_CONSTRAINTS
+import okhttp3.tls.internal.der.ObjectIdentifiers.COMMON_NAME
+import okhttp3.tls.internal.der.ObjectIdentifiers.ORGANIZATIONAL_UNIT_NAME
+import okhttp3.tls.internal.der.ObjectIdentifiers.RSA_ENCRYPTION
+import okhttp3.tls.internal.der.ObjectIdentifiers.SHA256_WITH_RSA_ENCRYPTION
+import okhttp3.tls.internal.der.ObjectIdentifiers.SUBJECT_ALTERNATIVE_NAME
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
@@ -100,16 +100,17 @@ internal class DerCertificatesTest {
     assertThat(okHttpCertificate).isEqualTo(
         Certificate(
             tbsCertificate = TbsCertificate(
-                version = 2L, // v3.
+                // v3.
+                version = 2L,
                 serialNumber = BigInteger.ONE,
                 signature = AlgorithmIdentifier(
-                    algorithm = sha256WithRSAEncryption,
+                    algorithm = SHA256_WITH_RSA_ENCRYPTION,
                     parameters = null
                 ),
                 issuer = listOf(
                     listOf(
                         AttributeTypeAndValue(
-                            type = commonName,
+                            type = COMMON_NAME,
                             value = "cash.app"
                         )
                     )
@@ -121,14 +122,14 @@ internal class DerCertificatesTest {
                 subject = listOf(
                     listOf(
                         AttributeTypeAndValue(
-                            type = commonName,
+                            type = COMMON_NAME,
                             value = "cash.app"
                         )
                     )
                 ),
                 subjectPublicKeyInfo = SubjectPublicKeyInfo(
                     algorithm = AlgorithmIdentifier(
-                        algorithm = rsaEncryption,
+                        algorithm = RSA_ENCRYPTION,
                         parameters = null
                     ),
                     subjectPublicKey = BitString(
@@ -141,7 +142,7 @@ internal class DerCertificatesTest {
                 extensions = listOf()
             ),
             signatureAlgorithm = AlgorithmIdentifier(
-                algorithm = sha256WithRSAEncryption,
+                algorithm = SHA256_WITH_RSA_ENCRYPTION,
                 parameters = null
             ),
             signatureValue = BitString(
@@ -215,10 +216,11 @@ internal class DerCertificatesTest {
     assertThat(okHttpCertificate).isEqualTo(
         Certificate(
             tbsCertificate = TbsCertificate(
-                version = 2L, // v3.
+                // v3.
+                version = 2L,
                 serialNumber = BigInteger("1372799044"),
                 signature = AlgorithmIdentifier(
-                    algorithm = sha256WithRSAEncryption,
+                    algorithm = SHA256_WITH_RSA_ENCRYPTION,
                     parameters = null
                 ),
                 issuer = listOf(
@@ -236,19 +238,19 @@ internal class DerCertificatesTest {
                     ),
                     listOf(
                         AttributeTypeAndValue(
-                            type = organizationalUnitName,
+                            type = ORGANIZATIONAL_UNIT_NAME,
                             value = "www.entrust.net/CPS is incorporated by reference"
                         )
                     ),
                     listOf(
                         AttributeTypeAndValue(
-                            type = organizationalUnitName,
+                            type = ORGANIZATIONAL_UNIT_NAME,
                             value = "(c) 2006 Entrust, Inc."
                         )
                     ),
                     listOf(
                         AttributeTypeAndValue(
-                            type = commonName,
+                            type = COMMON_NAME,
                             value = "Entrust Root Certification Authority"
                         )
                     )
@@ -272,26 +274,26 @@ internal class DerCertificatesTest {
                     ),
                     listOf(
                         AttributeTypeAndValue(
-                            type = organizationalUnitName,
+                            type = ORGANIZATIONAL_UNIT_NAME,
                             value = "See www.entrust.net/legal-terms"
                         )
                     ),
                     listOf(
                         AttributeTypeAndValue(
-                            type = organizationalUnitName,
+                            type = ORGANIZATIONAL_UNIT_NAME,
                             value = "(c) 2009 Entrust, Inc. - for authorized use only"
                         )
                     ),
                     listOf(
                         AttributeTypeAndValue(
-                            type = commonName,
+                            type = COMMON_NAME,
                             value = "Entrust Root Certification Authority - G2"
                         )
                     )
                 ),
                 subjectPublicKeyInfo = SubjectPublicKeyInfo(
                     algorithm = AlgorithmIdentifier(
-                        algorithm = rsaEncryption,
+                        algorithm = RSA_ENCRYPTION,
                         parameters = null
                     ),
                     subjectPublicKey = BitString(
@@ -308,7 +310,7 @@ internal class DerCertificatesTest {
                         value = "03020106".decodeHex()
                     ),
                     Extension(
-                        id = basicConstraints,
+                        id = BASIC_CONSTRAINTS,
                         critical = true,
                         value = BasicConstraints(
                             ca = true,
@@ -346,7 +348,7 @@ internal class DerCertificatesTest {
                 )
             ),
             signatureAlgorithm = AlgorithmIdentifier(
-                algorithm = sha256WithRSAEncryption,
+                algorithm = SHA256_WITH_RSA_ENCRYPTION,
                 parameters = null
             ),
             signatureValue = BitString(
@@ -432,10 +434,11 @@ internal class DerCertificatesTest {
     assertThat(okHttpCertificate).isEqualTo(
         Certificate(
             tbsCertificate = TbsCertificate(
-                version = 2L, // v3.
+                // v3.
+                version = 2L,
                 serialNumber = BigInteger("253093332781973022312510445874391888413"),
                 signature = AlgorithmIdentifier(
-                    algorithm = sha256WithRSAEncryption,
+                    algorithm = SHA256_WITH_RSA_ENCRYPTION,
                     parameters = null
                 ),
                 issuer = listOf(
@@ -453,19 +456,19 @@ internal class DerCertificatesTest {
                     ),
                     listOf(
                         AttributeTypeAndValue(
-                            type = organizationalUnitName,
+                            type = ORGANIZATIONAL_UNIT_NAME,
                             value = "See www.entrust.net/legal-terms"
                         )
                     ),
                     listOf(
                         AttributeTypeAndValue(
-                            type = organizationalUnitName,
+                            type = ORGANIZATIONAL_UNIT_NAME,
                             value = "(c) 2014 Entrust, Inc. - for authorized use only"
                         )
                     ),
                     listOf(
                         AttributeTypeAndValue(
-                            type = commonName,
+                            type = COMMON_NAME,
                             value = "Entrust Certification Authority - L1M"
                         )
                     )
@@ -525,14 +528,14 @@ internal class DerCertificatesTest {
                     ),
                     listOf(
                         AttributeTypeAndValue(
-                            type = commonName,
+                            type = COMMON_NAME,
                             value = "cash.app"
                         )
                     )
                 ),
                 subjectPublicKeyInfo = SubjectPublicKeyInfo(
                     algorithm = AlgorithmIdentifier(
-                        algorithm = rsaEncryption,
+                        algorithm = RSA_ENCRYPTION,
                         parameters = null
                     ),
                     subjectPublicKey = BitString(
@@ -544,7 +547,7 @@ internal class DerCertificatesTest {
                 subjectUniqueID = null,
                 extensions = listOf(
                     Extension(
-                        id = subjectAlternativeName,
+                        id = SUBJECT_ALTERNATIVE_NAME,
                         critical = false,
                         value = listOf(
                             CertificateAdapters.generalNameDnsName to "cash.app",
@@ -608,7 +611,7 @@ internal class DerCertificatesTest {
                         value = "041475fd24c2df592599e32f3373e18c0450dd1b87b6".decodeHex()
                     ),
                     Extension(
-                        id = basicConstraints,
+                        id = BASIC_CONSTRAINTS,
                         critical = false,
                         value = BasicConstraints(
                             ca = false,
@@ -618,7 +621,7 @@ internal class DerCertificatesTest {
                 )
             ),
             signatureAlgorithm = AlgorithmIdentifier(
-                algorithm = sha256WithRSAEncryption,
+                algorithm = SHA256_WITH_RSA_ENCRYPTION,
                 parameters = null
             ),
             signatureValue = BitString(
@@ -647,14 +650,14 @@ internal class DerCertificatesTest {
         .fromDer(certificateByteString)
 
     assertThat(okHttpCertificate.basicConstraints).isEqualTo(Extension(
-        id = basicConstraints,
+        id = BASIC_CONSTRAINTS,
         critical = true,
         value = BasicConstraints(true, 3)
     ))
     assertThat(okHttpCertificate.commonName).isEqualTo("Jurassic Park")
     assertThat(okHttpCertificate.organizationalUnitName).isEqualTo("Gene Research")
     assertThat(okHttpCertificate.subjectAlternativeNames).isEqualTo(Extension(
-        id = subjectAlternativeName,
+        id = SUBJECT_ALTERNATIVE_NAME,
         critical = true,
         value = listOf(
             CertificateAdapters.generalNameDnsName to "*.example.com",
@@ -701,7 +704,7 @@ internal class DerCertificatesTest {
         "mIE65swMM5/RNhS4aFjez/MwxFNOHaxc9VgCwYPXCLOtdf7AVovdyG0XWgbUXH+NyxKwboE").decodeBase64()!!
 
     val x509PublicKey = encodeKey(
-        algorithm = rsaEncryption,
+        algorithm = RSA_ENCRYPTION,
         publicKeyBytes = publicKeyBytes
     )
     val keyFactory = KeyFactory.getInstance("RSA")
@@ -817,7 +820,7 @@ internal class DerCertificatesTest {
     val decoded = CertificateAdapters.privateKeyInfo.fromDer(privateKeyInfoByteString)
 
     assertThat(decoded.version).isEqualTo(0L)
-    assertThat(decoded.algorithmIdentifier).isEqualTo(AlgorithmIdentifier(rsaEncryption, null))
+    assertThat(decoded.algorithmIdentifier).isEqualTo(AlgorithmIdentifier(RSA_ENCRYPTION, null))
     assertThat(decoded.privateKey.size).isEqualTo(607)
 
     val encoded = CertificateAdapters.privateKeyInfo.toDer(decoded)
@@ -915,7 +918,7 @@ internal class DerCertificatesTest {
 
     val decoded = CertificateAdapters.certificate.fromDer(certificateByteString)
     assertThat(decoded.subjectAlternativeNames).isEqualTo(Extension(
-        id = subjectAlternativeName,
+        id = SUBJECT_ALTERNATIVE_NAME,
         critical = false,
         value = listOf(
             Adapters.ANY_VALUE to AnyValue(

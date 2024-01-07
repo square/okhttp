@@ -1,14 +1,14 @@
 @file:Suppress("UnstableApiUsage")
 
+import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
-import java.net.URL
+import java.net.URI
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
-import java.net.URI
 
 buildscript {
   dependencies {
@@ -22,7 +22,6 @@ buildscript {
     classpath(libs.gradlePlugin.shadow)
     classpath(libs.gradlePlugin.animalsniffer)
     classpath(libs.gradlePlugin.errorprone)
-    classpath(libs.gradlePlugin.spotless)
     classpath(libs.gradlePlugin.mavenPublish)
     classpath(libs.gradlePlugin.binaryCompatibilityValidator)
   }
@@ -34,7 +33,18 @@ buildscript {
   }
 }
 
+plugins {
+  alias(libs.plugins.spotless)
+}
+
 apply(plugin = "org.jetbrains.dokka")
+
+configure<SpotlessExtension> {
+  kotlin {
+    target("**/*.kt")
+    ktlint()
+  }
+}
 
 allprojects {
   group = "com.squareup.okhttp3"

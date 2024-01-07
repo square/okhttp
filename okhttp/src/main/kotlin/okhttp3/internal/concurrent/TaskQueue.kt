@@ -79,8 +79,11 @@ class TaskQueue internal constructor(
     }
   }
 
-  /** Overload of [schedule] that uses a lambda for a repeating task. */
-  // TODO: make this inline once this is fixed: https://github.com/oracle/graal/issues/3466
+  /**
+   * Overload of [schedule] that uses a lambda for a repeating task.
+   *
+   * TODO: make this inline once this is fixed: https://github.com/oracle/graal/issues/3466
+   */
   fun schedule(
     name: String,
     delayNanos: Long = 0L,
@@ -93,8 +96,11 @@ class TaskQueue internal constructor(
     }, delayNanos)
   }
 
-  /** Executes [block] once on a task runner thread. */
-  // TODO: make this inline once this is fixed: https://github.com/oracle/graal/issues/3466
+  /**
+   * Executes [block] once on a task runner thread.
+   *
+   * TODO: make this inline once this is fixed: https://github.com/oracle/graal/issues/3466
+   */
   fun execute(
     name: String,
     delayNanos: Long = 0L,

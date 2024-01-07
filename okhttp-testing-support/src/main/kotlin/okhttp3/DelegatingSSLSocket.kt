@@ -18,9 +18,9 @@ package okhttp3
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.lang.AssertionError
-import java.lang.reflect.InvocationTargetException
-import java.net.*
+import java.net.InetAddress
+import java.net.SocketAddress
+import java.net.SocketException
 import java.nio.channels.SocketChannel
 import java.util.function.BiFunction
 import javax.net.ssl.HandshakeCompletedListener

@@ -29,6 +29,7 @@ import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import kotlin.time.Duration as KotlinDuration
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
 import okhttp3.internal.asFactory
@@ -45,7 +46,6 @@ import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
 import okio.Sink
 import okio.Source
-import kotlin.time.Duration as KotlinDuration
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 /**
@@ -290,7 +290,8 @@ open class OkHttpClient internal constructor(
       listener = listener,
       random = Random(),
       pingIntervalMillis = pingIntervalMillis.toLong(),
-      extensions = null, // Always null for clients.
+      // extensions is always null for clients:
+      extensions = null,
       minimumDeflateSize = minWebSocketMessageToCompress
     )
     webSocket.connect(this)

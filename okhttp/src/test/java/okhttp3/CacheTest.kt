@@ -24,7 +24,6 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
-import assertk.fail
 import java.io.IOException
 import java.net.CookieManager
 import java.net.HttpURLConnection
@@ -319,8 +318,8 @@ class CacheTest {
       .build()
     val request = Request.Builder().url(server.url("/")).build()
     val response1 = client.newCall(request).execute()
-    val `in` = response1.body.source()
-    assertThat(`in`.readUtf8()).isEqualTo("ABC")
+    val source = response1.body.source()
+    assertThat(source.readUtf8()).isEqualTo("ABC")
 
     // OpenJDK 6 fails on this line, complaining that the connection isn't open yet
     val cipherSuite = response1.handshake!!.cipherSuite
@@ -734,11 +733,11 @@ class CacheTest {
         .build()
     )
     val response1 = get(server.url("/"))
-    val `in` = response1.body.source()
-    assertThat(`in`.readUtf8(5)).isEqualTo("ABCDE")
-    `in`.close()
+    val source = response1.body.source()
+    assertThat(source.readUtf8(5)).isEqualTo("ABCDE")
+    source.close()
     assertFailsWith<IllegalStateException> {
-      `in`.readByte()
+      source.readByte()
     }
     assertThat(cache.writeAbortCount()).isEqualTo(1)
     assertThat(cache.writeSuccessCount()).isEqualTo(0)

@@ -115,8 +115,9 @@ internal object Adapters {
    * ```
    *   ' () + , - . / : = ?
    * ```
+   *
+   * TODO(jwilson): constrain to printable string characters.
    */
-  // TODO(jwilson): constrain to printable string characters.
   val PRINTABLE_STRING = BasicDerAdapter(
       name = "PRINTABLE STRING",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
@@ -130,8 +131,9 @@ internal object Adapters {
   /**
    * Based on International Alphabet No. 5. Note that there are bytes that IA5 and US-ASCII
    * disagree on interpretation.
+   *
+   * TODO(jwilson): constrain to IA5 characters.
    */
-  // TODO(jwilson): constrain to IA5 characters.
   val IA5_STRING = BasicDerAdapter(
       name = "IA5 STRING",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,

@@ -19,7 +19,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
-import okhttp3.internal.userAgent
+import okhttp3.internal.USER_AGENT
 import okio.ByteString
 
 /**
@@ -116,7 +116,7 @@ class AutobahnTester {
 
   private fun updateReports() {
     val latch = CountDownLatch(1)
-    newWebSocket("/updateReports?agent=$userAgent", object : WebSocketListener() {
+    newWebSocket("/updateReports?agent=$USER_AGENT", object : WebSocketListener() {
       override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
         webSocket.close(1000, null)
         latch.countDown()

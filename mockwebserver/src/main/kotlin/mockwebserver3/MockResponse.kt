@@ -141,29 +141,30 @@ class MockResponse {
     internal var trailers: Headers.Builder
 
     // At most one of (body,webSocketListener,streamHandler) is non-null.
-    private var body_: MockResponseBody? = null
-    private var streamHandler_: StreamHandler? = null
-    private var webSocketListener_: WebSocketListener? = null
+    private var bodyVar: MockResponseBody? = null
+    private var streamHandlerVar: StreamHandler? = null
+    private var webSocketListenerVar: WebSocketListener? = null
+
     var body: MockResponseBody?
-      get() = body_
+      get() = bodyVar
       set(value) {
-        body_ = value
-        streamHandler_ = null
-        webSocketListener_ = null
+        bodyVar = value
+        streamHandlerVar = null
+        webSocketListenerVar = null
       }
     var streamHandler: StreamHandler?
-      get() = streamHandler_
+      get() = streamHandlerVar
       set(value) {
-        streamHandler_ = value
-        body_ = null
-        webSocketListener_ = null
+        streamHandlerVar = value
+        bodyVar = null
+        webSocketListenerVar = null
       }
     var webSocketListener: WebSocketListener?
-      get() = webSocketListener_
+      get() = webSocketListenerVar
       set(value) {
-        webSocketListener_ = value
-        body_ = null
-        streamHandler_ = null
+        webSocketListenerVar = value
+        bodyVar = null
+        streamHandlerVar = null
       }
 
     var throttleBytesPerPeriod: Long
@@ -185,9 +186,9 @@ class MockResponse {
       this.inTunnel = false
       this.informationalResponses = mutableListOf()
       this.status = "HTTP/1.1 200 OK"
-      this.body_ = null
-      this.streamHandler_ = null
-      this.webSocketListener_ = null
+      this.bodyVar = null
+      this.streamHandlerVar = null
+      this.webSocketListenerVar = null
       this.headers = Headers.Builder()
         .add("Content-Length", "0")
       this.trailers = Headers.Builder()
@@ -206,9 +207,9 @@ class MockResponse {
       this.status = mockResponse.status
       this.headers = mockResponse.headers.newBuilder()
       this.trailers = mockResponse.trailers.newBuilder()
-      this.body_ = mockResponse.body
-      this.streamHandler_ = mockResponse.streamHandler
-      this.webSocketListener_ = mockResponse.webSocketListener
+      this.bodyVar = mockResponse.body
+      this.streamHandlerVar = mockResponse.streamHandler
+      this.webSocketListenerVar = mockResponse.webSocketListener
       this.throttleBytesPerPeriod = mockResponse.throttleBytesPerPeriod
       this.throttlePeriodNanos = mockResponse.throttlePeriodNanos
       this.socketPolicy = mockResponse.socketPolicy

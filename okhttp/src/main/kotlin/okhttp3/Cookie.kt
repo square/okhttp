@@ -81,8 +81,12 @@ class Cookie private constructor(
    */
   @get:JvmName("httpOnly") val httpOnly: Boolean,
 
-  /** Returns true if this cookie does not expire at the end of the current session. */
-  @get:JvmName("persistent") val persistent: Boolean, // True if 'expires' or 'max-age' is present.
+  /**
+   * Returns true if this cookie does not expire at the end of the current session.
+   *
+   * This is true if either 'expires' or 'max-age' is present.
+   */
+  @get:JvmName("persistent") val persistent: Boolean,
 
   /**
    * Returns true if this cookie's domain should be interpreted as a single host name, or false if
@@ -92,8 +96,10 @@ class Cookie private constructor(
    * For example, suppose the cookie's domain is `example.com`. If this flag is true it matches
    * **only** `example.com`. If this flag is false it matches `example.com` and all subdomains
    * including `api.example.com`, `www.example.com`, and `beta.api.example.com`.
+   *
+   * This is true unless 'domain' is present.
    */
-  @get:JvmName("hostOnly") val hostOnly: Boolean, // True unless 'domain' is present.
+  @get:JvmName("hostOnly") val hostOnly: Boolean,
 
   /**
    * Returns a string describing whether this cookie is sent for cross-site calls.

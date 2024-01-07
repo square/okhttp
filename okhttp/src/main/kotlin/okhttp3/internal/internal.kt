@@ -16,7 +16,7 @@
 
 /** Exposes Kotlin-internal APIs to Java test code and code in other modules. */
 @file:JvmName("Internal")
-
+@file:Suppress("ktlint:standard:filename")
 package okhttp3.internal
 
 import java.nio.charset.Charset

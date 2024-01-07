@@ -17,6 +17,7 @@ package okhttp3
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.fail
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -30,14 +31,13 @@ import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSession
 import javax.net.ssl.X509TrustManager
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.CertificatePinner.Companion.pin
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
-import assertk.fail
-import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -492,7 +492,7 @@ class ConnectionCoalescingTest {
    */
   @Test
   fun redirectWithDevSetup() {
-    val TRUST_MANAGER: X509TrustManager = object : X509TrustManager {
+    val trustManager: X509TrustManager = object : X509TrustManager {
       override fun checkClientTrusted(x509Certificates: Array<X509Certificate>, s: String) {
       }
 
@@ -503,8 +503,9 @@ class ConnectionCoalescingTest {
         return arrayOf()
       }
     }
-    client =
-      client.newBuilder().sslSocketFactory(client.sslSocketFactory, TRUST_MANAGER).build()
+    client = client.newBuilder()
+      .sslSocketFactory(client.sslSocketFactory, trustManager)
+      .build()
     server.enqueue(MockResponse())
     server.enqueue(MockResponse())
     assert200Http2Response(execute(url), server.hostName)

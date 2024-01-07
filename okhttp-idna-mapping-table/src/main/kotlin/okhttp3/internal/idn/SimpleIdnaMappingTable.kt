@@ -79,15 +79,21 @@ class SimpleIdnaMappingTable internal constructor(
 
 
 private val optionsDelimiter = Options.of(
-  ".".encodeUtf8(),  // 0.
-  " ".encodeUtf8(),  // 1.
-  ";".encodeUtf8(),  // 2.
-  "#".encodeUtf8(),  // 3.
-  "\n".encodeUtf8(), // 4.
+  // 0.
+  ".".encodeUtf8(),
+  // 1.
+  " ".encodeUtf8(),
+  // 2.
+  ";".encodeUtf8(),
+  // 3.
+  "#".encodeUtf8(),
+  // 4.
+  "\n".encodeUtf8(),
 )
 
 private val optionsDot = Options.of(
-  ".".encodeUtf8(),  // 0.
+  // 0.
+  ".".encodeUtf8(),
 )
 
 private const val DELIMITER_DOT = 0
@@ -97,13 +103,20 @@ private const val DELIMITER_HASH = 3
 private const val DELIMITER_NEWLINE = 4
 
 private val optionsType = Options.of(
-  "deviation ".encodeUtf8(),              // 0.
-  "disallowed ".encodeUtf8(),             // 1.
-  "disallowed_STD3_mapped ".encodeUtf8(), // 2.
-  "disallowed_STD3_valid ".encodeUtf8(),  // 3.
-  "ignored ".encodeUtf8(),                // 4.
-  "mapped ".encodeUtf8(),                 // 5.
-  "valid ".encodeUtf8(),                  // 6.
+  // 0.
+  "deviation ".encodeUtf8(),
+  // 1.
+  "disallowed ".encodeUtf8(),
+  // 2.
+  "disallowed_STD3_mapped ".encodeUtf8(),
+  // 3.
+  "disallowed_STD3_valid ".encodeUtf8(),
+  // 4.
+  "ignored ".encodeUtf8(),
+  // 5.
+  "mapped ".encodeUtf8(),
+  // 6.
+  "valid ".encodeUtf8(),
 )
 
 internal const val TYPE_DEVIATION = 0

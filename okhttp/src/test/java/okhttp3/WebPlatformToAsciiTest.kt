@@ -22,6 +22,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Runs the web platform ToAscii tests. */
 class WebPlatformToAsciiTest {
+  @Suppress("ktlint:standard:max-line-length")
   val knownFailures = setOf(
     // OkHttp rejects empty labels.
     "x..xn--zca",

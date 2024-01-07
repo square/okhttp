@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("ktlint:standard:filename")
 package okhttp3
 
 import assertk.assertThat
@@ -88,7 +89,7 @@ import okhttp3.internal.authenticator.JavaNetAuthenticator
 import okhttp3.internal.http.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.HTTP_TEMP_REDIRECT
 import okhttp3.internal.platform.Platform.Companion.get
-import okhttp3.internal.userAgent
+import okhttp3.internal.USER_AGENT
 import okhttp3.java.net.cookiejar.JavaNetCookieJar
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
@@ -988,7 +989,7 @@ class URLConnectionTest {
     val connect = server.takeRequest()
     assertThat(connect.headers["Private"]).isNull()
     assertThat(connect.headers["Proxy-Authorization"]).isNull()
-    assertThat(connect.headers["User-Agent"]).isEqualTo(userAgent)
+    assertThat(connect.headers["User-Agent"]).isEqualTo(USER_AGENT)
     assertThat(connect.headers["Host"]).isEqualTo("android.com:443")
     assertThat(connect.headers["Proxy-Connection"]).isEqualTo("Keep-Alive")
     val get = server.takeRequest()
@@ -2761,18 +2762,18 @@ class URLConnectionTest {
     val server = MockWebServer()
     // Sockets on some platforms can have large buffers that mean writes do not block when
     // required. These socket factories explicitly set the buffer sizes on sockets created.
-    val SOCKET_BUFFER_SIZE = 4 * 1024
+    val socketBufferSize = 4 * 1024
     server.serverSocketFactory = object : DelegatingServerSocketFactory(getDefault()) {
       override fun configureServerSocket(serverSocket: ServerSocket): ServerSocket {
-        serverSocket.receiveBufferSize = SOCKET_BUFFER_SIZE
+        serverSocket.receiveBufferSize = socketBufferSize
         return serverSocket
       }
     }
     client = client.newBuilder()
       .socketFactory(object : DelegatingSocketFactory(getDefault()) {
         override fun configureSocket(socket: Socket): Socket {
-          socket.receiveBufferSize = SOCKET_BUFFER_SIZE
-          socket.sendBufferSize = SOCKET_BUFFER_SIZE
+          socket.receiveBufferSize = socketBufferSize
+          socket.sendBufferSize = socketBufferSize
           return socket
         }
       })
@@ -3026,11 +3027,11 @@ class URLConnectionTest {
         .build()
     )
     val response = getResponse(newRequest("/"))
-    val `in` = response.body.byteStream()
-    assertThat(readAscii(`in`, 3)).isEqualTo("ABC")
-    assertThat(`in`.read()).isEqualTo(-1)
+    val inputStream = response.body.byteStream()
+    assertThat(readAscii(inputStream, 3)).isEqualTo("ABC")
+    assertThat(inputStream.read()).isEqualTo(-1)
     // throws IOException in Gingerbread.
-    assertThat(`in`.read()).isEqualTo(-1)
+    assertThat(inputStream.read()).isEqualTo(-1)
   }
 
   @Test
@@ -3796,7 +3797,7 @@ class URLConnectionTest {
     )
     assertContent("abc", getResponse(newRequest("/")))
     val request = server.takeRequest()
-    assertThat(request.headers["User-Agent"]).isEqualTo(userAgent)
+    assertThat(request.headers["User-Agent"]).isEqualTo(USER_AGENT)
   }
 
   @Test

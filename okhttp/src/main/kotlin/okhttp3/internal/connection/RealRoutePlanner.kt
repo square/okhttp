@@ -28,13 +28,13 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
+import okhttp3.internal.USER_AGENT
 import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.RoutePlanner.Plan
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.toHostHeader
-import okhttp3.internal.userAgent
 
 class RealRoutePlanner(
   private val client: OkHttpClient,
@@ -249,7 +249,7 @@ class RealRoutePlanner(
       .method("CONNECT", null)
       .header("Host", route.address.url.toHostHeader(includeDefaultPort = true))
       .header("Proxy-Connection", "Keep-Alive") // For HTTP/1.0 proxies like Squid.
-      .header("User-Agent", userAgent)
+      .header("User-Agent", USER_AGENT)
       .build()
 
     val fakeAuthChallengeResponse = Response.Builder()
@@ -303,10 +303,16 @@ class RealRoutePlanner(
    */
   private fun retryRoute(connection: RealConnection): Route? {
     return synchronized(connection) {
-      if (connection.routeFailureCount != 0) null
-      else if (!connection.noNewExchanges) null // This route is still in use.
-      else if (!connection.route().address.url.canReuseConnectionFor(address.url)) null
-      else connection.route()
+      when {
+        connection.routeFailureCount != 0 -> null
+
+        // This route is still in use.
+        !connection.noNewExchanges -> null
+
+        !connection.route().address.url.canReuseConnectionFor(address.url) -> null
+
+        else -> connection.route()
+      }
     }
   }
 

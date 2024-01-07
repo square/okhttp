@@ -90,12 +90,12 @@ import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.internal.DoubleInetAddressDns
 import okhttp3.internal.RecordingOkAuthenticator
+import okhttp3.internal.USER_AGENT
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.HTTP_EARLY_HINTS
 import okhttp3.internal.http.HTTP_PROCESSING
 import okhttp3.internal.http.RecordingProxySelector
-import okhttp3.internal.userAgent
 import okhttp3.java.net.cookiejar.JavaNetCookieJar
 import okhttp3.okio.LoggingFilesystem
 import okhttp3.testing.Flaky
@@ -1222,9 +1222,14 @@ open class CallTest {
     server.enqueue(MockResponse(body = "response that will never be received"))
     val response = executeSynchronously("/")
     response.assertFailure(
-      SSLException::class.java,  // JDK 11 response to the FAIL_HANDSHAKE
-      SSLProtocolException::class.java,  // RI response to the FAIL_HANDSHAKE
-      SSLHandshakeException::class.java // Android's response to the FAIL_HANDSHAKE
+      // JDK 11 response to the FAIL_HANDSHAKE:
+      SSLException::class.java,
+
+      // RI response to the FAIL_HANDSHAKE:
+      SSLProtocolException::class.java,
+
+      // Android's response to the FAIL_HANDSHAKE:
+      SSLHandshakeException::class.java
     )
     assertThat(client.connectionSpecs).doesNotContain(ConnectionSpec.COMPATIBLE_TLS)
   }
@@ -1237,12 +1242,17 @@ open class CallTest {
     server.enqueue(MockResponse(socketPolicy = FailHandshake))
     server.enqueue(MockResponse(body = "abc"))
     client = client.newBuilder()
-      .hostnameVerifier(
-        RecordingHostnameVerifier()
-      ) // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
-      .connectionSpecs(listOf(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
+      .hostnameVerifier(RecordingHostnameVerifier())
+      .connectionSpecs(
+        // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
+        listOf(
+          ConnectionSpec.RESTRICTED_TLS,
+          ConnectionSpec.MODERN_TLS,
+        )
+      )
       .sslSocketFactory(
-        suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager
+        suppressTlsFallbackClientSocketFactory(),
+        handshakeCertificates.trustManager
       )
       .build()
     executeSynchronously("/").assertBody("abc")
@@ -2844,7 +2854,7 @@ open class CallTest {
     server.enqueue(MockResponse())
     executeSynchronously("/")
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.headers["User-Agent"]!!).isEqualTo(userAgent)
+    assertThat(recordedRequest.headers["User-Agent"]!!).isEqualTo(USER_AGENT)
   }
 
   @Test
@@ -3205,7 +3215,7 @@ open class CallTest {
     )
     val connect = server.takeRequest()
     assertThat(connect.headers["Private"]).isNull()
-    assertThat(connect.headers["User-Agent"]).isEqualTo(userAgent)
+    assertThat(connect.headers["User-Agent"]).isEqualTo(USER_AGENT)
     assertThat(connect.headers["Proxy-Connection"]).isEqualTo("Keep-Alive")
     assertThat(connect.headers["Host"]).isEqualTo("android.com:443")
     val get = server.takeRequest()

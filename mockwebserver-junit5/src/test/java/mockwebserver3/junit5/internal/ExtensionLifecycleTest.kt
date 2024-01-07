@@ -34,25 +34,25 @@ class ExtensionLifecycleTest {
   @RegisterExtension
   val clientTestRule: OkHttpClientTestRule = OkHttpClientTestRule()
 
-  lateinit var _server: MockWebServer
+  lateinit var setUpServer: MockWebServer
 
   @BeforeEach
   fun setup(server: MockWebServer) {
-    _server = server
+    this.setUpServer = server
     assertThat(server.started).isTrue()
     server.enqueue(MockResponse())
   }
 
   @AfterEach
   fun tearDown(server: MockWebServer) {
-    assertThat(_server).isSameAs(server)
+    assertThat(setUpServer).isSameAs(server)
     assertThat(server.started).isTrue()
     server.enqueue(MockResponse())
   }
 
   @Test
   fun testClient(server: MockWebServer) {
-    assertThat(_server).isSameAs(server)
+    assertThat(setUpServer).isSameAs(server)
     assertThat(server.started).isTrue()
     clientTestRule.newClient().newCall(Request(server.url("/"))).execute().use {
       assertThat(it.code).isEqualTo(200)

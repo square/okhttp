@@ -56,7 +56,7 @@ class CacheCorruptionTest {
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private lateinit var client: OkHttpClient
   private lateinit var cache: Cache
-  private val NULL_HOSTNAME_VERIFIER = HostnameVerifier { _: String?, _: SSLSession? -> true }
+  private val nullHostnameVerifier = HostnameVerifier { _: String?, _: SSLSession? -> true }
   private val cookieManager = CookieManager()
   private lateinit var server: MockWebServer
 
@@ -168,7 +168,7 @@ class CacheCorruptionTest {
       .sslSocketFactory(
         handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
       )
-      .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
+      .hostnameVerifier(nullHostnameVerifier)
       .build()
     val request = Request(server.url("/"))
     val response1: Response = client.newCall(request).execute()
@@ -182,7 +182,7 @@ class CacheCorruptionTest {
 
   /**
    * @param delta the offset from the current date to use. Negative values yield dates in the past;
-   * positive values yield dates in the future.
+   *     positive values yield dates in the future.
    */
   private fun formatDate(delta: Long, timeUnit: TimeUnit): String? {
     return formatDate(Date(System.currentTimeMillis() + timeUnit.toMillis(delta)))

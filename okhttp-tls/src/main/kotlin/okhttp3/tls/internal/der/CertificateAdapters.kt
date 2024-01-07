@@ -104,9 +104,9 @@ internal object CertificateAdapters {
       // This type is pretty strange. The spec says that for certain algorithms we must encode null
       // when it is present, and for others we must omit it!
       // https://tools.ietf.org/html/rfc4055#section-2.1
-      ObjectIdentifiers.sha256WithRSAEncryption -> Adapters.NULL
-      ObjectIdentifiers.rsaEncryption -> Adapters.NULL
-      ObjectIdentifiers.ecPublicKey -> Adapters.OBJECT_IDENTIFIER
+      ObjectIdentifiers.SHA256_WITH_RSA_ENCRYPTION -> Adapters.NULL
+      ObjectIdentifiers.RSA_ENCRYPTION -> Adapters.NULL
+      ObjectIdentifiers.EC_PUBLIC_KEY -> Adapters.OBJECT_IDENTIFIER
       else -> null
     }
   }
@@ -206,8 +206,8 @@ internal object CertificateAdapters {
    */
   private val extensionValue: BasicDerAdapter<Any?> = Adapters.usingTypeHint { typeHint ->
     when (typeHint) {
-      ObjectIdentifiers.subjectAlternativeName -> subjectAlternativeName
-      ObjectIdentifiers.basicConstraints -> basicConstraints
+      ObjectIdentifiers.SUBJECT_ALTERNATIVE_NAME -> subjectAlternativeName
+      ObjectIdentifiers.BASIC_CONSTRAINTS -> basicConstraints
       else -> null
     }
   }.withExplicitBox(
@@ -349,7 +349,10 @@ internal object CertificateAdapters {
    */
   internal val tbsCertificate: BasicDerAdapter<TbsCertificate> = Adapters.sequence(
       "TBSCertificate",
-      Adapters.INTEGER_AS_LONG.withExplicitBox(tag = 0L).optional(defaultValue = 0), // v1 == 0
+      Adapters.INTEGER_AS_LONG
+        .withExplicitBox(tag = 0L)
+        // v1 == 0.
+        .optional(defaultValue = 0),
       Adapters.INTEGER_AS_BIG_INTEGER,
       algorithmIdentifier,
       name,

@@ -35,7 +35,7 @@ internal data class Certificate(
     get() {
       return tbsCertificate.subject
           .flatten()
-          .firstOrNull { it.type == ObjectIdentifiers.commonName }
+          .firstOrNull { it.type == ObjectIdentifiers.COMMON_NAME }
           ?.value
     }
 
@@ -43,21 +43,21 @@ internal data class Certificate(
     get() {
       return tbsCertificate.subject
           .flatten()
-          .firstOrNull { it.type == ObjectIdentifiers.organizationalUnitName }
+          .firstOrNull { it.type == ObjectIdentifiers.ORGANIZATIONAL_UNIT_NAME }
           ?.value
     }
 
   val subjectAlternativeNames: Extension?
     get() {
       return tbsCertificate.extensions.firstOrNull {
-        it.id == ObjectIdentifiers.subjectAlternativeName
+        it.id == ObjectIdentifiers.SUBJECT_ALTERNATIVE_NAME
       }
     }
 
   val basicConstraints: Extension
     get() {
       return tbsCertificate.extensions.first {
-        it.id == ObjectIdentifiers.basicConstraints
+        it.id == ObjectIdentifiers.BASIC_CONSTRAINTS
       }
     }
 
@@ -109,8 +109,8 @@ internal data class TbsCertificate(
   val signatureAlgorithmName: String
     get() {
       return when (signature.algorithm) {
-        ObjectIdentifiers.sha256WithRSAEncryption -> "SHA256WithRSA"
-        ObjectIdentifiers.sha256withEcdsa -> "SHA256withECDSA"
+        ObjectIdentifiers.SHA256_WITH_RSA_ENCRYPTION -> "SHA256WithRSA"
+        ObjectIdentifiers.SHA256_WITH_ECDSA -> "SHA256withECDSA"
         else -> error("unexpected signature algorithm: ${signature.algorithm}")
       }
     }
@@ -180,8 +180,9 @@ internal data class BasicConstraints(
 
 /** A private key. Note that this class doesn't support attributes or an embedded public key. */
 internal data class PrivateKeyInfo(
-  val version: Long, // v1(0), v2(1)
-  val algorithmIdentifier: AlgorithmIdentifier, // v1(0), v2(1)
+  // v1(0), v2(1).
+  val version: Long,
+  val algorithmIdentifier: AlgorithmIdentifier,
   val privateKey: ByteString
 ) {
   // Avoid Long.hashCode(long) which isn't available on Android 5.

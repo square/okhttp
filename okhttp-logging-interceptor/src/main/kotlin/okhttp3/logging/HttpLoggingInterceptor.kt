@@ -243,7 +243,14 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     val contentLength = responseBody.contentLength()
     val bodySize = if (contentLength != -1L) "$contentLength-byte" else "unknown-length"
     logger.log(
-        "<-- ${response.code}${if (response.message.isEmpty()) "" else ' ' + response.message} ${response.request.url} (${tookMs}ms${if (!logHeaders) ", $bodySize body" else ""})")
+      buildString {
+        append("<-- ${response.code}")
+        if (response.message.isNotEmpty()) append(" ${response.message}")
+        append(" ${response.request.url} (${tookMs}ms")
+        if (!logHeaders) append(", $bodySize body")
+        append(")")
+      }
+    )
 
     if (logHeaders) {
       val headers = response.headers
@@ -287,11 +294,13 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
           logger.log(buffer.clone().readString(charset))
         }
 
-        if (gzippedLength != null) {
-          logger.log("<-- END HTTP (${totalMs}ms, ${buffer.size}-byte, $gzippedLength-gzipped-byte body)")
-        } else {
-          logger.log("<-- END HTTP (${totalMs}ms, ${buffer.size}-byte body)")
-        }
+        logger.log(
+          buildString {
+            append("<-- END HTTP (${totalMs}ms, ${buffer.size}-byte")
+            if (gzippedLength != null) append(", $gzippedLength-gzipped-byte")
+            append(" body)")
+          }
+        )
       }
     }
 

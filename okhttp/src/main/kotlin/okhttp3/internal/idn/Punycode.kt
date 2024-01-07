@@ -34,13 +34,13 @@ object Punycode {
   val PREFIX_STRING = "xn--"
   val PREFIX = PREFIX_STRING.encodeUtf8()
 
-  private const val base = 36
-  private const val tmin = 1
-  private const val tmax = 26
-  private const val skew = 38
-  private const val damp = 700
-  private const val initial_bias = 72
-  private const val initial_n = 0x80
+  private const val BASE = 36
+  private const val TMIN = 1
+  private const val TMAX = 26
+  private const val SKEW = 38
+  private const val DAMP = 700
+  private const val INITIAL_BIAS = 72
+  private const val INITIAL_N = 0x80
 
   /**
    * Returns null if any label is oversized so much that the encoder cannot encode it without
@@ -90,7 +90,7 @@ object Punycode {
     // Copy all the basic code points to the output.
     var b = 0
     for (codePoint in input) {
-      if (codePoint < initial_n) {
+      if (codePoint < INITIAL_N) {
         result.writeByte(codePoint)
         b++
       }
@@ -99,9 +99,9 @@ object Punycode {
     // Copy a delimiter if any basic code points were emitted.
     if (b > 0) result.writeByte('-'.code)
 
-    var n = initial_n
+    var n = INITIAL_N
     var delta = 0
-    var bias = initial_bias
+    var bias = INITIAL_BIAS
     var h = b
     while (h < input.size) {
       val m = input.minBy { if (it >= n) it else Int.MAX_VALUE }
@@ -119,15 +119,15 @@ object Punycode {
         } else if (c == n) {
           var q = delta
 
-          for (k in base until Int.MAX_VALUE step base) {
+          for (k in BASE until Int.MAX_VALUE step BASE) {
             val t = when {
-              k <= bias -> tmin
-              k >= bias + tmax -> tmax
+              k <= bias -> TMIN
+              k >= bias + TMAX -> TMAX
               else -> k - bias
             }
             if (q < t) break
-            result.writeByte((t + ((q - t) % (base - t))).punycodeDigit)
-            q = (q - t) / (base - t)
+            result.writeByte((t + ((q - t) % (BASE - t))).punycodeDigit)
+            q = (q - t) / (BASE - t)
           }
 
           result.writeByte(q.punycodeDigit)
@@ -208,14 +208,14 @@ object Punycode {
       pos++ // Consume '-'.
     }
 
-    var n = initial_n
+    var n = INITIAL_N
     var i = 0
-    var bias = initial_bias
+    var bias = INITIAL_BIAS
 
     while (pos < limit) {
       val oldi = i
       var w = 1
-      for (k in base until Int.MAX_VALUE step base) {
+      for (k in BASE until Int.MAX_VALUE step BASE) {
         if (pos == limit) return false // Malformed.
         val c = string[pos++]
         val digit = when (c) {
@@ -228,12 +228,12 @@ object Punycode {
         if (i > Int.MAX_VALUE - deltaI) return false // Prevent overflow.
         i += deltaI
         val t = when {
-          k <= bias -> tmin
-          k >= bias + tmax -> tmax
+          k <= bias -> TMIN
+          k >= bias + TMAX -> TMAX
           else -> k - bias
         }
         if (digit < t) break
-        val scaleW = base - t
+        val scaleW = BASE - t
         if (w > Int.MAX_VALUE / scaleW) return false // Prevent overflow.
         w *= scaleW
       }
@@ -260,21 +260,21 @@ object Punycode {
   /** Returns a new bias. */
   private fun adapt(delta: Int, numpoints: Int, first: Boolean): Int {
     var delta = when {
-      first -> delta / damp
+      first -> delta / DAMP
       else -> delta / 2
     }
     delta += (delta / numpoints)
     var k = 0
-    while (delta > ((base - tmin) * tmax) / 2) {
-      delta /= (base - tmin)
-      k += base
+    while (delta > ((BASE - TMIN) * TMAX) / 2) {
+      delta /= (BASE - TMIN)
+      k += BASE
     }
-    return k + (((base - tmin + 1) * delta) / (delta + skew))
+    return k + (((BASE - TMIN + 1) * delta) / (delta + SKEW))
   }
 
   private fun String.requiresEncode(pos: Int, limit: Int): Boolean {
     for (i in pos until limit) {
-      if (this[i].code >= initial_n) return true
+      if (this[i].code >= INITIAL_N) return true
     }
     return false
   }
