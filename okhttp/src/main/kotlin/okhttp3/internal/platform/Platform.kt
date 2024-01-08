@@ -72,15 +72,16 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
  * Supported on Android 6.0+ via `NetworkSecurityPolicy`.
  */
 open class Platform {
-
   /** Prefix used on custom headers. */
   fun getPrefix() = "OkHttp"
 
   open fun newSSLContext(): SSLContext = SSLContext.getInstance("TLS")
 
   open fun platformTrustManager(): X509TrustManager {
-    val factory = TrustManagerFactory.getInstance(
-        TrustManagerFactory.getDefaultAlgorithm())
+    val factory =
+      TrustManagerFactory.getInstance(
+        TrustManagerFactory.getDefaultAlgorithm(),
+      )
     factory.init(null as KeyStore?)
     val trustManagers = factory.trustManagers!!
     check(trustManagers.size == 1 && trustManagers[0] is X509TrustManager) {
@@ -116,7 +117,7 @@ open class Platform {
   open fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
-    protocols: List<@JvmSuppressWildcards Protocol>
+    protocols: List<@JvmSuppressWildcards Protocol>,
   ) {
   }
 
@@ -136,11 +137,19 @@ open class Platform {
   }
 
   @Throws(IOException::class)
-  open fun connectSocket(socket: Socket, address: InetSocketAddress, connectTimeout: Int) {
+  open fun connectSocket(
+    socket: Socket,
+    address: InetSocketAddress,
+    connectTimeout: Int,
+  ) {
     socket.connect(address, connectTimeout)
   }
 
-  open fun log(message: String, level: Int = INFO, t: Throwable? = null) {
+  open fun log(
+    message: String,
+    level: Int = INFO,
+    t: Throwable? = null,
+  ) {
     val logLevel = if (level == WARN) Level.WARNING else Level.INFO
     logger.log(logLevel, message, t)
   }
@@ -159,20 +168,22 @@ open class Platform {
     }
   }
 
-  open fun logCloseableLeak(message: String, stackTrace: Any?) {
+  open fun logCloseableLeak(
+    message: String,
+    stackTrace: Any?,
+  ) {
     var logMessage = message
     if (stackTrace == null) {
       logMessage += " To see where this was allocated, set the OkHttpClient logger level to " +
-          "FINE: Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
+        "FINE: Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
     }
     log(logMessage, WARN, stackTrace as Throwable?)
   }
 
   open fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
-      BasicCertificateChainCleaner(buildTrustRootIndex(trustManager))
+    BasicCertificateChainCleaner(buildTrustRootIndex(trustManager))
 
-  open fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex =
-      BasicTrustRootIndex(*trustManager.acceptedIssuers)
+  open fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex = BasicTrustRootIndex(*trustManager.acceptedIssuers)
 
   open fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
     try {
@@ -201,13 +212,12 @@ open class Platform {
       this.platform = platform
     }
 
-    fun alpnProtocolNames(protocols: List<Protocol>) =
-        protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
+    fun alpnProtocolNames(protocols: List<Protocol>) = protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
 
     // This explicit check avoids activating in Android Studio with Android specific classes
     // available when running plugins inside the IDE.
     val isAndroid: Boolean
-        get() = "Dalvik" == System.getProperty("java.vm.name")
+      get() = "Dalvik" == System.getProperty("java.vm.name")
 
     private val isConscryptPreferred: Boolean
       get() {
@@ -228,11 +238,12 @@ open class Platform {
       }
 
     /** Attempt to match the host runtime to a capable Platform implementation. */
-    private fun findPlatform(): Platform = if (isAndroid) {
-      findAndroidPlatform()
-    } else {
-      findJvmPlatform()
-    }
+    private fun findPlatform(): Platform =
+      if (isAndroid) {
+        findAndroidPlatform()
+      } else {
+        findJvmPlatform()
+      }
 
     private fun findAndroidPlatform(): Platform {
       AndroidLog.enable()

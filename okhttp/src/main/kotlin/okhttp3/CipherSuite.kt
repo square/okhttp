@@ -42,13 +42,14 @@ class CipherSuite private constructor(
    * prefixed `TLS_`. For example, `TLS_RSA_EXPORT_WITH_RC4_40_MD5.javaName()` is
    * `"SSL_RSA_EXPORT_WITH_RC4_40_MD5"`.
    */
-  @get:JvmName("javaName") val javaName: String
+  @get:JvmName("javaName") val javaName: String,
 ) {
   @JvmName("-deprecated_javaName")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "javaName"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "javaName"),
+    level = DeprecationLevel.ERROR,
+  )
   fun javaName(): String = javaName
 
   override fun toString(): String = javaName
@@ -59,22 +60,26 @@ class CipherSuite private constructor(
      * ignoring the "TLS_" or "SSL_" prefix which is not consistent across platforms. In particular
      * some IBM JVMs use the "SSL_" prefix everywhere whereas Oracle JVMs mix "TLS_" and "SSL_".
      */
-    internal val ORDER_BY_NAME = object : Comparator<String> {
-      override fun compare(a: String, b: String): Int {
-        var i = 4
-        val limit = minOf(a.length, b.length)
-        while (i < limit) {
-          val charA = a[i]
-          val charB = b[i]
-          if (charA != charB) return if (charA < charB) -1 else 1
-          i++
+    internal val ORDER_BY_NAME =
+      object : Comparator<String> {
+        override fun compare(
+          a: String,
+          b: String,
+        ): Int {
+          var i = 4
+          val limit = minOf(a.length, b.length)
+          while (i < limit) {
+            val charA = a[i]
+            val charB = b[i]
+            if (charA != charB) return if (charA < charB) -1 else 1
+            i++
+          }
+          val lengthA = a.length
+          val lengthB = b.length
+          if (lengthA != lengthB) return if (lengthA < lengthB) -1 else 1
+          return 0
         }
-        val lengthA = a.length
-        val lengthB = b.length
-        if (lengthA != lengthB) return if (lengthA < lengthB) -1 else 1
-        return 0
       }
-    }
 
     /**
      * Holds interned instances. This needs to be above the init() calls below so that it's
@@ -86,15 +91,23 @@ class CipherSuite private constructor(
 
     // @JvmField val TLS_NULL_WITH_NULL_NULL = init("TLS_NULL_WITH_NULL_NULL", 0x0000)
     @JvmField val TLS_RSA_WITH_NULL_MD5 = init("SSL_RSA_WITH_NULL_MD5", 0x0001)
+
     @JvmField val TLS_RSA_WITH_NULL_SHA = init("SSL_RSA_WITH_NULL_SHA", 0x0002)
+
     @JvmField val TLS_RSA_EXPORT_WITH_RC4_40_MD5 = init("SSL_RSA_EXPORT_WITH_RC4_40_MD5", 0x0003)
+
     @JvmField val TLS_RSA_WITH_RC4_128_MD5 = init("SSL_RSA_WITH_RC4_128_MD5", 0x0004)
+
     @JvmField val TLS_RSA_WITH_RC4_128_SHA = init("SSL_RSA_WITH_RC4_128_SHA", 0x0005)
+
     // @JvmField val TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5 = init("SSL_RSA_EXPORT_WITH_RC2_CBC_40_MD5", 0x0006)
     // @JvmField val TLS_RSA_WITH_IDEA_CBC_SHA = init("TLS_RSA_WITH_IDEA_CBC_SHA", 0x0007)
     @JvmField val TLS_RSA_EXPORT_WITH_DES40_CBC_SHA = init("SSL_RSA_EXPORT_WITH_DES40_CBC_SHA", 0x0008)
+
     @JvmField val TLS_RSA_WITH_DES_CBC_SHA = init("SSL_RSA_WITH_DES_CBC_SHA", 0x0009)
+
     @JvmField val TLS_RSA_WITH_3DES_EDE_CBC_SHA = init("SSL_RSA_WITH_3DES_EDE_CBC_SHA", 0x000a)
+
     // @JvmField val TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA = init("SSL_DH_DSS_EXPORT_WITH_DES40_CBC_SHA", 0x000b)
     // @JvmField val TLS_DH_DSS_WITH_DES_CBC_SHA = init("TLS_DH_DSS_WITH_DES_CBC_SHA", 0x000c)
     // @JvmField val TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA = init("TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA", 0x000d)
@@ -102,74 +115,122 @@ class CipherSuite private constructor(
     // @JvmField val TLS_DH_RSA_WITH_DES_CBC_SHA = init("TLS_DH_RSA_WITH_DES_CBC_SHA", 0x000f)
     // @JvmField val TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA = init("TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA", 0x0010)
     @JvmField val TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA = init("SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA", 0x0011)
+
     @JvmField val TLS_DHE_DSS_WITH_DES_CBC_SHA = init("SSL_DHE_DSS_WITH_DES_CBC_SHA", 0x0012)
+
     @JvmField val TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA = init("SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA", 0x0013)
+
     @JvmField val TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA = init("SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA", 0x0014)
+
     @JvmField val TLS_DHE_RSA_WITH_DES_CBC_SHA = init("SSL_DHE_RSA_WITH_DES_CBC_SHA", 0x0015)
+
     @JvmField val TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA = init("SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA", 0x0016)
+
     @JvmField val TLS_DH_anon_EXPORT_WITH_RC4_40_MD5 = init("SSL_DH_anon_EXPORT_WITH_RC4_40_MD5", 0x0017)
+
     @JvmField val TLS_DH_anon_WITH_RC4_128_MD5 = init("SSL_DH_anon_WITH_RC4_128_MD5", 0x0018)
+
     @JvmField val TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA = init("SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA", 0x0019)
+
     @JvmField val TLS_DH_anon_WITH_DES_CBC_SHA = init("SSL_DH_anon_WITH_DES_CBC_SHA", 0x001a)
+
     @JvmField val TLS_DH_anon_WITH_3DES_EDE_CBC_SHA = init("SSL_DH_anon_WITH_3DES_EDE_CBC_SHA", 0x001b)
+
     @JvmField val TLS_KRB5_WITH_DES_CBC_SHA = init("TLS_KRB5_WITH_DES_CBC_SHA", 0x001e)
+
     @JvmField val TLS_KRB5_WITH_3DES_EDE_CBC_SHA = init("TLS_KRB5_WITH_3DES_EDE_CBC_SHA", 0x001f)
+
     @JvmField val TLS_KRB5_WITH_RC4_128_SHA = init("TLS_KRB5_WITH_RC4_128_SHA", 0x0020)
+
     // @JvmField val TLS_KRB5_WITH_IDEA_CBC_SHA = init("TLS_KRB5_WITH_IDEA_CBC_SHA", 0x0021)
     @JvmField val TLS_KRB5_WITH_DES_CBC_MD5 = init("TLS_KRB5_WITH_DES_CBC_MD5", 0x0022)
+
     @JvmField val TLS_KRB5_WITH_3DES_EDE_CBC_MD5 = init("TLS_KRB5_WITH_3DES_EDE_CBC_MD5", 0x0023)
+
     @JvmField val TLS_KRB5_WITH_RC4_128_MD5 = init("TLS_KRB5_WITH_RC4_128_MD5", 0x0024)
+
     // @JvmField val TLS_KRB5_WITH_IDEA_CBC_MD5 = init("TLS_KRB5_WITH_IDEA_CBC_MD5", 0x0025)
     @JvmField val TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA = init("TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA", 0x0026)
+
     // @JvmField val TLS_KRB5_EXPORT_WITH_RC2_CBC_40_SHA = init("TLS_KRB5_EXPORT_WITH_RC2_CBC_40_SHA", 0x0027)
     @JvmField val TLS_KRB5_EXPORT_WITH_RC4_40_SHA = init("TLS_KRB5_EXPORT_WITH_RC4_40_SHA", 0x0028)
+
     @JvmField val TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5 = init("TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5", 0x0029)
+
     // @JvmField val TLS_KRB5_EXPORT_WITH_RC2_CBC_40_MD5 = init("TLS_KRB5_EXPORT_WITH_RC2_CBC_40_MD5", 0x002a)
     @JvmField val TLS_KRB5_EXPORT_WITH_RC4_40_MD5 = init("TLS_KRB5_EXPORT_WITH_RC4_40_MD5", 0x002b)
+
     // @JvmField val TLS_PSK_WITH_NULL_SHA = init("TLS_PSK_WITH_NULL_SHA", 0x002c)
     // @JvmField val TLS_DHE_PSK_WITH_NULL_SHA = init("TLS_DHE_PSK_WITH_NULL_SHA", 0x002d)
     // @JvmField val TLS_RSA_PSK_WITH_NULL_SHA = init("TLS_RSA_PSK_WITH_NULL_SHA", 0x002e)
     @JvmField val TLS_RSA_WITH_AES_128_CBC_SHA = init("TLS_RSA_WITH_AES_128_CBC_SHA", 0x002f)
+
     // @JvmField val TLS_DH_DSS_WITH_AES_128_CBC_SHA = init("TLS_DH_DSS_WITH_AES_128_CBC_SHA", 0x0030)
     // @JvmField val TLS_DH_RSA_WITH_AES_128_CBC_SHA = init("TLS_DH_RSA_WITH_AES_128_CBC_SHA", 0x0031)
     @JvmField val TLS_DHE_DSS_WITH_AES_128_CBC_SHA = init("TLS_DHE_DSS_WITH_AES_128_CBC_SHA", 0x0032)
+
     @JvmField val TLS_DHE_RSA_WITH_AES_128_CBC_SHA = init("TLS_DHE_RSA_WITH_AES_128_CBC_SHA", 0x0033)
+
     @JvmField val TLS_DH_anon_WITH_AES_128_CBC_SHA = init("TLS_DH_anon_WITH_AES_128_CBC_SHA", 0x0034)
+
     @JvmField val TLS_RSA_WITH_AES_256_CBC_SHA = init("TLS_RSA_WITH_AES_256_CBC_SHA", 0x0035)
+
     // @JvmField val TLS_DH_DSS_WITH_AES_256_CBC_SHA = init("TLS_DH_DSS_WITH_AES_256_CBC_SHA", 0x0036)
     // @JvmField val TLS_DH_RSA_WITH_AES_256_CBC_SHA = init("TLS_DH_RSA_WITH_AES_256_CBC_SHA", 0x0037)
     @JvmField val TLS_DHE_DSS_WITH_AES_256_CBC_SHA = init("TLS_DHE_DSS_WITH_AES_256_CBC_SHA", 0x0038)
+
     @JvmField val TLS_DHE_RSA_WITH_AES_256_CBC_SHA = init("TLS_DHE_RSA_WITH_AES_256_CBC_SHA", 0x0039)
+
     @JvmField val TLS_DH_anon_WITH_AES_256_CBC_SHA = init("TLS_DH_anon_WITH_AES_256_CBC_SHA", 0x003a)
+
     @JvmField val TLS_RSA_WITH_NULL_SHA256 = init("TLS_RSA_WITH_NULL_SHA256", 0x003b)
+
     @JvmField val TLS_RSA_WITH_AES_128_CBC_SHA256 = init("TLS_RSA_WITH_AES_128_CBC_SHA256", 0x003c)
+
     @JvmField val TLS_RSA_WITH_AES_256_CBC_SHA256 = init("TLS_RSA_WITH_AES_256_CBC_SHA256", 0x003d)
+
     // @JvmField val TLS_DH_DSS_WITH_AES_128_CBC_SHA256 = init("TLS_DH_DSS_WITH_AES_128_CBC_SHA256", 0x003e)
     // @JvmField val TLS_DH_RSA_WITH_AES_128_CBC_SHA256 = init("TLS_DH_RSA_WITH_AES_128_CBC_SHA256", 0x003f)
     @JvmField val TLS_DHE_DSS_WITH_AES_128_CBC_SHA256 = init("TLS_DHE_DSS_WITH_AES_128_CBC_SHA256", 0x0040)
+
     @JvmField val TLS_RSA_WITH_CAMELLIA_128_CBC_SHA = init("TLS_RSA_WITH_CAMELLIA_128_CBC_SHA", 0x0041)
+
     // @JvmField val TLS_DH_DSS_WITH_CAMELLIA_128_CBC_SHA = init("TLS_DH_DSS_WITH_CAMELLIA_128_CBC_SHA", 0x0042)
     // @JvmField val TLS_DH_RSA_WITH_CAMELLIA_128_CBC_SHA = init("TLS_DH_RSA_WITH_CAMELLIA_128_CBC_SHA", 0x0043)
     @JvmField val TLS_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA = init("TLS_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA", 0x0044)
+
     @JvmField val TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA = init("TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA", 0x0045)
+
     // @JvmField val TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA = init("TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA", 0x0046)
     @JvmField val TLS_DHE_RSA_WITH_AES_128_CBC_SHA256 = init("TLS_DHE_RSA_WITH_AES_128_CBC_SHA256", 0x0067)
+
     // @JvmField val TLS_DH_DSS_WITH_AES_256_CBC_SHA256 = init("TLS_DH_DSS_WITH_AES_256_CBC_SHA256", 0x0068)
     // @JvmField val TLS_DH_RSA_WITH_AES_256_CBC_SHA256 = init("TLS_DH_RSA_WITH_AES_256_CBC_SHA256", 0x0069)
     @JvmField val TLS_DHE_DSS_WITH_AES_256_CBC_SHA256 = init("TLS_DHE_DSS_WITH_AES_256_CBC_SHA256", 0x006a)
+
     @JvmField val TLS_DHE_RSA_WITH_AES_256_CBC_SHA256 = init("TLS_DHE_RSA_WITH_AES_256_CBC_SHA256", 0x006b)
+
     @JvmField val TLS_DH_anon_WITH_AES_128_CBC_SHA256 = init("TLS_DH_anon_WITH_AES_128_CBC_SHA256", 0x006c)
+
     @JvmField val TLS_DH_anon_WITH_AES_256_CBC_SHA256 = init("TLS_DH_anon_WITH_AES_256_CBC_SHA256", 0x006d)
+
     @JvmField val TLS_RSA_WITH_CAMELLIA_256_CBC_SHA = init("TLS_RSA_WITH_CAMELLIA_256_CBC_SHA", 0x0084)
+
     // @JvmField val TLS_DH_DSS_WITH_CAMELLIA_256_CBC_SHA = init("TLS_DH_DSS_WITH_CAMELLIA_256_CBC_SHA", 0x0085)
     // @JvmField val TLS_DH_RSA_WITH_CAMELLIA_256_CBC_SHA = init("TLS_DH_RSA_WITH_CAMELLIA_256_CBC_SHA", 0x0086)
     @JvmField val TLS_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA = init("TLS_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA", 0x0087)
+
     @JvmField val TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA = init("TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA", 0x0088)
+
     // @JvmField val TLS_DH_anon_WITH_CAMELLIA_256_CBC_SHA = init("TLS_DH_anon_WITH_CAMELLIA_256_CBC_SHA", 0x0089)
     @JvmField val TLS_PSK_WITH_RC4_128_SHA = init("TLS_PSK_WITH_RC4_128_SHA", 0x008a)
+
     @JvmField val TLS_PSK_WITH_3DES_EDE_CBC_SHA = init("TLS_PSK_WITH_3DES_EDE_CBC_SHA", 0x008b)
+
     @JvmField val TLS_PSK_WITH_AES_128_CBC_SHA = init("TLS_PSK_WITH_AES_128_CBC_SHA", 0x008c)
+
     @JvmField val TLS_PSK_WITH_AES_256_CBC_SHA = init("TLS_PSK_WITH_AES_256_CBC_SHA", 0x008d)
+
     // @JvmField val TLS_DHE_PSK_WITH_RC4_128_SHA = init("TLS_DHE_PSK_WITH_RC4_128_SHA", 0x008e)
     // @JvmField val TLS_DHE_PSK_WITH_3DES_EDE_CBC_SHA = init("TLS_DHE_PSK_WITH_3DES_EDE_CBC_SHA", 0x008f)
     // @JvmField val TLS_DHE_PSK_WITH_AES_128_CBC_SHA = init("TLS_DHE_PSK_WITH_AES_128_CBC_SHA", 0x0090)
@@ -179,23 +240,32 @@ class CipherSuite private constructor(
     // @JvmField val TLS_RSA_PSK_WITH_AES_128_CBC_SHA = init("TLS_RSA_PSK_WITH_AES_128_CBC_SHA", 0x0094)
     // @JvmField val TLS_RSA_PSK_WITH_AES_256_CBC_SHA = init("TLS_RSA_PSK_WITH_AES_256_CBC_SHA", 0x0095)
     @JvmField val TLS_RSA_WITH_SEED_CBC_SHA = init("TLS_RSA_WITH_SEED_CBC_SHA", 0x0096)
+
     // @JvmField val TLS_DH_DSS_WITH_SEED_CBC_SHA = init("TLS_DH_DSS_WITH_SEED_CBC_SHA", 0x0097)
     // @JvmField val TLS_DH_RSA_WITH_SEED_CBC_SHA = init("TLS_DH_RSA_WITH_SEED_CBC_SHA", 0x0098)
     // @JvmField val TLS_DHE_DSS_WITH_SEED_CBC_SHA = init("TLS_DHE_DSS_WITH_SEED_CBC_SHA", 0x0099)
     // @JvmField val TLS_DHE_RSA_WITH_SEED_CBC_SHA = init("TLS_DHE_RSA_WITH_SEED_CBC_SHA", 0x009a)
     // @JvmField val TLS_DH_anon_WITH_SEED_CBC_SHA = init("TLS_DH_anon_WITH_SEED_CBC_SHA", 0x009b)
     @JvmField val TLS_RSA_WITH_AES_128_GCM_SHA256 = init("TLS_RSA_WITH_AES_128_GCM_SHA256", 0x009c)
+
     @JvmField val TLS_RSA_WITH_AES_256_GCM_SHA384 = init("TLS_RSA_WITH_AES_256_GCM_SHA384", 0x009d)
+
     @JvmField val TLS_DHE_RSA_WITH_AES_128_GCM_SHA256 = init("TLS_DHE_RSA_WITH_AES_128_GCM_SHA256", 0x009e)
+
     @JvmField val TLS_DHE_RSA_WITH_AES_256_GCM_SHA384 = init("TLS_DHE_RSA_WITH_AES_256_GCM_SHA384", 0x009f)
+
     // @JvmField val TLS_DH_RSA_WITH_AES_128_GCM_SHA256 = init("TLS_DH_RSA_WITH_AES_128_GCM_SHA256", 0x00a0)
     // @JvmField val TLS_DH_RSA_WITH_AES_256_GCM_SHA384 = init("TLS_DH_RSA_WITH_AES_256_GCM_SHA384", 0x00a1)
     @JvmField val TLS_DHE_DSS_WITH_AES_128_GCM_SHA256 = init("TLS_DHE_DSS_WITH_AES_128_GCM_SHA256", 0x00a2)
+
     @JvmField val TLS_DHE_DSS_WITH_AES_256_GCM_SHA384 = init("TLS_DHE_DSS_WITH_AES_256_GCM_SHA384", 0x00a3)
+
     // @JvmField val TLS_DH_DSS_WITH_AES_128_GCM_SHA256 = init("TLS_DH_DSS_WITH_AES_128_GCM_SHA256", 0x00a4)
     // @JvmField val TLS_DH_DSS_WITH_AES_256_GCM_SHA384 = init("TLS_DH_DSS_WITH_AES_256_GCM_SHA384", 0x00a5)
     @JvmField val TLS_DH_anon_WITH_AES_128_GCM_SHA256 = init("TLS_DH_anon_WITH_AES_128_GCM_SHA256", 0x00a6)
+
     @JvmField val TLS_DH_anon_WITH_AES_256_GCM_SHA384 = init("TLS_DH_anon_WITH_AES_256_GCM_SHA384", 0x00a7)
+
     // @JvmField val TLS_PSK_WITH_AES_128_GCM_SHA256 = init("TLS_PSK_WITH_AES_128_GCM_SHA256", 0x00a8)
     // @JvmField val TLS_PSK_WITH_AES_256_GCM_SHA384 = init("TLS_PSK_WITH_AES_256_GCM_SHA384", 0x00a9)
     // @JvmField val TLS_DHE_PSK_WITH_AES_128_GCM_SHA256 = init("TLS_DHE_PSK_WITH_AES_128_GCM_SHA256", 0x00aa)
@@ -227,32 +297,59 @@ class CipherSuite private constructor(
     // @JvmField val TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256 = init("TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256", 0x00c4)
     // @JvmField val TLS_DH_anon_WITH_CAMELLIA_256_CBC_SHA256 = init("TLS_DH_anon_WITH_CAMELLIA_256_CBC_SHA256", 0x00c5)
     @JvmField val TLS_EMPTY_RENEGOTIATION_INFO_SCSV = init("TLS_EMPTY_RENEGOTIATION_INFO_SCSV", 0x00ff)
+
     @JvmField val TLS_FALLBACK_SCSV = init("TLS_FALLBACK_SCSV", 0x5600)
+
     @JvmField val TLS_ECDH_ECDSA_WITH_NULL_SHA = init("TLS_ECDH_ECDSA_WITH_NULL_SHA", 0xc001)
+
     @JvmField val TLS_ECDH_ECDSA_WITH_RC4_128_SHA = init("TLS_ECDH_ECDSA_WITH_RC4_128_SHA", 0xc002)
+
     @JvmField val TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA = init("TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA", 0xc003)
+
     @JvmField val TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA = init("TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA", 0xc004)
+
     @JvmField val TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA = init("TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA", 0xc005)
+
     @JvmField val TLS_ECDHE_ECDSA_WITH_NULL_SHA = init("TLS_ECDHE_ECDSA_WITH_NULL_SHA", 0xc006)
+
     @JvmField val TLS_ECDHE_ECDSA_WITH_RC4_128_SHA = init("TLS_ECDHE_ECDSA_WITH_RC4_128_SHA", 0xc007)
+
     @JvmField val TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA = init("TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA", 0xc008)
+
     @JvmField val TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA = init("TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA", 0xc009)
+
     @JvmField val TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA = init("TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA", 0xc00a)
+
     @JvmField val TLS_ECDH_RSA_WITH_NULL_SHA = init("TLS_ECDH_RSA_WITH_NULL_SHA", 0xc00b)
+
     @JvmField val TLS_ECDH_RSA_WITH_RC4_128_SHA = init("TLS_ECDH_RSA_WITH_RC4_128_SHA", 0xc00c)
+
     @JvmField val TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA = init("TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA", 0xc00d)
+
     @JvmField val TLS_ECDH_RSA_WITH_AES_128_CBC_SHA = init("TLS_ECDH_RSA_WITH_AES_128_CBC_SHA", 0xc00e)
+
     @JvmField val TLS_ECDH_RSA_WITH_AES_256_CBC_SHA = init("TLS_ECDH_RSA_WITH_AES_256_CBC_SHA", 0xc00f)
+
     @JvmField val TLS_ECDHE_RSA_WITH_NULL_SHA = init("TLS_ECDHE_RSA_WITH_NULL_SHA", 0xc010)
+
     @JvmField val TLS_ECDHE_RSA_WITH_RC4_128_SHA = init("TLS_ECDHE_RSA_WITH_RC4_128_SHA", 0xc011)
+
     @JvmField val TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA = init("TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA", 0xc012)
+
     @JvmField val TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA = init("TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", 0xc013)
+
     @JvmField val TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA = init("TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA", 0xc014)
+
     @JvmField val TLS_ECDH_anon_WITH_NULL_SHA = init("TLS_ECDH_anon_WITH_NULL_SHA", 0xc015)
+
     @JvmField val TLS_ECDH_anon_WITH_RC4_128_SHA = init("TLS_ECDH_anon_WITH_RC4_128_SHA", 0xc016)
+
     @JvmField val TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA = init("TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA", 0xc017)
+
     @JvmField val TLS_ECDH_anon_WITH_AES_128_CBC_SHA = init("TLS_ECDH_anon_WITH_AES_128_CBC_SHA", 0xc018)
+
     @JvmField val TLS_ECDH_anon_WITH_AES_256_CBC_SHA = init("TLS_ECDH_anon_WITH_AES_256_CBC_SHA", 0xc019)
+
     // @JvmField val TLS_SRP_SHA_WITH_3DES_EDE_CBC_SHA = init("TLS_SRP_SHA_WITH_3DES_EDE_CBC_SHA", 0xc01a)
     // @JvmField val TLS_SRP_SHA_RSA_WITH_3DES_EDE_CBC_SHA = init("TLS_SRP_SHA_RSA_WITH_3DES_EDE_CBC_SHA", 0xc01b)
     // @JvmField val TLS_SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA = init("TLS_SRP_SHA_DSS_WITH_3DES_EDE_CBC_SHA", 0xc01c)
@@ -263,25 +360,43 @@ class CipherSuite private constructor(
     // @JvmField val TLS_SRP_SHA_RSA_WITH_AES_256_CBC_SHA = init("TLS_SRP_SHA_RSA_WITH_AES_256_CBC_SHA", 0xc021)
     // @JvmField val TLS_SRP_SHA_DSS_WITH_AES_256_CBC_SHA = init("TLS_SRP_SHA_DSS_WITH_AES_256_CBC_SHA", 0xc022)
     @JvmField val TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256 = init("TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256", 0xc023)
+
     @JvmField val TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384 = init("TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384", 0xc024)
+
     @JvmField val TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256 = init("TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256", 0xc025)
+
     @JvmField val TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384 = init("TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384", 0xc026)
+
     @JvmField val TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256 = init("TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256", 0xc027)
+
     @JvmField val TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384 = init("TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384", 0xc028)
+
     @JvmField val TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256 = init("TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256", 0xc029)
+
     @JvmField val TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384 = init("TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384", 0xc02a)
+
     @JvmField val TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 = init("TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", 0xc02b)
+
     @JvmField val TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 = init("TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384", 0xc02c)
+
     @JvmField val TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256 = init("TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256", 0xc02d)
+
     @JvmField val TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384 = init("TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384", 0xc02e)
+
     @JvmField val TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 = init("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", 0xc02f)
+
     @JvmField val TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 = init("TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384", 0xc030)
+
     @JvmField val TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256 = init("TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256", 0xc031)
+
     @JvmField val TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384 = init("TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384", 0xc032)
+
     // @JvmField val TLS_ECDHE_PSK_WITH_RC4_128_SHA = init("TLS_ECDHE_PSK_WITH_RC4_128_SHA", 0xc033)
     // @JvmField val TLS_ECDHE_PSK_WITH_3DES_EDE_CBC_SHA = init("TLS_ECDHE_PSK_WITH_3DES_EDE_CBC_SHA", 0xc034)
     @JvmField val TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA = init("TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA", 0xc035)
+
     @JvmField val TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA = init("TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA", 0xc036)
+
     // @JvmField val TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 = init("TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256", 0xc037)
     // @JvmField val TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA384 = init("TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA384", 0xc038)
     // @JvmField val TLS_ECDHE_PSK_WITH_NULL_SHA = init("TLS_ECDHE_PSK_WITH_NULL_SHA", 0xc039)
@@ -404,8 +519,11 @@ class CipherSuite private constructor(
     // @JvmField val TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 = init("TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8", 0xc0ae)
     // @JvmField val TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8 = init("TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8", 0xc0af)
     @JvmField val TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256 = init("TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256", 0xcca8)
+
     @JvmField val TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 = init("TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256", 0xcca9)
+
     @JvmField val TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256 = init("TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256", 0xccaa)
+
     // @JvmField val TLS_PSK_WITH_CHACHA20_POLY1305_SHA256 = init("TLS_PSK_WITH_CHACHA20_POLY1305_SHA256", 0xccab)
     @JvmField val TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256 = init("TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256", 0xccac)
     // @JvmField val TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256 = init("TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256", 0xccad)
@@ -413,9 +531,13 @@ class CipherSuite private constructor(
 
     // TLS 1.3 https://tools.ietf.org/html/rfc8446
     @JvmField val TLS_AES_128_GCM_SHA256 = init("TLS_AES_128_GCM_SHA256", 0x1301)
+
     @JvmField val TLS_AES_256_GCM_SHA384 = init("TLS_AES_256_GCM_SHA384", 0x1302)
+
     @JvmField val TLS_CHACHA20_POLY1305_SHA256 = init("TLS_CHACHA20_POLY1305_SHA256", 0x1303)
+
     @JvmField val TLS_AES_128_CCM_SHA256 = init("TLS_AES_128_CCM_SHA256", 0x1304)
+
     @JvmField val TLS_AES_128_CCM_8_SHA256 = init("TLS_AES_128_CCM_8_SHA256", 0x1305)
 
     /**
@@ -451,7 +573,10 @@ class CipherSuite private constructor(
      *     name for older cipher suites because the prefix is `SSL_` instead of `TLS_`.
      * @param value the integer identifier for this cipher suite. (Documentation only.)
      */
-    private fun init(javaName: String, value: Int): CipherSuite {
+    private fun init(
+      javaName: String,
+      value: Int,
+    ): CipherSuite {
       val suite = CipherSuite(javaName)
       INSTANCES[javaName] = suite
       return suite

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal
 
 import java.nio.charset.Charset
@@ -24,7 +25,6 @@ import okhttp3.internal.JvmHttpUrl.canonicalizeWithCharset
 import okio.Buffer
 
 internal object JvmHttpUrl {
-
   internal fun Buffer.writeCanonicalized(
     input: String,
     pos: Int,
@@ -34,15 +34,18 @@ internal object JvmHttpUrl {
     strict: Boolean,
     plusIsSpace: Boolean,
     unicodeAllowed: Boolean,
-    charset: Charset?
+    charset: Charset?,
   ) {
     var encodedCharBuffer: Buffer? = null // Lazily allocated.
     var codePoint: Int
     var i = pos
     while (i < limit) {
       codePoint = input.codePointAt(i)
-      if (alreadyEncoded && (codePoint == '\t'.code || codePoint == '\n'.code ||
-          codePoint == '\u000c'.code || codePoint == '\r'.code)) {
+      if (alreadyEncoded && (
+          codePoint == '\t'.code || codePoint == '\n'.code ||
+            codePoint == '\u000c'.code || codePoint == '\r'.code
+        )
+      ) {
         // Skip this character.
       } else if (codePoint == ' '.code && encodeSet === FORM_ENCODE_SET) {
         // Encode ' ' as '+'.
@@ -55,7 +58,8 @@ internal object JvmHttpUrl {
         codePoint >= 0x80 && !unicodeAllowed ||
         codePoint.toChar() in encodeSet ||
         codePoint == '%'.code &&
-        (!alreadyEncoded || strict && !input.isPercentEncoded(i, limit))) {
+        (!alreadyEncoded || strict && !input.isPercentEncoded(i, limit))
+      ) {
         // Percent encode this character.
         if (encodedCharBuffer == null) {
           encodedCharBuffer = Buffer()
@@ -109,7 +113,7 @@ internal object JvmHttpUrl {
     strict: Boolean = false,
     plusIsSpace: Boolean = false,
     unicodeAllowed: Boolean = false,
-    charset: Charset? = null
+    charset: Charset? = null,
   ): String {
     var codePoint: Int
     var i = pos
@@ -121,7 +125,8 @@ internal object JvmHttpUrl {
         codePoint.toChar() in encodeSet ||
         codePoint == '%'.code &&
         (!alreadyEncoded || strict && !isPercentEncoded(i, limit)) ||
-        codePoint == '+'.code && plusIsSpace) {
+        codePoint == '+'.code && plusIsSpace
+      ) {
         // Slow path: the character at i requires encoding!
         val out = Buffer()
         out.writeUtf8(this, pos, i)
@@ -134,7 +139,7 @@ internal object JvmHttpUrl {
           strict = strict,
           plusIsSpace = plusIsSpace,
           unicodeAllowed = unicodeAllowed,
-          charset = charset
+          charset = charset,
         )
         return out.readUtf8()
       }
@@ -151,7 +156,7 @@ internal object HttpUrlCommon {
     encoded: String,
     pos: Int,
     limit: Int,
-    plusIsSpace: Boolean
+    plusIsSpace: Boolean,
   ) {
     var codePoint: Int
     var i = pos
@@ -175,6 +180,7 @@ internal object HttpUrlCommon {
       i += Character.charCount(codePoint)
     }
   }
+
   internal fun String.canonicalize(
     pos: Int = 0,
     limit: Int = length,
@@ -191,7 +197,7 @@ internal object HttpUrlCommon {
       alreadyEncoded = alreadyEncoded,
       strict = strict,
       plusIsSpace = plusIsSpace,
-      unicodeAllowed = unicodeAllowed
+      unicodeAllowed = unicodeAllowed,
     )
   }
 }

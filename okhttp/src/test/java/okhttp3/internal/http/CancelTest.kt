@@ -70,7 +70,8 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @Timeout(30)
 @Tag("Slow")
 class CancelTest {
-  @JvmField @RegisterExtension val platform = PlatformRule()
+  @JvmField @RegisterExtension
+  val platform = PlatformRule()
 
   lateinit var cancelMode: CancelMode
   lateinit var connectionType: ConnectionType
@@ -79,16 +80,17 @@ class CancelTest {
 
   enum class CancelMode {
     CANCEL,
-    INTERRUPT
+    INTERRUPT,
   }
 
   enum class ConnectionType {
     H2,
     HTTPS,
-    HTTP
+    HTTP,
   }
 
-  @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
+  @JvmField @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
 
   val handshakeCertificates = platform.localhostHandshakeCertificates()
 
@@ -110,9 +112,8 @@ class CancelTest {
     server = MockWebServer()
     server.serverSocketFactory =
       object : DelegatingServerSocketFactory(ServerSocketFactory.getDefault()) {
-        @Throws(IOException::class) override fun configureServerSocket(
-          serverSocket: ServerSocket
-        ): ServerSocket {
+        @Throws(IOException::class)
+        override fun configureServerSocket(serverSocket: ServerSocket): ServerSocket {
           serverSocket.receiveBufferSize = SOCKET_BUFFER_SIZE
           return serverSocket
         }
@@ -122,21 +123,26 @@ class CancelTest {
     }
     server.start()
 
-    client = clientTestRule.newClientBuilder()
-        .socketFactory(object : DelegatingSocketFactory(SocketFactory.getDefault()) {
-          @Throws(IOException::class)
-          override fun configureSocket(socket: Socket): Socket {
-            socket.sendBufferSize = SOCKET_BUFFER_SIZE
-            socket.receiveBufferSize = SOCKET_BUFFER_SIZE
-            return socket
-          }
-        })
+    client =
+      clientTestRule.newClientBuilder()
+        .socketFactory(
+          object : DelegatingSocketFactory(SocketFactory.getDefault()) {
+            @Throws(IOException::class)
+            override fun configureSocket(socket: Socket): Socket {
+              socket.sendBufferSize = SOCKET_BUFFER_SIZE
+              socket.receiveBufferSize = SOCKET_BUFFER_SIZE
+              return socket
+            }
+          },
+        )
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
+          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
         )
         .eventListener(listener)
         .apply {
-          if (connectionType == HTTPS) { protocols(listOf(HTTP_1_1)) }
+          if (connectionType == HTTPS) {
+            protocols(listOf(HTTP_1_1))
+          }
         }
         .build()
     threadToCancel = Thread.currentThread()
@@ -147,27 +153,30 @@ class CancelTest {
   fun cancelWritingRequestBody(mode: Pair<CancelMode, ConnectionType>) {
     setUp(mode)
     server.enqueue(MockResponse())
-    val call = client.newCall(
-      Request(
-        url = server.url("/"),
-        body = object : RequestBody() {
-          override fun contentType(): MediaType? {
-            return null
-          }
+    val call =
+      client.newCall(
+        Request(
+          url = server.url("/"),
+          body =
+            object : RequestBody() {
+              override fun contentType(): MediaType? {
+                return null
+              }
 
-          @Throws(
-            IOException::class
-          ) override fun writeTo(sink: BufferedSink) {
-            for (i in 0..9) {
-              sink.writeByte(0)
-              sink.flush()
-              sleep(100)
-            }
-            fail("Expected connection to be closed")
-          }
-        },
+              @Throws(
+                IOException::class,
+              )
+              override fun writeTo(sink: BufferedSink) {
+                for (i in 0..9) {
+                  sink.writeByte(0)
+                  sink.flush()
+                  sleep(100)
+                }
+                fail("Expected connection to be closed")
+              }
+            },
+        ),
       )
-    )
     cancelLater(call, 500)
     assertFailsWith<IOException> {
       call.execute()
@@ -185,10 +194,10 @@ class CancelTest {
       MockResponse.Builder()
         .body(
           Buffer()
-            .write(ByteArray(responseBodySize))
+            .write(ByteArray(responseBodySize)),
         )
         .throttleBody(64 * 1024, 125, MILLISECONDS) // 500 Kbps
-        .build()
+        .build(),
     )
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
@@ -214,10 +223,10 @@ class CancelTest {
       MockResponse.Builder()
         .body(
           Buffer()
-            .write(ByteArray(responseBodySize))
+            .write(ByteArray(responseBodySize)),
         )
         .throttleBody(64 * 1024, 125, MILLISECONDS) // 500 Kbps
-        .build()
+        .build(),
     )
     server.enqueue(MockResponse(body = "."))
 
@@ -255,27 +264,28 @@ class CancelTest {
     }
 
     val events2 = listener.eventSequence.filter { isConnectionEvent(it) }.map { it.name }
-    val expectedEvents2 = mutableListOf<String>().apply {
-      add("CallStart")
-      if (connectionType != H2) {
-        addAll(listOf("ConnectStart", "ConnectEnd"))
+    val expectedEvents2 =
+      mutableListOf<String>().apply {
+        add("CallStart")
+        if (connectionType != H2) {
+          addAll(listOf("ConnectStart", "ConnectEnd"))
+        }
+        addAll(listOf("ConnectionAcquired", "ConnectionReleased", "CallEnd"))
       }
-      addAll(listOf("ConnectionAcquired", "ConnectionReleased", "CallEnd"))
-    }
 
     assertThat(events2).isEqualTo(expectedEvents2)
   }
 
   private fun isConnectionEvent(it: CallEvent?) =
     it is CallStart ||
-        it is CallEnd ||
-        it is ConnectStart ||
-        it is ConnectEnd ||
-        it is ConnectionAcquired ||
-        it is ConnectionReleased ||
-        it is Canceled ||
-        it is RequestFailed ||
-        it is ResponseFailed
+      it is CallEnd ||
+      it is ConnectStart ||
+      it is ConnectEnd ||
+      it is ConnectionAcquired ||
+      it is ConnectionReleased ||
+      it is Canceled ||
+      it is RequestFailed ||
+      it is ResponseFailed
 
   private fun sleep(delayMillis: Int) {
     try {
@@ -287,7 +297,7 @@ class CancelTest {
 
   private fun cancelLater(
     call: Call,
-    delayMillis: Int
+    delayMillis: Int,
   ): CountDownLatch {
     val latch = CountDownLatch(1)
     Thread {
@@ -308,8 +318,14 @@ class CancelTest {
   }
 }
 
-class CancelModelParamProvider: SimpleProvider() {
-  override fun arguments() = CancelTest.CancelMode.values().flatMap { c -> CancelTest.ConnectionType.values().map { x -> Pair(
-    c, x
-  ) } }
+class CancelModelParamProvider : SimpleProvider() {
+  override fun arguments() =
+    CancelTest.CancelMode.values().flatMap { c ->
+      CancelTest.ConnectionType.values().map { x ->
+        Pair(
+          c,
+          x,
+        )
+      }
+    }
 }

@@ -53,9 +53,10 @@ class SocksProxyTest {
   fun proxy() {
     server.enqueue(MockResponse.Builder().body("abc").build())
     server.enqueue(MockResponse.Builder().body("def").build())
-    val client = clientTestRule.newClientBuilder()
-      .proxy(socksProxy.proxy())
-      .build()
+    val client =
+      clientTestRule.newClientBuilder()
+        .proxy(socksProxy.proxy())
+        .build()
     val request1 = Request.Builder().url(server.url("/")).build()
     val response1 = client.newCall(request1).execute()
     assertThat(response1.body.string()).isEqualTo("abc")
@@ -70,18 +71,20 @@ class SocksProxyTest {
   @Test
   fun proxySelector() {
     server.enqueue(MockResponse.Builder().body("abc").build())
-    val proxySelector: ProxySelector = object : ProxySelector() {
-      override fun select(uri: URI) = listOf(socksProxy.proxy())
+    val proxySelector: ProxySelector =
+      object : ProxySelector() {
+        override fun select(uri: URI) = listOf(socksProxy.proxy())
 
-      override fun connectFailed(
-        uri: URI,
-        socketAddress: SocketAddress,
-        e: IOException,
-      ) = error("unexpected call")
-    }
-    val client = clientTestRule.newClientBuilder()
-      .proxySelector(proxySelector)
-      .build()
+        override fun connectFailed(
+          uri: URI,
+          socketAddress: SocketAddress,
+          e: IOException,
+        ) = error("unexpected call")
+      }
+    val client =
+      clientTestRule.newClientBuilder()
+        .proxySelector(proxySelector)
+        .build()
     val request = Request.Builder().url(server.url("/")).build()
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("abc")
@@ -92,13 +95,15 @@ class SocksProxyTest {
   fun checkRemoteDNSResolve() {
     // This testcase will fail if the target is resolved locally instead of through the proxy.
     server.enqueue(MockResponse.Builder().body("abc").build())
-    val client = clientTestRule.newClientBuilder()
-      .proxy(socksProxy.proxy())
-      .build()
-    val url = server.url("/")
-      .newBuilder()
-      .host(SocksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS)
-      .build()
+    val client =
+      clientTestRule.newClientBuilder()
+        .proxy(socksProxy.proxy())
+        .build()
+    val url =
+      server.url("/")
+        .newBuilder()
+        .host(SocksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS)
+        .build()
     val request = Request.Builder().url(url).build()
     val response1 = client.newCall(request).execute()
     assertThat(response1.body.string()).isEqualTo("abc")

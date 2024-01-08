@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal
 
 import java.text.Normalizer
 import java.text.Normalizer.Form.NFC
 
-internal fun normalizeNfc(string: String): String =
-  Normalizer.normalize(string, NFC)
+internal fun normalizeNfc(string: String): String = Normalizer.normalize(string, NFC)

@@ -55,7 +55,7 @@ class OsgiTest {
       createBndRun(workspace).use { bndRun ->
         bndRun.resolve(
           false,
-          false
+          false,
         )
       }
     }
@@ -71,7 +71,7 @@ class OsgiTest {
           "${Constants.PLUGIN}.$REPO_NAME",
           LocalIndexedRepo::class.java.getName() +
             "; ${LocalIndexedRepo.PROP_NAME} = '$REPO_NAME'" +
-            "; ${LocalIndexedRepo.PROP_LOCAL_DIR} = '$repoDir'"
+            "; ${LocalIndexedRepo.PROP_LOCAL_DIR} = '$repoDir'",
         )
         refresh()
         prepareWorkspace()
@@ -89,14 +89,16 @@ class OsgiTest {
   private fun createBndRun(workspace: Workspace): Bndrun {
     // Creating the run require string. It will always use the latest version of each bundle
     // available in the repository.
-    val runRequireString = REQUIRED_BUNDLES.joinToString(separator = ",") {
-      "osgi.identity;filter:='(osgi.identity=$it)'"
-    }
+    val runRequireString =
+      REQUIRED_BUNDLES.joinToString(separator = ",") {
+        "osgi.identity;filter:='(osgi.identity=$it)'"
+      }
 
-    val bndEditModel = BndEditModel(workspace).apply {
-      // Temporary project to satisfy bnd API.
-      project = Project(workspace, workspaceDir.toFile())
-    }
+    val bndEditModel =
+      BndEditModel(workspace).apply {
+        // Temporary project to satisfy bnd API.
+        project = Project(workspace, workspaceDir.toFile())
+      }
 
     return Bndrun(bndEditModel).apply {
       setRunfw(RESOLVE_OSGI_FRAMEWORK)
@@ -113,9 +115,10 @@ class OsgiTest {
 
   private fun RepositoryPlugin.deployClassPath() {
     val classpath = System.getProperty("java.class.path")
-    val entries = classpath.split(File.pathSeparator.toRegex())
-      .dropLastWhile { it.isEmpty() }
-      .toTypedArray()
+    val entries =
+      classpath.split(File.pathSeparator.toRegex())
+        .dropLastWhile { it.isEmpty() }
+        .toTypedArray()
     for (classPathEntry in entries) {
       deployFile(classPathEntry.toPath())
     }
@@ -141,20 +144,20 @@ class OsgiTest {
     val fileSystem = FileSystem.SYSTEM
 
     /** Each is the Bundle-SymbolicName of an OkHttp module's OSGi configuration.  */
-    private val REQUIRED_BUNDLES: List<String> = mutableListOf(
-      "com.squareup.okhttp3",
-      "com.squareup.okhttp3.brotli",
-      "com.squareup.okhttp3.dnsoverhttps",
-      "com.squareup.okhttp3.logging",
-      "com.squareup.okhttp3.sse",
-      "com.squareup.okhttp3.tls",
-      "com.squareup.okhttp3.urlconnection"
-    )
+    private val REQUIRED_BUNDLES: List<String> =
+      mutableListOf(
+        "com.squareup.okhttp3",
+        "com.squareup.okhttp3.brotli",
+        "com.squareup.okhttp3.dnsoverhttps",
+        "com.squareup.okhttp3.logging",
+        "com.squareup.okhttp3.sse",
+        "com.squareup.okhttp3.tls",
+        "com.squareup.okhttp3.urlconnection",
+      )
 
     /** Equinox must also be on the testing classpath.  */
     private const val RESOLVE_OSGI_FRAMEWORK = "org.eclipse.osgi"
     private const val RESOLVE_JAVA_VERSION = "JavaSE-1.8"
     private const val REPO_NAME = "OsgiTest"
-
   }
 }

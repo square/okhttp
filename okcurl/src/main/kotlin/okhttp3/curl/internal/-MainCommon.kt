@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.curl.internal
 
 import java.io.IOException
@@ -53,15 +54,16 @@ internal fun Main.commonCreateRequest(): Request {
 }
 
 private fun Main.mediaType(): MediaType? {
-  val mimeType = headers?.let {
-    for (header in it) {
-      val parts = header.split(':', limit = 2)
-      if ("Content-Type".equals(parts[0], ignoreCase = true)) {
-        return@let parts[1].trim()
+  val mimeType =
+    headers?.let {
+      for (header in it) {
+        val parts = header.split(':', limit = 2)
+        if ("Content-Type".equals(parts[0], ignoreCase = true)) {
+          return@let parts[1].trim()
+        }
       }
-    }
-    return@let null
-  } ?: "application/x-www-form-urlencoded"
+      return@let null
+    } ?: "application/x-www-form-urlencoded"
 
   return mimeType.toMediaTypeOrNull()
 }

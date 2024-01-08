@@ -112,16 +112,17 @@ internal class FastFallbackExchangeFinder(
    * its connection.
    */
   private fun launchTcpConnect(): ConnectResult? {
-    val plan = when {
-      routePlanner.hasNext() -> {
-        try {
-          routePlanner.plan()
-        } catch (e: Throwable) {
-          FailedPlan(e)
+    val plan =
+      when {
+        routePlanner.hasNext() -> {
+          try {
+            routePlanner.plan()
+          } catch (e: Throwable) {
+            FailedPlan(e)
+          }
         }
+        else -> return null // Nothing further to try.
       }
-      else -> return null // Nothing further to try.
-    }
 
     // Already connected. Return it immediately.
     if (plan.isReady) return ConnectResult(plan)
@@ -132,24 +133,30 @@ internal class FastFallbackExchangeFinder(
     // Connect TCP asynchronously.
     tcpConnectsInFlight += plan
     val taskName = "$okHttpName connect ${routePlanner.address.url.redact()}"
-    taskRunner.newQueue().schedule(object : Task(taskName) {
-      override fun runOnce(): Long {
-        val connectResult = try {
-          plan.connectTcp()
-        } catch (e: Throwable) {
-          ConnectResult(plan, throwable = e)
+    taskRunner.newQueue().schedule(
+      object : Task(taskName) {
+        override fun runOnce(): Long {
+          val connectResult =
+            try {
+              plan.connectTcp()
+            } catch (e: Throwable) {
+              ConnectResult(plan, throwable = e)
+            }
+          // Only post a result if this hasn't since been canceled.
+          if (plan in tcpConnectsInFlight) {
+            connectResults.put(connectResult)
+          }
+          return -1L
         }
-        // Only post a result if this hasn't since been canceled.
-        if (plan in tcpConnectsInFlight) {
-          connectResults.put(connectResult)
-        }
-        return -1L
-      }
-    })
+      },
+    )
     return null
   }
 
-  private fun awaitTcpConnect(timeout: Long, unit: TimeUnit): ConnectResult? {
+  private fun awaitTcpConnect(
+    timeout: Long,
+    unit: TimeUnit,
+  ): ConnectResult? {
     if (tcpConnectsInFlight.isEmpty()) return null
 
     val result = connectResults.poll(timeout, unit) ?: return null

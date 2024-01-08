@@ -47,7 +47,7 @@ import okio.gzip
 class PublicSuffixListGenerator(
   projectRoot: Path = ".".toPath(),
   val fileSystem: FileSystem = FileSystem.SYSTEM,
-  val client: OkHttpClient = OkHttpClient()
+  val client: OkHttpClient = OkHttpClient(),
 ) {
   private val resources = projectRoot / "okhttp/src/main/resources/okhttp3/internal/publicsuffix"
   private val testResources = projectRoot / "okhttp/src/test/resources/okhttp3/internal/publicsuffix"
@@ -67,38 +67,40 @@ class PublicSuffixListGenerator(
     writeOutputFile(importResults)
   }
 
-  private suspend fun updateLocalFile() = withContext(Dispatchers.IO) {
-    client.newCall(request).executeAsync().use { response ->
-      fileSystem.sink(publicSuffixListDotDat).buffer().use { sink ->
-        sink.writeAll(response.body.source())
-      }
-    }
-  }
-
-  private suspend fun readImportResults(): ImportResults = withContext(Dispatchers.IO) {
-    val sortedRules: SortedSet<ByteString> = TreeSet()
-    val sortedExceptionRules: SortedSet<ByteString> = TreeSet()
-    var totalRuleBytes = 0
-    var totalExceptionRuleBytes = 0
-
-    fileSystem.source(publicSuffixListDotDat).buffer().use { source ->
-      while (!source.exhausted()) {
-        var rule: ByteString = source.readUtf8LineStrict().toRule() ?: continue
-
-        if (rule.startsWith(EXCEPTION_RULE_MARKER)) {
-          rule = rule.substring(1)
-          // We use '\n' for end of value.
-          totalExceptionRuleBytes += rule.size + 1
-          sortedExceptionRules.add(rule)
-        } else {
-          totalRuleBytes += rule.size + 1 // We use '\n' for end of value.
-          sortedRules.add(rule)
+  private suspend fun updateLocalFile() =
+    withContext(Dispatchers.IO) {
+      client.newCall(request).executeAsync().use { response ->
+        fileSystem.sink(publicSuffixListDotDat).buffer().use { sink ->
+          sink.writeAll(response.body.source())
         }
       }
     }
 
-    ImportResults(sortedRules, sortedExceptionRules, totalRuleBytes, totalExceptionRuleBytes)
-  }
+  private suspend fun readImportResults(): ImportResults =
+    withContext(Dispatchers.IO) {
+      val sortedRules: SortedSet<ByteString> = TreeSet()
+      val sortedExceptionRules: SortedSet<ByteString> = TreeSet()
+      var totalRuleBytes = 0
+      var totalExceptionRuleBytes = 0
+
+      fileSystem.source(publicSuffixListDotDat).buffer().use { source ->
+        while (!source.exhausted()) {
+          var rule: ByteString = source.readUtf8LineStrict().toRule() ?: continue
+
+          if (rule.startsWith(EXCEPTION_RULE_MARKER)) {
+            rule = rule.substring(1)
+            // We use '\n' for end of value.
+            totalExceptionRuleBytes += rule.size + 1
+            sortedExceptionRules.add(rule)
+          } else {
+            totalRuleBytes += rule.size + 1 // We use '\n' for end of value.
+            sortedRules.add(rule)
+          }
+        }
+      }
+
+      ImportResults(sortedRules, sortedExceptionRules, totalRuleBytes, totalExceptionRuleBytes)
+    }
 
   private fun String.toRule(): ByteString? {
     if (trim { it <= ' ' }.isEmpty() || startsWith("//")) return null
@@ -112,10 +114,10 @@ class PublicSuffixListGenerator(
     val sortedRules: SortedSet<ByteString>,
     val sortedExceptionRules: SortedSet<ByteString>,
     val totalRuleBytes: Int,
-    val totalExceptionRuleBytes: Int
+    val totalExceptionRuleBytes: Int,
   ) {
     fun writeOut(sink: BufferedSink) {
-      with (sink) {
+      with(sink) {
         writeInt(totalRuleBytes)
         for (domain in sortedRules) {
           write(domain).writeByte(NEWLINE)
@@ -128,11 +130,12 @@ class PublicSuffixListGenerator(
     }
   }
 
-  private suspend fun writeOutputFile(importResults: ImportResults) = withContext(Dispatchers.IO) {
-    fileSystem.sink(outputFile).gzip().buffer().use { sink ->
+  private suspend fun writeOutputFile(importResults: ImportResults) =
+    withContext(Dispatchers.IO) {
+      fileSystem.sink(outputFile).gzip().buffer().use { sink ->
         importResults.writeOut(sink)
+      }
     }
-  }
 
   /**
    * These assertions ensure the [PublicSuffixDatabase] remains correct. The specification is

@@ -219,8 +219,11 @@ class RelayTest {
   }
 
   private fun assertFile(
-    prefix: ByteString, upstreamSize: Long, metadataSize: Int, upstream: String?,
-    metadata: ByteString?
+    prefix: ByteString,
+    upstreamSize: Long,
+    metadataSize: Int,
+    upstream: String?,
+    metadata: ByteString?,
   ) {
     val source = file.source().buffer()
     assertThat(source.readByteString(prefix.size.toLong())).isEqualTo(prefix)

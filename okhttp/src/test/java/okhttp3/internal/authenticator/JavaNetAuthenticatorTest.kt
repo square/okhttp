@@ -34,10 +34,11 @@ class JavaNetAuthenticatorTest {
   private var authenticator = JavaNetAuthenticator()
   private val fakeDns = FakeDns()
   private val recordingAuthenticator = RecordingAuthenticator()
-  private val factory = TestValueFactory()
-    .apply {
-      dns = fakeDns
-    }
+  private val factory =
+    TestValueFactory()
+      .apply {
+        dns = fakeDns
+      }
 
   @BeforeEach
   fun setup() {
@@ -56,10 +57,12 @@ class JavaNetAuthenticatorTest {
 
     val route = factory.newRoute()
 
-    val request = Request.Builder()
+    val request =
+      Request.Builder()
         .url("https://server/robots.txt")
         .build()
-    val response = Response.Builder()
+    val response =
+      Response.Builder()
         .request(request)
         .code(401)
         .header("WWW-Authenticate", "Basic realm=\"User Visible Realm\"")
@@ -69,17 +72,20 @@ class JavaNetAuthenticatorTest {
     val authRequest = authenticator.authenticate(route, response)
 
     assertEquals(
-        "Basic ${RecordingAuthenticator.BASE_64_CREDENTIALS}", authRequest!!.header("Authorization")
+      "Basic ${RecordingAuthenticator.BASE_64_CREDENTIALS}",
+      authRequest!!.header("Authorization"),
     )
   }
 
   @Test
   fun noSupportForNonBasicAuth() {
-    val request = Request.Builder()
+    val request =
+      Request.Builder()
         .url("https://server/robots.txt")
         .build()
 
-    val response = Response.Builder()
+    val response =
+      Response.Builder()
         .request(request)
         .code(401)
         .header("WWW-Authenticate", "UnsupportedScheme realm=\"User Visible Realm\"")

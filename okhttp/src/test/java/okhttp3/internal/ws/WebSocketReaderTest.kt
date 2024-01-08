@@ -19,7 +19,6 @@ import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.isEqualTo
 import assertk.assertions.matches
-import assertk.fail
 import java.io.EOFException
 import java.io.IOException
 import java.net.ProtocolException
@@ -41,34 +40,38 @@ class WebSocketReaderTest {
   private val random = Random(0)
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.
-  private val serverReader = WebSocketReader(
-    isClient = false,
-    source = data,
-    frameCallback = callback.asFrameCallback(),
-    perMessageDeflate = false,
-    noContextTakeover = false
-  )
-  private val serverReaderWithCompression = WebSocketReader(
-    isClient = false,
-    source = data,
-    frameCallback = callback.asFrameCallback(),
-    perMessageDeflate = true,
-    noContextTakeover = false
-  )
-  private val clientReader = WebSocketReader(
-    isClient = true,
-    source = data,
-    frameCallback = callback.asFrameCallback(),
-    perMessageDeflate = false,
-    noContextTakeover = false
-  )
-  private val clientReaderWithCompression = WebSocketReader(
-    isClient = true,
-    source = data,
-    frameCallback = callback.asFrameCallback(),
-    perMessageDeflate = true,
-    noContextTakeover = false
-  )
+  private val serverReader =
+    WebSocketReader(
+      isClient = false,
+      source = data,
+      frameCallback = callback.asFrameCallback(),
+      perMessageDeflate = false,
+      noContextTakeover = false,
+    )
+  private val serverReaderWithCompression =
+    WebSocketReader(
+      isClient = false,
+      source = data,
+      frameCallback = callback.asFrameCallback(),
+      perMessageDeflate = true,
+      noContextTakeover = false,
+    )
+  private val clientReader =
+    WebSocketReader(
+      isClient = true,
+      source = data,
+      frameCallback = callback.asFrameCallback(),
+      perMessageDeflate = false,
+      noContextTakeover = false,
+    )
+  private val clientReaderWithCompression =
+    WebSocketReader(
+      isClient = true,
+      source = data,
+      frameCallback = callback.asFrameCallback(),
+      perMessageDeflate = true,
+      noContextTakeover = false,
+    )
 
   @AfterEach fun tearDown() {
     callback.assertExhausted()
@@ -138,7 +141,7 @@ class WebSocketReaderTest {
   }
 
   @Test fun serverSentFramesMustNotBeMasked() {
-      data.write("8180".decodeHex())
+    data.write("8180".decodeHex())
     assertFailsWith<ProtocolException> {
       clientReader.processNextFrame()
     }.also { expected ->
@@ -211,7 +214,7 @@ class WebSocketReaderTest {
       clientReader.processNextFrame()
     }.also { expected ->
       assertThat(expected.message).isEqualTo(
-        "Frame length 0x8000000000000000 > 0x7FFFFFFFFFFFFFFF"
+        "Frame length 0x8000000000000000 > 0x7FFFFFFFFFFFFFFF",
       )
     }
   }

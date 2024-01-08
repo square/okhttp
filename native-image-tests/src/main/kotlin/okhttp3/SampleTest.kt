@@ -26,7 +26,8 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
 class SampleTest {
-  @JvmField @RegisterExtension val clientRule = OkHttpClientTestRule()
+  @JvmField @RegisterExtension
+  val clientRule = OkHttpClientTestRule()
 
   @Test
   fun passingTest() {
@@ -59,6 +60,6 @@ class SampleTest {
   }
 }
 
-class SampleTestProvider: SimpleProvider() {
+class SampleTestProvider : SimpleProvider() {
   override fun arguments() = listOf("A", "B")
 }

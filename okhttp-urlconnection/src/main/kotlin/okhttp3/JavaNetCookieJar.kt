@@ -32,7 +32,7 @@ class JavaNetCookieJar private constructor(
 ) : CookieJar by delegate {
   constructor(cookieHandler: CookieHandler) : this(
     okhttp3.java.net.cookiejar.JavaNetCookieJar(
-      cookieHandler
-    )
+      cookieHandler,
+    ),
   )
 }

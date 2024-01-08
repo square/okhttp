@@ -22,7 +22,11 @@ interface FlowControlListener {
    * Notification that the receiving stream flow control window has changed.
    * [WindowCounter] generally carries the client view of total and acked bytes.
    */
-  fun receivingStreamWindowChanged(streamId: Int, windowCounter: WindowCounter, bufferSize: Long)
+  fun receivingStreamWindowChanged(
+    streamId: Int,
+    windowCounter: WindowCounter,
+    bufferSize: Long,
+  )
 
   /**
    * Notification that the receiving connection flow control window has changed.
@@ -31,8 +35,12 @@ interface FlowControlListener {
   fun receivingConnectionWindowChanged(windowCounter: WindowCounter)
 
   /** Noop implementation */
-  object None: FlowControlListener {
-    override fun receivingStreamWindowChanged(streamId: Int, windowCounter: WindowCounter, bufferSize: Long) {
+  object None : FlowControlListener {
+    override fun receivingStreamWindowChanged(
+      streamId: Int,
+      windowCounter: WindowCounter,
+      bufferSize: Long,
+    ) {
     }
 
     override fun receivingConnectionWindowChanged(windowCounter: WindowCounter) {

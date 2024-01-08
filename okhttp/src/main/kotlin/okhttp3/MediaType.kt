@@ -31,21 +31,17 @@ import okhttp3.internal.commonToString
  */
 class MediaType internal constructor(
   internal val mediaType: String,
-
   /**
    * Returns the high-level media type, such as "text", "image", "audio", "video", or "application".
    */
   @get:JvmName("type") val type: String,
-
   /**
    * Returns a specific media subtype, such as "plain" or "png", "mpeg", "mp4" or "xml".
    */
   @get:JvmName("subtype") val subtype: String,
-
   /** Alternating parameter names with their values, like `["charset", "utf-8"]`. */
-  internal val parameterNamesAndValues: Array<String>
+  internal val parameterNamesAndValues: Array<String>,
 ) {
-
   /**
    * Returns the charset of this media type, or [defaultValue] if either this media type doesn't
    * specify a charset, or if its charset is unsupported by the current runtime.
@@ -70,7 +66,7 @@ class MediaType internal constructor(
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "type"),
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.ERROR,
   )
   fun type(): String = type
 
@@ -78,7 +74,7 @@ class MediaType internal constructor(
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "subtype"),
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.ERROR,
   )
   fun subtype(): String = subtype
 
@@ -110,22 +106,24 @@ class MediaType internal constructor(
     @JvmName("-deprecated_get")
     @Deprecated(
       message = "moved to extension function",
-      replaceWith = ReplaceWith(
-        expression = "mediaType.toMediaType()",
-        imports = ["okhttp3.MediaType.Companion.toMediaType"]
-      ),
-      level = DeprecationLevel.ERROR
+      replaceWith =
+        ReplaceWith(
+          expression = "mediaType.toMediaType()",
+          imports = ["okhttp3.MediaType.Companion.toMediaType"],
+        ),
+      level = DeprecationLevel.ERROR,
     )
     fun get(mediaType: String): MediaType = mediaType.toMediaType()
 
     @JvmName("-deprecated_parse")
     @Deprecated(
       message = "moved to extension function",
-      replaceWith = ReplaceWith(
-        expression = "mediaType.toMediaTypeOrNull()",
-        imports = ["okhttp3.MediaType.Companion.toMediaTypeOrNull"]
-      ),
-      level = DeprecationLevel.ERROR
+      replaceWith =
+        ReplaceWith(
+          expression = "mediaType.toMediaTypeOrNull()",
+          imports = ["okhttp3.MediaType.Companion.toMediaTypeOrNull"],
+        ),
+      level = DeprecationLevel.ERROR,
     )
     fun parse(mediaType: String): MediaType? = mediaType.toMediaTypeOrNull()
   }

@@ -22,14 +22,16 @@ import okhttp3.Request
 object ExternalHttp2Example {
   @JvmStatic
   fun main(args: Array<String>) {
-    val client = OkHttpClient.Builder()
-      .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-      .build()
-    val call = client.newCall(
-      Request.Builder()
-        .url("https://www.google.ca/")
+    val client =
+      OkHttpClient.Builder()
+        .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .build()
-    )
+    val call =
+      client.newCall(
+        Request.Builder()
+          .url("https://www.google.ca/")
+          .build(),
+      )
     val response = call.execute()
     try {
       println(response.code)

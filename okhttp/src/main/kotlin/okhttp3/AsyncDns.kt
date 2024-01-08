@@ -36,7 +36,10 @@ interface AsyncDns {
   /**
    * Query DNS records for `hostname`, in the order they are received.
    */
-  fun query(hostname: String, callback: Callback)
+  fun query(
+    hostname: String,
+    callback: Callback,
+  )
 
   /**
    * Callback to receive results from the DNS Queries.
@@ -46,12 +49,18 @@ interface AsyncDns {
      * Return addresses for a dns query for a single class of IPv4 (A) or IPv6 (AAAA).
      * May be an empty list indicating that the host is unreachable.
      */
-    fun onResponse(hostname: String, addresses: List<InetAddress>)
+    fun onResponse(
+      hostname: String,
+      addresses: List<InetAddress>,
+    )
 
     /**
      * Returns an error for the DNS query.
      */
-    fun onFailure(hostname: String, e: IOException)
+    fun onFailure(
+      hostname: String,
+      e: IOException,
+    )
   }
 
   /**
@@ -60,7 +69,7 @@ interface AsyncDns {
    */
   enum class DnsClass(val type: Int) {
     IPV4(TYPE_A),
-    IPV6(TYPE_AAAA);
+    IPV6(TYPE_AAAA),
   }
 
   companion object {
@@ -71,43 +80,53 @@ interface AsyncDns {
      * Adapt an AsyncDns implementation to Dns, waiting until onComplete is received
      * and returning results if available.
      */
-    fun toDns(vararg asyncDns: AsyncDns): Dns = Dns { hostname ->
-      val allAddresses = mutableListOf<InetAddress>()
-      val allExceptions = mutableListOf<IOException>()
-      val latch = CountDownLatch(asyncDns.size)
+    fun toDns(vararg asyncDns: AsyncDns): Dns =
+      Dns { hostname ->
+        val allAddresses = mutableListOf<InetAddress>()
+        val allExceptions = mutableListOf<IOException>()
+        val latch = CountDownLatch(asyncDns.size)
 
-      asyncDns.forEach {
-        it.query(hostname, object : Callback {
-          override fun onResponse(hostname: String, addresses: List<InetAddress>) {
-            synchronized(allAddresses) {
-              allAddresses.addAll(addresses)
-            }
-            latch.countDown()
-          }
+        asyncDns.forEach {
+          it.query(
+            hostname,
+            object : Callback {
+              override fun onResponse(
+                hostname: String,
+                addresses: List<InetAddress>,
+              ) {
+                synchronized(allAddresses) {
+                  allAddresses.addAll(addresses)
+                }
+                latch.countDown()
+              }
 
-          override fun onFailure(hostname: String, e: IOException) {
-            synchronized(allExceptions) {
-              allExceptions.add(e)
-            }
-            latch.countDown()
-          }
-        })
-      }
-
-      latch.await()
-
-      // No mutations should be possible after this point
-      if (allAddresses.isEmpty()) {
-        val first = allExceptions.firstOrNull() ?: UnknownHostException("No results for $hostname")
-
-        allExceptions.drop(1).forEach {
-          first.addSuppressed(it)
+              override fun onFailure(
+                hostname: String,
+                e: IOException,
+              ) {
+                synchronized(allExceptions) {
+                  allExceptions.add(e)
+                }
+                latch.countDown()
+              }
+            },
+          )
         }
 
-        throw first
-      }
+        latch.await()
 
-      allAddresses
-    }
+        // No mutations should be possible after this point
+        if (allAddresses.isEmpty()) {
+          val first = allExceptions.firstOrNull() ?: UnknownHostException("No results for $hostname")
+
+          allExceptions.drop(1).forEach {
+            first.addSuppressed(it)
+          }
+
+          throw first
+        }
+
+        allAddresses
+      }
   }
 }

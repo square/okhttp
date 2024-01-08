@@ -19,7 +19,7 @@ import java.io.IOException
 
 /** Attempt routes one at a time until one connects. */
 internal class SequentialExchangeFinder(
-  override val routePlanner: RoutePlanner
+  override val routePlanner: RoutePlanner,
 ) : ExchangeFinder {
   override fun find(): RealConnection {
     var firstException: IOException? = null
@@ -31,10 +31,11 @@ internal class SequentialExchangeFinder(
 
         if (!plan.isReady) {
           val tcpConnectResult = plan.connectTcp()
-          val connectResult = when {
-            tcpConnectResult.isSuccess -> plan.connectTlsEtc()
-            else -> tcpConnectResult
-          }
+          val connectResult =
+            when {
+              tcpConnectResult.isSuccess -> plan.connectTlsEtc()
+              else -> tcpConnectResult
+            }
 
           val (_, nextPlan, failure) = connectResult
 

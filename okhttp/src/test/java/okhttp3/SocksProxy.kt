@@ -79,7 +79,7 @@ class SocksProxy {
   fun proxy(): Proxy {
     return Proxy(
       Proxy.Type.SOCKS,
-      InetSocketAddress.createUnresolved("localhost", serverSocket!!.localPort)
+      InetSocketAddress.createUnresolved("localhost", serverSocket!!.localPort),
     )
   }
 
@@ -111,7 +111,7 @@ class SocksProxy {
 
   private fun hello(
     fromSource: BufferedSource,
-    fromSink: BufferedSink
+    fromSink: BufferedSink,
   ) {
     val version = fromSource.readByte() and 0xff
     val methodCount = fromSource.readByte() and 0xff
@@ -136,8 +136,9 @@ class SocksProxy {
   }
 
   private fun acceptCommand(
-    fromAddress: InetAddress, fromSource: BufferedSource,
-    fromSink: BufferedSink
+    fromAddress: InetAddress,
+    fromSource: BufferedSource,
+    fromSink: BufferedSink,
   ) {
     // Read the command.
     val version = fromSource.readByte() and 0xff
@@ -149,25 +150,26 @@ class SocksProxy {
     if (reserved != 0) throw ProtocolException("unexpected reserved: $reserved")
 
     val addressType = fromSource.readByte() and 0xff
-    val toAddress = when (addressType) {
-      ADDRESS_TYPE_IPV4 -> {
-        InetAddress.getByAddress(fromSource.readByteArray(4L))
-      }
-
-      ADDRESS_TYPE_DOMAIN_NAME -> {
-        val domainNameLength: Int = fromSource.readByte() and 0xff
-        val domainName = fromSource.readUtf8(domainNameLength.toLong())
-        // Resolve HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS to localhost.
-        when {
-          domainName.equals(HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS, ignoreCase = true) -> {
-            InetAddress.getByName("localhost")
-          }
-          else -> InetAddress.getByName(domainName)
+    val toAddress =
+      when (addressType) {
+        ADDRESS_TYPE_IPV4 -> {
+          InetAddress.getByAddress(fromSource.readByteArray(4L))
         }
-      }
 
-      else -> throw ProtocolException("unsupported address type: $addressType")
-    }
+        ADDRESS_TYPE_DOMAIN_NAME -> {
+          val domainNameLength: Int = fromSource.readByte() and 0xff
+          val domainName = fromSource.readUtf8(domainNameLength.toLong())
+          // Resolve HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS to localhost.
+          when {
+            domainName.equals(HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS, ignoreCase = true) -> {
+              InetAddress.getByName("localhost")
+            }
+            else -> InetAddress.getByName(domainName)
+          }
+        }
+
+        else -> throw ProtocolException("unsupported address type: $addressType")
+      }
 
     val port = fromSource.readShort() and 0xffff
 
@@ -205,7 +207,7 @@ class SocksProxy {
     fromAddress: InetAddress,
     toAddress: InetAddress,
     source: BufferedSource,
-    sink: BufferedSink
+    sink: BufferedSink,
   ) {
     executor.execute {
       val name = "SocksProxy $fromAddress to $toAddress"

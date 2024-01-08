@@ -35,9 +35,8 @@ import okio.buffer
  */
 class PublicSuffixDatabase internal constructor(
   val path: Path = PUBLIC_SUFFIX_RESOURCE,
-  val fileSystem: FileSystem = FileSystem.RESOURCES
+  val fileSystem: FileSystem = FileSystem.RESOURCES,
 ) {
-
   /** True after we've attempted to read the list for the first time. */
   private val listRead = AtomicBoolean(false)
 
@@ -78,13 +77,14 @@ class PublicSuffixDatabase internal constructor(
       return null // The domain is a public suffix.
     }
 
-    val firstLabelOffset = if (rule[0][0] == EXCEPTION_MARKER) {
-      // Exception rules hold the effective TLD plus one.
-      domainLabels.size - rule.size
-    } else {
-      // Otherwise the rule is for a public suffix, so we must take one more label.
-      domainLabels.size - (rule.size + 1)
-    }
+    val firstLabelOffset =
+      if (rule[0][0] == EXCEPTION_MARKER) {
+        // Exception rules hold the effective TLD plus one.
+        domainLabels.size - rule.size
+      } else {
+        // Otherwise the rule is for a public suffix, so we must take one more label.
+        domainLabels.size - (rule.size + 1)
+      }
 
     return splitDomain(domain).asSequence().drop(firstLabelOffset).joinToString(".")
   }
@@ -152,8 +152,11 @@ class PublicSuffixDatabase internal constructor(
     var exception: String? = null
     if (wildcardMatch != null) {
       for (labelIndex in 0 until domainLabelsUtf8Bytes.size - 1) {
-        val rule = publicSuffixExceptionListBytes.binarySearch(
-            domainLabelsUtf8Bytes, labelIndex)
+        val rule =
+          publicSuffixExceptionListBytes.binarySearch(
+            domainLabelsUtf8Bytes,
+            labelIndex,
+          )
         if (rule != null) {
           exception = rule
           break
@@ -232,7 +235,7 @@ class PublicSuffixDatabase internal constructor(
   /** Visible for testing. */
   fun setListBytes(
     publicSuffixListBytes: ByteArray,
-    publicSuffixExceptionListBytes: ByteArray
+    publicSuffixExceptionListBytes: ByteArray,
   ) {
     this.publicSuffixListBytes = publicSuffixListBytes
     this.publicSuffixExceptionListBytes = publicSuffixExceptionListBytes
@@ -257,7 +260,7 @@ class PublicSuffixDatabase internal constructor(
 
     private fun ByteArray.binarySearch(
       labels: Array<ByteArray>,
-      labelIndex: Int
+      labelIndex: Int,
     ): String? {
       var low = 0
       var high = size

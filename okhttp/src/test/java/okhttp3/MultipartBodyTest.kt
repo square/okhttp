@@ -42,16 +42,18 @@ class MultipartBodyTest {
 
   @Test
   fun singlePart() {
-    val expected = """
+    val expected =
+      """
       |--123
       |
       |Hello, World!
       |--123--
       |
       """.trimMargin().replace("\n", "\r\n")
-    val body = MultipartBody.Builder("123")
-      .addPart("Hello, World!".toRequestBody(null))
-      .build()
+    val body =
+      MultipartBody.Builder("123")
+        .addPart("Hello, World!".toRequestBody(null))
+        .build()
     assertThat(body.boundary).isEqualTo("123")
     assertThat(body.type).isEqualTo(MultipartBody.MIXED)
     assertThat(body.contentType().toString())
@@ -66,7 +68,8 @@ class MultipartBodyTest {
 
   @Test
   fun threeParts() {
-    val expected = """
+    val expected =
+      """
       |--123
       |
       |Quick
@@ -79,11 +82,12 @@ class MultipartBodyTest {
       |--123--
       |
       """.trimMargin().replace("\n", "\r\n")
-    val body = MultipartBody.Builder("123")
-      .addPart("Quick".toRequestBody(null))
-      .addPart("Brown".toRequestBody(null))
-      .addPart("Fox".toRequestBody(null))
-      .build()
+    val body =
+      MultipartBody.Builder("123")
+        .addPart("Quick".toRequestBody(null))
+        .addPart("Brown".toRequestBody(null))
+        .addPart("Fox".toRequestBody(null))
+        .build()
     assertThat(body.boundary).isEqualTo("123")
     assertThat(body.type).isEqualTo(MultipartBody.MIXED)
     assertThat(body.contentType().toString())
@@ -98,7 +102,8 @@ class MultipartBodyTest {
 
   @Test
   fun fieldAndTwoFiles() {
-    val expected = """
+    val expected =
+      """
       |--AaB03x
       |Content-Disposition: form-data; name="submit-name"
       |
@@ -123,31 +128,35 @@ class MultipartBodyTest {
       |--AaB03x--
       |
       """.trimMargin().replace("\n", "\r\n")
-    val body = MultipartBody.Builder("AaB03x")
-      .setType(MultipartBody.FORM)
-      .addFormDataPart("submit-name", "Larry")
-      .addFormDataPart(
-        "files", null,
-        MultipartBody.Builder("BbC04y")
-          .addPart(
-            headersOf("Content-Disposition", "file; filename=\"file1.txt\""),
-            "... contents of file1.txt ...".toRequestBody("text/plain".toMediaType())
-          )
-          .addPart(
-            headersOf(
-              "Content-Disposition", "file; filename=\"file2.gif\"",
-              "Content-Transfer-Encoding", "binary"
-            ),
-            "... contents of file2.gif ...".toByteArray(StandardCharsets.UTF_8)
-              .toRequestBody("image/gif".toMediaType())
-          )
-          .build()
-      )
-      .build()
+    val body =
+      MultipartBody.Builder("AaB03x")
+        .setType(MultipartBody.FORM)
+        .addFormDataPart("submit-name", "Larry")
+        .addFormDataPart(
+          "files",
+          null,
+          MultipartBody.Builder("BbC04y")
+            .addPart(
+              headersOf("Content-Disposition", "file; filename=\"file1.txt\""),
+              "... contents of file1.txt ...".toRequestBody("text/plain".toMediaType()),
+            )
+            .addPart(
+              headersOf(
+                "Content-Disposition",
+                "file; filename=\"file2.gif\"",
+                "Content-Transfer-Encoding",
+                "binary",
+              ),
+              "... contents of file2.gif ...".toByteArray(StandardCharsets.UTF_8)
+                .toRequestBody("image/gif".toMediaType()),
+            )
+            .build(),
+        )
+        .build()
     assertThat(body.boundary).isEqualTo("AaB03x")
     assertThat(body.type).isEqualTo(MultipartBody.FORM)
     assertThat(body.contentType().toString()).isEqualTo(
-      "multipart/form-data; boundary=AaB03x"
+      "multipart/form-data; boundary=AaB03x",
     )
     assertThat(body.parts.size).isEqualTo(2)
     assertThat(body.contentLength()).isEqualTo(488L)
@@ -159,7 +168,8 @@ class MultipartBodyTest {
 
   @Test
   fun stringEscapingIsWeird() {
-    val expected = """
+    val expected =
+      """
       |--AaB03x
       |Content-Disposition: form-data; name="field with spaces"; filename="filename with spaces.txt"
       |Content-Type: text/plain; charset=utf-8
@@ -180,16 +190,18 @@ class MultipartBodyTest {
       |--AaB03x--
       |
       """.trimMargin().replace("\n", "\r\n")
-    val body = MultipartBody.Builder("AaB03x")
-      .setType(MultipartBody.FORM)
-      .addFormDataPart(
-        "field with spaces", "filename with spaces.txt",
-        "okay".toRequestBody("text/plain; charset=utf-8".toMediaType())
-      )
-      .addFormDataPart("field with \"", "\"")
-      .addFormDataPart("field with %22", "%22")
-      .addFormDataPart("field with \u007e", "Alpha")
-      .build()
+    val body =
+      MultipartBody.Builder("AaB03x")
+        .setType(MultipartBody.FORM)
+        .addFormDataPart(
+          "field with spaces",
+          "filename with spaces.txt",
+          "okay".toRequestBody("text/plain; charset=utf-8".toMediaType()),
+        )
+        .addFormDataPart("field with \"", "\"")
+        .addFormDataPart("field with %22", "%22")
+        .addFormDataPart("field with \u007e", "Alpha")
+        .build()
     val buffer = Buffer()
     body.writeTo(buffer)
     assertThat(buffer.readUtf8()).isEqualTo(expected)
@@ -208,7 +220,8 @@ class MultipartBodyTest {
       }
     }
 
-    val expected = """
+    val expected =
+      """
       |--123
       |
       |Quick
@@ -221,11 +234,12 @@ class MultipartBodyTest {
       |--123--
       |
       """.trimMargin().replace("\n", "\r\n")
-    val body = MultipartBody.Builder("123")
-      .addPart("Quick".toRequestBody(null))
-      .addPart(StreamingBody("Brown"))
-      .addPart("Fox".toRequestBody(null))
-      .build()
+    val body =
+      MultipartBody.Builder("123")
+        .addPart("Quick".toRequestBody(null))
+        .addPart(StreamingBody("Brown"))
+        .addPart("Fox".toRequestBody(null))
+        .build()
     assertThat(body.boundary).isEqualTo("123")
     assertThat(body.type).isEqualTo(MultipartBody.MIXED)
     assertThat(body.contentType().toString())
@@ -243,7 +257,7 @@ class MultipartBodyTest {
     assertFailsWith<IllegalArgumentException> {
       multipart.addPart(
         headersOf("Content-Type", "text/plain"),
-        "Hello, World!".toRequestBody(null)
+        "Hello, World!".toRequestBody(null),
       )
     }
   }
@@ -254,7 +268,7 @@ class MultipartBodyTest {
     assertFailsWith<IllegalArgumentException> {
       multipart.addPart(
         headersOf("Content-Length", "13"),
-        "Hello, World!".toRequestBody(null)
+        "Hello, World!".toRequestBody(null),
       )
     }
   }
@@ -262,9 +276,10 @@ class MultipartBodyTest {
   @Test
   @Throws(IOException::class)
   fun partAccessors() {
-    val body = MultipartBody.Builder()
-      .addPart(headersOf("Foo", "Bar"), "Baz".toRequestBody(null))
-      .build()
+    val body =
+      MultipartBody.Builder()
+        .addPart(headersOf("Foo", "Bar"), "Baz".toRequestBody(null))
+        .build()
     assertThat(body.parts.size).isEqualTo(1)
     val part1Buffer = Buffer()
     val part1 = body.part(0)
@@ -275,7 +290,8 @@ class MultipartBodyTest {
 
   @Test
   fun nonAsciiFilename() {
-    val expected = """
+    val expected =
+      """
       |--AaB03x
       |Content-Disposition: form-data; name="attachment"; filename="resumé.pdf"
       |Content-Type: application/pdf; charset=utf-8
@@ -284,13 +300,15 @@ class MultipartBodyTest {
       |--AaB03x--
       |
       """.trimMargin().replace("\n", "\r\n")
-    val body = MultipartBody.Builder("AaB03x")
-      .setType(MultipartBody.FORM)
-      .addFormDataPart(
-        "attachment", "resumé.pdf",
-        "Jesse’s Resumé".toRequestBody("application/pdf".toMediaTypeOrNull())
-      )
-      .build()
+    val body =
+      MultipartBody.Builder("AaB03x")
+        .setType(MultipartBody.FORM)
+        .addFormDataPart(
+          "attachment",
+          "resumé.pdf",
+          "Jesse’s Resumé".toRequestBody("application/pdf".toMediaTypeOrNull()),
+        )
+        .build()
     val buffer = Buffer()
     body.writeTo(buffer)
     assertThat(buffer.readUtf8()).isEqualTo(expected)
@@ -298,16 +316,18 @@ class MultipartBodyTest {
 
   @Test
   fun writeTwice() {
-    val expected = """
+    val expected =
+      """
       |--123
       |
       |Hello, World!
       |--123--
       |
       """.trimMargin().replace("\n", "\r\n")
-    val body = MultipartBody.Builder("123")
-      .addPart("Hello, World!".toRequestBody(null))
-      .build()
+    val body =
+      MultipartBody.Builder("123")
+        .addPart("Hello, World!".toRequestBody(null))
+        .build()
 
     assertThat(body.isOneShot()).isEqualTo(false)
 
@@ -324,16 +344,18 @@ class MultipartBodyTest {
 
   @Test
   fun writeTwiceWithOneShot() {
-    val expected = """
+    val expected =
+      """
       |--123
       |
       |Hello, World!
       |--123--
       |
       """.trimMargin().replace("\n", "\r\n")
-    val body = MultipartBody.Builder("123")
-      .addPart("Hello, World!".toOneShotRequestBody())
-      .build()
+    val body =
+      MultipartBody.Builder("123")
+        .addPart("Hello, World!".toOneShotRequestBody())
+        .build()
 
     assertThat(body.isOneShot()).isEqualTo(true)
 

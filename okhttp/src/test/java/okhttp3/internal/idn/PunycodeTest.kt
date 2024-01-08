@@ -25,86 +25,86 @@ class PunycodeTest {
     // (A) Arabic (Egyptian)
     testEncodeDecode(
       unicode = "ليهمابتكلموشعربي؟",
-      punycode = "xn--egbpdaj6bu4bxfgehfvwxn"
+      punycode = "xn--egbpdaj6bu4bxfgehfvwxn",
     )
 
     // (B) Chinese (simplified)
     testEncodeDecode(
       unicode = "他们为什么不说中文",
-      punycode = "xn--ihqwcrb4cv8a8dqg056pqjye"
+      punycode = "xn--ihqwcrb4cv8a8dqg056pqjye",
     )
 
     // (C) Chinese (traditional)
     testEncodeDecode(
       unicode = "他們爲什麽不說中文",
-      punycode = "xn--ihqwctvzc91f659drss3x8bo0yb"
+      punycode = "xn--ihqwctvzc91f659drss3x8bo0yb",
     )
 
     // (D) Czech
     testEncodeDecode(
       unicode = "Pročprostěnemluvíčesky",
-      punycode = "xn--Proprostnemluvesky-uyb24dma41a"
+      punycode = "xn--Proprostnemluvesky-uyb24dma41a",
     )
 
     // (E) Hebrew:
     testEncodeDecode(
       unicode = "למההםפשוטלאמדבריםעברית",
-      punycode = "xn--4dbcagdahymbxekheh6e0a7fei0b"
+      punycode = "xn--4dbcagdahymbxekheh6e0a7fei0b",
     )
 
     // (F) Hindi (Devanagari)
     testEncodeDecode(
       unicode = "यहलोगहिन्दीक्योंनहींबोलसकतेहैं",
-      punycode = "xn--i1baa7eci9glrd9b2ae1bj0hfcgg6iyaf8o0a1dig0cd"
+      punycode = "xn--i1baa7eci9glrd9b2ae1bj0hfcgg6iyaf8o0a1dig0cd",
     )
 
     // (G) Japanese (kanji and hiragana)
     testEncodeDecode(
       unicode = "なぜみんな日本語を話してくれないのか",
-      punycode = "xn--n8jok5ay5dzabd5bym9f0cm5685rrjetr6pdxa"
+      punycode = "xn--n8jok5ay5dzabd5bym9f0cm5685rrjetr6pdxa",
     )
 
     // (H) Korean (Hangul syllables)
     testEncodeDecode(
       unicode = "세계의모든사람들이한국어를이해한다면얼마나좋을까",
-      punycode = "xn--989aomsvi5e83db1d2a355cv1e0vak1dwrv93d5xbh15a0dt30a5jpsd879ccm6fea98c"
+      punycode = "xn--989aomsvi5e83db1d2a355cv1e0vak1dwrv93d5xbh15a0dt30a5jpsd879ccm6fea98c",
     )
 
     // (I) Russian (Cyrillic)
     testEncodeDecode(
       unicode = "почемужеонинеговорятпорусски",
-      punycode = "xn--b1abfaaepdrnnbgefbadotcwatmq2g4l"
+      punycode = "xn--b1abfaaepdrnnbgefbadotcwatmq2g4l",
     )
 
     // (J) Spanish
     testEncodeDecode(
       unicode = "PorquénopuedensimplementehablarenEspañol",
-      punycode = "xn--PorqunopuedensimplementehablarenEspaol-fmd56a"
+      punycode = "xn--PorqunopuedensimplementehablarenEspaol-fmd56a",
     )
 
     // (K) Vietnamese
     testEncodeDecode(
       unicode = "TạisaohọkhôngthểchỉnóitiếngViệt",
-      punycode = "xn--TisaohkhngthchnitingVit-kjcr8268qyxafd2f1b9g"
+      punycode = "xn--TisaohkhngthchnitingVit-kjcr8268qyxafd2f1b9g",
     )
   }
 
   @Test fun multipleLabels() {
     testEncodeDecode(
       unicode = "☃.net",
-      punycode = "xn--n3h.net"
+      punycode = "xn--n3h.net",
     )
     testEncodeDecode(
       unicode = "ålgård.no",
-      punycode = "xn--lgrd-poac.no"
+      punycode = "xn--lgrd-poac.no",
     )
     testEncodeDecode(
       unicode = "個人.香港",
-      punycode = "xn--gmqw5a.xn--j6w193g"
+      punycode = "xn--gmqw5a.xn--j6w193g",
     )
     testEncodeDecode(
       unicode = "упр.срб",
-      punycode = "xn--o1ach.xn--90a3ac"
+      punycode = "xn--o1ach.xn--90a3ac",
     )
   }
 
@@ -136,21 +136,21 @@ class PunycodeTest {
   @Test fun dashInPrefix() {
     testEncodeDecode(
       unicode = "klmnöpqrst-uvwxy",
-      punycode = "xn--klmnpqrst-uvwxy-ctb"
+      punycode = "xn--klmnpqrst-uvwxy-ctb",
     )
   }
 
   @Test fun uppercasePunycode() {
     testDecodeOnly(
       unicode = "ليهمابتكلموشعربي؟",
-      punycode = "XN--EGBPDAJ6BU4BXFGEHFVWXN"
+      punycode = "XN--EGBPDAJ6BU4BXFGEHFVWXN",
     )
   }
 
   @Test fun mixedCasePunycode() {
     testDecodeOnly(
       unicode = "ليهمابتكلموشعربي؟",
-      punycode = "Xn--EgBpDaJ6Bu4bXfGeHfVwXn"
+      punycode = "Xn--EgBpDaJ6Bu4bXfGeHfVwXn",
     )
   }
 
@@ -174,12 +174,18 @@ class PunycodeTest {
     assertNull(Punycode.decode("xn--ls8h="))
   }
 
-  private fun testEncodeDecode(unicode: String, punycode: String) {
+  private fun testEncodeDecode(
+    unicode: String,
+    punycode: String,
+  ) {
     assertEquals(unicode, Punycode.decode(punycode))
     assertEquals(punycode, Punycode.encode(unicode))
   }
 
-  private fun testDecodeOnly(unicode: String, punycode: String) {
+  private fun testDecodeOnly(
+    unicode: String,
+    punycode: String,
+  ) {
     assertEquals(unicode, Punycode.decode(punycode))
   }
 }

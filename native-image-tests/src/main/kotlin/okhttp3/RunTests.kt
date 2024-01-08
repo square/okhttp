@@ -15,6 +15,9 @@
  */
 package okhttp3
 
+import java.io.File
+import java.io.PrintWriter
+import kotlin.system.exitProcess
 import org.junit.jupiter.engine.JupiterTestEngine
 import org.junit.platform.console.options.Theme
 import org.junit.platform.engine.DiscoverySelector
@@ -30,9 +33,6 @@ import org.junit.platform.launcher.core.LauncherConfig
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
 import org.junit.platform.launcher.core.LauncherFactory
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener
-import java.io.File
-import java.io.PrintWriter
-import kotlin.system.exitProcess
 
 /**
  * Graal main method to run tests with minimal reflection and automatic settings.
@@ -49,13 +49,14 @@ fun main(vararg args: String) {
 
   val jupiterTestEngine = buildTestEngine()
 
-  val config = LauncherConfig.builder()
-    .enableTestExecutionListenerAutoRegistration(false)
-    .enableTestEngineAutoRegistration(false)
-    .enablePostDiscoveryFilterAutoRegistration(false)
-    .addTestEngines(jupiterTestEngine)
-    .addTestExecutionListeners(DotListener, summaryListener, treeListener)
-    .build()
+  val config =
+    LauncherConfig.builder()
+      .enableTestExecutionListenerAutoRegistration(false)
+      .enableTestEngineAutoRegistration(false)
+      .enablePostDiscoveryFilterAutoRegistration(false)
+      .addTestEngines(jupiterTestEngine)
+      .addTestExecutionListeners(DotListener, summaryListener, treeListener)
+      .build()
   val launcher: Launcher = LauncherFactory.create(config)
 
   val request: LauncherDiscoveryRequest = buildRequest(selectors)
@@ -89,8 +90,9 @@ fun testSelectors(inputFile: File? = null): List<DiscoverySelector> {
   val lines =
     inputFile?.readLines() ?: sampleTestClass.getResource("/testlist.txt").readText().lines()
 
-  val flatClassnameList = lines
-    .filter { it.isNotBlank() }
+  val flatClassnameList =
+    lines
+      .filter { it.isNotBlank() }
 
   return flatClassnameList
     .mapNotNull {
@@ -107,11 +109,12 @@ fun testSelectors(inputFile: File? = null): List<DiscoverySelector> {
  * Builds a Junit Test Plan request for a fixed set of classes, or potentially a recursive package.
  */
 fun buildRequest(selectors: List<DiscoverySelector>): LauncherDiscoveryRequest {
-  val request: LauncherDiscoveryRequest = LauncherDiscoveryRequestBuilder.request()
-    // TODO replace junit.jupiter.extensions.autodetection.enabled with API approach.
+  val request: LauncherDiscoveryRequest =
+    LauncherDiscoveryRequestBuilder.request()
+      // TODO replace junit.jupiter.extensions.autodetection.enabled with API approach.
 //    .enableImplicitConfigurationParameters(false)
-    .selectors(selectors)
-    .build()
+      .selectors(selectors)
+      .build()
   return request
 }
 
@@ -136,11 +139,13 @@ fun findTests(selectors: List<DiscoverySelector>): List<TestDescriptor> {
  * https://github.com/junit-team/junit5/issues/2469
  */
 fun treeListener(): TestExecutionListener {
-  val colorPalette = Class.forName("org.junit.platform.console.tasks.ColorPalette").getField("DEFAULT").apply {
-    isAccessible = true
-  }.get(null)
+  val colorPalette =
+    Class.forName("org.junit.platform.console.tasks.ColorPalette").getField("DEFAULT").apply {
+      isAccessible = true
+    }.get(null)
   return Class.forName(
-    "org.junit.platform.console.tasks.TreePrintingListener").declaredConstructors.first()
+    "org.junit.platform.console.tasks.TreePrintingListener",
+  ).declaredConstructors.first()
     .apply {
       isAccessible = true
     }

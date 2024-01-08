@@ -27,9 +27,8 @@ class RealResponseBody(
    */
   private val contentTypeString: String?,
   private val contentLength: Long,
-  private val source: BufferedSource
+  private val source: BufferedSource,
 ) : ResponseBody() {
-
   override fun contentLength(): Long = contentLength
 
   override fun contentType(): MediaType? = contentTypeString?.toMediaTypeOrNull()

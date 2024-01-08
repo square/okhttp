@@ -31,21 +31,28 @@ import okhttp3.internal.readFieldOrNull
 class StandardAndroidSocketAdapter(
   sslSocketClass: Class<in SSLSocket>,
   private val sslSocketFactoryClass: Class<in SSLSocketFactory>,
-  private val paramClass: Class<*>
+  private val paramClass: Class<*>,
 ) : AndroidSocketAdapter(sslSocketClass) {
-
-  override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean =
-    sslSocketFactoryClass.isInstance(sslSocketFactory)
+  override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = sslSocketFactoryClass.isInstance(sslSocketFactory)
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
     val context: Any? =
-      readFieldOrNull(sslSocketFactory, paramClass,
-        "sslParameters")
-    val x509TrustManager = readFieldOrNull(
-      context!!, X509TrustManager::class.java, "x509TrustManager")
-    return x509TrustManager ?: readFieldOrNull(context,
+      readFieldOrNull(
+        sslSocketFactory,
+        paramClass,
+        "sslParameters",
+      )
+    val x509TrustManager =
+      readFieldOrNull(
+        context!!,
+        X509TrustManager::class.java,
+        "x509TrustManager",
+      )
+    return x509TrustManager ?: readFieldOrNull(
+      context,
       X509TrustManager::class.java,
-      "trustManager")
+      "trustManager",
+    )
   }
 
   companion object {
@@ -59,7 +66,12 @@ class StandardAndroidSocketAdapter(
 
         StandardAndroidSocketAdapter(sslSocketClass, sslSocketFactoryClass, paramsClass)
       } catch (e: Exception) {
-        AndroidLog.androidLog(loggerName = OkHttpClient::class.java.name, logLevel = Platform.WARN, message = "unable to load android socket classes", t = e)
+        AndroidLog.androidLog(
+          loggerName = OkHttpClient::class.java.name,
+          logLevel = Platform.WARN,
+          message = "unable to load android socket classes",
+          t = e,
+        )
         null
       }
     }

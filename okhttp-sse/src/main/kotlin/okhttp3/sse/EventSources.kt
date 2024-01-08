@@ -45,7 +45,10 @@ object EventSources {
   }
 
   @JvmStatic
-  fun processResponse(response: Response, listener: EventSourceListener) {
+  fun processResponse(
+    response: Response,
+    listener: EventSourceListener,
+  ) {
     val eventSource = RealEventSource(response.request, listener)
     eventSource.processResponse(response)
   }

@@ -57,31 +57,42 @@ class HostnamesTest {
 
   @Test
   fun inet4AddressToAscii() {
-    assertThat(inet4AddressToAscii(
-      byteArrayOf(0, 0, 0, 0)
-    )).isEqualTo("0.0.0.0")
+    assertThat(
+      inet4AddressToAscii(
+        byteArrayOf(0, 0, 0, 0),
+      ),
+    ).isEqualTo("0.0.0.0")
 
-    assertThat(inet4AddressToAscii(
-      byteArrayOf(1, 2, 3, 4)
-    )).isEqualTo("1.2.3.4")
+    assertThat(
+      inet4AddressToAscii(
+        byteArrayOf(1, 2, 3, 4),
+      ),
+    ).isEqualTo("1.2.3.4")
 
-    assertThat(inet4AddressToAscii(
-      byteArrayOf(127, 0, 0, 1)
-    )).isEqualTo("127.0.0.1")
+    assertThat(
+      inet4AddressToAscii(
+        byteArrayOf(127, 0, 0, 1),
+      ),
+    ).isEqualTo("127.0.0.1")
 
-    assertThat(inet4AddressToAscii(
-      byteArrayOf(192.toByte(), 168.toByte(), 0, 1)
-    )).isEqualTo("192.168.0.1")
+    assertThat(
+      inet4AddressToAscii(
+        byteArrayOf(192.toByte(), 168.toByte(), 0, 1),
+      ),
+    ).isEqualTo("192.168.0.1")
 
-    assertThat(inet4AddressToAscii(
-      byteArrayOf(252.toByte(), 253.toByte(), 254.toByte(), 255.toByte())
-    )).isEqualTo("252.253.254.255")
+    assertThat(
+      inet4AddressToAscii(
+        byteArrayOf(252.toByte(), 253.toByte(), 254.toByte(), 255.toByte()),
+      ),
+    ).isEqualTo("252.253.254.255")
 
-    assertThat(inet4AddressToAscii(
-      byteArrayOf(255.toByte(), 255.toByte(), 255.toByte(), 255.toByte())
-    )).isEqualTo("255.255.255.255")
+    assertThat(
+      inet4AddressToAscii(
+        byteArrayOf(255.toByte(), 255.toByte(), 255.toByte(), 255.toByte()),
+      ),
+    ).isEqualTo("255.255.255.255")
   }
 
-  private fun decodeIpv6(input: String): ByteArray? =
-    decodeIpv6(input, 0, input.length)
+  private fun decodeIpv6(input: String): ByteArray? = decodeIpv6(input, 0, input.length)
 }

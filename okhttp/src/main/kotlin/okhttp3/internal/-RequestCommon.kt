@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal
 
 import kotlin.reflect.KClass
@@ -51,22 +52,29 @@ internal fun canonicalUrl(url: String): String {
   }
 }
 
-
-fun Request.Builder.commonHeader(name: String, value: String) = apply {
+fun Request.Builder.commonHeader(
+  name: String,
+  value: String,
+) = apply {
   headers[name] = value
 }
 
-fun Request.Builder.commonAddHeader(name: String, value: String) = apply {
+fun Request.Builder.commonAddHeader(
+  name: String,
+  value: String,
+) = apply {
   headers.add(name, value)
 }
 
-fun Request.Builder.commonRemoveHeader(name: String) = apply {
-  headers.removeAll(name)
-}
+fun Request.Builder.commonRemoveHeader(name: String) =
+  apply {
+    headers.removeAll(name)
+  }
 
-fun Request.Builder.commonHeaders(headers: Headers) = apply {
-  this.headers = headers.newBuilder()
-}
+fun Request.Builder.commonHeaders(headers: Headers) =
+  apply {
+    this.headers = headers.newBuilder()
+  }
 
 fun Request.Builder.commonCacheControl(cacheControl: CacheControl): Request.Builder {
   val value = cacheControl.toString()
@@ -88,57 +96,66 @@ fun Request.Builder.commonPut(body: RequestBody): Request.Builder = method("PUT"
 
 fun Request.Builder.commonPatch(body: RequestBody): Request.Builder = method("PATCH", body)
 
-fun Request.Builder.commonMethod(method: String, body: RequestBody?): Request.Builder = apply {
-  require(method.isNotEmpty()) {
-    "method.isEmpty() == true"
-  }
-  if (body == null) {
-    require(!HttpMethod.requiresRequestBody(method)) {
-      "method $method must have a request body."
+fun Request.Builder.commonMethod(
+  method: String,
+  body: RequestBody?,
+): Request.Builder =
+  apply {
+    require(method.isNotEmpty()) {
+      "method.isEmpty() == true"
     }
-  } else {
-    require(HttpMethod.permitsRequestBody(method)) {
-      "method $method must not have a request body."
+    if (body == null) {
+      require(!HttpMethod.requiresRequestBody(method)) {
+        "method $method must have a request body."
+      }
+    } else {
+      require(HttpMethod.permitsRequestBody(method)) {
+        "method $method must not have a request body."
+      }
     }
+    this.method = method
+    this.body = body
   }
-  this.method = method
-  this.body = body
-}
 
-fun <T : Any> Request.Builder.commonTag(type: KClass<T>, tag: T?) = apply {
+fun <T : Any> Request.Builder.commonTag(
+  type: KClass<T>,
+  tag: T?,
+) = apply {
   if (tag == null) {
     if (tags.isNotEmpty()) {
       (tags as MutableMap).remove(type)
     }
   } else {
-    val mutableTags: MutableMap<KClass<*>, Any> = when {
-      tags.isEmpty() -> mutableMapOf<KClass<*>, Any>().also { tags = it }
-      else -> tags as MutableMap<KClass<*>, Any>
-    }
+    val mutableTags: MutableMap<KClass<*>, Any> =
+      when {
+        tags.isEmpty() -> mutableMapOf<KClass<*>, Any>().also { tags = it }
+        else -> tags as MutableMap<KClass<*>, Any>
+      }
     mutableTags[type] = tag
   }
 }
 
-fun Request.commonToString(): String = buildString {
-  append("Request{method=")
-  append(method)
-  append(", url=")
-  append(url)
-  if (headers.size != 0) {
-    append(", headers=[")
-    headers.forEachIndexed { index, (name, value) ->
-      if (index > 0) {
-        append(", ")
+fun Request.commonToString(): String =
+  buildString {
+    append("Request{method=")
+    append(method)
+    append(", url=")
+    append(url)
+    if (headers.size != 0) {
+      append(", headers=[")
+      headers.forEachIndexed { index, (name, value) ->
+        if (index > 0) {
+          append(", ")
+        }
+        append(name)
+        append(':')
+        append(if (isSensitiveHeader(name)) "██" else value)
       }
-      append(name)
-      append(':')
-      append(if (isSensitiveHeader(name)) "██" else value)
+      append(']')
     }
-    append(']')
+    if (tags.isNotEmpty()) {
+      append(", tags=")
+      append(tags)
+    }
+    append('}')
   }
-  if (tags.isNotEmpty()) {
-    append(", tags=")
-    append(tags)
-  }
-  append('}')
-}

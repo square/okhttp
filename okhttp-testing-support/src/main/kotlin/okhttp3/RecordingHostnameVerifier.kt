@@ -24,7 +24,7 @@ class RecordingHostnameVerifier : HostnameVerifier {
 
   @Synchronized override fun verify(
     hostname: String,
-    session: SSLSession
+    session: SSLSession,
   ): Boolean {
     calls.add("verify $hostname")
     return true

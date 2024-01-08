@@ -29,7 +29,6 @@ class RouteDatabase {
   val failedRoutes: Set<Route>
     @Synchronized get() = _failedRoutes.toSet()
 
-
   /** Records a failure connecting to [failedRoute]. */
   @Synchronized fun failed(failedRoute: Route) {
     _failedRoutes.add(failedRoute)

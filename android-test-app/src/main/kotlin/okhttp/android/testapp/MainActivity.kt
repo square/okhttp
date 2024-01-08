@@ -19,20 +19,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import okhttp3.Call
 import okhttp3.Callback
-import okhttp3.CookieJar
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.publicsuffix.PublicSuffixDatabase
-import okio.FileSystem
 import okio.IOException
-import okio.Path.Companion.toPath
-import java.net.CookieHandler
-import java.net.URI
 
 class MainActivity : ComponentActivity() {
-
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
@@ -41,15 +34,23 @@ class MainActivity : ComponentActivity() {
     val url = "https://github.com/square/okhttp".toHttpUrl()
     println(url.topPrivateDomain())
 
-    client.newCall(Request(url)).enqueue(object : Callback {
-      override fun onFailure(call: Call, e: IOException) {
-        println("failed: $e")
-      }
+    client.newCall(Request(url)).enqueue(
+      object : Callback {
+        override fun onFailure(
+          call: Call,
+          e: IOException,
+        ) {
+          println("failed: $e")
+        }
 
-      override fun onResponse(call: Call, response: Response) {
-        println("response: ${response.code}")
-        response.close()
-      }
-    })
+        override fun onResponse(
+          call: Call,
+          response: Response,
+        ) {
+          println("response: ${response.code}")
+          response.close()
+        }
+      },
+    )
   }
 }

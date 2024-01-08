@@ -35,7 +35,10 @@ class EventSourceRecorder : EventSourceListener() {
     cancel = true
   }
 
-  override fun onOpen(eventSource: EventSource, response: Response) {
+  override fun onOpen(
+    eventSource: EventSource,
+    response: Response,
+  ) {
     get().log("[ES] onOpen", Platform.INFO, null)
     events.add(Open(eventSource, response))
     drainCancelQueue(eventSource)
@@ -52,9 +55,7 @@ class EventSourceRecorder : EventSourceListener() {
     drainCancelQueue(eventSource)
   }
 
-  override fun onClosed(
-    eventSource: EventSource,
-  ) {
+  override fun onClosed(eventSource: EventSource) {
     get().log("[ES] onClosed", Platform.INFO, null)
     events.add(Closed)
     drainCancelQueue(eventSource)
@@ -70,9 +71,7 @@ class EventSourceRecorder : EventSourceListener() {
     drainCancelQueue(eventSource)
   }
 
-  private fun drainCancelQueue(
-    eventSource: EventSource,
-  ) {
+  private fun drainCancelQueue(eventSource: EventSource) {
     if (cancel) {
       cancel = false
       eventSource.cancel()

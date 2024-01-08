@@ -47,7 +47,7 @@ class WebSocketWriter(
   val random: Random,
   private val perMessageDeflate: Boolean,
   private val noContextTakeover: Boolean,
-  private val minimumDeflateSize: Long
+  private val minimumDeflateSize: Long,
 ) : Closeable {
   /** This holds outbound data for compression and masking. */
   private val messageBuffer = Buffer()
@@ -83,19 +83,23 @@ class WebSocketWriter(
    * @param reason Reason for shutting down or `null`.
    */
   @Throws(IOException::class)
-  fun writeClose(code: Int, reason: ByteString?) {
+  fun writeClose(
+    code: Int,
+    reason: ByteString?,
+  ) {
     var payload = ByteString.EMPTY
     if (code != 0 || reason != null) {
       if (code != 0) {
         validateCloseCode(code)
       }
-      payload = Buffer().run {
-        writeShort(code)
-        if (reason != null) {
-          write(reason)
+      payload =
+        Buffer().run {
+          writeShort(code)
+          if (reason != null) {
+            write(reason)
+          }
+          readByteString()
         }
-        readByteString()
-      }
     }
 
     try {
@@ -106,7 +110,10 @@ class WebSocketWriter(
   }
 
   @Throws(IOException::class)
-  private fun writeControlFrame(opcode: Int, payload: ByteString) {
+  private fun writeControlFrame(
+    opcode: Int,
+    payload: ByteString,
+  ) {
     if (writerClosed) throw IOException("closed")
 
     val length = payload.size
@@ -143,14 +150,18 @@ class WebSocketWriter(
   }
 
   @Throws(IOException::class)
-  fun writeMessageFrame(formatOpcode: Int, data: ByteString) {
+  fun writeMessageFrame(
+    formatOpcode: Int,
+    data: ByteString,
+  ) {
     if (writerClosed) throw IOException("closed")
 
     messageBuffer.write(data)
 
     var b0 = formatOpcode or B0_FLAG_FIN
     if (perMessageDeflate && data.size >= minimumDeflateSize) {
-      val messageDeflater = this.messageDeflater
+      val messageDeflater =
+        this.messageDeflater
           ?: MessageDeflater(noContextTakeover).also { this.messageDeflater = it }
       messageDeflater.deflate(messageBuffer)
       b0 = b0 or B0_FLAG_RSV1

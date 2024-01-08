@@ -30,6 +30,10 @@ object NullProxySelector : ProxySelector() {
     return listOf(Proxy.NO_PROXY)
   }
 
-  override fun connectFailed(uri: URI?, sa: SocketAddress?, ioe: IOException?) {
+  override fun connectFailed(
+    uri: URI?,
+    sa: SocketAddress?,
+    ioe: IOException?,
+  ) {
   }
 }

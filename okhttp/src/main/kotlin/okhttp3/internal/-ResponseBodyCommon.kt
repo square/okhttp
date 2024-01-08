@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal
 
 import okhttp3.MediaType
@@ -31,7 +32,7 @@ internal fun ResponseBody.commonByteString() = commonConsumeSource(BufferedSourc
 
 internal inline fun <T : Any> ResponseBody.commonConsumeSource(
   consumer: (BufferedSource) -> T,
-  sizeMapper: (T) -> Int
+  sizeMapper: (T) -> Int,
 ): T {
   val contentLength = contentLength()
   if (contentLength > Int.MAX_VALUE) {
@@ -62,11 +63,12 @@ internal fun ByteString.commonToResponseBody(contentType: MediaType?): ResponseB
 
 internal fun BufferedSource.commonAsResponseBody(
   contentType: MediaType?,
-  contentLength: Long
-): ResponseBody = object : ResponseBody() {
-  override fun contentType(): MediaType? = contentType
+  contentLength: Long,
+): ResponseBody =
+  object : ResponseBody() {
+    override fun contentType(): MediaType? = contentType
 
-  override fun contentLength(): Long = contentLength
+    override fun contentLength(): Long = contentLength
 
-  override fun source(): BufferedSource = this@commonAsResponseBody
-}
+    override fun source(): BufferedSource = this@commonAsResponseBody
+  }

@@ -57,22 +57,24 @@ class RouteSelectorTest {
   private val proxySelector = RecordingProxySelector()
   private val uriHost = "hosta"
   private val uriPort = 1003
-  private val factory = TestValueFactory().apply {
-    this.dns = this@RouteSelectorTest.dns
-    this.proxySelector = this@RouteSelectorTest.proxySelector
-    this.uriHost = this@RouteSelectorTest.uriHost
-    this.uriPort = this@RouteSelectorTest.uriPort
-  }
+  private val factory =
+    TestValueFactory().apply {
+      this.dns = this@RouteSelectorTest.dns
+      this.proxySelector = this@RouteSelectorTest.proxySelector
+      this.uriHost = this@RouteSelectorTest.uriHost
+      this.uriPort = this@RouteSelectorTest.uriPort
+    }
 
   private lateinit var call: Call
   private val routeDatabase = RouteDatabase()
 
   @BeforeEach fun setUp() {
-    call = clientTestRule.newClient().newCall(
-      Request.Builder()
-        .url("https://$uriHost:$uriPort/")
-        .build()
-    )
+    call =
+      clientTestRule.newClient().newCall(
+        Request.Builder()
+          .url("https://$uriHost:$uriPort/")
+          .build(),
+      )
   }
 
   @AfterEach fun tearDown() {
@@ -119,9 +121,10 @@ class RouteSelectorTest {
   }
 
   @Test fun explicitProxyTriesThatProxysAddressesOnly() {
-    val address = factory.newAddress(
-      proxy = proxyA,
-    )
+    val address =
+      factory.newAddress(
+        proxy = proxyA,
+      )
     val routeSelector = newRouteSelector(address)
     assertThat(routeSelector.hasNext()).isTrue()
     dns[PROXY_A_HOST] = dns.allocate(2)
@@ -135,9 +138,10 @@ class RouteSelectorTest {
   }
 
   @Test fun explicitDirectProxy() {
-    val address = factory.newAddress(
-      proxy = Proxy.NO_PROXY,
-    )
+    val address =
+      factory.newAddress(
+        proxy = Proxy.NO_PROXY,
+      )
     val routeSelector = newRouteSelector(address)
     assertThat(routeSelector.hasNext()).isTrue()
     dns[uriHost] = dns.allocate(2)
@@ -158,10 +162,11 @@ class RouteSelectorTest {
     // The string '>' is okay in a hostname in HttpUrl, which does very light hostname validation.
     // It is not okay in URI, and so it's stripped and we get a URI with a null host.
     val bogusHostname = ">"
-    val address = factory.newAddress(
-      uriHost = bogusHostname,
-      uriPort = uriPort,
-    )
+    val address =
+      factory.newAddress(
+        uriHost = bogusHostname,
+        uriPort = uriPort,
+      )
     val routeSelector = newRouteSelector(address)
     assertThat(routeSelector.hasNext()).isTrue()
     dns[bogusHostname] = dns.allocate(1)
@@ -174,20 +179,26 @@ class RouteSelectorTest {
   }
 
   @Test fun proxySelectorReturnsNull() {
-    val nullProxySelector: ProxySelector = object : ProxySelector() {
-      override fun select(uri: URI): List<Proxy>? {
-        assertThat(uri.host).isEqualTo(uriHost)
-        return null
+    val nullProxySelector: ProxySelector =
+      object : ProxySelector() {
+        override fun select(uri: URI): List<Proxy>? {
+          assertThat(uri.host).isEqualTo(uriHost)
+          return null
+        }
+
+        override fun connectFailed(
+          uri: URI,
+          socketAddress: SocketAddress,
+          e: IOException,
+        ) {
+          throw AssertionError()
+        }
       }
 
-      override fun connectFailed(uri: URI, socketAddress: SocketAddress, e: IOException) {
-        throw AssertionError()
-      }
-    }
-
-    val address = factory.newAddress(
-      proxySelector = nullProxySelector
-    )
+    val address =
+      factory.newAddress(
+        proxySelector = nullProxySelector,
+      )
     val routeSelector = newRouteSelector(address)
     assertThat(routeSelector.hasNext()).isTrue()
     dns[uriHost] = dns.allocate(1)
@@ -385,13 +396,15 @@ class RouteSelectorTest {
   }
 
   @Test fun addressesNotSortedWhenFastFallbackIsOff() {
-    val address = factory.newAddress(
-      proxy = Proxy.NO_PROXY
-    )
-    val routeSelector = newRouteSelector(
-      address = address,
-      fastFallback = false,
-    )
+    val address =
+      factory.newAddress(
+        proxy = Proxy.NO_PROXY,
+      )
+    val routeSelector =
+      newRouteSelector(
+        address = address,
+        fastFallback = false,
+      )
     assertThat(routeSelector.hasNext()).isTrue()
     val (ipv4_1, ipv4_2) = dns.allocate(2)
     val (ipv6_1, ipv6_2) = dns.allocateIpv6(2)
@@ -407,13 +420,15 @@ class RouteSelectorTest {
   }
 
   @Test fun addressesSortedWhenFastFallbackIsOn() {
-    val address = factory.newAddress(
-      proxy = Proxy.NO_PROXY
-    )
-    val routeSelector = newRouteSelector(
-      address = address,
-      fastFallback = true,
-    )
+    val address =
+      factory.newAddress(
+        proxy = Proxy.NO_PROXY,
+      )
+    val routeSelector =
+      newRouteSelector(
+        address = address,
+        fastFallback = true,
+      )
     assertThat(routeSelector.hasNext()).isTrue()
     val (ipv4_1, ipv4_2) = dns.allocate(2)
     val (ipv6_1, ipv6_2) = dns.allocateIpv6(2)
@@ -440,78 +455,81 @@ class RouteSelectorTest {
     assertThat(socketAddress.socketHost).isEqualTo("127.0.0.1")
     socketAddress = InetSocketAddress(InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1)), 1234)
     assertThat(socketAddress.socketHost).isEqualTo("127.0.0.1")
-    socketAddress = InetSocketAddress(
-      InetAddress.getByAddress("foobar", byteArrayOf(127, 0, 0, 1)),
-      1234
-    )
+    socketAddress =
+      InetSocketAddress(
+        InetAddress.getByAddress("foobar", byteArrayOf(127, 0, 0, 1)),
+        1234,
+      )
     assertThat(socketAddress.socketHost).isEqualTo("127.0.0.1")
   }
 
   @Test fun routeToString() {
-    val ipv4Address = InetAddress.getByAddress(
-      byteArrayOf(1, 2, 3, 4)
-    )
+    val ipv4Address =
+      InetAddress.getByAddress(
+        byteArrayOf(1, 2, 3, 4),
+      )
     assertThat(
       Route(
         factory.newAddress(uriHost = "1.2.3.4", uriPort = 1003),
         Proxy.NO_PROXY,
-        InetSocketAddress(ipv4Address, 1003)
-      ).toString()
+        InetSocketAddress(ipv4Address, 1003),
+      ).toString(),
     ).isEqualTo("1.2.3.4:1003")
     assertThat(
       Route(
         factory.newAddress(uriHost = "example.com", uriPort = 1003),
         Proxy.NO_PROXY,
-        InetSocketAddress(ipv4Address, 1003)
-      ).toString()
+        InetSocketAddress(ipv4Address, 1003),
+      ).toString(),
     ).isEqualTo("example.com at 1.2.3.4:1003")
     assertThat(
       Route(
         factory.newAddress(uriHost = "example.com", uriPort = 1003),
         Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
-        InetSocketAddress(ipv4Address, 1003)
-      ).toString()
+        InetSocketAddress(ipv4Address, 1003),
+      ).toString(),
     ).isEqualTo("example.com via proxy 1.2.3.4:1003")
     assertThat(
       Route(
         factory.newAddress(uriHost = "example.com", uriPort = 1003),
         Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
-        InetSocketAddress(ipv4Address, 5678)
-      ).toString()
+        InetSocketAddress(ipv4Address, 5678),
+      ).toString(),
     ).isEqualTo("example.com:1003 via proxy 1.2.3.4:5678")
   }
 
   @Test fun routeToStringIpv6() {
-    val ipv6Address = InetAddress.getByAddress(
-      byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
-    )
+    val ipv6Address =
+      InetAddress.getByAddress(
+        byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
+      )
     assertThat(
       Route(
         factory.newAddress(uriHost = "::1", uriPort = 1003),
         Proxy.NO_PROXY,
-        InetSocketAddress(ipv6Address, uriPort)
-      ).toString()
+        InetSocketAddress(ipv6Address, uriPort),
+      ).toString(),
     ).isEqualTo("[::1]:1003")
     assertThat(
       Route(
         factory.newAddress(uriHost = "example.com", uriPort = 1003),
         Proxy.NO_PROXY,
-        InetSocketAddress(ipv6Address, uriPort)
-      ).toString()
+        InetSocketAddress(ipv6Address, uriPort),
+      ).toString(),
     ).isEqualTo("example.com at [::1]:1003")
     assertThat(
       Route(
         factory.newAddress(uriHost = "example.com", uriPort = 1003),
         Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
-        InetSocketAddress(ipv6Address, 5678)
-      ).toString()
+        InetSocketAddress(ipv6Address, 5678),
+      ).toString(),
     ).isEqualTo("example.com:1003 via proxy [::1]:5678")
     assertThat(
       Route(
         factory.newAddress(uriHost = "::2", uriPort = 1003),
         Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
-        InetSocketAddress(ipv6Address, 5678)
-      ).toString()
+        InetSocketAddress(ipv6Address, 5678),
+      ).toString(),
     ).isEqualTo("[::2]:1003 via proxy [::1]:5678")
   }
 
@@ -520,7 +538,7 @@ class RouteSelectorTest {
     address: Address,
     proxy: Proxy,
     socketAddress: InetAddress,
-    socketPort: Int
+    socketPort: Int,
   ) {
     assertThat(route.address).isEqualTo(address)
     assertThat(route.proxy).isEqualTo(proxy)
@@ -546,16 +564,18 @@ class RouteSelectorTest {
   companion object {
     private const val PROXY_A_PORT = 1001
     private const val PROXY_A_HOST = "proxya"
-    private val proxyA = Proxy(
-      Proxy.Type.HTTP,
-      InetSocketAddress.createUnresolved(PROXY_A_HOST, PROXY_A_PORT)
-    )
+    private val proxyA =
+      Proxy(
+        Proxy.Type.HTTP,
+        InetSocketAddress.createUnresolved(PROXY_A_HOST, PROXY_A_PORT),
+      )
 
     private const val PROXY_B_PORT = 1002
     private const val PROXY_B_HOST = "proxyb"
-    private val proxyB = Proxy(
-      Proxy.Type.HTTP,
-      InetSocketAddress.createUnresolved(PROXY_B_HOST, PROXY_B_PORT)
-    )
+    private val proxyB =
+      Proxy(
+        Proxy.Type.HTTP,
+        InetSocketAddress.createUnresolved(PROXY_B_HOST, PROXY_B_PORT),
+      )
   }
 }

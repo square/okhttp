@@ -27,18 +27,23 @@ import okhttp3.sse.EventSourceListener
 
 internal class RealEventSource(
   private val request: Request,
-  private val listener: EventSourceListener
+  private val listener: EventSourceListener,
 ) : EventSource, ServerSentEventReader.Callback, Callback {
   private var call: Call? = null
+
   @Volatile private var canceled = false
 
   fun connect(callFactory: Call.Factory) {
-    call = callFactory.newCall(request).apply {
-      enqueue(this@RealEventSource)
-    }
+    call =
+      callFactory.newCall(request).apply {
+        enqueue(this@RealEventSource)
+      }
   }
 
-  override fun onResponse(call: Call, response: Response) {
+  override fun onResponse(
+    call: Call,
+    response: Response,
+  ) {
     processResponse(response)
   }
 
@@ -52,8 +57,11 @@ internal class RealEventSource(
       val body = response.body
 
       if (!body.isEventStream()) {
-        listener.onFailure(this,
-            IllegalStateException("Invalid content-type: ${body.contentType()}"), response)
+        listener.onFailure(
+          this,
+          IllegalStateException("Invalid content-type: ${body.contentType()}"),
+          response,
+        )
         return
       }
 
@@ -71,10 +79,11 @@ internal class RealEventSource(
           }
         }
       } catch (e: Exception) {
-        val exception = when {
-          canceled -> IOException("canceled", e)
-          else -> e
-        }
+        val exception =
+          when {
+            canceled -> IOException("canceled", e)
+            else -> e
+          }
         listener.onFailure(this, exception, response)
         return
       }
@@ -91,7 +100,10 @@ internal class RealEventSource(
     return contentType.type == "text" && contentType.subtype == "event-stream"
   }
 
-  override fun onFailure(call: Call, e: IOException) {
+  override fun onFailure(
+    call: Call,
+    e: IOException,
+  ) {
     listener.onFailure(this, e, null)
   }
 
@@ -102,7 +114,11 @@ internal class RealEventSource(
     call?.cancel()
   }
 
-  override fun onEvent(id: String?, type: String?, data: String) {
+  override fun onEvent(
+    id: String?,
+    type: String?,
+    data: String,
+  ) {
     listener.onEvent(this, id, type, data)
   }
 

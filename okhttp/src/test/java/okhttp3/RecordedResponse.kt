@@ -36,54 +36,68 @@ class RecordedResponse(
   val response: Response?,
   val webSocket: WebSocket?,
   val body: String?,
-  val failure: IOException?
+  val failure: IOException?,
 ) {
-  fun assertRequestUrl(url: HttpUrl) = apply {
-    assertThat(request.url).isEqualTo(url)
-  }
+  fun assertRequestUrl(url: HttpUrl) =
+    apply {
+      assertThat(request.url).isEqualTo(url)
+    }
 
-  fun assertRequestMethod(method: String) = apply {
-    assertThat(request.method).isEqualTo(method)
-  }
+  fun assertRequestMethod(method: String) =
+    apply {
+      assertThat(request.method).isEqualTo(method)
+    }
 
-  fun assertRequestHeader(name: String, vararg values: String) = apply {
+  fun assertRequestHeader(
+    name: String,
+    vararg values: String,
+  ) = apply {
     assertThat(request.headers(name)).containsExactly(*values)
   }
 
-  fun assertCode(expectedCode: Int) = apply {
-    assertThat(response!!.code).isEqualTo(expectedCode)
-  }
+  fun assertCode(expectedCode: Int) =
+    apply {
+      assertThat(response!!.code).isEqualTo(expectedCode)
+    }
 
-  fun assertSuccessful() = apply {
-    assertThat(failure).isNull()
-    assertThat(response!!.isSuccessful).isTrue()
-  }
+  fun assertSuccessful() =
+    apply {
+      assertThat(failure).isNull()
+      assertThat(response!!.isSuccessful).isTrue()
+    }
 
-  fun assertNotSuccessful() = apply {
-    assertThat(response!!.isSuccessful).isFalse()
-  }
+  fun assertNotSuccessful() =
+    apply {
+      assertThat(response!!.isSuccessful).isFalse()
+    }
 
-  fun assertHeader(name: String, vararg values: String?) = apply {
+  fun assertHeader(
+    name: String,
+    vararg values: String?,
+  ) = apply {
     assertThat(response!!.headers(name)).containsExactly(*values)
   }
 
-  fun assertHeaders(headers: Headers) = apply {
-    assertThat(response!!.headers).isEqualTo(headers)
-  }
+  fun assertHeaders(headers: Headers) =
+    apply {
+      assertThat(response!!.headers).isEqualTo(headers)
+    }
 
-  fun assertBody(expectedBody: String) = apply {
-    assertThat(body).isEqualTo(expectedBody)
-  }
+  fun assertBody(expectedBody: String) =
+    apply {
+      assertThat(body).isEqualTo(expectedBody)
+    }
 
-  fun assertHandshake() = apply {
-    val handshake = response!!.handshake!!
-    assertThat(handshake.tlsVersion).isNotNull()
-    assertThat(handshake.cipherSuite).isNotNull()
-    assertThat(handshake.peerPrincipal).isNotNull()
-    assertThat(handshake.peerCertificates.size).isEqualTo(1)
-    assertThat(handshake.localPrincipal).isNull()
-    assertThat(handshake.localCertificates.size).isEqualTo(0)
-  }
+  fun assertHandshake() =
+    apply {
+      val handshake = response!!.handshake!!
+      assertThat(handshake.tlsVersion).isNotNull()
+      assertThat(handshake.cipherSuite).isNotNull()
+      assertThat(handshake.peerPrincipal).isNotNull()
+      assertThat(handshake.peerCertificates.size).isEqualTo(1)
+      assertThat(handshake.localPrincipal).isNull()
+      assertThat(handshake.localCertificates.size).isEqualTo(0)
+    }
 
   /**
    * Asserts that the current response was redirected and returns the prior response.
@@ -102,14 +116,16 @@ class RecordedResponse(
   }
 
   /** Asserts that the current response didn't use the network.  */
-  fun assertNoNetworkResponse() = apply {
-    assertThat(response!!.networkResponse).isNull()
-  }
+  fun assertNoNetworkResponse() =
+    apply {
+      assertThat(response!!.networkResponse).isNull()
+    }
 
   /** Asserts that the current response didn't use the cache.  */
-  fun assertNoCacheResponse() = apply {
-    assertThat(response!!.cacheResponse).isNull()
-  }
+  fun assertNoCacheResponse() =
+    apply {
+      assertThat(response!!.cacheResponse).isNull()
+    }
 
   /**
    * Asserts that the current response used the cache and returns the cache response.
@@ -119,41 +135,56 @@ class RecordedResponse(
     return RecordedResponse(cacheResponse.request, cacheResponse, null, null, null)
   }
 
-  fun assertFailure(vararg allowedExceptionTypes: Class<*>) = apply {
-    var found = false
-    for (expectedClass in allowedExceptionTypes) {
-      if (expectedClass.isInstance(failure)) {
-        found = true
-        break
+  fun assertFailure(vararg allowedExceptionTypes: Class<*>) =
+    apply {
+      var found = false
+      for (expectedClass in allowedExceptionTypes) {
+        if (expectedClass.isInstance(failure)) {
+          found = true
+          break
+        }
       }
+      assertThat(
+        found,
+        "Expected exception type among ${allowedExceptionTypes.contentToString()}, got $failure",
+      ).isTrue()
     }
-    assertThat(
-      found,
-      "Expected exception type among ${allowedExceptionTypes.contentToString()}, got $failure"
-    ).isTrue()
-  }
 
-  fun assertFailure(vararg messages: String) = apply {
-    assertThat(failure, "No failure found").isNotNull()
-    assertThat(messages).contains(failure!!.message)
-  }
+  fun assertFailure(vararg messages: String) =
+    apply {
+      assertThat(failure, "No failure found").isNotNull()
+      assertThat(messages).contains(failure!!.message)
+    }
 
-  fun assertFailureMatches(vararg patterns: String) = apply {
-    val message = failure!!.message!!
-    assertThat(patterns.firstOrNull { pattern ->
-      message.matches(pattern.toRegex())
-    }).isNotNull()
-  }
+  fun assertFailureMatches(vararg patterns: String) =
+    apply {
+      val message = failure!!.message!!
+      assertThat(
+        patterns.firstOrNull { pattern ->
+          message.matches(pattern.toRegex())
+        },
+      ).isNotNull()
+    }
 
-  fun assertSentRequestAtMillis(minimum: Long, maximum: Long) = apply {
+  fun assertSentRequestAtMillis(
+    minimum: Long,
+    maximum: Long,
+  ) = apply {
     assertDateInRange(minimum, response!!.sentRequestAtMillis, maximum)
   }
 
-  fun assertReceivedResponseAtMillis(minimum: Long, maximum: Long) = apply {
+  fun assertReceivedResponseAtMillis(
+    minimum: Long,
+    maximum: Long,
+  ) = apply {
     assertDateInRange(minimum, response!!.receivedResponseAtMillis, maximum)
   }
 
-  private fun assertDateInRange(minimum: Long, actual: Long, maximum: Long) {
+  private fun assertDateInRange(
+    minimum: Long,
+    actual: Long,
+    maximum: Long,
+  ) {
     assertThat(actual, "${format(minimum)} <= ${format(actual)} <= ${format(maximum)}")
       .isBetween(minimum, maximum)
   }

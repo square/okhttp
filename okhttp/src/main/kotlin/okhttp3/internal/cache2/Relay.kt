@@ -52,21 +52,17 @@ class Relay private constructor(
    * are permitted.
    */
   var file: RandomAccessFile?,
-
   /**
    * Null once the file has a complete copy of the upstream bytes. Only the [upstreamReader] thread
    * may access this source.
    */
   var upstream: Source?,
-
   /** The number of bytes consumed from [upstream]. Guarded by this. */
   var upstreamPos: Long,
-
   /** User-supplied additional data persisted with the source data. */
   private val metadata: ByteString,
-
   /** The maximum size of [buffer]. */
-  val bufferMaxSize: Long
+  val bufferMaxSize: Long,
 ) {
   /** The thread that currently has access to upstream. Possibly null. Guarded by this. */
   var upstreamReader: Thread? = null
@@ -96,14 +92,15 @@ class Relay private constructor(
   private fun writeHeader(
     prefix: ByteString,
     upstreamSize: Long,
-    metadataSize: Long
+    metadataSize: Long,
   ) {
-    val header = Buffer().apply {
-      write(prefix)
-      writeLong(upstreamSize)
-      writeLong(metadataSize)
-      require(size == FILE_HEADER_SIZE)
-    }
+    val header =
+      Buffer().apply {
+        write(prefix)
+        writeLong(upstreamSize)
+        writeLong(metadataSize)
+        require(size == FILE_HEADER_SIZE)
+      }
 
     val fileOperator = FileOperator(file!!.channel)
     fileOperator.write(0, header, FILE_HEADER_SIZE)
@@ -184,42 +181,46 @@ class Relay private constructor(
      * block until that read completes. It is possible to time out while waiting for that.
      */
     @Throws(IOException::class)
-    override fun read(sink: Buffer, byteCount: Long): Long {
+    override fun read(
+      sink: Buffer,
+      byteCount: Long,
+    ): Long {
       check(fileOperator != null)
 
-      val source: Int = synchronized(this@Relay) {
-        // We need new data from upstream.
-        while (true) {
-          val upstreamPos = this@Relay.upstreamPos
-          if (sourcePos != upstreamPos) break
+      val source: Int =
+        synchronized(this@Relay) {
+          // We need new data from upstream.
+          while (true) {
+            val upstreamPos = this@Relay.upstreamPos
+            if (sourcePos != upstreamPos) break
 
-          // No more data upstream. We're done.
-          if (complete) return -1L
+            // No more data upstream. We're done.
+            if (complete) return -1L
 
-          // Another thread is already reading. Wait for that.
-          if (upstreamReader != null) {
-            timeout.waitUntilNotified(this@Relay)
-            continue
+            // Another thread is already reading. Wait for that.
+            if (upstreamReader != null) {
+              timeout.waitUntilNotified(this@Relay)
+              continue
+            }
+
+            // We will do the read.
+            upstreamReader = Thread.currentThread()
+            return@synchronized SOURCE_UPSTREAM
           }
 
-          // We will do the read.
-          upstreamReader = Thread.currentThread()
-          return@synchronized SOURCE_UPSTREAM
+          val bufferPos = upstreamPos - buffer.size
+
+          // Bytes of the read precede the buffer. Read from the file.
+          if (sourcePos < bufferPos) {
+            return@synchronized SOURCE_FILE
+          }
+
+          // The buffer has the data we need. Read from there and return immediately.
+          val bytesToRead = minOf(byteCount, upstreamPos - sourcePos)
+          buffer.copyTo(sink, sourcePos - bufferPos, bytesToRead)
+          sourcePos += bytesToRead
+          return bytesToRead
         }
-
-        val bufferPos = upstreamPos - buffer.size
-
-        // Bytes of the read precede the buffer. Read from the file.
-        if (sourcePos < bufferPos) {
-          return@synchronized SOURCE_FILE
-        }
-
-        // The buffer has the data we need. Read from there and return immediately.
-        val bytesToRead = minOf(byteCount, upstreamPos - sourcePos)
-        buffer.copyTo(sink, sourcePos - bufferPos, bytesToRead)
-        sourcePos += bytesToRead
-        return bytesToRead
-      }
 
       // Read from the file.
       if (source == SOURCE_FILE) {
@@ -247,7 +248,10 @@ class Relay private constructor(
 
         // Append the upstream bytes to the file.
         fileOperator!!.write(
-            FILE_HEADER_SIZE + upstreamPos, upstreamBuffer.clone(), upstreamBytesRead)
+          FILE_HEADER_SIZE + upstreamPos,
+          upstreamBuffer.clone(),
+          upstreamBytesRead,
+        )
 
         synchronized(this@Relay) {
           // Append new upstream bytes into the buffer. Trim it to its max size.
@@ -297,6 +301,7 @@ class Relay private constructor(
     private const val SOURCE_FILE = 2
 
     @JvmField val PREFIX_CLEAN = "OkHttp cache v1\n".encodeUtf8()
+
     @JvmField val PREFIX_DIRTY = "OkHttp DIRTY :(\n".encodeUtf8()
     private const val FILE_HEADER_SIZE = 32L
 
@@ -312,7 +317,7 @@ class Relay private constructor(
       file: File,
       upstream: Source,
       metadata: ByteString,
-      bufferMaxSize: Long
+      bufferMaxSize: Long,
     ): Relay {
       val randomAccessFile = RandomAccessFile(file, "rw")
       val result = Relay(randomAccessFile, upstream, 0L, metadata, bufferMaxSize)

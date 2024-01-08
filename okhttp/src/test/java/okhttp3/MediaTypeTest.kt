@@ -32,7 +32,10 @@ open class MediaTypeTest {
 
   protected open fun parse(string: String): MediaType = string.toMediaTypeOrNull()!!
 
-  protected open fun assertInvalid(string: String, exceptionMessage: String?) {
+  protected open fun assertInvalid(
+    string: String,
+    exceptionMessage: String?,
+  ) {
     assertNull(string.toMediaTypeOrNull(), exceptionMessage)
   }
 
@@ -45,7 +48,7 @@ open class MediaTypeTest {
     assertEquals(mediaType, parse("text/plain;boundary=foo;charset=utf-8"))
     assertEquals(
       mediaType.hashCode(),
-      parse("text/plain;boundary=foo;charset=utf-8").hashCode()
+      parse("text/plain;boundary=foo;charset=utf-8").hashCode(),
     )
   }
 
@@ -79,47 +82,47 @@ open class MediaTypeTest {
     assertInvalid("text/ plain", "No subtype found for: \"text/ plain\"")
     assertInvalid(
       "text/pl@in",
-      "Parameter is not formatted correctly: \"@in\" for: \"text/pl@in\""
+      "Parameter is not formatted correctly: \"@in\" for: \"text/pl@in\"",
     )
     assertInvalid(
       "text/plain; a",
-      "Parameter is not formatted correctly: \"a\" for: \"text/plain; a\""
+      "Parameter is not formatted correctly: \"a\" for: \"text/plain; a\"",
     )
     assertInvalid(
       "text/plain; a=",
-      "Parameter is not formatted correctly: \"a=\" for: \"text/plain; a=\""
+      "Parameter is not formatted correctly: \"a=\" for: \"text/plain; a=\"",
     )
     assertInvalid(
       "text/plain; a=@",
-      "Parameter is not formatted correctly: \"a=@\" for: \"text/plain; a=@\""
+      "Parameter is not formatted correctly: \"a=@\" for: \"text/plain; a=@\"",
     )
     assertInvalid(
       "text/plain; a=\"@",
-      "Parameter is not formatted correctly: \"a=\"@\" for: \"text/plain; a=\"@\""
+      "Parameter is not formatted correctly: \"a=\"@\" for: \"text/plain; a=\"@\"",
     )
     assertInvalid(
       "text/plain; a=1; b",
-      "Parameter is not formatted correctly: \"b\" for: \"text/plain; a=1; b\""
+      "Parameter is not formatted correctly: \"b\" for: \"text/plain; a=1; b\"",
     )
     assertInvalid(
       "text/plain; a=1; b=",
-      "Parameter is not formatted correctly: \"b=\" for: \"text/plain; a=1; b=\""
+      "Parameter is not formatted correctly: \"b=\" for: \"text/plain; a=1; b=\"",
     )
     assertInvalid(
       "text/plain; a=\u2025",
-      "Parameter is not formatted correctly: \"a=‥\" for: \"text/plain; a=‥\""
+      "Parameter is not formatted correctly: \"a=‥\" for: \"text/plain; a=‥\"",
     )
     assertInvalid(
       "text/pl ain",
-      "Parameter is not formatted correctly: \" ain\" for: \"text/pl ain\""
+      "Parameter is not formatted correctly: \" ain\" for: \"text/pl ain\"",
     )
     assertInvalid(
       "text/plain ",
-      "Parameter is not formatted correctly: \" \" for: \"text/plain \""
+      "Parameter is not formatted correctly: \" \" for: \"text/plain \"",
     )
     assertInvalid(
       "text/plain ; a=1",
-      "Parameter is not formatted correctly: \" ; a=1\" for: \"text/plain ; a=1\""
+      "Parameter is not formatted correctly: \" ; a=1\" for: \"text/plain ; a=1\"",
     )
   }
 
@@ -204,6 +207,7 @@ open class MediaTypeTest {
     val mediaType = parse("multipart/mixed; number=2; number=3")
     assertEquals("2", mediaType.parameter("number"))
   }
+
   private fun assertMediaType(string: String) {
     assertEquals(string, parse(string).toString())
   }

@@ -31,15 +31,15 @@ class ConscryptSocketAdapter : SocketAdapter {
   override fun isSupported(): Boolean = ConscryptPlatform.isSupported
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
-      when {
-        matchesSocket(sslSocket) -> Conscrypt.getApplicationProtocol(sslSocket)
-        else -> null // No TLS extensions if the socket class is custom.
-      }
+    when {
+      matchesSocket(sslSocket) -> Conscrypt.getApplicationProtocol(sslSocket)
+      else -> null // No TLS extensions if the socket class is custom.
+    }
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
-    protocols: List<Protocol>
+    protocols: List<Protocol>,
   ) {
     // No TLS extensions if the socket class is custom.
     if (matchesSocket(sslSocket)) {
@@ -53,11 +53,13 @@ class ConscryptSocketAdapter : SocketAdapter {
   }
 
   companion object {
-    val factory = object : DeferredSocketAdapter.Factory {
-      override fun matchesSocket(sslSocket: SSLSocket): Boolean {
-        return ConscryptPlatform.isSupported && Conscrypt.isConscrypt(sslSocket)
+    val factory =
+      object : DeferredSocketAdapter.Factory {
+        override fun matchesSocket(sslSocket: SSLSocket): Boolean {
+          return ConscryptPlatform.isSupported && Conscrypt.isConscrypt(sslSocket)
+        }
+
+        override fun create(sslSocket: SSLSocket): SocketAdapter = ConscryptSocketAdapter()
       }
-      override fun create(sslSocket: SSLSocket): SocketAdapter = ConscryptSocketAdapter()
-    }
   }
 }

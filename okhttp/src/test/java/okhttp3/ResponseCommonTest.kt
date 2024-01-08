@@ -63,16 +63,17 @@ class ResponseCommonTest {
   }
 
   @Test fun defaultResponseBodyIsEmpty() {
-    val response = Response.Builder()
-      .request(
-        Request.Builder()
-          .url("https://example.com/")
-          .build()
-      )
-      .protocol(Protocol.HTTP_1_1)
-      .code(200)
-      .message("OK")
-      .build()
+    val response =
+      Response.Builder()
+        .request(
+          Request.Builder()
+            .url("https://example.com/")
+            .build(),
+        )
+        .protocol(Protocol.HTTP_1_1)
+        .code(200)
+        .message("OK")
+        .build()
     assertThat(response.body.contentType()).isNull()
     assertThat(response.body.contentLength()).isEqualTo(0L)
     assertThat(response.body.byteString()).isEqualTo(EMPTY)
@@ -84,30 +85,38 @@ class ResponseCommonTest {
    */
   private fun responseBody(content: String): ResponseBody {
     val data = Buffer().writeUtf8(content)
-    val source: Source = object : Source {
-      var closed = false
-      override fun close() {
-        closed = true
-      }
+    val source: Source =
+      object : Source {
+        var closed = false
 
-      override fun read(sink: Buffer, byteCount: Long): Long {
-        check(!closed)
-        return data.read(sink, byteCount)
-      }
+        override fun close() {
+          closed = true
+        }
 
-      override fun timeout(): Timeout {
-        return Timeout.NONE
+        override fun read(
+          sink: Buffer,
+          byteCount: Long,
+        ): Long {
+          check(!closed)
+          return data.read(sink, byteCount)
+        }
+
+        override fun timeout(): Timeout {
+          return Timeout.NONE
+        }
       }
-    }
     return source.buffer().asResponseBody(null, -1)
   }
 
-  private fun newResponse(responseBody: ResponseBody, code: Int = 200): Response {
+  private fun newResponse(
+    responseBody: ResponseBody,
+    code: Int = 200,
+  ): Response {
     return Response.Builder()
       .request(
         Request.Builder()
           .url("https://example.com/")
-          .build()
+          .build(),
       )
       .protocol(Protocol.HTTP_1_1)
       .code(code)

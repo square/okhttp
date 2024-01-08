@@ -98,64 +98,74 @@ class TaskFaker : Closeable {
   private var isRunningAllTasks = false
 
   /** A task runner that posts tasks to this fake. Tasks won't be executed until requested. */
-  val taskRunner: TaskRunner = TaskRunner(object : TaskRunner.Backend {
-    override fun execute(taskRunner: TaskRunner, runnable: Runnable) {
-      taskRunner.assertThreadHoldsLock()
-      val acquiredTaskRunnerLock = AtomicBoolean()
+  val taskRunner: TaskRunner =
+    TaskRunner(
+      object : TaskRunner.Backend {
+        override fun execute(
+          taskRunner: TaskRunner,
+          runnable: Runnable,
+        ) {
+          taskRunner.assertThreadHoldsLock()
+          val acquiredTaskRunnerLock = AtomicBoolean()
 
-      tasksExecutor.execute {
-        taskRunner.lock.withLock {
-          acquiredTaskRunnerLock.set(true)
-          taskRunner.condition.signalAll()
+          tasksExecutor.execute {
+            taskRunner.lock.withLock {
+              acquiredTaskRunnerLock.set(true)
+              taskRunner.condition.signalAll()
 
-          tasksRunningCount++
-          if (tasksRunningCount > 1) isParallel = true
-          try {
-            if (!isRunningAllTasks) {
-              stall()
+              tasksRunningCount++
+              if (tasksRunningCount > 1) isParallel = true
+              try {
+                if (!isRunningAllTasks) {
+                  stall()
+                }
+                runnable.run()
+              } catch (e: InterruptedException) {
+                if (!tasksExecutor.isShutdown) throw e // Ignore shutdown-triggered interruptions.
+              } finally {
+                tasksRunningCount--
+                taskBecameStalled.release()
+              }
             }
-            runnable.run()
-          } catch (e: InterruptedException) {
-            if (!tasksExecutor.isShutdown) throw e // Ignore shutdown-triggered interruptions.
-          } finally {
-            tasksRunningCount--
-            taskBecameStalled.release()
+          }
+
+          // Execute() must not return until the launched task stalls.
+          while (!acquiredTaskRunnerLock.get()) {
+            taskRunner.condition.await()
           }
         }
-      }
 
-      // Execute() must not return until the launched task stalls.
-      while (!acquiredTaskRunnerLock.get()) {
-        taskRunner.condition.await()
-      }
-    }
+        override fun nanoTime() = nanoTime
 
-    override fun nanoTime() = nanoTime
+        override fun coordinatorNotify(taskRunner: TaskRunner) {
+          taskRunner.assertThreadHoldsLock()
+          check(waitingCoordinatorThread != null)
 
-    override fun coordinatorNotify(taskRunner: TaskRunner) {
-      taskRunner.assertThreadHoldsLock()
-      check(waitingCoordinatorThread != null)
+          stalledTasks.remove(waitingCoordinatorThread)
+          taskRunner.condition.signalAll()
+        }
 
-      stalledTasks.remove(waitingCoordinatorThread)
-      taskRunner.condition.signalAll()
-    }
+        override fun coordinatorWait(
+          taskRunner: TaskRunner,
+          nanos: Long,
+        ) {
+          taskRunner.assertThreadHoldsLock()
 
-    override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
-      taskRunner.assertThreadHoldsLock()
+          check(waitingCoordinatorThread == null)
+          if (nanos == 0L) return
 
-      check(waitingCoordinatorThread == null)
-      if (nanos == 0L) return
+          waitingCoordinatorThread = Thread.currentThread()
+          try {
+            stall()
+          } finally {
+            waitingCoordinatorThread = null
+          }
+        }
 
-      waitingCoordinatorThread = Thread.currentThread()
-      try {
-        stall()
-      } finally {
-        waitingCoordinatorThread = null
-      }
-    }
-
-    override fun <T> decorate(queue: BlockingQueue<T>) = TaskFakerBlockingQueue(queue)
-  }, logger = logger)
+        override fun <T> decorate(queue: BlockingQueue<T>) = TaskFakerBlockingQueue(queue)
+      },
+      logger = logger,
+    )
 
   /** Wait for the test thread to proceed. */
   private fun stall() {
@@ -275,13 +285,16 @@ class TaskFaker : Closeable {
    * like [poll]. It is only usable within task faker tasks.
    */
   private inner class TaskFakerBlockingQueue<T>(
-    val delegate: BlockingQueue<T>
+    val delegate: BlockingQueue<T>,
   ) : AbstractQueue<T>(), BlockingQueue<T> {
     override val size: Int = delegate.size
 
     override fun poll(): T = delegate.poll()
 
-    override fun poll(timeout: Long, unit: TimeUnit): T? {
+    override fun poll(
+      timeout: Long,
+      unit: TimeUnit,
+    ): T? {
       taskRunner.assertThreadHoldsLock()
 
       val waitUntil = nanoTime + unit.toNanos(timeout)
@@ -306,7 +319,11 @@ class TaskFaker : Closeable {
 
     override fun peek(): T = error("unsupported")
 
-    override fun offer(element: T, timeout: Long, unit: TimeUnit) = error("unsupported")
+    override fun offer(
+      element: T,
+      timeout: Long,
+      unit: TimeUnit,
+    ) = error("unsupported")
 
     override fun take() = error("unsupported")
 
@@ -314,7 +331,10 @@ class TaskFaker : Closeable {
 
     override fun drainTo(sink: MutableCollection<in T>) = error("unsupported")
 
-    override fun drainTo(sink: MutableCollection<in T>, maxElements: Int) = error("unsupported")
+    override fun drainTo(
+      sink: MutableCollection<in T>,
+      maxElements: Int,
+    ) = error("unsupported")
   }
 
   /** Returns true if no tasks have been scheduled. This runs the coordinator for confirmation. */

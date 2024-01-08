@@ -32,14 +32,16 @@ import org.junit.jupiter.api.extension.RegisterExtension
  * https://square.github.io/okhttp/
  */
 class OkHttpClientTest {
-  @JvmField @RegisterExtension val platform = PlatformRule()
+  @JvmField @RegisterExtension
+  val platform = PlatformRule()
 
   @Test fun get(server: MockWebServer) {
     server.enqueue(MockResponse(body = "hello, OkHttp"))
 
     val client = OkHttpClient()
 
-    val request = Request.Builder()
+    val request =
+      Request.Builder()
         .url(server.url("/"))
         .header("Accept", "text/plain")
         .build()
@@ -48,9 +50,9 @@ class OkHttpClientTest {
     assertThat(response.body.string()).isEqualTo("hello, OkHttp")
 
     val recorded = server.takeRequest()
-      assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
-      assertThat(recorded.headers["Accept-Encoding"]).isEqualTo("gzip")
-      assertThat(recorded.headers["Connection"]).isEqualTo("Keep-Alive")
-      assertThat(recorded.headers["User-Agent"]!!).matches(Regex("okhttp/.*"))
+    assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
+    assertThat(recorded.headers["Accept-Encoding"]).isEqualTo("gzip")
+    assertThat(recorded.headers["Connection"]).isEqualTo("Keep-Alive")
+    assertThat(recorded.headers["User-Agent"]!!).matches(Regex("okhttp/.*"))
   }
 }

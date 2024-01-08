@@ -47,28 +47,20 @@ class CacheControl internal constructor(
    * In a request, it means do not use a cache to satisfy the request.
    */
   @get:JvmName("noCache") val noCache: Boolean,
-
   /** If true, this response should not be cached. */
   @get:JvmName("noStore") val noStore: Boolean,
-
   /** The duration past the response's served date that it can be served without validation. */
   @get:JvmName("maxAgeSeconds") val maxAgeSeconds: Int,
-
   /**
    * The "s-maxage" directive is the max age for shared caches. Not to be confused with "max-age"
    * for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.
    */
   @get:JvmName("sMaxAgeSeconds") val sMaxAgeSeconds: Int,
-
   val isPrivate: Boolean,
   val isPublic: Boolean,
-
   @get:JvmName("mustRevalidate") val mustRevalidate: Boolean,
-
   @get:JvmName("maxStaleSeconds") val maxStaleSeconds: Int,
-
   @get:JvmName("minFreshSeconds") val minFreshSeconds: Int,
-
   /**
    * This field's name "only-if-cached" is misleading. It actually means "do not use the network".
    * It is set by a client who only wants to make a request if it can be fully satisfied by the
@@ -76,81 +68,88 @@ class CacheControl internal constructor(
    * if this header is set.
    */
   @get:JvmName("onlyIfCached") val onlyIfCached: Boolean,
-
   @get:JvmName("noTransform") val noTransform: Boolean,
-
   @get:JvmName("immutable") val immutable: Boolean,
-
-  internal var headerValue: String?
+  internal var headerValue: String?,
 ) {
   @JvmName("-deprecated_noCache")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "noCache"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "noCache"),
+    level = DeprecationLevel.ERROR,
+  )
   fun noCache(): Boolean = noCache
 
   @JvmName("-deprecated_noStore")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "noStore"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "noStore"),
+    level = DeprecationLevel.ERROR,
+  )
   fun noStore(): Boolean = noStore
 
   @JvmName("-deprecated_maxAgeSeconds")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "maxAgeSeconds"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "maxAgeSeconds"),
+    level = DeprecationLevel.ERROR,
+  )
   fun maxAgeSeconds(): Int = maxAgeSeconds
 
   @JvmName("-deprecated_sMaxAgeSeconds")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "sMaxAgeSeconds"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "sMaxAgeSeconds"),
+    level = DeprecationLevel.ERROR,
+  )
   fun sMaxAgeSeconds(): Int = sMaxAgeSeconds
 
   @JvmName("-deprecated_mustRevalidate")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "mustRevalidate"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "mustRevalidate"),
+    level = DeprecationLevel.ERROR,
+  )
   fun mustRevalidate(): Boolean = mustRevalidate
 
   @JvmName("-deprecated_maxStaleSeconds")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "maxStaleSeconds"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "maxStaleSeconds"),
+    level = DeprecationLevel.ERROR,
+  )
   fun maxStaleSeconds(): Int = maxStaleSeconds
 
   @JvmName("-deprecated_minFreshSeconds")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "minFreshSeconds"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "minFreshSeconds"),
+    level = DeprecationLevel.ERROR,
+  )
   fun minFreshSeconds(): Int = minFreshSeconds
 
   @JvmName("-deprecated_onlyIfCached")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "onlyIfCached"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "onlyIfCached"),
+    level = DeprecationLevel.ERROR,
+  )
   fun onlyIfCached(): Boolean = onlyIfCached
 
   @JvmName("-deprecated_noTransform")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "noTransform"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "noTransform"),
+    level = DeprecationLevel.ERROR,
+  )
   fun noTransform(): Boolean = noTransform
 
   @JvmName("-deprecated_immutable")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "immutable"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "immutable"),
+    level = DeprecationLevel.ERROR,
+  )
   fun immutable(): Boolean = immutable
 
   override fun toString(): String = commonToString()
@@ -190,11 +189,20 @@ class CacheControl internal constructor(
      * @param maxAge a non-negative integer. This is stored and transmitted with [TimeUnit.SECONDS]
      *     precision; finer precision will be lost.
      */
-    fun maxAge(maxAge: Int, timeUnit: DurationUnit) = commonMaxAge(maxAge, timeUnit)
+    fun maxAge(
+      maxAge: Int,
+      timeUnit: DurationUnit,
+    ) = commonMaxAge(maxAge, timeUnit)
 
-    fun maxStale(maxStale: Int, timeUnit: DurationUnit) = commonMaxStale(maxStale, timeUnit)
+    fun maxStale(
+      maxStale: Int,
+      timeUnit: DurationUnit,
+    ) = commonMaxStale(maxStale, timeUnit)
 
-    fun minFresh(minFresh: Int, timeUnit: DurationUnit) = commonMinFresh(minFresh, timeUnit)
+    fun minFresh(
+      minFresh: Int,
+      timeUnit: DurationUnit,
+    ) = commonMinFresh(minFresh, timeUnit)
 
     /**
      * Sets the maximum age of a cached response. If the cache response's age exceeds [maxAge], it
@@ -203,7 +211,10 @@ class CacheControl internal constructor(
      * @param maxAge a non-negative integer. This is stored and transmitted with [TimeUnit.SECONDS]
      *     precision; finer precision will be lost.
      */
-    fun maxAge(maxAge: Int, timeUnit: TimeUnit) = apply {
+    fun maxAge(
+      maxAge: Int,
+      timeUnit: TimeUnit,
+    ) = apply {
       require(maxAge >= 0) { "maxAge < 0: $maxAge" }
       val maxAgeSecondsLong = timeUnit.toSeconds(maxAge.toLong())
       this.maxAgeSeconds = maxAgeSecondsLong.commonClampToInt()
@@ -216,7 +227,10 @@ class CacheControl internal constructor(
      * @param maxStale a non-negative integer. This is stored and transmitted with
      *     [TimeUnit.SECONDS] precision; finer precision will be lost.
      */
-    fun maxStale(maxStale: Int, timeUnit: TimeUnit) = apply {
+    fun maxStale(
+      maxStale: Int,
+      timeUnit: TimeUnit,
+    ) = apply {
       require(maxStale >= 0) { "maxStale < 0: $maxStale" }
       val maxStaleSecondsLong = timeUnit.toSeconds(maxStale.toLong())
       this.maxStaleSeconds = maxStaleSecondsLong.commonClampToInt()
@@ -230,7 +244,10 @@ class CacheControl internal constructor(
      * @param minFresh a non-negative integer. This is stored and transmitted with
      *     [TimeUnit.SECONDS] precision; finer precision will be lost.
      */
-    fun minFresh(minFresh: Int, timeUnit: TimeUnit) = apply {
+    fun minFresh(
+      minFresh: Int,
+      timeUnit: TimeUnit,
+    ) = apply {
       require(minFresh >= 0) { "minFresh < 0: $minFresh" }
       val minFreshSecondsLong = timeUnit.toSeconds(minFresh.toLong())
       this.minFreshSeconds = minFreshSecondsLong.commonClampToInt()

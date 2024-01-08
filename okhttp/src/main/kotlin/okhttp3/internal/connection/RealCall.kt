@@ -63,19 +63,20 @@ class RealCall(
   val client: OkHttpClient,
   /** The application's original request unadulterated by redirects or auth headers. */
   val originalRequest: Request,
-  val forWebSocket: Boolean
+  val forWebSocket: Boolean,
 ) : Call, Cloneable {
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
 
   internal val eventListener: EventListener = client.eventListenerFactory.create(this)
 
-  private val timeout = object : AsyncTimeout() {
-    override fun timedOut() {
-      this@RealCall.cancel()
+  private val timeout =
+    object : AsyncTimeout() {
+      override fun timedOut() {
+        this@RealCall.cancel()
+      }
+    }.apply {
+      timeout(client.callTimeoutMillis.toLong(), MILLISECONDS)
     }
-  }.apply {
-    timeout(client.callTimeoutMillis.toLong(), MILLISECONDS)
-  }
 
   private val executed = AtomicBoolean()
 
@@ -115,6 +116,7 @@ class RealCall(
   // canceled it's canceled forever.
 
   @Volatile private var canceled = false
+
   @Volatile private var exchange: Exchange? = null
   internal val plansToCancel = CopyOnWriteArrayList<RoutePlanner.Plan>()
 
@@ -189,16 +191,17 @@ class RealCall(
     }
     interceptors += CallServerInterceptor(forWebSocket)
 
-    val chain = RealInterceptorChain(
-      call = this,
-      interceptors = interceptors,
-      index = 0,
-      exchange = null,
-      request = originalRequest,
-      connectTimeoutMillis = client.connectTimeoutMillis,
-      readTimeoutMillis = client.readTimeoutMillis,
-      writeTimeoutMillis = client.writeTimeoutMillis
-    )
+    val chain =
+      RealInterceptorChain(
+        call = this,
+        interceptors = interceptors,
+        index = 0,
+        exchange = null,
+        request = originalRequest,
+        connectTimeoutMillis = client.connectTimeoutMillis,
+        readTimeoutMillis = client.readTimeoutMillis,
+        writeTimeoutMillis = client.writeTimeoutMillis,
+      )
 
     var calledNoMoreExchanges = false
     try {
@@ -242,17 +245,19 @@ class RealCall(
     }
 
     if (newRoutePlanner) {
-      val routePlanner = RealRoutePlanner(
-        client,
-        createAddress(request.url),
-        this,
-        chain,
-        connectionListener = connectionPool.connectionListener
-      )
-      this.exchangeFinder = when {
-        client.fastFallback -> FastFallbackExchangeFinder(routePlanner, client.taskRunner)
-        else -> SequentialExchangeFinder(routePlanner)
-      }
+      val routePlanner =
+        RealRoutePlanner(
+          client,
+          createAddress(request.url),
+          this,
+          chain,
+          connectionListener = connectionPool.connectionListener,
+        )
+      this.exchangeFinder =
+        when {
+          client.fastFallback -> FastFallbackExchangeFinder(routePlanner, client.taskRunner)
+          else -> SequentialExchangeFinder(routePlanner)
+        }
     }
   }
 
@@ -299,7 +304,7 @@ class RealCall(
     exchange: Exchange,
     requestDone: Boolean,
     responseDone: Boolean,
-    e: E
+    e: E,
   ): E {
     if (exchange != this.exchange) return e // This exchange was detached violently!
 
@@ -360,10 +365,11 @@ class RealCall(
     val connection = this.connection
     if (connection != null) {
       connection.assertThreadDoesntHoldLock()
-      val toClose: Socket? = synchronized(connection) {
-        // Sets this.connection to null.
-        releaseConnectionNoEvents()
-      }
+      val toClose: Socket? =
+        synchronized(connection) {
+          // Sets this.connection to null.
+          releaseConnectionNoEvents()
+        }
       if (this.connection == null) {
         toClose?.closeQuietly()
         eventListener.connectionReleased(this, connection)
@@ -468,7 +474,7 @@ class RealCall(
       proxy = client.proxy,
       protocols = client.protocols,
       connectionSpecs = client.connectionSpecs,
-      proxySelector = client.proxySelector
+      proxySelector = client.proxySelector,
     )
   }
 
@@ -482,15 +488,17 @@ class RealCall(
    * sensitive information.
    */
   private fun toLoggableString(): String {
-    return ((if (isCanceled()) "canceled " else "") +
-      (if (forWebSocket) "web socket" else "call") +
-      " to " + redactedUrl())
+    return (
+      (if (isCanceled()) "canceled " else "") +
+        (if (forWebSocket) "web socket" else "call") +
+        " to " + redactedUrl()
+    )
   }
 
   internal fun redactedUrl(): String = originalRequest.url.redact()
 
   inner class AsyncCall(
-    private val responseCallback: Callback
+    private val responseCallback: Callback,
   ) : Runnable {
     @Volatile var callsPerHost = AtomicInteger(0)
       private set
@@ -571,6 +579,6 @@ class RealCall(
      * Captures the stack trace at the time the Call is executed or enqueued. This is helpful for
      * identifying the origin of connection leaks.
      */
-    val callStackTrace: Any?
+    val callStackTrace: Any?,
   ) : WeakReference<RealCall>(referent)
 }

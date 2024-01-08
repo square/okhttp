@@ -43,6 +43,7 @@ fun interface Dns {
      */
     @JvmField
     val SYSTEM: Dns = DnsSystem()
+
     private class DnsSystem : Dns {
       override fun lookup(hostname: String): List<InetAddress> {
         try {

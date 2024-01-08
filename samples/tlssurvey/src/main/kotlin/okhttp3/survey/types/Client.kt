@@ -20,7 +20,7 @@ data class Client(
   val version: String,
   val platform: String?,
   val enabled: List<SuiteId> = listOf(),
-  val supported: List<SuiteId> = listOf()
+  val supported: List<SuiteId> = listOf(),
 ) {
   val nameAndVersion: String
     get() = "$userAgent/$version"

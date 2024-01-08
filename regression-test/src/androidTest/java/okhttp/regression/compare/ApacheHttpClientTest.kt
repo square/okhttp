@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp.regression.compare;
+package okhttp.regression.compare
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.apache.hc.client5.http.classic.methods.HttpGet

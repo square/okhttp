@@ -169,26 +169,41 @@ class MockHttp2Peer : Closeable {
   private class OutFrame(
     val sequence: Int,
     val start: Long,
-    val truncated: Boolean
+    val truncated: Boolean,
   )
 
   class InFrame(val sequence: Int, val reader: Http2Reader) : Http2Reader.Handler {
     @JvmField var type = -1
     var clearPrevious = false
+
     @JvmField var outFinished = false
+
     @JvmField var inFinished = false
+
     @JvmField var streamId = 0
+
     @JvmField var associatedStreamId = 0
+
     @JvmField var errorCode: ErrorCode? = null
+
     @JvmField var windowSizeIncrement: Long = 0
+
     @JvmField var headerBlock: List<Header>? = null
+
     @JvmField var data: ByteArray? = null
+
     @JvmField var settings: Settings? = null
+
     @JvmField var ack = false
+
     @JvmField var payload1 = 0
+
     @JvmField var payload2 = 0
 
-    override fun settings(clearPrevious: Boolean, settings: Settings) {
+    override fun settings(
+      clearPrevious: Boolean,
+      settings: Settings,
+    ) {
       check(type == -1)
       this.type = Http2.TYPE_SETTINGS
       this.clearPrevious = clearPrevious
@@ -202,8 +217,10 @@ class MockHttp2Peer : Closeable {
     }
 
     override fun headers(
-      inFinished: Boolean, streamId: Int,
-      associatedStreamId: Int, headerBlock: List<Header>
+      inFinished: Boolean,
+      streamId: Int,
+      associatedStreamId: Int,
+      headerBlock: List<Header>,
     ) {
       check(type == -1)
       this.type = Http2.TYPE_HEADERS
@@ -217,7 +234,7 @@ class MockHttp2Peer : Closeable {
       inFinished: Boolean,
       streamId: Int,
       source: BufferedSource,
-      length: Int
+      length: Int,
     ) {
       check(type == -1)
       this.type = Http2.TYPE_DATA
@@ -226,14 +243,21 @@ class MockHttp2Peer : Closeable {
       this.data = source.readByteString(length.toLong()).toByteArray()
     }
 
-    override fun rstStream(streamId: Int, errorCode: ErrorCode) {
+    override fun rstStream(
+      streamId: Int,
+      errorCode: ErrorCode,
+    ) {
       check(type == -1)
       this.type = Http2.TYPE_RST_STREAM
       this.streamId = streamId
       this.errorCode = errorCode
     }
 
-    override fun ping(ack: Boolean, payload1: Int, payload2: Int) {
+    override fun ping(
+      ack: Boolean,
+      payload1: Int,
+      payload2: Int,
+    ) {
       check(type == -1)
       type = Http2.TYPE_PING
       this.ack = ack
@@ -241,7 +265,11 @@ class MockHttp2Peer : Closeable {
       this.payload2 = payload2
     }
 
-    override fun goAway(lastGoodStreamId: Int, errorCode: ErrorCode, debugData: ByteString) {
+    override fun goAway(
+      lastGoodStreamId: Int,
+      errorCode: ErrorCode,
+      debugData: ByteString,
+    ) {
       check(type == -1)
       this.type = Http2.TYPE_GOAWAY
       this.streamId = lastGoodStreamId
@@ -249,7 +277,10 @@ class MockHttp2Peer : Closeable {
       this.data = debugData.toByteArray()
     }
 
-    override fun windowUpdate(streamId: Int, windowSizeIncrement: Long) {
+    override fun windowUpdate(
+      streamId: Int,
+      windowSizeIncrement: Long,
+    ) {
       check(type == -1)
       this.type = Http2.TYPE_WINDOW_UPDATE
       this.streamId = streamId
@@ -257,13 +288,19 @@ class MockHttp2Peer : Closeable {
     }
 
     override fun priority(
-      streamId: Int, streamDependency: Int, weight: Int,
-      exclusive: Boolean
+      streamId: Int,
+      streamDependency: Int,
+      weight: Int,
+      exclusive: Boolean,
     ) {
       throw UnsupportedOperationException()
     }
 
-    override fun pushPromise(streamId: Int, associatedStreamId: Int, headerBlock: List<Header>) {
+    override fun pushPromise(
+      streamId: Int,
+      associatedStreamId: Int,
+      headerBlock: List<Header>,
+    ) {
       this.type = Http2.TYPE_PUSH_PROMISE
       this.streamId = streamId
       this.associatedStreamId = associatedStreamId
@@ -276,7 +313,7 @@ class MockHttp2Peer : Closeable {
       protocol: ByteString,
       host: String,
       port: Int,
-      maxAge: Long
+      maxAge: Long,
     ) {
       throw UnsupportedOperationException()
     }

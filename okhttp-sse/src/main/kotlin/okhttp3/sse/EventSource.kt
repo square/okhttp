@@ -33,6 +33,9 @@ interface EventSource {
      * asynchronous process to connect the socket. Once that succeeds or fails, `listener` will be
      * notified. The caller must cancel the returned event source when it is no longer in use.
      */
-    fun newEventSource(request: Request, listener: EventSourceListener): EventSource
+    fun newEventSource(
+      request: Request,
+      listener: EventSourceListener,
+    ): EventSource
   }
 }

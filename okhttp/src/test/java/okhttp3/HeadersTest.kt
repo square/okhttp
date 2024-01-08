@@ -20,7 +20,6 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
-import kotlin.test.fail
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Headers.Companion.toHeaders
 
@@ -49,10 +48,11 @@ class HeadersTest {
   }
 
   @Test fun ofMakesDefensiveCopy() {
-    val namesAndValues = arrayOf(
-      "User-Agent",
-      "OkHttp"
-    )
+    val namesAndValues =
+      arrayOf(
+        "User-Agent",
+        "OkHttp",
+      )
     val headers = headersOf(*namesAndValues)
     namesAndValues[1] = "Chrome"
     assertThat(headers.value(0)).isEqualTo("OkHttp")
@@ -193,48 +193,54 @@ class HeadersTest {
   }
 
   @Test fun headersEquals() {
-    val headers1 = Headers.Builder()
-      .add("Connection", "close")
-      .add("Transfer-Encoding", "chunked")
-      .build()
-    val headers2 = Headers.Builder()
-      .add("Connection", "close")
-      .add("Transfer-Encoding", "chunked")
-      .build()
+    val headers1 =
+      Headers.Builder()
+        .add("Connection", "close")
+        .add("Transfer-Encoding", "chunked")
+        .build()
+    val headers2 =
+      Headers.Builder()
+        .add("Connection", "close")
+        .add("Transfer-Encoding", "chunked")
+        .build()
     assertThat(headers2).isEqualTo(headers1)
     assertThat(headers2.hashCode()).isEqualTo(headers1.hashCode())
   }
 
   @Test fun headersNotEquals() {
-    val headers1 = Headers.Builder()
-      .add("Connection", "close")
-      .add("Transfer-Encoding", "chunked")
-      .build()
-    val headers2 = Headers.Builder()
-      .add("Connection", "keep-alive")
-      .add("Transfer-Encoding", "chunked")
-      .build()
+    val headers1 =
+      Headers.Builder()
+        .add("Connection", "close")
+        .add("Transfer-Encoding", "chunked")
+        .build()
+    val headers2 =
+      Headers.Builder()
+        .add("Connection", "keep-alive")
+        .add("Transfer-Encoding", "chunked")
+        .build()
     assertThat(headers2).isNotEqualTo(headers1)
     assertThat(headers2.hashCode()).isNotEqualTo(headers1.hashCode().toLong())
   }
 
   @Test fun headersToString() {
-    val headers = Headers.Builder()
-      .add("A", "a")
-      .add("B", "bb")
-      .build()
+    val headers =
+      Headers.Builder()
+        .add("A", "a")
+        .add("B", "bb")
+        .build()
     assertThat(headers.toString()).isEqualTo("A: a\nB: bb\n")
   }
 
   @Test fun headersToStringRedactsSensitiveHeaders() {
-    val headers = Headers.Builder()
-      .add("content-length", "99")
-      .add("authorization", "peanutbutter")
-      .add("proxy-authorization", "chocolate")
-      .add("cookie", "drink=coffee")
-      .add("set-cookie", "accessory=sugar")
-      .add("user-agent", "OkHttp")
-      .build()
+    val headers =
+      Headers.Builder()
+        .add("content-length", "99")
+        .add("authorization", "peanutbutter")
+        .add("proxy-authorization", "chocolate")
+        .add("cookie", "drink=coffee")
+        .add("set-cookie", "accessory=sugar")
+        .add("user-agent", "OkHttp")
+        .build()
     assertThat(headers.toString()).isEqualTo(
       """
       |content-length: 99
@@ -243,21 +249,24 @@ class HeadersTest {
       |cookie: ██
       |set-cookie: ██
       |user-agent: OkHttp
-      |""".trimMargin()
+      |
+      """.trimMargin(),
     )
   }
 
   @Test fun headersAddAll() {
-    val sourceHeaders = Headers.Builder()
-      .add("A", "aa")
-      .add("a", "aa")
-      .add("B", "bb")
-      .build()
-    val headers = Headers.Builder()
-      .add("A", "a")
-      .addAll(sourceHeaders)
-      .add("C", "c")
-      .build()
+    val sourceHeaders =
+      Headers.Builder()
+        .add("A", "aa")
+        .add("a", "aa")
+        .add("B", "bb")
+        .build()
+    val headers =
+      Headers.Builder()
+        .add("A", "a")
+        .addAll(sourceHeaders)
+        .add("C", "c")
+        .build()
     assertThat(headers.toString()).isEqualTo("A: a\nA: aa\na: aa\nB: bb\nC: c\n")
   }
 

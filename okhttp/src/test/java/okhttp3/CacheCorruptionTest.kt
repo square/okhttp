@@ -68,10 +68,11 @@ class CacheCorruptionTest {
     server.protocolNegotiationEnabled = false
     val loggingFileSystem = LoggingFilesystem(fileSystem)
     cache = buildCache("/cache/".toPath(), Int.MAX_VALUE.toLong(), loggingFileSystem)
-    client = clientTestRule.newClientBuilder()
-      .cache(cache)
-      .cookieJar(JavaNetCookieJar(cookieManager))
-      .build()
+    client =
+      clientTestRule.newClientBuilder()
+        .cache(cache)
+        .cookieJar(JavaNetCookieJar(cookieManager))
+        .build()
   }
 
   @AfterEach
@@ -84,12 +85,13 @@ class CacheCorruptionTest {
 
   @Test
   fun corruptedCipher() {
-    val response = testCorruptingCache {
-      corruptMetadata {
-        // mess with cipher suite
-        it.replace("TLS_", "SLT_")
+    val response =
+      testCorruptingCache {
+        corruptMetadata {
+          // mess with cipher suite
+          it.replace("TLS_", "SLT_")
+        }
       }
-    }
 
     assertThat(response.body.string()).isEqualTo("ABC.1") // cached
     assertThat(cache.requestCount()).isEqualTo(2)
@@ -101,12 +103,13 @@ class CacheCorruptionTest {
 
   @Test
   fun truncatedMetadataEntry() {
-    val response = testCorruptingCache {
-      corruptMetadata {
-        // truncate metadata to 1/4 of length
-        it.substring(0, it.length / 4)
+    val response =
+      testCorruptingCache {
+        corruptMetadata {
+          // truncate metadata to 1/4 of length
+          it.substring(0, it.length / 4)
+        }
       }
-    }
 
     assertThat(response.body.string()).isEqualTo("ABC.2") // not cached
     assertThat(cache.requestCount()).isEqualTo(2)
@@ -115,12 +118,13 @@ class CacheCorruptionTest {
   }
 
   @Test fun corruptedUrl() {
-    val response = testCorruptingCache {
-      corruptMetadata {
-        // strip https scheme
-        it.substring(5)
+    val response =
+      testCorruptingCache {
+        corruptMetadata {
+          // strip https scheme
+          it.substring(5)
+        }
       }
-    }
 
     assertThat(response.body.string()).isEqualTo("ABC.2") // not cached
     assertThat(cache.requestCount()).isEqualTo(2)
@@ -129,14 +133,16 @@ class CacheCorruptionTest {
   }
 
   private fun corruptMetadata(corruptor: (String) -> String) {
-    val metadataFile = fileSystem.allPaths.find {
-      it.name.endsWith(".0")
-    }
+    val metadataFile =
+      fileSystem.allPaths.find {
+        it.name.endsWith(".0")
+      }
 
     if (metadataFile != null) {
-      val contents = fileSystem.read(metadataFile) {
-        readUtf8()
-      }
+      val contents =
+        fileSystem.read(metadataFile) {
+          readUtf8()
+        }
 
       fileSystem.write(metadataFile) {
         writeUtf8(corruptor(contents))
@@ -148,28 +154,35 @@ class CacheCorruptionTest {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse(
-        headers = headersOf(
-          "Last-Modified", formatDate(-1, TimeUnit.HOURS)!!,
-          "Expires", formatDate(1, TimeUnit.HOURS)!!,
-        ),
+        headers =
+          headersOf(
+            "Last-Modified",
+            formatDate(-1, TimeUnit.HOURS)!!,
+            "Expires",
+            formatDate(1, TimeUnit.HOURS)!!,
+          ),
         body = "ABC.1",
-      )
+      ),
     )
     server.enqueue(
       MockResponse(
-        headers = headersOf(
-          "Last-Modified", formatDate(-1, TimeUnit.HOURS)!!,
-          "Expires", formatDate(1, TimeUnit.HOURS)!!,
-        ),
+        headers =
+          headersOf(
+            "Last-Modified",
+            formatDate(-1, TimeUnit.HOURS)!!,
+            "Expires",
+            formatDate(1, TimeUnit.HOURS)!!,
+          ),
         body = "ABC.2",
-      )
+      ),
     )
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .hostnameVerifier(nullHostnameVerifier)
-      .build()
+    client =
+      client.newBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+        )
+        .hostnameVerifier(nullHostnameVerifier)
+        .build()
     val request = Request(server.url("/"))
     val response1: Response = client.newCall(request).execute()
     val bodySource = response1.body.source()
@@ -184,7 +197,10 @@ class CacheCorruptionTest {
    * @param delta the offset from the current date to use. Negative values yield dates in the past;
    *     positive values yield dates in the future.
    */
-  private fun formatDate(delta: Long, timeUnit: TimeUnit): String? {
+  private fun formatDate(
+    delta: Long,
+    timeUnit: TimeUnit,
+  ): String? {
     return formatDate(Date(System.currentTimeMillis() + timeUnit.toMillis(delta)))
   }
 

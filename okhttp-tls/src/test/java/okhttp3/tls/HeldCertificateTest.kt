@@ -59,9 +59,10 @@ class HeldCertificateTest {
   @Test
   fun customInterval() {
     // 5 seconds starting on 1970-01-01.
-    val heldCertificate = HeldCertificate.Builder()
-      .validityInterval(5000L, 10000L)
-      .build()
+    val heldCertificate =
+      HeldCertificate.Builder()
+        .validityInterval(5000L, 10000L)
+        .build()
     val certificate = heldCertificate.certificate
     assertThat(certificate.notBefore.time).isEqualTo(5000L)
     assertThat(certificate.notAfter.time).isEqualTo(10000L)
@@ -70,9 +71,10 @@ class HeldCertificateTest {
   @Test
   fun customDuration() {
     val now = System.currentTimeMillis()
-    val heldCertificate = HeldCertificate.Builder()
-      .duration(5, TimeUnit.SECONDS)
-      .build()
+    val heldCertificate =
+      HeldCertificate.Builder()
+        .duration(5, TimeUnit.SECONDS)
+        .build()
     val certificate = heldCertificate.certificate
     val deltaMillis = 1000.0
     val durationMillis = 5000L
@@ -84,35 +86,38 @@ class HeldCertificateTest {
 
   @Test
   fun subjectAlternativeNames() {
-    val heldCertificate = HeldCertificate.Builder()
-      .addSubjectAlternativeName("1.1.1.1")
-      .addSubjectAlternativeName("cash.app")
-      .build()
+    val heldCertificate =
+      HeldCertificate.Builder()
+        .addSubjectAlternativeName("1.1.1.1")
+        .addSubjectAlternativeName("cash.app")
+        .build()
     val certificate = heldCertificate.certificate
     assertThat(certificate.subjectAlternativeNames.toList()).containsExactly(
       listOf(GeneralName.iPAddress, "1.1.1.1"),
-      listOf(GeneralName.dNSName, "cash.app")
+      listOf(GeneralName.dNSName, "cash.app"),
     )
   }
 
   @Test
   fun commonName() {
-    val heldCertificate = HeldCertificate.Builder()
-      .commonName("cash.app")
-      .build()
+    val heldCertificate =
+      HeldCertificate.Builder()
+        .commonName("cash.app")
+        .build()
     val certificate = heldCertificate.certificate
     assertThat(certificate.getSubjectX500Principal().name).isEqualTo("CN=cash.app")
   }
 
   @Test
   fun organizationalUnit() {
-    val heldCertificate = HeldCertificate.Builder()
-      .commonName("cash.app")
-      .organizationalUnit("cash")
-      .build()
+    val heldCertificate =
+      HeldCertificate.Builder()
+        .commonName("cash.app")
+        .organizationalUnit("cash")
+        .build()
     val certificate = heldCertificate.certificate
     assertThat(certificate.getSubjectX500Principal().name).isEqualTo(
-      "CN=cash.app,OU=cash"
+      "CN=cash.app,OU=cash",
     )
   }
 
@@ -120,32 +125,41 @@ class HeldCertificateTest {
   @Test
   fun pems() {
     val keyFactory = KeyFactory.getInstance("RSA")
-    val publicKeyBytes = ("MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCApFHhtrLan28q+oMolZuaTfWBA0V5aM" +
-      "Ivq32BsloQu6LlvX1wJ4YEoUCjDlPOtpht7XLbUmBnbIzN89XK4UJVM6Sqp3K88Km8z7gMrdrfTom/274wL25fICR+" +
-      "yDEQ5fUVYBmJAKXZF1aoI0mIoEx0xFsQhIJ637v2MxJDupd61wIDAQAB")
-      .decodeBase64()!!
-    val publicKey = keyFactory.generatePublic(
-      X509EncodedKeySpec(publicKeyBytes.toByteArray())
-    )
-    val privateKeyBytes = ("MIICdQIBADANBgkqhkiG9w0BAQEFAASCAl8wggJbAgEAAoGBAICkUeG2stqfbyr6gyiVm" +
-      "5pN9YEDRXlowi+rfYGyWhC7ouW9fXAnhgShQKMOU862mG3tcttSYGdsjM3z1crhQlUzpKqncrzwqbzPuAyt2t9Oib/" +
-      "bvjAvbl8gJH7IMRDl9RVgGYkApdkXVqgjSYigTHTEWxCEgnrfu/YzEkO6l3rXAgMBAAECgYB99mhnB6piADOuddXv6" +
-      "26NzUBTr4xbsYRTgSxHzwf50oFTTBSDuW+1IOBVyTWu94SSPyt0LllPbC8Di3sQSTnVGpSqAvEXknBMzIc0UO74Rn9" +
-      "p3gZjEenPt1l77fIBa2nK06/rdsJCoE/1P1JSfM9w7LU1RsTmseYMLeJl5F79gQJBAO/BbAKqg1yzK7VijygvBoUrr" +
-      "+rt2lbmKgcUQ/rxu8IIQk0M/xgJqSkXDXuOnboGM7sQSKfJAZUtT7xozvLzV7ECQQCJW59w7NIM0qZ/gIX2gcNZr1B" +
-      "/V3zcGlolTDciRm+fnKGNt2EEDKnVL3swzbEfTCa48IT0QKgZJqpXZERa26UHAkBLXmiP5f5pk8F3wcXzAeVw06z3k" +
-      "1IB41Tu6MX+CyPU+TeudRlz+wV8b0zDvK+EnRKCCbptVFj1Bkt8lQ4JfcnhAkAk2Y3Gz+HySrkcT7Cg12M/NkdUQnZ" +
-      "e3jr88pt/+IGNwomc6Wt/mJ4fcWONTkGMcfOZff1NQeNXDAZ6941XCsIVAkASOg02PlVHLidU7mIE65swMM5/RNhS4" +
-      "aFjez/MwxFNOHaxc9VgCwYPXCLOtdf7AVovdyG0XWgbUXH+NyxKwboE").decodeBase64()!!
-    val privateKey = keyFactory.generatePrivate(
-      PKCS8EncodedKeySpec(privateKeyBytes.toByteArray())
-    )
-    val heldCertificate = HeldCertificate.Builder()
-      .keyPair(publicKey, privateKey)
-      .commonName("cash.app")
-      .validityInterval(0L, 1000L)
-      .rsa2048()
-      .build()
+    val publicKeyBytes =
+      (
+        "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCApFHhtrLan28q+oMolZuaTfWBA0V5aM" +
+          "Ivq32BsloQu6LlvX1wJ4YEoUCjDlPOtpht7XLbUmBnbIzN89XK4UJVM6Sqp3K88Km8z7gMrdrfTom/274wL25fICR+" +
+          "yDEQ5fUVYBmJAKXZF1aoI0mIoEx0xFsQhIJ637v2MxJDupd61wIDAQAB"
+      )
+        .decodeBase64()!!
+    val publicKey =
+      keyFactory.generatePublic(
+        X509EncodedKeySpec(publicKeyBytes.toByteArray()),
+      )
+    val privateKeyBytes =
+      (
+        "MIICdQIBADANBgkqhkiG9w0BAQEFAASCAl8wggJbAgEAAoGBAICkUeG2stqfbyr6gyiVm" +
+          "5pN9YEDRXlowi+rfYGyWhC7ouW9fXAnhgShQKMOU862mG3tcttSYGdsjM3z1crhQlUzpKqncrzwqbzPuAyt2t9Oib/" +
+          "bvjAvbl8gJH7IMRDl9RVgGYkApdkXVqgjSYigTHTEWxCEgnrfu/YzEkO6l3rXAgMBAAECgYB99mhnB6piADOuddXv6" +
+          "26NzUBTr4xbsYRTgSxHzwf50oFTTBSDuW+1IOBVyTWu94SSPyt0LllPbC8Di3sQSTnVGpSqAvEXknBMzIc0UO74Rn9" +
+          "p3gZjEenPt1l77fIBa2nK06/rdsJCoE/1P1JSfM9w7LU1RsTmseYMLeJl5F79gQJBAO/BbAKqg1yzK7VijygvBoUrr" +
+          "+rt2lbmKgcUQ/rxu8IIQk0M/xgJqSkXDXuOnboGM7sQSKfJAZUtT7xozvLzV7ECQQCJW59w7NIM0qZ/gIX2gcNZr1B" +
+          "/V3zcGlolTDciRm+fnKGNt2EEDKnVL3swzbEfTCa48IT0QKgZJqpXZERa26UHAkBLXmiP5f5pk8F3wcXzAeVw06z3k" +
+          "1IB41Tu6MX+CyPU+TeudRlz+wV8b0zDvK+EnRKCCbptVFj1Bkt8lQ4JfcnhAkAk2Y3Gz+HySrkcT7Cg12M/NkdUQnZ" +
+          "e3jr88pt/+IGNwomc6Wt/mJ4fcWONTkGMcfOZff1NQeNXDAZ6941XCsIVAkASOg02PlVHLidU7mIE65swMM5/RNhS4" +
+          "aFjez/MwxFNOHaxc9VgCwYPXCLOtdf7AVovdyG0XWgbUXH+NyxKwboE"
+      ).decodeBase64()!!
+    val privateKey =
+      keyFactory.generatePrivate(
+        PKCS8EncodedKeySpec(privateKeyBytes.toByteArray()),
+      )
+    val heldCertificate =
+      HeldCertificate.Builder()
+        .keyPair(publicKey, privateKey)
+        .commonName("cash.app")
+        .validityInterval(0L, 1000L)
+        .rsa2048()
+        .build()
     assertThat(
       """
       |-----BEGIN CERTIFICATE-----
@@ -159,7 +173,8 @@ class HeldCertificateTest {
       |+OEfl3zhm0PUqcbckMzhJtqIa7NkDSjNm71BKd843pIhGcEri69DcL/cR8T+eMex
       |hadh7aGM9OjeL8gznLeq27Ly6Dj7Vkp5OmOrSKfn
       |-----END CERTIFICATE-----
-      |""".trimMargin()
+      |
+      """.trimMargin(),
     ).isEqualTo(heldCertificate.certificatePem())
     assertThat(
       """
@@ -178,7 +193,8 @@ class HeldCertificateTest {
       |TUHjVwwGeveNVwrCFQJAEjoNNj5VRy4nVO5iBOubMDDOf0TYUuGhY3s/zMMRTTh2
       |sXPVYAsGD1wizrXX+wFaL3chtF1oG1Fx/jcsSsG6BA==
       |-----END RSA PRIVATE KEY-----
-      |""".trimMargin()
+      |
+      """.trimMargin(),
     ).isEqualTo(heldCertificate.privateKeyPkcs1Pem())
     assertThat(
       """
@@ -198,36 +214,41 @@ class HeldCertificateTest {
       |LidU7mIE65swMM5/RNhS4aFjez/MwxFNOHaxc9VgCwYPXCLOtdf7AVovdyG0XWgb
       |UXH+NyxKwboE
       |-----END PRIVATE KEY-----
-      |""".trimMargin()
+      |
+      """.trimMargin(),
     ).isEqualTo(heldCertificate.privateKeyPkcs8Pem())
   }
 
   @Test
   fun ecdsaSignedByRsa() {
-    val root = HeldCertificate.Builder()
-      .certificateAuthority(0)
-      .rsa2048()
-      .build()
-    val leaf = HeldCertificate.Builder()
-      .certificateAuthority(0)
-      .ecdsa256()
-      .signedBy(root)
-      .build()
+    val root =
+      HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .rsa2048()
+        .build()
+    val leaf =
+      HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .ecdsa256()
+        .signedBy(root)
+        .build()
     assertThat(root.certificate.sigAlgName).isEqualTo("SHA256WITHRSA", ignoreCase = true)
     assertThat(leaf.certificate.sigAlgName).isEqualTo("SHA256WITHRSA", ignoreCase = true)
   }
 
   @Test
   fun rsaSignedByEcdsa() {
-    val root = HeldCertificate.Builder()
-      .certificateAuthority(0)
-      .ecdsa256()
-      .build()
-    val leaf = HeldCertificate.Builder()
-      .certificateAuthority(0)
-      .rsa2048()
-      .signedBy(root)
-      .build()
+    val root =
+      HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .ecdsa256()
+        .build()
+    val leaf =
+      HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .rsa2048()
+        .signedBy(root)
+        .build()
     assertThat(root.certificate.sigAlgName).isEqualTo("SHA256WITHECDSA", ignoreCase = true)
     assertThat(leaf.certificate.sigAlgName).isEqualTo("SHA256WITHECDSA", ignoreCase = true)
   }
@@ -245,7 +266,8 @@ class HeldCertificateTest {
     //     .organizationalUnit("engineering")
     //     .ecdsa256()
     //     .build();
-    val certificatePem = """
+    val certificatePem =
+      """
       |-----BEGIN CERTIFICATE-----
       |MIIBYTCCAQegAwIBAgIBKjAKBggqhkjOPQQDAjApMRQwEgYDVQQLEwtlbmdpbmVl
       |cmluZzERMA8GA1UEAxMIY2FzaC5hcHAwHhcNNzAwMTAxMDAwMDA1WhcNNzAwMTAx
@@ -256,19 +278,24 @@ class HeldCertificateTest {
       |AiAyHHg1N6YDDQiY920+cnI5XSZwEGhAtb9PYWO8bLmkcQIhAI2CfEZf3V/obmdT
       |yyaoEufLKVXhrTQhRfodTeigi4RX
       |-----END CERTIFICATE-----
-      |""".trimMargin()
-    val pkcs8Pem = """
+      |
+      """.trimMargin()
+    val pkcs8Pem =
+      """
       |-----BEGIN PRIVATE KEY-----
       |MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCA7ODT0xhGSNn4ESj6J
       |lu/GJQZoU9lDrCPeUcQ28tzOWw==
       |-----END PRIVATE KEY-----
-      |""".trimMargin()
-    val bcPkcs8Pem = """
+      |
+      """.trimMargin()
+    val bcPkcs8Pem =
+      """
       |-----BEGIN PRIVATE KEY-----
       |ME0CAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEMzAxAgEBBCA7ODT0xhGSNn4ESj6J
       |lu/GJQZoU9lDrCPeUcQ28tzOW6AKBggqhkjOPQMBBw==
       |-----END PRIVATE KEY-----
-      |""".trimMargin()
+      |
+      """.trimMargin()
     val heldCertificate = decode(certificatePem + pkcs8Pem)
     assertThat(heldCertificate.certificatePem()).isEqualTo(certificatePem)
 
@@ -283,7 +310,7 @@ class HeldCertificateTest {
     assertThat(certificate.notAfter.time).isEqualTo(10000L)
     assertThat(certificate.subjectAlternativeNames.toList()).containsExactly(
       listOf(GeneralName.iPAddress, "1.1.1.1"),
-      listOf(GeneralName.dNSName, "cash.app")
+      listOf(GeneralName.dNSName, "cash.app"),
     )
     assertThat(certificate.getSubjectX500Principal().name)
       .isEqualTo("CN=cash.app,OU=engineering")
@@ -302,7 +329,8 @@ class HeldCertificateTest {
     //   -newkey rsa:512 \
     //   -keyout privateKey.key \
     //   -out certificate.crt
-    val certificatePem = """
+    val certificatePem =
+      """
       |-----BEGIN CERTIFICATE-----
       |MIIBFzCBwgIJAIVAqagcVN7/MA0GCSqGSIb3DQEBBAUAMBMxETAPBgNVBAMMCGNh
       |c2guYXBwMB4XDTE5MDkwNzAyMjg0NFoXDTE5MDkwODAyMjg0NFowEzERMA8GA1UE
@@ -311,8 +339,10 @@ class HeldCertificateTest {
       |zIdrLQIDAQABMA0GCSqGSIb3DQEBBAUAA0EAO1UpwhrkW3Ho1nZK/taoUQOoqz/n
       |HFVMtyEkm5gBDgz8nJXwb3zbegclQyH+kVou02S8zC5WWzEtd0R8S0LsTA==
       |-----END CERTIFICATE-----
-      |""".trimMargin()
-    val pkcs8Pem = """
+      |
+      """.trimMargin()
+    val pkcs8Pem =
+      """
       |-----BEGIN PRIVATE KEY-----
       |MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEA8qAeoubm4mBTD9/J
       |ujLQkfk/fuJt/T5pVQ1vUEqxfcMw0zYgszQ5C2MiIl7M6JkTRKU01q9hVFCR83wX
@@ -323,7 +353,8 @@ class HeldCertificateTest {
       |DK/S8UkjYY/tIq4nVRJsD+LvlkLrwnkCIECcz4yF4HQgv+Tbzj/gGSBl1VIliTcB
       |Rc5RUQ0mZJQF
       |-----END PRIVATE KEY-----
-      |""".trimMargin()
+      |
+      """.trimMargin()
     val heldCertificate = decode(pkcs8Pem + certificatePem)
     assertThat(heldCertificate.certificatePem()).isEqualTo(certificatePem)
     assertThat(heldCertificate.privateKeyPkcs8Pem()).isEqualTo(pkcs8Pem)
@@ -345,7 +376,8 @@ class HeldCertificateTest {
     //     .organizationalUnit("engineering")
     //     .rsa2048()
     //     .build();
-    val certificatePem = """
+    val certificatePem =
+      """
       |-----BEGIN CERTIFICATE-----
       |MIIC7TCCAdWgAwIBAgIBKjANBgkqhkiG9w0BAQsFADApMRQwEgYDVQQLEwtlbmdp
       |bmVlcmluZzERMA8GA1UEAxMIY2FzaC5hcHAwHhcNNzAwMTAxMDAwMDA1WhcNNzAw
@@ -364,8 +396,10 @@ class HeldCertificateTest {
       |sZQW31gO2arPmfNotkQdFdNL12c9YZKkJGhyK6NcpffD2l6O9NS5SRD5RnkvBxQw
       |fX5DamL8je/YKSLQ4wgUA/5iVKlCiJGQi6fYIJ0kxayO
       |-----END CERTIFICATE-----
-      |""".trimMargin()
-    val pkcs8Pem = """
+      |
+      """.trimMargin()
+    val pkcs8Pem =
+      """
       |-----BEGIN PRIVATE KEY-----
       |MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCaU+vrUPL0APGI
       |SXIuRX4xRrigXmGKx+GRPnWDWvGJwOm23Vpq/eZxQx6PbSUB1+QZzAwge20RpNAp
@@ -394,7 +428,8 @@ class HeldCertificateTest {
       |+dMHl5I/urMesjKKWiKZHdbWVIjJDv25r3jrN9VLr4q6AD9r1Su5G0o2j0N5ujVg
       |SzpFHp+ZzhL/SANa8EqlcF6ItQ==
       |-----END PRIVATE KEY-----
-      |""".trimMargin()
+      |
+      """.trimMargin()
     val heldCertificate = decode(pkcs8Pem + certificatePem)
     assertThat(heldCertificate.certificatePem()).isEqualTo(certificatePem)
     assertThat(heldCertificate.privateKeyPkcs8Pem()).isEqualTo(pkcs8Pem)
@@ -403,7 +438,7 @@ class HeldCertificateTest {
     assertThat(certificate.notAfter.time).isEqualTo(10000L)
     assertThat(certificate.subjectAlternativeNames.toList()).containsExactly(
       listOf(GeneralName.iPAddress, "1.1.1.1"),
-      listOf(GeneralName.dNSName, "cash.app")
+      listOf(GeneralName.dNSName, "cash.app"),
     )
     assertThat(certificate.getSubjectX500Principal().name)
       .isEqualTo("CN=cash.app,OU=engineering")
@@ -411,7 +446,8 @@ class HeldCertificateTest {
 
   @Test
   fun decodeWrongNumber() {
-    val certificatePem = """
+    val certificatePem =
+      """
       |-----BEGIN CERTIFICATE-----
       |MIIBYTCCAQegAwIBAgIBKjAKBggqhkjOPQQDAjApMRQwEgYDVQQLEwtlbmdpbmVl
       |cmluZzERMA8GA1UEAxMIY2FzaC5hcHAwHhcNNzAwMTAxMDAwMDA1WhcNNzAwMTAx
@@ -422,13 +458,16 @@ class HeldCertificateTest {
       |AiAyHHg1N6YDDQiY920+cnI5XSZwEGhAtb9PYWO8bLmkcQIhAI2CfEZf3V/obmdT
       |yyaoEufLKVXhrTQhRfodTeigi4RX
       |-----END CERTIFICATE-----
-      |""".trimMargin()
-    val pkcs8Pem = """
+      |
+      """.trimMargin()
+    val pkcs8Pem =
+      """
       |-----BEGIN PRIVATE KEY-----
       |MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCA7ODT0xhGSNn4ESj6J
       |lu/GJQZoU9lDrCPeUcQ28tzOWw==
       |-----END PRIVATE KEY-----
-      |""".trimMargin()
+      |
+      """.trimMargin()
     try {
       decode(certificatePem)
       fail<Any>()
@@ -466,7 +505,8 @@ class HeldCertificateTest {
         |-----BEGIN RSA PRIVATE KEY-----
         |sXPVYAsGD1wizrXX+wFaL3chtF1oG1Fx/jcsSsG6BA==
         |-----END RSA PRIVATE KEY-----
-        |""".trimMargin()
+        |
+        """.trimMargin(),
       )
       fail<Any>()
     } catch (expected: IllegalArgumentException) {
@@ -486,7 +526,8 @@ class HeldCertificateTest {
         |MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCA7ODT0xhGSNn4ESj6J
         |lu/GJQZoU9lDrCPeUcQ28tzOWw==
         |-----END PRIVATE KEY-----
-        |""".trimMargin()
+        |
+        """.trimMargin(),
       )
       fail<Any>()
     } catch (expected: IllegalArgumentException) {
@@ -510,7 +551,8 @@ class HeldCertificateTest {
         |-----BEGIN PRIVATE KEY-----
         |MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCA7ODT0xhGSNn4ESj6J
         |-----END PRIVATE KEY-----
-        |""".trimMargin()
+        |
+        """.trimMargin(),
       )
       fail<Any>()
     } catch (expected: IllegalArgumentException) {

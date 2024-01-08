@@ -56,7 +56,7 @@ class WebSocketReader(
   val source: BufferedSource,
   private val frameCallback: FrameCallback,
   private val perMessageDeflate: Boolean,
-  private val noContextTakeover: Boolean
+  private val noContextTakeover: Boolean,
 ) : Closeable {
   private var closed = false
 
@@ -85,8 +85,13 @@ class WebSocketReader(
     fun onReadMessage(bytes: ByteString)
 
     fun onReadPing(payload: ByteString)
+
     fun onReadPong(payload: ByteString)
-    fun onReadClose(code: Int, reason: String)
+
+    fun onReadClose(
+      code: Int,
+      reason: String,
+    )
   }
 
   /**
@@ -133,12 +138,13 @@ class WebSocketReader(
     val reservedFlag1 = b0 and B0_FLAG_RSV1 != 0
     when (opcode) {
       OPCODE_TEXT, OPCODE_BINARY -> {
-        readingCompressedMessage = if (reservedFlag1) {
-          if (!perMessageDeflate) throw ProtocolException("Unexpected rsv1 flag")
-          true
-        } else {
-          false
-        }
+        readingCompressedMessage =
+          if (reservedFlag1) {
+            if (!perMessageDeflate) throw ProtocolException("Unexpected rsv1 flag")
+            true
+          } else {
+            false
+          }
       }
       else -> {
         if (reservedFlag1) throw ProtocolException("Unexpected rsv1 flag")
@@ -156,11 +162,13 @@ class WebSocketReader(
     val isMasked = b1 and B1_FLAG_MASK != 0
     if (isMasked == isClient) {
       // Masked payloads must be read on the server. Unmasked payloads must be read on the client.
-      throw ProtocolException(if (isClient) {
-        "Server-sent frames must not be masked."
-      } else {
-        "Client-sent frames must be masked."
-      })
+      throw ProtocolException(
+        if (isClient) {
+          "Server-sent frames must not be masked."
+        } else {
+          "Client-sent frames must be masked."
+        },
+      )
     }
 
     // Get frame length, optionally reading from follow-up bytes if indicated by special values.
@@ -171,7 +179,8 @@ class WebSocketReader(
       frameLength = source.readLong()
       if (frameLength < 0L) {
         throw ProtocolException(
-            "Frame length 0x${frameLength.toHexString()} > 0x7FFFFFFFFFFFFFFF")
+          "Frame length 0x${frameLength.toHexString()} > 0x7FFFFFFFFFFFFFFF",
+        )
       }
     }
 
@@ -236,7 +245,8 @@ class WebSocketReader(
     readMessage()
 
     if (readingCompressedMessage) {
-      val messageInflater = this.messageInflater
+      val messageInflater =
+        this.messageInflater
           ?: MessageInflater(noContextTakeover).also { this.messageInflater = it }
       messageInflater.inflate(messageFrameBuffer)
     }

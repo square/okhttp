@@ -198,7 +198,10 @@ abstract class DelegatingSSLSocket(protected val delegate: SSLSocket?) : SSLSock
   }
 
   @Throws(SocketException::class)
-  override fun setSoLinger(on: Boolean, timeout: Int) {
+  override fun setSoLinger(
+    on: Boolean,
+    timeout: Int,
+  ) {
     delegate!!.setSoLinger(on, timeout)
   }
 
@@ -247,7 +250,10 @@ abstract class DelegatingSSLSocket(protected val delegate: SSLSocket?) : SSLSock
   }
 
   @Throws(IOException::class)
-  override fun connect(remoteAddr: SocketAddress, timeout: Int) {
+  override fun connect(
+    remoteAddr: SocketAddress,
+    timeout: Int,
+  ) {
     delegate!!.connect(remoteAddr, timeout)
   }
 

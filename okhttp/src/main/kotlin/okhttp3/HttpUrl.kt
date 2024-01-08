@@ -323,7 +323,6 @@ import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 class HttpUrl internal constructor(
   /** Either "http" or "https". */
   @get:JvmName("scheme") val scheme: String,
-
   /**
    * The decoded username, or an empty string if none is present.
    *
@@ -335,7 +334,6 @@ class HttpUrl internal constructor(
    * | `http://a%20b:c%20d@host/`       | `"a b"`      |
    */
   @get:JvmName("username") val username: String,
-
   /**
    * Returns the decoded password, or an empty string if none is present.
    *
@@ -347,7 +345,6 @@ class HttpUrl internal constructor(
    * | `http://a%20b:c%20d@host/`       | `"c d"`      |
    */
   @get:JvmName("password") val password: String,
-
   /**
    * The host address suitable for use with [InetAddress.getAllByName]. May be:
    *
@@ -367,7 +364,6 @@ class HttpUrl internal constructor(
    * | `http://xn--n3h.net/` | `"xn--n3h.net"` |
    */
   @get:JvmName("host") val host: String,
-
   /**
    * The explicitly-specified port if one was provided, or the default port for this URL's scheme.
    * For example, this returns 8443 for `https://square.com:8443/` and 443 for
@@ -380,7 +376,6 @@ class HttpUrl internal constructor(
    * | `https://host/`     | `443`    |
    */
   @get:JvmName("port") val port: Int,
-
   /**
    * A list of path segments like `["a", "b", "c"]` for the URL `http://host/a/b/c`. This list is
    * never empty though it may contain a single empty string.
@@ -392,14 +387,12 @@ class HttpUrl internal constructor(
    * | `http://host/a/b%20c/d"` | `["a", "b c", "d"]` |
    */
   @get:JvmName("pathSegments") val pathSegments: List<String>,
-
   /**
    * Alternating, decoded query names and values, or null for no query. Names may be empty or
    * non-empty, but never null. Values are null if the name has no corresponding '=' separator, or
    * empty, or non-empty.
    */
   internal val queryNamesAndValues: List<String?>?,
-
   /**
    * This URL's fragment, like `"abc"` for `http://host/#abc`. This is null if the URL has no
    * fragment.
@@ -412,15 +405,15 @@ class HttpUrl internal constructor(
    * | `http://host/#abc|def` | `"abc|def"`  |
    */
   @get:JvmName("fragment") val fragment: String?,
-
   /** Canonical URL. */
-  internal val url: String
+  internal val url: String,
 ) {
   val isHttps: Boolean
     get() = scheme == "https"
 
   /** Returns this URL as a [java.net.URL][URL]. */
-  @JvmName("url") fun toUrl(): URL {
+  @JvmName("url")
+  fun toUrl(): URL {
     try {
       return URL(url)
     } catch (e: MalformedURLException) {
@@ -441,7 +434,8 @@ class HttpUrl internal constructor(
    * These differences may have a significant consequence when the URI is interpreted by a
    * web server. For this reason the [URI class][URI] and this method should be avoided.
    */
-  @JvmName("uri") fun toUri(): URI {
+  @JvmName("uri")
+  fun toUri(): URI {
     val uri = newBuilder().reencodeForUri().toString()
     return try {
       URI(uri)
@@ -466,7 +460,8 @@ class HttpUrl internal constructor(
    * | `http://username:password@host/` | `"username"`        |
    * | `http://a%20b:c%20d@host/`       | `"a%20b"`           |
    */
-  @get:JvmName("encodedUsername") val encodedUsername: String
+  @get:JvmName("encodedUsername")
+  val encodedUsername: String
     get() = commonEncodedUsername
 
   /**
@@ -479,7 +474,8 @@ class HttpUrl internal constructor(
    * | `http://username:password@host/` | `"password"`        |
    * | `http://a%20b:c%20d@host/`       | `"c%20d"`           |
    */
-  @get:JvmName("encodedPassword") val encodedPassword: String
+  @get:JvmName("encodedPassword")
+  val encodedPassword: String
     get() = commonEncodedPassword
 
   /**
@@ -506,7 +502,8 @@ class HttpUrl internal constructor(
    * | `http://host/a/b/c`     | `"/a/b/c"`      |
    * | `http://host/a/b%20c/d` | `"/a/b%20c/d"`  |
    */
-  @get:JvmName("encodedPath") val encodedPath: String
+  @get:JvmName("encodedPath")
+  val encodedPath: String
     get() = commonEncodedPath
 
   /**
@@ -519,7 +516,8 @@ class HttpUrl internal constructor(
    * | `http://host/a/b/c`     | `["a", "b", "c"]`       |
    * | `http://host/a/b%20c/d` | `["a", "b%20c", "d"]`   |
    */
-  @get:JvmName("encodedPathSegments") val encodedPathSegments: List<String>
+  @get:JvmName("encodedPathSegments")
+  val encodedPathSegments: List<String>
     get() = commonEncodedPathSegments
 
   /**
@@ -534,7 +532,8 @@ class HttpUrl internal constructor(
    * | `http://host/?a=apple&a=apricot`  | `"a=apple&a=apricot"`  |
    * | `http://host/?a=apple&b`          | `"a=apple&b"`          |
    */
-  @get:JvmName("encodedQuery") val encodedQuery: String?
+  @get:JvmName("encodedQuery")
+  val encodedQuery: String?
     get() = commonEncodedQuery
 
   /**
@@ -550,7 +549,8 @@ class HttpUrl internal constructor(
    * | `http://host/?a=apple&a=apricot`  | `"a=apple&a=apricot"`  |
    * | `http://host/?a=apple&b`          | `"a=apple&b"`          |
    */
-  @get:JvmName("query") val query: String?
+  @get:JvmName("query")
+  val query: String?
     get() = commonQuery
 
   /**
@@ -566,7 +566,8 @@ class HttpUrl internal constructor(
    * | `http://host/?a=apple&a=apricot`  | `2`           |
    * | `http://host/?a=apple&b`          | `2`           |
    */
-  @get:JvmName("querySize") val querySize: Int
+  @get:JvmName("querySize")
+  val querySize: Int
     get() = commonQuerySize
 
   /**
@@ -595,7 +596,8 @@ class HttpUrl internal constructor(
    * | `http://host/?a=apple&a=apricot`  | `["a"]`                 |
    * | `http://host/?a=apple&b`          | `["a", "b"]`            |
    */
-  @get:JvmName("queryParameterNames") val queryParameterNames: Set<String>
+  @get:JvmName("queryParameterNames")
+  val queryParameterNames: Set<String>
     get() = commonQueryParameterNames
 
   /**
@@ -715,135 +717,154 @@ class HttpUrl internal constructor(
 
   @JvmName("-deprecated_url")
   @Deprecated(
-      message = "moved to toUrl()",
-      replaceWith = ReplaceWith(expression = "toUrl()"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to toUrl()",
+    replaceWith = ReplaceWith(expression = "toUrl()"),
+    level = DeprecationLevel.ERROR,
+  )
   fun url(): URL = toUrl()
 
   @JvmName("-deprecated_uri")
   @Deprecated(
-      message = "moved to toUri()",
-      replaceWith = ReplaceWith(expression = "toUri()"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to toUri()",
+    replaceWith = ReplaceWith(expression = "toUri()"),
+    level = DeprecationLevel.ERROR,
+  )
   fun uri(): URI = toUri()
 
   @JvmName("-deprecated_scheme")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "scheme"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "scheme"),
+    level = DeprecationLevel.ERROR,
+  )
   fun scheme(): String = scheme
 
   @JvmName("-deprecated_encodedUsername")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "encodedUsername"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "encodedUsername"),
+    level = DeprecationLevel.ERROR,
+  )
   fun encodedUsername(): String = encodedUsername
 
   @JvmName("-deprecated_username")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "username"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "username"),
+    level = DeprecationLevel.ERROR,
+  )
   fun username(): String = username
 
   @JvmName("-deprecated_encodedPassword")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "encodedPassword"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "encodedPassword"),
+    level = DeprecationLevel.ERROR,
+  )
   fun encodedPassword(): String = encodedPassword
 
   @JvmName("-deprecated_password")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "password"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "password"),
+    level = DeprecationLevel.ERROR,
+  )
   fun password(): String = password
 
   @JvmName("-deprecated_host")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "host"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "host"),
+    level = DeprecationLevel.ERROR,
+  )
   fun host(): String = host
 
   @JvmName("-deprecated_port")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "port"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "port"),
+    level = DeprecationLevel.ERROR,
+  )
   fun port(): Int = port
 
   @JvmName("-deprecated_pathSize")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "pathSize"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "pathSize"),
+    level = DeprecationLevel.ERROR,
+  )
   fun pathSize(): Int = pathSize
 
   @JvmName("-deprecated_encodedPath")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "encodedPath"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "encodedPath"),
+    level = DeprecationLevel.ERROR,
+  )
   fun encodedPath(): String = encodedPath
 
   @JvmName("-deprecated_encodedPathSegments")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "encodedPathSegments"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "encodedPathSegments"),
+    level = DeprecationLevel.ERROR,
+  )
   fun encodedPathSegments(): List<String> = encodedPathSegments
 
   @JvmName("-deprecated_pathSegments")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "pathSegments"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "pathSegments"),
+    level = DeprecationLevel.ERROR,
+  )
   fun pathSegments(): List<String> = pathSegments
 
   @JvmName("-deprecated_encodedQuery")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "encodedQuery"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "encodedQuery"),
+    level = DeprecationLevel.ERROR,
+  )
   fun encodedQuery(): String? = encodedQuery
 
   @JvmName("-deprecated_query")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "query"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "query"),
+    level = DeprecationLevel.ERROR,
+  )
   fun query(): String? = query
 
   @JvmName("-deprecated_querySize")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "querySize"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "querySize"),
+    level = DeprecationLevel.ERROR,
+  )
   fun querySize(): Int = querySize
 
   @JvmName("-deprecated_queryParameterNames")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "queryParameterNames"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "queryParameterNames"),
+    level = DeprecationLevel.ERROR,
+  )
   fun queryParameterNames(): Set<String> = queryParameterNames
 
   @JvmName("-deprecated_encodedFragment")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "encodedFragment"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "encodedFragment"),
+    level = DeprecationLevel.ERROR,
+  )
   fun encodedFragment(): String? = encodedFragment
 
   @JvmName("-deprecated_fragment")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "fragment"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "fragment"),
+    level = DeprecationLevel.ERROR,
+  )
   fun fragment(): String? = fragment
 
   class Builder {
@@ -893,9 +914,15 @@ class HttpUrl internal constructor(
      */
     fun addEncodedPathSegments(encodedPathSegments: String): Builder = commonAddEncodedPathSegments(encodedPathSegments)
 
-    fun setPathSegment(index: Int, pathSegment: String) = commonSetPathSegment(index, pathSegment)
+    fun setPathSegment(
+      index: Int,
+      pathSegment: String,
+    ) = commonSetPathSegment(index, pathSegment)
 
-    fun setEncodedPathSegment(index: Int, encodedPathSegment: String) = commonSetEncodedPathSegment(index, encodedPathSegment)
+    fun setEncodedPathSegment(
+      index: Int,
+      encodedPathSegment: String,
+    ) = commonSetEncodedPathSegment(index, encodedPathSegment)
 
     fun removePathSegment(index: Int) = commonRemovePathSegment(index)
 
@@ -906,14 +933,26 @@ class HttpUrl internal constructor(
     fun encodedQuery(encodedQuery: String?) = commonEncodedQuery(encodedQuery)
 
     /** Encodes the query parameter using UTF-8 and adds it to this URL's query string. */
-    fun addQueryParameter(name: String, value: String?) = commonAddQueryParameter(name, value)
+    fun addQueryParameter(
+      name: String,
+      value: String?,
+    ) = commonAddQueryParameter(name, value)
 
     /** Adds the pre-encoded query parameter to this URL's query string. */
-    fun addEncodedQueryParameter(encodedName: String, encodedValue: String?) = commonAddEncodedQueryParameter(encodedName, encodedValue)
+    fun addEncodedQueryParameter(
+      encodedName: String,
+      encodedValue: String?,
+    ) = commonAddEncodedQueryParameter(encodedName, encodedValue)
 
-    fun setQueryParameter(name: String, value: String?) = commonSetQueryParameter(name, value)
+    fun setQueryParameter(
+      name: String,
+      value: String?,
+    ) = commonSetQueryParameter(name, value)
 
-    fun setEncodedQueryParameter(encodedName: String, encodedValue: String?) = commonSetEncodedQueryParameter(encodedName, encodedValue)
+    fun setEncodedQueryParameter(
+      encodedName: String,
+      encodedValue: String?,
+    ) = commonSetEncodedQueryParameter(encodedName, encodedValue)
 
     fun removeAllQueryParameters(name: String) = commonRemoveAllQueryParameters(name)
 
@@ -927,42 +966,49 @@ class HttpUrl internal constructor(
      * Re-encodes the components of this URL so that it satisfies (obsolete) RFC 2396, which is
      * particularly strict for certain components.
      */
-    internal fun reencodeForUri() = apply {
-      host = host?.replace(Regex("[\"<>^`{|}]"), "")
+    internal fun reencodeForUri() =
+      apply {
+        host = host?.replace(Regex("[\"<>^`{|}]"), "")
 
-      for (i in 0 until encodedPathSegments.size) {
-        encodedPathSegments[i] = encodedPathSegments[i].canonicalize(
-          encodeSet = PATH_SEGMENT_ENCODE_SET_URI,
-          alreadyEncoded = true,
-          strict = true
-        )
-      }
+        for (i in 0 until encodedPathSegments.size) {
+          encodedPathSegments[i] =
+            encodedPathSegments[i].canonicalize(
+              encodeSet = PATH_SEGMENT_ENCODE_SET_URI,
+              alreadyEncoded = true,
+              strict = true,
+            )
+        }
 
-      val encodedQueryNamesAndValues = this.encodedQueryNamesAndValues
-      if (encodedQueryNamesAndValues != null) {
-        for (i in 0 until encodedQueryNamesAndValues.size) {
-          encodedQueryNamesAndValues[i] = encodedQueryNamesAndValues[i]?.canonicalize(
-            encodeSet = QUERY_COMPONENT_ENCODE_SET_URI,
+        val encodedQueryNamesAndValues = this.encodedQueryNamesAndValues
+        if (encodedQueryNamesAndValues != null) {
+          for (i in 0 until encodedQueryNamesAndValues.size) {
+            encodedQueryNamesAndValues[i] =
+              encodedQueryNamesAndValues[i]?.canonicalize(
+                encodeSet = QUERY_COMPONENT_ENCODE_SET_URI,
+                alreadyEncoded = true,
+                strict = true,
+                plusIsSpace = true,
+              )
+          }
+        }
+
+        encodedFragment =
+          encodedFragment?.canonicalize(
+            encodeSet = FRAGMENT_ENCODE_SET_URI,
             alreadyEncoded = true,
             strict = true,
-            plusIsSpace = true
+            unicodeAllowed = true,
           )
-        }
       }
-
-      encodedFragment = encodedFragment?.canonicalize(
-        encodeSet = FRAGMENT_ENCODE_SET_URI,
-        alreadyEncoded = true,
-        strict = true,
-        unicodeAllowed = true
-      )
-    }
 
     fun build(): HttpUrl = commonBuild()
 
     override fun toString(): String = commonToString()
 
-    internal fun parse(base: HttpUrl?, input: String): Builder = commonParse(base, input)
+    internal fun parse(
+      base: HttpUrl?,
+      input: String,
+    ): Builder = commonParse(base, input)
   }
 
   companion object {
@@ -975,7 +1021,8 @@ class HttpUrl internal constructor(
      * @throws IllegalArgumentException If this is not a well-formed HTTP or HTTPS URL.
      */
     @JvmStatic
-    @JvmName("get") fun String.toHttpUrl(): HttpUrl = commonToHttpUrl()
+    @JvmName("get")
+    fun String.toHttpUrl(): HttpUrl = commonToHttpUrl()
 
     /**
      * Returns a new `HttpUrl` representing `url` if it is a well-formed HTTP or HTTPS URL, or null
@@ -1000,44 +1047,48 @@ class HttpUrl internal constructor(
     @JvmName("-deprecated_get")
     @Deprecated(
       message = "moved to extension function",
-      replaceWith = ReplaceWith(
-        expression = "url.toHttpUrl()",
-        imports = ["okhttp3.HttpUrl.Companion.toHttpUrl"]
-      ),
-      level = DeprecationLevel.ERROR
+      replaceWith =
+        ReplaceWith(
+          expression = "url.toHttpUrl()",
+          imports = ["okhttp3.HttpUrl.Companion.toHttpUrl"],
+        ),
+      level = DeprecationLevel.ERROR,
     )
     fun get(url: String): HttpUrl = url.toHttpUrl()
 
     @JvmName("-deprecated_parse")
     @Deprecated(
       message = "moved to extension function",
-      replaceWith = ReplaceWith(
-        expression = "url.toHttpUrlOrNull()",
-        imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"]
-      ),
-      level = DeprecationLevel.ERROR
+      replaceWith =
+        ReplaceWith(
+          expression = "url.toHttpUrlOrNull()",
+          imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"],
+        ),
+      level = DeprecationLevel.ERROR,
     )
     fun parse(url: String): HttpUrl? = url.toHttpUrlOrNull()
 
     @JvmName("-deprecated_get")
     @Deprecated(
       message = "moved to extension function",
-      replaceWith = ReplaceWith(
-        expression = "url.toHttpUrlOrNull()",
-        imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"]
-      ),
-      level = DeprecationLevel.ERROR
+      replaceWith =
+        ReplaceWith(
+          expression = "url.toHttpUrlOrNull()",
+          imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"],
+        ),
+      level = DeprecationLevel.ERROR,
     )
     fun get(url: URL): HttpUrl? = url.toHttpUrlOrNull()
 
     @JvmName("-deprecated_get")
     @Deprecated(
       message = "moved to extension function",
-      replaceWith = ReplaceWith(
-        expression = "uri.toHttpUrlOrNull()",
-        imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"]
-      ),
-      level = DeprecationLevel.ERROR
+      replaceWith =
+        ReplaceWith(
+          expression = "uri.toHttpUrlOrNull()",
+          imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"],
+        ),
+      level = DeprecationLevel.ERROR,
     )
     fun get(uri: URI): HttpUrl? = uri.toHttpUrlOrNull()
   }

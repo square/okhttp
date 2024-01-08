@@ -33,7 +33,7 @@ open class RecordingConnectionListener(
    * An override to ignore the normal order that is enforced.
    * EventListeners added by Interceptors will not see all events.
    */
-  private val enforceOrder: Boolean = true
+  private val enforceOrder: Boolean = true,
 ) : ConnectionListener() {
   val eventSequence: Deque<ConnectionEvent> = ConcurrentLinkedDeque()
 
@@ -51,7 +51,7 @@ open class RecordingConnectionListener(
    * Removes recorded events up to (and including) an event is found whose class equals [eventClass]
    * and returns it.
    */
-  fun <T: ConnectionEvent> removeUpToEvent(eventClass: Class<T>): T {
+  fun <T : ConnectionEvent> removeUpToEvent(eventClass: Class<T>): T {
     val fullEventSequence = eventSequence.toList()
     try {
       while (true) {
@@ -75,7 +75,7 @@ open class RecordingConnectionListener(
    */
   fun takeEvent(
     eventClass: Class<out ConnectionEvent>? = null,
-    elapsedMs: Long = -1L
+    elapsedMs: Long = -1L,
   ): ConnectionEvent {
     val result = eventSequence.remove()
     val actualElapsedNs = result.timestampNs - (lastTimestampNs ?: result.timestampNs)
@@ -88,7 +88,7 @@ open class RecordingConnectionListener(
     if (elapsedMs != -1L) {
       assertThat(
         TimeUnit.NANOSECONDS.toMillis(actualElapsedNs)
-          .toDouble()
+          .toDouble(),
       )
         .isCloseTo(elapsedMs.toDouble(), 100.0)
     }
@@ -125,7 +125,7 @@ open class RecordingConnectionListener(
     if (eventSequence.isEmpty()) {
       assertThat(e).isInstanceOf(ConnectionEvent.ConnectStart::class.java)
     } else {
-      eventSequence.forEach loop@ {
+      eventSequence.forEach loop@{
         when (e.closes(it)) {
           null -> return // no open event
           true -> return // found open event
@@ -136,21 +136,40 @@ open class RecordingConnectionListener(
     }
   }
 
-  override fun connectStart(route: Route, call: Call) = logEvent(ConnectionEvent.ConnectStart(System.nanoTime(), route, call))
+  override fun connectStart(
+    route: Route,
+    call: Call,
+  ) = logEvent(ConnectionEvent.ConnectStart(System.nanoTime(), route, call))
 
-  override fun connectFailed(route: Route, call: Call, failure: IOException) = logEvent(ConnectionEvent.ConnectFailed(System.nanoTime(), route, call, failure))
+  override fun connectFailed(
+    route: Route,
+    call: Call,
+    failure: IOException,
+  ) = logEvent(
+    ConnectionEvent.ConnectFailed(System.nanoTime(), route, call, failure),
+  )
 
-  override fun connectEnd(connection: Connection, route: Route, call: Call) {
+  override fun connectEnd(
+    connection: Connection,
+    route: Route,
+    call: Call,
+  ) {
     logEvent(ConnectionEvent.ConnectEnd(System.nanoTime(), connection, route, call))
   }
 
   override fun connectionClosed(connection: Connection) = logEvent(ConnectionEvent.ConnectionClosed(System.nanoTime(), connection))
 
-  override fun connectionAcquired(connection: Connection, call: Call) {
+  override fun connectionAcquired(
+    connection: Connection,
+    call: Call,
+  ) {
     logEvent(ConnectionEvent.ConnectionAcquired(System.nanoTime(), connection, call))
   }
 
-  override fun connectionReleased(connection: Connection, call: Call) {
+  override fun connectionReleased(
+    connection: Connection,
+    call: Call,
+  ) {
     if (eventSequence.find { it is ConnectionEvent.ConnectStart && it.connection == connection } != null && connection is RealConnection) {
       if (connection.noNewExchanges) {
         assertThat(eventSequence).matchesPredicate { deque ->

@@ -19,7 +19,6 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
-import assertk.fail
 import java.io.IOException
 import java.util.Arrays
 import kotlin.test.assertFailsWith
@@ -76,18 +75,22 @@ class HpackTest {
     hpackReader!!.readHeaders()
     assertThat(hpackReader!!.headerCount).isEqualTo(0)
     assertThat(hpackReader!!.getAndResetHeaderList()).isEqualTo(
-      headerEntries("custom-key", "custom-header")
+      headerEntries("custom-key", "custom-header"),
     )
   }
 
   /** Oldest entries are evicted to support newer ones.  */
   @Test
   fun writerEviction() {
-    val headerBlock = headerEntries(
-      "custom-foo", "custom-header",
-      "custom-bar", "custom-header",
-      "custom-baz", "custom-header"
-    )
+    val headerBlock =
+      headerEntries(
+        "custom-foo",
+        "custom-header",
+        "custom-bar",
+        "custom-header",
+        "custom-baz",
+        "custom-header",
+      )
     bytesIn.writeByte(0x40) // Literal indexed
     bytesIn.writeByte(0x0a) // Literal name (len = 10)
     bytesIn.writeUtf8("custom-foo")
@@ -120,11 +123,15 @@ class HpackTest {
 
   @Test
   fun readerEviction() {
-    val headerBlock = headerEntries(
-      "custom-foo", "custom-header",
-      "custom-bar", "custom-header",
-      "custom-baz", "custom-header"
-    )
+    val headerBlock =
+      headerEntries(
+        "custom-foo",
+        "custom-header",
+        "custom-bar",
+        "custom-header",
+        "custom-baz",
+        "custom-header",
+      )
 
     // Set to only support 110 bytes (enough for 2 headers).
     bytesIn.writeByte(0x3F) // Dynamic table size update (size = 110).
@@ -211,7 +218,7 @@ class HpackTest {
     val entry = hpackReader!!.dynamicTable[readerHeaderTableLength() - 1]!!
     checkEntry(entry, "custom-key", "custom-header", 55)
     assertThat(hpackReader!!.getAndResetHeaderList()).isEqualTo(
-      headerEntries("custom-key", "custom-header")
+      headerEntries("custom-key", "custom-header"),
     )
   }
 
@@ -254,7 +261,7 @@ class HpackTest {
     hpackReader!!.readHeaders()
     assertThat(hpackReader!!.headerCount).isEqualTo(0)
     assertThat(hpackReader!!.getAndResetHeaderList()).isEqualTo(
-      headerEntries(":path", "/sample/path")
+      headerEntries(":path", "/sample/path"),
     )
   }
 
@@ -302,10 +309,13 @@ class HpackTest {
 
   @Test
   fun theSameHeaderAfterOneIncrementalIndexed() {
-    val headerBlock = headerEntries(
-      "custom-key", "custom-header",
-      "custom-key", "custom-header"
-    )
+    val headerBlock =
+      headerEntries(
+        "custom-key",
+        "custom-header",
+        "custom-key",
+        "custom-header",
+      )
     bytesIn.writeByte(0x40) // Never indexed
     bytesIn.writeByte(0x0a) // Literal name (len = 10)
     bytesIn.writeUtf8("custom-key")
@@ -331,7 +341,7 @@ class HpackTest {
     assertThat(hpackReader!!.dynamicTableByteCount).isEqualTo(0)
     assertThat(hpackReader!!.dynamicTable[readerHeaderTableLength() - 1]).isNull()
     assertThat(hpackReader!!.getAndResetHeaderList()).isEqualTo(
-      headerEntries(":method", "GET")
+      headerEntries(":method", "GET"),
     )
   }
 
@@ -421,7 +431,7 @@ class HpackTest {
     // Not buffered in header table.
     assertThat(hpackReader!!.headerCount).isEqualTo(0)
     assertThat(hpackReader!!.getAndResetHeaderList()).isEqualTo(
-      headerEntries(":method", "GET")
+      headerEntries(":method", "GET"),
     )
   }
 
@@ -448,7 +458,8 @@ class HpackTest {
     bytesIn.writeUtf8("Basic2")
     hpackReader!!.readHeaders()
     assertThat(hpackReader!!.getAndResetHeaderList()).containsExactly(
-      Header("custom-foo", "Basic"), Header("custom-foo", "Basic2")
+      Header("custom-foo", "Basic"),
+      Header("custom-foo", "Basic2"),
     )
   }
 
@@ -513,11 +524,15 @@ class HpackTest {
     // Decoded header list:
     assertThat(hpackReader!!.getAndResetHeaderList()).isEqualTo(
       headerEntries(
-        ":method", "GET",
-        ":scheme", "http",
-        ":path", "/",
-        ":authority", "www.example.com"
-      )
+        ":method",
+        "GET",
+        ":scheme",
+        "http",
+        ":path",
+        "/",
+        ":authority",
+        "www.example.com",
+      ),
     )
   }
 
@@ -557,8 +572,8 @@ class HpackTest {
         ":scheme", "http",
         ":path", "/",
         ":authority", "www.example.com",
-        "cache-control", "no-cache"
-      )
+        "cache-control", "no-cache",
+      ),
     )
   }
 
@@ -603,8 +618,8 @@ class HpackTest {
         ":scheme", "https",
         ":path", "/index.html",
         ":authority", "www.example.com",
-        "custom-key", "custom-value"
-      )
+        "custom-key", "custom-value",
+      ),
     )
   }
 
@@ -651,11 +666,15 @@ class HpackTest {
     // Decoded header list:
     assertThat(hpackReader!!.getAndResetHeaderList()).isEqualTo(
       headerEntries(
-        ":method", "GET",
-        ":scheme", "http",
-        ":path", "/",
-        ":authority", "www.example.com"
-      )
+        ":method",
+        "GET",
+        ":scheme",
+        "http",
+        ":path",
+        "/",
+        ":authority",
+        "www.example.com",
+      ),
     )
   }
 
@@ -696,8 +715,8 @@ class HpackTest {
         ":scheme", "http",
         ":path", "/",
         ":authority", "www.example.com",
-        "cache-control", "no-cache"
-      )
+        "cache-control", "no-cache",
+      ),
     )
   }
 
@@ -744,8 +763,8 @@ class HpackTest {
         ":scheme", "https",
         ":path", "/index.html",
         ":authority", "www.example.com",
-        "custom-key", "custom-value"
-      )
+        "custom-key", "custom-value",
+      ),
     )
   }
 
@@ -824,12 +843,12 @@ class HpackTest {
           3,
           'B'.code,
           'a'.code,
-          'R'.code
-        )
+          'R'.code,
+        ),
       ).readHeaders()
     }.also { expected ->
       assertThat(expected.message).isEqualTo(
-        "PROTOCOL_ERROR response malformed: mixed case name: Foo"
+        "PROTOCOL_ERROR response malformed: mixed case name: Foo",
       )
     }
   }
@@ -849,14 +868,14 @@ class HpackTest {
     assertBytes(
       // Dynamic table size update (size = 2048).
       0x3F, 0xE1, 0xF,
-      0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code
+      0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code,
     )
     hpackWriter!!.resizeHeaderTable(8192)
     hpackWriter!!.writeHeaders(listOf(Header("bar", "foo")))
     assertBytes(
       // Dynamic table size update (size = 8192).
       0x3F, 0xE1, 0x3F,
-      0x40, 3, 'b'.code, 'a'.code, 'r'.code, 3, 'f'.code, 'o'.code, 'o'.code
+      0x40, 3, 'b'.code, 'a'.code, 'r'.code, 3, 'f'.code, 'o'.code, 'o'.code,
     )
 
     // No more dynamic table updates should be emitted.
@@ -880,7 +899,7 @@ class HpackTest {
     assertBytes(
       // Dynamic table size update (size = 16384).
       0x3F, 0xE1, 0x7F,
-      0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code
+      0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code,
     )
   }
 
@@ -892,7 +911,7 @@ class HpackTest {
     assertBytes(
       // Dynamic size update (size = 0).
       0x20,
-      0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code
+      0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code,
     )
   }
 
@@ -909,16 +928,19 @@ class HpackTest {
       0x20,
       // Dynamic size update (size = 2048).
       0x3F, 0xE1, 0xF,
-      0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code
+      0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code,
     )
   }
 
   @Test
   fun dynamicTableEvictionWhenSizeLowered() {
-    val headerBlock = headerEntries(
-      "custom-key1", "custom-header",
-      "custom-key2", "custom-header"
-    )
+    val headerBlock =
+      headerEntries(
+        "custom-key1",
+        "custom-header",
+        "custom-key2",
+        "custom-header",
+      )
     hpackWriter!!.writeHeaders(headerBlock)
     assertThat(hpackWriter!!.headerCount).isEqualTo(2)
     hpackWriter!!.resizeHeaderTable(56)
@@ -929,10 +951,13 @@ class HpackTest {
 
   @Test
   fun noEvictionOnDynamicTableSizeIncrease() {
-    val headerBlock = headerEntries(
-      "custom-key1", "custom-header",
-      "custom-key2", "custom-header"
-    )
+    val headerBlock =
+      headerEntries(
+        "custom-key1",
+        "custom-header",
+        "custom-key2",
+        "custom-header",
+      )
     hpackWriter!!.writeHeaders(headerBlock)
     assertThat(hpackWriter!!.headerCount).isEqualTo(2)
     hpackWriter!!.resizeHeaderTable(8192)
@@ -949,16 +974,17 @@ class HpackTest {
   fun huffmanEncode() {
     hpackWriter = Hpack.Writer(4096, true, bytesOut)
     hpackWriter!!.writeHeaders(headerEntries("foo", "bar"))
-    val expected = Buffer()
-      .writeByte(0x40) // Literal header, new name.
-      .writeByte(0x82) // String literal is Huffman encoded (len = 2).
-      .writeByte(0x94) // 'foo' Huffman encoded.
-      .writeByte(0xE7)
-      .writeByte(3) // String literal not Huffman encoded (len = 3).
-      .writeByte('b'.code)
-      .writeByte('a'.code)
-      .writeByte('r'.code)
-      .readByteString()
+    val expected =
+      Buffer()
+        .writeByte(0x40) // Literal header, new name.
+        .writeByte(0x82) // String literal is Huffman encoded (len = 2).
+        .writeByte(0x94) // 'foo' Huffman encoded.
+        .writeByte(0xE7)
+        .writeByte(3) // String literal not Huffman encoded (len = 3).
+        .writeByte('b'.code)
+        .writeByte('a'.code)
+        .writeByte('r'.code)
+        .readByteString()
     val actual = bytesOut.readByteString()
     assertThat(actual).isEqualTo(expected)
   }
@@ -1014,7 +1040,7 @@ class HpackTest {
       'a'.code,
       'd'.code,
       'e'.code,
-      'r'.code
+      'r'.code,
     )
     assertThat(hpackWriter!!.headerCount).isEqualTo(1)
     hpackWriter!!.writeHeaders(headerEntries("custom-key", "custom-header"))
@@ -1081,7 +1107,12 @@ class HpackTest {
     return Buffer().write(intArrayToByteArray(bytes))
   }
 
-  private fun checkEntry(entry: Header, name: String, value: String, size: Int) {
+  private fun checkEntry(
+    entry: Header,
+    name: String,
+    value: String,
+    size: Int,
+  ) {
     assertThat(entry.name.utf8()).isEqualTo(name)
     assertThat(entry.value.utf8()).isEqualTo(value)
     assertThat(entry.hpackSize).isEqualTo(size)

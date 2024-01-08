@@ -56,21 +56,24 @@ class WholeOperationTimeoutTest {
 
   @Test
   fun defaultConfigIsNoTimeout() {
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
     val call = client.newCall(request)
     assertThat(call.timeout().timeoutNanos()).isEqualTo(0)
   }
 
   @Test
   fun configureClientDefault() {
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
-    val timeoutClient = client.newBuilder()
-      .callTimeout(Duration.ofMillis(456))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
+    val timeoutClient =
+      client.newBuilder()
+        .callTimeout(Duration.ofMillis(456))
+        .build()
     val call = timeoutClient.newCall(request)
     assertThat(call.timeout().timeoutNanos())
       .isEqualTo(TimeUnit.MILLISECONDS.toNanos(456))
@@ -79,10 +82,11 @@ class WholeOperationTimeoutTest {
   @Test
   fun timeoutWritingRequest() {
     server.enqueue(MockResponse())
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .post(sleepingRequestBody(500))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .post(sleepingRequestBody(500))
+        .build()
     val call = client.newCall(request)
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
     assertFailsWith<IOException> {
@@ -96,26 +100,35 @@ class WholeOperationTimeoutTest {
   @Test
   fun timeoutWritingRequestWithEnqueue() {
     server.enqueue(MockResponse())
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .post(sleepingRequestBody(500))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .post(sleepingRequestBody(500))
+        .build()
     val latch = CountDownLatch(1)
     val exceptionRef = AtomicReference<Throwable>()
     val call = client.newCall(request)
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
-    call.enqueue(object : Callback {
-      override fun onFailure(call: Call, e: IOException) {
-        exceptionRef.set(e)
-        latch.countDown()
-      }
+    call.enqueue(
+      object : Callback {
+        override fun onFailure(
+          call: Call,
+          e: IOException,
+        ) {
+          exceptionRef.set(e)
+          latch.countDown()
+        }
 
-      @Throws(IOException::class)
-      override fun onResponse(call: Call, response: Response) {
-        response.close()
-        latch.countDown()
-      }
-    })
+        @Throws(IOException::class)
+        override fun onResponse(
+          call: Call,
+          response: Response,
+        ) {
+          response.close()
+          latch.countDown()
+        }
+      },
+    )
     latch.await()
     assertThat(call.isCanceled()).isTrue()
     assertThat(exceptionRef.get()).isNotNull()
@@ -126,11 +139,12 @@ class WholeOperationTimeoutTest {
     server.enqueue(
       MockResponse.Builder()
         .headersDelay(500, TimeUnit.MILLISECONDS)
-        .build()
+        .build(),
     )
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
     val call = client.newCall(request)
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
     assertFailsWith<IOException> {
@@ -146,27 +160,36 @@ class WholeOperationTimeoutTest {
     server.enqueue(
       MockResponse.Builder()
         .headersDelay(500, TimeUnit.MILLISECONDS)
-        .build()
+        .build(),
     )
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
     val latch = CountDownLatch(1)
     val exceptionRef = AtomicReference<Throwable>()
     val call = client.newCall(request)
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
-    call.enqueue(object : Callback {
-      override fun onFailure(call: Call, e: IOException) {
-        exceptionRef.set(e)
-        latch.countDown()
-      }
+    call.enqueue(
+      object : Callback {
+        override fun onFailure(
+          call: Call,
+          e: IOException,
+        ) {
+          exceptionRef.set(e)
+          latch.countDown()
+        }
 
-      @Throws(IOException::class)
-      override fun onResponse(call: Call, response: Response) {
-        response.close()
-        latch.countDown()
-      }
-    })
+        @Throws(IOException::class)
+        override fun onResponse(
+          call: Call,
+          response: Response,
+        ) {
+          response.close()
+          latch.countDown()
+        }
+      },
+    )
     latch.await()
     assertThat(call.isCanceled()).isTrue()
     assertThat(exceptionRef.get()).isNotNull()
@@ -177,11 +200,12 @@ class WholeOperationTimeoutTest {
     server.enqueue(
       MockResponse.Builder()
         .body(BIG_ENOUGH_BODY)
-        .build()
+        .build(),
     )
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
     val call = client.newCall(request)
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
     val response = call.execute()
@@ -199,35 +223,44 @@ class WholeOperationTimeoutTest {
     server.enqueue(
       MockResponse.Builder()
         .body(BIG_ENOUGH_BODY)
-        .build()
+        .build(),
     )
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
     val latch = CountDownLatch(1)
     val exceptionRef = AtomicReference<Throwable>()
     val call = client.newCall(request)
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
-    call.enqueue(object : Callback {
-      override fun onFailure(call: Call, e: IOException) {
-        latch.countDown()
-      }
-
-      @Throws(IOException::class)
-      override fun onResponse(call: Call, response: Response) {
-        try {
-          Thread.sleep(500)
-        } catch (e: InterruptedException) {
-          throw AssertionError()
-        }
-        assertFailsWith<IOException> {
-          response.body.source().readUtf8()
-        }.also { expected ->
-          exceptionRef.set(expected)
+    call.enqueue(
+      object : Callback {
+        override fun onFailure(
+          call: Call,
+          e: IOException,
+        ) {
           latch.countDown()
         }
-      }
-    })
+
+        @Throws(IOException::class)
+        override fun onResponse(
+          call: Call,
+          response: Response,
+        ) {
+          try {
+            Thread.sleep(500)
+          } catch (e: InterruptedException) {
+            throw AssertionError()
+          }
+          assertFailsWith<IOException> {
+            response.body.source().readUtf8()
+          }.also { expected ->
+            exceptionRef.set(expected)
+            latch.countDown()
+          }
+        }
+      },
+    )
     latch.await()
     assertThat(call.isCanceled()).isTrue()
     assertThat(exceptionRef.get()).isNotNull()
@@ -240,40 +273,41 @@ class WholeOperationTimeoutTest {
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/b")
         .headersDelay(100, TimeUnit.MILLISECONDS)
-        .build()
+        .build(),
     )
     server.enqueue(
       MockResponse.Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/c")
         .headersDelay(100, TimeUnit.MILLISECONDS)
-        .build()
+        .build(),
     )
     server.enqueue(
       MockResponse.Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/d")
         .headersDelay(100, TimeUnit.MILLISECONDS)
-        .build()
+        .build(),
     )
     server.enqueue(
       MockResponse.Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/e")
         .headersDelay(100, TimeUnit.MILLISECONDS)
-        .build()
+        .build(),
     )
     server.enqueue(
       MockResponse.Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/f")
         .headersDelay(100, TimeUnit.MILLISECONDS)
-        .build()
+        .build(),
     )
     server.enqueue(MockResponse())
-    val request = Request.Builder()
-      .url(server.url("/a"))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/a"))
+        .build()
     val call = client.newCall(request)
     call.timeout().timeout(250, TimeUnit.MILLISECONDS)
     assertFailsWith<IOException> {
@@ -291,12 +325,12 @@ class WholeOperationTimeoutTest {
       MockResponse.Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", otherServer.url("/"))
-        .build()
+        .build(),
     )
     otherServer.enqueue(
       MockResponse.Builder()
         .headersDelay(500, TimeUnit.MILLISECONDS)
-        .build()
+        .build(),
     )
     val request = Request.Builder().url(server.url("/")).build()
     val call = client.newCall(request)
@@ -317,12 +351,13 @@ class WholeOperationTimeoutTest {
       MockResponse.Builder()
         .headersDelay(250, TimeUnit.MILLISECONDS)
         .body(BIG_ENOUGH_BODY)
-        .build()
+        .build(),
     )
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .post(sleepingRequestBody(250))
-      .build()
+    val request =
+      Request.Builder()
+        .url(server.url("/"))
+        .post(sleepingRequestBody(250))
+        .build()
     val call = client.newCall(request)
     call.timeout().timeout(2000, TimeUnit.MILLISECONDS)
     val response = call.execute()

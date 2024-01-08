@@ -44,7 +44,10 @@ interface PushObserver {
    * @param requestHeaders minimally includes `:method`, `:scheme`, `:authority`,
    * and `:path`.
    */
-  fun onRequest(streamId: Int, requestHeaders: List<Header>): Boolean
+  fun onRequest(
+    streamId: Int,
+    requestHeaders: List<Header>,
+  ): Boolean
 
   /**
    * The response headers corresponding to a pushed request.  When [last] is true, there are
@@ -54,7 +57,11 @@ interface PushObserver {
    * @param responseHeaders minimally includes `:status`.
    * @param last when true, there is no response data.
    */
-  fun onHeaders(streamId: Int, responseHeaders: List<Header>, last: Boolean): Boolean
+  fun onHeaders(
+    streamId: Int,
+    responseHeaders: List<Header>,
+    last: Boolean,
+  ): Boolean
 
   /**
    * A chunk of response data corresponding to a pushed request.  This data must either be read or
@@ -66,30 +73,53 @@ interface PushObserver {
    * @param last when true, there are no data frames to follow.
    */
   @Throws(IOException::class)
-  fun onData(streamId: Int, source: BufferedSource, byteCount: Int, last: Boolean): Boolean
+  fun onData(
+    streamId: Int,
+    source: BufferedSource,
+    byteCount: Int,
+    last: Boolean,
+  ): Boolean
 
   /** Indicates the reason why this stream was canceled. */
-  fun onReset(streamId: Int, errorCode: ErrorCode)
+  fun onReset(
+    streamId: Int,
+    errorCode: ErrorCode,
+  )
 
   companion object {
     @JvmField val CANCEL: PushObserver = PushObserverCancel()
-    private class PushObserverCancel : PushObserver {
 
-      override fun onRequest(streamId: Int, requestHeaders: List<Header>): Boolean {
+    private class PushObserverCancel : PushObserver {
+      override fun onRequest(
+        streamId: Int,
+        requestHeaders: List<Header>,
+      ): Boolean {
         return true
       }
 
-      override fun onHeaders(streamId: Int, responseHeaders: List<Header>, last: Boolean): Boolean {
+      override fun onHeaders(
+        streamId: Int,
+        responseHeaders: List<Header>,
+        last: Boolean,
+      ): Boolean {
         return true
       }
 
       @Throws(IOException::class)
-      override fun onData(streamId: Int, source: BufferedSource, byteCount: Int, last: Boolean): Boolean {
+      override fun onData(
+        streamId: Int,
+        source: BufferedSource,
+        byteCount: Int,
+        last: Boolean,
+      ): Boolean {
         source.skip(byteCount.toLong())
         return true
       }
 
-      override fun onReset(streamId: Int, errorCode: ErrorCode) {
+      override fun onReset(
+        streamId: Int,
+        errorCode: ErrorCode,
+      ) {
       }
     }
   }

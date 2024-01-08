@@ -23,7 +23,7 @@ data class Header(
   /** Name in case-insensitive ASCII encoding. */
   @JvmField val name: ByteString,
   /** Value in UTF-8 encoding. */
-  @JvmField val value: ByteString
+  @JvmField val value: ByteString,
 ) {
   @JvmField val hpackSize = 32 + name.size + value.size
 
@@ -45,9 +45,13 @@ data class Header(
     const val TARGET_AUTHORITY_UTF8 = ":authority"
 
     @JvmField val RESPONSE_STATUS: ByteString = RESPONSE_STATUS_UTF8.encodeUtf8()
+
     @JvmField val TARGET_METHOD: ByteString = TARGET_METHOD_UTF8.encodeUtf8()
+
     @JvmField val TARGET_PATH: ByteString = TARGET_PATH_UTF8.encodeUtf8()
+
     @JvmField val TARGET_SCHEME: ByteString = TARGET_SCHEME_UTF8.encodeUtf8()
+
     @JvmField val TARGET_AUTHORITY: ByteString = TARGET_AUTHORITY_UTF8.encodeUtf8()
   }
 }

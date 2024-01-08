@@ -34,9 +34,8 @@ import javax.net.ssl.SSLPeerUnverifiedException
  * [Conscrypt]: https://conscrypt.org/
  */
 class BasicCertificateChainCleaner(
-  private val trustRootIndex: TrustRootIndex
+  private val trustRootIndex: TrustRootIndex,
 ) : CertificateChainCleaner() {
-
   /**
    * Returns a cleaned chain for [chain].
    *
@@ -45,7 +44,10 @@ class BasicCertificateChainCleaner(
    * what was used to establish [chain].
    */
   @Throws(SSLPeerUnverifiedException::class)
-  override fun clean(chain: List<Certificate>, hostname: String): List<Certificate> {
+  override fun clean(
+    chain: List<Certificate>,
+    hostname: String,
+  ): List<Certificate> {
     val queue: Deque<Certificate> = ArrayDeque(chain)
     val result = mutableListOf<Certificate>()
     result.add(queue.removeFirst())
@@ -89,7 +91,8 @@ class BasicCertificateChainCleaner(
 
       // The last link isn't trusted. Fail.
       throw SSLPeerUnverifiedException(
-          "Failed to find a trusted cert that signed $toVerify")
+        "Failed to find a trusted cert that signed $toVerify",
+      )
     }
 
     throw SSLPeerUnverifiedException("Certificate chain too long: $result")

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+
 package okhttp3
 
 import java.io.IOException
@@ -35,17 +36,16 @@ sealed class ConnectionEvent {
   data class ConnectStart(
     override val timestampNs: Long,
     val route: Route,
-    val call: Call
+    val call: Call,
   ) : ConnectionEvent()
 
   data class ConnectFailed(
     override val timestampNs: Long,
     val route: Route,
     val call: Call,
-    val exception: IOException
+    val exception: IOException,
   ) : ConnectionEvent() {
-    override fun closes(event: ConnectionEvent): Boolean =
-      event is ConnectStart && call == event.call && route == event.route
+    override fun closes(event: ConnectionEvent): Boolean = event is ConnectStart && call == event.call && route == event.route
   }
 
   data class ConnectEnd(
@@ -54,8 +54,7 @@ sealed class ConnectionEvent {
     val route: Route,
     val call: Call,
   ) : ConnectionEvent() {
-    override fun closes(event: ConnectionEvent): Boolean =
-      event is ConnectStart && call == event.call && route == event.route
+    override fun closes(event: ConnectionEvent): Boolean = event is ConnectStart && call == event.call && route == event.route
   }
 
   data class ConnectionClosed(
@@ -66,15 +65,14 @@ sealed class ConnectionEvent {
   data class ConnectionAcquired(
     override val timestampNs: Long,
     override val connection: Connection,
-    val call: Call
+    val call: Call,
   ) : ConnectionEvent()
 
   data class ConnectionReleased(
     override val timestampNs: Long,
     override val connection: Connection,
-    val call: Call
+    val call: Call,
   ) : ConnectionEvent() {
-
     override fun closes(event: ConnectionEvent): Boolean =
       event is ConnectionAcquired && connection == event.connection && call == event.call
   }

@@ -56,11 +56,12 @@ class Jdk9PlatformTest {
   @Test
   fun selectedProtocolIsNullWhenSslSocketThrowsExceptionForApplicationProtocol() {
     platform.assumeJdk9()
-    val applicationProtocolUnsupported = object : DelegatingSSLSocket(null) {
-      override fun getApplicationProtocol(): String {
-        throw UnsupportedOperationException("Mock exception")
+    val applicationProtocolUnsupported =
+      object : DelegatingSSLSocket(null) {
+        override fun getApplicationProtocol(): String {
+          throw UnsupportedOperationException("Mock exception")
+        }
       }
-    }
     assertThat(Jdk9Platform().getSelectedProtocol(applicationProtocolUnsupported)).isNull()
   }
 }

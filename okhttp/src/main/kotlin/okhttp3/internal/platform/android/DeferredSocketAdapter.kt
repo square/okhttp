@@ -33,13 +33,12 @@ class DeferredSocketAdapter(private val socketAdapterFactory: Factory) : SocketA
     return true
   }
 
-  override fun matchesSocket(sslSocket: SSLSocket): Boolean =
-    socketAdapterFactory.matchesSocket(sslSocket)
+  override fun matchesSocket(sslSocket: SSLSocket): Boolean = socketAdapterFactory.matchesSocket(sslSocket)
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
-    protocols: List<Protocol>
+    protocols: List<Protocol>,
   ) {
     getDelegate(sslSocket)?.configureTlsExtensions(sslSocket, hostname, protocols)
   }
@@ -58,6 +57,7 @@ class DeferredSocketAdapter(private val socketAdapterFactory: Factory) : SocketA
 
   interface Factory {
     fun matchesSocket(sslSocket: SSLSocket): Boolean
+
     fun create(sslSocket: SSLSocket): SocketAdapter
   }
 }

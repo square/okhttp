@@ -39,7 +39,7 @@ class Android10SocketAdapter : SocketAdapter {
   override fun isSupported(): Boolean = Companion.isSupported()
 
   @SuppressLint("NewApi")
-  override fun getSelectedProtocol(sslSocket: SSLSocket): String?  {
+  override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
     return try {
       // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
       // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
@@ -57,7 +57,7 @@ class Android10SocketAdapter : SocketAdapter {
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
-    protocols: List<Protocol>
+    protocols: List<Protocol>,
   ) {
     try {
       SSLSockets.setUseSessionTickets(sslSocket, true)
@@ -76,8 +76,7 @@ class Android10SocketAdapter : SocketAdapter {
 
   @SuppressSignatureCheck
   companion object {
-    fun buildIfSupported(): SocketAdapter? =
-        if (isSupported()) Android10SocketAdapter() else null
+    fun buildIfSupported(): SocketAdapter? = if (isSupported()) Android10SocketAdapter() else null
 
     fun isSupported() = isAndroid && Build.VERSION.SDK_INT >= 29
   }

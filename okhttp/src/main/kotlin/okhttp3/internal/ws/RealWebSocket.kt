@@ -63,7 +63,7 @@ class RealWebSocket(
    */
   private var extensions: WebSocketExtensions?,
   /** If compression is negotiated, outbound messages of this size and larger will be compressed. */
-  private var minimumDeflateSize: Long
+  private var minimumDeflateSize: Long,
 ) : WebSocket, WebSocketReader.FrameCallback {
   private val key: String
 
@@ -145,11 +145,13 @@ class RealWebSocket(
       return
     }
 
-    val webSocketClient = client.newBuilder()
+    val webSocketClient =
+      client.newBuilder()
         .eventListener(EventListener.NONE)
         .protocols(ONLY_HTTP1)
         .build()
-    val request = originalRequest.newBuilder()
+    val request =
+      originalRequest.newBuilder()
         .header("Upgrade", "websocket")
         .header("Connection", "Upgrade")
         .header("Sec-WebSocket-Key", key)
@@ -157,41 +159,49 @@ class RealWebSocket(
         .header("Sec-WebSocket-Extensions", "permessage-deflate")
         .build()
     call = RealCall(webSocketClient, request, forWebSocket = true)
-    call!!.enqueue(object : Callback {
-      override fun onResponse(call: Call, response: Response) {
-        val exchange = response.exchange
-        val streams: Streams
-        try {
-          checkUpgradeSuccess(response, exchange)
-          streams = exchange!!.newWebSocketStreams()
-        } catch (e: IOException) {
-          failWebSocket(e, response)
-          response.closeQuietly()
-          exchange?.webSocketUpgradeFailed()
-          return
-        }
-
-        // Apply the extensions. If they're unacceptable initiate a graceful shut down.
-        // TODO(jwilson): Listeners should get onFailure() instead of onClosing() + onClosed(1010).
-        val extensions = WebSocketExtensions.parse(response.headers)
-        this@RealWebSocket.extensions = extensions
-        if (!extensions.isValid()) {
-          synchronized(this@RealWebSocket) {
-            messageAndCloseQueue.clear() // Don't transmit any messages.
-            close(1010, "unexpected Sec-WebSocket-Extensions in response header")
+    call!!.enqueue(
+      object : Callback {
+        override fun onResponse(
+          call: Call,
+          response: Response,
+        ) {
+          val exchange = response.exchange
+          val streams: Streams
+          try {
+            checkUpgradeSuccess(response, exchange)
+            streams = exchange!!.newWebSocketStreams()
+          } catch (e: IOException) {
+            failWebSocket(e, response)
+            response.closeQuietly()
+            exchange?.webSocketUpgradeFailed()
+            return
           }
+
+          // Apply the extensions. If they're unacceptable initiate a graceful shut down.
+          // TODO(jwilson): Listeners should get onFailure() instead of onClosing() + onClosed(1010).
+          val extensions = WebSocketExtensions.parse(response.headers)
+          this@RealWebSocket.extensions = extensions
+          if (!extensions.isValid()) {
+            synchronized(this@RealWebSocket) {
+              messageAndCloseQueue.clear() // Don't transmit any messages.
+              close(1010, "unexpected Sec-WebSocket-Extensions in response header")
+            }
+          }
+
+          // Process all web socket messages.
+          val name = "$okHttpName WebSocket ${request.url.redact()}"
+          initReaderAndWriter(name, streams)
+          loopReader(response)
         }
 
-        // Process all web socket messages.
-        val name = "$okHttpName WebSocket ${request.url.redact()}"
-        initReaderAndWriter(name, streams)
-        loopReader(response)
-      }
-
-      override fun onFailure(call: Call, e: IOException) {
-        failWebSocket(e)
-      }
-    })
+        override fun onFailure(
+          call: Call,
+          e: IOException,
+        ) {
+          failWebSocket(e)
+        }
+      },
+    )
   }
 
   private fun WebSocketExtensions.isValid(): Boolean {
@@ -209,29 +219,36 @@ class RealWebSocket(
   }
 
   @Throws(IOException::class)
-  internal fun checkUpgradeSuccess(response: Response, exchange: Exchange?) {
+  internal fun checkUpgradeSuccess(
+    response: Response,
+    exchange: Exchange?,
+  ) {
     if (response.code != 101) {
       throw ProtocolException(
-          "Expected HTTP 101 response but was '${response.code} ${response.message}'")
+        "Expected HTTP 101 response but was '${response.code} ${response.message}'",
+      )
     }
 
     val headerConnection = response.header("Connection")
     if (!"Upgrade".equals(headerConnection, ignoreCase = true)) {
       throw ProtocolException(
-          "Expected 'Connection' header value 'Upgrade' but was '$headerConnection'")
+        "Expected 'Connection' header value 'Upgrade' but was '$headerConnection'",
+      )
     }
 
     val headerUpgrade = response.header("Upgrade")
     if (!"websocket".equals(headerUpgrade, ignoreCase = true)) {
       throw ProtocolException(
-          "Expected 'Upgrade' header value 'websocket' but was '$headerUpgrade'")
+        "Expected 'Upgrade' header value 'websocket' but was '$headerUpgrade'",
+      )
     }
 
     val headerAccept = response.header("Sec-WebSocket-Accept")
     val acceptExpected = (key + WebSocketProtocol.ACCEPT_MAGIC).encodeUtf8().sha1().base64()
     if (acceptExpected != headerAccept) {
       throw ProtocolException(
-          "Expected 'Sec-WebSocket-Accept' header value '$acceptExpected' but was '$headerAccept'")
+        "Expected 'Sec-WebSocket-Accept' header value '$acceptExpected' but was '$headerAccept'",
+      )
     }
 
     if (exchange == null) {
@@ -239,19 +256,23 @@ class RealWebSocket(
     }
   }
 
-  fun initReaderAndWriter(name: String, streams: Streams) {
+  fun initReaderAndWriter(
+    name: String,
+    streams: Streams,
+  ) {
     val extensions = this.extensions!!
     synchronized(this) {
       this.name = name
       this.streams = streams
-      this.writer = WebSocketWriter(
+      this.writer =
+        WebSocketWriter(
           isClient = streams.client,
           sink = streams.sink,
           random = random,
           perMessageDeflate = extensions.perMessageDeflate,
           noContextTakeover = extensions.noContextTakeover(streams.client),
-          minimumDeflateSize = minimumDeflateSize
-      )
+          minimumDeflateSize = minimumDeflateSize,
+        )
       this.writerTask = WriterTask()
       if (pingIntervalMillis != 0L) {
         val pingIntervalNanos = MILLISECONDS.toNanos(pingIntervalMillis)
@@ -265,13 +286,14 @@ class RealWebSocket(
       }
     }
 
-    reader = WebSocketReader(
+    reader =
+      WebSocketReader(
         isClient = streams.client,
         source = streams.source,
         frameCallback = this,
         perMessageDeflate = extensions.perMessageDeflate,
-        noContextTakeover = extensions.noContextTakeover(!streams.client)
-    )
+        noContextTakeover = extensions.noContextTakeover(!streams.client),
+      )
   }
 
   /** Receive frames until there are no more. Invoked only by the reader thread. */
@@ -336,10 +358,11 @@ class RealWebSocket(
         this.taskQueue.shutdown()
       }
 
-      streamsToClose = when {
-        writer == null -> streams
-        else -> null
-      }
+      streamsToClose =
+        when {
+          writer == null -> streams
+          else -> null
+        }
     }
 
     if (!failed && streamsToClose != null && receivedCloseCode != -1) {
@@ -388,7 +411,10 @@ class RealWebSocket(
     awaitingPong = false
   }
 
-  override fun onReadClose(code: Int, reason: String) {
+  override fun onReadClose(
+    code: Int,
+    reason: String,
+  ) {
     require(code != -1)
 
     synchronized(this) {
@@ -410,7 +436,10 @@ class RealWebSocket(
     return send(bytes, OPCODE_BINARY)
   }
 
-  @Synchronized private fun send(data: ByteString, formatOpcode: Int): Boolean {
+  @Synchronized private fun send(
+    data: ByteString,
+    formatOpcode: Int,
+  ): Boolean {
     // Don't send new frames after we've failed or enqueued a close frame.
     if (failed || enqueuedClose) return false
 
@@ -436,14 +465,17 @@ class RealWebSocket(
     return true
   }
 
-  override fun close(code: Int, reason: String?): Boolean {
+  override fun close(
+    code: Int,
+    reason: String?,
+  ): Boolean {
     return close(code, reason, CANCEL_AFTER_CLOSE_MILLIS)
   }
 
   @Synchronized fun close(
     code: Int,
     reason: String?,
-    cancelAfterCloseMillis: Long
+    cancelAfterCloseMillis: Long,
   ): Boolean {
     validateCloseCode(code)
 
@@ -513,10 +545,11 @@ class RealWebSocket(
           if (receivedCloseCode != -1) {
             writerToClose = this.writer
             this.writer = null
-            streamsToClose = when {
-              writerToClose != null && reader == null -> this.streams
-              else -> null
-            }
+            streamsToClose =
+              when {
+                writerToClose != null && reader == null -> this.streams
+                else -> null
+              }
             this.taskQueue.shutdown()
           } else {
             // When we request a graceful close also schedule a cancel of the web socket.
@@ -572,10 +605,11 @@ class RealWebSocket(
 
     if (failedPing != -1) {
       failWebSocket(
-        e = SocketTimeoutException(
-          "sent ping but didn't receive pong within " +
-            "${pingIntervalMillis}ms (after ${failedPing - 1} successful ping/pongs)"
-        ),
+        e =
+          SocketTimeoutException(
+            "sent ping but didn't receive pong within " +
+              "${pingIntervalMillis}ms (after ${failedPing - 1} successful ping/pongs)",
+          ),
         isWriter = true,
       )
       return
@@ -605,10 +639,11 @@ class RealWebSocket(
       writerToClose = this.writer
       this.writer = null
 
-      streamsToClose = when {
-        writerToClose != null && reader == null -> this.streams
-        else -> null
-      }
+      streamsToClose =
+        when {
+          writerToClose != null && reader == null -> this.streams
+          else -> null
+        }
 
       if (!isWriter && writerToClose != null) {
         // If the caller isn't the writer thread, get that thread to close the writer.
@@ -636,19 +671,19 @@ class RealWebSocket(
 
   internal class Message(
     val formatOpcode: Int,
-    val data: ByteString
+    val data: ByteString,
   )
 
   internal class Close(
     val code: Int,
     val reason: ByteString?,
-    val cancelAfterCloseMillis: Long
+    val cancelAfterCloseMillis: Long,
   )
 
   abstract class Streams(
     val client: Boolean,
     val source: BufferedSource,
-    val sink: BufferedSink
+    val sink: BufferedSink,
   ) : Closeable {
     abstract fun cancel()
   }

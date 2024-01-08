@@ -17,6 +17,7 @@
 /** Exposes Kotlin-internal APIs to Java test code and code in other modules. */
 @file:JvmName("Internal")
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal
 
 import java.nio.charset.Charset
@@ -37,22 +38,38 @@ import okhttp3.Response
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealConnection
 
-internal fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? =
-    Cookie.parse(currentTimeMillis, url, setCookie)
+internal fun parseCookie(
+  currentTimeMillis: Long,
+  url: HttpUrl,
+  setCookie: String,
+): Cookie? = Cookie.parse(currentTimeMillis, url, setCookie)
 
-internal fun cookieToString(cookie: Cookie, forObsoleteRfc2965: Boolean): String =
-    cookie.toString(forObsoleteRfc2965)
+internal fun cookieToString(
+  cookie: Cookie,
+  forObsoleteRfc2965: Boolean,
+): String = cookie.toString(forObsoleteRfc2965)
 
-internal fun addHeaderLenient(builder: Headers.Builder, line: String): Headers.Builder =
-    builder.addLenient(line)
+internal fun addHeaderLenient(
+  builder: Headers.Builder,
+  line: String,
+): Headers.Builder = builder.addLenient(line)
 
-internal fun addHeaderLenient(builder: Headers.Builder, name: String, value: String): Headers.Builder =
-    builder.addLenient(name, value)
+internal fun addHeaderLenient(
+  builder: Headers.Builder,
+  name: String,
+  value: String,
+): Headers.Builder = builder.addLenient(name, value)
 
-internal fun cacheGet(cache: Cache, request: Request): Response? = cache.get(request)
+internal fun cacheGet(
+  cache: Cache,
+  request: Request,
+): Response? = cache.get(request)
 
-internal fun applyConnectionSpec(connectionSpec: ConnectionSpec, sslSocket: SSLSocket, isFallback: Boolean) =
-    connectionSpec.apply(sslSocket, isFallback)
+internal fun applyConnectionSpec(
+  connectionSpec: ConnectionSpec,
+  sslSocket: SSLSocket,
+  isFallback: Boolean,
+) = connectionSpec.apply(sslSocket, isFallback)
 
 internal fun ConnectionSpec.effectiveCipherSuites(socketEnabledCipherSuites: Array<String>): Array<String> {
   return if (cipherSuitesAsString != null) {
@@ -94,4 +111,11 @@ internal val Response.connection: RealConnection
 
 internal fun OkHttpClient.Builder.taskRunnerInternal(taskRunner: TaskRunner) = this.taskRunner(taskRunner)
 
-internal fun buildConnectionPool(connectionListener: ConnectionListener, taskRunner: TaskRunner): ConnectionPool = ConnectionPool(connectionListener = connectionListener, taskRunner = taskRunner)
+internal fun buildConnectionPool(
+  connectionListener: ConnectionListener,
+  taskRunner: TaskRunner,
+): ConnectionPool =
+  ConnectionPool(
+    connectionListener = connectionListener,
+    taskRunner = taskRunner,
+  )

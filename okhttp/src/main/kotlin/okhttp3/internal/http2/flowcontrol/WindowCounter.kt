@@ -1,7 +1,7 @@
 package okhttp3.internal.http2.flowcontrol
 
 class WindowCounter(
-  val streamId: Int
+  val streamId: Int,
 ) {
   /** The total number of bytes consumed. */
   var total: Long = 0L
@@ -15,7 +15,10 @@ class WindowCounter(
     @Synchronized get() = total - acknowledged
 
   @Synchronized
-  fun update(total: Long = 0, acknowledged: Long = 0) {
+  fun update(
+    total: Long = 0,
+    acknowledged: Long = 0,
+  ) {
     check(total >= 0)
     check(acknowledged >= 0)
 

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal
 
 import kotlin.time.DurationUnit
@@ -24,40 +25,50 @@ import okhttp3.Headers
 internal fun CacheControl.commonToString(): String {
   var result = headerValue
   if (result == null) {
-    result = buildString {
-      if (noCache) append("no-cache, ")
-      if (noStore) append("no-store, ")
-      if (maxAgeSeconds != -1) append("max-age=").append(maxAgeSeconds).append(", ")
-      if (sMaxAgeSeconds != -1) append("s-maxage=").append(sMaxAgeSeconds).append(", ")
-      if (isPrivate) append("private, ")
-      if (isPublic) append("public, ")
-      if (mustRevalidate) append("must-revalidate, ")
-      if (maxStaleSeconds != -1) append("max-stale=").append(maxStaleSeconds).append(", ")
-      if (minFreshSeconds != -1) append("min-fresh=").append(minFreshSeconds).append(", ")
-      if (onlyIfCached) append("only-if-cached, ")
-      if (noTransform) append("no-transform, ")
-      if (immutable) append("immutable, ")
-      if (isEmpty()) return ""
-      deleteRange(length - 2, length)
-    }
+    result =
+      buildString {
+        if (noCache) append("no-cache, ")
+        if (noStore) append("no-store, ")
+        if (maxAgeSeconds != -1) append("max-age=").append(maxAgeSeconds).append(", ")
+        if (sMaxAgeSeconds != -1) append("s-maxage=").append(sMaxAgeSeconds).append(", ")
+        if (isPrivate) append("private, ")
+        if (isPublic) append("public, ")
+        if (mustRevalidate) append("must-revalidate, ")
+        if (maxStaleSeconds != -1) append("max-stale=").append(maxStaleSeconds).append(", ")
+        if (minFreshSeconds != -1) append("min-fresh=").append(minFreshSeconds).append(", ")
+        if (onlyIfCached) append("only-if-cached, ")
+        if (noTransform) append("no-transform, ")
+        if (immutable) append("immutable, ")
+        if (isEmpty()) return ""
+        deleteRange(length - 2, length)
+      }
     headerValue = result
   }
   return result
 }
 
-internal fun CacheControl.Builder.commonMaxAge(maxAge: Int, timeUnit: DurationUnit) = apply {
+internal fun CacheControl.Builder.commonMaxAge(
+  maxAge: Int,
+  timeUnit: DurationUnit,
+) = apply {
   require(maxAge >= 0) { "maxAge < 0: $maxAge" }
   val maxAgeSecondsLong = maxAge.toDuration(timeUnit).inWholeSeconds
   this.maxAgeSeconds = maxAgeSecondsLong.commonClampToInt()
 }
 
-internal fun CacheControl.Builder.commonMaxStale(maxStale: Int, timeUnit: DurationUnit) = apply {
+internal fun CacheControl.Builder.commonMaxStale(
+  maxStale: Int,
+  timeUnit: DurationUnit,
+) = apply {
   require(maxStale >= 0) { "maxStale < 0: $maxStale" }
   val maxStaleSecondsLong = maxStale.toDuration(timeUnit).inWholeSeconds
   this.maxStaleSeconds = maxStaleSecondsLong.commonClampToInt()
 }
 
-internal fun CacheControl.Builder.commonMinFresh(minFresh: Int, timeUnit: DurationUnit) = apply {
+internal fun CacheControl.Builder.commonMinFresh(
+  minFresh: Int,
+  timeUnit: DurationUnit,
+) = apply {
   require(minFresh >= 0) { "minFresh < 0: $minFresh" }
   val minFreshSecondsLong = minFresh.toDuration(timeUnit).inWholeSeconds
   this.minFreshSeconds = minFreshSecondsLong.commonClampToInt()
@@ -70,15 +81,16 @@ internal fun Long.commonClampToInt(): Int {
   }
 }
 
-internal fun CacheControl.Companion.commonForceNetwork() = CacheControl.Builder()
-  .noCache()
-  .build()
+internal fun CacheControl.Companion.commonForceNetwork() =
+  CacheControl.Builder()
+    .noCache()
+    .build()
 
-
-internal fun CacheControl.Companion.commonForceCache() = CacheControl.Builder()
-  .onlyIfCached()
-  .maxStale(Int.MAX_VALUE, DurationUnit.SECONDS)
-  .build()
+internal fun CacheControl.Companion.commonForceCache() =
+  CacheControl.Builder()
+    .onlyIfCached()
+    .maxStale(Int.MAX_VALUE, DurationUnit.SECONDS)
+    .build()
 
 internal fun CacheControl.Builder.commonBuild(): CacheControl {
   return CacheControl(
@@ -94,29 +106,34 @@ internal fun CacheControl.Builder.commonBuild(): CacheControl {
     onlyIfCached = onlyIfCached,
     noTransform = noTransform,
     immutable = immutable,
-    headerValue = null
+    headerValue = null,
   )
 }
 
-internal fun CacheControl.Builder.commonNoCache() = apply {
-  this.noCache = true
-}
+internal fun CacheControl.Builder.commonNoCache() =
+  apply {
+    this.noCache = true
+  }
 
-internal fun CacheControl.Builder.commonNoStore() = apply {
-  this.noStore = true
-}
+internal fun CacheControl.Builder.commonNoStore() =
+  apply {
+    this.noStore = true
+  }
 
-internal fun CacheControl.Builder.commonOnlyIfCached() = apply {
-  this.onlyIfCached = true
-}
+internal fun CacheControl.Builder.commonOnlyIfCached() =
+  apply {
+    this.onlyIfCached = true
+  }
 
-internal fun CacheControl.Builder.commonNoTransform() = apply {
-  this.noTransform = true
-}
+internal fun CacheControl.Builder.commonNoTransform() =
+  apply {
+    this.noTransform = true
+  }
 
-internal fun CacheControl.Builder.commonImmutable() = apply {
-  this.immutable = true
-}
+internal fun CacheControl.Builder.commonImmutable() =
+  apply {
+    this.immutable = true
+  }
 
 internal fun CacheControl.Companion.commonParse(headers: Headers): CacheControl {
   var noCache = false
@@ -244,7 +261,7 @@ internal fun CacheControl.Companion.commonParse(headers: Headers): CacheControl 
     onlyIfCached = onlyIfCached,
     noTransform = noTransform,
     immutable = immutable,
-    headerValue = headerValue
+    headerValue = headerValue,
   )
 }
 
@@ -252,7 +269,10 @@ internal fun CacheControl.Companion.commonParse(headers: Headers): CacheControl 
  * Returns the next index in this at or after [startIndex] that is a character from
  * [characters]. Returns the input length if none of the requested characters can be found.
  */
-private fun String.indexOfElement(characters: String, startIndex: Int = 0): Int {
+private fun String.indexOfElement(
+  characters: String,
+  startIndex: Int = 0,
+): Int {
   for (i in startIndex until length) {
     if (this[i] in characters) {
       return i

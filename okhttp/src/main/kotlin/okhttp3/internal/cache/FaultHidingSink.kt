@@ -23,11 +23,14 @@ import okio.Sink
 /** A sink that never throws IOExceptions, even if the underlying sink does. */
 internal open class FaultHidingSink(
   delegate: Sink,
-  val onException: (IOException) -> Unit
+  val onException: (IOException) -> Unit,
 ) : ForwardingSink(delegate) {
   private var hasErrors = false
 
-  override fun write(source: Buffer, byteCount: Long) {
+  override fun write(
+    source: Buffer,
+    byteCount: Long,
+  ) {
     if (hasErrors) {
       source.skip(byteCount)
       return

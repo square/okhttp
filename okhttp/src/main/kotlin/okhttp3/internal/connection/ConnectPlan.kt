@@ -66,7 +66,6 @@ class ConnectPlan(
   private val call: RealCall,
   private val chain: Interceptor.Chain,
   private val routePlanner: RealRoutePlanner,
-
   // Specifics to this plan.
   override val route: Route,
   internal val routes: List<Route>?,
@@ -74,7 +73,7 @@ class ConnectPlan(
   private val tunnelRequest: Request?,
   internal val connectionSpecIndex: Int,
   internal val isTlsFallback: Boolean,
-  internal val connectionListener: ConnectionListener
+  internal val connectionListener: ConnectionListener,
 ) : RoutePlanner.Plan, ExchangeCodec.Carrier {
   private val eventListener = call.eventListener
 
@@ -118,7 +117,7 @@ class ConnectPlan(
       tunnelRequest = tunnelRequest,
       connectionSpecIndex = connectionSpecIndex,
       isTlsFallback = isTlsFallback,
-      connectionListener = connectionListener
+      connectionListener = connectionListener,
     )
   }
 
@@ -180,13 +179,14 @@ class ConnectPlan(
         eventListener.secureConnectStart(call)
 
         // Create the wrapper over the connected socket.
-        val sslSocket = route.address.sslSocketFactory.createSocket(
-          rawSocket,
-          route.address.url.host,
-          route.address.url.port,
-          // autoClose:
-          true
-        ) as SSLSocket
+        val sslSocket =
+          route.address.sslSocketFactory.createSocket(
+            rawSocket,
+            route.address.url.host,
+            route.address.url.port,
+            // autoClose:
+            true,
+          ) as SSLSocket
 
         val tlsEquipPlan = planWithCurrentOrInitialConnectionSpec(connectionSpecs, sslSocket)
         val connectionSpec = connectionSpecs[tlsEquipPlan.connectionSpecIndex]
@@ -199,25 +199,27 @@ class ConnectPlan(
         eventListener.secureConnectEnd(call, handshake)
       } else {
         socket = rawSocket
-        protocol = when {
-          Protocol.H2_PRIOR_KNOWLEDGE in route.address.protocols -> Protocol.H2_PRIOR_KNOWLEDGE
-          else -> Protocol.HTTP_1_1
-        }
+        protocol =
+          when {
+            Protocol.H2_PRIOR_KNOWLEDGE in route.address.protocols -> Protocol.H2_PRIOR_KNOWLEDGE
+            else -> Protocol.HTTP_1_1
+          }
       }
 
-      val connection = RealConnection(
-        taskRunner = client.taskRunner,
-        connectionPool = client.connectionPool.delegate,
-        route = route,
-        rawSocket = rawSocket,
-        socket = socket,
-        handshake = handshake,
-        protocol = protocol,
-        source = source,
-        sink = sink,
-        pingIntervalMillis = client.pingIntervalMillis,
-        connectionListener = client.connectionPool.connectionListener
-      )
+      val connection =
+        RealConnection(
+          taskRunner = client.taskRunner,
+          connectionPool = client.connectionPool.delegate,
+          route = route,
+          rawSocket = rawSocket,
+          socket = socket,
+          handshake = handshake,
+          protocol = protocol,
+          source = source,
+          sink = sink,
+          pingIntervalMillis = client.pingIntervalMillis,
+          connectionListener = client.connectionPool.connectionListener,
+        )
       this.connection = connection
       connection.start()
 
@@ -236,7 +238,7 @@ class ConnectPlan(
       return ConnectResult(
         plan = this,
         nextPlan = retryTlsConnection,
-        throwable = e
+        throwable = e,
       )
     } finally {
       call.plansToCancel -= this
@@ -250,10 +252,11 @@ class ConnectPlan(
   /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
   @Throws(IOException::class)
   private fun connectSocket() {
-    val rawSocket = when (route.proxy.type()) {
-      Proxy.Type.DIRECT, Proxy.Type.HTTP -> route.address.socketFactory.createSocket()!!
-      else -> Socket(route.proxy)
-    }
+    val rawSocket =
+      when (route.proxy.type()) {
+        Proxy.Type.DIRECT, Proxy.Type.HTTP -> route.address.socketFactory.createSocket()!!
+        else -> Socket(route.proxy)
+      }
     this.rawSocket = rawSocket
 
     // Handle the race where cancel() precedes connectSocket(). We don't want to miss a cancel.
@@ -293,8 +296,9 @@ class ConnectPlan(
    */
   @Throws(IOException::class)
   internal fun connectTunnel(): ConnectResult {
-    val nextTunnelRequest = createTunnel()
-      ?: return ConnectResult(plan = this) // Success.
+    val nextTunnelRequest =
+      createTunnel()
+        ?: return ConnectResult(plan = this) // Success.
 
     // The proxy decided to close the connection after an auth challenge. Retry with different
     // auth credentials.
@@ -306,16 +310,18 @@ class ConnectPlan(
         eventListener.connectEnd(call, route.socketAddress, route.proxy, null)
         ConnectResult(
           plan = this,
-          nextPlan = copy(
-            attempt = nextAttempt,
-            tunnelRequest = nextTunnelRequest,
-          )
+          nextPlan =
+            copy(
+              attempt = nextAttempt,
+              tunnelRequest = nextTunnelRequest,
+            ),
         )
       }
       else -> {
-        val failure = ProtocolException(
-          "Too many tunnel connections attempted: $MAX_TUNNEL_ATTEMPTS"
-        )
+        val failure =
+          ProtocolException(
+            "Too many tunnel connections attempted: $MAX_TUNNEL_ATTEMPTS",
+          )
         eventListener.connectFailed(call, route.socketAddress, route.proxy, null, failure)
         connectionListener.connectFailed(route, call, failure)
         return ConnectResult(plan = this, throwable = failure)
@@ -324,7 +330,10 @@ class ConnectPlan(
   }
 
   @Throws(IOException::class)
-  private fun connectTls(sslSocket: SSLSocket, connectionSpec: ConnectionSpec) {
+  private fun connectTls(
+    sslSocket: SSLSocket,
+    connectionSpec: ConnectionSpec,
+  ) {
     val address = route.address
     var success = false
     try {
@@ -349,27 +358,28 @@ class ConnectPlan(
             |    certificate: ${CertificatePinner.pin(cert)}
             |    DN: ${cert.subjectDN.name}
             |    subjectAltNames: ${OkHostnameVerifier.allSubjectAltNames(cert)}
-            """.trimMargin()
+            """.trimMargin(),
           )
         } else {
           throw SSLPeerUnverifiedException(
-            "Hostname ${address.url.host} not verified (no certificates)"
+            "Hostname ${address.url.host} not verified (no certificates)",
           )
         }
       }
 
       val certificatePinner = address.certificatePinner!!
 
-      val handshake = Handshake(
-        unverifiedHandshake.tlsVersion,
-        unverifiedHandshake.cipherSuite,
-        unverifiedHandshake.localCertificates
-      ) {
-        certificatePinner.certificateChainCleaner!!.clean(
-          unverifiedHandshake.peerCertificates,
-          address.url.host
-        )
-      }
+      val handshake =
+        Handshake(
+          unverifiedHandshake.tlsVersion,
+          unverifiedHandshake.cipherSuite,
+          unverifiedHandshake.localCertificates,
+        ) {
+          certificatePinner.certificateChainCleaner!!.clean(
+            unverifiedHandshake.peerCertificates,
+            address.url.host,
+          )
+        }
       this.handshake = handshake
 
       // Check that the certificate pinner is satisfied by the certificates presented.
@@ -378,11 +388,12 @@ class ConnectPlan(
       }
 
       // Success! Save the handshake and the ALPN protocol.
-      val maybeProtocol = if (connectionSpec.supportsTlsExtensions) {
-        Platform.get().getSelectedProtocol(sslSocket)
-      } else {
-        null
-      }
+      val maybeProtocol =
+        if (connectionSpec.supportsTlsExtensions) {
+          Platform.get().getSelectedProtocol(sslSocket)
+        } else {
+          null
+        }
       socket = sslSocket
       source = sslSocket.source().buffer()
       sink = sslSocket.sink().buffer()
@@ -409,20 +420,22 @@ class ConnectPlan(
     while (true) {
       val source = this.source!!
       val sink = this.sink!!
-      val tunnelCodec = Http1ExchangeCodec(
-        // No client for CONNECT tunnels:
-        client = null,
-        carrier = this,
-        source = source,
-        sink = sink
-      )
+      val tunnelCodec =
+        Http1ExchangeCodec(
+          // No client for CONNECT tunnels:
+          client = null,
+          carrier = this,
+          source = source,
+          sink = sink,
+        )
       source.timeout().timeout(client.readTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
       sink.timeout().timeout(client.writeTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
       tunnelCodec.writeRequest(nextRequest.headers, requestLine)
       tunnelCodec.finishRequest()
-      val response = tunnelCodec.readResponseHeaders(false)!!
-        .request(nextRequest)
-        .build()
+      val response =
+        tunnelCodec.readResponseHeaders(false)!!
+          .request(nextRequest)
+          .build()
       tunnelCodec.skipConnectBody(response)
 
       when (response.code) {
@@ -449,15 +462,15 @@ class ConnectPlan(
   @Throws(IOException::class)
   internal fun planWithCurrentOrInitialConnectionSpec(
     connectionSpecs: List<ConnectionSpec>,
-    sslSocket: SSLSocket
+    sslSocket: SSLSocket,
   ): ConnectPlan {
     if (connectionSpecIndex != -1) return this
     return nextConnectionSpec(connectionSpecs, sslSocket)
       ?: throw UnknownServiceException(
         "Unable to find acceptable protocols." +
-          " isFallback=${isTlsFallback}," +
+          " isFallback=$isTlsFallback," +
           " modes=$connectionSpecs," +
-          " supported protocols=${sslSocket.enabledProtocols!!.contentToString()}"
+          " supported protocols=${sslSocket.enabledProtocols!!.contentToString()}",
       )
   }
 
@@ -467,7 +480,7 @@ class ConnectPlan(
    */
   internal fun nextConnectionSpec(
     connectionSpecs: List<ConnectionSpec>,
-    sslSocket: SSLSocket
+    sslSocket: SSLSocket,
   ): ConnectPlan? {
     for (i in connectionSpecIndex + 1 until connectionSpecs.size) {
       if (connectionSpecs[i].isCompatible(sslSocket)) {
@@ -499,7 +512,10 @@ class ConnectPlan(
     return connection
   }
 
-  override fun trackFailure(call: RealCall, e: IOException?) {
+  override fun trackFailure(
+    call: RealCall,
+    e: IOException?,
+  ) {
     // Do nothing.
   }
 
@@ -525,7 +541,7 @@ class ConnectPlan(
       tunnelRequest = tunnelRequest,
       connectionSpecIndex = connectionSpecIndex,
       isTlsFallback = isTlsFallback,
-      connectionListener = connectionListener
+      connectionListener = connectionListener,
     )
   }
 

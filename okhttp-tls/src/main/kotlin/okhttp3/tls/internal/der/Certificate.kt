@@ -29,22 +29,22 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 internal data class Certificate(
   val tbsCertificate: TbsCertificate,
   val signatureAlgorithm: AlgorithmIdentifier,
-  val signatureValue: BitString
+  val signatureValue: BitString,
 ) {
   val commonName: Any?
     get() {
       return tbsCertificate.subject
-          .flatten()
-          .firstOrNull { it.type == ObjectIdentifiers.COMMON_NAME }
-          ?.value
+        .flatten()
+        .firstOrNull { it.type == ObjectIdentifiers.COMMON_NAME }
+        ?.value
     }
 
   val organizationalUnitName: Any?
     get() {
       return tbsCertificate.subject
-          .flatten()
-          .firstOrNull { it.type == ObjectIdentifiers.ORGANIZATIONAL_UNIT_NAME }
-          ?.value
+        .flatten()
+        .firstOrNull { it.type == ObjectIdentifiers.ORGANIZATIONAL_UNIT_NAME }
+        ?.value
     }
 
   val subjectAlternativeNames: Extension?
@@ -100,7 +100,7 @@ internal data class TbsCertificate(
   val subjectPublicKeyInfo: SubjectPublicKeyInfo,
   val issuerUniqueID: BitString?,
   val subjectUniqueID: BitString?,
-  val extensions: List<Extension>
+  val extensions: List<Extension>,
 ) {
   /**
    * Returns the standard name of this certificate's signature algorithm as specified by
@@ -136,18 +136,18 @@ internal data class AlgorithmIdentifier(
   /** An OID string like "1.2.840.113549.1.1.11" for sha256WithRSAEncryption. */
   val algorithm: String,
   /** Parameters of a type implied by [algorithm]. */
-  val parameters: Any?
+  val parameters: Any?,
 )
 
 internal data class AttributeTypeAndValue(
   /** An OID string like "2.5.4.11" for organizationalUnitName. */
   val type: String,
-  val value: Any?
+  val value: Any?,
 )
 
 internal data class Validity(
   val notBefore: Long,
-  val notAfter: Long
+  val notAfter: Long,
 ) {
   // Avoid Long.hashCode(long) which isn't available on Android 5.
   override fun hashCode(): Int {
@@ -160,14 +160,14 @@ internal data class Validity(
 
 internal data class SubjectPublicKeyInfo(
   val algorithm: AlgorithmIdentifier,
-  val subjectPublicKey: BitString
+  val subjectPublicKey: BitString,
 )
 
 @IgnoreJRERequirement // As of AGP 3.4.1, D8 desugars API 24 hashCode methods.
 internal data class Extension(
   val id: String,
   val critical: Boolean,
-  val value: Any?
+  val value: Any?,
 )
 
 @IgnoreJRERequirement // As of AGP 3.4.1, D8 desugars API 24 hashCode methods.
@@ -175,7 +175,7 @@ internal data class BasicConstraints(
   /** True if this certificate can be used as a Certificate Authority (CA). */
   val ca: Boolean,
   /** The maximum number of intermediate CAs between this and leaf certificates. */
-  val maxIntermediateCas: Long?
+  val maxIntermediateCas: Long?,
 )
 
 /** A private key. Note that this class doesn't support attributes or an embedded public key. */
@@ -183,7 +183,7 @@ internal data class PrivateKeyInfo(
   // v1(0), v2(1).
   val version: Long,
   val algorithmIdentifier: AlgorithmIdentifier,
-  val privateKey: ByteString
+  val privateKey: ByteString,
 ) {
   // Avoid Long.hashCode(long) which isn't available on Android 5.
   override fun hashCode(): Int {

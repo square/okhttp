@@ -28,12 +28,16 @@ class MockWebServerRuleTest {
   @Test fun statementStartsAndStops() {
     val rule = MockWebServerRule()
     val called = AtomicBoolean()
-    val statement: Statement = rule.apply(object : Statement() {
-      override fun evaluate() {
-        called.set(true)
-        rule.server.url("/").toUrl().openConnection().connect()
-      }
-    }, Description.EMPTY)
+    val statement: Statement =
+      rule.apply(
+        object : Statement() {
+          override fun evaluate() {
+            called.set(true)
+            rule.server.url("/").toUrl().openConnection().connect()
+          }
+        },
+        Description.EMPTY,
+      )
     statement.evaluate()
     assertThat(called.get()).isTrue()
     try {

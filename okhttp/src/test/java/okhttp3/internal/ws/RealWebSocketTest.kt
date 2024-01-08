@@ -255,7 +255,7 @@ class RealWebSocketTest {
     assertThat(client.closed).isTrue()
     client.listener.assertFailure(
       ProtocolException::class.java,
-      "Control frames must be final."
+      "Control frames must be final.",
     )
     server.processNextFrame()
     taskFaker.runTasks()
@@ -276,7 +276,8 @@ class RealWebSocketTest {
     client.webSocket!!.finishReader()
     assertThat(client.closed).isTrue()
     client.listener.assertFailure(
-      ProtocolException::class.java, "Server-sent frames must not be masked."
+      ProtocolException::class.java,
+      "Server-sent frames must not be masked.",
     )
     server.listener.assertClosing(1000, "Hello")
     server.listener.assertExhausted() // Client should not have sent second close.
@@ -297,7 +298,7 @@ class RealWebSocketTest {
     assertThat(client.closed).isTrue()
     client.listener.assertFailure(
       ProtocolException::class.java,
-      "Control frames must be final."
+      "Control frames must be final.",
     )
     server.listener.assertClosing(1000, "Hello!")
     server.listener.assertExhausted() // Client should not have sent second close.
@@ -353,7 +354,7 @@ class RealWebSocketTest {
     taskFaker.advanceUntil(ns(1000L))
     client.listener.assertFailure(
       SocketTimeoutException::class.java,
-      "sent ping but didn't receive pong within 500ms (after 0 successful ping/pongs)"
+      "sent ping but didn't receive pong within 500ms (after 0 successful ping/pongs)",
     )
   }
 
@@ -382,7 +383,7 @@ class RealWebSocketTest {
     taskFaker.advanceUntil(ns(1500L))
     client.listener.assertFailure(
       SocketTimeoutException::class.java,
-      "sent ping but didn't receive pong within 500ms (after 1 successful ping/pongs)"
+      "sent ping but didn't receive pong within 500ms (after 1 successful ping/pongs)",
     )
   }
 
@@ -443,20 +444,23 @@ class RealWebSocketTest {
       responseHeaders: Headers? = headersOf(),
     ) {
       val url = "http://example.com/websocket"
-      val response = Response.Builder()
-        .code(101)
-        .message("OK")
-        .request(Request.Builder().url(url).build())
-        .headers(responseHeaders!!)
-        .protocol(Protocol.HTTP_1_1)
-        .build()
-      webSocket = RealWebSocket(
-        taskFaker.taskRunner, response.request, listener, random!!,
-        pingIntervalMillis.toLong(), parse(
-          responseHeaders
-        ),
-        RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE
-      )
+      val response =
+        Response.Builder()
+          .code(101)
+          .message("OK")
+          .request(Request.Builder().url(url).build())
+          .headers(responseHeaders!!)
+          .protocol(Protocol.HTTP_1_1)
+          .build()
+      webSocket =
+        RealWebSocket(
+          taskFaker.taskRunner, response.request, listener, random!!,
+          pingIntervalMillis.toLong(),
+          parse(
+            responseHeaders,
+          ),
+          RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE,
+        )
       webSocket!!.initReaderAndWriter(name, this)
     }
 

@@ -30,19 +30,20 @@ class CacheControlJvmTest {
   @Test
   @Throws(Exception::class)
   fun completeBuilder() {
-    val cacheControl = CacheControl.Builder()
-      .noCache()
-      .noStore()
-      .maxAge(1, TimeUnit.SECONDS)
-      .maxStale(2, TimeUnit.SECONDS)
-      .minFresh(3, TimeUnit.SECONDS)
-      .onlyIfCached()
-      .noTransform()
-      .immutable()
-      .build()
+    val cacheControl =
+      CacheControl.Builder()
+        .noCache()
+        .noStore()
+        .maxAge(1, TimeUnit.SECONDS)
+        .maxStale(2, TimeUnit.SECONDS)
+        .minFresh(3, TimeUnit.SECONDS)
+        .onlyIfCached()
+        .noTransform()
+        .immutable()
+        .build()
     assertThat(cacheControl.toString()).isEqualTo(
-      "no-cache, no-store, max-age=1, max-stale=2, min-fresh=3, only-if-cached, "
-        + "no-transform, immutable"
+      "no-cache, no-store, max-age=1, max-stale=2, min-fresh=3, only-if-cached, " +
+        "no-transform, immutable",
     )
     assertThat(cacheControl.noCache).isTrue()
     assertThat(cacheControl.noStore).isTrue()
@@ -63,9 +64,10 @@ class CacheControlJvmTest {
   @Test
   @Throws(Exception::class)
   fun parseEmpty() {
-    val cacheControl = parse(
-      Headers.Builder().set("Cache-Control", "").build()
-    )
+    val cacheControl =
+      parse(
+        Headers.Builder().set("Cache-Control", "").build(),
+      )
     assertThat(cacheControl.toString()).isEqualTo("")
     assertThat(cacheControl.noCache).isFalse()
     assertThat(cacheControl.noStore).isFalse()
@@ -82,13 +84,16 @@ class CacheControlJvmTest {
   @Test
   @Throws(Exception::class)
   fun parse() {
-    val header = ("no-cache, no-store, max-age=1, s-maxage=2, private, public, must-revalidate, "
-      + "max-stale=3, min-fresh=4, only-if-cached, no-transform")
-    val cacheControl = parse(
-      Headers.Builder()
-        .set("Cache-Control", header)
-        .build()
+    val header = (
+      "no-cache, no-store, max-age=1, s-maxage=2, private, public, must-revalidate, " +
+        "max-stale=3, min-fresh=4, only-if-cached, no-transform"
     )
+    val cacheControl =
+      parse(
+        Headers.Builder()
+          .set("Cache-Control", header)
+          .build(),
+      )
     assertThat(cacheControl.noCache).isTrue()
     assertThat(cacheControl.noStore).isTrue()
     assertThat(cacheControl.maxAgeSeconds).isEqualTo(1)
@@ -108,11 +113,12 @@ class CacheControlJvmTest {
   fun parseIgnoreCacheControlExtensions() {
     // Example from http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.6
     val header = "private, community=\"UCI\""
-    val cacheControl = parse(
-      Headers.Builder()
-        .set("Cache-Control", header)
-        .build()
-    )
+    val cacheControl =
+      parse(
+        Headers.Builder()
+          .set("Cache-Control", header)
+          .build(),
+      )
     assertThat(cacheControl.noCache).isFalse()
     assertThat(cacheControl.noStore).isFalse()
     assertThat(cacheControl.maxAgeSeconds).isEqualTo(-1)
@@ -145,20 +151,26 @@ class CacheControlJvmTest {
 
   @Test
   fun parseCacheControlHeaderValueInvalidatedByPragma() {
-    val headers = headersOf(
-      "Cache-Control", "max-age=12",
-      "Pragma", "must-revalidate"
-    )
+    val headers =
+      headersOf(
+        "Cache-Control",
+        "max-age=12",
+        "Pragma",
+        "must-revalidate",
+      )
     val cacheControl = parse(headers)
     assertThat(cacheControl.toString()).isEqualTo("max-age=12, must-revalidate")
   }
 
   @Test
   fun parseCacheControlHeaderValueInvalidatedByTwoValues() {
-    val headers = headersOf(
-      "Cache-Control", "max-age=12",
-      "Cache-Control", "must-revalidate"
-    )
+    val headers =
+      headersOf(
+        "Cache-Control",
+        "max-age=12",
+        "Cache-Control",
+        "must-revalidate",
+      )
     val cacheControl = parse(headers)
     assertThat(cacheControl.toString()).isEqualTo("max-age=12, must-revalidate")
   }
@@ -172,9 +184,10 @@ class CacheControlJvmTest {
 
   @Test
   fun computedHeaderValueIsCached() {
-    val cacheControl = CacheControl.Builder()
-      .maxAge(2, TimeUnit.DAYS)
-      .build()
+    val cacheControl =
+      CacheControl.Builder()
+        .maxAge(2, TimeUnit.DAYS)
+        .build()
     assertThat(cacheControl.toString()).isEqualTo("max-age=172800")
     assertThat(cacheControl.toString()).isSameAs(cacheControl.toString())
   }
@@ -182,9 +195,10 @@ class CacheControlJvmTest {
   @Test
   @Throws(Exception::class)
   fun timeDurationTruncatedToMaxValue() {
-    val cacheControl = CacheControl.Builder()
-      .maxAge(365 * 100, TimeUnit.DAYS) // Longer than Integer.MAX_VALUE seconds.
-      .build()
+    val cacheControl =
+      CacheControl.Builder()
+        .maxAge(365 * 100, TimeUnit.DAYS) // Longer than Integer.MAX_VALUE seconds.
+        .build()
     assertThat(cacheControl.maxAgeSeconds).isEqualTo(Int.MAX_VALUE)
   }
 
@@ -200,9 +214,10 @@ class CacheControlJvmTest {
   @Test
   @Throws(Exception::class)
   fun timePrecisionIsTruncatedToSeconds() {
-    val cacheControl = CacheControl.Builder()
-      .maxAge(4999, TimeUnit.MILLISECONDS)
-      .build()
+    val cacheControl =
+      CacheControl.Builder()
+        .maxAge(4999, TimeUnit.MILLISECONDS)
+        .build()
     assertThat(cacheControl.maxAgeSeconds).isEqualTo(4)
   }
 }

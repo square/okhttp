@@ -101,7 +101,10 @@ interface WebSocket {
    * @param reason Reason for shutting down, no longer than 123 bytes of UTF-8 encoded data (**not** characters) or null.
    * @throws IllegalArgumentException if [code] is invalid or [reason] is too long.
    */
-  fun close(code: Int, reason: String?): Boolean
+  fun close(
+    code: Int,
+    reason: String?,
+  ): Boolean
 
   /**
    * Immediately and violently release resources held by this web socket, discarding any enqueued
@@ -116,6 +119,9 @@ interface WebSocket {
      * notified. The caller must either close or cancel the returned web socket when it is no longer
      * in use.
      */
-    fun newWebSocket(request: Request, listener: WebSocketListener): WebSocket
+    fun newWebSocket(
+      request: Request,
+      listener: WebSocketListener,
+    ): WebSocket
   }
 }

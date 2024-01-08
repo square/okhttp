@@ -43,16 +43,16 @@ import org.robolectric.annotation.Config
   sdk = [30],
 )
 class RobolectricOkHttpClientTest {
-
   private lateinit var context: Context
   private lateinit var client: OkHttpClient
 
   @Before
   fun setUp() {
     context = ApplicationProvider.getApplicationContext<Application>()
-    client = OkHttpClient.Builder()
-      .cache(Cache("/cache".toPath(), 10_000_000, FakeFileSystem()))
-      .build()
+    client =
+      OkHttpClient.Builder()
+        .cache(Cache("/cache".toPath(), 10_000_000, FakeFileSystem()))
+        .build()
   }
 
   @Test
@@ -61,8 +61,9 @@ class RobolectricOkHttpClientTest {
 
     val request = Request("https://www.google.com/robots.txt".toHttpUrl())
 
-    val networkRequest = request.newBuilder()
-      .build()
+    val networkRequest =
+      request.newBuilder()
+        .build()
 
     val call = client.newCall(networkRequest)
 

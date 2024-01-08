@@ -32,11 +32,13 @@ import org.junit.jupiter.api.Test
 
 class PublicSuffixDatabaseTest {
   private val publicSuffixDatabase = PublicSuffixDatabase()
+
   @Test fun longestMatchWins() {
-    val buffer = Buffer()
-      .writeUtf8("com\n")
-      .writeUtf8("my.square.com\n")
-      .writeUtf8("square.com\n")
+    val buffer =
+      Buffer()
+        .writeUtf8("com\n")
+        .writeUtf8("my.square.com\n")
+        .writeUtf8("square.com\n")
     publicSuffixDatabase.setListBytes(buffer.readByteArray(), byteArrayOf())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("example.com"))
       .isEqualTo("example.com")
@@ -49,10 +51,11 @@ class PublicSuffixDatabaseTest {
   }
 
   @Test fun wildcardMatch() {
-    val buffer = Buffer()
-      .writeUtf8("*.square.com\n")
-      .writeUtf8("com\n")
-      .writeUtf8("example.com\n")
+    val buffer =
+      Buffer()
+        .writeUtf8("*.square.com\n")
+        .writeUtf8("com\n")
+        .writeUtf8("example.com\n")
     publicSuffixDatabase.setListBytes(buffer.readByteArray(), byteArrayOf())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("my.square.com")).isNull()
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.my.square.com"))
@@ -62,10 +65,11 @@ class PublicSuffixDatabaseTest {
   }
 
   @Test fun boundarySearches() {
-    val buffer = Buffer()
-      .writeUtf8("bbb\n")
-      .writeUtf8("ddd\n")
-      .writeUtf8("fff\n")
+    val buffer =
+      Buffer()
+        .writeUtf8("bbb\n")
+        .writeUtf8("ddd\n")
+        .writeUtf8("fff\n")
     publicSuffixDatabase.setListBytes(buffer.readByteArray(), byteArrayOf())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("aaa")).isNull()
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("ggg")).isNull()
@@ -74,13 +78,15 @@ class PublicSuffixDatabaseTest {
   }
 
   @Test fun exceptionRule() {
-    val exception = Buffer()
-      .writeUtf8("my.square.jp\n")
-    val buffer = Buffer()
-      .writeUtf8("*.jp\n")
-      .writeUtf8("*.square.jp\n")
-      .writeUtf8("example.com\n")
-      .writeUtf8("square.com\n")
+    val exception =
+      Buffer()
+        .writeUtf8("my.square.jp\n")
+    val buffer =
+      Buffer()
+        .writeUtf8("*.jp\n")
+        .writeUtf8("*.square.jp\n")
+        .writeUtf8("example.com\n")
+        .writeUtf8("square.com\n")
     publicSuffixDatabase.setListBytes(buffer.readByteArray(), exception.readByteArray())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("my.square.jp"))
       .isEqualTo("my.square.jp")
@@ -90,13 +96,15 @@ class PublicSuffixDatabaseTest {
   }
 
   @Test fun noEffectiveTldPlusOne() {
-    val exception = Buffer()
-      .writeUtf8("my.square.jp\n")
-    val buffer = Buffer()
-      .writeUtf8("*.jp\n")
-      .writeUtf8("*.square.jp\n")
-      .writeUtf8("example.com\n")
-      .writeUtf8("square.com\n")
+    val exception =
+      Buffer()
+        .writeUtf8("my.square.jp\n")
+    val buffer =
+      Buffer()
+        .writeUtf8("*.jp\n")
+        .writeUtf8("*.square.jp\n")
+        .writeUtf8("example.com\n")
+        .writeUtf8("square.com\n")
     publicSuffixDatabase.setListBytes(buffer.readByteArray(), exception.readByteArray())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("example.com")).isNull()
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.square.jp")).isNull()
@@ -105,11 +113,11 @@ class PublicSuffixDatabaseTest {
   @Test fun allPublicSuffixes() {
     val buffer = Buffer()
     FileSystem.RESOURCES.source(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE).use { resource ->
-        GzipSource(resource).buffer().use { source ->
-          val length = source.readInt()
-          buffer.write(source, length.toLong())
-        }
+      GzipSource(resource).buffer().use { source ->
+        val length = source.readInt()
+        buffer.write(source, length.toLong())
       }
+    }
     while (!buffer.exhausted()) {
       var publicSuffix = buffer.readUtf8LineStrict()
       if (publicSuffix.contains("*")) {
@@ -125,17 +133,17 @@ class PublicSuffixDatabaseTest {
   @Test fun publicSuffixExceptions() {
     val buffer = Buffer()
     FileSystem.RESOURCES.source(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE).use { resource ->
-        GzipSource(resource).buffer().use { source ->
-          var length = source.readInt()
-          source.skip(length.toLong())
-          length = source.readInt()
-          buffer.write(source, length.toLong())
-        }
+      GzipSource(resource).buffer().use { source ->
+        var length = source.readInt()
+        source.skip(length.toLong())
+        length = source.readInt()
+        buffer.write(source, length.toLong())
       }
+    }
     while (!buffer.exhausted()) {
       val exception = buffer.readUtf8LineStrict()
       assertThat(publicSuffixDatabase.getEffectiveTldPlusOne(exception)).isEqualTo(
-        exception
+        exception,
       )
       val test = "foobar.$exception"
       assertThat(publicSuffixDatabase.getEffectiveTldPlusOne(test)).isEqualTo(exception)
@@ -153,9 +161,10 @@ class PublicSuffixDatabaseTest {
   }
 
   @Test fun secondReadFailsSameAsFirst() {
-    val badPublicSuffixDatabase = PublicSuffixDatabase(
-      path = "/xxx.gz".toPath()
-    )
+    val badPublicSuffixDatabase =
+      PublicSuffixDatabase(
+        path = "/xxx.gz".toPath(),
+      )
     lateinit var firstFailure: Exception
     assertFailsWith<Exception> {
       badPublicSuffixDatabase.getEffectiveTldPlusOne("squareup.com")
@@ -189,10 +198,10 @@ class PublicSuffixDatabaseTest {
     checkPublicSuffix("b.example.example", "example.example")
     checkPublicSuffix("a.b.example.example", "example.example")
     // Listed, but non-Internet, TLD.
-    //checkPublicSuffix("local", null);
-    //checkPublicSuffix("example.local", null);
-    //checkPublicSuffix("b.example.local", null);
-    //checkPublicSuffix("a.b.example.local", null);
+    // checkPublicSuffix("local", null);
+    // checkPublicSuffix("example.local", null);
+    // checkPublicSuffix("b.example.local", null);
+    // checkPublicSuffix("a.b.example.local", null);
     // TLD with only 1 rule.
     checkPublicSuffix("biz", null)
     checkPublicSuffix("domain.biz", "domain.biz")
@@ -269,7 +278,10 @@ class PublicSuffixDatabaseTest {
     checkPublicSuffix("xn--fiqs8s", null)
   }
 
-  private fun checkPublicSuffix(domain: String, registrablePart: String?) {
+  private fun checkPublicSuffix(
+    domain: String,
+    registrablePart: String?,
+  ) {
     val canonicalDomain = domain.toCanonicalHost() ?: return
     val result = publicSuffixDatabase.getEffectiveTldPlusOne(canonicalDomain)
     if (registrablePart == null) {

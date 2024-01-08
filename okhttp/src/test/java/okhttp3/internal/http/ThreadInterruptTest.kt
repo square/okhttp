@@ -15,11 +15,13 @@
  */
 package okhttp3.internal.http
 
+import assertk.fail
 import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
 import java.util.concurrent.TimeUnit
+import kotlin.test.assertFailsWith
 import okhttp3.DelegatingServerSocketFactory
 import okhttp3.DelegatingSocketFactory
 import okhttp3.OkHttpClient
@@ -32,8 +34,6 @@ import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.BufferedSink
 import org.junit.jupiter.api.AfterEach
-import assertk.fail
-import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -54,23 +54,27 @@ class ThreadInterruptTest {
     // Sockets on some platforms can have large buffers that mean writes do not block when
     // required. These socket factories explicitly set the buffer sizes on sockets created.
     server = MockWebServer()
-    server.serverSocketFactory = object : DelegatingServerSocketFactory(getDefault()) {
-      @Throws(SocketException::class)
-      override fun configureServerSocket(serverSocket: ServerSocket): ServerSocket {
-        serverSocket.setReceiveBufferSize(SOCKET_BUFFER_SIZE)
-        return serverSocket
-      }
-    }
-    client = clientTestRule.newClientBuilder()
-      .socketFactory(object : DelegatingSocketFactory(getDefault()) {
-        @Throws(IOException::class)
-        override fun configureSocket(socket: Socket): Socket {
-          socket.setSendBufferSize(SOCKET_BUFFER_SIZE)
-          socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE)
-          return socket
+    server.serverSocketFactory =
+      object : DelegatingServerSocketFactory(getDefault()) {
+        @Throws(SocketException::class)
+        override fun configureServerSocket(serverSocket: ServerSocket): ServerSocket {
+          serverSocket.setReceiveBufferSize(SOCKET_BUFFER_SIZE)
+          return serverSocket
         }
-      })
-      .build()
+      }
+    client =
+      clientTestRule.newClientBuilder()
+        .socketFactory(
+          object : DelegatingSocketFactory(getDefault()) {
+            @Throws(IOException::class)
+            override fun configureSocket(socket: Socket): Socket {
+              socket.setSendBufferSize(SOCKET_BUFFER_SIZE)
+              socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE)
+              return socket
+            }
+          },
+        )
+        .build()
   }
 
   @AfterEach
@@ -82,23 +86,26 @@ class ThreadInterruptTest {
   fun interruptWritingRequestBody() {
     server.enqueue(MockResponse())
     server.start()
-    val call = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .post(object : RequestBody() {
-          override fun contentType() = null
+    val call =
+      client.newCall(
+        Request.Builder()
+          .url(server.url("/"))
+          .post(
+            object : RequestBody() {
+              override fun contentType() = null
 
-          override fun writeTo(sink: BufferedSink) {
-            for (i in 0..9) {
-              sink.writeByte(0)
-              sink.flush()
-              sleep(100)
-            }
-            fail("Expected connection to be closed")
-          }
-        })
-        .build()
-    )
+              override fun writeTo(sink: BufferedSink) {
+                for (i in 0..9) {
+                  sink.writeByte(0)
+                  sink.flush()
+                  sleep(100)
+                }
+                fail("Expected connection to be closed")
+              }
+            },
+          )
+          .build(),
+      )
     interruptLater(500)
     assertFailsWith<IOException> {
       call.execute()
@@ -111,14 +118,15 @@ class ThreadInterruptTest {
     server.enqueue(
       MockResponse()
         .setBody(Buffer().write(ByteArray(responseBodySize)))
-        .throttleBody((64 * 1024).toLong(), 125, TimeUnit.MILLISECONDS)
+        .throttleBody((64 * 1024).toLong(), 125, TimeUnit.MILLISECONDS),
     ) // 500 Kbps
     server.start()
-    val call = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
+    val call =
+      client.newCall(
+        Request.Builder()
+          .url(server.url("/"))
+          .build(),
+      )
     val response = call.execute()
     interruptLater(500)
     val responseBody = response.body.byteStream()
@@ -140,10 +148,11 @@ class ThreadInterruptTest {
 
   private fun interruptLater(delayMillis: Int) {
     val toInterrupt = Thread.currentThread()
-    val interruptingCow = Thread {
-      sleep(delayMillis)
-      toInterrupt.interrupt()
-    }
+    val interruptingCow =
+      Thread {
+        sleep(delayMillis)
+        toInterrupt.interrupt()
+      }
     interruptingCow.start()
   }
 

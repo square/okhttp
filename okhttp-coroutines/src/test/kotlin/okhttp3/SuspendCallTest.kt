@@ -80,7 +80,7 @@ class SuspendCallTest {
         MockResponse.Builder()
           .bodyDelay(5, TimeUnit.SECONDS)
           .body("abc")
-          .build()
+          .build(),
       )
 
       val call = client.newCall(request)
@@ -109,7 +109,7 @@ class SuspendCallTest {
         MockResponse.Builder()
           .bodyDelay(5, TimeUnit.SECONDS)
           .body("abc")
-          .build()
+          .build(),
       )
 
       val call = client.newCall(request)
@@ -137,7 +137,7 @@ class SuspendCallTest {
         MockResponse(
           body = "abc",
           socketPolicy = DisconnectAfterRequest,
-        )
+        ),
       )
 
       val call = client.newCall(request)

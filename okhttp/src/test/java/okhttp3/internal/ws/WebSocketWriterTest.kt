@@ -18,6 +18,7 @@ package okhttp3.internal.ws
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import java.util.Random
+import kotlin.test.assertFailsWith
 import okhttp3.TestUtil.repeat
 import okhttp3.internal.format
 import okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY
@@ -30,8 +31,6 @@ import okio.ByteString.Companion.EMPTY
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
-import assertk.fail
-import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -46,29 +45,32 @@ class WebSocketWriterTest {
    * exceptions thrown from the test do not cause this check to fail.
    */
   @RegisterExtension
-  val noDataLeftBehind = AfterEachCallback { context: ExtensionContext ->
-    if (context.executionException.isPresent) return@AfterEachCallback
-    assertThat(data.readByteString().hex(), "Data not empty")
-      .isEqualTo("")
-  }
+  val noDataLeftBehind =
+    AfterEachCallback { context: ExtensionContext ->
+      if (context.executionException.isPresent) return@AfterEachCallback
+      assertThat(data.readByteString().hex(), "Data not empty")
+        .isEqualTo("")
+    }
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.
-  private val serverWriter = WebSocketWriter(
-    isClient = false,
-    sink = data,
-    random = random,
-    perMessageDeflate = false,
-    noContextTakeover = false,
-    minimumDeflateSize = 0L
-  )
-  private val clientWriter = WebSocketWriter(
-    isClient = true,
-    sink = data,
-    random = random,
-    perMessageDeflate = false,
-    noContextTakeover = false,
-    minimumDeflateSize = 0L
-  )
+  private val serverWriter =
+    WebSocketWriter(
+      isClient = false,
+      sink = data,
+      random = random,
+      perMessageDeflate = false,
+      noContextTakeover = false,
+      minimumDeflateSize = 0L,
+    )
+  private val clientWriter =
+    WebSocketWriter(
+      isClient = true,
+      sink = data,
+      random = random,
+      perMessageDeflate = false,
+      noContextTakeover = false,
+      minimumDeflateSize = 0L,
+    )
 
   @Test fun serverTextMessage() {
     serverWriter.writeMessageFrame(OPCODE_TEXT, "Hello".encodeUtf8())
@@ -76,9 +78,15 @@ class WebSocketWriterTest {
   }
 
   @Test fun serverCompressedTextMessage() {
-    val serverWriter = WebSocketWriter(
-      false, data, random, true, false, 0L
-    )
+    val serverWriter =
+      WebSocketWriter(
+        false,
+        data,
+        random,
+        true,
+        false,
+        0L,
+      )
     serverWriter.writeMessageFrame(OPCODE_TEXT, "Hello".encodeUtf8())
     assertData("c107f248cdc9c90700")
   }
@@ -106,16 +114,25 @@ class WebSocketWriterTest {
   }
 
   @Test fun clientCompressedTextMessage() {
-    val clientWriter = WebSocketWriter(
-      false, data, random, true, false, 0L
-    )
+    val clientWriter =
+      WebSocketWriter(
+        false,
+        data,
+        random,
+        true,
+        false,
+        0L,
+      )
     clientWriter.writeMessageFrame(OPCODE_TEXT, "Hello".encodeUtf8())
     assertData("c107f248cdc9c90700")
   }
 
   @Test fun serverBinaryMessage() {
-    val payload = ("60b420bb3851d9d47acb933dbe70399bf6c92da33af01d4fb770e98c0325f41d3ebaf8986da71" +
-      "2c82bcd4d554bf0b54023c2").decodeHex()
+    val payload =
+      (
+        "60b420bb3851d9d47acb933dbe70399bf6c92da33af01d4fb770e98c0325f41d3ebaf8986da71" +
+          "2c82bcd4d554bf0b54023c2"
+      ).decodeHex()
     serverWriter.writeMessageFrame(OPCODE_BINARY, payload)
     assertData("8232")
     assertData(payload)
@@ -150,14 +167,17 @@ class WebSocketWriterTest {
   }
 
   @Test fun clientBinary() {
-    val payload = ("60b420bb3851d9d47acb933dbe70399bf6c92da33af01d4fb770e98c0325f41d3ebaf8986da71" +
-      "2c82bcd4d554bf0b54023c2").decodeHex()
+    val payload =
+      (
+        "60b420bb3851d9d47acb933dbe70399bf6c92da33af01d4fb770e98c0325f41d3ebaf8986da71" +
+          "2c82bcd4d554bf0b54023c2"
+      ).decodeHex()
     clientWriter.writeMessageFrame(OPCODE_BINARY, payload)
     assertData("82b2")
     assertData("60b420bb")
     assertData(
       "0000000058e5f96f1a7fb386dec41920967d0d185a443df4d7c4c9376391d4a65e0ed8230d1332734b796dee2" +
-      "b4495fb4376"
+        "b4495fb4376",
     )
   }
 
@@ -257,7 +277,7 @@ class WebSocketWriterTest {
       serverWriter.writePing(binaryData(1000))
     }.also { expected ->
       assertThat(expected.message).isEqualTo(
-        "Payload size must be less than or equal to 125"
+        "Payload size must be less than or equal to 125",
       )
     }
   }
@@ -267,7 +287,7 @@ class WebSocketWriterTest {
       serverWriter.writePong((binaryData(1000)))
     }.also { expected ->
       assertThat(expected.message).isEqualTo(
-        "Payload size must be less than or equal to 125"
+        "Payload size must be less than or equal to 125",
       )
     }
   }
@@ -278,7 +298,7 @@ class WebSocketWriterTest {
       serverWriter.writeClose(1000, longReason)
     }.also { expected ->
       assertThat(expected.message).isEqualTo(
-        "Payload size must be less than or equal to 125"
+        "Payload size must be less than or equal to 125",
       )
     }
   }

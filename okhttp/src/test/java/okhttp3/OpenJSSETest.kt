@@ -37,8 +37,11 @@ import org.openjsse.sun.security.ssl.SSLSocketFactoryImpl
 import org.openjsse.sun.security.ssl.SSLSocketImpl
 
 class OpenJSSETest {
-  @JvmField @RegisterExtension var platform = PlatformRule()
-  @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
+  @JvmField @RegisterExtension
+  var platform = PlatformRule()
+
+  @JvmField @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
 
   var client = clientTestRule.newClient()
 
@@ -100,18 +103,22 @@ class OpenJSSETest {
   private fun enableTls() {
     // Generate a self-signed cert for the server to serve and the client to trust.
     // can't use TlsUtil.localhost with a non OpenJSSE trust manager
-    val heldCertificate = HeldCertificate.Builder()
+    val heldCertificate =
+      HeldCertificate.Builder()
         .commonName("localhost")
         .addSubjectAlternativeName("localhost")
         .build()
-    val handshakeCertificates = HandshakeCertificates.Builder()
+    val handshakeCertificates =
+      HandshakeCertificates.Builder()
         .heldCertificate(heldCertificate)
         .addTrustedCertificate(heldCertificate.certificate)
         .build()
 
-    client = client.newBuilder()
+    client =
+      client.newBuilder()
         .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
+          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+        )
         .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }

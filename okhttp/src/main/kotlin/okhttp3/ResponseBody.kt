@@ -149,9 +149,10 @@ abstract class ResponseBody : Closeable {
    *
    * Otherwise the response bytes are decoded as UTF-8.
    */
-  fun charStream(): Reader = reader ?: BomAwareReader(source(), charset()).also {
-    reader = it
-  }
+  fun charStream(): Reader =
+    reader ?: BomAwareReader(source(), charset()).also {
+      reader = it
+    }
 
   /**
    * Returns the response as a string.
@@ -170,9 +171,10 @@ abstract class ResponseBody : Closeable {
    * possibility for your response.
    */
   @Throws(IOException::class)
-  fun string(): String = source().use { source ->
-    source.readString(charset = source.readBomAsCharset(charset()))
-  }
+  fun string(): String =
+    source().use { source ->
+      source.readString(charset = source.readBomAsCharset(charset()))
+    }
 
   private fun charset() = contentType().charsetOrUtf8()
 
@@ -180,21 +182,26 @@ abstract class ResponseBody : Closeable {
 
   internal class BomAwareReader(
     private val source: BufferedSource,
-    private val charset: Charset
+    private val charset: Charset,
   ) : Reader() {
-
     private var closed: Boolean = false
     private var delegate: Reader? = null
 
     @Throws(IOException::class)
-    override fun read(cbuf: CharArray, off: Int, len: Int): Int {
+    override fun read(
+      cbuf: CharArray,
+      off: Int,
+      len: Int,
+    ): Int {
       if (closed) throw IOException("Stream closed")
 
-      val finalDelegate = delegate ?: InputStreamReader(
+      val finalDelegate =
+        delegate ?: InputStreamReader(
           source.inputStream(),
-          source.readBomAsCharset(charset)).also {
-        delegate = it
-      }
+          source.readBomAsCharset(charset),
+        ).also {
+          delegate = it
+        }
       return finalDelegate.read(cbuf, off, len)
     }
 
@@ -242,46 +249,63 @@ abstract class ResponseBody : Closeable {
 
     @JvmStatic
     @Deprecated(
-        message = "Moved to extension function. Put the 'content' argument first to fix Java",
-        replaceWith = ReplaceWith(
-            expression = "content.toResponseBody(contentType)",
-            imports = ["okhttp3.ResponseBody.Companion.toResponseBody"]
+      message = "Moved to extension function. Put the 'content' argument first to fix Java",
+      replaceWith =
+        ReplaceWith(
+          expression = "content.toResponseBody(contentType)",
+          imports = ["okhttp3.ResponseBody.Companion.toResponseBody"],
         ),
-        level = DeprecationLevel.WARNING)
-    fun create(contentType: MediaType?, content: String): ResponseBody = content.toResponseBody(contentType)
+      level = DeprecationLevel.WARNING,
+    )
+    fun create(
+      contentType: MediaType?,
+      content: String,
+    ): ResponseBody = content.toResponseBody(contentType)
 
     @JvmStatic
     @Deprecated(
-        message = "Moved to extension function. Put the 'content' argument first to fix Java",
-        replaceWith = ReplaceWith(
-            expression = "content.toResponseBody(contentType)",
-            imports = ["okhttp3.ResponseBody.Companion.toResponseBody"]
+      message = "Moved to extension function. Put the 'content' argument first to fix Java",
+      replaceWith =
+        ReplaceWith(
+          expression = "content.toResponseBody(contentType)",
+          imports = ["okhttp3.ResponseBody.Companion.toResponseBody"],
         ),
-        level = DeprecationLevel.WARNING)
-    fun create(contentType: MediaType?, content: ByteArray): ResponseBody = content.toResponseBody(contentType)
+      level = DeprecationLevel.WARNING,
+    )
+    fun create(
+      contentType: MediaType?,
+      content: ByteArray,
+    ): ResponseBody = content.toResponseBody(contentType)
 
     @JvmStatic
     @Deprecated(
-        message = "Moved to extension function. Put the 'content' argument first to fix Java",
-        replaceWith = ReplaceWith(
-            expression = "content.toResponseBody(contentType)",
-            imports = ["okhttp3.ResponseBody.Companion.toResponseBody"]
+      message = "Moved to extension function. Put the 'content' argument first to fix Java",
+      replaceWith =
+        ReplaceWith(
+          expression = "content.toResponseBody(contentType)",
+          imports = ["okhttp3.ResponseBody.Companion.toResponseBody"],
         ),
-        level = DeprecationLevel.WARNING)
-    fun create(contentType: MediaType?, content: ByteString): ResponseBody = content.toResponseBody(contentType)
+      level = DeprecationLevel.WARNING,
+    )
+    fun create(
+      contentType: MediaType?,
+      content: ByteString,
+    ): ResponseBody = content.toResponseBody(contentType)
 
     @JvmStatic
     @Deprecated(
-        message = "Moved to extension function. Put the 'content' argument first to fix Java",
-        replaceWith = ReplaceWith(
-            expression = "content.asResponseBody(contentType, contentLength)",
-            imports = ["okhttp3.ResponseBody.Companion.asResponseBody"]
+      message = "Moved to extension function. Put the 'content' argument first to fix Java",
+      replaceWith =
+        ReplaceWith(
+          expression = "content.asResponseBody(contentType, contentLength)",
+          imports = ["okhttp3.ResponseBody.Companion.asResponseBody"],
         ),
-        level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.WARNING,
+    )
     fun create(
       contentType: MediaType?,
       contentLength: Long,
-      content: BufferedSource
+      content: BufferedSource,
     ): ResponseBody = content.asResponseBody(contentType, contentLength)
   }
 }

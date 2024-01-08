@@ -67,7 +67,7 @@ class FakeSSLSession(vararg val certificates: Certificate) : SSLSession {
   }
 
   @Throws(
-      SSLPeerUnverifiedException::class
+    SSLPeerUnverifiedException::class,
   )
   override fun getPeerCertificateChain(): Array<X509Certificate> {
     throw UnsupportedOperationException()
@@ -96,7 +96,7 @@ class FakeSSLSession(vararg val certificates: Certificate) : SSLSession {
 
   override fun putValue(
     s: String,
-    obj: Any
+    obj: Any,
   ) {
     throw UnsupportedOperationException()
   }

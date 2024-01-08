@@ -35,7 +35,7 @@ class ExtensionMultipleInstancesTest {
   fun setup(
     defaultInstance: MockWebServer,
     @MockWebServerInstance("A") instanceA: MockWebServer,
-    @MockWebServerInstance("B") instanceB: MockWebServer
+    @MockWebServerInstance("B") instanceB: MockWebServer,
   ) {
     defaultInstancePort = defaultInstance.port
     instanceAPort = instanceA.port
@@ -51,7 +51,7 @@ class ExtensionMultipleInstancesTest {
   fun tearDown(
     defaultInstance: MockWebServer,
     @MockWebServerInstance("A") instanceA: MockWebServer,
-    @MockWebServerInstance("B") instanceB: MockWebServer
+    @MockWebServerInstance("B") instanceB: MockWebServer,
   ) {
     assertThat(defaultInstance.port).isEqualTo(defaultInstancePort)
     assertThat(instanceA.port).isEqualTo(instanceAPort)
@@ -62,7 +62,7 @@ class ExtensionMultipleInstancesTest {
   fun testClient(
     defaultInstance: MockWebServer,
     @MockWebServerInstance("A") instanceA: MockWebServer,
-    @MockWebServerInstance("B") instanceB: MockWebServer
+    @MockWebServerInstance("B") instanceB: MockWebServer,
   ) {
     assertThat(defaultInstance.port).isEqualTo(defaultInstancePort)
     assertThat(instanceA.port).isEqualTo(instanceAPort)

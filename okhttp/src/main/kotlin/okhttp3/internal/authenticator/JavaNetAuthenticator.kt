@@ -33,7 +33,10 @@ import okhttp3.Route
  */
 class JavaNetAuthenticator(private val defaultDns: Dns = Dns.SYSTEM) : okhttp3.Authenticator {
   @Throws(IOException::class)
-  override fun authenticate(route: Route?, response: Response): Request? {
+  override fun authenticate(
+    route: Route?,
+    response: Response,
+  ): Request? {
     val challenges = response.challenges()
     val request = response.request
     val url = request.url
@@ -46,9 +49,10 @@ class JavaNetAuthenticator(private val defaultDns: Dns = Dns.SYSTEM) : okhttp3.A
       }
 
       val dns = route?.address?.dns ?: defaultDns
-      val auth = if (proxyAuthorization) {
-        val proxyAddress = proxy.address() as InetSocketAddress
-        Authenticator.requestPasswordAuthentication(
+      val auth =
+        if (proxyAuthorization) {
+          val proxyAddress = proxy.address() as InetSocketAddress
+          Authenticator.requestPasswordAuthentication(
             proxyAddress.hostName,
             proxy.connectToInetAddress(url, dns),
             proxyAddress.port,
@@ -56,10 +60,10 @@ class JavaNetAuthenticator(private val defaultDns: Dns = Dns.SYSTEM) : okhttp3.A
             challenge.realm,
             challenge.scheme,
             url.toUrl(),
-            Authenticator.RequestorType.PROXY
-        )
-      } else {
-        Authenticator.requestPasswordAuthentication(
+            Authenticator.RequestorType.PROXY,
+          )
+        } else {
+          Authenticator.requestPasswordAuthentication(
             url.host,
             proxy.connectToInetAddress(url, dns),
             url.port,
@@ -67,17 +71,21 @@ class JavaNetAuthenticator(private val defaultDns: Dns = Dns.SYSTEM) : okhttp3.A
             challenge.realm,
             challenge.scheme,
             url.toUrl(),
-            Authenticator.RequestorType.SERVER
-        )
-      }
+            Authenticator.RequestorType.SERVER,
+          )
+        }
 
       if (auth != null) {
         val credentialHeader = if (proxyAuthorization) "Proxy-Authorization" else "Authorization"
-        val credential = Credentials.basic(
-            auth.userName, String(auth.password), challenge.charset)
+        val credential =
+          Credentials.basic(
+            auth.userName,
+            String(auth.password),
+            challenge.charset,
+          )
         return request.newBuilder()
-            .header(credentialHeader, credential)
-            .build()
+          .header(credentialHeader, credential)
+          .build()
       }
     }
 
@@ -85,7 +93,10 @@ class JavaNetAuthenticator(private val defaultDns: Dns = Dns.SYSTEM) : okhttp3.A
   }
 
   @Throws(IOException::class)
-  private fun Proxy.connectToInetAddress(url: HttpUrl, dns: Dns): InetAddress {
+  private fun Proxy.connectToInetAddress(
+    url: HttpUrl,
+    dns: Dns,
+  ): InetAddress {
     return when (type()) {
       Proxy.Type.DIRECT -> dns.lookup(url.host).first()
       else -> (address() as InetSocketAddress).address

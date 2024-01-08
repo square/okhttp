@@ -28,11 +28,10 @@ import okhttp3.FallbackTestClientSocketFactory.Companion.TLS_FALLBACK_SCSV
 class FallbackTestClientSocketFactory(
   delegate: SSLSocketFactory,
 ) : DelegatingSSLSocketFactory(delegate) {
-  override fun configureSocket(sslSocket: SSLSocket): SSLSocket =
-    TlsFallbackScsvDisabledSSLSocket(sslSocket)
+  override fun configureSocket(sslSocket: SSLSocket): SSLSocket = TlsFallbackScsvDisabledSSLSocket(sslSocket)
 
   private class TlsFallbackScsvDisabledSSLSocket(
-    socket: SSLSocket
+    socket: SSLSocket,
   ) : DelegatingSSLSocket(socket) {
     override fun setEnabledCipherSuites(suites: Array<String>) {
       val enabledCipherSuites = mutableListOf<String>()

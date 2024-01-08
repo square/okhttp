@@ -42,7 +42,7 @@ object TestUtil {
   @JvmStatic
   fun repeat(
     c: Char,
-    count: Int
+    count: Int,
   ): String {
     val array = CharArray(count)
     Arrays.fill(array, c)

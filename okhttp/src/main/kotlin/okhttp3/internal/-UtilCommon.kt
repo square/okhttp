@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal
 
 import okhttp3.Headers
@@ -35,7 +36,10 @@ import okio.Path
 import okio.use
 
 // TODO: migrate callers to [Regex.matchAt] when that API is not experimental.
-internal fun Regex.matchAtPolyfill(input: CharSequence, index: Int): MatchResult? {
+internal fun Regex.matchAtPolyfill(
+  input: CharSequence,
+  index: Int,
+): MatchResult? {
   val candidate = find(input, index) ?: return null
   if (candidate.range.first != index) return null // Didn't match where it should have.
   return candidate
@@ -45,22 +49,19 @@ internal fun Regex.matchAtPolyfill(input: CharSequence, index: Int): MatchResult
 val EMPTY_BYTE_ARRAY: ByteArray = ByteArray(0)
 
 /** Byte order marks. */
-internal val UNICODE_BOMS = Options.of(
-   // UTF-8.
-  "efbbbf".decodeHex(),
-
-   // UTF-16BE.
-  "feff".decodeHex(),
-
-   // UTF-16LE.
-  "fffe".decodeHex(),
-
-   // UTF-32BE.
-  "0000ffff".decodeHex(),
-
-  // UTF-32LE.
-  "ffff0000".decodeHex(),
-)
+internal val UNICODE_BOMS =
+  Options.of(
+    // UTF-8.
+    "efbbbf".decodeHex(),
+    // UTF-16BE.
+    "feff".decodeHex(),
+    // UTF-16LE.
+    "fffe".decodeHex(),
+    // UTF-32BE.
+    "0000ffff".decodeHex(),
+    // UTF-32LE.
+    "ffff0000".decodeHex(),
+  )
 
 /**
  * Returns an array containing only elements found in this array and also in [other]. The returned
@@ -68,7 +69,7 @@ internal val UNICODE_BOMS = Options.of(
  */
 internal fun Array<String>.intersect(
   other: Array<String>,
-  comparator: Comparator<in String>
+  comparator: Comparator<in String>,
 ): Array<String> {
   val result = mutableListOf<String>()
   for (a in this) {
@@ -90,7 +91,7 @@ internal fun Array<String>.intersect(
  */
 internal fun Array<String>.hasIntersection(
   other: Array<String>?,
-  comparator: Comparator<in String>
+  comparator: Comparator<in String>,
 ): Boolean {
   if (isEmpty() || other == null || other.isEmpty()) {
     return false
@@ -105,8 +106,10 @@ internal fun Array<String>.hasIntersection(
   return false
 }
 
-internal fun Array<String>.indexOf(value: String, comparator: Comparator<String>): Int =
-  indexOfFirst { comparator.compare(it, value) == 0 }
+internal fun Array<String>.indexOf(
+  value: String,
+  comparator: Comparator<String>,
+): Int = indexOfFirst { comparator.compare(it, value) == 0 }
 
 @Suppress("UNCHECKED_CAST")
 internal fun Array<String>.concat(value: String): Array<String> {
@@ -118,7 +121,7 @@ internal fun Array<String>.concat(value: String): Array<String> {
 /** Increments [startIndex] until this string is not ASCII whitespace. Stops at [endIndex]. */
 internal fun String.indexOfFirstNonAsciiWhitespace(
   startIndex: Int = 0,
-  endIndex: Int = length
+  endIndex: Int = length,
 ): Int {
   for (i in startIndex until endIndex) {
     when (this[i]) {
@@ -134,7 +137,7 @@ internal fun String.indexOfFirstNonAsciiWhitespace(
  */
 internal fun String.indexOfLastNonAsciiWhitespace(
   startIndex: Int = 0,
-  endIndex: Int = length
+  endIndex: Int = length,
 ): Int {
   for (i in endIndex - 1 downTo startIndex) {
     when (this[i]) {
@@ -145,9 +148,11 @@ internal fun String.indexOfLastNonAsciiWhitespace(
   return startIndex
 }
 
-
 /** Equivalent to `string.substring(startIndex, endIndex).trim()`. */
-fun String.trimSubstring(startIndex: Int = 0, endIndex: Int = length): String {
+fun String.trimSubstring(
+  startIndex: Int = 0,
+  endIndex: Int = length,
+): String {
   val start = indexOfFirstNonAsciiWhitespace(startIndex, endIndex)
   val end = indexOfLastNonAsciiWhitespace(start, endIndex)
   return substring(start, end)
@@ -160,7 +165,7 @@ fun String.trimSubstring(startIndex: Int = 0, endIndex: Int = length): String {
 fun String.delimiterOffset(
   delimiters: String,
   startIndex: Int = 0,
-  endIndex: Int = length
+  endIndex: Int = length,
 ): Int {
   for (i in startIndex until endIndex) {
     if (this[i] in delimiters) return i
@@ -175,7 +180,7 @@ fun String.delimiterOffset(
 fun String.delimiterOffset(
   delimiter: Char,
   startIndex: Int = 0,
-  endIndex: Int = length
+  endIndex: Int = length,
 ): Int {
   for (i in startIndex until endIndex) {
     if (this[i] == delimiter) return i
@@ -205,15 +210,18 @@ internal fun isSensitiveHeader(name: String): Boolean {
     name.equals("Set-Cookie", ignoreCase = true)
 }
 
-internal fun Char.parseHexDigit(): Int = when (this) {
-  in '0'..'9' -> this - '0'
-  in 'a'..'f' -> this - 'a' + 10
-  in 'A'..'F' -> this - 'A' + 10
-  else -> -1
-}
+internal fun Char.parseHexDigit(): Int =
+  when (this) {
+    in '0'..'9' -> this - '0'
+    in 'a'..'f' -> this - 'a' + 10
+    in 'A'..'F' -> this - 'A' + 10
+    else -> -1
+  }
 
 internal infix fun Byte.and(mask: Int): Int = toInt() and mask
+
 internal infix fun Short.and(mask: Int): Int = toInt() and mask
+
 internal infix fun Int.and(mask: Long): Long = toLong() and mask
 
 @Throws(IOException::class)
@@ -225,9 +233,11 @@ internal fun BufferedSink.writeMedium(medium: Int) {
 
 @Throws(IOException::class)
 internal fun BufferedSource.readMedium(): Int {
-  return (readByte() and 0xff shl 16
-    or (readByte() and 0xff shl 8)
-    or (readByte() and 0xff))
+  return (
+    readByte() and 0xff shl 16
+      or (readByte() and 0xff shl 8)
+      or (readByte() and 0xff)
+  )
 }
 
 /** Run [block] until it either throws an [IOException] or completes. */
@@ -331,11 +341,12 @@ internal fun FileSystem.deleteIfExists(path: Path) {
 /** Tolerant delete, try to clear as many files as possible even after a failure. */
 internal fun FileSystem.deleteContents(directory: Path) {
   var exception: IOException? = null
-  val files = try {
-    list(directory)
-  } catch (fnfe: FileNotFoundException) {
-    return
-  }
+  val files =
+    try {
+      list(directory)
+    } catch (fnfe: FileNotFoundException) {
+      return
+    }
   for (file in files) {
     try {
       if (metadata(file).isDirectory) {
@@ -358,9 +369,10 @@ internal fun <E> MutableList<E>.addIfAbsent(element: E) {
   if (!contains(element)) add(element)
 }
 
-internal fun Exception.withSuppressed(suppressed: List<Exception>): Throwable = apply {
-  for (e in suppressed) addSuppressed(e)
-}
+internal fun Exception.withSuppressed(suppressed: List<Exception>): Throwable =
+  apply {
+    for (e in suppressed) addSuppressed(e)
+  }
 
 internal inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List<T> {
   var result: List<T> = emptyList()
@@ -375,7 +387,11 @@ internal inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List
 
 internal const val USER_AGENT: String = "okhttp/${CONST_VERSION}"
 
-internal fun checkOffsetAndCount(arrayLength: Long, offset: Long, count: Long) {
+internal fun checkOffsetAndCount(
+  arrayLength: Long,
+  offset: Long,
+  count: Long,
+) {
   if (offset or count < 0L || offset > arrayLength || arrayLength - offset < count) {
     throw ArrayIndexOutOfBoundsException("length=$arrayLength, offset=$offset, count=$offset")
   }
@@ -385,7 +401,10 @@ val commonEmptyHeaders: Headers = Headers.headersOf()
 val commonEmptyRequestBody: RequestBody = EMPTY_BYTE_ARRAY.toRequestBody()
 val commonEmptyResponse: ResponseBody = EMPTY_BYTE_ARRAY.toResponseBody()
 
-internal fun <T> interleave(a: Iterable<T>, b: Iterable<T>): List<T> {
+internal fun <T> interleave(
+  a: Iterable<T>,
+  b: Iterable<T>,
+): List<T> {
   val ia = a.iterator()
   val ib = b.iterator()
 

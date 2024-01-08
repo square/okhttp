@@ -89,11 +89,15 @@ class Dispatcher() {
   private var executorServiceOrNull: ExecutorService? = null
 
   @get:Synchronized
-  @get:JvmName("executorService") val executorService: ExecutorService
+  @get:JvmName("executorService")
+  val executorService: ExecutorService
     get() {
       if (executorServiceOrNull == null) {
-        executorServiceOrNull = ThreadPoolExecutor(0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
-            SynchronousQueue(), threadFactory("$okHttpName Dispatcher", false))
+        executorServiceOrNull =
+          ThreadPoolExecutor(
+            0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
+            SynchronousQueue(), threadFactory("$okHttpName Dispatcher", false),
+          )
       }
       return executorServiceOrNull!!
     }
@@ -183,17 +187,17 @@ class Dispatcher() {
     // particularly because RealCall handles a RejectedExecutionException
     // by executing on the same thread.
     if (executorService.isShutdown) {
-        for (i in 0 until executableCalls.size) {
-          val asyncCall = executableCalls[i]
-          asyncCall.callsPerHost.decrementAndGet()
+      for (i in 0 until executableCalls.size) {
+        val asyncCall = executableCalls[i]
+        asyncCall.callsPerHost.decrementAndGet()
 
-          synchronized(this) {
-            runningAsyncCalls.remove(asyncCall)
-          }
-
-          asyncCall.failRejected()
+        synchronized(this) {
+          runningAsyncCalls.remove(asyncCall)
         }
-        idleCallback?.run()
+
+        asyncCall.failRejected()
+      }
+      idleCallback?.run()
     } else {
       for (i in 0 until executableCalls.size) {
         val asyncCall = executableCalls[i]
@@ -220,7 +224,10 @@ class Dispatcher() {
     finished(runningSyncCalls, call)
   }
 
-  private fun <T> finished(calls: Deque<T>, call: T) {
+  private fun <T> finished(
+    calls: Deque<T>,
+    call: T,
+  ) {
     val idleCallback: Runnable?
     synchronized(this) {
       if (!calls.remove(call)) throw AssertionError("Call wasn't in-flight!")
@@ -250,8 +257,9 @@ class Dispatcher() {
 
   @JvmName("-deprecated_executorService")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "executorService"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "executorService"),
+    level = DeprecationLevel.ERROR,
+  )
   fun executorService(): ExecutorService = executorService
 }

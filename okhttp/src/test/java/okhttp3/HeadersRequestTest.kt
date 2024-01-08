@@ -25,11 +25,15 @@ import org.junit.jupiter.api.Test
 
 class HeadersRequestTest {
   @Test fun readNameValueBlockDropsForbiddenHeadersHttp2() {
-    val headerBlock = headersOf(
-      ":status", "200 OK",
-      ":version", "HTTP/1.1",
-      "connection", "close"
-    )
+    val headerBlock =
+      headersOf(
+        ":status",
+        "200 OK",
+        ":version",
+        "HTTP/1.1",
+        "connection",
+        "close",
+      )
     val request = Request.Builder().url("http://square.com/").build()
     val response = readHttp2HeadersList(headerBlock, Protocol.HTTP_2).request(request).build()
     val headers = response.headers
@@ -39,33 +43,45 @@ class HeadersRequestTest {
   }
 
   @Test fun http2HeadersListDropsForbiddenHeadersHttp2() {
-    val request = Request.Builder()
-      .url("http://square.com/")
-      .header("Connection", "upgrade")
-      .header("Upgrade", "websocket")
-      .header("Host", "square.com")
-      .header("TE", "gzip")
-      .build()
-    val expected = headerEntries(
-      ":method", "GET",
-      ":path", "/",
-      ":authority", "square.com",
-      ":scheme", "http"
-    )
+    val request =
+      Request.Builder()
+        .url("http://square.com/")
+        .header("Connection", "upgrade")
+        .header("Upgrade", "websocket")
+        .header("Host", "square.com")
+        .header("TE", "gzip")
+        .build()
+    val expected =
+      headerEntries(
+        ":method",
+        "GET",
+        ":path",
+        "/",
+        ":authority",
+        "square.com",
+        ":scheme",
+        "http",
+      )
     assertThat(http2HeadersList(request)).isEqualTo(expected)
   }
 
   @Test fun http2HeadersListDontDropTeIfTrailersHttp2() {
-    val request = Request.Builder()
-      .url("http://square.com/")
-      .header("TE", "trailers")
-      .build()
-    val expected = headerEntries(
-      ":method", "GET",
-      ":path", "/",
-      ":scheme", "http",
-      "te", "trailers"
-    )
+    val request =
+      Request.Builder()
+        .url("http://square.com/")
+        .header("TE", "trailers")
+        .build()
+    val expected =
+      headerEntries(
+        ":method",
+        "GET",
+        ":path",
+        "/",
+        ":scheme",
+        "http",
+        "te",
+        "trailers",
+      )
     assertThat(http2HeadersList(request)).isEqualTo(expected)
   }
 }

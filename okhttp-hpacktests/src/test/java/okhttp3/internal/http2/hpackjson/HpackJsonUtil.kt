@@ -35,13 +35,17 @@ import okio.source
  */
 object HpackJsonUtil {
   @Suppress("unused")
-  private val MOSHI = Moshi.Builder()
-    .add(object : Any() {
-      @ToJson fun byteStringToJson(byteString: ByteString) = byteString.hex()
-      @FromJson fun byteStringFromJson(json: String) = json.decodeHex()
-    })
-    .add(KotlinJsonAdapterFactory())
-    .build()
+  private val MOSHI =
+    Moshi.Builder()
+      .add(
+        object : Any() {
+          @ToJson fun byteStringToJson(byteString: ByteString) = byteString.hex()
+
+          @FromJson fun byteStringFromJson(json: String) = json.decodeHex()
+        },
+      )
+      .add(KotlinJsonAdapterFactory())
+      .build()
   private val STORY_JSON_ADAPTER = MOSHI.adapter(Story::class.java)
 
   private val fileSystem = FileSystem.SYSTEM
@@ -58,8 +62,9 @@ object HpackJsonUtil {
 
   /** Iterate through the hpack-test-case resources, only picking stories for the current draft.  */
   fun storiesForCurrentDraft(): Array<String> {
-    val resource = HpackJsonUtil::class.java.getResource("/hpack-test-case")
-      ?: return arrayOf()
+    val resource =
+      HpackJsonUtil::class.java.getResource("/hpack-test-case")
+        ?: return arrayOf()
 
     val testCaseDirectory = File(resource.toURI()).toOkioPath()
     val result = mutableListOf<String>()
@@ -83,17 +88,20 @@ object HpackJsonUtil {
     val result = mutableListOf<Story>()
     var i = 0
     while (true) { // break after last test.
-      val storyResourceName = String.format(
-        "/hpack-test-case/%s/story_%02d.json",
-        testFolderName,
-        i,
-      )
-      val storyInputStream = HpackJsonUtil::class.java.getResourceAsStream(storyResourceName)
-        ?: break
+      val storyResourceName =
+        String.format(
+          "/hpack-test-case/%s/story_%02d.json",
+          testFolderName,
+          i,
+        )
+      val storyInputStream =
+        HpackJsonUtil::class.java.getResourceAsStream(storyResourceName)
+          ?: break
       try {
         storyInputStream.use {
-          val story = readStory(storyInputStream.source().buffer())
-            .copy(fileName = storyResourceName)
+          val story =
+            readStory(storyInputStream.source().buffer())
+              .copy(fileName = storyResourceName)
           result.add(story)
           i++
         }

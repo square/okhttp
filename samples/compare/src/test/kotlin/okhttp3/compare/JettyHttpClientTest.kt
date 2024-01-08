@@ -47,16 +47,17 @@ class JettyHttpClientTest {
   @Test fun get(server: MockWebServer) {
     server.enqueue(MockResponse(body = "hello, Jetty HTTP Client"))
 
-    val request = client.newRequest(server.url("/").toUri())
+    val request =
+      client.newRequest(server.url("/").toUri())
         .header("Accept", "text/plain")
     val response = request.send()
     assertThat(response.status).isEqualTo(200)
     assertThat(response.contentAsString).isEqualTo("hello, Jetty HTTP Client")
 
     val recorded = server.takeRequest()
-      assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
-      assertThat(recorded.headers["Accept-Encoding"]).isEqualTo("gzip")
-      assertThat(recorded.headers["Connection"]).isNull()
-      assertThat(recorded.headers["User-Agent"]!!).matches(Regex("Jetty/.*"))
+    assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
+    assertThat(recorded.headers["Accept-Encoding"]).isEqualTo("gzip")
+    assertThat(recorded.headers["Connection"]).isNull()
+    assertThat(recorded.headers["User-Agent"]!!).matches(Regex("Jetty/.*"))
   }
 }

@@ -43,50 +43,52 @@ class ResponseBodyTest {
   fun sourceClosesUnderlyingSource() {
     var closed = false
 
-    val body: ResponseBody = object : ResponseBody() {
-      override fun contentType(): MediaType? {
-        return null
-      }
+    val body: ResponseBody =
+      object : ResponseBody() {
+        override fun contentType(): MediaType? {
+          return null
+        }
 
-      override fun contentLength(): Long {
-        return 5
-      }
+        override fun contentLength(): Long {
+          return 5
+        }
 
-      override fun source(): BufferedSource {
-        val source = Buffer().writeUtf8("hello")
-        return object : ForwardingSource(source) {
-          override fun close() {
-            closed = true
-            super.close()
-          }
-        }.buffer()
+        override fun source(): BufferedSource {
+          val source = Buffer().writeUtf8("hello")
+          return object : ForwardingSource(source) {
+            override fun close() {
+              closed = true
+              super.close()
+            }
+          }.buffer()
+        }
       }
-    }
     body.source().close()
     assertThat(closed).isTrue()
   }
 
   @Test
   fun throwingUnderlyingSourceClosesQuietly() {
-    val body: ResponseBody = object : ResponseBody() {
-      override fun contentType(): MediaType? {
-        return null
-      }
+    val body: ResponseBody =
+      object : ResponseBody() {
+        override fun contentType(): MediaType? {
+          return null
+        }
 
-      override fun contentLength(): Long {
-        return 5
-      }
+        override fun contentLength(): Long {
+          return 5
+        }
 
-      override fun source(): BufferedSource {
-        val source = Buffer().writeUtf8("hello")
-        return object : ForwardingSource(source) {
-          @Throws(IOException::class)
-          override fun close() {
-            throw IOException("Broken!")
-          }
-        }.buffer()
+        override fun source(): BufferedSource {
+          val source = Buffer().writeUtf8("hello")
+          return object : ForwardingSource(source) {
+            @Throws(IOException::class)
+            override fun close() {
+              throw IOException("Broken!")
+            }
+          }.buffer()
+        }
       }
-    }
     assertThat(body.source().readUtf8()).isEqualTo("hello")
     body.close()
   }
@@ -135,9 +137,12 @@ class ResponseBodyTest {
 }
 
 abstract class ForwardingSource(
-  val delegate: Source
+  val delegate: Source,
 ) : Source {
-  override fun read(sink: Buffer, byteCount: Long): Long = delegate.read(sink, byteCount)
+  override fun read(
+    sink: Buffer,
+    byteCount: Long,
+  ): Long = delegate.read(sink, byteCount)
 
   override fun timeout() = delegate.timeout()
 

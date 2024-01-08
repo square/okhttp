@@ -15,21 +15,22 @@
  */
 package okhttp3
 
+import java.io.File
+import java.lang.reflect.InvocationTargetException
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
-import java.io.File
-import java.lang.reflect.InvocationTargetException
 
 private val prefix = if (File("samples").exists()) "" else "../../"
 
 private fun mainFiles(): List<File> {
-  val directories = listOf(
-    "$prefix/samples/guide/src/main/java/okhttp3/guide",
-    "$prefix/samples/guide/src/main/java/okhttp3/recipes",
-    "$prefix/samples/guide/src/main/java/okhttp3/recipes/kt"
-  ).map { File(it) }
+  val directories =
+    listOf(
+      "$prefix/samples/guide/src/main/java/okhttp3/guide",
+      "$prefix/samples/guide/src/main/java/okhttp3/recipes",
+      "$prefix/samples/guide/src/main/java/okhttp3/recipes/kt",
+    ).map { File(it) }
 
   return directories.flatMap {
     it.listFiles().orEmpty().filter { f -> f.isFile }.toList()
@@ -56,7 +57,8 @@ class AllMainsTest {
   @ParameterizedTest
   @ArgumentsSource(MainTestProvider::class)
   fun runMain(className: String) {
-    val mainMethod = Class.forName(className)
+    val mainMethod =
+      Class.forName(className)
         .methods.find { it.name == "main" }
     try {
       if (mainMethod != null) {
@@ -78,7 +80,7 @@ class AllMainsTest {
   @Suppress("UNUSED_PARAMETER")
   private fun expectedFailure(
     className: String,
-    cause: Throwable
+    cause: Throwable,
   ): Boolean {
     return when (className) {
       "okhttp3.recipes.CheckHandshake" -> true // by design

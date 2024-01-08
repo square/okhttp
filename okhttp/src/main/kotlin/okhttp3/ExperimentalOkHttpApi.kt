@@ -40,7 +40,7 @@ package okhttp3
   AnnotationTarget.FUNCTION,
   AnnotationTarget.PROPERTY_GETTER,
   AnnotationTarget.PROPERTY_SETTER,
-  AnnotationTarget.TYPEALIAS
+  AnnotationTarget.TYPEALIAS,
 )
 @RequiresOptIn(level = RequiresOptIn.Level.ERROR)
 public annotation class ExperimentalOkHttpApi

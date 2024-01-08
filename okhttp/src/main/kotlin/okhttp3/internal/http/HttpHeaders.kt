@@ -98,8 +98,12 @@ private fun Buffer.readChallengeHeader(result: MutableList<Challenge>) {
 
     // It's a token68 because there isn't a value after it.
     if (!commaPrefixed && (commaSuffixed || exhausted())) {
-      result.add(Challenge(schemeName,
-          Collections.singletonMap<String, String>(null, peek + "=".repeat(eqCount))))
+      result.add(
+        Challenge(
+          schemeName,
+          Collections.singletonMap<String, String>(null, peek + "=".repeat(eqCount)),
+        ),
+      )
       peek = null
       continue
     }
@@ -117,10 +121,11 @@ private fun Buffer.readChallengeHeader(result: MutableList<Challenge>) {
       if (eqCount > 1) return // Unexpected '=' characters.
       if (skipCommasAndWhitespace()) return // Unexpected ','.
 
-      val parameterValue = when {
-        startsWith('"'.code.toByte()) -> readQuotedString()
-        else -> readToken()
-      } ?: return // Expected a value.
+      val parameterValue =
+        when {
+          startsWith('"'.code.toByte()) -> readQuotedString()
+          else -> readToken()
+        } ?: return // Expected a value.
 
       val replaced = parameters.put(peek, parameterValue)
       peek = null
@@ -197,7 +202,10 @@ private fun Buffer.readToken(): String? {
   }
 }
 
-fun CookieJar.receiveHeaders(url: HttpUrl, headers: Headers) {
+fun CookieJar.receiveHeaders(
+  url: HttpUrl,
+  headers: Headers,
+) {
   if (this === CookieJar.NO_COOKIES) return
 
   val cookies = Cookie.parseAll(url, headers)
@@ -218,15 +226,17 @@ fun Response.promisesBody(): Boolean {
 
   val responseCode = code
   if ((responseCode < HTTP_CONTINUE || responseCode >= 200) &&
-      responseCode != HTTP_NO_CONTENT &&
-      responseCode != HTTP_NOT_MODIFIED) {
+    responseCode != HTTP_NO_CONTENT &&
+    responseCode != HTTP_NOT_MODIFIED
+  ) {
     return true
   }
 
   // If the Content-Length or Transfer-Encoding headers disagree with the response code, the
   // response is malformed. For best compatibility, we honor the headers.
   if (headersContentLength() != -1L ||
-      "chunked".equals(header("Transfer-Encoding"), ignoreCase = true)) {
+    "chunked".equals(header("Transfer-Encoding"), ignoreCase = true)
+  ) {
     return true
   }
 
@@ -234,9 +244,10 @@ fun Response.promisesBody(): Boolean {
 }
 
 @Deprecated(
-    message = "No longer supported",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith(expression = "response.promisesBody()"))
+  message = "No longer supported",
+  level = DeprecationLevel.ERROR,
+  replaceWith = ReplaceWith(expression = "response.promisesBody()"),
+)
 fun hasBody(response: Response): Boolean {
   return response.promisesBody()
 }

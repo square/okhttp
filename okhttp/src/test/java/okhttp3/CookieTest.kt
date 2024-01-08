@@ -26,14 +26,13 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Arrays
 import java.util.Date
+import kotlin.test.assertFailsWith
 import okhttp3.Cookie.Companion.parse
 import okhttp3.Cookie.Companion.parseAll
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.UTC
 import okhttp3.internal.http.MAX_DATE
 import okhttp3.internal.parseCookie
-import assertk.fail
-import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
@@ -286,9 +285,11 @@ class CookieTest {
   }
 
   @Test fun domainMatchesIpv6AddressWithIpv4Suffix() {
-    val cookie = parse(
-      "http://[::1:ffff:ffff]/".toHttpUrl(), "a=b; domain=::1:255.255.255.255"
-    )
+    val cookie =
+      parse(
+        "http://[::1:ffff:ffff]/".toHttpUrl(),
+        "a=b; domain=::1:255.255.255.255",
+      )
     assertThat(cookie!!.domain).isEqualTo("::1:ffff:ffff")
     assertThat(cookie.matches("http://[::1:ffff:ffff]/".toHttpUrl())).isTrue()
   }
@@ -324,7 +325,7 @@ class CookieTest {
   @Test fun hostOnly() {
     assertThat(parse(url, "a=b")!!.hostOnly).isTrue()
     assertThat(
-      parse(url, "a=b; domain=example.com")!!.hostOnly
+      parse(url, "a=b; domain=example.com")!!.hostOnly,
     ).isFalse()
   }
 
@@ -336,7 +337,8 @@ class CookieTest {
   }
 
   @Test fun defaultPathIsUsedIfPathDoesntHaveLeadingSlash() {
-    assertThat(parse("http://example.com/foo/bar".toHttpUrl(), "a=b; path=quux")!!.path
+    assertThat(
+      parse("http://example.com/foo/bar".toHttpUrl(), "a=b; path=quux")!!.path,
     ).isEqualTo("/foo")
     assertThat(parse("http://example.com/foo/bar".toHttpUrl(), "a=b; path=")!!.path)
       .isEqualTo("/foo")
@@ -382,12 +384,14 @@ class CookieTest {
   @Test fun lastExpiresAtWins() {
     assertThat(
       parseCookie(
-        0L, url, "a=b; "
-        + "Expires=Thu, 01 Jan 1970 00:00:02 GMT; "
-        + "Expires=Thu, 01 Jan 1970 00:00:04 GMT; "
-        + "Expires=Thu, 01 Jan 1970 00:00:01 GMT; "
-        + "Expires=Thu, 01 Jan 1970 00:00:03 GMT"
-      )!!.expiresAt
+        0L,
+        url,
+        "a=b; " +
+          "Expires=Thu, 01 Jan 1970 00:00:02 GMT; " +
+          "Expires=Thu, 01 Jan 1970 00:00:04 GMT; " +
+          "Expires=Thu, 01 Jan 1970 00:00:01 GMT; " +
+          "Expires=Thu, 01 Jan 1970 00:00:03 GMT",
+      )!!.expiresAt,
     ).isEqualTo(3000L)
   }
 
@@ -399,10 +403,11 @@ class CookieTest {
   }
 
   @Test fun parseAll() {
-    val headers = Headers.Builder()
-      .add("Set-Cookie: a=b")
-      .add("Set-Cookie: c=d")
-      .build()
+    val headers =
+      Headers.Builder()
+        .add("Set-Cookie: a=b")
+        .add("Set-Cookie: c=d")
+        .build()
     val cookies = parseAll(url, headers)
     assertThat(cookies.size).isEqualTo(2)
     assertThat(cookies[0].toString()).isEqualTo("a=b; path=/")
@@ -410,11 +415,12 @@ class CookieTest {
   }
 
   @Test fun builder() {
-    val cookie = Cookie.Builder()
-      .name("a")
-      .value("b")
-      .domain("example.com")
-      .build()
+    val cookie =
+      Cookie.Builder()
+        .name("a")
+        .value("b")
+        .domain("example.com")
+        .build()
     assertThat(cookie.name).isEqualTo("a")
     assertThat(cookie.value).isEqualTo("b")
     assertThat(cookie.expiresAt).isEqualTo(MAX_DATE)
@@ -428,12 +434,13 @@ class CookieTest {
   }
 
   @Test fun newBuilder() {
-    val cookie = parseCookie(0L, url, "c=d; Max-Age=1")!!.newBuilder()
-      .name("a")
-      .value("b")
-      .domain("example.com")
-      .expiresAt(MAX_DATE)
-      .build()
+    val cookie =
+      parseCookie(0L, url, "c=d; Max-Age=1")!!.newBuilder()
+        .name("a")
+        .value("b")
+        .domain("example.com")
+        .expiresAt(MAX_DATE)
+        .build()
     assertThat(cookie.name).isEqualTo("a")
     assertThat(cookie.value).isEqualTo("b")
     assertThat(cookie.expiresAt).isEqualTo(MAX_DATE)
@@ -459,32 +466,35 @@ class CookieTest {
   }
 
   @Test fun builderClampsMaxDate() {
-    val cookie = Cookie.Builder()
-      .name("a")
-      .value("b")
-      .hostOnlyDomain("example.com")
-      .expiresAt(Long.MAX_VALUE)
-      .build()
+    val cookie =
+      Cookie.Builder()
+        .name("a")
+        .value("b")
+        .hostOnlyDomain("example.com")
+        .expiresAt(Long.MAX_VALUE)
+        .build()
     assertThat(cookie.toString()).isEqualTo("a=b; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/")
   }
 
   @Test fun builderExpiresAt() {
-    val cookie = Cookie.Builder()
-      .name("a")
-      .value("b")
-      .hostOnlyDomain("example.com")
-      .expiresAt(date("1970-01-01T00:00:01.000+0000").time)
-      .build()
+    val cookie =
+      Cookie.Builder()
+        .name("a")
+        .value("b")
+        .hostOnlyDomain("example.com")
+        .expiresAt(date("1970-01-01T00:00:01.000+0000").time)
+        .build()
     assertThat(cookie.toString()).isEqualTo("a=b; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/")
   }
 
   @Test fun builderClampsMinDate() {
-    val cookie = Cookie.Builder()
-      .name("a")
-      .value("b")
-      .hostOnlyDomain("example.com")
-      .expiresAt(date("1970-01-01T00:00:00.000+0000").time)
-      .build()
+    val cookie =
+      Cookie.Builder()
+        .name("a")
+        .value("b")
+        .hostOnlyDomain("example.com")
+        .expiresAt(date("1970-01-01T00:00:00.000+0000").time)
+        .build()
     assertThat(cookie.toString()).isEqualTo("a=b; max-age=0; path=/")
   }
 
@@ -495,22 +505,24 @@ class CookieTest {
   }
 
   @Test fun builderDomain() {
-    val cookie = Cookie.Builder()
-      .name("a")
-      .value("b")
-      .hostOnlyDomain("squareup.com")
-      .build()
+    val cookie =
+      Cookie.Builder()
+        .name("a")
+        .value("b")
+        .hostOnlyDomain("squareup.com")
+        .build()
     assertThat(cookie.domain).isEqualTo("squareup.com")
     assertThat(cookie.hostOnly).isTrue()
   }
 
   @Test fun builderPath() {
-    val cookie = Cookie.Builder()
-      .name("a")
-      .value("b")
-      .hostOnlyDomain("example.com")
-      .path("/foo")
-      .build()
+    val cookie =
+      Cookie.Builder()
+        .name("a")
+        .value("b")
+        .hostOnlyDomain("example.com")
+        .path("/foo")
+        .build()
     assertThat(cookie.path).isEqualTo("/foo")
   }
 
@@ -521,31 +533,34 @@ class CookieTest {
   }
 
   @Test fun builderSecure() {
-    val cookie = Cookie.Builder()
-      .name("a")
-      .value("b")
-      .hostOnlyDomain("example.com")
-      .secure()
-      .build()
+    val cookie =
+      Cookie.Builder()
+        .name("a")
+        .value("b")
+        .hostOnlyDomain("example.com")
+        .secure()
+        .build()
     assertThat(cookie.secure).isTrue()
   }
 
   @Test fun builderHttpOnly() {
-    val cookie = Cookie.Builder()
-      .name("a")
-      .value("b")
-      .hostOnlyDomain("example.com")
-      .httpOnly()
-      .build()
+    val cookie =
+      Cookie.Builder()
+        .name("a")
+        .value("b")
+        .hostOnlyDomain("example.com")
+        .httpOnly()
+        .build()
     assertThat(cookie.httpOnly).isTrue()
   }
 
   @Test fun builderIpv6() {
-    val cookie = Cookie.Builder()
-      .name("a")
-      .value("b")
-      .domain("0:0:0:0:0:0:0:1")
-      .build()
+    val cookie =
+      Cookie.Builder()
+        .name("a")
+        .value("b")
+        .domain("0:0:0:0:0:0:0:1")
+        .build()
     assertThat(cookie.domain).isEqualTo("::1")
   }
 
@@ -567,10 +582,11 @@ class CookieTest {
   }
 
   @Test fun builderSameSiteTrimmed() {
-    var cookieBuilder = Cookie.Builder()
-      .name("a")
-      .value("b")
-      .domain("example.com")
+    var cookieBuilder =
+      Cookie.Builder()
+        .name("a")
+        .value("b")
+        .domain("example.com")
 
     assertThrows<IllegalArgumentException> {
       cookieBuilder.sameSite(" a").build()
@@ -588,44 +604,47 @@ class CookieTest {
   @ParameterizedTest(name = "{displayName}({arguments})")
   @ValueSource(strings = ["Lax", "Strict", "UnrecognizedButValid"])
   fun builderSameSite(sameSite: String) {
-    val cookie = Cookie.Builder()
-      .name("a")
-      .value("b")
-      .domain("example.com")
-      .sameSite(sameSite)
-      .build()
+    val cookie =
+      Cookie.Builder()
+        .name("a")
+        .value("b")
+        .domain("example.com")
+        .sameSite(sameSite)
+        .build()
     assertThat(cookie.sameSite).isEqualTo(sameSite)
   }
 
-    /** Note that we permit building a cookie that doesn’t follow the rules. */
-    @Test fun builderSameSiteNoneDoesNotRequireSecure() {
-    val cookieBuilder = Cookie.Builder()
-      .name("a")
-      .value("b")
-      .domain("example.com")
-      .sameSite("None")
+  /** Note that we permit building a cookie that doesn’t follow the rules. */
+  @Test fun builderSameSiteNoneDoesNotRequireSecure() {
+    val cookieBuilder =
+      Cookie.Builder()
+        .name("a")
+        .value("b")
+        .domain("example.com")
+        .sameSite("None")
 
     val cookie = cookieBuilder.build()
     assertThat(cookie.sameSite).isEqualTo("None")
   }
 
   @Test fun equalsAndHashCode() {
-    val cookieStrings = Arrays.asList(
-      "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly",
-      "a= ; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly",
-      "a=b;          Domain=example.com; Max-Age=5; Secure; HttpOnly",
-      "a=b; Path=/c;                     Max-Age=5; Secure; HttpOnly",
-      "a=b; Path=/c; Domain=example.com;            Secure; HttpOnly",
-      "a=b; Path=/c; Domain=example.com; Max-Age=5;         HttpOnly",
-      "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure;         ",
-      "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly; SameSite=Lax",
-      "a= ; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly; SameSite=Lax",
-      "a=b;          Domain=example.com; Max-Age=5; Secure; HttpOnly; SameSite=Lax",
-      "a=b; Path=/c;                     Max-Age=5; Secure; HttpOnly; SameSite=Lax",
-      "a=b; Path=/c; Domain=example.com;            Secure; HttpOnly; SameSite=Lax",
-      "a=b; Path=/c; Domain=example.com; Max-Age=5;         HttpOnly; SameSite=Lax",
-      "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure;         ; SameSite=Lax",
-    )
+    val cookieStrings =
+      Arrays.asList(
+        "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly",
+        "a= ; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly",
+        "a=b;          Domain=example.com; Max-Age=5; Secure; HttpOnly",
+        "a=b; Path=/c;                     Max-Age=5; Secure; HttpOnly",
+        "a=b; Path=/c; Domain=example.com;            Secure; HttpOnly",
+        "a=b; Path=/c; Domain=example.com; Max-Age=5;         HttpOnly",
+        "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure;         ",
+        "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly; SameSite=Lax",
+        "a= ; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly; SameSite=Lax",
+        "a=b;          Domain=example.com; Max-Age=5; Secure; HttpOnly; SameSite=Lax",
+        "a=b; Path=/c;                     Max-Age=5; Secure; HttpOnly; SameSite=Lax",
+        "a=b; Path=/c; Domain=example.com;            Secure; HttpOnly; SameSite=Lax",
+        "a=b; Path=/c; Domain=example.com; Max-Age=5;         HttpOnly; SameSite=Lax",
+        "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure;         ; SameSite=Lax",
+      )
     for (stringA in cookieStrings) {
       val cookieA = parseCookie(0, url, stringA!!)
       for (stringB in cookieStrings) {
@@ -642,7 +661,8 @@ class CookieTest {
     }
   }
 
-  @Throws(ParseException::class) private fun date(s: String): Date {
+  @Throws(ParseException::class)
+  private fun date(s: String): Date {
     val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
     format.timeZone = UTC
     return format.parse(s)

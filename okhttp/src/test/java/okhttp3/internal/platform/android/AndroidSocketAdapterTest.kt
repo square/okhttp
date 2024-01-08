@@ -36,7 +36,8 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
 class AndroidSocketAdapterTest {
-  @RegisterExtension @JvmField val platform = PlatformRule()
+  @RegisterExtension @JvmField
+  val platform = PlatformRule()
 
   @BeforeEach
   fun setUp() {
@@ -90,7 +91,7 @@ class AndroidSocketAdapterTest {
     assertFalse(adapter.matchesSocketFactory(socketFactory))
 
     val sslSocket =
-        object : DelegatingSSLSocket(context.socketFactory.createSocket() as SSLSocket) {}
+      object : DelegatingSSLSocket(context.socketFactory.createSocket() as SSLSocket) {}
     assertFalse(adapter.matchesSocket(sslSocket))
 
     adapter.configureTlsExtensions(sslSocket, null, listOf(HTTP_2, HTTP_1_1))
@@ -102,9 +103,9 @@ class AndroidSocketAdapterTest {
     @JvmStatic
     fun data(): Collection<SocketAdapter> {
       return listOfNotNull(
-          DeferredSocketAdapter(ConscryptSocketAdapter.factory),
-          DeferredSocketAdapter(AndroidSocketAdapter.factory("org.conscrypt")),
-          StandardAndroidSocketAdapter.buildIfSupported("org.conscrypt")
+        DeferredSocketAdapter(ConscryptSocketAdapter.factory),
+        DeferredSocketAdapter(AndroidSocketAdapter.factory("org.conscrypt")),
+        StandardAndroidSocketAdapter.buildIfSupported("org.conscrypt"),
       )
     }
   }

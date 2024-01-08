@@ -54,10 +54,10 @@ import org.junit.jupiter.api.Test
  * ensures the symbols remain available and with the expected parameter and return types.
  */
 @Suppress(
-    "DEPRECATION_ERROR",
-    "UNUSED_VALUE",
-    "UNUSED_VARIABLE",
-    "VARIABLE_WITH_REDUNDANT_INITIALIZER"
+  "DEPRECATION_ERROR",
+  "UNUSED_VALUE",
+  "UNUSED_VARIABLE",
+  "VARIABLE_WITH_REDUNDANT_INITIALIZER",
 )
 class KotlinDeprecationErrorTest {
   private val factory = TestValueFactory()
@@ -151,7 +151,7 @@ class KotlinDeprecationErrorTest {
   @Test @Disabled
   fun handshake() {
     val handshake: Handshake =
-        Handshake.get((localhost().sslSocketFactory().createSocket() as SSLSocket).session)
+      Handshake.get((localhost().sslSocketFactory().createSocket() as SSLSocket).session)
     val tlsVersion: TlsVersion = handshake.tlsVersion()
     val cipherSuite: CipherSuite = handshake.cipherSuite()
     val peerCertificates: List<Certificate> = handshake.peerCertificates()

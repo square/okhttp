@@ -29,7 +29,7 @@ open class Jdk9Platform : Platform() {
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
-    protocols: List<@JvmSuppressWildcards Protocol>
+    protocols: List<@JvmSuppressWildcards Protocol>,
   ) {
     val sslParameters = sslSocket.sslParameters
 
@@ -61,7 +61,8 @@ open class Jdk9Platform : Platform() {
     // sun.security.ssl.SSLSocketFactoryImpl accessible:  module java.base does not export
     // sun.security.ssl to unnamed module @xxx
     throw UnsupportedOperationException(
-        "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on JDK 8 (>= 252) or JDK 9+")
+      "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on JDK 8 (>= 252) or JDK 9+",
+    )
   }
 
   override fun newSSLContext(): SSLContext {
@@ -86,17 +87,18 @@ open class Jdk9Platform : Platform() {
     val majorVersion = System.getProperty("java.specification.version")?.toIntOrNull()
 
     init {
-      isAvailable = if (majorVersion != null) {
-        majorVersion >= 9
-      } else {
-        try {
-          // also present on JDK8 after build 252.
-          SSLSocket::class.java.getMethod("getApplicationProtocol")
-          true
-        } catch (nsme: NoSuchMethodException) {
-          false
+      isAvailable =
+        if (majorVersion != null) {
+          majorVersion >= 9
+        } else {
+          try {
+            // also present on JDK8 after build 252.
+            SSLSocket::class.java.getMethod("getApplicationProtocol")
+            true
+          } catch (nsme: NoSuchMethodException) {
+            false
+          }
         }
-      }
     }
 
     fun buildIfSupported(): Jdk9Platform? = if (isAvailable) Jdk9Platform() else null

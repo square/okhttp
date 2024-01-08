@@ -53,14 +53,16 @@ class TestValueFactory : Closeable {
   var proxy: Proxy = Proxy.NO_PROXY
   var proxySelector: ProxySelector = RecordingProxySelector()
   var proxyAuthenticator: Authenticator = RecordingOkAuthenticator("password", null)
-  var connectionSpecs: List<ConnectionSpec> = listOf(
-    ConnectionSpec.MODERN_TLS,
-    ConnectionSpec.COMPATIBLE_TLS,
-    ConnectionSpec.CLEARTEXT,
-  )
-  var protocols: List<Protocol> = listOf(
-    Protocol.HTTP_1_1,
-  )
+  var connectionSpecs: List<ConnectionSpec> =
+    listOf(
+      ConnectionSpec.MODERN_TLS,
+      ConnectionSpec.COMPATIBLE_TLS,
+      ConnectionSpec.CLEARTEXT,
+    )
+  var protocols: List<Protocol> =
+    listOf(
+      Protocol.HTTP_1_1,
+    )
   var handshakeCertificates: HandshakeCertificates = localhost()
   var sslSocketFactory: SSLSocketFactory? = handshakeCertificates.sslSocketFactory()
   var hostnameVerifier: HostnameVerifier? = HttpsURLConnection.getDefaultHostnameVerifier()
@@ -73,13 +75,14 @@ class TestValueFactory : Closeable {
     idleAtNanos: Long = Long.MAX_VALUE,
     taskRunner: TaskRunner = this.taskRunner,
   ): RealConnection {
-    val result = RealConnection.newTestConnection(
-      taskRunner = taskRunner,
-      connectionPool = pool,
-      route = route,
-      socket = Socket(),
-      idleAtNs = idleAtNanos
-    )
+    val result =
+      RealConnection.newTestConnection(
+        taskRunner = taskRunner,
+        connectionPool = pool,
+        route = route,
+        socket = Socket(),
+        idleAtNs = idleAtNanos,
+      )
     synchronized(result) { pool.put(result) }
     return result
   }
@@ -93,7 +96,7 @@ class TestValueFactory : Closeable {
       maxIdleConnections = maxIdleConnections,
       keepAliveDuration = 100L,
       timeUnit = TimeUnit.NANOSECONDS,
-      connectionListener = ConnectionListener.NONE
+      connectionListener = ConnectionListener.NONE,
     )
   }
 
@@ -119,7 +122,6 @@ class TestValueFactory : Closeable {
       proxySelector = proxySelector,
     )
   }
-
 
   fun newHttpsAddress(
     uriHost: String = this.uriHost,
@@ -148,18 +150,16 @@ class TestValueFactory : Closeable {
   fun newRoute(
     address: Address = newAddress(),
     proxy: Proxy = this.proxy,
-    socketAddress: InetSocketAddress = InetSocketAddress.createUnresolved(uriHost, uriPort)
+    socketAddress: InetSocketAddress = InetSocketAddress.createUnresolved(uriHost, uriPort),
   ): Route {
     return Route(
       address = address,
       proxy = proxy,
-      socketAddress = socketAddress
+      socketAddress = socketAddress,
     )
   }
 
-  fun newChain(
-    call: RealCall,
-  ): RealInterceptorChain {
+  fun newChain(call: RealCall): RealInterceptorChain {
     return RealInterceptorChain(
       call = call,
       interceptors = listOf(),
@@ -168,7 +168,7 @@ class TestValueFactory : Closeable {
       request = call.request(),
       connectTimeoutMillis = 10_000,
       readTimeoutMillis = 10_000,
-      writeTimeoutMillis = 10_000
+      writeTimeoutMillis = 10_000,
     )
   }
 

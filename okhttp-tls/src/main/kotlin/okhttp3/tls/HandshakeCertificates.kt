@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+
 package okhttp3.tls
 
+import java.security.KeyStoreException
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.util.Collections
@@ -31,7 +33,6 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.toImmutableList
 import okhttp3.tls.internal.TlsUtil.newKeyManager
 import okhttp3.tls.internal.TlsUtil.newTrustManager
-import java.security.KeyStoreException
 
 /**
  * Certificates to identify which peers to trust and also to earn the trust of those peers in kind.
@@ -72,21 +73,22 @@ import java.security.KeyStoreException
  */
 class HandshakeCertificates private constructor(
   @get:JvmName("keyManager") val keyManager: X509KeyManager,
-  @get:JvmName("trustManager") val trustManager: X509TrustManager
+  @get:JvmName("trustManager") val trustManager: X509TrustManager,
 ) {
-
   @JvmName("-deprecated_keyManager")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "keyManager"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "keyManager"),
+    level = DeprecationLevel.ERROR,
+  )
   fun keyManager(): X509KeyManager = keyManager
 
   @JvmName("-deprecated_trustManager")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "trustManager"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "trustManager"),
+    level = DeprecationLevel.ERROR,
+  )
   fun trustManager(): X509TrustManager = trustManager
 
   fun sslSocketFactory(): SSLSocketFactory = sslContext().socketFactory
@@ -114,7 +116,7 @@ class HandshakeCertificates private constructor(
      */
     fun heldCertificate(
       heldCertificate: HeldCertificate,
-      vararg intermediates: X509Certificate
+      vararg intermediates: X509Certificate,
     ) = apply {
       this.heldCertificate = heldCertificate
       this.intermediates = arrayOf(*intermediates) // Defensive copy.
@@ -124,9 +126,10 @@ class HandshakeCertificates private constructor(
      * Add a trusted root certificate to use when authenticating a peer. Peers must provide
      * a chain of certificates whose root is one of these.
      */
-    fun addTrustedCertificate(certificate: X509Certificate) = apply {
-      this.trustedCertificates += certificate
-    }
+    fun addTrustedCertificate(certificate: X509Certificate) =
+      apply {
+        this.trustedCertificates += certificate
+      }
 
     /**
      * Add all of the host platform's trusted root certificates. This set varies by platform
@@ -140,10 +143,11 @@ class HandshakeCertificates private constructor(
      * certificates. Applications that connect to a known set of servers may be able to mitigate
      * this problem with [certificate pinning][CertificatePinner].
      */
-    fun addPlatformTrustedCertificates() = apply {
-      val platformTrustManager = Platform.get().platformTrustManager()
-      Collections.addAll(trustedCertificates, *platformTrustManager.acceptedIssuers)
-    }
+    fun addPlatformTrustedCertificates() =
+      apply {
+        val platformTrustManager = Platform.get().platformTrustManager()
+        Collections.addAll(trustedCertificates, *platformTrustManager.acceptedIssuers)
+      }
 
     /**
      * Configures this to not authenticate the HTTPS server on to [hostname]. This makes the user
@@ -168,9 +172,10 @@ class HandshakeCertificates private constructor(
      *
      * @param hostname the exact hostname from the URL for insecure connections.
      */
-    fun addInsecureHost(hostname: String) = apply {
-      insecureHosts += hostname
-    }
+    fun addInsecureHost(hostname: String) =
+      apply {
+        insecureHosts += hostname
+      }
 
     fun build(): HandshakeCertificates {
       val immutableInsecureHosts = insecureHosts.toImmutableList()

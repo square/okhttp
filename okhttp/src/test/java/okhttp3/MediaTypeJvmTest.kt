@@ -22,7 +22,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.internal.platform.Platform.Companion.isAndroid
 import org.junit.jupiter.api.Test
 
-class MediaTypeJvmTest: MediaTypeGetTest() {
+class MediaTypeJvmTest : MediaTypeGetTest() {
   override fun MediaType.charsetName(): String? = this.charset()?.name()
 
   @Test fun testCharsetNameIsDoubleQuotedAndSingleQuotedAndroid() {
@@ -38,17 +38,21 @@ class MediaTypeJvmTest: MediaTypeGetTest() {
   @Test fun testDefaultCharset() {
     val noCharset = parse("text/plain")
     assertEquals(
-      "UTF-8", noCharset.charset(Charsets.UTF_8)!!.name()
+      "UTF-8",
+      noCharset.charset(Charsets.UTF_8)!!.name(),
     )
     assertEquals(
-      "US-ASCII", noCharset.charset(Charsets.US_ASCII)!!.name()
+      "US-ASCII",
+      noCharset.charset(Charsets.US_ASCII)!!.name(),
     )
     val charset = parse("text/plain; charset=iso-8859-1")
     assertEquals(
-      "ISO-8859-1", charset.charset(Charsets.UTF_8)!!.name()
+      "ISO-8859-1",
+      charset.charset(Charsets.UTF_8)!!.name(),
     )
     assertEquals(
-      "ISO-8859-1", charset.charset(Charsets.US_ASCII)!!.name()
+      "ISO-8859-1",
+      charset.charset(Charsets.US_ASCII)!!.name(),
     )
   }
 
@@ -68,7 +72,10 @@ class MediaTypeJvmTest: MediaTypeGetTest() {
     }
   }
 
-  private fun <T> withLocale(locale: Locale, block: () -> T): T {
+  private fun <T> withLocale(
+    locale: Locale,
+    block: () -> T,
+  ): T {
     val previous = Locale.getDefault()
     try {
       Locale.setDefault(locale)

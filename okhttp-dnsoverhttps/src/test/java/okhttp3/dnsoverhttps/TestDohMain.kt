@@ -24,7 +24,10 @@ import okhttp3.OkHttpClient
 import okhttp3.dnsoverhttps.DohProviders.providers
 import org.conscrypt.OpenSSLProvider
 
-private fun runBatch(dnsProviders: List<DnsOverHttps>, names: List<String>) {
+private fun runBatch(
+  dnsProviders: List<DnsOverHttps>,
+  names: List<String>,
+) {
   var time = System.currentTimeMillis()
   for (dns in dnsProviders) {
     println("Testing ${dns.url}")
@@ -54,46 +57,52 @@ fun main() {
   var names = listOf("google.com", "graph.facebook.com", "sdflkhfsdlkjdf.ee")
   try {
     println("uncached\n********\n")
-    var dnsProviders = providers(
-      client = bootstrapClient,
-      http2Only = false,
-      workingOnly = false,
-      getOnly = false,
-    )
+    var dnsProviders =
+      providers(
+        client = bootstrapClient,
+        http2Only = false,
+        workingOnly = false,
+        getOnly = false,
+      )
     runBatch(dnsProviders, names)
-    val dnsCache = Cache(
-      directory = File("./target/TestDohMain.cache.${System.currentTimeMillis()}"),
-      maxSize = 10L * 1024 * 1024
-    )
+    val dnsCache =
+      Cache(
+        directory = File("./target/TestDohMain.cache.${System.currentTimeMillis()}"),
+        maxSize = 10L * 1024 * 1024,
+      )
     println("Bad targets\n***********\n")
     val url = "https://dns.cloudflare.com/.not-so-well-known/run-dmc-query".toHttpUrl()
-    val badProviders = listOf(
-      DnsOverHttps.Builder()
-        .client(bootstrapClient)
-        .url(url)
-        .post(true)
-        .build()
-    )
+    val badProviders =
+      listOf(
+        DnsOverHttps.Builder()
+          .client(bootstrapClient)
+          .url(url)
+          .post(true)
+          .build(),
+      )
     runBatch(badProviders, names)
     println("cached first run\n****************\n")
     names = listOf("google.com", "graph.facebook.com")
-    bootstrapClient = bootstrapClient.newBuilder()
-      .cache(dnsCache)
-      .build()
-    dnsProviders = providers(
-      client = bootstrapClient,
-      http2Only = true,
-      workingOnly = true,
-      getOnly = true,
-    )
+    bootstrapClient =
+      bootstrapClient.newBuilder()
+        .cache(dnsCache)
+        .build()
+    dnsProviders =
+      providers(
+        client = bootstrapClient,
+        http2Only = true,
+        workingOnly = true,
+        getOnly = true,
+      )
     runBatch(dnsProviders, names)
     println("cached second run\n*****************\n")
-    dnsProviders = providers(
-      client = bootstrapClient,
-      http2Only = true,
-      workingOnly = true,
-      getOnly = true,
-    )
+    dnsProviders =
+      providers(
+        client = bootstrapClient,
+        http2Only = true,
+        workingOnly = true,
+        getOnly = true,
+      )
     runBatch(dnsProviders, names)
   } finally {
     bootstrapClient.connectionPool.evictAll()

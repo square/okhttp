@@ -20,6 +20,7 @@ import assertk.assertions.isEqualTo
 import java.io.File
 import java.io.RandomAccessFile
 import java.util.Random
+import kotlin.test.assertFailsWith
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
@@ -27,8 +28,6 @@ import okio.buffer
 import okio.sink
 import okio.source
 import org.junit.jupiter.api.AfterEach
-import assertk.fail
-import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -53,9 +52,10 @@ class FileOperatorTest {
   @Test
   fun read() {
     write("Hello, World".encodeUtf8())
-    val operator = FileOperator(
-      randomAccessFile!!.getChannel()
-    )
+    val operator =
+      FileOperator(
+        randomAccessFile!!.getChannel(),
+      )
     val buffer = Buffer()
     operator.read(0, buffer, 5)
     assertThat(buffer.readUtf8()).isEqualTo("Hello")
@@ -65,9 +65,10 @@ class FileOperatorTest {
 
   @Test
   fun write() {
-    val operator = FileOperator(
-      randomAccessFile!!.getChannel()
-    )
+    val operator =
+      FileOperator(
+        randomAccessFile!!.getChannel(),
+      )
     val buffer1 = Buffer().writeUtf8("Hello, World")
     operator.write(0, buffer1, 5)
     assertThat(buffer1.readUtf8()).isEqualTo(", World")
@@ -79,9 +80,10 @@ class FileOperatorTest {
 
   @Test
   fun readAndWrite() {
-    val operator = FileOperator(
-      randomAccessFile!!.getChannel()
-    )
+    val operator =
+      FileOperator(
+        randomAccessFile!!.getChannel(),
+      )
     write("woman god creates dinosaurs destroys. ".encodeUtf8())
     val buffer = Buffer()
     operator.read(6, buffer, 21)
@@ -103,24 +105,27 @@ class FileOperatorTest {
     operator.read(4, buffer, 19)
     operator.write(80, buffer, buffer.size)
     assertThat(snapshot()).isEqualTo(
-      (""
-        + "god creates dinosaurs. "
-        + "god destroys dinosaurs. "
-        + "god creates man. "
-        + "man destroys god. "
-        + "man creates dinosaurs. "
-        ).encodeUtf8()
+      (
+        "" +
+          "god creates dinosaurs. " +
+          "god destroys dinosaurs. " +
+          "god creates man. " +
+          "man destroys god. " +
+          "man creates dinosaurs. "
+      ).encodeUtf8(),
     )
   }
 
   @Test
   fun multipleOperatorsShareOneFile() {
-    val operatorA = FileOperator(
-      randomAccessFile!!.getChannel()
-    )
-    val operatorB = FileOperator(
-      randomAccessFile!!.getChannel()
-    )
+    val operatorA =
+      FileOperator(
+        randomAccessFile!!.getChannel(),
+      )
+    val operatorB =
+      FileOperator(
+        randomAccessFile!!.getChannel(),
+      )
     val bufferA = Buffer()
     val bufferB = Buffer()
     bufferA.writeUtf8("Dodgson!\n")
@@ -141,9 +146,10 @@ class FileOperatorTest {
   fun largeRead() {
     val data = randomByteString(1000000)
     write(data)
-    val operator = FileOperator(
-      randomAccessFile!!.getChannel()
-    )
+    val operator =
+      FileOperator(
+        randomAccessFile!!.getChannel(),
+      )
     val buffer = Buffer()
     operator.read(0, buffer, data.size.toLong())
     assertThat(buffer.readByteString()).isEqualTo(data)
@@ -152,9 +158,10 @@ class FileOperatorTest {
   @Test
   fun largeWrite() {
     val data = randomByteString(1000000)
-    val operator = FileOperator(
-      randomAccessFile!!.getChannel()
-    )
+    val operator =
+      FileOperator(
+        randomAccessFile!!.getChannel(),
+      )
     val buffer = Buffer().write(data)
     operator.write(0, buffer, data.size.toLong())
     assertThat(snapshot()).isEqualTo(data)
@@ -162,9 +169,10 @@ class FileOperatorTest {
 
   @Test
   fun readBounds() {
-    val operator = FileOperator(
-      randomAccessFile!!.getChannel()
-    )
+    val operator =
+      FileOperator(
+        randomAccessFile!!.getChannel(),
+      )
     val buffer = Buffer()
     assertFailsWith<IndexOutOfBoundsException> {
       operator.read(0, buffer, -1L)
@@ -173,9 +181,10 @@ class FileOperatorTest {
 
   @Test
   fun writeBounds() {
-    val operator = FileOperator(
-      randomAccessFile!!.getChannel()
-    )
+    val operator =
+      FileOperator(
+        randomAccessFile!!.getChannel(),
+      )
     val buffer = Buffer().writeUtf8("abc")
     assertFailsWith<IndexOutOfBoundsException> {
       operator.write(0, buffer, -1L)

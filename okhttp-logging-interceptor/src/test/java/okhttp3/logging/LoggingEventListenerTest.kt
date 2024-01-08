@@ -50,9 +50,10 @@ class LoggingEventListenerTest {
   val clientTestRule = OkHttpClientTestRule()
   private lateinit var server: MockWebServer
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
-  private val logRecorder = HttpLoggingInterceptorTest.LogRecorder(
-    prefix = Regex("""\[\d+ ms] """)
-  )
+  private val logRecorder =
+    HttpLoggingInterceptorTest.LogRecorder(
+      prefix = Regex("""\[\d+ ms] """),
+    )
   private val loggingEventListenerFactory = LoggingEventListener.Factory(logRecorder)
   private lateinit var client: OkHttpClient
   private lateinit var url: HttpUrl
@@ -60,14 +61,15 @@ class LoggingEventListenerTest {
   @BeforeEach
   fun setUp(server: MockWebServer) {
     this.server = server
-    client = clientTestRule.newClientBuilder()
-      .eventListenerFactory(loggingEventListenerFactory)
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(),
-        handshakeCertificates.trustManager
-      )
-      .retryOnConnectionFailure(false)
-      .build()
+    client =
+      clientTestRule.newClientBuilder()
+        .eventListenerFactory(loggingEventListenerFactory)
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        )
+        .retryOnConnectionFailure(false)
+        .build()
     url = server.url("/")
   }
 
@@ -78,7 +80,7 @@ class LoggingEventListenerTest {
       MockResponse.Builder()
         .body("Hello!")
         .setHeader("Content-Type", PLAIN)
-        .build()
+        .build(),
     )
     val response = client.newCall(request().build()).execute()
     assertThat(response.body).isNotNull()
@@ -91,7 +93,11 @@ class LoggingEventListenerTest {
       .assertLogMatch(Regex("""dnsEnd: \[.+]"""))
       .assertLogMatch(Regex("""connectStart: ${url.host}/.+ DIRECT"""))
       .assertLogMatch(Regex("""connectEnd: http/1.1"""))
-      .assertLogMatch(Regex("""connectionAcquired: Connection\{${url.host}:\d+, proxy=DIRECT hostAddress=${url.host}/.+ cipherSuite=none protocol=http/1\.1\}"""))
+      .assertLogMatch(
+        Regex(
+          """connectionAcquired: Connection\{${url.host}:\d+, proxy=DIRECT hostAddress=${url.host}/.+ cipherSuite=none protocol=http/1\.1\}""",
+        ),
+      )
       .assertLogMatch(Regex("""requestHeadersStart"""))
       .assertLogMatch(Regex("""requestHeadersEnd"""))
       .assertLogMatch(Regex("""responseHeadersStart"""))
@@ -116,7 +122,11 @@ class LoggingEventListenerTest {
       .assertLogMatch(Regex("""dnsEnd: \[.+]"""))
       .assertLogMatch(Regex("""connectStart: ${url.host}/.+ DIRECT"""))
       .assertLogMatch(Regex("""connectEnd: http/1.1"""))
-      .assertLogMatch(Regex("""connectionAcquired: Connection\{${url.host}:\d+, proxy=DIRECT hostAddress=${url.host}/.+ cipherSuite=none protocol=http/1\.1\}"""))
+      .assertLogMatch(
+        Regex(
+          """connectionAcquired: Connection\{${url.host}:\d+, proxy=DIRECT hostAddress=${url.host}/.+ cipherSuite=none protocol=http/1\.1\}""",
+        ),
+      )
       .assertLogMatch(Regex("""requestHeadersStart"""))
       .assertLogMatch(Regex("""requestHeadersEnd"""))
       .assertLogMatch(Regex("""requestBodyStart"""))
@@ -148,9 +158,15 @@ class LoggingEventListenerTest {
       .assertLogMatch(Regex("""dnsEnd: \[.+]"""))
       .assertLogMatch(Regex("""connectStart: ${url.host}/.+ DIRECT"""))
       .assertLogMatch(Regex("""secureConnectStart"""))
-      .assertLogMatch(Regex("""secureConnectEnd: Handshake\{tlsVersion=TLS_1_[23] cipherSuite=TLS_.* peerCertificates=\[CN=localhost] localCertificates=\[]\}"""))
+      .assertLogMatch(
+        Regex(
+          """secureConnectEnd: Handshake\{tlsVersion=TLS_1_[23] cipherSuite=TLS_.* peerCertificates=\[CN=localhost] localCertificates=\[]\}""",
+        ),
+      )
       .assertLogMatch(Regex("""connectEnd: h2"""))
-      .assertLogMatch(Regex("""connectionAcquired: Connection\{${url.host}:\d+, proxy=DIRECT hostAddress=${url.host}/.+ cipherSuite=.+ protocol=h2\}"""))
+      .assertLogMatch(
+        Regex("""connectionAcquired: Connection\{${url.host}:\d+, proxy=DIRECT hostAddress=${url.host}/.+ cipherSuite=.+ protocol=h2\}"""),
+      )
       .assertLogMatch(Regex("""requestHeadersStart"""))
       .assertLogMatch(Regex("""requestHeadersEnd"""))
       .assertLogMatch(Regex("""responseHeadersStart"""))
@@ -164,10 +180,11 @@ class LoggingEventListenerTest {
 
   @Test
   fun dnsFail() {
-    client = OkHttpClient.Builder()
-      .dns { _ -> throw UnknownHostException("reason") }
-      .eventListenerFactory(loggingEventListenerFactory)
-      .build()
+    client =
+      OkHttpClient.Builder()
+        .dns { _ -> throw UnknownHostException("reason") }
+        .eventListenerFactory(loggingEventListenerFactory)
+        .build()
     try {
       client.newCall(request().build()).execute()
       fail<Any>()
@@ -190,7 +207,7 @@ class LoggingEventListenerTest {
     server.enqueue(
       MockResponse.Builder()
         .socketPolicy(FailHandshake)
-        .build()
+        .build(),
     )
     url = server.url("/")
     try {
@@ -206,8 +223,16 @@ class LoggingEventListenerTest {
       .assertLogMatch(Regex("""dnsEnd: \[.+]"""))
       .assertLogMatch(Regex("""connectStart: ${url.host}/.+ DIRECT"""))
       .assertLogMatch(Regex("""secureConnectStart"""))
-      .assertLogMatch(Regex("""connectFailed: null \S+(?:SSLProtocolException|SSLHandshakeException|TlsFatalAlert): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed|unexpected_message\(10\)).*"""))
-      .assertLogMatch(Regex("""callFailed: \S+(?:SSLProtocolException|SSLHandshakeException|TlsFatalAlert): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed|unexpected_message\(10\)).*"""))
+      .assertLogMatch(
+        Regex(
+          """connectFailed: null \S+(?:SSLProtocolException|SSLHandshakeException|TlsFatalAlert): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed|unexpected_message\(10\)).*""",
+        ),
+      )
+      .assertLogMatch(
+        Regex(
+          """callFailed: \S+(?:SSLProtocolException|SSLHandshakeException|TlsFatalAlert): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed|unexpected_message\(10\)).*""",
+        ),
+      )
       .assertNoMoreLogs()
   }
 

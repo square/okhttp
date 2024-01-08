@@ -59,26 +59,28 @@ class RouteFailureTest {
   val ipv4 = InetAddress.getByName("203.0.113.1")
   val ipv6 = InetAddress.getByName("2001:db8:ffff:ffff:ffff:ffff:ffff:1")
 
-  val refusedStream = MockResponse(
-    socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode),
-  )
+  val refusedStream =
+    MockResponse(
+      socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode),
+    )
   val bodyResponse = MockResponse(body = "body")
 
   @BeforeEach
   fun setUp(
     server: MockWebServer,
-    @MockWebServerInstance("server2") server2: MockWebServer
+    @MockWebServerInstance("server2") server2: MockWebServer,
   ) {
     this.server1 = server
     this.server2 = server2
 
     socketFactory = SpecificHostSocketFactory(InetSocketAddress(server.hostName, server.port))
 
-    client = clientTestRule.newClientBuilder()
-      .dns(dns)
-      .socketFactory(socketFactory)
-      .eventListenerFactory(clientTestRule.wrap(listener))
-      .build()
+    client =
+      clientTestRule.newClientBuilder()
+        .dns(dns)
+        .socketFactory(socketFactory)
+        .eventListenerFactory(clientTestRule.wrap(listener))
+        .build()
   }
 
   @Test
@@ -94,12 +96,13 @@ class RouteFailureTest {
     socketFactory[ipv6] = server1.inetSocketAddress
     socketFactory[ipv4] = server2.inetSocketAddress
 
-    client = client.newBuilder()
-      .fastFallback(false)
-      .apply {
-        retryOnConnectionFailure = false
-      }
-      .build()
+    client =
+      client.newBuilder()
+        .fastFallback(false)
+        .apply {
+          retryOnConnectionFailure = false
+        }
+        .build()
 
     executeSynchronously(request)
       .assertFailureMatches("stream was reset: REFUSED_STREAM")
@@ -112,7 +115,7 @@ class RouteFailureTest {
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
-      "ConnectionReleased"
+      "ConnectionReleased",
     )
   }
 
@@ -130,12 +133,13 @@ class RouteFailureTest {
     socketFactory[ipv6] = server1.inetSocketAddress
     socketFactory[ipv4] = server2.inetSocketAddress
 
-    client = client.newBuilder()
-      .fastFallback(false)
-      .apply {
-        retryOnConnectionFailure = true
-      }
-      .build()
+    client =
+      client.newBuilder()
+        .fastFallback(false)
+        .apply {
+          retryOnConnectionFailure = true
+        }
+        .build()
 
     executeSynchronously(request)
       .assertBody("body")
@@ -172,12 +176,13 @@ class RouteFailureTest {
     socketFactory[ipv6] = server1.inetSocketAddress
     socketFactory[ipv4] = server2.inetSocketAddress
 
-    client = client.newBuilder()
-      .fastFallback(true)
-      .apply {
-        retryOnConnectionFailure = false
-      }
-      .build()
+    client =
+      client.newBuilder()
+        .fastFallback(true)
+        .apply {
+          retryOnConnectionFailure = false
+        }
+        .build()
 
     executeSynchronously(request)
       .assertFailureMatches("stream was reset: REFUSED_STREAM")
@@ -190,7 +195,7 @@ class RouteFailureTest {
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
-      "ConnectionReleased"
+      "ConnectionReleased",
     )
   }
 
@@ -208,12 +213,13 @@ class RouteFailureTest {
     socketFactory[ipv6] = server1.inetSocketAddress
     socketFactory[ipv4] = server2.inetSocketAddress
 
-    client = client.newBuilder()
-      .fastFallback(true)
-      .apply {
-        retryOnConnectionFailure = true
-      }
-      .build()
+    client =
+      client.newBuilder()
+        .fastFallback(true)
+        .apply {
+          retryOnConnectionFailure = true
+        }
+        .build()
 
     executeSynchronously(request)
       .assertBody("body")
@@ -233,7 +239,7 @@ class RouteFailureTest {
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
-      "ConnectionReleased"
+      "ConnectionReleased",
     )
   }
 
@@ -249,12 +255,13 @@ class RouteFailureTest {
     dns[server1.hostName] = listOf(ipv6)
     socketFactory[ipv6] = server1.inetSocketAddress
 
-    client = client.newBuilder()
-      .fastFallback(false)
-      .apply {
-        retryOnConnectionFailure = true
-      }
-      .build()
+    client =
+      client.newBuilder()
+        .fastFallback(false)
+        .apply {
+          retryOnConnectionFailure = true
+        }
+        .build()
 
     executeSynchronously(request)
       .assertFailureMatches("stream was reset: REFUSED_STREAM")
@@ -266,7 +273,7 @@ class RouteFailureTest {
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
-      "ConnectionReleased"
+      "ConnectionReleased",
     )
   }
 
@@ -282,12 +289,13 @@ class RouteFailureTest {
     dns[server1.hostName] = listOf(ipv6)
     socketFactory[ipv6] = server1.inetSocketAddress
 
-    client = client.newBuilder()
-      .fastFallback(true)
-      .apply {
-        retryOnConnectionFailure = true
-      }
-      .build()
+    client =
+      client.newBuilder()
+        .fastFallback(true)
+        .apply {
+          retryOnConnectionFailure = true
+        }
+        .build()
 
     executeSynchronously(request)
       .assertFailureMatches("stream was reset: REFUSED_STREAM")
@@ -299,15 +307,13 @@ class RouteFailureTest {
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
-      "ConnectionReleased"
+      "ConnectionReleased",
     )
   }
 
   @ParameterizedTest
   @ValueSource(booleans = [false, true])
-  fun proxyMoveTest(
-    cleanShutdown: Boolean
-  ) {
+  fun proxyMoveTest(cleanShutdown: Boolean) {
     // Define a single Proxy at myproxy:8008 that will artificially move during the test
     val proxySelector = RecordingProxySelector()
     proxySelector.proxies.add(Proxy(Proxy.Type.HTTP, InetSocketAddress("myproxy", 8008)))
@@ -372,20 +378,22 @@ class RouteFailureTest {
 
   private fun enableProtocol(protocol: Protocol) {
     enableTls()
-    client = client.newBuilder()
-      .protocols(listOf(protocol, Protocol.HTTP_1_1))
-      .build()
+    client =
+      client.newBuilder()
+        .protocols(listOf(protocol, Protocol.HTTP_1_1))
+        .build()
     server1.protocols = client.protocols
     server2.protocols = client.protocols
   }
 
   private fun enableTls() {
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .hostnameVerifier(RecordingHostnameVerifier())
-      .build()
+    client =
+      client.newBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+        )
+        .hostnameVerifier(RecordingHostnameVerifier())
+        .build()
     server1.useHttps(handshakeCertificates.sslSocketFactory())
     server2.useHttps(handshakeCertificates.sslSocketFactory())
   }

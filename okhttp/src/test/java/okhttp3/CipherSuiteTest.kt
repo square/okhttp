@@ -119,10 +119,11 @@ class CipherSuiteTest {
     socket.enabledProtocols = arrayOf("TLSv1")
     socket.supportedCipherSuites = arrayOf("SSL_A", "SSL_B", "SSL_C", "SSL_D", "SSL_E")
     socket.enabledCipherSuites = arrayOf("SSL_A", "SSL_B", "SSL_C")
-    val connectionSpec = ConnectionSpec.Builder(true)
-      .tlsVersions(TlsVersion.TLS_1_0)
-      .cipherSuites("TLS_A", "TLS_C", "TLS_E")
-      .build()
+    val connectionSpec =
+      ConnectionSpec.Builder(true)
+        .tlsVersions(TlsVersion.TLS_1_0)
+        .cipherSuites("TLS_A", "TLS_C", "TLS_E")
+        .build()
     applyConnectionSpec(connectionSpec, socket, false)
     assertArrayEquals(arrayOf("TLS_A", "TLS_C"), socket.enabledCipherSuites)
   }
@@ -134,10 +135,11 @@ class CipherSuiteTest {
     socket.supportedCipherSuites =
       arrayOf("TLS_A", "TLS_B", "TLS_C", "TLS_D", "TLS_E")
     socket.enabledCipherSuites = arrayOf("TLS_A", "TLS_B", "TLS_C")
-    val connectionSpec = ConnectionSpec.Builder(true)
-      .tlsVersions(TlsVersion.TLS_1_0)
-      .cipherSuites("SSL_A", "SSL_C", "SSL_E")
-      .build()
+    val connectionSpec =
+      ConnectionSpec.Builder(true)
+        .tlsVersions(TlsVersion.TLS_1_0)
+        .cipherSuites("SSL_A", "SSL_C", "SSL_E")
+        .build()
     applyConnectionSpec(connectionSpec, socket, false)
     assertArrayEquals(arrayOf("SSL_A", "SSL_C"), socket.enabledCipherSuites)
   }
@@ -148,14 +150,15 @@ class CipherSuiteTest {
     socket.enabledProtocols = arrayOf("TLSv1")
     socket.supportedCipherSuites = arrayOf("SSL_A", "SSL_FALLBACK_SCSV")
     socket.enabledCipherSuites = arrayOf("SSL_A")
-    val connectionSpec = ConnectionSpec.Builder(true)
-      .tlsVersions(TlsVersion.TLS_1_0)
-      .cipherSuites("SSL_A")
-      .build()
+    val connectionSpec =
+      ConnectionSpec.Builder(true)
+        .tlsVersions(TlsVersion.TLS_1_0)
+        .cipherSuites("SSL_A")
+        .build()
     applyConnectionSpec(connectionSpec, socket, true)
     assertArrayEquals(
       arrayOf("SSL_A", "SSL_FALLBACK_SCSV"),
-      socket.enabledCipherSuites
+      socket.enabledCipherSuites,
     )
   }
 
@@ -165,14 +168,15 @@ class CipherSuiteTest {
     socket.enabledProtocols = arrayOf("TLSv1")
     socket.supportedCipherSuites = arrayOf("TLS_A", "TLS_FALLBACK_SCSV")
     socket.enabledCipherSuites = arrayOf("TLS_A")
-    val connectionSpec = ConnectionSpec.Builder(true)
-      .tlsVersions(TlsVersion.TLS_1_0)
-      .cipherSuites("TLS_A")
-      .build()
+    val connectionSpec =
+      ConnectionSpec.Builder(true)
+        .tlsVersions(TlsVersion.TLS_1_0)
+        .cipherSuites("TLS_A")
+        .build()
     applyConnectionSpec(connectionSpec, socket, true)
     assertArrayEquals(
       arrayOf("TLS_A", "TLS_FALLBACK_SCSV"),
-      socket.enabledCipherSuites
+      socket.enabledCipherSuites,
     )
   }
 
@@ -182,10 +186,11 @@ class CipherSuiteTest {
     socket.enabledProtocols = arrayOf("TLSv1", "TLSv1.1", "TLSv1.2")
     socket.supportedCipherSuites = arrayOf("TLS_A")
     socket.enabledCipherSuites = arrayOf("TLS_A")
-    val connectionSpec = ConnectionSpec.Builder(true)
-      .tlsVersions(TlsVersion.TLS_1_1, TlsVersion.TLS_1_2, TlsVersion.TLS_1_3)
-      .cipherSuites("TLS_A")
-      .build()
+    val connectionSpec =
+      ConnectionSpec.Builder(true)
+        .tlsVersions(TlsVersion.TLS_1_1, TlsVersion.TLS_1_2, TlsVersion.TLS_1_3)
+        .cipherSuites("TLS_A")
+        .build()
     applyConnectionSpec(connectionSpec, socket, false)
     assertArrayEquals(arrayOf("TLSv1.1", "TLSv1.2"), socket.enabledProtocols)
   }
@@ -194,6 +199,7 @@ class CipherSuiteTest {
     private lateinit var enabledProtocols: Array<String>
     private lateinit var supportedCipherSuites: Array<String>
     private lateinit var enabledCipherSuites: Array<String>
+
     override fun getEnabledProtocols(): Array<String> {
       return enabledProtocols
     }

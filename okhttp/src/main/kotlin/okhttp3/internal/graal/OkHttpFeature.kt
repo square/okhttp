@@ -30,7 +30,7 @@ class OkHttpFeature : Feature {
   override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess?) {
     RuntimeResourceAccess.addResource(
       ClassLoader.getSystemClassLoader().getUnnamedModule(),
-      "okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz"
+      "okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz",
     )
   }
 }

@@ -33,9 +33,11 @@ import okhttp3.internal.platform.Platform
  * pinning.
  */
 abstract class CertificateChainCleaner {
-
   @Throws(SSLPeerUnverifiedException::class)
-  abstract fun clean(chain: List<Certificate>, hostname: String): List<Certificate>
+  abstract fun clean(
+    chain: List<Certificate>,
+    hostname: String,
+  ): List<Certificate>
 
   companion object {
     fun get(trustManager: X509TrustManager): CertificateChainCleaner {
