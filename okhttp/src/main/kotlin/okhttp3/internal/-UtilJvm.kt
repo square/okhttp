@@ -39,11 +39,11 @@ import kotlin.time.Duration
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.defaultPort
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.ResponseBody
-import okhttp3.internal.CommonHttpUrl.commonDefaultPort
 import okhttp3.internal.http2.Header
 import okio.Buffer
 import okio.BufferedSource
@@ -79,7 +79,7 @@ internal fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
     } else {
       host
     }
-  return if (includeDefaultPort || port != commonDefaultPort(scheme)) {
+  return if (includeDefaultPort || port != defaultPort(scheme)) {
     "$host:$port"
   } else {
     host
