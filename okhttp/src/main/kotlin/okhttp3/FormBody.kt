@@ -18,10 +18,10 @@ package okhttp3
 import java.io.IOException
 import java.nio.charset.Charset
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.internal.CommonHttpUrl.FORM_ENCODE_SET
-import okhttp3.internal.CommonHttpUrl.percentDecode
-import okhttp3.internal.JvmHttpUrl.canonicalizeWithCharset
 import okhttp3.internal.toImmutableList
+import okhttp3.internal.url.FORM_ENCODE_SET
+import okhttp3.internal.url.canonicalizeWithCharset
+import okhttp3.internal.url.percentDecode
 import okio.Buffer
 import okio.BufferedSink
 
