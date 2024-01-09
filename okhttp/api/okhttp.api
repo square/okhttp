@@ -677,6 +677,7 @@ public final class okhttp3/HttpUrl {
 	public final fun -deprecated_uri ()Ljava/net/URI;
 	public final fun -deprecated_url ()Ljava/net/URL;
 	public final fun -deprecated_username ()Ljava/lang/String;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public static final fun defaultPort (Ljava/lang/String;)I
 	public final fun encodedFragment ()Ljava/lang/String;
 	public final fun encodedPassword ()Ljava/lang/String;
