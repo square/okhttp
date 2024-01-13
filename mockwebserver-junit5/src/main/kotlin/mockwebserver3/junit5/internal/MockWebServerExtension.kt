@@ -99,7 +99,6 @@ class MockWebServerExtension :
     parameterContext: ParameterContext,
     extensionContext: ExtensionContext,
   ): Boolean {
-    // Not supported on constructors, or static contexts
     return parameterContext.parameter.type === MockWebServer::class.java
   }
 
