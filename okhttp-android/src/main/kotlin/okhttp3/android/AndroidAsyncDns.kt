@@ -47,31 +47,40 @@ class AndroidAsyncDns(
     hostname: String,
     callback: AsyncDns.Callback,
   ) {
-    resolver.query(
-      network,
-      hostname,
-      dnsClass.type,
-      DnsResolver.FLAG_EMPTY,
-      executor,
-      null,
-      object : DnsResolver.Callback<List<InetAddress>> {
-        override fun onAnswer(
-          addresses: List<InetAddress>,
-          rCode: Int,
-        ) {
-          callback.onResponse(hostname, addresses)
-        }
+    try {
+      resolver.query(
+        network,
+        hostname,
+        dnsClass.type,
+        DnsResolver.FLAG_EMPTY,
+        executor,
+        null,
+        object : DnsResolver.Callback<List<InetAddress>> {
+          override fun onAnswer(
+            addresses: List<InetAddress>,
+            rCode: Int,
+          ) {
+            callback.onResponse(hostname, addresses)
+          }
 
-        override fun onError(e: DnsResolver.DnsException) {
-          callback.onFailure(
-            hostname,
-            UnknownHostException(e.message).apply {
-              initCause(e)
-            },
-          )
-        }
-      },
-    )
+          override fun onError(e: DnsResolver.DnsException) {
+            callback.onFailure(
+              hostname,
+              UnknownHostException(e.message).apply {
+                initCause(e)
+              },
+            )
+          }
+        },
+      )
+    } catch (e: Exception) {
+      callback.onFailure(
+        hostname,
+        UnknownHostException(e.message).apply {
+          initCause(e)
+        },
+      )
+    }
   }
 
   companion object {
