@@ -45,12 +45,13 @@ class MockWebServerExtension :
   private val ExtensionContext.resource: ServersForTest
     get() {
       // For Methods (before/after/test) grab the class store
-      val store = if (this.element.getOrNull() is Method) {
-        val parent = parent.get()
-        parent.getStore(namespace)
-      } else {
-        getStore(namespace)
-      }
+      val store =
+        if (this.element.getOrNull() is Method) {
+          val parent = parent.get()
+          parent.getStore(namespace)
+        } else {
+          getStore(namespace)
+        }
 
       return store.serversForTest
     }
