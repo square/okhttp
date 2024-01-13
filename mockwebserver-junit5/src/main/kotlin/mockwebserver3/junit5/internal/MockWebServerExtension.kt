@@ -84,10 +84,11 @@ class MockWebServerExtension :
 
     fun shutdownAll() {
       try {
-        for (server in servers.values) {
+        val toClear = servers.values.toList()
+        servers.clear()
+        for (server in toClear) {
           server.shutdown()
         }
-        servers.clear()
       } catch (e: IOException) {
         logger.log(Level.WARNING, "MockWebServer shutdown failed", e)
       }

@@ -26,10 +26,8 @@ import okhttp3.Request
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 
-@ExtendWith(MockWebServerExtension::class)
 class ExtensionLifecycleTest(private val constructorServer: MockWebServer) {
   @RegisterExtension
   val clientTestRule: OkHttpClientTestRule = OkHttpClientTestRule()

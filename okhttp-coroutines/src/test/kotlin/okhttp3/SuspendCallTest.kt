@@ -35,14 +35,11 @@ import kotlinx.coroutines.withTimeout
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.DisconnectAfterRequest
-import mockwebserver3.junit5.internal.MockWebServerExtension
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
 
-@ExtendWith(MockWebServerExtension::class)
 class SuspendCallTest {
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
