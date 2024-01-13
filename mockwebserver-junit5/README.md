@@ -51,6 +51,21 @@ class MyTest(
 }
 ```
 
+Multiple instances can be obtained by naming additional ones:
+
+```
+class MyTest(
+  private val server: MockWebServer,
+  @MockWebServerInstance("server2") private val server2: MockWebServer,
+  @MockWebServerInstance("server3") private val server3: MockWebServer
+) {
+  @Test
+  fun test() {
+    ...
+  }
+}
+```
+
 Requirements
 ------------
 
