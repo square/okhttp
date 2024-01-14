@@ -3,7 +3,7 @@ plugins {
 }
 
 val test by tasks.getting
-test.onlyIf { property("containerTests").toString().toBoolean() }
+test.onlyIf { System.getenv("CI") == null || property("containerTests").toString().toBoolean() }
 
 dependencies {
   api(projects.okhttp)
@@ -14,4 +14,5 @@ dependencies {
   testImplementation(libs.testcontainers)
   testImplementation(libs.mockserver)
   testImplementation(libs.mockserver.client)
+  testImplementation(libs.testcontainers.junit5)
 }
