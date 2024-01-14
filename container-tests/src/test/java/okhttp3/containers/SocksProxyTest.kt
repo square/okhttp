@@ -20,22 +20,22 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
 
-
 @Testcontainers
 class SocksProxyTest {
-
   @Container
   val mockServer: MockServerContainer = MockServerContainer(MOCKSERVER_IMAGE)
 
   @Container
-  val socks5Proxy = GenericContainer(SOCKS5_PROXY)
-    .withExposedPorts(1080)
+  val socks5Proxy =
+    GenericContainer(SOCKS5_PROXY)
+      .withExposedPorts(1080)
 
   @Test
   fun testExternal() {
-    val client = OkHttpClient.Builder()
-      .proxy(Proxy(SOCKS, InetSocketAddress("localhost", socks5Proxy.firstMappedPort)))
-      .build()
+    val client =
+      OkHttpClient.Builder()
+        .proxy(Proxy(SOCKS, InetSocketAddress("localhost", socks5Proxy.firstMappedPort)))
+        .build()
 
     // TODO replace with a test without external dependencies
     val response = client.newCall(Request(("https://google.com/robots.txt").toHttpUrl())).execute()
@@ -54,9 +54,10 @@ class SocksProxyTest {
         )
         .respond(response().withBody("Peter the person!"))
 
-      val client = OkHttpClient.Builder()
-        .proxy(Proxy(SOCKS, InetSocketAddress("localhost", socks5Proxy.firstMappedPort)))
-        .build()
+      val client =
+        OkHttpClient.Builder()
+          .proxy(Proxy(SOCKS, InetSocketAddress("localhost", socks5Proxy.firstMappedPort)))
+          .build()
 
       val response = client.newCall(Request((mockServer.endpoint + "/person?name=peter").toHttpUrl())).execute()
 
