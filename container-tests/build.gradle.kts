@@ -2,6 +2,9 @@ plugins {
   kotlin("jvm")
 }
 
+val test by tasks.getting
+test.onlyIf { property("containerTests").toString().toBoolean() }
+
 dependencies {
   api(projects.okhttp)
 

@@ -18,7 +18,7 @@ jobs:
     permissions:
       checks: write # for actions/upload-artifact
     runs-on: ubuntu-latest
-#    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'containers')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'containers')
 
     steps:
       - name: Checkout
@@ -35,4 +35,4 @@ jobs:
       - name: Run Container Tests
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: container-tests:test
+          arguments: container-tests:test -PcontainerTests=true
