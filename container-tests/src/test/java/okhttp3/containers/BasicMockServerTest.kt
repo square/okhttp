@@ -5,17 +5,19 @@ import assertk.assertions.contains
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.mockserver.client.MockServerClient
 import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
 import org.testcontainers.containers.MockServerContainer
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
 
+@Testcontainers
 class BasicMockServerTest {
-  @get:Rule
-  var mockServer: MockServerContainer = MockServerContainer(MOCKSERVER_IMAGE)
+  @Container
+  val mockServer: MockServerContainer = MockServerContainer(MOCKSERVER_IMAGE)
 
   @Test
   fun testRequest() {
