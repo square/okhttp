@@ -16,6 +16,7 @@ import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.MockServerContainer
+import org.testcontainers.containers.Network
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
@@ -24,11 +25,19 @@ import org.testcontainers.utility.DockerImageName
 class SocksProxyTest {
   @Container
   val mockServer: MockServerContainer = MockServerContainer(MOCKSERVER_IMAGE)
+    .withNetwork(Network.SHARED)
+    .withLogConsumer {
+      println("mockserver: " + it.utf8StringWithoutLineEnding)
+    }
 
   @Container
   val socks5Proxy =
     GenericContainer(SOCKS5_PROXY)
+      .withNetwork(Network.SHARED)
       .withExposedPorts(1080)
+      .withLogConsumer {
+        println("go-socks5-proxy: " + it.utf8StringWithoutLineEnding)
+      }
 
   @Test
   fun testExternal() {
@@ -44,7 +53,6 @@ class SocksProxyTest {
   }
 
   @Test
-  @Disabled("Not working between two docker containers")
   fun testLocal() {
     MockServerClient(mockServer.host, mockServer.serverPort).use { mockServerClient ->
       mockServerClient
