@@ -15,12 +15,14 @@
  */
 package okhttp3.compare
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.matches
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.testing.PlatformRule
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -30,14 +32,16 @@ import org.junit.jupiter.api.extension.RegisterExtension
  * https://square.github.io/okhttp/
  */
 class OkHttpClientTest {
-  @JvmField @RegisterExtension val platform = PlatformRule()
+  @JvmField @RegisterExtension
+  val platform = PlatformRule()
 
   @Test fun get(server: MockWebServer) {
     server.enqueue(MockResponse(body = "hello, OkHttp"))
 
     val client = OkHttpClient()
 
-    val request = Request.Builder()
+    val request =
+      Request.Builder()
         .url(server.url("/"))
         .header("Accept", "text/plain")
         .build()
@@ -46,9 +50,9 @@ class OkHttpClientTest {
     assertThat(response.body.string()).isEqualTo("hello, OkHttp")
 
     val recorded = server.takeRequest()
-      assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
-      assertThat(recorded.headers["Accept-Encoding"]).isEqualTo("gzip")
-      assertThat(recorded.headers["Connection"]).isEqualTo("Keep-Alive")
-      assertThat(recorded.headers["User-Agent"]).matches("okhttp/.*")
+    assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
+    assertThat(recorded.headers["Accept-Encoding"]).isEqualTo("gzip")
+    assertThat(recorded.headers["Connection"]).isEqualTo("Keep-Alive")
+    assertThat(recorded.headers["User-Agent"]!!).matches(Regex("okhttp/.*"))
   }
 }

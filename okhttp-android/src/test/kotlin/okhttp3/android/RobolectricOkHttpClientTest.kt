@@ -19,38 +19,40 @@ package okhttp3.android
 import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import okhttp3.CacheControl
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import java.net.InetAddress
+import java.net.UnknownHostException
+import okhttp3.Cache
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.assertj.core.api.Assertions.assertThat
+import okio.Path.Companion.toPath
+import okio.fakefilesystem.FakeFileSystem
 import org.junit.AssumptionViolatedException
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.net.InetAddress
-import java.net.UnknownHostException
-import okhttp3.Cache
-import okio.Path.Companion.toPath
-import okio.fakefilesystem.FakeFileSystem
 
 @RunWith(RobolectricTestRunner::class)
 @Config(
   sdk = [30],
 )
 class RobolectricOkHttpClientTest {
-
   private lateinit var context: Context
   private lateinit var client: OkHttpClient
 
   @Before
   fun setUp() {
     context = ApplicationProvider.getApplicationContext<Application>()
-    client = OkHttpClient.Builder()
-      .cache(Cache("/cache".toPath(), 10_000_000, FakeFileSystem()))
-      .build()
+    client =
+      OkHttpClient.Builder()
+        .cache(Cache("/cache".toPath(), 10_000_000, FakeFileSystem()))
+        .build()
   }
 
   @Test
@@ -59,8 +61,9 @@ class RobolectricOkHttpClientTest {
 
     val request = Request("https://www.google.com/robots.txt".toHttpUrl())
 
-    val networkRequest = request.newBuilder()
-      .build()
+    val networkRequest =
+      request.newBuilder()
+        .build()
 
     val call = client.newCall(networkRequest)
 

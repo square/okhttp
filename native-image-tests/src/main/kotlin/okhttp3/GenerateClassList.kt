@@ -15,24 +15,27 @@
  */
 package okhttp3
 
+import java.io.File
 import org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor
 import org.junit.platform.engine.discovery.DiscoverySelectors
-import java.io.File
 
 // TODO move to junit5 tags
-val avoidedTests = setOf(
-  "okhttp3.BouncyCastleTest",
-  "okhttp3.ConscryptTest",
-  "okhttp3.CorrettoTest",
-  "okhttp3.OpenJSSETest",
-  "okhttp3.internal.platform.Jdk8WithJettyBootPlatformTest",
-  "okhttp3.internal.platform.Jdk9PlatformTest",
-  "okhttp3.internal.platform.PlatformTest",
-  "okhttp3.internal.platform.android.AndroidSocketAdapterTest",
-  "okhttp3.osgi.OsgiTest",
-  "okhttp3.CookiesTest", // hanging
-  "okhttp3.WholeOperationTimeoutTest", // hanging
-)
+val avoidedTests =
+  setOf(
+    "okhttp3.BouncyCastleTest",
+    "okhttp3.ConscryptTest",
+    "okhttp3.CorrettoTest",
+    "okhttp3.OpenJSSETest",
+    "okhttp3.internal.platform.Jdk8WithJettyBootPlatformTest",
+    "okhttp3.internal.platform.Jdk9PlatformTest",
+    "okhttp3.internal.platform.PlatformTest",
+    "okhttp3.internal.platform.android.AndroidSocketAdapterTest",
+    "okhttp3.osgi.OsgiTest",
+    // Hanging.
+    "okhttp3.CookiesTest",
+    // Hanging.
+    "okhttp3.WholeOperationTimeoutTest",
+  )
 
 /**
  * Run periodically to refresh the known set of working tests.
@@ -42,11 +45,12 @@ val avoidedTests = setOf(
 fun main() {
   val knownTestFile = File("native-image-tests/src/main/resources/testlist.txt")
   val testSelector = DiscoverySelectors.selectPackage("okhttp3")
-  val testClasses = findTests(listOf(testSelector))
-    .filter { it.isContainer }
-    .mapNotNull { (it as? ClassBasedTestDescriptor)?.testClass?.name }
-    .filterNot { it in avoidedTests }
-    .sorted()
-    .distinct()
+  val testClasses =
+    findTests(listOf(testSelector))
+      .filter { it.isContainer }
+      .mapNotNull { (it as? ClassBasedTestDescriptor)?.testClass?.name }
+      .filterNot { it in avoidedTests }
+      .sorted()
+      .distinct()
   knownTestFile.writeText(testClasses.joinToString("\n"))
 }

@@ -1,7 +1,7 @@
 plugins {
   kotlin("jvm")
   application
-  id("com.google.devtools.ksp").version("1.9.0-1.0.13")
+  id("com.google.devtools.ksp").version("1.9.22-1.0.16")
 }
 
 application {
@@ -10,7 +10,7 @@ application {
 
 dependencies {
   implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.10")
-  implementation("com.squareup.okhttp3:okhttp-coroutines:5.0.0-alpha.11")
+  implementation("com.squareup.okhttp3:okhttp-coroutines:5.0.0-alpha.12")
   implementation(libs.conscrypt.openjdk)
 
   implementation("com.squareup.retrofit2:retrofit:2.9.0")

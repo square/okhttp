@@ -30,7 +30,6 @@ package mockwebserver3
  * server has closed the socket before follow up requests are made.
  */
 sealed interface SocketPolicy {
-
   /**
    * Shutdown [MockWebServer] after writing response.
    */

@@ -34,7 +34,8 @@ class PostPath {
       writeUtf8("{}")
     }
 
-    val request = Request.Builder()
+    val request =
+      Request.Builder()
         .url("https://httpbin.org/anything")
         .put(path.asRequestBody(fileSystem, MEDIA_TYPE_JSON))
         .build()

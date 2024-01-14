@@ -11,6 +11,7 @@ _2023-10-16_
     This is the dataset that powers `HttpUrl.topPrivateDomain()`.
  *  Fix: Immediately update the connection's flow control window instead of waiting for the
     receiving stream to process it.
+
     This change may increase OkHttp's memory use for applications that make many concurrent HTTP
     calls and that can receive data faster than they can process it. Previously, OkHttp limited
     HTTP/2 to 16 MiB of unacknowledged data per connection. With this fix there is a limit of 16 MiB

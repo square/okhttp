@@ -28,14 +28,19 @@ class PostMultipart {
 
   fun run() {
     // Use the imgur image upload API as documented at https://api.imgur.com/endpoints/image
-    val requestBody = MultipartBody.Builder()
+    val requestBody =
+      MultipartBody.Builder()
         .setType(MultipartBody.FORM)
         .addFormDataPart("title", "Square Logo")
-        .addFormDataPart("image", "logo-square.png",
-            File("docs/images/logo-square.png").asRequestBody(MEDIA_TYPE_PNG))
+        .addFormDataPart(
+          "image",
+          "logo-square.png",
+          File("docs/images/logo-square.png").asRequestBody(MEDIA_TYPE_PNG),
+        )
         .build()
 
-    val request = Request.Builder()
+    val request =
+      Request.Builder()
         .header("Authorization", "Client-ID $IMGUR_CLIENT_ID")
         .url("https://api.imgur.com/3/image")
         .post(requestBody)

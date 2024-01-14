@@ -25,12 +25,14 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 import org.conscrypt.Conscrypt
 
+@Suppress("ktlint:standard:property-naming")
 suspend fun main() {
   val includeConscrypt = false
 
-  val client = OkHttpClient.Builder()
-    .cache(Cache("build/okhttp_cache".toPath(), 100_000_000, FileSystem.SYSTEM))
-    .build()
+  val client =
+    OkHttpClient.Builder()
+      .cache(Cache("build/okhttp_cache".toPath(), 100_000_000, FileSystem.SYSTEM))
+      .build()
 
   val sslLabsScraper = SslLabsScraper(client)
 
@@ -62,35 +64,37 @@ suspend fun main() {
 
     val currentVm = currentVm(ianaSuitesNew)
 
-    val conscrypt = if (includeConscrypt) {
-      Security.addProvider(Conscrypt.newProvider())
-      conscrypt(ianaSuitesNew)
-    } else {
-      Client("Conscrypt", "Disabled", null, listOf())
-    }
+    val conscrypt =
+      if (includeConscrypt) {
+        Security.addProvider(Conscrypt.newProvider())
+        conscrypt(ianaSuitesNew)
+      } else {
+        Client("Conscrypt", "Disabled", null, listOf())
+      }
 
-    val clients = listOf(
-      okhttp,
-      chrome80,
-      firefox73,
-      android9,
-      safari12iOS,
-      conscrypt,
-      currentVm,
-      okHttp_3_9,
-      okHttp_3_11,
-      okHttp_3_13,
-      okHttp_3_14,
-      okHttp_4_10,
-      android5,
-      java7,
-      java12,
-      firefox34,
-      firefox53,
-      chrome33,
-      chrome57,
-      safari12Osx
-    )
+    val clients =
+      listOf(
+        okhttp,
+        chrome80,
+        firefox73,
+        android9,
+        safari12iOS,
+        conscrypt,
+        currentVm,
+        okHttp_3_9,
+        okHttp_3_11,
+        okHttp_3_13,
+        okHttp_3_14,
+        okHttp_4_10,
+        android5,
+        java7,
+        java12,
+        firefox34,
+        firefox53,
+        chrome33,
+        chrome57,
+        safari12Osx,
+      )
 
     val orderBy = okhttp.enabled + chrome80.enabled + safari12Osx.enabled + rest(clients)
     val survey = CipherSuiteSurvey(clients = clients, ianaSuites = ianaSuitesNew, orderBy = orderBy)

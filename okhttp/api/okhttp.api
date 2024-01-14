@@ -556,6 +556,9 @@ public abstract interface class okhttp3/EventListener$Factory {
 	public abstract fun create (Lokhttp3/Call;)Lokhttp3/EventListener;
 }
 
+public abstract interface annotation class okhttp3/ExperimentalOkHttpApi : java/lang/annotation/Annotation {
+}
+
 public final class okhttp3/FormBody : okhttp3/RequestBody {
 	public static final field Companion Lokhttp3/FormBody$Companion;
 	public final fun -deprecated_size ()I
@@ -674,6 +677,7 @@ public final class okhttp3/HttpUrl {
 	public final fun -deprecated_uri ()Ljava/net/URI;
 	public final fun -deprecated_url ()Ljava/net/URL;
 	public final fun -deprecated_username ()Ljava/lang/String;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public static final fun defaultPort (Ljava/lang/String;)I
 	public final fun encodedFragment ()Ljava/lang/String;
 	public final fun encodedPassword ()Ljava/lang/String;
@@ -816,6 +820,7 @@ public final class okhttp3/MultipartBody : okhttp3/RequestBody {
 	public final fun boundary ()Ljava/lang/String;
 	public fun contentLength ()J
 	public fun contentType ()Lokhttp3/MediaType;
+	public fun isOneShot ()Z
 	public final fun part (I)Lokhttp3/MultipartBody$Part;
 	public final fun parts ()Ljava/util/List;
 	public final fun size ()I

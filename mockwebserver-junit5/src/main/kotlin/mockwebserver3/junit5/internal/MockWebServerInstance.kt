@@ -16,5 +16,5 @@
 package mockwebserver3.junit5.internal
 
 annotation class MockWebServerInstance(
-  val name: String
+  val name: String,
 )

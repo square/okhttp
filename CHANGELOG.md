@@ -5,6 +5,99 @@ Change Log
 
 See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
 
+## Version 5.0.0-alpha.12
+
+_2023-12-17_
+
+We took too long to cut this release and there's a lot of changes in it. We've been busy.
+
+Although this release is labeled _alpha_, the only unstable thing in it is our new APIs. This
+release has many critical bug fixes and is safe to run in production. We're eager to stabilize our
+new APIs so we can get out of alpha.
+
+ *  New: Support Java 21's virtual threads (‘OpenJDK Project Loom’). We changed OkHttp's internals
+    to use `Lock` and `Condition` instead of `synchronized` for best resource utilization.
+
+ *  New: Switch our Internationalized Domain Name (IDN) implementation to [UTS #46 Nontransitional
+    Processing][uts46]. With this fix, the `ß` code point no longer maps to `ss`. OkHttp now embeds
+    its own IDN mapping table in the library.
+
+ *  New: Prefer the client's configured precedence order for TLS cipher suites. (OkHttp used to
+    prefer the JDK’s precedence order.) This change may cause your HTTP calls to negotiate a
+    different cipher suite than before! OkHttp's defaults cipher suites are selected for good
+    security and performance.
+
+ *  New: `ConnectionListener` publishes events for connects, disconnects, and use of pooled
+    connections.
+
+ *  Fix: Immediately update the connection's flow control window instead of waiting for the
+    receiving stream to process it.
+
+    This change may increase OkHttp's memory use for applications that make many concurrent HTTP
+    calls and that can receive data faster than they can process it. Previously, OkHttp limited
+    HTTP/2 to 16 MiB of unacknowledged data per connection. With this fix there is a limit of 16 MiB
+    of unacknowledged data per stream and no per-connection limit.
+
+ *  Fix: Don't close a `Deflater` while we're still using it to compress a web socket message. We
+    had a severe bug where web sockets were closed on the wrong thread, which caused
+    `NullPointerException` crashes in `Deflater`.
+
+ *  Fix: Don't crash after a web socket fails its connection upgrade. We incorrectly released
+    the web socket's connections back to the pool before their resources were cleaned up.
+
+ *  Fix: Don't infinite loop when a received web socket message has self-terminating compressed
+    data.
+
+ *  Fix: Don't fail the call when the response code is ‘HTTP 102 Processing’ or ‘HTTP 103 Early
+    Hints’.
+
+ *  Fix: Honor interceptors' changes to connect and read timeouts.
+
+ *  Fix: Recover gracefully when a cached response is corrupted on disk.
+
+ *  Fix: Don't leak file handles when a cache disk write fails.
+
+ *  Fix: Don't hang when the public suffix database cannot be loaded. We had a bug where a failure
+    reading the public suffix database would cause subsequent reads to hang when they should have
+    crashed.
+
+ *  Fix: Avoid `InetAddress.getCanonicalHostName()` in MockWebServer. This avoids problems if the
+    host machine's IP address has additional DNS registrations.
+
+ *  New: Create a JPMS-compatible artifact for `JavaNetCookieJar`. Previously, multiple OkHttp
+    artifacts defined classes in the `okhttp3` package, but this is forbidden by the Java module
+    system. We've fixed this with a new package (`okhttp3.java.net.cookiejar`) and a new artifact,
+    `com.squareup.okhttp3:okhttp-java-net-cookiehandler`. (The original artifact now delegates to
+    this new one.)
+
+    ```kotlin
+    implementation("com.squareup.okhttp3:okhttp-java-net-cookiehandler:5.0.0-alpha.12")
+    ```
+
+ *  New: `Cookie.sameSite` determines whether cookies should be sent on cross-site requests. This
+    is used by servers to defend against Cross-Site Request Forgery (CSRF) attacks.
+
+ *  New: Log the total time of the HTTP call in `HttpLoggingInterceptor`.
+
+ *  New: `OkHttpClient.Builder` now has APIs that use `kotlin.time.Duration`.
+
+ *  New: `mockwebserver3.SocketPolicy` is now a sealed interface. This is one of several
+    backwards-incompatible API changes that may impact early adopters of this alpha API.
+
+ *  New: `mockwebserver3.Stream` for duplex streams.
+
+ *  New: `mockwebserver3.MockResponseBody` for streamed response bodies.
+
+ *  New: `mockwebserver3.MockResponse` is now immutable, with a `Builder`.
+
+ *  New: `mockwebserver3.RecordedRequest.handshakeServerNames` returns the SNI (Server Name
+    Indication) attribute from the TLS handshake.
+
+ *  Upgrade: [Kotlin 1.9.21][kotlin_1_9_21].
+
+ *  Upgrade: [Okio 3.7.0][okio_3_7_0].
+
+
 ## Version 5.0.0-alpha.11
 
 _2022-12-24_
@@ -273,8 +366,11 @@ release is the version name.
 [kotlin_1_6_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.6.10
 [kotlin_1_6_21]: https://github.com/JetBrains/kotlin/releases/tag/v1.6.21
 [kotlin_1_7_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.7.10
+[kotlin_1_9_21]: https://github.com/JetBrains/kotlin/releases/tag/v1.9.21
 [okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
 [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
 [okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
 [okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
+[okio_3_7_0]: https://square.github.io/okio/changelog/#version-370
 [rfc_8305]: https://tools.ietf.org/html/rfc8305
+[uts46]: https://www.unicode.org/reports/tr46

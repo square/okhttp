@@ -15,17 +15,19 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
 class SampleTest {
-  @JvmField @RegisterExtension val clientRule = OkHttpClientTestRule()
+  @JvmField @RegisterExtension
+  val clientRule = OkHttpClientTestRule()
 
   @Test
   fun passingTest() {
@@ -58,6 +60,6 @@ class SampleTest {
   }
 }
 
-class SampleTestProvider: SimpleProvider() {
+class SampleTestProvider : SimpleProvider() {
   override fun arguments() = listOf("A", "B")
 }

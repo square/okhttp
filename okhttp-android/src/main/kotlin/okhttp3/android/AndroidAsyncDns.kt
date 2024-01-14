@@ -43,20 +43,34 @@ class AndroidAsyncDns(
   private val resolver = DnsResolver.getInstance()
   private val executor = Executors.newSingleThreadExecutor()
 
-  override fun query(hostname: String, callback: AsyncDns.Callback) {
+  override fun query(
+    hostname: String,
+    callback: AsyncDns.Callback,
+  ) {
     resolver.query(
-      network, hostname, dnsClass.type, DnsResolver.FLAG_EMPTY, executor, null,
+      network,
+      hostname,
+      dnsClass.type,
+      DnsResolver.FLAG_EMPTY,
+      executor,
+      null,
       object : DnsResolver.Callback<List<InetAddress>> {
-        override fun onAnswer(addresses: List<InetAddress>, rCode: Int) {
+        override fun onAnswer(
+          addresses: List<InetAddress>,
+          rCode: Int,
+        ) {
           callback.onResponse(hostname, addresses)
         }
 
         override fun onError(e: DnsResolver.DnsException) {
-          callback.onFailure(hostname, UnknownHostException(e.message).apply {
-            initCause(e)
-          })
+          callback.onFailure(
+            hostname,
+            UnknownHostException(e.message).apply {
+              initCause(e)
+            },
+          )
         }
-      }
+      },
     )
   }
 

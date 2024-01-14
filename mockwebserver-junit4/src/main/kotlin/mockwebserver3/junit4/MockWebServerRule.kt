@@ -15,11 +15,11 @@
  */
 package mockwebserver3.junit4
 
-import mockwebserver3.MockWebServer
-import org.junit.rules.ExternalResource
 import java.io.IOException
 import java.util.logging.Level
 import java.util.logging.Logger
+import mockwebserver3.MockWebServer
+import org.junit.rules.ExternalResource
 
 /**
  * Runs MockWebServer for the duration of a single test method.

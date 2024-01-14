@@ -15,6 +15,11 @@
  */
 package mockwebserver3
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isTrue
 import okhttp3.Dns
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -24,7 +29,6 @@ import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -51,17 +55,19 @@ class MockResponseSniTest {
     val handshakeCertificates = localhost()
     server.useHttps(handshakeCertificates.sslSocketFactory())
 
-    val dns = Dns {
-      Dns.SYSTEM.lookup(server.hostName)
-    }
+    val dns =
+      Dns {
+        Dns.SYSTEM.lookup(server.hostName)
+      }
 
-    val client = clientTestRule.newClientBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(),
-        handshakeCertificates.trustManager
-      )
-      .dns(dns)
-      .build()
+    val client =
+      clientTestRule.newClientBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        )
+        .dns(dns)
+        .build()
 
     server.enqueue(MockResponse())
 
@@ -80,36 +86,41 @@ class MockResponseSniTest {
    */
   @Test
   fun domainFronting() {
-    val heldCertificate = HeldCertificate.Builder()
-      .commonName("server name")
-      .addSubjectAlternativeName("url-host.com")
-      .build()
-    val handshakeCertificates = HandshakeCertificates.Builder()
-      .heldCertificate(heldCertificate)
-      .addTrustedCertificate(heldCertificate.certificate)
-      .build()
+    val heldCertificate =
+      HeldCertificate.Builder()
+        .commonName("server name")
+        .addSubjectAlternativeName("url-host.com")
+        .build()
+    val handshakeCertificates =
+      HandshakeCertificates.Builder()
+        .heldCertificate(heldCertificate)
+        .addTrustedCertificate(heldCertificate.certificate)
+        .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
 
-    val dns = Dns {
-      Dns.SYSTEM.lookup(server.hostName)
-    }
+    val dns =
+      Dns {
+        Dns.SYSTEM.lookup(server.hostName)
+      }
 
-    val client = clientTestRule.newClientBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(),
-        handshakeCertificates.trustManager
-      )
-      .dns(dns)
-      .build()
+    val client =
+      clientTestRule.newClientBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        )
+        .dns(dns)
+        .build()
 
     server.enqueue(MockResponse())
 
-    val call = client.newCall(
-      Request(
-        url = "https://url-host.com:${server.port}/".toHttpUrl(),
-        headers = headersOf("Host", "header-host"),
+    val call =
+      client.newCall(
+        Request(
+          url = "https://url-host.com:${server.port}/".toHttpUrl(),
+          headers = headersOf("Host", "header-host"),
+        ),
       )
-    )
     val response = call.execute()
     assertThat(response.isSuccessful).isTrue()
 
@@ -146,34 +157,39 @@ class MockResponseSniTest {
    * tell MockWebServer to act as a proxy.
    */
   private fun requestToHostnameViaProxy(hostnameOrIpAddress: String): RecordedRequest {
-    val heldCertificate = HeldCertificate.Builder()
-      .commonName("server name")
-      .addSubjectAlternativeName(hostnameOrIpAddress)
-      .build()
-    val handshakeCertificates = HandshakeCertificates.Builder()
-      .heldCertificate(heldCertificate)
-      .addTrustedCertificate(heldCertificate.certificate)
-      .build()
+    val heldCertificate =
+      HeldCertificate.Builder()
+        .commonName("server name")
+        .addSubjectAlternativeName(hostnameOrIpAddress)
+        .build()
+    val handshakeCertificates =
+      HandshakeCertificates.Builder()
+        .heldCertificate(heldCertificate)
+        .addTrustedCertificate(heldCertificate.certificate)
+        .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
 
-    val client = clientTestRule.newClientBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(),
-        handshakeCertificates.trustManager
-      )
-      .proxy(server.toProxyAddress())
-      .build()
+    val client =
+      clientTestRule.newClientBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        )
+        .proxy(server.toProxyAddress())
+        .build()
 
     server.enqueue(MockResponse(inTunnel = true))
     server.enqueue(MockResponse())
 
-    val call = client.newCall(
-      Request(
-        url = server.url("/").newBuilder()
-          .host(hostnameOrIpAddress)
-          .build()
+    val call =
+      client.newCall(
+        Request(
+          url =
+            server.url("/").newBuilder()
+              .host(hostnameOrIpAddress)
+              .build(),
+        ),
       )
-    )
     val response = call.execute()
     assertThat(response.isSuccessful).isTrue()
 

@@ -38,7 +38,13 @@ public final class UnixDomainSocketFactory extends SocketFactory {
 
   @Override public Socket createSocket(String host, int port) throws IOException {
     Socket result = createSocket();
-    result.connect(new InetSocketAddress(host, port));
+
+    try {
+      result.connect(new InetSocketAddress(host, port));
+    } catch (IOException e) {
+      result.close();
+      throw e;
+    }
     return result;
   }
 
@@ -49,7 +55,13 @@ public final class UnixDomainSocketFactory extends SocketFactory {
 
   @Override public Socket createSocket(InetAddress host, int port) throws IOException {
     Socket result = createSocket();
-    result.connect(new InetSocketAddress(host, port));
+
+    try {
+      result.connect(new InetSocketAddress(host, port));
+    } catch (IOException e) {
+      result.close();
+      throw e;
+    }
     return result;
   }
 

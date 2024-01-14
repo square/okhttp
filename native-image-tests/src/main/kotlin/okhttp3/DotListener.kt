@@ -15,19 +15,22 @@
  */
 package okhttp3
 
+import java.io.OutputStream
+import java.io.PrintStream
 import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestIdentifier
 import org.junit.platform.launcher.TestPlan
-import java.io.OutputStream
-import java.io.PrintStream
 
-object DotListener: TestExecutionListener {
+object DotListener : TestExecutionListener {
   private var originalSystemErr: PrintStream? = null
   private var originalSystemOut: PrintStream? = null
   private var testCount = 0
 
-  override fun executionSkipped(testIdentifier: TestIdentifier, reason: String) {
+  override fun executionSkipped(
+    testIdentifier: TestIdentifier,
+    reason: String,
+  ) {
     printStatus("-")
   }
 
@@ -40,7 +43,7 @@ object DotListener: TestExecutionListener {
 
   override fun executionFinished(
     testIdentifier: TestIdentifier,
-    testExecutionResult: TestExecutionResult
+    testExecutionResult: TestExecutionResult,
   ) {
     if (!testIdentifier.isContainer) {
       when (testExecutionResult.status!!) {
@@ -59,8 +62,8 @@ object DotListener: TestExecutionListener {
     originalSystemOut = System.out
     originalSystemErr = System.err
 
-    System.setOut(object: PrintStream(OutputStream.nullOutputStream()) {})
-    System.setErr(object: PrintStream(OutputStream.nullOutputStream()) {})
+    System.setOut(object : PrintStream(OutputStream.nullOutputStream()) {})
+    System.setErr(object : PrintStream(OutputStream.nullOutputStream()) {})
   }
 
   fun uninstall() {

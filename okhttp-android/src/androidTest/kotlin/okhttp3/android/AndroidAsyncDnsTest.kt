@@ -20,11 +20,17 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.os.Build
 import androidx.test.platform.app.InstrumentationRegistry
+import assertk.assertThat
+import assertk.assertions.hasMessage
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotEmpty
+import assertk.assertions.isNull
+import assertk.fail
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
 import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
 import mockwebserver3.junit4.MockWebServerRule
 import okhttp3.AsyncDns
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -33,9 +39,6 @@ import okhttp3.Request
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okio.IOException
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.fail
-import org.junit.Assume
 import org.junit.Assume.assumeTrue
 import org.junit.AssumptionViolatedException
 import org.junit.Before
@@ -47,14 +50,16 @@ import org.junit.Test
  * Run with "./gradlew :android-test:connectedCheck -PandroidBuild=true" and make sure ANDROID_SDK_ROOT is set.
  */
 class AndroidAsyncDnsTest {
-  @JvmField @Rule val serverRule = MockWebServerRule()
+  @JvmField @Rule
+  val serverRule = MockWebServerRule()
   private lateinit var client: OkHttpClient
 
   private val localhost: HandshakeCertificates by lazy {
     // Generate a self-signed cert for the server to serve and the client to trust.
-    val heldCertificate = HeldCertificate.Builder()
-      .addSubjectAlternativeName("localhost")
-      .build()
+    val heldCertificate =
+      HeldCertificate.Builder()
+        .addSubjectAlternativeName("localhost")
+        .build()
     return@lazy HandshakeCertificates.Builder()
       .addPlatformTrustedCertificates()
       .heldCertificate(heldCertificate)
@@ -66,10 +71,11 @@ class AndroidAsyncDnsTest {
   fun init() {
     assumeTrue("Supported on API 29+", Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
 
-    client = OkHttpClient.Builder()
-      .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
-      .sslSocketFactory(localhost.sslSocketFactory(), localhost.trustManager)
-      .build()
+    client =
+      OkHttpClient.Builder()
+        .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
+        .sslSocketFactory(localhost.sslSocketFactory(), localhost.trustManager)
+        .build()
 
     serverRule.server.useHttps(localhost.sslSocketFactory())
   }
@@ -115,7 +121,7 @@ class AndroidAsyncDnsTest {
     val (allAddresses, exception) = dnsQuery("localhost")
 
     assertThat(exception).isNull()
-    assertThat(allAddresses).isNotEmpty
+    assertThat(allAddresses).isNotEmpty()
   }
 
   private fun dnsQuery(hostname: String): Pair<List<InetAddress>, Exception?> {
@@ -124,17 +130,26 @@ class AndroidAsyncDnsTest {
     val latch = CountDownLatch(1)
 
     // assumes an IPv4 address
-    AndroidAsyncDns.IPv4.query(hostname, object : AsyncDns.Callback {
-      override fun onResponse(hostname: String, addresses: List<InetAddress>) {
-        allAddresses.addAll(addresses)
-        latch.countDown()
-      }
+    AndroidAsyncDns.IPv4.query(
+      hostname,
+      object : AsyncDns.Callback {
+        override fun onResponse(
+          hostname: String,
+          addresses: List<InetAddress>,
+        ) {
+          allAddresses.addAll(addresses)
+          latch.countDown()
+        }
 
-      override fun onFailure(hostname: String, e: IOException) {
-        exception = e
-        latch.countDown()
-      }
-    })
+        override fun onFailure(
+          hostname: String,
+          e: IOException,
+        ) {
+          exception = e
+          latch.countDown()
+        }
+      },
+    )
 
     latch.await()
 
@@ -148,7 +163,7 @@ class AndroidAsyncDnsTest {
     val (allAddresses, exception) = dnsQuery("google.com")
 
     assertThat(exception).isNull()
-    assertThat(allAddresses).isNotEmpty
+    assertThat(allAddresses).isNotEmpty()
   }
 
   @Test
@@ -170,10 +185,11 @@ class AndroidAsyncDnsTest {
     val network =
       connectivityManager.activeNetwork ?: throw AssumptionViolatedException("No active network")
 
-    val client = OkHttpClient.Builder()
-      .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
-      .socketFactory(network.socketFactory)
-      .build()
+    val client =
+      OkHttpClient.Builder()
+        .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
+        .socketFactory(network.socketFactory)
+        .build()
 
     val call =
       client.newCall(Request("https://google.com/robots.txt".toHttpUrl()))

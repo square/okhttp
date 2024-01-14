@@ -18,33 +18,32 @@ package okhttp3.sse.internal
 import java.io.IOException
 import okhttp3.Call
 import okhttp3.Callback
-import okhttp3.EventListener
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
-import okhttp3.internal.connection.RealCall
 import okhttp3.internal.stripBody
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 
 internal class RealEventSource(
   private val request: Request,
-  private val listener: EventSourceListener
+  private val listener: EventSourceListener,
 ) : EventSource, ServerSentEventReader.Callback, Callback {
-  private var call: RealCall? = null
+  private var call: Call? = null
+
   @Volatile private var canceled = false
 
-  fun connect(client: OkHttpClient) {
-    val client = client.newBuilder()
-        .eventListener(EventListener.NONE)
-        .build()
-    val realCall = client.newCall(request) as RealCall
-    call = realCall
-    realCall.enqueue(this)
+  fun connect(callFactory: Call.Factory) {
+    call =
+      callFactory.newCall(request).apply {
+        enqueue(this@RealEventSource)
+      }
   }
 
-  override fun onResponse(call: Call, response: Response) {
+  override fun onResponse(
+    call: Call,
+    response: Response,
+  ) {
     processResponse(response)
   }
 
@@ -58,13 +57,16 @@ internal class RealEventSource(
       val body = response.body
 
       if (!body.isEventStream()) {
-        listener.onFailure(this,
-            IllegalStateException("Invalid content-type: ${body.contentType()}"), response)
+        listener.onFailure(
+          this,
+          IllegalStateException("Invalid content-type: ${body.contentType()}"),
+          response,
+        )
         return
       }
 
       // This is a long-lived response. Cancel full-call timeouts.
-      call?.timeoutEarlyExit()
+      call?.timeout()?.cancel()
 
       // Replace the body with a stripped one so the callbacks can't see real data.
       val response = response.stripBody()
@@ -77,10 +79,11 @@ internal class RealEventSource(
           }
         }
       } catch (e: Exception) {
-        val exception = when {
-          canceled -> IOException("canceled", e)
-          else -> e
-        }
+        val exception =
+          when {
+            canceled -> IOException("canceled", e)
+            else -> e
+          }
         listener.onFailure(this, exception, response)
         return
       }
@@ -97,7 +100,10 @@ internal class RealEventSource(
     return contentType.type == "text" && contentType.subtype == "event-stream"
   }
 
-  override fun onFailure(call: Call, e: IOException) {
+  override fun onFailure(
+    call: Call,
+    e: IOException,
+  ) {
     listener.onFailure(this, e, null)
   }
 
@@ -108,7 +114,11 @@ internal class RealEventSource(
     call?.cancel()
   }
 
-  override fun onEvent(id: String?, type: String?, data: String) {
+  override fun onEvent(
+    id: String?,
+    type: String?,
+    data: String,
+  ) {
     listener.onEvent(this, id, type, data)
   }
 

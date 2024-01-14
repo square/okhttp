@@ -16,8 +16,10 @@
 package mockwebserver3.junit5.internal
 
 import java.io.IOException
+import java.lang.reflect.Method
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.jvm.optionals.getOrNull
 import mockwebserver3.MockWebServer
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -38,12 +40,28 @@ import org.junit.jupiter.api.extension.ParameterResolver
  * - The test lifecycle default (passed into test method, plus @BeforeEach, @AfterEach)
  * - named instances with @MockWebServerInstance.
  */
-class MockWebServerExtension
-  : BeforeEachCallback, AfterEachCallback, ParameterResolver {
+class MockWebServerExtension :
+  BeforeEachCallback, AfterEachCallback, ParameterResolver {
   private val ExtensionContext.resource: ServersForTest
-    get() = getStore(namespace).getOrComputeIfAbsent(this.uniqueId) {
-      ServersForTest()
-    } as ServersForTest
+    get() {
+      // For Methods (before/after/test) grab the class store
+      val store =
+        if (this.element.getOrNull() is Method) {
+          val parent = parent.get()
+          parent.getStore(namespace)
+        } else {
+          getStore(namespace)
+        }
+
+      return store.serversForTest
+    }
+
+  private val ExtensionContext.Store.serversForTest: ServersForTest
+    get() {
+      return getOrComputeIfAbsent(storeKey) {
+        ServersForTest()
+      } as ServersForTest
+    }
 
   private class ServersForTest {
     private val servers = mutableMapOf<String, MockWebServer>()
@@ -66,10 +84,11 @@ class MockWebServerExtension
 
     fun shutdownAll() {
       try {
-        for (server in servers.values) {
+        val toClear = servers.values.toList()
+        servers.clear()
+        for (server in toClear) {
           server.shutdown()
         }
-        servers.clear()
       } catch (e: IOException) {
         logger.log(Level.WARNING, "MockWebServer shutdown failed", e)
       }
@@ -80,24 +99,23 @@ class MockWebServerExtension
   @IgnoreJRERequirement
   override fun supportsParameter(
     parameterContext: ParameterContext,
-    extensionContext: ExtensionContext
+    extensionContext: ExtensionContext,
   ): Boolean {
-    // Not supported on constructors, or static contexts
     return parameterContext.parameter.type === MockWebServer::class.java
-      && extensionContext.testMethod.isPresent
   }
 
   @Suppress("NewApi")
   override fun resolveParameter(
     parameterContext: ParameterContext,
-    extensionContext: ExtensionContext
+    extensionContext: ExtensionContext,
   ): Any {
     val nameAnnotation = parameterContext.findAnnotation(MockWebServerInstance::class.java)
-    val name = if (nameAnnotation.isPresent) {
-      nameAnnotation.get().name
-    } else {
-      defaultName
-    }
+    val name =
+      if (nameAnnotation.isPresent) {
+        nameAnnotation.get().name
+      } else {
+        defaultName
+      }
     return extensionContext.resource.server(name)
   }
 
@@ -110,9 +128,10 @@ class MockWebServerExtension
     context.resource.shutdownAll()
   }
 
-  companion object {
+  private companion object {
     private val logger = Logger.getLogger(MockWebServerExtension::class.java.name)
     private val namespace = ExtensionContext.Namespace.create(MockWebServerExtension::class.java)
     private val defaultName = MockWebServerExtension::class.java.simpleName
+    private val storeKey = "ServersForTest"
   }
 }

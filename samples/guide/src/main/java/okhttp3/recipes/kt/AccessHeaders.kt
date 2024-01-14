@@ -23,7 +23,8 @@ class AccessHeaders {
   private val client = OkHttpClient()
 
   fun run() {
-    val request = Request.Builder()
+    val request =
+      Request.Builder()
         .url("https://api.github.com/repos/square/okhttp/issues")
         .header("User-Agent", "OkHttp Headers.java")
         .addHeader("Accept", "application/json; q=0.5")
