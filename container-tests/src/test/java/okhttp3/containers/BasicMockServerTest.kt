@@ -23,7 +23,7 @@ class BasicMockServerTest {
       mockServerClient
         .`when`(
           request().withPath("/person")
-            .withQueryStringParameter("name", "peter")
+            .withQueryStringParameter("name", "peter"),
         )
         .respond(response().withBody("Peter the person!"))
 
@@ -36,8 +36,9 @@ class BasicMockServerTest {
   }
 
   companion object {
-    val MOCKSERVER_IMAGE: DockerImageName = DockerImageName
-      .parse("mockserver/mockserver")
-      .withTag("mockserver-5.15.0")
+    val MOCKSERVER_IMAGE: DockerImageName =
+      DockerImageName
+        .parse("mockserver/mockserver")
+        .withTag("mockserver-5.15.0")
   }
 }
