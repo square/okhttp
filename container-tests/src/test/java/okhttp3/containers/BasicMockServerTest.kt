@@ -1,10 +1,10 @@
 package okhttp3.containers
 
+import assertk.assertThat
+import assertk.assertions.contains
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.assertj.core.api.Assertions
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
 import org.mockserver.client.MockServerClient
