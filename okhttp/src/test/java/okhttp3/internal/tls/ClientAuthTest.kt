@@ -37,7 +37,6 @@ import javax.security.auth.x500.X500Principal
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
 import okhttp3.RecordingEventListener
@@ -52,12 +51,10 @@ import okhttp3.tls.internal.TlsUtil.newTrustManager
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junitpioneer.jupiter.RetryingTest
 
 @Tag("Slowish")
-@ExtendWith(MockWebServerExtension::class)
 class ClientAuthTest {
   @RegisterExtension
   val platform = PlatformRule()

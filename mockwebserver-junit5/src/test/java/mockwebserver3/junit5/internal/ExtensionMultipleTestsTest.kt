@@ -19,10 +19,8 @@ import assertk.assertThat
 import assertk.assertions.isTrue
 import mockwebserver3.MockWebServer
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(MockWebServerExtension::class)
-class ExtensionMultipleTestsTest() {
+class ExtensionMultipleTestsTest {
   @Test
   fun testClient1(
     defaultInstance: MockWebServer,
