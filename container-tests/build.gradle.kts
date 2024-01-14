@@ -5,7 +5,8 @@ plugins {
 tasks.withType<Test> {
   useJUnitPlatform()
   onlyIf("By default not in CI") {
-    System.getenv("CI") == null || (hasProperty("containerTests") && property("containerTests").toString().toBoolean())
+    System.getenv("CI") == null
+      || (project.hasProperty("containerTests") && project.property("containerTests").toString().toBoolean())
   }
 }
 
