@@ -25,9 +25,10 @@ class SocksProxyTest {
   val network: Network = Network.newNetwork()
 
   @Container
-  val mockServer: MockServerContainer = MockServerContainer(MOCKSERVER_IMAGE)
-    .withNetwork(network)
-    .withNetworkAliases("mockserver")
+  val mockServer: MockServerContainer =
+    MockServerContainer(MOCKSERVER_IMAGE)
+      .withNetwork(network)
+      .withNetworkAliases("mockserver")
 
   @Container
   val socks5Proxy =
@@ -50,9 +51,10 @@ class SocksProxyTest {
           .proxy(Proxy(SOCKS, InetSocketAddress(socks5Proxy.host, socks5Proxy.firstMappedPort)))
           .build()
 
-      val response = client.newCall(
-        Request("http://mockserver:1080/person?name=peter".toHttpUrl())
-      ).execute()
+      val response =
+        client.newCall(
+          Request("http://mockserver:1080/person?name=peter".toHttpUrl()),
+        ).execute()
 
       assertThat(response.body.string()).contains("Peter the person")
     }
