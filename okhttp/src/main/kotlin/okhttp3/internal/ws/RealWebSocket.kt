@@ -99,6 +99,13 @@ class RealWebSocket(
   /** The total size in bytes of enqueued but not yet transmitted messages. */
   private var queueSize = 0L
 
+  /** The maximum size in bytes of the message queue */
+  /**
+   * The maximum number of bytes to enqueue. Rather than enqueueing beyond this limit we tear down
+   * the web socket! It's possible that we're writing faster than the peer can read.
+   */
+  private var maxQueueSize = 16L * 1024 * 1024 // 16 MiB.
+
   /** True if we've enqueued a close frame. No further message frames will be enqueued. */
   private var enqueuedClose = false
 
@@ -134,6 +141,12 @@ class RealWebSocket(
   override fun request(): Request = originalRequest
 
   @Synchronized override fun queueSize(): Long = queueSize
+
+  @Synchronized override fun maxQueueSize(): Long = maxQueueSize
+
+  @Synchronized override fun setMaxQueueSize(newSize: Long) {
+    maxQueueSize = newSize;
+  }
 
   override fun cancel() {
     call!!.cancel()
@@ -444,7 +457,7 @@ class RealWebSocket(
     if (failed || enqueuedClose) return false
 
     // If this frame overflows the buffer, reject it and close the web socket.
-    if (queueSize + data.size > MAX_QUEUE_SIZE) {
+    if (queueSize + data.size > maxQueueSize) {
       close(CLOSE_CLIENT_GOING_AWAY, null)
       return false
     }
@@ -701,12 +714,6 @@ class RealWebSocket(
 
   companion object {
     private val ONLY_HTTP1 = listOf(Protocol.HTTP_1_1)
-
-    /**
-     * The maximum number of bytes to enqueue. Rather than enqueueing beyond this limit we tear down
-     * the web socket! It's possible that we're writing faster than the peer can read.
-     */
-    private const val MAX_QUEUE_SIZE = 16L * 1024 * 1024 // 16 MiB.
 
     /**
      * The maximum amount of time after the client calls [close] to wait for a graceful shutdown. If

@@ -64,6 +64,17 @@ interface WebSocket {
   fun queueSize(): Long
 
   /**
+   * Returns the maximum size in bytes of the messages enqueued to be transmitted to the server.
+   */
+  fun maxQueueSize(): Long
+
+  /**
+   * Sets the maximum size in bytes of the messages enqueued to be transmitted to the server.
+   * NOTE: Larger queue sizes may not be efficient, only change when absolutely necessary.
+   */
+  fun setMaxQueueSize(newSize: Long)
+
+  /**
    * Attempts to enqueue `text` to be UTF-8 encoded and sent as a the data of a text (type `0x1`)
    * message.
    *

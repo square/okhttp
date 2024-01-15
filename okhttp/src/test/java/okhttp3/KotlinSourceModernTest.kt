@@ -1232,6 +1232,10 @@ class KotlinSourceModernTest {
 
         override fun queueSize(): Long = TODO()
 
+        override fun maxQueueSize(): Long = TODO()
+
+        override fun setMaxQueueSize(newValue: Long) = TODO()
+
         override fun send(text: String): Boolean = TODO()
 
         override fun send(bytes: ByteString): Boolean = TODO()
