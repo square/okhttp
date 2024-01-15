@@ -13,7 +13,7 @@ org-jetbrains-kotlin = "1.9.21"
 org-junit-jupiter = "5.10.1"
 
 [libraries]
-amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.3.1"
+amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.3.3"
 androidx-activity = "androidx.activity:activity-ktx:1.8.2"
 androidx-annotation = "androidx.annotation:annotation:1.7.1"
 androidx-espresso-core = "androidx.test.espresso:espresso-core:3.5.1"
