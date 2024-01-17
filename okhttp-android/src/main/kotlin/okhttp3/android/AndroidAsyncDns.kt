@@ -40,7 +40,7 @@ class AndroidAsyncDns(
   private val network: Network? = null,
 ) : AsyncDns {
   @RequiresApi(Build.VERSION_CODES.Q)
-  private val resolver = DnsResolver.getInstance()
+  internal val resolver = DnsResolver.getInstance()
   private val executor = Executors.newSingleThreadExecutor()
 
   override fun query(
@@ -72,6 +72,12 @@ class AndroidAsyncDns(
             )
           }
         },
+      )
+    } catch (iae: IllegalArgumentException) {
+      // java.lang.IllegalArgumentException: Network.fromNetworkHandle refusing to instantiate NETID_UNSET Network.
+      callback.onResponse(
+        hostname,
+        listOf(),
       )
     } catch (e: Exception) {
       callback.onFailure(
