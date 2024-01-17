@@ -23,9 +23,7 @@ import mockwebserver3.MockWebServer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(MockWebServerExtension::class)
 class ExtensionMultipleInstancesTest {
   var defaultInstancePort: Int = -1
   var instanceAPort: Int = -1

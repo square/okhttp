@@ -42,7 +42,6 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.Cache
 import okhttp3.Call
 import okhttp3.CertificatePinner
@@ -83,14 +82,13 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.opentest4j.TestAbortedException
 
 /**
  * Run with "./gradlew :android-test:connectedCheck -PandroidBuild=true" and make sure ANDROID_SDK_ROOT is set.
  */
-@ExtendWith(MockWebServerExtension::class)
+
 @Tag("Slow")
 class OkHttpTest {
   @Suppress("RedundantVisibilityModifier")

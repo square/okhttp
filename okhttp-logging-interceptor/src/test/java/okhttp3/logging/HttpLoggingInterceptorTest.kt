@@ -24,7 +24,6 @@ import assertk.assertions.matches
 import java.net.UnknownHostException
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.MediaType
@@ -45,10 +44,8 @@ import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 
-@ExtendWith(MockWebServerExtension::class)
 class HttpLoggingInterceptorTest {
   @RegisterExtension
   val platform = PlatformRule()

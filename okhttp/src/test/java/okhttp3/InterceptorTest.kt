@@ -22,7 +22,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
-import assertk.assertions.isSameAs
+import assertk.assertions.isSameInstanceAs
 import assertk.assertions.isTrue
 import java.io.IOException
 import java.net.SocketTimeoutException
@@ -87,7 +87,7 @@ class InterceptorTest {
         .addInterceptor(Interceptor { chain: Interceptor.Chain? -> interceptorResponse })
         .build()
     val response = client.newCall(request).execute()
-    assertThat(response).isSameAs(interceptorResponse)
+    assertThat(response).isSameInstanceAs(interceptorResponse)
   }
 
   @Test
@@ -820,7 +820,7 @@ class InterceptorTest {
     assertFailsWith<IOException> {
       call.execute()
     }
-    assertThat(callRef.get()).isSameAs(call)
+    assertThat(callRef.get()).isSameInstanceAs(call)
   }
 
   private fun uppercase(original: RequestBody?): RequestBody {

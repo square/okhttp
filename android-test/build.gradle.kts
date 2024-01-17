@@ -20,7 +20,8 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     testInstrumentationRunnerArguments += mapOf(
       "runnerBuilder" to "de.mannodermaus.junit5.AndroidJUnit5Builder",
-      "notPackage" to "org.bouncycastle"
+      "notPackage" to "org.bouncycastle",
+      "configurationParameters" to "junit.jupiter.extensions.autodetection.enabled=true"
     )
   }
 
