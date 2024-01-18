@@ -50,8 +50,8 @@ include(":samples:unixdomainsockets")
 
 project(":okhttp-logging-interceptor").name = "logging-interceptor"
 
-include(":okhttp-android")
 if (!isKnownBrokenIntelliJ()) {
+  include(":okhttp-android")
   include(":android-test")
   include(":android-test-app")
 }
