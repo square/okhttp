@@ -35,15 +35,19 @@ class ShadowDnsResolver {
     val domain: String,
     val nsType: Int,
     val flags: Int,
-    val callback: DnsResolver.Callback<List<InetAddress>>
+    val callback: DnsResolver.Callback<List<InetAddress>>,
   )
 
   @Implementation
-  fun query(network: Network?, domain: String,
-            nsType: Int, flags: Int,
-            executor: Executor,
-            cancellationSignal: CancellationSignal?,
-            callback: DnsResolver.Callback<List<InetAddress>>) {
+  fun query(
+    network: Network?,
+    domain: String,
+    nsType: Int,
+    flags: Int,
+    executor: Executor,
+    cancellationSignal: CancellationSignal?,
+    callback: DnsResolver.Callback<List<InetAddress>>,
+  ) {
     responder(Request(network, domain, nsType, flags, callback))
   }
 
