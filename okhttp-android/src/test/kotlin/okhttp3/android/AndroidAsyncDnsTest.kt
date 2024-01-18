@@ -15,9 +15,11 @@
  */
 package okhttp3.android
 
-import assertk.assertThat
-import assertk.assertions.isEmpty
-import assertk.assertions.isNull
+import assertk.assertFailure
+import assertk.assertions.hasMessage
+import assertk.assertions.isInstanceOf
+import java.net.UnknownHostException
+import okhttp3.AsyncDns
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -29,16 +31,20 @@ import org.robolectric.shadow.api.Shadow
 class AndroidAsyncDnsTest {
   @Test
   fun testDnsRequestInvalid() {
-    val dns = AndroidAsyncDns.IPv4
-    val shadowDns: ShadowDnsResolver = Shadow.extract(dns.resolver)
+    val asyncDns = AndroidAsyncDns.IPv4
+    val shadowDns: ShadowDnsResolver = Shadow.extract(asyncDns.resolver)
 
     shadowDns.responder = {
       throw IllegalArgumentException("Network.fromNetworkHandle refusing to instantiate NETID_UNSET Network.")
     }
 
-    val (allAddresses, exception) = dnsQuery(dns, "google.invalid")
+    val dns = AsyncDns.toDns(asyncDns)
 
-    assertThat(exception).isNull()
-    assertThat(allAddresses).isEmpty()
+    assertFailure {
+      dns.lookup("google.invalid")
+    }.apply {
+      hasMessage("Network.fromNetworkHandle refusing to instantiate NETID_UNSET Network.")
+      isInstanceOf(UnknownHostException::class)
+    }
   }
 }

@@ -73,12 +73,6 @@ class AndroidAsyncDns(
           }
         },
       )
-    } catch (iae: IllegalArgumentException) {
-      // java.lang.IllegalArgumentException: Network.fromNetworkHandle refusing to instantiate NETID_UNSET Network.
-      callback.onResponse(
-        hostname,
-        listOf(),
-      )
     } catch (e: Exception) {
       callback.onFailure(
         hostname,
