@@ -440,7 +440,7 @@ jobs:
         run: ./native-image-tests/build/graal/ConsoleLauncher
 
   testandroid:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'android') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
@@ -469,6 +469,12 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: 17
+
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
       - name: Gradle cache
         uses: gradle/gradle-build-action@v2
@@ -548,7 +554,7 @@ jobs:
 
 
   testandroidregression:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     if: contains(github.event.pull_request.labels.*.name, 'android-regression')
 
@@ -575,6 +581,12 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: 17
+
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
       - name: Gradle cache
         uses: gradle/gradle-build-action@v2
