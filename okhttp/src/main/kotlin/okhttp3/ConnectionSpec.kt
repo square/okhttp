@@ -172,7 +172,8 @@ class ConnectionSpec internal constructor(
 
     if (cipherSuitesAsString != null &&
       !cipherSuitesAsString.hasIntersection(
-        socket.enabledCipherSuites, CipherSuite.ORDER_BY_NAME,
+        socket.enabledCipherSuites,
+        CipherSuite.ORDER_BY_NAME,
       )
     ) {
       return false

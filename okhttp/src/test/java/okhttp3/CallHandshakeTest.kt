@@ -74,7 +74,8 @@ class CallHandshakeTest {
     client =
       clientTestRule.newClientBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()

@@ -517,7 +517,8 @@ class URLConnectionTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()
@@ -628,7 +629,8 @@ class URLConnectionTest {
         ) // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
         .connectionSpecs(Arrays.asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
         .sslSocketFactory(
-          suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager,
+          suppressTlsFallbackClientSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .build()
     val response = getResponse(newRequest("/foo"))
@@ -652,7 +654,8 @@ class URLConnectionTest {
         .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
         .hostnameVerifier(RecordingHostnameVerifier())
         .sslSocketFactory(
-          suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager,
+          suppressTlsFallbackClientSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .build()
     assertFailsWith<IOException> {
@@ -684,7 +687,8 @@ class URLConnectionTest {
       client.newBuilder()
         .hostnameVerifier(RecordingHostnameVerifier())
         .sslSocketFactory(
-          suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager,
+          suppressTlsFallbackClientSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .build()
     assertContent("abc", getResponse(newRequest("/")))
@@ -824,7 +828,8 @@ class URLConnectionTest {
       client =
         client.newBuilder()
           .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+            handshakeCertificates.sslSocketFactory(),
+            handshakeCertificates.trustManager,
           )
           .hostnameVerifier(RecordingHostnameVerifier())
           .build()
@@ -910,7 +915,8 @@ class URLConnectionTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()
@@ -952,7 +958,8 @@ class URLConnectionTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(hostnameVerifier)
         .build()
@@ -989,7 +996,8 @@ class URLConnectionTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .connectionSpecs(listOf(ConnectionSpec.MODERN_TLS))
         .hostnameVerifier(RecordingHostnameVerifier())
@@ -1028,7 +1036,8 @@ class URLConnectionTest {
       client.newBuilder()
         .proxy(server.toProxyAddress())
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(hostnameVerifier)
         .build()
@@ -1071,7 +1080,8 @@ class URLConnectionTest {
         .proxyAuthenticator(Authenticator.JAVA_NET_AUTHENTICATOR)
         .proxy(server.toProxyAddress())
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()
@@ -1105,7 +1115,8 @@ class URLConnectionTest {
       client.newBuilder()
         .proxy(server.toProxyAddress())
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()
@@ -1967,7 +1978,8 @@ class URLConnectionTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()
@@ -2254,7 +2266,8 @@ class URLConnectionTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()
@@ -2284,7 +2297,8 @@ class URLConnectionTest {
       client.newBuilder()
         .followSslRedirects(false)
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()
@@ -2327,7 +2341,8 @@ class URLConnectionTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .followSslRedirects(true)
@@ -2353,7 +2368,8 @@ class URLConnectionTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .followSslRedirects(true)
@@ -2380,7 +2396,8 @@ class URLConnectionTest {
       client =
         client.newBuilder()
           .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+            handshakeCertificates.sslSocketFactory(),
+            handshakeCertificates.trustManager,
           )
           .hostnameVerifier(RecordingHostnameVerifier())
           .build()
@@ -3887,7 +3904,8 @@ class URLConnectionTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .build()
     assertFailsWith<IOException> {

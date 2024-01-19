@@ -325,7 +325,8 @@ class CacheTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build()
@@ -372,7 +373,8 @@ class CacheTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build()
@@ -499,7 +501,8 @@ class CacheTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build()
@@ -553,7 +556,8 @@ class CacheTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build()
@@ -2396,7 +2400,8 @@ class CacheTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build()

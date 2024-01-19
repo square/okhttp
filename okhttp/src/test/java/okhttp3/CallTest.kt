@@ -1348,7 +1348,8 @@ open class CallTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          clientSocketFactory, handshakeCertificates.trustManager,
+          clientSocketFactory,
+          handshakeCertificates.trustManager,
         ) // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
         .connectionSpecs(listOf(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
         .hostnameVerifier(RecordingHostnameVerifier())
@@ -4157,7 +4158,8 @@ open class CallTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .proxy(server.toProxyAddress())
@@ -4309,7 +4311,8 @@ open class CallTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .protocols(listOf(Protocol.HTTP_1_1))
@@ -4619,7 +4622,8 @@ open class CallTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()

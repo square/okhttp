@@ -443,7 +443,10 @@ class MockWebServer : Closeable {
           }
           socket =
             sslSocketFactory!!.createSocket(
-              raw, raw.inetAddress.hostAddress, raw.port, true,
+              raw,
+              raw.inetAddress.hostAddress,
+              raw.port,
+              true,
             )
           val sslSocket = socket as SSLSocket
           sslSocket.useClientMode = false

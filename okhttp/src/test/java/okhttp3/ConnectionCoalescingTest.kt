@@ -94,7 +94,8 @@ class ConnectionCoalescingTest {
         .fastFallback(false) // Avoid data races.
         .dns(dns)
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .build()
     val serverHandshakeCertificates =
