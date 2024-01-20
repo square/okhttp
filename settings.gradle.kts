@@ -47,6 +47,7 @@ include(":samples:slack")
 include(":samples:static-server")
 include(":samples:tlssurvey")
 include(":samples:unixdomainsockets")
+include(":container-tests")
 
 project(":okhttp-logging-interceptor").name = "logging-interceptor"
 
