@@ -24,7 +24,6 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.fail
-import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
@@ -39,7 +38,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 import javax.net.ssl.SSLException
-import kotlin.io.use
 import kotlin.test.assertFailsWith
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -84,8 +82,11 @@ import okhttp3.internal.discard
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
-import okio.*
+import okio.Buffer
+import okio.BufferedSink
+import okio.GzipSink
 import okio.Path.Companion.toPath
+import okio.buffer
 import okio.fakefilesystem.FakeFileSystem
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
@@ -94,7 +95,6 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
