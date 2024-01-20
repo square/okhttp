@@ -35,13 +35,13 @@ import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import javax.inject.Named
 import javax.net.ssl.HostnameVerifier
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
 import mockwebserver3.SocketPolicy.DisconnectAtEnd
-import mockwebserver3.junit5.internal.MockWebServerInstance
 import okhttp3.Cache.Companion.key
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
@@ -84,8 +84,8 @@ class CacheTest {
 
   @BeforeEach
   fun setUp(
-    @MockWebServerInstance(name = "1") server: MockWebServer,
-    @MockWebServerInstance(name = "2") server2: MockWebServer,
+    @Named("1") server: MockWebServer,
+    @Named("2") server2: MockWebServer,
   ) {
     this.server = server
     this.server2 = server2

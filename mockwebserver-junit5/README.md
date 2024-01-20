@@ -56,8 +56,8 @@ Multiple instances can be obtained by naming additional ones:
 ```
 class MyTest(
   private val server: MockWebServer,
-  @MockWebServerInstance("server2") private val server2: MockWebServer,
-  @MockWebServerInstance("server3") private val server3: MockWebServer
+  @Named("server2") private val server2: MockWebServer,
+  @Named("server3") private val server3: MockWebServer
 ) {
   @Test
   fun test() {

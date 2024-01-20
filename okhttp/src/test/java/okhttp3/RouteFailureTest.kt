@@ -24,10 +24,10 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.SocketTimeoutException
+import javax.inject.Named
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.ResetStreamAtStart
-import mockwebserver3.junit5.internal.MockWebServerInstance
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.PlatformRule
@@ -68,7 +68,7 @@ class RouteFailureTest {
   @BeforeEach
   fun setUp(
     server: MockWebServer,
-    @MockWebServerInstance("server2") server2: MockWebServer,
+    @Named("server2") server2: MockWebServer,
   ) {
     this.server1 = server
     this.server2 = server2

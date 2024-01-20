@@ -17,6 +17,7 @@ package mockwebserver3.junit5.internal
 
 import assertk.assertThat
 import assertk.assertions.isTrue
+import javax.inject.Named
 import mockwebserver3.MockWebServer
 import org.junit.jupiter.api.Test
 
@@ -24,7 +25,7 @@ class ExtensionMultipleTestsTest {
   @Test
   fun testClient1(
     defaultInstance: MockWebServer,
-    @MockWebServerInstance("A") instanceA: MockWebServer,
+    @Named("A") instanceA: MockWebServer,
   ) {
     assertThat(seenInstances.add(defaultInstance.port)).isTrue()
     assertThat(seenInstances.add(instanceA.port)).isTrue()
@@ -33,7 +34,7 @@ class ExtensionMultipleTestsTest {
   @Test
   fun testClient2(
     defaultInstance: MockWebServer,
-    @MockWebServerInstance("A") instanceA: MockWebServer,
+    @Named("A") instanceA: MockWebServer,
   ) {
     assertThat(seenInstances.add(defaultInstance.port)).isTrue()
     assertThat(seenInstances.add(instanceA.port)).isTrue()

@@ -60,6 +60,7 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.zip.GZIPInputStream
+import javax.inject.Named
 import javax.net.SocketFactory
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
@@ -75,7 +76,6 @@ import mockwebserver3.SocketPolicy.DisconnectAtEnd
 import mockwebserver3.SocketPolicy.FailHandshake
 import mockwebserver3.SocketPolicy.ShutdownInputAtEnd
 import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
-import mockwebserver3.junit5.internal.MockWebServerInstance
 import okhttp3.Credentials.basic
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -130,7 +130,7 @@ class URLConnectionTest {
   @BeforeEach
   fun setUp(
     server: MockWebServer,
-    @MockWebServerInstance("server2") server2: MockWebServer,
+    @Named("server2") server2: MockWebServer,
   ) {
     this.server = server
     this.server2 = server2

@@ -24,6 +24,7 @@ dependencies {
   api(projects.mockwebserver3)
   api(libs.junit.jupiter.api)
   compileOnly(libs.animalsniffer.annotations)
+  api(libs.javax.inject)
 
   testRuntimeOnly(libs.junit.jupiter.engine)
   testImplementation(libs.kotlin.junit5)
