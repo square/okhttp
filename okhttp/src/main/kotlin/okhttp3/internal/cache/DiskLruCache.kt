@@ -20,6 +20,7 @@ import java.io.EOFException
 import java.io.Flushable
 import java.io.IOException
 import okhttp3.internal.assertThreadHoldsLock
+import okhttp3.internal.cache.CacheLock.openLock
 import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
@@ -95,6 +96,8 @@ class DiskLruCache(
   /** Used for asynchronous journal rebuilds. */
   taskRunner: TaskRunner,
 ) : Closeable, Flushable {
+  lateinit var cacheLock: Closeable
+
   internal val fileSystem: FileSystem =
     object : ForwardingFileSystem(fileSystem) {
       override fun sink(
@@ -241,6 +244,8 @@ class DiskLruCache(
     }
 
     civilizedFileSystem = fileSystem.isCivilized(journalFileBackup)
+
+    cacheLock = openLock(fileSystem, directory)
 
     // Prefer to pick up where we left off.
     if (fileSystem.exists(journalFile)) {
@@ -704,6 +709,8 @@ class DiskLruCache(
       closed = true
       return
     }
+
+    cacheLock.close()
 
     // Copying for concurrent iteration.
     for (entry in lruEntries.values.toTypedArray()) {
