@@ -57,7 +57,8 @@ import okio.buffer
  * bandwidth.
  *
  * The Cache instance must have exclusive access to the [directory], since the internal data structures
- * may cause corruption or runtime errors if not.
+ * may cause corruption or runtime errors if not. It may however be shared amongst multiple OkHttpClient
+ * instances.
  *
  * ## Cache Optimization
  *
