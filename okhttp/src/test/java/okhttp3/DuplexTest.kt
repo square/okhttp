@@ -768,7 +768,8 @@ class DuplexTest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()

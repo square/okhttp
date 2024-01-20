@@ -454,7 +454,10 @@ class RealWebSocketTest {
           .build()
       webSocket =
         RealWebSocket(
-          taskFaker.taskRunner, response.request, listener, random!!,
+          taskFaker.taskRunner,
+          response.request,
+          listener,
+          random!!,
           pingIntervalMillis.toLong(),
           parse(
             responseHeaders,

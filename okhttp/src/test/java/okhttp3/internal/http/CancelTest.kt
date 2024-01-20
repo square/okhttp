@@ -136,7 +136,8 @@ class CancelTest {
           },
         )
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .eventListener(listener)
         .apply {

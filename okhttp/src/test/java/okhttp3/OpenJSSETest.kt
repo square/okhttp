@@ -117,7 +117,8 @@ class OpenJSSETest {
     client =
       client.newBuilder()
         .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager,
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
         )
         .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())

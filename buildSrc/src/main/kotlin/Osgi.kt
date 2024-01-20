@@ -49,7 +49,9 @@ private fun Project.applyOsgi(
   val jarTask = tasks.getByName<Jar>(jarTaskName)
   val bundleExtension =
     jarTask.extensions.findByType() ?: jarTask.extensions.create(
-      BundleTaskExtension.NAME, BundleTaskExtension::class.java, jarTask,
+      BundleTaskExtension.NAME,
+      BundleTaskExtension::class.java,
+      jarTask,
     )
   bundleExtension.run {
     setClasspath(osgi.compileClasspath + sourceSets["main"].compileClasspath)

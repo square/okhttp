@@ -95,8 +95,12 @@ class Dispatcher() {
       if (executorServiceOrNull == null) {
         executorServiceOrNull =
           ThreadPoolExecutor(
-            0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
-            SynchronousQueue(), threadFactory("$okHttpName Dispatcher", false),
+            0,
+            Int.MAX_VALUE,
+            60,
+            TimeUnit.SECONDS,
+            SynchronousQueue(),
+            threadFactory("$okHttpName Dispatcher", false),
           )
       }
       return executorServiceOrNull!!
