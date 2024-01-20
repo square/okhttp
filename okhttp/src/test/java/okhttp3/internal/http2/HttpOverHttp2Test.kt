@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 import javax.net.ssl.SSLException
+import kotlin.io.use
 import kotlin.test.assertFailsWith
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -83,10 +84,9 @@ import okhttp3.internal.discard
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
-import okio.Buffer
-import okio.BufferedSink
-import okio.GzipSink
-import okio.buffer
+import okio.*
+import okio.Path.Companion.toPath
+import okio.fakefilesystem.FakeFileSystem
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -107,9 +107,6 @@ class HttpOverHttp2Test {
     override fun arguments() = listOf(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_2)
   }
 
-  @TempDir
-  lateinit var tempDir: File
-
   @RegisterExtension
   val platform: PlatformRule = PlatformRule()
 
@@ -127,7 +124,8 @@ class HttpOverHttp2Test {
   private lateinit var server: MockWebServer
   private lateinit var protocol: Protocol
   private lateinit var client: OkHttpClient
-  private lateinit var cache: Cache
+  private val fileSystem: FakeFileSystem = FakeFileSystem()
+  private val cache: Cache = Cache("/tmp/cache".toPath(), Long.MAX_VALUE, fileSystem)
   private lateinit var scheme: String
 
   private fun configureClientTestRule(): OkHttpClientTestRule {
@@ -164,10 +162,13 @@ class HttpOverHttp2Test {
           .build()
       scheme = "http"
     }
-    cache = Cache(tempDir, Int.MAX_VALUE.toLong())
   }
 
   @AfterEach fun tearDown() {
+//    TODO reenable after https://github.com/square/okhttp/issues/8206
+//    fileSystem.checkNoOpenFiles()
+    cache.close()
+
     java.net.Authenticator.setDefault(null)
   }
 
