@@ -23,6 +23,7 @@ import java.net.HttpCookie
 import java.util.Collections
 import okhttp3.Cookie
 import okhttp3.CookieJar
+import okhttp3.ExperimentalOkHttpApi
 import okhttp3.HttpUrl
 import okhttp3.internal.cookieToString
 import okhttp3.internal.delimiterOffset
@@ -31,6 +32,7 @@ import okhttp3.internal.platform.Platform.Companion.WARN
 import okhttp3.internal.trimSubstring
 
 /** A cookie jar that delegates to a [java.net.CookieHandler]. */
+@ExperimentalOkHttpApi
 class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
   override fun saveFromResponse(
     url: HttpUrl,

@@ -35,6 +35,7 @@ import okhttp3.AsyncDns
  * @param network network to use, if not selects the default network.
  */
 @RequiresApi(Build.VERSION_CODES.Q)
+@ExperimentalOkHttpApi
 class AndroidAsyncDns(
   private val dnsClass: AsyncDns.DnsClass,
   private val network: Network? = null,
@@ -74,6 +75,7 @@ class AndroidAsyncDns(
     )
   }
 
+  @ExperimentalOkHttpApi
   companion object {
     @RequiresApi(Build.VERSION_CODES.Q)
     val IPv4 = AndroidAsyncDns(dnsClass = AsyncDns.DnsClass.IPV4)

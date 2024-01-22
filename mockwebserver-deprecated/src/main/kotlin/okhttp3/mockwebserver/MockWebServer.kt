@@ -24,11 +24,13 @@ import java.util.logging.Level
 import java.util.logging.Logger
 import javax.net.ServerSocketFactory
 import javax.net.ssl.SSLSocketFactory
+import okhttp3.ExperimentalOkHttpApi
 import okhttp3.HttpUrl
 import okhttp3.Protocol
 import org.junit.rules.ExternalResource
 
 class MockWebServer : ExternalResource(), Closeable {
+  @ExperimentalOkHttpApi
   val delegate = mockwebserver3.MockWebServer()
 
   val requestCount: Int by delegate::requestCount

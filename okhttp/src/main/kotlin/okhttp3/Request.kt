@@ -68,6 +68,7 @@ class Request internal constructor(builder: Builder) {
    *
    * @param method defaults to "GET" if [body] is null, and "POST" otherwise.
    */
+  @ExperimentalOkHttpApi
   constructor(
     url: HttpUrl,
     headers: Headers = headersOf(),
@@ -97,6 +98,7 @@ class Request internal constructor(builder: Builder) {
   inline fun <reified T : Any> tag(): T? = tag(T::class)
 
   /** Returns the tag attached with [type] as a key, or null if no tag is attached with that key. */
+  @ExperimentalOkHttpApi
   fun <T : Any> tag(type: KClass<T>): T? = type.java.cast(tags[type])
 
   /**
@@ -293,6 +295,7 @@ class Request internal constructor(builder: Builder) {
      * Use this API to attach timing, debugging, or other application data to a request so that
      * you may read it in interceptors, event listeners, or callbacks.
      */
+    @ExperimentalOkHttpApi
     fun <T : Any> tag(
       type: KClass<T>,
       tag: T?,

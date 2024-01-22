@@ -92,6 +92,7 @@ class Cookie private constructor(
    * This is true unless 'domain' is present.
    */
   @get:JvmName("hostOnly") val hostOnly: Boolean,
+
   /**
    * Returns a string describing whether this cookie is sent for cross-site calls.
    *
@@ -117,7 +118,9 @@ class Cookie private constructor(
    *  - "None": the cookie is always sent. The "Secure" attribute must also be set when setting this
    *    value.
    */
-  @get:JvmName("sameSite") val sameSite: String?,
+  @get:JvmName("sameSite")
+  @property:ExperimentalOkHttpApi
+  val sameSite: String?,
 ) {
   /**
    * Returns true if this cookie should be included on a request to [url]. In addition to this
@@ -286,6 +289,7 @@ class Cookie private constructor(
     }
   }
 
+  @ExperimentalOkHttpApi
   fun newBuilder(): Builder = Builder(this)
 
   /**
@@ -377,6 +381,7 @@ class Cookie private constructor(
         this.httpOnly = true
       }
 
+    @ExperimentalOkHttpApi
     fun sameSite(sameSite: String) =
       apply {
         require(sameSite.trim() == sameSite) { "sameSite is not trimmed" }

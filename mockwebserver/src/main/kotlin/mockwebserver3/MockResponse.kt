@@ -20,6 +20,7 @@ package mockwebserver3
 import java.util.concurrent.TimeUnit
 import mockwebserver3.SocketPolicy.KeepOpen
 import mockwebserver3.internal.toMockResponseBody
+import okhttp3.ExperimentalOkHttpApi
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.WebSocketListener
@@ -28,6 +29,7 @@ import okhttp3.internal.http2.Settings
 import okio.Buffer
 
 /** A scripted response to be replayed by the mock web server. */
+@ExperimentalOkHttpApi
 class MockResponse {
   /** Returns the HTTP response line, such as "HTTP/1.1 200 OK". */
   val status: String
@@ -112,6 +114,7 @@ class MockResponse {
 
   override fun toString(): String = status
 
+  @ExperimentalOkHttpApi
   class Builder : Cloneable {
     var inTunnel: Boolean
       internal set
@@ -453,6 +456,7 @@ class MockResponse {
     fun build(): MockResponse = MockResponse(this)
   }
 
+  @ExperimentalOkHttpApi
   companion object {
     private const val CHUNKED_BODY_HEADER = "Transfer-encoding: chunked"
   }

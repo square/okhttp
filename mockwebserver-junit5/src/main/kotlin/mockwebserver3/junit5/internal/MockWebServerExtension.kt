@@ -21,6 +21,7 @@ import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.jvm.optionals.getOrNull
 import mockwebserver3.MockWebServer
+import okhttp3.ExperimentalOkHttpApi
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -40,6 +41,7 @@ import org.junit.jupiter.api.extension.ParameterResolver
  * - The test lifecycle default (passed into test method, plus @BeforeEach, @AfterEach)
  * - named instances with @MockWebServerInstance.
  */
+@ExperimentalOkHttpApi
 class MockWebServerExtension :
   BeforeEachCallback, AfterEachCallback, ParameterResolver {
   private val ExtensionContext.resource: ServersForTest
