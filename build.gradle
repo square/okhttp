@@ -49,6 +49,7 @@ buildscript {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
     classpath "com.android.tools.build:gradle:7.4.2"
+    classpath "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.13.2"
   }
 
   repositories {
@@ -233,6 +234,7 @@ subprojects { project ->
 
   apply plugin: 'maven-publish'
   apply plugin: 'signing'
+  apply plugin: 'binary-compatibility-validator'
 
   publishing {
     if (!bom) {

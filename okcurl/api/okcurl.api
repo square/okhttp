@@ -1,0 +1,49 @@
+public final class okhttp3/curl/Main : java/lang/Runnable {
+	public static final field Companion Lokhttp3/curl/Main$Companion;
+	public fun <init> ()V
+	public final fun createRequest ()Lokhttp3/Request;
+	public final fun getAllowInsecure ()Z
+	public final fun getCallTimeout ()I
+	public final fun getCompletionScript ()Z
+	public final fun getConnectTimeout ()I
+	public final fun getData ()Ljava/lang/String;
+	public final fun getFollowRedirects ()Z
+	public final fun getHeaders ()Ljava/util/List;
+	public final fun getMethod ()Ljava/lang/String;
+	public final fun getReadTimeout ()I
+	public final fun getReferer ()Ljava/lang/String;
+	public final fun getShowHeaders ()Z
+	public final fun getShowHttp2Frames ()Z
+	public final fun getSslDebug ()Z
+	public final fun getUrl ()Ljava/lang/String;
+	public final fun getUserAgent ()Ljava/lang/String;
+	public final fun getVerbose ()Z
+	public static final fun main ([Ljava/lang/String;)V
+	public fun run ()V
+	public final fun setAllowInsecure (Z)V
+	public final fun setCallTimeout (I)V
+	public final fun setCompletionScript (Z)V
+	public final fun setConnectTimeout (I)V
+	public final fun setData (Ljava/lang/String;)V
+	public final fun setFollowRedirects (Z)V
+	public final fun setHeaders (Ljava/util/List;)V
+	public final fun setMethod (Ljava/lang/String;)V
+	public final fun setReadTimeout (I)V
+	public final fun setReferer (Ljava/lang/String;)V
+	public final fun setShowHeaders (Z)V
+	public final fun setShowHttp2Frames (Z)V
+	public final fun setSslDebug (Z)V
+	public final fun setUrl (Ljava/lang/String;)V
+	public final fun setUserAgent (Ljava/lang/String;)V
+	public final fun setVerbose (Z)V
+}
+
+public final class okhttp3/curl/Main$Companion {
+	public final fun main ([Ljava/lang/String;)V
+}
+
+public final class okhttp3/curl/Main$VersionProvider : picocli/CommandLine$IVersionProvider {
+	public fun <init> ()V
+	public fun getVersion ()[Ljava/lang/String;
+}
+
