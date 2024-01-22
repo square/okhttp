@@ -13,8 +13,7 @@
     <activity
       android:name=".TestActivity"
       android:exported="true"
-      android:label="@string/title_activity_test"
-      android:theme="@style/Theme.Okhttpparent">
+      android:label="@string/title_activity_test">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
 

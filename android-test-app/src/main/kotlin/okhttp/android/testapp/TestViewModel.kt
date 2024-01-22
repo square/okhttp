@@ -18,16 +18,23 @@ import kotlinx.coroutines.withContext
 class TestViewModel(application: Application) : AndroidViewModel(application) {
 
   init {
-      viewModelScope.launch {
-        while(true) {
-          println("looping(isFlightModeOn = ${isFlightModeOn()}) " + dnsQuery())
-          delay(250.milliseconds)
+    viewModelScope.launch {
+      while (true) {
+        val dnsQuery = dnsQuery()
+        val out = if (dnsQuery.isFailure) {
+          val throwable = dnsQuery.exceptionOrNull()!!
+          throwable.toString()
+        } else {
+          dnsQuery.getOrNull()?.toString()
         }
+        println("looping(isFlightModeOn = ${isFlightModeOn()}) " + out)
+        delay(250.milliseconds)
       }
+    }
   }
 
   /**Query the system setting to check the flight mode is on or off**/
-  private fun isFlightModeOn() = Settings.System.getInt(
+  private fun isFlightModeOn() = Settings.Global.getInt(
     getApplication<Application>().contentResolver,
     Settings.Global.AIRPLANE_MODE_ON,
     0
@@ -50,6 +57,8 @@ class TestViewModel(application: Application) : AndroidViewModel(application) {
     return withContext(Dispatchers.IO) {
       kotlin.runCatching {
         InetAddress.getAllByName(uiState.value.host).toList()
+      }.recoverCatching {
+        throw it.cause ?: it
       }
     }
   }
@@ -57,6 +66,7 @@ class TestViewModel(application: Application) : AndroidViewModel(application) {
   val clearDnsCache = InetAddress::class.java.getMethod("clearDnsCache")
 
   fun clearAddressCache() {
+//    println("clearAddressCache")
     clearDnsCache.invoke(null)
   }
 
