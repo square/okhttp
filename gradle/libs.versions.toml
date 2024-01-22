@@ -6,6 +6,7 @@ com-squareup-okio = "3.7.0"
 de-mannodermaus-junit5 = "1.4.0"
 graalvm = "22.3.2"
 kotlinx-serialization = "1.6.2"
+lifecycleRuntimeCompose = "2.7.0"
 mockserverClient = "5.15.0"
 org-bouncycastle = "1.76"
 org-conscrypt = "2.5.2"
@@ -13,6 +14,10 @@ org-jetbrains-coroutines = "1.7.3"
 org-jetbrains-kotlin = "1.9.21"
 org-junit-jupiter = "5.10.1"
 testcontainers = "1.19.3"
+lifecycle-runtime-ktx = "2.6.1"
+activity-compose = "1.8.2"
+compose-bom = "2023.08.00"
+lifecycleViewmodelCompose = "2.7.0"
 
 [libraries]
 amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.3.3"
@@ -20,6 +25,7 @@ androidx-activity = "androidx.activity:activity-ktx:1.8.2"
 androidx-annotation = "androidx.annotation:annotation:1.7.1"
 androidx-espresso-core = "androidx.test.espresso:espresso-core:3.5.1"
 androidx-junit = "androidx.test.ext:junit:1.1.5"
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
 androidx-test-runner = "androidx.test:runner:1.5.2"
 animalsniffer-annotations = "org.codehaus.mojo:animal-sniffer-annotations:1.23"
 aqute-resolve = { module = "biz.aQute.bnd:biz.aQute.resolve", version.ref = "biz-aQute-bnd" }
@@ -95,3 +101,14 @@ squareup-okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem
 squareup-okio-nodefilesystem = { module = "com.squareup.okio:okio-nodefilesystem", version.ref = "com-squareup-okio" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainers-junit5 = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-ktx" }
+activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
+compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
+ui = { group = "androidx.compose.ui", name = "ui" }
+ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
