@@ -56,6 +56,10 @@ import okio.buffer
  * Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and
  * bandwidth.
  *
+ * The Cache instance must have exclusive access to the [directory], since the internal data structures
+ * may cause corruption or runtime errors if not. It may however be shared amongst multiple OkHttpClient
+ * instances.
+ *
  * ## Cache Optimization
  *
  * To measure cache effectiveness, this class tracks three statistics:
