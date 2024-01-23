@@ -1,5 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
+import com.diffplug.gradle.spotless.KotlinExtension
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
@@ -7,7 +8,10 @@ import java.net.URI
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
+import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapper
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.js.translate.context.Namer.kotlin
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 buildscript {
@@ -213,6 +217,20 @@ subprojects {
   tasks.withType<JavaCompile> {
     sourceCompatibility = JavaVersion.VERSION_1_8.toString()
     targetCompatibility = JavaVersion.VERSION_1_8.toString()
+  }
+}
+
+// Opt-in to @ExperimentalOkHttpApi everywhere.
+subprojects {
+  plugins.withId("org.jetbrains.kotlin.jvm") {
+    kotlinExtension.sourceSets.configureEach {
+      languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
+    }
+  }
+  plugins.withId("org.jetbrains.kotlin.android") {
+    kotlinExtension.sourceSets.configureEach {
+      languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
+    }
   }
 }
 

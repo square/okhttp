@@ -24,6 +24,7 @@ import okio.IOException
  * attempt to mutate the event parameters, or be reentrant back into the client.
  * Any IO - writing to files or network should be done asynchronously.
  */
+@ExperimentalOkHttpApi
 abstract class ConnectionListener {
   /**
    * Invoked as soon as a call causes a connection to be started.
@@ -77,6 +78,7 @@ abstract class ConnectionListener {
    */
   open fun noNewExchanges(connection: Connection) {}
 
+  @ExperimentalOkHttpApi
   companion object {
     val NONE: ConnectionListener = object : ConnectionListener() {}
   }

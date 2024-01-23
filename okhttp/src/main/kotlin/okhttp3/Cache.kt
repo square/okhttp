@@ -151,6 +151,7 @@ class Cache internal constructor(
   fileSystem: FileSystem,
   taskRunner: TaskRunner,
 ) : Closeable, Flushable {
+  @ExperimentalOkHttpApi
   constructor(
     directory: Path,
     maxSize: Long,
@@ -388,6 +389,7 @@ class Cache internal constructor(
     get() = cache.directory.toFile()
 
   @get:JvmName("directoryPath")
+  @ExperimentalOkHttpApi
   val directoryPath: Path
     get() = cache.directory
 

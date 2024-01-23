@@ -25,6 +25,7 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.Executors
 import okhttp3.AsyncDns
+import okhttp3.ExperimentalOkHttpApi
 
 /**
  * DNS implementation based on android.net.DnsResolver, which submits a request for
@@ -35,6 +36,7 @@ import okhttp3.AsyncDns
  * @param network network to use, if not selects the default network.
  */
 @RequiresApi(Build.VERSION_CODES.Q)
+@ExperimentalOkHttpApi
 class AndroidAsyncDns(
   private val dnsClass: AsyncDns.DnsClass,
   private val network: Network? = null,
@@ -83,6 +85,7 @@ class AndroidAsyncDns(
     }
   }
 
+  @ExperimentalOkHttpApi
   companion object {
     @RequiresApi(Build.VERSION_CODES.Q)
     val IPv4 = AndroidAsyncDns(dnsClass = AsyncDns.DnsClass.IPV4)

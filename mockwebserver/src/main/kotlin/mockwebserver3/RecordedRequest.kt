@@ -20,6 +20,7 @@ import java.io.IOException
 import java.net.Inet6Address
 import java.net.Socket
 import javax.net.ssl.SSLSocket
+import okhttp3.ExperimentalOkHttpApi
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers
@@ -29,6 +30,7 @@ import okhttp3.internal.platform.Platform
 import okio.Buffer
 
 /** An HTTP request that came into the mock web server. */
+@ExperimentalOkHttpApi
 class RecordedRequest(
   val requestLine: String,
   /** All headers. */

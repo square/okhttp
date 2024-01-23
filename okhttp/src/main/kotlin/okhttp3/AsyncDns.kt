@@ -32,6 +32,7 @@ import okio.IOException
  *
  * Implementations of this interface must be safe for concurrent use.
  */
+@ExperimentalOkHttpApi
 interface AsyncDns {
   /**
    * Query DNS records for `hostname`, in the order they are received.
@@ -44,6 +45,7 @@ interface AsyncDns {
   /**
    * Callback to receive results from the DNS Queries.
    */
+  @ExperimentalOkHttpApi
   interface Callback {
     /**
      * Return addresses for a dns query for a single class of IPv4 (A) or IPv6 (AAAA).
@@ -67,11 +69,13 @@ interface AsyncDns {
    * Class of DNS addresses, such that clients that treat these differently, such
    * as attempting IPv6 first, can make such decisions.
    */
+  @ExperimentalOkHttpApi
   enum class DnsClass(val type: Int) {
     IPV4(TYPE_A),
     IPV6(TYPE_AAAA),
   }
 
+  @ExperimentalOkHttpApi
   companion object {
     const val TYPE_A = 1
     const val TYPE_AAAA = 28
