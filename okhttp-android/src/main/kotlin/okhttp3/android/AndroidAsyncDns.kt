@@ -25,6 +25,7 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.Executors
 import okhttp3.AsyncDns
+import okhttp3.ExperimentalOkHttpApi
 
 /**
  * DNS implementation based on android.net.DnsResolver, which submits a request for

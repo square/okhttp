@@ -92,7 +92,6 @@ class Cookie private constructor(
    * This is true unless 'domain' is present.
    */
   @get:JvmName("hostOnly") val hostOnly: Boolean,
-
   /**
    * Returns a string describing whether this cookie is sent for cross-site calls.
    *

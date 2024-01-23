@@ -227,6 +227,11 @@ subprojects {
       languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
     }
   }
+  plugins.withId("org.jetbrains.kotlin.android") {
+    kotlinExtension.sourceSets.configureEach {
+      languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
+    }
+  }
 }
 
 /** Configure publishing and signing for published Java and JavaPlatform subprojects. */
