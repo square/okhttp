@@ -267,9 +267,7 @@ abstract class RequestBody {
 
         @Throws(IOException::class)
         override fun writeTo(sink: BufferedSink) {
-          val gzipSink = GzipSink(sink).buffer()
-          this@gzip.writeTo(gzipSink)
-          gzipSink.close()
+          GzipSink(sink).buffer().use(this@gzip::writeTo)
         }
 
         override fun isOneShot(): Boolean {
