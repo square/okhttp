@@ -233,6 +233,8 @@ open class OkHttpClient internal constructor(
   /**
    * Default call timeout (in milliseconds). By default there is no timeout for complete calls, but
    * there is for the connect, write, and read actions within a call.
+   *
+   * For WebSockets and duplex calls the timeout only applies to the initial setup.
    */
   @get:JvmName("callTimeoutMillis")
   val callTimeoutMillis: Int = builder.callTimeout
