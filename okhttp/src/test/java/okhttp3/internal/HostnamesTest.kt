@@ -61,8 +61,11 @@ class HostnamesTest {
     assertThat(canonicalizeInetAddress(addressAIpv6)).isEqualTo(
       ByteArray(12) +
         byteArrayOf(
-          192.toByte(), 168.toByte(), 0, 1
-        )
+          192.toByte(),
+          168.toByte(),
+          0,
+          1,
+        ),
     )
   }
 
@@ -124,19 +127,19 @@ class HostnamesTest {
     assertThat("2001:db8::1".toCanonicalHost()).isEqualTo("2001:db8::1")
     assertThat("::ffff:192.168.0.1".toCanonicalHost()).isEqualTo("192.168.0.1")
     assertThat(
-      "FEDC:BA98:7654:3210:FEDC:BA98:7654:3210".toCanonicalHost()
+      "FEDC:BA98:7654:3210:FEDC:BA98:7654:3210".toCanonicalHost(),
     ).isEqualTo(
-      "fedc:ba98:7654:3210:fedc:ba98:7654:3210"
+      "fedc:ba98:7654:3210:fedc:ba98:7654:3210",
     )
 
     assertThat(
-      "1080:0:0:0:8:800:200C:417A".toCanonicalHost()
+      "1080:0:0:0:8:800:200C:417A".toCanonicalHost(),
     ).isEqualTo("1080::8:800:200c:417a")
 
     assertThat("1080::8:800:200C:417A".toCanonicalHost()).isEqualTo("1080::8:800:200c:417a")
     assertThat("FF01::101".toCanonicalHost()).isEqualTo("ff01::101")
     assertThat(
-      "0:0:0:0:0:FFFF:129.144.52.38".toCanonicalHost()
+      "0:0:0:0:0:FFFF:129.144.52.38".toCanonicalHost(),
     ).isEqualTo("129.144.52.38")
 
     assertThat("::FFFF:129.144.52.38".toCanonicalHost()).isEqualTo("129.144.52.38")
