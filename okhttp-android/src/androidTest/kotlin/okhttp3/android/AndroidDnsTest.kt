@@ -44,6 +44,7 @@ class AndroidDnsTest {
       cause().isNotNull().hasMessage("android_getaddrinfo failed: EAI_NODATA (No address associated with hostname)")
     }
   }
+
   @Test
   fun testDnsRequestInvalidWithSystem() {
     assertFailure {

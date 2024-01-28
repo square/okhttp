@@ -4,7 +4,7 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 import okhttp3.Dns
 
-object AndroidDns: Dns {
+object AndroidDns : Dns {
   private val dns: Dns = Dns.SYSTEM
 
   val clearDnsCache = kotlin.runCatching { InetAddress::class.java.getMethod("clearDnsCache") }
