@@ -56,10 +56,20 @@ class HostnamesTest {
   }
 
   @Test
-  fun canonicalizeInetAddressIPv6RepresentationOfIPV4() {
+  fun canonicalizeInetAddressIPv6RepresentationOfCompatibleIPV4() {
     val addressAIpv6 = decodeIpv6("::192.168.0.1")!!
-    val addressAIpv4 = ByteArray(12) + byteArrayOf(192.toByte(), 168.toByte(), 0, 1)
-    assertThat(canonicalizeInetAddress(addressAIpv6)).isEqualTo(addressAIpv4)
+    assertThat(canonicalizeInetAddress(addressAIpv6)).isEqualTo(
+      ByteArray(12) +
+        byteArrayOf(
+          192.toByte(), 168.toByte(), 0, 1
+        )
+    )
+  }
+
+  @Test
+  fun canonicalizeInetAddressIPv6RepresentationOfMappedIPV4() {
+    val addressAIpv6 = decodeIpv6("::FFFF:192.168.0.1")!!
+    assertThat(canonicalizeInetAddress(addressAIpv6)).isEqualTo(byteArrayOf(192.toByte(), 168.toByte(), 0, 1))
   }
 
   @Test
