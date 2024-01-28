@@ -91,6 +91,7 @@ enum class Protocol(private val protocol: String) {
    * HTTP/3 is not natively supported by OkHttp, but provided to allow a theoretical interceptor
    * that provides support.
    */
+  @ExperimentalOkHttpApi
   HTTP_3("h3"),
   ;
 

@@ -15,9 +15,11 @@
  */
 package mockwebserver3
 
+import okhttp3.ExperimentalOkHttpApi
 import okhttp3.Headers
 
 /** An HTTP request initiated by the server. */
+@ExperimentalOkHttpApi
 class PushPromise(
   val method: String,
   val path: String,

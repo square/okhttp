@@ -120,6 +120,7 @@ abstract class RequestBody {
     /** Returns a new request body that transmits this. */
     @JvmStatic
     @JvmName("create")
+    @ExperimentalOkHttpApi
     fun FileDescriptor.toRequestBody(contentType: MediaType? = null): RequestBody {
       return object : RequestBody() {
         override fun contentType() = contentType
@@ -162,6 +163,7 @@ abstract class RequestBody {
     /** Returns a new request body that transmits the content of this. */
     @JvmStatic
     @JvmName("create")
+    @ExperimentalOkHttpApi
     fun Path.asRequestBody(
       fileSystem: FileSystem,
       contentType: MediaType? = null,
@@ -252,6 +254,7 @@ abstract class RequestBody {
      * ```
      */
     @JvmStatic
+    @ExperimentalOkHttpApi
     fun RequestBody.gzip(): RequestBody {
       return object : RequestBody() {
         override fun contentType(): MediaType? {
@@ -264,9 +267,7 @@ abstract class RequestBody {
 
         @Throws(IOException::class)
         override fun writeTo(sink: BufferedSink) {
-          val gzipSink = GzipSink(sink).buffer()
-          this@gzip.writeTo(gzipSink)
-          gzipSink.close()
+          GzipSink(sink).buffer().use(this@gzip::writeTo)
         }
 
         override fun isOneShot(): Boolean {

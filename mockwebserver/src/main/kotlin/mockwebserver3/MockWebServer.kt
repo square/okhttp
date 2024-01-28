@@ -63,6 +63,7 @@ import mockwebserver3.internal.ThrottledSink
 import mockwebserver3.internal.TriggerSink
 import mockwebserver3.internal.duplex.RealStream
 import mockwebserver3.internal.sleepNanos
+import okhttp3.ExperimentalOkHttpApi
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
@@ -97,6 +98,7 @@ import okio.source
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
  * in sequence.
  */
+@ExperimentalOkHttpApi
 class MockWebServer : Closeable {
   private val taskRunnerBackend =
     TaskRunner.RealBackend(
@@ -1164,6 +1166,7 @@ class MockWebServer : Closeable {
     }
   }
 
+  @ExperimentalOkHttpApi
   companion object {
     private const val CLIENT_AUTH_NONE = 0
     private const val CLIENT_AUTH_REQUESTED = 1

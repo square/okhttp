@@ -395,6 +395,7 @@ class Response internal constructor(
 
     open fun priorResponse(priorResponse: Response?) = commonPriorResponse(priorResponse)
 
+    @ExperimentalOkHttpApi
     open fun trailers(trailersFn: (() -> Headers)): Builder = commonTrailers(trailersFn)
 
     open fun sentRequestAtMillis(sentRequestAtMillis: Long) =

@@ -25,6 +25,7 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.Executors
 import okhttp3.AsyncDns
+import okhttp3.ExperimentalOkHttpApi
 
 /**
  * DNS implementation based on android.net.DnsResolver, which submits a request for
@@ -35,45 +36,56 @@ import okhttp3.AsyncDns
  * @param network network to use, if not selects the default network.
  */
 @RequiresApi(Build.VERSION_CODES.Q)
+@ExperimentalOkHttpApi
 class AndroidAsyncDns(
   private val dnsClass: AsyncDns.DnsClass,
   private val network: Network? = null,
 ) : AsyncDns {
   @RequiresApi(Build.VERSION_CODES.Q)
-  private val resolver = DnsResolver.getInstance()
+  internal val resolver = DnsResolver.getInstance()
   private val executor = Executors.newSingleThreadExecutor()
 
   override fun query(
     hostname: String,
     callback: AsyncDns.Callback,
   ) {
-    resolver.query(
-      network,
-      hostname,
-      dnsClass.type,
-      DnsResolver.FLAG_EMPTY,
-      executor,
-      null,
-      object : DnsResolver.Callback<List<InetAddress>> {
-        override fun onAnswer(
-          addresses: List<InetAddress>,
-          rCode: Int,
-        ) {
-          callback.onResponse(hostname, addresses)
-        }
+    try {
+      resolver.query(
+        network,
+        hostname,
+        dnsClass.type,
+        DnsResolver.FLAG_EMPTY,
+        executor,
+        null,
+        object : DnsResolver.Callback<List<InetAddress>> {
+          override fun onAnswer(
+            addresses: List<InetAddress>,
+            rCode: Int,
+          ) {
+            callback.onResponse(hostname, addresses)
+          }
 
-        override fun onError(e: DnsResolver.DnsException) {
-          callback.onFailure(
-            hostname,
-            UnknownHostException(e.message).apply {
-              initCause(e)
-            },
-          )
-        }
-      },
-    )
+          override fun onError(e: DnsResolver.DnsException) {
+            callback.onFailure(
+              hostname,
+              UnknownHostException(e.message).apply {
+                initCause(e)
+              },
+            )
+          }
+        },
+      )
+    } catch (e: Exception) {
+      callback.onFailure(
+        hostname,
+        UnknownHostException(e.message).apply {
+          initCause(e)
+        },
+      )
+    }
   }
 
+  @ExperimentalOkHttpApi
   companion object {
     @RequiresApi(Build.VERSION_CODES.Q)
     val IPv4 = AndroidAsyncDns(dnsClass = AsyncDns.DnsClass.IPV4)
