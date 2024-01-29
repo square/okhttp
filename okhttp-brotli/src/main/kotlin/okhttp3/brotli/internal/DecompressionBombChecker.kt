@@ -20,7 +20,7 @@ import okio.ForwardingSource
 import okio.IOException
 import okio.Source
 
-/** Fails decompression if the ratio is within a reasonable limit. */
+/** Fails decompression if the ratio is too high. */
 internal class DecompressionBombChecker(
   private val maxRatio: Long,
 ) {

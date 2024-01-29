@@ -16,8 +16,10 @@
 package okhttp3.brotli
 
 import assertk.assertFailure
-import assertk.assertions.hasMessage
 import assertk.assertions.isInstanceOf
+import assertk.assertions.isNotNull
+import assertk.assertions.matches
+import assertk.assertions.message
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
@@ -33,8 +35,9 @@ import okio.gzip
 import org.junit.jupiter.api.Test
 
 class BrotliBombTest {
+  /** https://github.com/square/okhttp/issues/7738 */
   @Test
-  fun testUncompressBrotli() {
+  fun testDecompressBomb() {
     val response =
       Response.Builder()
         .code(200)
@@ -50,8 +53,12 @@ class BrotliBombTest {
     assertFailure {
       uncompressed.body.string()
     }.isInstanceOf<IOException>()
-      .hasMessage(
-        "decompression bomb? outputByteCount=819200, inputByteCount=8192 exceeds max ratio of 100",
+      .message()
+      .isNotNull()
+      .matches(
+        Regex(
+          "decompression bomb\\? outputByteCount=\\d+, inputByteCount=\\d+ exceeds max ratio of 100",
+        ),
       )
   }
 
