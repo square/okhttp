@@ -56,6 +56,26 @@ class HostnamesTest {
   }
 
   @Test
+  fun canonicalizeInetAddressIPv6RepresentationOfCompatibleIPV4() {
+    val addressAIpv6 = decodeIpv6("::192.168.0.1")!!
+    assertThat(canonicalizeInetAddress(addressAIpv6)).isEqualTo(
+      ByteArray(12) +
+        byteArrayOf(
+          192.toByte(),
+          168.toByte(),
+          0,
+          1,
+        ),
+    )
+  }
+
+  @Test
+  fun canonicalizeInetAddressIPv6RepresentationOfMappedIPV4() {
+    val addressAIpv6 = decodeIpv6("::FFFF:192.168.0.1")!!
+    assertThat(canonicalizeInetAddress(addressAIpv6)).isEqualTo(byteArrayOf(192.toByte(), 168.toByte(), 0, 1))
+  }
+
+  @Test
   fun inet4AddressToAscii() {
     assertThat(
       inet4AddressToAscii(
@@ -95,4 +115,44 @@ class HostnamesTest {
   }
 
   private fun decodeIpv6(input: String): ByteArray? = decodeIpv6(input, 0, input.length)
+
+  @Test
+  fun testToCanonicalHost() {
+    // IPv4
+    assertThat("127.0.0.1".toCanonicalHost()).isEqualTo("127.0.0.1")
+    assertThat("1.2.3.4".toCanonicalHost()).isEqualTo("1.2.3.4")
+
+    // IPv6
+    assertThat("::1".toCanonicalHost()).isEqualTo("::1")
+    assertThat("2001:db8::1".toCanonicalHost()).isEqualTo("2001:db8::1")
+    assertThat("::ffff:192.168.0.1".toCanonicalHost()).isEqualTo("192.168.0.1")
+    assertThat(
+      "FEDC:BA98:7654:3210:FEDC:BA98:7654:3210".toCanonicalHost(),
+    ).isEqualTo(
+      "fedc:ba98:7654:3210:fedc:ba98:7654:3210",
+    )
+
+    assertThat(
+      "1080:0:0:0:8:800:200C:417A".toCanonicalHost(),
+    ).isEqualTo("1080::8:800:200c:417a")
+
+    assertThat("1080::8:800:200C:417A".toCanonicalHost()).isEqualTo("1080::8:800:200c:417a")
+    assertThat("FF01::101".toCanonicalHost()).isEqualTo("ff01::101")
+    assertThat(
+      "0:0:0:0:0:FFFF:129.144.52.38".toCanonicalHost(),
+    ).isEqualTo("129.144.52.38")
+
+    assertThat("::FFFF:129.144.52.38".toCanonicalHost()).isEqualTo("129.144.52.38")
+
+    // Hostnames
+    assertThat("WwW.GoOgLe.cOm".toCanonicalHost()).isEqualTo("www.google.com")
+    assertThat("localhost".toCanonicalHost()).isEqualTo("localhost")
+    assertThat("☃.net".toCanonicalHost()).isEqualTo("xn--n3h.net")
+
+    // IPv4 Compatible or Mapped addresses
+    assertThat("::192.168.0.1".toCanonicalHost()).isEqualTo("::c0a8:1")
+    assertThat("::FFFF:192.168.0.1".toCanonicalHost()).isEqualTo("192.168.0.1")
+    assertThat("0:0:0:0:0:0:13.1.68.3".toCanonicalHost()).isEqualTo("::d01:4403")
+    assertThat("::13.1.68.3".toCanonicalHost()).isEqualTo("::d01:4403")
+  }
 }
