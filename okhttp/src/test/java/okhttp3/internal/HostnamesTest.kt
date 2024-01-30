@@ -149,7 +149,7 @@ class HostnamesTest {
     assertThat("localhost".toCanonicalHost()).isEqualTo("localhost")
     assertThat("☃.net".toCanonicalHost()).isEqualTo("xn--n3h.net")
 
-    // Expected?
+    // IPv4 Compatible or Mapped addresses
     assertThat("::192.168.0.1".toCanonicalHost()).isEqualTo("::c0a8:1")
     assertThat("::FFFF:192.168.0.1".toCanonicalHost()).isEqualTo("192.168.0.1")
     assertThat("0:0:0:0:0:0:13.1.68.3".toCanonicalHost()).isEqualTo("::d01:4403")
