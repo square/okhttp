@@ -982,44 +982,51 @@ class CacheTest {
 
   @Test
   fun requestMethodOptionsIsNotCached() {
-    testRequestMethod("OPTIONS", false)
+    testRequestMethod("OPTIONS", false, true)
   }
 
   @Test
   fun requestMethodGetIsCached() {
-    testRequestMethod("GET", true)
+    testRequestMethod("GET", true, true)
   }
 
   @Test
   fun requestMethodHeadIsNotCached() {
     // We could support this but choose not to for implementation simplicity
-    testRequestMethod("HEAD", false)
+    testRequestMethod("HEAD", false, true)
   }
 
   @Test
   fun requestMethodPostIsNotCached() {
     // We could support this but choose not to for implementation simplicity
-    testRequestMethod("POST", false)
+    testRequestMethod("POST", false, true)
+  }
+
+  @Test
+  fun requestMethodPostIsNotCachedUnlessOverride() {
+    // We could support this but choose not to for implementation simplicity
+    testRequestMethod("POST", true, withOverride = true)
   }
 
   @Test
   fun requestMethodPutIsNotCached() {
-    testRequestMethod("PUT", false)
+    testRequestMethod("PUT", false, true)
   }
 
   @Test
   fun requestMethodDeleteIsNotCached() {
-    testRequestMethod("DELETE", false)
+    testRequestMethod("DELETE", false, true)
   }
 
   @Test
   fun requestMethodTraceIsNotCached() {
-    testRequestMethod("TRACE", false)
+    testRequestMethod("TRACE", false, true)
   }
 
   private fun testRequestMethod(
     requestMethod: String,
     expectCached: Boolean,
+    withOverride: Boolean = false,
   ) {
     // 1. Seed the cache (potentially).
     // 2. Expect a cache hit or miss.
@@ -1038,6 +1045,11 @@ class CacheTest {
     val request =
       Request.Builder()
         .url(url)
+        .apply {
+          if (withOverride) {
+            cacheUrlOverride(url)
+          }
+        }
         .method(requestMethod, requestBodyOrNull(requestMethod))
         .build()
     val response1 = client.newCall(request).execute()
@@ -3248,6 +3260,48 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         "A", "a1", "Content-Length", "4", "B", "b4", "B", "b5", "C", "c6",
       ),
     )
+  }
+
+  @Test
+  fun getHasCorrectResponseIsCorrect() {
+    val request = Request(server.url("/abc"))
+
+    val response = testBasicCachingRules(request)
+
+    assertThat(response.request.url).isEqualTo(request.url)
+    assertThat(response.cacheResponse!!.request.url).isEqualTo(request.url)
+  }
+
+  @Test
+  fun postWithOverrideResponseIsCorrect() {
+    val url = server.url("/abc?token=123")
+    val cacheUrlOverride = url.newBuilder().removeAllQueryParameters("token").build()
+
+    val request =
+      Request.Builder()
+        .url(url)
+        .method("POST", "XYZ".toRequestBody())
+        .cacheUrlOverride(cacheUrlOverride)
+        .build()
+
+    val response = testBasicCachingRules(request)
+
+    assertThat(response.request.url).isEqualTo(request.url)
+    assertThat(response.cacheResponse!!.request.url).isEqualTo(cacheUrlOverride)
+  }
+
+  private fun testBasicCachingRules(request: Request): Response {
+    val mockResponse =
+      MockResponse.Builder()
+        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
+        .status("HTTP/1.1 200 Fantastic")
+    server.enqueue(mockResponse.build())
+
+    client.newCall(request).execute().use {
+      it.body.bytes()
+    }
+    return client.newCall(request).execute()
   }
 
   private operator fun get(url: HttpUrl): Response {
