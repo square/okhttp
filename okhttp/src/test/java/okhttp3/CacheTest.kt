@@ -982,30 +982,24 @@ class CacheTest {
 
   @Test
   fun requestMethodOptionsIsNotCached() {
-    testRequestMethod("OPTIONS", false, true)
+    testRequestMethod("OPTIONS", false)
   }
 
   @Test
   fun requestMethodGetIsCached() {
-    testRequestMethod("GET", true, true)
+    testRequestMethod("GET", true)
   }
 
   @Test
   fun requestMethodHeadIsNotCached() {
     // We could support this but choose not to for implementation simplicity
-    testRequestMethod("HEAD", false, true)
+    testRequestMethod("HEAD", false)
   }
 
   @Test
   fun requestMethodPostIsNotCached() {
     // We could support this but choose not to for implementation simplicity
-    testRequestMethod("POST", false, true)
-  }
-
-  @Test
-  fun requestMethodPostIsNotCachedUnlessOverride() {
-    // We could support this but choose not to for implementation simplicity
-    testRequestMethod("POST", true, withOverride = true)
+    testRequestMethod("POST", false)
   }
 
   @Test
@@ -1015,12 +1009,12 @@ class CacheTest {
 
   @Test
   fun requestMethodDeleteIsNotCached() {
-    testRequestMethod("DELETE", false, true)
+    testRequestMethod("DELETE", false)
   }
 
   @Test
   fun requestMethodTraceIsNotCached() {
-    testRequestMethod("TRACE", false, true)
+    testRequestMethod("TRACE", false)
   }
 
   private fun testRequestMethod(
