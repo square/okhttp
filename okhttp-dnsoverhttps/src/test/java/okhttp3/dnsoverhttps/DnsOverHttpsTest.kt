@@ -173,26 +173,20 @@ class DnsOverHttpsTest {
     val cache = Cache("cache".toPath(), (100 * 1024).toLong(), cacheFs)
     val cachedClient = bootstrapClient.newBuilder().cache(cache).build()
     val cachedDns = buildLocalhost(cachedClient, false)
-    server.enqueue(
-      dnsResponse(
-        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
-          "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
-          "0003b00049df00112",
+
+    repeat(2) {
+      server.enqueue(
+        dnsResponse(
+          "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
+            "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
+            "0003b00049df00112",
+        )
+          .newBuilder()
+          .setHeader("cache-control", "private, max-age=298")
+          .build(),
       )
-        .newBuilder()
-        .setHeader("cache-control", "private, max-age=298")
-        .build(),
-    )
-    server.enqueue(
-      dnsResponse(
-        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
-          "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
-          "0003b00049df00112",
-      )
-        .newBuilder()
-        .setHeader("cache-control", "private, max-age=298")
-        .build(),
-    )
+    }
+
     var result = cachedDns.lookup("google.com")
     assertThat(result).containsExactly(address("157.240.1.18"))
     var recordedRequest = server.takeRequest()
@@ -217,36 +211,18 @@ class DnsOverHttpsTest {
     val cache = Cache("cache".toPath(), (100 * 1024).toLong(), cacheFs)
     val cachedClient = bootstrapClient.newBuilder().cache(cache).build()
     val cachedDns = buildLocalhost(cachedClient, false, post = true)
-    server.enqueue(
-      dnsResponse(
-        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
-          "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
-          "0003b00049df00112",
+    repeat(2) {
+      server.enqueue(
+        dnsResponse(
+          "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
+            "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
+            "0003b00049df00112",
+        )
+          .newBuilder()
+          .setHeader("cache-control", "private, max-age=298")
+          .build(),
       )
-        .newBuilder()
-        .setHeader("cache-control", "private, max-age=298")
-        .build(),
-    )
-    server.enqueue(
-      dnsResponse(
-        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
-          "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
-          "0003b00049df00112",
-      )
-        .newBuilder()
-        .setHeader("cache-control", "private, max-age=298")
-        .build(),
-    )
-    server.enqueue(
-      dnsResponse(
-        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
-          "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
-          "0003b00049df00112",
-      )
-        .newBuilder()
-        .setHeader("cache-control", "private, max-age=298")
-        .build(),
-    )
+    }
 
     var result = cachedDns.lookup("google.com")
     assertThat(result).containsExactly(address("157.240.1.18"))
