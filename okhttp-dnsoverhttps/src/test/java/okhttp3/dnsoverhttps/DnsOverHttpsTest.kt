@@ -22,6 +22,7 @@ import assertk.assertions.containsExactlyInAnyOrder
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
+import assertk.assertions.isNull
 import java.io.EOFException
 import java.io.File
 import java.io.IOException
@@ -191,7 +192,6 @@ class DnsOverHttpsTest {
   // 3. successful network response
   // 4. successful stale cached GET response
   // 5. unsuccessful response
-  // TODO how closely to follow POST rules on caching?
   @Test
   fun usesCache() {
     val cache = Cache("cache".toPath(), (100 * 1024).toLong(), cacheFs)
@@ -207,14 +207,33 @@ class DnsOverHttpsTest {
         .setHeader("cache-control", "private, max-age=298")
         .build(),
     )
+    server.enqueue(
+      dnsResponse(
+        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
+          "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
+          "0003b00049df00112",
+      )
+        .newBuilder()
+        .setHeader("cache-control", "private, max-age=298")
+        .build(),
+    )
     var result = cachedDns.lookup("google.com")
     assertThat(result).containsExactly(address("157.240.1.18"))
-    val recordedRequest = server.takeRequest()
+    var recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("GET")
     assertThat(recordedRequest.path)
       .isEqualTo("/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ")
+
     result = cachedDns.lookup("google.com")
+    assertThat(server.takeRequest(1, TimeUnit.MILLISECONDS)).isNull()
     assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
+
+    result = cachedDns.lookup("www.google.com")
+    assertThat(result).containsExactly(address("157.240.1.18"))
+    recordedRequest = server.takeRequest()
+    assertThat(recordedRequest.method).isEqualTo("GET")
+    assertThat(recordedRequest.path)
+      .isEqualTo("/lookup?ct&dns=AAABAAABAAAAAAAAA3d3dwZnb29nbGUDY29tAAABAAE")
   }
 
   @Test
@@ -232,14 +251,44 @@ class DnsOverHttpsTest {
         .setHeader("cache-control", "private, max-age=298")
         .build(),
     )
+    server.enqueue(
+      dnsResponse(
+        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
+          "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
+          "0003b00049df00112",
+      )
+        .newBuilder()
+        .setHeader("cache-control", "private, max-age=298")
+        .build(),
+    )
+    server.enqueue(
+      dnsResponse(
+        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
+          "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
+          "0003b00049df00112",
+      )
+        .newBuilder()
+        .setHeader("cache-control", "private, max-age=298")
+        .build(),
+    )
+
     var result = cachedDns.lookup("google.com")
     assertThat(result).containsExactly(address("157.240.1.18"))
-    val recordedRequest = server.takeRequest()
+    var recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("POST")
     assertThat(recordedRequest.path)
       .isEqualTo("/lookup?ct")
+
     result = cachedDns.lookup("google.com")
+    assertThat(server.takeRequest(0, TimeUnit.MILLISECONDS)).isNull()
     assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
+
+    result = cachedDns.lookup("www.google.com")
+    assertThat(result).containsExactly(address("157.240.1.18"))
+    recordedRequest = server.takeRequest(0, TimeUnit.MILLISECONDS)!!
+    assertThat(recordedRequest.method).isEqualTo("POST")
+    assertThat(recordedRequest.path)
+      .isEqualTo("/lookup?ct")
   }
 
   @Test

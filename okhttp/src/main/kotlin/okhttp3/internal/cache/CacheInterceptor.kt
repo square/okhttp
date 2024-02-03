@@ -126,19 +126,18 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
       }
     }
 
-    val cacheNetworkRequest = networkRequest.requestForCache()
-
     val response =
       networkResponse!!.newBuilder()
         .cacheResponse(cacheResponse?.stripBody())
         .networkResponse(networkResponse.stripBody())
-        .request(cacheNetworkRequest)
         .build()
 
     if (cache != null) {
-      if (response.promisesBody() && CacheStrategy.isCacheable(response)) {
+      val cacheNetworkRequest = networkRequest.requestForCache()
+
+      if (response.promisesBody() && CacheStrategy.isCacheable(response, cacheNetworkRequest)) {
         // Offer this request to the cache.
-        val cacheRequest = cache.put(response)
+        val cacheRequest = cache.put(response.newBuilder().request(cacheNetworkRequest).build())
         return cacheWritingResponse(cacheRequest, response).also {
           if (cacheResponse != null) {
             // This will log a conditional cache miss only.
@@ -291,12 +290,11 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
 }
 
 private fun Request.requestForCache(): Request {
-  return if (cacheUrlOverride != null) {
+  return cacheUrlOverride?.let {
     newBuilder()
       .get()
+      .url(it)
       .cacheUrlOverride(null)
       .build()
-  } else {
-    this
-  }
+  } ?: this
 }

@@ -43,7 +43,6 @@ import mockwebserver3.RecordedRequest
 import mockwebserver3.SocketPolicy.DisconnectAtEnd
 import mockwebserver3.junit5.internal.MockWebServerInstance
 import okhttp3.Cache.Companion.key
-import okhttp3.Cache.Companion.keyUrl
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -2708,7 +2707,7 @@ class CacheTest {
         .build(),
     )
     val url = server.url("/")
-    val urlKey = keyUrl(url)
+    val urlKey = key(url)
     val entryMetadata =
       """
       $url
@@ -2757,7 +2756,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   @Test
   fun testGoldenCacheHttpsResponseOkHttp27() {
     val url = server.url("/")
-    val urlKey = keyUrl(url)
+    val urlKey = key(url)
     val prefix = get().getPrefix()
     val entryMetadata =
       """
@@ -2805,7 +2804,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   @Test
   fun testGoldenCacheHttpsResponseOkHttp30() {
     val url = server.url("/")
-    val urlKey = keyUrl(url)
+    val urlKey = key(url)
     val prefix = get().getPrefix()
     val entryMetadata =
       """
@@ -2857,7 +2856,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   @Test
   fun testGoldenCacheHttpResponseOkHttp30() {
     val url = server.url("/")
-    val urlKey = keyUrl(url)
+    val urlKey = key(url)
     val prefix = get().getPrefix()
     val entryMetadata =
       """

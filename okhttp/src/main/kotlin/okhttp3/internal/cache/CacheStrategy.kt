@@ -152,7 +152,7 @@ class CacheStrategy internal constructor(
       // If this response shouldn't have been stored, it should never be used as a response source.
       // This check should be redundant as long as the persistence store is well-behaved and the
       // rules are constant.
-      if (!isCacheable(cacheResponse)) {
+      if (!isCacheable(cacheResponse, request)) {
         return CacheStrategy(request, null)
       }
 
@@ -292,6 +292,7 @@ class CacheStrategy internal constructor(
     /** Returns true if [response] can be stored to later serve another request. */
     fun isCacheable(
       response: Response,
+      request: Request,
     ): Boolean {
       // Always go to network for uncacheable response codes (RFC 7231 section 6.1), This
       // implementation doesn't support caching partial content.
@@ -333,7 +334,7 @@ class CacheStrategy internal constructor(
       }
 
       // A 'no-store' directive on request or response prevents the response from being cached.
-      return !response.cacheControl.noStore && !response.request.cacheControl.noStore
+      return !response.cacheControl.noStore && !request.cacheControl.noStore
     }
   }
 }
