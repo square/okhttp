@@ -15,6 +15,7 @@ import okhttp3.containers.BasicMockServerTest.Companion.MOCKSERVER_IMAGE
 import okhttp3.containers.BasicMockServerTest.Companion.trustMockServer
 import okio.buffer
 import okio.source
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockserver.client.MockServerClient
 import org.mockserver.configuration.Configuration
@@ -54,9 +55,10 @@ class BasicProxyTest {
     testRequest {
       it.withProxyConfiguration(ProxyConfiguration.proxyConfiguration(ProxyConfiguration.Type.HTTP, it.remoteAddress()))
 
-      val client = OkHttpClient.Builder()
-        .proxy(Proxy(Proxy.Type.HTTP, it.remoteAddress()))
-        .build()
+      val client =
+        OkHttpClient.Builder()
+          .proxy(Proxy(Proxy.Type.HTTP, it.remoteAddress()))
+          .build()
 
       val response =
         client.newCall(
@@ -70,9 +72,10 @@ class BasicProxyTest {
   @Test
   fun testOkHttpSecureDirect() {
     testRequest {
-      val client = OkHttpClient.Builder()
-        .trustMockServer()
-        .build()
+      val client =
+        OkHttpClient.Builder()
+          .trustMockServer()
+          .build()
 
       val response =
         client.newCall(
@@ -87,11 +90,12 @@ class BasicProxyTest {
   @Test
   fun testOkHttpSecureProxiedHttp1() {
     testRequest {
-      val client = OkHttpClient.Builder()
-        .trustMockServer()
-        .proxy(Proxy(Proxy.Type.HTTP, it.remoteAddress()))
-        .protocols(listOf(Protocol.HTTP_1_1))
-        .build()
+      val client =
+        OkHttpClient.Builder()
+          .trustMockServer()
+          .proxy(Proxy(Proxy.Type.HTTP, it.remoteAddress()))
+          .protocols(listOf(Protocol.HTTP_1_1))
+          .build()
 
       val response =
         client.newCall(
@@ -104,13 +108,15 @@ class BasicProxyTest {
   }
 
   @Test
+  @Disabled("https://github.com/square/okhttp/issues/8233")
   fun testOkHttpSecureProxiedHttp2() {
     testRequest {
-      val client = OkHttpClient.Builder()
-        .trustMockServer()
-        .proxy(Proxy(Proxy.Type.HTTP, it.remoteAddress()))
-        .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-        .build()
+      val client =
+        OkHttpClient.Builder()
+          .trustMockServer()
+          .proxy(Proxy(Proxy.Type.HTTP, it.remoteAddress()))
+          .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+          .build()
 
       val response =
         client.newCall(
@@ -136,10 +142,11 @@ class BasicProxyTest {
   @Test
   fun testUrlConnectionPlaintextProxied() {
     testRequest {
-      val proxy = Proxy(
-        Proxy.Type.HTTP,
-        it.remoteAddress()
-      )
+      val proxy =
+        Proxy(
+          Proxy.Type.HTTP,
+          it.remoteAddress(),
+        )
 
       val url = URI(mockServer.endpoint + "/person?name=peter").toURL()
 
@@ -169,10 +176,11 @@ class BasicProxyTest {
     HttpsURLConnection.setDefaultSSLSocketFactory(keyStoreFactory.sslContext().socketFactory)
 
     testRequest {
-      val proxy = Proxy(
-        Proxy.Type.HTTP,
-        it.remoteAddress()
-      )
+      val proxy =
+        Proxy(
+          Proxy.Type.HTTP,
+          it.remoteAddress(),
+        )
 
       val url = URI(mockServer.secureEndpoint + "/person?name=peter").toURL()
 
@@ -184,8 +192,9 @@ class BasicProxyTest {
 
   private fun testRequest(function: (MockServerClient) -> Unit) {
     MockServerClient(mockServer.host, mockServer.serverPort).use { mockServerClient ->
-      val request = request().withPath("/person")
-        .withQueryStringParameter("name", "peter")
+      val request =
+        request().withPath("/person")
+          .withQueryStringParameter("name", "peter")
 
       mockServerClient
         .`when`(
