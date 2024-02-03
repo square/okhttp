@@ -25,6 +25,7 @@ import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Protocol
+import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.RealCall
@@ -44,7 +45,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
     val call = chain.call()
-    val cacheCandidate = cache?.get(chain.request())
+    val cacheCandidate = cache?.get(chain.request().requestForCache())
 
     val now = System.currentTimeMillis()
 
@@ -125,14 +126,17 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
       }
     }
 
+    val cacheNetworkRequest = networkRequest.requestForCache()
+
     val response =
       networkResponse!!.newBuilder()
         .cacheResponse(cacheResponse?.stripBody())
         .networkResponse(networkResponse.stripBody())
+        .request(cacheNetworkRequest)
         .build()
 
     if (cache != null) {
-      if (response.promisesBody() && CacheStrategy.isCacheable(response, networkRequest)) {
+      if (response.promisesBody() && CacheStrategy.isCacheable(response)) {
         // Offer this request to the cache.
         val cacheRequest = cache.put(response)
         return cacheWritingResponse(cacheRequest, response).also {
@@ -283,5 +287,16 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
         "Content-Encoding".equals(fieldName, ignoreCase = true) ||
         "Content-Type".equals(fieldName, ignoreCase = true)
     }
+  }
+}
+
+private fun Request.requestForCache(): Request {
+  return if (cacheUrlOverride != null) {
+    newBuilder()
+      .get()
+      .cacheUrlOverride(null)
+      .build()
+  } else {
+    this
   }
 }

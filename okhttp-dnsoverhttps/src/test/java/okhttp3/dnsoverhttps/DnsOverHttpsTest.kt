@@ -31,9 +31,12 @@ import java.util.concurrent.TimeUnit
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.Cache
+import okhttp3.Call
 import okhttp3.Dns
+import okhttp3.EventListener
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.Response
 import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
@@ -55,6 +58,27 @@ class DnsOverHttpsTest {
   private val bootstrapClient =
     OkHttpClient.Builder()
       .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+      .eventListener(object : EventListener() {
+        override fun callStart(call: Call) {
+          println("callStart " + call.request().url + " " + call.request().cacheUrlOverride)
+        }
+
+        override fun satisfactionFailure(call: Call, response: Response) {
+          println("satisfactionFailure " + call.request().url)
+        }
+
+        override fun cacheHit(call: Call, response: Response) {
+          println("cacheHit " + call.request().url)
+        }
+
+        override fun cacheMiss(call: Call) {
+          println("cacheMiss " + call.request().url)
+        }
+
+        override fun cacheConditionalHit(call: Call, cachedResponse: Response) {
+          println("cacheConditionalHit " + call.request().url)
+        }
+      })
       .build()
 
   @BeforeEach
@@ -194,6 +218,31 @@ class DnsOverHttpsTest {
   }
 
   @Test
+  fun usesCacheEvenForPost() {
+    val cache = Cache("cache".toPath(), (100 * 1024).toLong(), cacheFs)
+    val cachedClient = bootstrapClient.newBuilder().cache(cache).build()
+    val cachedDns = buildLocalhost(cachedClient, false, post = true)
+    server.enqueue(
+      dnsResponse(
+        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
+          "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
+          "0003b00049df00112",
+      )
+        .newBuilder()
+        .setHeader("cache-control", "private, max-age=298")
+        .build(),
+    )
+    var result = cachedDns.lookup("google.com")
+    assertThat(result).containsExactly(address("157.240.1.18"))
+    val recordedRequest = server.takeRequest()
+    assertThat(recordedRequest.method).isEqualTo("POST")
+    assertThat(recordedRequest.path)
+      .isEqualTo("/lookup?ct")
+    result = cachedDns.lookup("google.com")
+    assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
+  }
+
+  @Test
   fun usesCacheOnlyIfFresh() {
     val cache = Cache(File("./target/DnsOverHttpsTest.cache"), 100 * 1024L)
     val cachedClient = bootstrapClient.newBuilder().cache(cache).build()
@@ -245,12 +294,14 @@ class DnsOverHttpsTest {
   private fun buildLocalhost(
     bootstrapClient: OkHttpClient,
     includeIPv6: Boolean,
+    post: Boolean = false
   ): DnsOverHttps {
     val url = server.url("/lookup?ct")
     return DnsOverHttps.Builder().client(bootstrapClient)
       .includeIPv6(includeIPv6)
       .resolvePrivateAddresses(true)
       .url(url)
+      .post(post)
       .build()
   }
 

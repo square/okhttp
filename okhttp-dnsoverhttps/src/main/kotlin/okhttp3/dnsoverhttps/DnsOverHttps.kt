@@ -186,16 +186,24 @@ class DnsOverHttps internal constructor(
     throw unknownHostException
   }
 
-  private fun getCacheOnlyResponse(request: Request): Response? {
-    if (!post && client.cache != null) {
+  private fun getCacheOnlyResponse(
+    request: Request,
+  ): Response? {
+    if (client.cache != null) {
       try {
         // Use the cache without hitting the network first
         // 504 code indicates that the Cache is stale
-        val preferCache =
+        val onlyIfCached =
           CacheControl.Builder()
             .onlyIfCached()
             .build()
-        val cacheRequest = request.newBuilder().cacheControl(preferCache).build()
+
+        var cacheUrl = request.url
+
+        val cacheRequest = request.newBuilder()
+          .cacheControl(onlyIfCached)
+          .cacheUrlOverride(cacheUrl)
+          .build()
 
         val cacheResponse = client.newCall(cacheRequest).execute()
 
@@ -247,7 +255,12 @@ class DnsOverHttps internal constructor(
       val query = DnsRecordCodec.encodeQuery(hostname, type)
 
       if (post) {
-        url(url).post(query.toRequestBody(DNS_MESSAGE))
+        url(url)
+          .cacheUrlOverride(
+            url.newBuilder()
+              .addQueryParameter("hostname", hostname).build()
+          )
+          .post(query.toRequestBody(DNS_MESSAGE))
       } else {
         val encoded = query.base64Url().replace("=", "")
         val requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build()
@@ -313,7 +326,8 @@ class DnsOverHttps internal constructor(
         this.bootstrapDnsHosts = bootstrapDnsHosts
       }
 
-    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder = bootstrapDnsHosts(bootstrapDnsHosts.toList())
+    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder =
+      bootstrapDnsHosts(bootstrapDnsHosts.toList())
 
     fun systemDns(systemDns: Dns) =
       apply {
