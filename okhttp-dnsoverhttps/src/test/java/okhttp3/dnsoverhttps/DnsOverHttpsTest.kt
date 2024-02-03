@@ -32,12 +32,9 @@ import java.util.concurrent.TimeUnit
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.Cache
-import okhttp3.Call
 import okhttp3.Dns
-import okhttp3.EventListener
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import okhttp3.Response
 import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
@@ -59,27 +56,6 @@ class DnsOverHttpsTest {
   private val bootstrapClient =
     OkHttpClient.Builder()
       .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-      .eventListener(object : EventListener() {
-        override fun callStart(call: Call) {
-          println("callStart " + call.request().url + " " + call.request().cacheUrlOverride)
-        }
-
-        override fun satisfactionFailure(call: Call, response: Response) {
-          println("satisfactionFailure " + call.request().url)
-        }
-
-        override fun cacheHit(call: Call, response: Response) {
-          println("cacheHit " + call.request().url)
-        }
-
-        override fun cacheMiss(call: Call) {
-          println("cacheMiss " + call.request().url)
-        }
-
-        override fun cacheConditionalHit(call: Call, cachedResponse: Response) {
-          println("cacheConditionalHit " + call.request().url)
-        }
-      })
       .build()
 
   @BeforeEach
@@ -343,7 +319,7 @@ class DnsOverHttpsTest {
   private fun buildLocalhost(
     bootstrapClient: OkHttpClient,
     includeIPv6: Boolean,
-    post: Boolean = false
+    post: Boolean = false,
   ): DnsOverHttps {
     val url = server.url("/lookup?ct")
     return DnsOverHttps.Builder().client(bootstrapClient)

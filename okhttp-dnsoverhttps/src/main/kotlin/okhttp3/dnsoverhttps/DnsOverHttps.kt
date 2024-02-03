@@ -186,9 +186,7 @@ class DnsOverHttps internal constructor(
     throw unknownHostException
   }
 
-  private fun getCacheOnlyResponse(
-    request: Request,
-  ): Response? {
+  private fun getCacheOnlyResponse(request: Request): Response? {
     if (client.cache != null) {
       try {
         // Use the cache without hitting the network first
@@ -200,10 +198,11 @@ class DnsOverHttps internal constructor(
 
         var cacheUrl = request.url
 
-        val cacheRequest = request.newBuilder()
-          .cacheControl(onlyIfCached)
-          .cacheUrlOverride(cacheUrl)
-          .build()
+        val cacheRequest =
+          request.newBuilder()
+            .cacheControl(onlyIfCached)
+            .cacheUrlOverride(cacheUrl)
+            .build()
 
         val cacheResponse = client.newCall(cacheRequest).execute()
 
@@ -258,7 +257,7 @@ class DnsOverHttps internal constructor(
         url(url)
           .cacheUrlOverride(
             url.newBuilder()
-              .addQueryParameter("hostname", hostname).build()
+              .addQueryParameter("hostname", hostname).build(),
           )
           .post(query.toRequestBody(DNS_MESSAGE))
       } else {
@@ -326,8 +325,7 @@ class DnsOverHttps internal constructor(
         this.bootstrapDnsHosts = bootstrapDnsHosts
       }
 
-    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder =
-      bootstrapDnsHosts(bootstrapDnsHosts.toList())
+    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder = bootstrapDnsHosts(bootstrapDnsHosts.toList())
 
     fun systemDns(systemDns: Dns) =
       apply {

@@ -327,7 +327,8 @@ class Request internal constructor(builder: Builder) {
      *
      * If set, this will also allow caching for POST requests.
      */
-    fun cacheUrlOverride(cacheUrlOverride: HttpUrl?) = apply {
+    fun cacheUrlOverride(cacheUrlOverride: HttpUrl?) =
+      apply {
         this.cacheUrlOverride = cacheUrlOverride
       }
 
