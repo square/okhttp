@@ -290,11 +290,15 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
 }
 
 private fun Request.requestForCache(): Request {
-  return cacheUrlOverride?.let {
+  val cacheUrlOverride = cacheUrlOverride
+
+  return if (cacheUrlOverride != null && (method == "GET" || method == "POST")) {
     newBuilder()
       .get()
-      .url(it)
+      .url(cacheUrlOverride)
       .cacheUrlOverride(null)
       .build()
-  } ?: this
+  } else {
+    this
+  }
 }
