@@ -904,6 +904,51 @@ class HttpLoggingInterceptorTest {
   }
 
   @Test
+  fun sensitiveQueryParamsAreRedacted() {
+    url = server.url("/api/login?user=test_user&authentication=basic&password=confidential_password")
+    val sanitizedUrl = "${server.url("/")}api/login?user=██&authentication=basic&password=██"
+    val sanitizedUrlPattern = sanitizedUrl.replace("?", """\?""")
+
+    val networkInterceptor =
+      HttpLoggingInterceptor(networkLogs).setLevel(
+        Level.BASIC,
+      )
+    networkInterceptor.redactQueryParams("user", "passWord")
+
+    val applicationInterceptor =
+      HttpLoggingInterceptor(applicationLogs).setLevel(
+        Level.BASIC,
+      )
+    applicationInterceptor.redactQueryParams("user", "PassworD")
+
+    client =
+      OkHttpClient.Builder()
+        .addNetworkInterceptor(networkInterceptor)
+        .addInterceptor(applicationInterceptor)
+        .build()
+    server.enqueue(
+      MockResponse.Builder()
+        .build(),
+    )
+    val response =
+      client
+        .newCall(
+          request()
+            .build(),
+        )
+        .execute()
+    response.body.close()
+    applicationLogs
+      .assertLogEqual("--> GET $sanitizedUrl")
+      .assertLogMatch(Regex("""<-- 200 OK $sanitizedUrlPattern \(\d+ms, \d+-byte body\)"""))
+      .assertNoMoreLogs()
+    networkLogs
+      .assertLogEqual("--> GET $sanitizedUrl http/1.1")
+      .assertLogMatch(Regex("""<-- 200 OK $sanitizedUrlPattern \(\d+ms, \d+-byte body\)"""))
+      .assertNoMoreLogs()
+  }
+
+  @Test
   fun duplexRequestsAreNotLogged() {
     platform.assumeHttp2Support()
     server.useHttps(handshakeCertificates.sslSocketFactory()) // HTTP/2

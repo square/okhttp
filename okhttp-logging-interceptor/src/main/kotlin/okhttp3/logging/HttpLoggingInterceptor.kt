@@ -22,6 +22,7 @@ import java.nio.charset.Charset
 import java.util.TreeSet
 import java.util.concurrent.TimeUnit
 import okhttp3.Headers
+import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -45,6 +46,8 @@ class HttpLoggingInterceptor
     private val logger: Logger = Logger.DEFAULT,
   ) : Interceptor {
     @Volatile private var headersToRedact = emptySet<String>()
+
+    @Volatile private var queryParamsNameToRedact = emptySet<String>()
 
     @set:JvmName("level")
     @Volatile
@@ -132,6 +135,13 @@ class HttpLoggingInterceptor
       headersToRedact = newHeadersToRedact
     }
 
+    fun redactQueryParams(vararg name: String) {
+      val newQueryParamsNameToRedact = TreeSet(String.CASE_INSENSITIVE_ORDER)
+      newQueryParamsNameToRedact += queryParamsNameToRedact
+      newQueryParamsNameToRedact.addAll(name)
+      queryParamsNameToRedact = newQueryParamsNameToRedact
+    }
+
     /**
      * Sets the level and returns this.
      *
@@ -168,7 +178,7 @@ class HttpLoggingInterceptor
 
       val connection = chain.connection()
       var requestStartMessage =
-        ("--> ${request.method} ${request.url}${if (connection != null) " " + connection.protocol() else ""}")
+        ("--> ${request.method} ${sanitizeUrl(request.url)}${if (connection != null) " " + connection.protocol() else ""}")
       if (!logHeaders && requestBody != null) {
         requestStartMessage += " (${requestBody.contentLength()}-byte body)"
       }
@@ -251,7 +261,7 @@ class HttpLoggingInterceptor
         buildString {
           append("<-- ${response.code}")
           if (response.message.isNotEmpty()) append(" ${response.message}")
-          append(" ${response.request.url} (${tookMs}ms")
+          append(" ${sanitizeUrl(response.request.url)} (${tookMs}ms")
           if (!logHeaders) append(", $bodySize body")
           append(")")
         },
@@ -310,6 +320,29 @@ class HttpLoggingInterceptor
       }
 
       return response
+    }
+
+    private fun sanitizeUrl(url: HttpUrl): String {
+      val params = ArrayList<Pair<String, String>>()
+      for (parameterName in url.queryParameterNames) {
+        params.add(
+          Pair(
+            first = parameterName,
+            second = if (parameterName in queryParamsNameToRedact) "██" else url.queryParameter(parameterName) ?: "",
+          ),
+        )
+      }
+      val queryParamsBuilder = StringBuilder()
+      val totalParam = params.size
+      if (totalParam > 0) {
+        queryParamsBuilder.append("?")
+        params.forEachIndexed { index, param ->
+          val suffix = if (index != totalParam - 1) "&" else ""
+          queryParamsBuilder.append("${param.first}=${param.second}$suffix")
+        }
+      }
+
+      return "${url.toString().substringBefore("?")}$queryParamsBuilder"
     }
 
     private fun logHeader(
