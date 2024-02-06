@@ -323,6 +323,9 @@ class HttpLoggingInterceptor
     }
 
     private fun sanitizeUrl(url: HttpUrl): String {
+      if (queryParamsNameToRedact.isEmpty()) {
+        return url.toString()
+      }
       val params = ArrayList<Pair<String, String>>()
       for (parameterName in url.queryParameterNames) {
         params.add(
