@@ -24,9 +24,11 @@ import assertk.assertions.hasMessage
 import assertk.assertions.hasSize
 import assertk.assertions.index
 import assertk.assertions.isCloseTo
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isIn
+import assertk.assertions.isInstanceOf
 import assertk.assertions.isLessThan
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNotNull
@@ -55,6 +57,7 @@ import java.util.Arrays
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -93,10 +96,13 @@ import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.internal.DoubleInetAddressDns
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.USER_AGENT
+import okhttp3.internal.UnreadableResponseBody
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.duplex.MockSocketHandler
 import okhttp3.internal.http.HTTP_EARLY_HINTS
 import okhttp3.internal.http.HTTP_PROCESSING
+import okhttp3.internal.http.HTTP_SWITCHING_PROTOCOLS
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.java.net.cookiejar.JavaNetCookieJar
 import okhttp3.okio.LoggingFilesystem
@@ -110,6 +116,7 @@ import okio.ByteString
 import okio.ForwardingSource
 import okio.GzipSink
 import okio.Path.Companion.toPath
+import okio.Socket
 import okio.buffer
 import okio.fakefilesystem.FakeFileSystem
 import okio.use
@@ -4839,6 +4846,96 @@ open class CallTest {
     }.also { expected ->
       assertThat(expected.message!!).contains("Unreadable ResponseBody!")
     }
+  }
+
+  @Test
+  fun upgradeConnection() {
+    val mockStreamHandler =
+      MockSocketHandler()
+        .receiveRequest("request A\n")
+        .sendResponse("response B\n")
+        .receiveRequest("request C\n")
+        .sendResponse("response D\n")
+        .sendResponse("response E\n")
+        .receiveRequest("response F\n")
+        .exhaustRequest()
+        .exhaustResponse()
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .code(HTTP_SWITCHING_PROTOCOLS)
+        .headers(
+          headersOf(
+            "Connection",
+            "upgrade",
+            "Upgrade",
+            "tcp",
+            "Content-Type",
+            "text/plain; charset=UTF-8",
+//            "Content-Type", "application/vnd.docker.raw-stream",
+          ),
+        ).socketHandler(mockStreamHandler)
+        .build(),
+    )
+    val call =
+      client.newCall(
+        Request
+          .Builder()
+          .url(server.url("/"))
+          .header("Connection", "upgrade")
+          .header("Upgrade", "tcp")
+          // .post(...)
+          .build(),
+      )
+
+    var socket: Socket?
+    val received: BlockingQueue<String?> = LinkedBlockingQueue<String?>()
+
+    call.execute().use { response ->
+      assertThat(response.code).isEqualTo(HTTP_SWITCHING_PROTOCOLS)
+      assertThat(response.headers("Connection").first()).isEqualTo("upgrade", true)
+      assertThat(response.headers("Upgrade").first()).isEqualTo("tcp", true)
+      assertThat(response.headers("Content-Type").first().toMediaType()).isEqualTo("text/plain; charset=UTF-8".toMediaType())
+//      assertThat(response.headers("Content-Type").first().toMediaType()).isEqualTo("application/vnd.docker.raw-stream".toMediaType())
+      assertThat(response.headers("Content-Length")).isEmpty()
+      assertThat(response.body).isInstanceOf<UnreadableResponseBody>()
+
+      socket = response.socket
+      assertThat(socket).isNotNull()
+
+      val reader = socket!!.source
+      val readerThread =
+        object : Thread("reader") {
+          override fun run() {
+            try {
+              var line: String?
+              while (reader.buffer().readUtf8Line().also { line = it } != null) {
+                received.add(line)
+              }
+            } catch (e: Exception) {
+              reader.closeQuietly()
+            }
+          }
+        }
+      readerThread.start()
+
+      val writer = socket.sink
+      writer.buffer().writeUtf8("request A\n").flush()
+      writer.buffer().writeUtf8("request C\n").flush()
+      writer.buffer().writeUtf8("response F\n").flush()
+    }
+
+    val responses = mutableListOf<String?>()
+    responses.add(received.poll(2, TimeUnit.SECONDS))
+    responses.add(received.poll(2, TimeUnit.SECONDS))
+    responses.add(received.poll(2, TimeUnit.SECONDS))
+    assertThat(responses).containsExactly(
+      "response B",
+      "response D",
+      "response E",
+    )
+
+    socket?.cancel()
   }
 
   private fun makeFailingCall() {

@@ -225,7 +225,7 @@ fun Response.promisesBody(): Boolean {
   }
 
   val responseCode = code
-  if ((responseCode < HTTP_CONTINUE || responseCode >= 200) &&
+  if ((responseCode < HTTP_CONTINUE || responseCode == HTTP_SWITCHING_PROTOCOLS || responseCode >= 200) &&
     responseCode != HTTP_NO_CONTENT &&
     responseCode != HTTP_NOT_MODIFIED
   ) {
