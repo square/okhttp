@@ -41,6 +41,7 @@ import okhttp3.internal.concurrent.withLock
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http1.Http1ExchangeCodec
+import okhttp3.internal.http1.Streams
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.FlowControlListener
@@ -308,6 +309,28 @@ class RealConnection internal constructor(
 
       override fun cancel() {
         exchange.cancel()
+      }
+    }
+  }
+
+  @Throws(SocketException::class)
+  internal fun newHttpStreams(exchange: Exchange): Streams {
+    socket.soTimeout = 0
+    noNewExchanges()
+    val realSource = this.source
+    val realSink = this.sink
+    return object : Streams {
+      override val source: BufferedSource
+        get() = realSource
+
+      override val sink: BufferedSink
+        get() = realSink
+
+      override fun cancel() {
+        sink.flush()
+        exchange.cancel()
+//        sink.closeQuietly()
+//        source.closeQuietly()
       }
     }
   }

@@ -25,6 +25,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RealResponseBody
+import okhttp3.internal.http1.Streams
 import okhttp3.internal.ws.RealWebSocket
 import okio.Buffer
 import okio.ForwardingSink
@@ -155,6 +156,12 @@ class Exchange(
       requestDone = true,
       e = null,
     )
+  }
+
+  @Throws(SocketException::class)
+  fun newHttpStreams(): Streams {
+    call.timeoutEarlyExit()
+    return (codec.carrier as RealConnection).newHttpStreams(this)
   }
 
   fun noNewExchangesOnConnection() {
