@@ -1,11 +1,11 @@
 # IdnaMappingTable.txt
-# Date: 2022-05-02, 19:29:26 GMT
-# © 2022 Unicode®, Inc.
+# Date: 2023-08-10, 22:32:27 GMT
+# © 2023 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see https://www.unicode.org/terms_of_use.html
 #
 # Unicode IDNA Compatible Preprocessing for UTS #46
-# Version: 15.0.0
+# Version: 15.1.0
 #
 # For documentation and usage, see https://www.unicode.org/reports/tr46
 #
@@ -2036,7 +2036,7 @@
 1E9A          ; mapped                 ; 0061 02BE     # 1.1  LATIN SMALL LETTER A WITH RIGHT HALF RING
 1E9B          ; mapped                 ; 1E61          # 2.0  LATIN SMALL LETTER LONG S WITH DOT ABOVE
 1E9C..1E9D    ; valid                                  # 5.1  LATIN SMALL LETTER LONG S WITH DIAGONAL STROKE..LATIN SMALL LETTER LONG S WITH HIGH STROKE
-1E9E          ; mapped                 ; 0073 0073     # 5.1  LATIN CAPITAL LETTER SHARP S
+1E9E          ; mapped                 ; 00DF          # 5.1  LATIN CAPITAL LETTER SHARP S
 1E9F          ; valid                                  # 5.1  LATIN SMALL LETTER DELTA
 1EA0          ; mapped                 ; 1EA1          # 1.1  LATIN CAPITAL LETTER A WITH DOT BELOW
 1EA1          ; valid                                  # 1.1  LATIN SMALL LETTER A WITH DOT BELOW
@@ -2565,11 +2565,7 @@
 222E          ; valid                  ;      ; NV8    # 1.1  CONTOUR INTEGRAL
 222F          ; mapped                 ; 222E 222E     # 1.1  SURFACE INTEGRAL
 2230          ; mapped                 ; 222E 222E 222E #1.1  VOLUME INTEGRAL
-2231..225F    ; valid                  ;      ; NV8    # 1.1  CLOCKWISE INTEGRAL..QUESTIONED EQUAL TO
-2260          ; disallowed_STD3_valid                  # 1.1  NOT EQUAL TO
-2261..226D    ; valid                  ;      ; NV8    # 1.1  IDENTICAL TO..NOT EQUIVALENT TO
-226E..226F    ; disallowed_STD3_valid                  # 1.1  NOT LESS-THAN..NOT GREATER-THAN
-2270..22F1    ; valid                  ;      ; NV8    # 1.1  NEITHER LESS-THAN NOR EQUAL TO..DOWN RIGHT DIAGONAL ELLIPSIS
+2231..22F1    ; valid                  ;      ; NV8    # 1.1  CLOCKWISE INTEGRAL..DOWN RIGHT DIAGONAL ELLIPSIS
 22F2..22FF    ; valid                  ;      ; NV8    # 3.2  ELEMENT OF WITH LONG HORIZONTAL STROKE..Z NOTATION BAG MEMBERSHIP
 2300          ; valid                  ;      ; NV8    # 1.1  DIAMETER SIGN
 2301          ; valid                  ;      ; NV8    # 3.0  ELECTRIC ARROW
@@ -3273,7 +3269,7 @@
 2FD5          ; mapped                 ; 9FA0          # 3.0  KANGXI RADICAL FLUTE
 2FD6..2FEF    ; disallowed                             # NA   <reserved-2FD6>..<reserved-2FEF>
 2FF0..2FFB    ; disallowed                             # 3.0  IDEOGRAPHIC DESCRIPTION CHARACTER LEFT TO RIGHT..IDEOGRAPHIC DESCRIPTION CHARACTER OVERLAID
-2FFC..2FFF    ; disallowed                             # NA   <reserved-2FFC>..<reserved-2FFF>
+2FFC..2FFF    ; disallowed                             # 15.1 IDEOGRAPHIC DESCRIPTION CHARACTER SURROUND FROM RIGHT..IDEOGRAPHIC DESCRIPTION CHARACTER ROTATION
 3000          ; disallowed_STD3_mapped ; 0020          # 1.1  IDEOGRAPHIC SPACE
 3001          ; valid                  ;      ; NV8    # 1.1  IDEOGRAPHIC COMMA
 3002          ; mapped                 ; 002E          # 1.1  IDEOGRAPHIC FULL STOP
@@ -3425,7 +3421,8 @@
 31BB..31BF    ; valid                                  # 13.0 BOPOMOFO FINAL LETTER G..BOPOMOFO LETTER AH
 31C0..31CF    ; valid                  ;      ; NV8    # 4.1  CJK STROKE T..CJK STROKE N
 31D0..31E3    ; valid                  ;      ; NV8    # 5.1  CJK STROKE H..CJK STROKE Q
-31E4..31EF    ; disallowed                             # NA   <reserved-31E4>..<reserved-31EF>
+31E4..31EE    ; disallowed                             # NA   <reserved-31E4>..<reserved-31EE>
+31EF          ; disallowed                             # 15.1 IDEOGRAPHIC DESCRIPTION CHARACTER SUBTRACTION
 31F0..31FF    ; valid                                  # 3.2  KATAKANA LETTER SMALL KU..KATAKANA LETTER SMALL RO
 3200          ; disallowed_STD3_mapped ; 0028 1100 0029 #1.1  PARENTHESIZED HANGUL KIYEOK
 3201          ; disallowed_STD3_mapped ; 0028 1102 0029 #1.1  PARENTHESIZED HANGUL NIEUN
@@ -8450,7 +8447,9 @@ FFFE..FFFF    ; disallowed                             # 1.1  <noncharacter-FFFE
 2B820..2CEA1  ; valid                                  # 8.0  CJK UNIFIED IDEOGRAPH-2B820..CJK UNIFIED IDEOGRAPH-2CEA1
 2CEA2..2CEAF  ; disallowed                             # NA   <reserved-2CEA2>..<reserved-2CEAF>
 2CEB0..2EBE0  ; valid                                  # 10.0 CJK UNIFIED IDEOGRAPH-2CEB0..CJK UNIFIED IDEOGRAPH-2EBE0
-2EBE1..2F7FF  ; disallowed                             # NA   <reserved-2EBE1>..<reserved-2F7FF>
+2EBE1..2EBEF  ; disallowed                             # NA   <reserved-2EBE1>..<reserved-2EBEF>
+2EBF0..2EE5D  ; valid                                  # 15.1 CJK UNIFIED IDEOGRAPH-2EBF0..CJK UNIFIED IDEOGRAPH-2EE5D
+2EE5E..2F7FF  ; disallowed                             # NA   <reserved-2EE5E>..<reserved-2F7FF>
 2F800         ; mapped                 ; 4E3D          # 3.1  CJK COMPATIBILITY IDEOGRAPH-2F800
 2F801         ; mapped                 ; 4E38          # 3.1  CJK COMPATIBILITY IDEOGRAPH-2F801
 2F802         ; mapped                 ; 4E41          # 3.1  CJK COMPATIBILITY IDEOGRAPH-2F802
