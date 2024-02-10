@@ -431,9 +431,11 @@ class OkHttpClientTest {
     assertNotSame(
       client.routeDatabase,
       client.newBuilder()
-        .certificatePinner(CertificatePinner.Builder()
-          .add("san.com", "sha1/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
-          .build())
+        .certificatePinner(
+          CertificatePinner.Builder()
+            .add("san.com", "sha1/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
+            .build(),
+        )
         .build()
         .routeDatabase,
     )
