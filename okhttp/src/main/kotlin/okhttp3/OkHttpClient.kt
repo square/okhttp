@@ -1052,11 +1052,13 @@ open class OkHttpClient internal constructor(
      */
     fun certificatePinner(certificatePinner: CertificatePinner) =
       apply {
-        if (certificatePinner != this.certificatePinner) {
+        val cleanCertificatePinner = CertificatePinner(certificatePinner.pins)
+
+        if (cleanCertificatePinner != this.certificatePinner) {
           this.routeDatabase = null
         }
 
-        this.certificatePinner = certificatePinner
+        this.certificatePinner = cleanCertificatePinner
       }
 
     /**
