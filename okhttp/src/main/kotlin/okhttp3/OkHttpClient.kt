@@ -205,14 +205,15 @@ open class OkHttpClient internal constructor(
   @get:JvmName("socketFactory")
   val socketFactory: SocketFactory = builder.socketFactory
 
-  private val sslSocketFactoryOrNull: SSLSocketFactory?
+  private val sslInitializedFields: Lazy<SSLInitializedFields>?
 
   @get:JvmName("sslSocketFactory")
   val sslSocketFactory: SSLSocketFactory
-    get() = sslSocketFactoryOrNull ?: throw IllegalStateException("CLEARTEXT-only client")
+    get() = sslInitializedFields?.value?.sslSocketFactory ?: throw IllegalStateException("CLEARTEXT-only client")
 
   @get:JvmName("x509TrustManager")
   val x509TrustManager: X509TrustManager?
+    get() = sslInitializedFields?.value?.x509TrustManager
 
   @get:JvmName("connectionSpecs")
   val connectionSpecs: List<ConnectionSpec> =
@@ -226,9 +227,11 @@ open class OkHttpClient internal constructor(
 
   @get:JvmName("certificatePinner")
   val certificatePinner: CertificatePinner
+    get() = sslInitializedFields?.value?.certificatePinner ?: CertificatePinner.DEFAULT
 
   @get:JvmName("certificateChainCleaner")
   val certificateChainCleaner: CertificateChainCleaner?
+    get() = sslInitializedFields?.value?.certificateChainCleaner
 
   /**
    * Default call timeout (in milliseconds). By default there is no timeout for complete calls, but
@@ -269,28 +272,41 @@ open class OkHttpClient internal constructor(
 
   init {
     if (connectionSpecs.none { it.isTls }) {
-      this.sslSocketFactoryOrNull = null
-      this.certificateChainCleaner = null
-      this.x509TrustManager = null
-      this.certificatePinner = CertificatePinner.DEFAULT
+      this.sslInitializedFields = null
     } else if (builder.sslSocketFactoryOrNull != null) {
-      this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
-      this.certificateChainCleaner = builder.certificateChainCleaner!!
-      this.x509TrustManager = builder.x509TrustManagerOrNull!!
-      this.certificatePinner =
-        builder.certificatePinner
-          .withCertificateChainCleaner(certificateChainCleaner!!)
+      this.sslInitializedFields =
+        lazyOf(
+          SSLInitializedFields(
+            builder.x509TrustManagerOrNull!!,
+            builder.sslSocketFactoryOrNull!!,
+            builder.certificateChainCleaner!!,
+            builder.certificatePinner.withCertificateChainCleaner(builder.certificateChainCleaner!!),
+          ),
+        )
     } else {
-      this.x509TrustManager = Platform.get().platformTrustManager()
-      this.sslSocketFactoryOrNull = Platform.get().newSslSocketFactory(x509TrustManager!!)
-      this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
-      this.certificatePinner =
-        builder.certificatePinner
-          .withCertificateChainCleaner(certificateChainCleaner!!)
+      this.sslInitializedFields =
+        lazy {
+          val platform = Platform.get()
+          val trustManager = platform.platformTrustManager()
+          val certificateChainCleaner = CertificateChainCleaner.get(trustManager)
+          SSLInitializedFields(
+            trustManager,
+            platform.newSslSocketFactory(trustManager),
+            certificateChainCleaner,
+            builder.certificatePinner.withCertificateChainCleaner(certificateChainCleaner),
+          )
+        }
     }
 
     verifyClientState()
   }
+
+  private data class SSLInitializedFields(
+    val x509TrustManager: X509TrustManager,
+    val sslSocketFactory: SSLSocketFactory,
+    val certificateChainCleaner: CertificateChainCleaner,
+    val certificatePinner: CertificatePinner,
+  )
 
   private fun verifyClientState() {
     check(null !in (interceptors as List<Interceptor?>)) {
@@ -301,14 +317,9 @@ open class OkHttpClient internal constructor(
     }
 
     if (connectionSpecs.none { it.isTls }) {
-      check(sslSocketFactoryOrNull == null)
-      check(certificateChainCleaner == null)
-      check(x509TrustManager == null)
-      check(certificatePinner == CertificatePinner.DEFAULT)
+      check(sslInitializedFields == null) { "ssl initialized for plaintext client" }
     } else {
-      checkNotNull(sslSocketFactoryOrNull) { "sslSocketFactory == null" }
-      checkNotNull(certificateChainCleaner) { "certificateChainCleaner == null" }
-      checkNotNull(x509TrustManager) { "x509TrustManager == null" }
+      checkNotNull(sslInitializedFields) { "ssl not initialized for client" }
     }
   }
 
@@ -597,7 +608,7 @@ open class OkHttpClient internal constructor(
       this.proxySelector = okHttpClient.proxySelector
       this.proxyAuthenticator = okHttpClient.proxyAuthenticator
       this.socketFactory = okHttpClient.socketFactory
-      this.sslSocketFactoryOrNull = okHttpClient.sslSocketFactoryOrNull
+      this.sslSocketFactoryOrNull = okHttpClient.sslSocketFactory
       this.x509TrustManagerOrNull = okHttpClient.x509TrustManager
       this.connectionSpecs = okHttpClient.connectionSpecs
       this.protocols = okHttpClient.protocols
