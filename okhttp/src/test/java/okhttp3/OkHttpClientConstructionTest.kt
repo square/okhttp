@@ -57,10 +57,9 @@ class OkHttpClientConstructionTest {
 
     val call = client.newCall(Request("https://example.org/robots.txt".toHttpUrl()))
 
-    val exception =
-      assertThrows<NoSuchAlgorithmException> {
-        call.execute()
-      }
+    assertThrows<NoSuchAlgorithmException> {
+      call.execute()
+    }
   }
 
   class ExplosivePlatform(private val explode: () -> Nothing) : Platform() {
