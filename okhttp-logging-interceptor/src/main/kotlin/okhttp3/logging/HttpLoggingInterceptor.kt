@@ -322,30 +322,18 @@ class HttpLoggingInterceptor
       return response
     }
 
-    private fun sanitizeUrl(url: HttpUrl): String {
-      if (queryParamsNameToRedact.isEmpty()) {
+    internal fun sanitizeUrl(url: HttpUrl): String {
+      if (queryParamsNameToRedact.isEmpty() || url.querySize == 0) {
         return url.toString()
       }
-      val params = ArrayList<Pair<String, String>>()
-      for (parameterName in url.queryParameterNames) {
-        params.add(
-          Pair(
-            first = parameterName,
-            second = if (parameterName in queryParamsNameToRedact) "██" else url.queryParameter(parameterName) ?: "",
-          ),
-        )
-      }
-      val queryParamsBuilder = StringBuilder()
-      val totalParam = params.size
-      if (totalParam > 0) {
-        queryParamsBuilder.append("?")
-        params.forEachIndexed { index, param ->
-          val suffix = if (index != totalParam - 1) "&" else ""
-          queryParamsBuilder.append("${param.first}=${param.second}$suffix")
-        }
-      }
+      return url.newBuilder().query(null).apply {
+        for (i in 0 until url.querySize) {
+          val parameterName = url.queryParameterName(i)
+          val newValue = if (parameterName in queryParamsNameToRedact) "██" else url.queryParameterValue(i)
 
-      return "${url.toString().substringBefore("?")}$queryParamsBuilder"
+          addEncodedQueryParameter(parameterName, newValue)
+        }
+      }.toString()
     }
 
     private fun logHeader(
