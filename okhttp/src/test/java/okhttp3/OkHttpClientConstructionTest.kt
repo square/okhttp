@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import java.security.NoSuchAlgorithmException
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -23,6 +24,7 @@ import okhttp3.internal.platform.Platform
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
 
 class OkHttpClientConstructionTest {
@@ -30,7 +32,7 @@ class OkHttpClientConstructionTest {
   var platform = PlatformRule()
 
   @Test fun constructionDoesntTriggerPlatformOrSSL() {
-    Platform.resetForTests(platform = ExplosivePlatform())
+    Platform.resetForTests(platform = ExplosivePlatform { TODO("Avoid call") })
 
     val client = OkHttpClient()
 
@@ -39,17 +41,39 @@ class OkHttpClientConstructionTest {
     client.newCall(Request("https://example.org/robots.txt".toHttpUrl()))
   }
 
-  class ExplosivePlatform : Platform() {
+  @Test fun cloneDoesntTriggerPlatformOrSSL() {
+    Platform.resetForTests(platform = ExplosivePlatform { TODO("Avoid call") })
+
+    val client = OkHttpClient()
+
+    val client2 = client.newBuilder().build()
+    assertNotNull(client2.toString())
+  }
+
+  @Test fun triggersOnExecute() {
+    Platform.resetForTests(platform = ExplosivePlatform { throw NoSuchAlgorithmException() })
+
+    val client = OkHttpClient()
+
+    val call = client.newCall(Request("https://example.org/robots.txt".toHttpUrl()))
+
+    val exception =
+      assertThrows<NoSuchAlgorithmException> {
+        call.execute()
+      }
+  }
+
+  class ExplosivePlatform(private val explode: () -> Nothing) : Platform() {
     override fun newSSLContext(): SSLContext {
-      TODO("Avoid call")
+      explode()
     }
 
     override fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
-      TODO("Avoid call")
+      explode()
     }
 
     override fun platformTrustManager(): X509TrustManager {
-      TODO("Avoid call")
+      explode()
     }
   }
 }

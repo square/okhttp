@@ -225,9 +225,14 @@ open class OkHttpClient internal constructor(
   @get:JvmName("hostnameVerifier")
   val hostnameVerifier: HostnameVerifier = builder.hostnameVerifier
 
+  private lateinit var _certificatePinner: CertificatePinner
+
   @get:JvmName("certificatePinner")
-  val certificatePinner: CertificatePinner
-    get() = sslInitializedFields?.value?.certificatePinner ?: CertificatePinner.DEFAULT
+  val certificatePinner: CertificatePinner by lazy {
+    certificateChainCleaner?.let {
+      _certificatePinner.withCertificateChainCleaner(it)
+    } ?: _certificatePinner
+  }
 
   @get:JvmName("certificateChainCleaner")
   val certificateChainCleaner: CertificateChainCleaner?
@@ -273,16 +278,10 @@ open class OkHttpClient internal constructor(
   init {
     if (connectionSpecs.none { it.isTls }) {
       this.sslInitializedFields = null
-    } else if (builder.sslSocketFactoryOrNull != null) {
-      this.sslInitializedFields =
-        lazyOf(
-          SSLInitializedFields(
-            builder.x509TrustManagerOrNull!!,
-            builder.sslSocketFactoryOrNull!!,
-            builder.certificateChainCleaner!!,
-            builder.certificatePinner.withCertificateChainCleaner(builder.certificateChainCleaner!!),
-          ),
-        )
+      this._certificatePinner = CertificatePinner.DEFAULT
+    } else if (builder.sslInitializedFields != null) {
+      this.sslInitializedFields = builder.sslInitializedFields
+      this._certificatePinner = builder.certificatePinner
     } else {
       this.sslInitializedFields =
         lazy {
@@ -293,19 +292,18 @@ open class OkHttpClient internal constructor(
             trustManager,
             platform.newSslSocketFactory(trustManager),
             certificateChainCleaner,
-            builder.certificatePinner.withCertificateChainCleaner(certificateChainCleaner),
           )
         }
+      this._certificatePinner = builder.certificatePinner
     }
 
     verifyClientState()
   }
 
-  private data class SSLInitializedFields(
+  internal data class SSLInitializedFields(
     val x509TrustManager: X509TrustManager,
     val sslSocketFactory: SSLSocketFactory,
     val certificateChainCleaner: CertificateChainCleaner,
-    val certificatePinner: CertificatePinner,
   )
 
   private fun verifyClientState() {
@@ -318,6 +316,7 @@ open class OkHttpClient internal constructor(
 
     if (connectionSpecs.none { it.isTls }) {
       check(sslInitializedFields == null) { "ssl initialized for plaintext client" }
+      check(certificatePinner == CertificatePinner.DEFAULT)
     } else {
       checkNotNull(sslInitializedFields) { "ssl not initialized for client" }
     }
@@ -574,13 +573,11 @@ open class OkHttpClient internal constructor(
     internal var proxySelector: ProxySelector? = null
     internal var proxyAuthenticator: Authenticator = Authenticator.NONE
     internal var socketFactory: SocketFactory = SocketFactory.getDefault()
-    internal var sslSocketFactoryOrNull: SSLSocketFactory? = null
-    internal var x509TrustManagerOrNull: X509TrustManager? = null
+    internal var sslInitializedFields: Lazy<SSLInitializedFields>? = null
     internal var connectionSpecs: List<ConnectionSpec> = DEFAULT_CONNECTION_SPECS
     internal var protocols: List<Protocol> = DEFAULT_PROTOCOLS
     internal var hostnameVerifier: HostnameVerifier = OkHostnameVerifier
     internal var certificatePinner: CertificatePinner = CertificatePinner.DEFAULT
-    internal var certificateChainCleaner: CertificateChainCleaner? = null
     internal var callTimeout = 0
     internal var connectTimeout = 10_000
     internal var readTimeout = 10_000
@@ -608,13 +605,11 @@ open class OkHttpClient internal constructor(
       this.proxySelector = okHttpClient.proxySelector
       this.proxyAuthenticator = okHttpClient.proxyAuthenticator
       this.socketFactory = okHttpClient.socketFactory
-      this.sslSocketFactoryOrNull = okHttpClient.sslSocketFactory
-      this.x509TrustManagerOrNull = okHttpClient.x509TrustManager
+      this.sslInitializedFields = okHttpClient.sslInitializedFields
       this.connectionSpecs = okHttpClient.connectionSpecs
       this.protocols = okHttpClient.protocols
       this.hostnameVerifier = okHttpClient.hostnameVerifier
-      this.certificatePinner = okHttpClient.certificatePinner
-      this.certificateChainCleaner = okHttpClient.certificateChainCleaner
+      this.certificatePinner = okHttpClient._certificatePinner
       this.callTimeout = okHttpClient.callTimeoutMillis
       this.connectTimeout = okHttpClient.connectTimeoutMillis
       this.readTimeout = okHttpClient.readTimeoutMillis
@@ -877,18 +872,25 @@ open class OkHttpClient internal constructor(
     )
     fun sslSocketFactory(sslSocketFactory: SSLSocketFactory) =
       apply {
-        if (sslSocketFactory != this.sslSocketFactoryOrNull) {
+        if (sslSocketFactory != sslInitializedFields?.value?.sslSocketFactory) {
           this.routeDatabase = null
         }
 
-        this.sslSocketFactoryOrNull = sslSocketFactory
-        this.x509TrustManagerOrNull =
-          Platform.get().trustManager(sslSocketFactory) ?: throw IllegalStateException(
-            "Unable to extract the trust manager on ${Platform.get()}, " +
+        val platform = Platform.get()
+        val trustManager =
+          platform.trustManager(sslSocketFactory) ?: throw IllegalStateException(
+            "Unable to extract the trust manager on $platform, " +
               "sslSocketFactory is ${sslSocketFactory.javaClass}",
           )
-        this.certificateChainCleaner =
-          Platform.get().buildCertificateChainCleaner(x509TrustManagerOrNull!!)
+        // Expensive copy assuming SSL already initialized
+        sslInitializedFields =
+          lazyOf(
+            SSLInitializedFields(
+              trustManager,
+              sslSocketFactory = sslSocketFactory,
+              certificateChainCleaner = platform.buildCertificateChainCleaner(trustManager),
+            ),
+          )
       }
 
     /**
@@ -940,13 +942,21 @@ open class OkHttpClient internal constructor(
       sslSocketFactory: SSLSocketFactory,
       trustManager: X509TrustManager,
     ) = apply {
-      if (sslSocketFactory != this.sslSocketFactoryOrNull || trustManager != this.x509TrustManagerOrNull) {
+      val existingSsl = sslInitializedFields?.value
+
+      if (sslSocketFactory != existingSsl?.sslSocketFactory || trustManager != existingSsl?.x509TrustManager) {
         this.routeDatabase = null
       }
 
-      this.sslSocketFactoryOrNull = sslSocketFactory
-      this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
-      this.x509TrustManagerOrNull = trustManager
+      // Expensive copy assuming SSL already initialized
+      sslInitializedFields =
+        lazyOf(
+          SSLInitializedFields(
+            trustManager,
+            sslSocketFactory = sslSocketFactory,
+            certificateChainCleaner = CertificateChainCleaner.get(trustManager),
+          ),
+        )
     }
 
     fun connectionSpecs(connectionSpecs: List<ConnectionSpec>) =
