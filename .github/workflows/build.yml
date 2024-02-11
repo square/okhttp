@@ -117,6 +117,13 @@ jobs:
           report_paths: '**/build/test-results/*/TEST-*.xml'
           check_name: OpenJDK 11 Test Report
 
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        with:
+          files: |
+            **/build/test-results/*/TEST-*.xml
+
   testzulu11:
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'zulu')

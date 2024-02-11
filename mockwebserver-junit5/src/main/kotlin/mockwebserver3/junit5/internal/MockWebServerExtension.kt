@@ -16,14 +16,14 @@
 package mockwebserver3.junit5.internal
 
 import java.io.IOException
-import java.lang.reflect.Method
 import java.util.logging.Level
 import java.util.logging.Logger
-import kotlin.jvm.optionals.getOrNull
 import mockwebserver3.MockWebServer
 import okhttp3.ExperimentalOkHttpApi
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ParameterContext
@@ -43,27 +43,12 @@ import org.junit.jupiter.api.extension.ParameterResolver
  */
 @ExperimentalOkHttpApi
 class MockWebServerExtension :
-  BeforeEachCallback, AfterEachCallback, ParameterResolver {
+  BeforeEachCallback, AfterEachCallback, ParameterResolver, BeforeAllCallback, AfterAllCallback {
   private val ExtensionContext.resource: ServersForTest
-    get() {
-      // For Methods (before/after/test) grab the class store
-      val store =
-        if (this.element.getOrNull() is Method) {
-          val parent = parent.get()
-          parent.getStore(namespace)
-        } else {
-          getStore(namespace)
-        }
-
-      return store.serversForTest
-    }
-
-  private val ExtensionContext.Store.serversForTest: ServersForTest
-    get() {
-      return getOrComputeIfAbsent(storeKey) {
+    get() =
+      getStore(namespace).getOrComputeIfAbsent(this.uniqueId) {
         ServersForTest()
       } as ServersForTest
-    }
 
   private class ServersForTest {
     private val servers = mutableMapOf<String, MockWebServer>()
@@ -130,10 +115,17 @@ class MockWebServerExtension :
     context.resource.shutdownAll()
   }
 
+  override fun beforeAll(context: ExtensionContext) {
+    context.resource.startAll()
+  }
+
+  override fun afterAll(context: ExtensionContext) {
+    context.resource.shutdownAll()
+  }
+
   private companion object {
     private val logger = Logger.getLogger(MockWebServerExtension::class.java.name)
     private val namespace = ExtensionContext.Namespace.create(MockWebServerExtension::class.java)
     private val defaultName = MockWebServerExtension::class.java.simpleName
-    private val storeKey = "ServersForTest"
   }
 }
