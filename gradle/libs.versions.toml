@@ -12,7 +12,7 @@ org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.7.3"
 org-jetbrains-kotlin = "1.9.21"
 org-junit-jupiter = "5.10.1"
-testcontainers = "1.19.3"
+testcontainers = "1.19.5"
 
 [libraries]
 amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.3.3"
