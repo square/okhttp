@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER")
+
 package okhttp3
 
 import assertk.assertThat
@@ -54,12 +55,13 @@ open class RecordingConnectionListener(
   override fun logFrame(frameLog: () -> String) {
     frameLogs.add(frameLog())
   }
+
   fun takeFrameLog(): String {
     return frameLogs.take()
   }
 
   fun takeFrameLogs(): List<String> {
-    synchronized (frameLogs) {
+    synchronized(frameLogs) {
       return frameLogs.toList().also {
         frameLogs.clear()
       }

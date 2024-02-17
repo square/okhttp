@@ -44,7 +44,7 @@ import okio.BufferedSink
 class Http2Writer internal constructor(
   private val sink: BufferedSink,
   private val client: Boolean,
-  private val frameLogger: FrameLogger = FrameLogger.Noop
+  private val frameLogger: FrameLogger = FrameLogger.Noop,
 ) : Closeable {
   private val hpackBuffer: Buffer = Buffer()
   private var maxFrameSize: Int = INITIAL_MAX_FRAME_SIZE

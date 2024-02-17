@@ -29,7 +29,6 @@ import kotlin.concurrent.withLock
 import okhttp3.internal.buildConnectionPool
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealConnectionPool
-import okhttp3.internal.http2.Http2
 import okhttp3.internal.taskRunnerInternal
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule.Companion.LOOM_PROPERTY

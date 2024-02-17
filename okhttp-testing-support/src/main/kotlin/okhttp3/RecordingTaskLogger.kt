@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER")
+
 package okhttp3
 
 import java.util.concurrent.LinkedBlockingQueue
@@ -21,14 +22,22 @@ import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskLogger
 import okhttp3.internal.concurrent.TaskQueue
 
-class RecordingTaskLogger: TaskLogger {
+class RecordingTaskLogger : TaskLogger {
   private val logs = LinkedBlockingQueue<String>()
 
-  override fun taskLog(task: Task, queue: TaskQueue, messageBlock: () -> String) {
+  override fun taskLog(
+    task: Task,
+    queue: TaskQueue,
+    messageBlock: () -> String,
+  ) {
     logs.add(messageBlock())
   }
 
-  override fun <T> logElapsed(task: Task, queue: TaskQueue, block: () -> T): T {
+  override fun <T> logElapsed(
+    task: Task,
+    queue: TaskQueue,
+    block: () -> T,
+  ): T {
     return block()
   }
 }

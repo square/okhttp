@@ -45,7 +45,7 @@ class TaskRunner internal constructor(
   val backend: Backend,
   internal val logger: TaskLogger,
 ) {
-  constructor(backend: Backend): this(backend, TaskLogger.Noop)
+  constructor(backend: Backend) : this(backend, TaskLogger.Noop)
 
   val lock: ReentrantLock = ReentrantLock()
   val condition: Condition = lock.newCondition()
@@ -289,17 +289,19 @@ class TaskRunner internal constructor(
 
   class RealBackend internal constructor(val executor: ExecutorService) : Backend {
     constructor(threadFactory: ThreadFactory) :
-      this(ThreadPoolExecutor(
-        // corePoolSize:
-        0,
-        // maximumPoolSize:
-        Int.MAX_VALUE,
-        // keepAliveTime:
-        60L,
-        TimeUnit.SECONDS,
-        SynchronousQueue(),
-        threadFactory,
-      ))
+      this(
+        ThreadPoolExecutor(
+          // corePoolSize:
+          0,
+          // maximumPoolSize:
+          Int.MAX_VALUE,
+          // keepAliveTime:
+          60L,
+          TimeUnit.SECONDS,
+          SynchronousQueue(),
+          threadFactory,
+        ),
+      )
 
     override fun nanoTime() = System.nanoTime()
 

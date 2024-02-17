@@ -71,7 +71,6 @@ import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.Route
 import okhttp3.SimpleProvider
-import okhttp3.TestLogHandler
 import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.TestUtil.repeat
 import okhttp3.internal.DoubleInetAddressDns

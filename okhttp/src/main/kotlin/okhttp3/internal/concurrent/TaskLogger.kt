@@ -35,10 +35,18 @@ internal interface TaskLogger {
   ): T
 
   object Noop : TaskLogger {
-    override fun taskLog(task: Task, queue: TaskQueue, messageBlock: () -> String) {
+    override fun taskLog(
+      task: Task,
+      queue: TaskQueue,
+      messageBlock: () -> String,
+    ) {
     }
 
-    override fun <T> logElapsed(task: Task, queue: TaskQueue, block: () -> T): T {
+    override fun <T> logElapsed(
+      task: Task,
+      queue: TaskQueue,
+      block: () -> T,
+    ): T {
       return block()
     }
   }

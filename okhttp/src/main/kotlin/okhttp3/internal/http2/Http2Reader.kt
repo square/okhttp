@@ -58,7 +58,7 @@ class Http2Reader internal constructor(
   /** Creates a frame reader with max header table size of 4096. */
   private val source: BufferedSource,
   private val client: Boolean,
-  private val frameLogger: FrameLogger = FrameLogger.Noop
+  private val frameLogger: FrameLogger = FrameLogger.Noop,
 ) : Closeable {
   private val continuation: ContinuationSource = ContinuationSource(this.source, frameLogger)
   private val hpackReader: Hpack.Reader =
@@ -382,10 +382,10 @@ class Http2Reader internal constructor(
     }
     frameLogger.logFrame {
       frameLogWindowUpdate(
-            inbound = true,
-            streamId = streamId,
-            length = length,
-            windowSizeIncrement = increment,
+        inbound = true,
+        streamId = streamId,
+        length = length,
+        windowSizeIncrement = increment,
       )
     }
     handler.windowUpdate(streamId, increment)
@@ -402,7 +402,7 @@ class Http2Reader internal constructor(
    */
   internal class ContinuationSource(
     private val source: BufferedSource,
-    private val frameLogger: FrameLogger
+    private val frameLogger: FrameLogger,
   ) : Source {
     var length: Int = 0
     var flags: Int = 0
