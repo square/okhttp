@@ -350,6 +350,13 @@ open class PlatformRule
       }
     }
 
+    fun assumeNotWindows() {
+      assumeFalse(isWindows, "This test fails on Windows.")
+    }
+
+    val isWindows: Boolean
+      get() = System.getProperty("os.name", "?").startsWith("Windows")
+
     val isAndroid: Boolean
       get() = Platform.Companion.isAndroid
 

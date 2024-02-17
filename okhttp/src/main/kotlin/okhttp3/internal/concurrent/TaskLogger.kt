@@ -28,11 +28,35 @@ internal interface TaskLogger {
     messageBlock: () -> String,
   )
 
+  val loggingEnabled: Boolean
+
   fun <T> logElapsed(
     task: Task,
     queue: TaskQueue,
     block: () -> T,
-  ): T
+  ): T {
+    var startNs = -1L
+    if (loggingEnabled) {
+      startNs = queue.taskRunner.backend.nanoTime()
+      taskLog(task, queue) { "starting" }
+    }
+
+    var completedNormally = false
+    try {
+      val result = block()
+      completedNormally = true
+      return result
+    } finally {
+      if (loggingEnabled) {
+        val elapsedNs = queue.taskRunner.backend.nanoTime() - startNs
+        if (completedNormally) {
+          taskLog(task, queue) { "finished run in ${Logging.formatDuration(elapsedNs)}" }
+        } else {
+          taskLog(task, queue) { "failed a run in ${Logging.formatDuration(elapsedNs)}" }
+        }
+      }
+    }
+  }
 
   object Noop : TaskLogger {
     override fun taskLog(
@@ -49,10 +73,15 @@ internal interface TaskLogger {
     ): T {
       return block()
     }
+
+    override val loggingEnabled: Boolean = false
   }
 
   object Logging : TaskLogger {
     private val logger: Logger = Logger.getLogger(TaskRunner::class.java.name)
+
+    override val loggingEnabled: Boolean
+      get() = logger.isLoggable(Level.FINE)
 
     override fun taskLog(
       task: Task,
@@ -64,42 +93,19 @@ internal interface TaskLogger {
       }
     }
 
-    override fun <T> logElapsed(
-      task: Task,
-      queue: TaskQueue,
-      block: () -> T,
-    ): T {
-      var startNs = -1L
-      val loggingEnabled = logger.isLoggable(Level.FINE)
-      if (loggingEnabled) {
-        startNs = queue.taskRunner.backend.nanoTime()
-        logger.log(task, queue, "starting")
-      }
-
-      var completedNormally = false
-      try {
-        val result = block()
-        completedNormally = true
-        return result
-      } finally {
-        if (loggingEnabled) {
-          val elapsedNs = queue.taskRunner.backend.nanoTime() - startNs
-          if (completedNormally) {
-            logger.log(task, queue, "finished run in ${formatDuration(elapsedNs)}")
-          } else {
-            logger.log(task, queue, "failed a run in ${formatDuration(elapsedNs)}")
-          }
-        }
-      }
-    }
-
     private fun Logger.log(
       task: Task,
       queue: TaskQueue,
       message: String,
     ) {
-      fine("${queue.name} ${String.format("%-22s", message)}: ${task.name}")
+      fine(logString(queue, message, task))
     }
+
+    fun logString(
+      queue: TaskQueue,
+      message: String,
+      task: Task
+    ) = "${queue.name} ${"%-22s".format(message)}: ${task.name}"
 
     /**
      * Returns a duration in the nearest whole-number units like "999 µs" or "  1 s ". This rounds 0.5
@@ -119,7 +125,7 @@ internal interface TaskLogger {
           ns < 999_500_000 -> "${(ns + 500_000) / 1_000_000} ms"
           else -> "${(ns + 500_000_000) / 1_000_000_000} s "
         }
-      return String.format("%6s", s)
+      return "%6s".format(s)
     }
   }
 }

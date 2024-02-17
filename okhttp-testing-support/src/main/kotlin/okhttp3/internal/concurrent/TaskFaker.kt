@@ -26,9 +26,9 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.logging.Logger
 import kotlin.concurrent.withLock
 import okhttp3.OkHttpClient
+import okhttp3.RecordingTaskLogger
 
 /**
  * Runs a [TaskRunner] in a controlled environment so that everything is sequential and
@@ -63,8 +63,6 @@ class TaskFaker : Closeable {
     }
   }
 
-  val logger = Logger.getLogger("TaskFaker." + instance++)
-
   /** Though this executor service may hold many threads, they are not executed concurrently. */
   private val tasksExecutor = Executors.newCachedThreadPool()
 
@@ -98,6 +96,8 @@ class TaskFaker : Closeable {
 
   /** True if new tasks should run immediately without stalling. Guarded by [taskRunner]. */
   private var isRunningAllTasks = false
+
+  private val taskLogger = RecordingTaskLogger()
 
   /** A task runner that posts tasks to this fake. Tasks won't be executed until requested. */
   val taskRunner: TaskRunner =
@@ -166,6 +166,7 @@ class TaskFaker : Closeable {
 
         override fun <T> decorate(queue: BlockingQueue<T>) = TaskFakerBlockingQueue(queue)
       },
+      logger = taskLogger
     )
 
   /** Wait for the test thread to proceed. */
@@ -343,6 +344,10 @@ class TaskFaker : Closeable {
 
   override fun close() {
     tasksExecutor.shutdownNow()
+  }
+
+  fun takeAllLogs(): List<String> {
+    return taskLogger.takeAllLogs()
   }
 
   companion object {

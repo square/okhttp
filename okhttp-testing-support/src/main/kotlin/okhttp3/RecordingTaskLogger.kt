@@ -20,6 +20,7 @@ package okhttp3
 import java.util.concurrent.LinkedBlockingQueue
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskLogger
+import okhttp3.internal.concurrent.TaskLogger.Logging.logString
 import okhttp3.internal.concurrent.TaskQueue
 
 class RecordingTaskLogger : TaskLogger {
@@ -30,14 +31,16 @@ class RecordingTaskLogger : TaskLogger {
     queue: TaskQueue,
     messageBlock: () -> String,
   ) {
-    logs.add(messageBlock())
+    logs.add(logString(queue, messageBlock(), task))
   }
 
-  override fun <T> logElapsed(
-    task: Task,
-    queue: TaskQueue,
-    block: () -> T,
-  ): T {
-    return block()
+  fun takeAllLogs(): List<String> {
+    synchronized(logs) {
+      return logs.toList().also {
+        logs.clear()
+      }
+    }
   }
+
+  override val loggingEnabled: Boolean = true
 }

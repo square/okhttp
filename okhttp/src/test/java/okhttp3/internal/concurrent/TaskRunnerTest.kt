@@ -23,16 +23,11 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isSameAs
 import java.util.concurrent.RejectedExecutionException
 import kotlin.test.assertFailsWith
-import okhttp3.TestLogHandler
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 
 class TaskRunnerTest {
   private val taskFaker = TaskFaker()
-
-  @RegisterExtension @JvmField
-  val testLogHandler = TestLogHandler(taskFaker.logger)
 
   private val taskRunner = taskFaker.taskRunner
   private val log = mutableListOf<String>()
@@ -61,10 +56,10 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 finished run in   0 µs: task",
     )
   }
 
@@ -92,16 +87,16 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 run again after  50 µs: task",
-      "FINE: Q10000 finished run in   0 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 run again after 150 µs: task",
-      "FINE: Q10000 finished run in   0 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 run again after  50 µs: task",
+      "Q10000 finished run in   0 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 run again after 150 µs: task",
+      "Q10000 finished run in   0 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 finished run in   0 µs: task",
     )
   }
 
@@ -133,14 +128,14 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 scheduled after  50 µs: task",
-      "FINE: Q10000 already scheduled     : task",
-      "FINE: Q10000 finished run in   0 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 scheduled after  50 µs: task",
+      "Q10000 already scheduled     : task",
+      "Q10000 finished run in   0 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 finished run in   0 µs: task",
     )
   }
 
@@ -172,14 +167,14 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 scheduled after 200 µs: task",
-      "FINE: Q10000 run again after  50 µs: task",
-      "FINE: Q10000 finished run in   0 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 scheduled after 200 µs: task",
+      "Q10000 run again after  50 µs: task",
+      "Q10000 finished run in   0 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 finished run in   0 µs: task",
     )
   }
 
@@ -198,9 +193,9 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 canceled              : task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task",
+      "Q10000 canceled              : task",
     )
   }
 
@@ -228,10 +223,10 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 finished run in   0 µs: task",
     )
   }
 
@@ -250,10 +245,10 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 finished run in   0 µs: task",
     )
   }
 
@@ -271,10 +266,10 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 finished run in   0 µs: task",
     )
   }
 
@@ -303,13 +298,13 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 run again after  50 µs: task",
-      "FINE: Q10000 finished run in   0 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 run again after  50 µs: task",
+      "Q10000 finished run in   0 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 finished run in   0 µs: task",
     )
   }
 
@@ -328,9 +323,9 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 canceled              : task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task",
+      "Q10000 canceled              : task",
     )
   }
 
@@ -358,10 +353,10 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 finished run in   0 µs: task",
     )
   }
 
@@ -391,16 +386,16 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task one",
-      "FINE: Q10000 scheduled after 100 µs: task two",
-      "FINE: Q10000 scheduled after 100 µs: task three",
-      "FINE: Q10000 starting              : task one",
-      "FINE: Q10000 finished run in   0 µs: task one",
-      "FINE: Q10000 starting              : task two",
-      "FINE: Q10000 finished run in   0 µs: task two",
-      "FINE: Q10000 starting              : task three",
-      "FINE: Q10000 finished run in   0 µs: task three",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task one",
+      "Q10000 scheduled after 100 µs: task two",
+      "Q10000 scheduled after 100 µs: task three",
+      "Q10000 starting              : task one",
+      "Q10000 finished run in   0 µs: task one",
+      "Q10000 starting              : task two",
+      "Q10000 finished run in   0 µs: task two",
+      "Q10000 starting              : task three",
+      "Q10000 finished run in   0 µs: task three",
     )
   }
 
@@ -430,16 +425,16 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactlyInAnyOrder(
-      "FINE: Q10000 scheduled after 100 µs: task one",
-      "FINE: Q10001 scheduled after 100 µs: task two",
-      "FINE: Q10002 scheduled after 100 µs: task three",
-      "FINE: Q10000 starting              : task one",
-      "FINE: Q10000 finished run in   0 µs: task one",
-      "FINE: Q10001 starting              : task two",
-      "FINE: Q10001 finished run in   0 µs: task two",
-      "FINE: Q10002 starting              : task three",
-      "FINE: Q10002 finished run in   0 µs: task three",
+    assertThat(taskFaker.takeAllLogs()).containsExactlyInAnyOrder(
+      "Q10000 scheduled after 100 µs: task one",
+      "Q10001 scheduled after 100 µs: task two",
+      "Q10002 scheduled after 100 µs: task three",
+      "Q10000 starting              : task one",
+      "Q10000 finished run in   0 µs: task one",
+      "Q10001 starting              : task two",
+      "Q10001 finished run in   0 µs: task two",
+      "Q10002 starting              : task three",
+      "Q10002 finished run in   0 µs: task three",
     )
   }
 
@@ -455,9 +450,9 @@ class TaskRunnerTest {
 
     assertThat(redQueue.scheduledTasks.toString()).isEqualTo("[task one, task two]")
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task one",
-      "FINE: Q10000 scheduled after 200 µs: task two",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task one",
+      "Q10000 scheduled after 200 µs: task two",
     )
   }
 
@@ -504,16 +499,16 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task one",
-      "FINE: Q10000 scheduled after 200 µs: task two",
-      "FINE: Q10000 starting              : task one",
-      "FINE: Q10000 scheduled after 200 µs: task one",
-      "FINE: Q10000 finished run in   0 µs: task one",
-      "FINE: Q10000 starting              : task two",
-      "FINE: Q10000 finished run in   0 µs: task two",
-      "FINE: Q10000 starting              : task one",
-      "FINE: Q10000 finished run in   0 µs: task one",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task one",
+      "Q10000 scheduled after 200 µs: task two",
+      "Q10000 starting              : task one",
+      "Q10000 scheduled after 200 µs: task one",
+      "Q10000 finished run in   0 µs: task one",
+      "Q10000 starting              : task two",
+      "Q10000 finished run in   0 µs: task two",
+      "Q10000 starting              : task one",
+      "Q10000 finished run in   0 µs: task one",
     )
   }
 
@@ -542,13 +537,13 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task one",
-      "FINE: Q10001 scheduled after 200 µs: task two",
-      "FINE: Q10000 starting              : task one",
-      "FINE: Q10000 finished run in   0 µs: task one",
-      "FINE: Q10001 starting              : task two",
-      "FINE: Q10001 finished run in   0 µs: task two",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task one",
+      "Q10001 scheduled after 200 µs: task two",
+      "Q10000 starting              : task one",
+      "Q10000 finished run in   0 µs: task one",
+      "Q10001 starting              : task two",
+      "Q10001 finished run in   0 µs: task two",
     )
   }
 
@@ -562,10 +557,10 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after   0 µs: lucky task",
-      "FINE: Q10000 starting              : lucky task",
-      "FINE: Q10000 finished run in   0 µs: lucky task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after   0 µs: lucky task",
+      "Q10000 starting              : lucky task",
+      "Q10000 finished run in   0 µs: lucky task",
     )
   }
 
@@ -584,9 +579,9 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 canceled              : task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task",
+      "Q10000 canceled              : task",
     )
   }
 
@@ -614,10 +609,10 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 scheduled after 100 µs: task",
+      "Q10000 starting              : task",
+      "Q10000 finished run in   0 µs: task",
     )
   }
 
@@ -630,8 +625,8 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 schedule canceled (queue is shutdown): task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 schedule canceled (queue is shutdown): task",
     )
   }
 
@@ -651,8 +646,8 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 schedule failed (queue is shutdown): task",
+    assertThat(taskFaker.takeAllLogs()).containsExactly(
+      "Q10000 schedule failed (queue is shutdown): task",
     )
   }
 
