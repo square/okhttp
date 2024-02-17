@@ -53,7 +53,7 @@ import okio.source
  * an [IOException] that was triggered by a certain caller can be caught and handled by that caller.
  */
 @Suppress("NAME_SHADOWING")
-class Http2Connection internal constructor(builder: Builder) : Closeable {
+class Http2Connection internal constructor(builder: Builder, frameLogger: FrameLogger) : Closeable {
   // Internal state of this connection is guarded by 'this'. No blocking operations may be
   // performed while holding this lock!
   //
@@ -136,10 +136,10 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     private set
 
   internal val socket: Socket = builder.socket
-  val writer = Http2Writer(builder.sink, client)
+  val writer = Http2Writer(builder.sink, client, frameLogger = frameLogger)
 
   // Visible for testing
-  val readerRunnable = ReaderRunnable(Http2Reader(builder.source, client))
+  val readerRunnable = ReaderRunnable(Http2Reader(builder.source, client, frameLogger = frameLogger))
 
   // Guarded by this.
   private val currentPushRequests = mutableSetOf<Int>()
@@ -563,10 +563,11 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
   }
 
-  class Builder(
+  class Builder internal constructor(
     /** True if this peer initiated the connection; false if this peer accepted the connection. */
     internal var client: Boolean,
     internal val taskRunner: TaskRunner,
+    internal val frameLogger: FrameLogger = FrameLogger.Noop,
   ) {
     internal lateinit var socket: Socket
     internal lateinit var connectionName: String
@@ -616,7 +617,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       }
 
     fun build(): Http2Connection {
-      return Http2Connection(this)
+      return Http2Connection(this, frameLogger)
     }
   }
 

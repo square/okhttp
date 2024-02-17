@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER")
 package okhttp3
 
 import assertk.assertThat
@@ -22,9 +23,11 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.matchesPredicate
 import java.util.Deque
 import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import okhttp3.ConnectionEvent.NoNewExchanges
 import okhttp3.internal.connection.RealConnection
+import okhttp3.internal.http2.FrameLogger
 import okio.IOException
 import org.junit.jupiter.api.Assertions
 
@@ -34,8 +37,9 @@ open class RecordingConnectionListener(
    * EventListeners added by Interceptors will not see all events.
    */
   private val enforceOrder: Boolean = true,
-) : ConnectionListener() {
+) : ConnectionListener(), FrameLogger {
   val eventSequence: Deque<ConnectionEvent> = ConcurrentLinkedDeque()
+  private val frameLogs = LinkedBlockingQueue<String>()
 
   private val forbiddenLocks = mutableSetOf<Any>()
 
@@ -45,6 +49,21 @@ open class RecordingConnectionListener(
   /** Confirm that the thread does not hold a lock on `lock` during the callback. */
   fun forbidLock(lock: Any) {
     forbiddenLocks.add(lock)
+  }
+
+  override fun logFrame(frameLog: () -> String) {
+    frameLogs.add(frameLog())
+  }
+  fun takeFrameLog(): String {
+    return frameLogs.take()
+  }
+
+  fun takeFrameLogs(): List<String> {
+    synchronized (frameLogs) {
+      return frameLogs.toList().also {
+        frameLogs.clear()
+      }
+    }
   }
 
   /**

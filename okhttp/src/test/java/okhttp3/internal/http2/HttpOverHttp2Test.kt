@@ -113,9 +113,6 @@ class HttpOverHttp2Test {
   @RegisterExtension
   val clientTestRule = configureClientTestRule()
 
-  @RegisterExtension
-  val testLogHandler: TestLogHandler = TestLogHandler(Http2::class.java)
-
   // Flaky https://github.com/square/okhttp/issues/4632
   // Flaky https://github.com/square/okhttp/issues/4633
   private val handshakeCertificates: HandshakeCertificates =
@@ -423,8 +420,8 @@ class HttpOverHttp2Test {
     val expectedFrameCount = dataLength / 16384
     var dataFrameCount = 0
     while (dataFrameCount < expectedFrameCount) {
-      val log = testLogHandler.take()
-      if (log == "FINE: << 0x00000003 16384 DATA          ") {
+      val log = clientTestRule.takeFrameLog()
+      if (log == "<< 0x00000003 16384 DATA          ") {
         dataFrameCount++
       }
     }
@@ -1564,7 +1561,7 @@ class HttpOverHttp2Test {
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("ABC")
     assertThat(response.protocol).isEqualTo(protocol)
-    val logs = testLogHandler.takeAll()
+    val logs = clientTestRule.takeFrameLogs()
     assertThat(firstFrame(logs, "HEADERS")!!, "header logged")
       .contains("HEADERS       END_STREAM|END_HEADERS")
   }
@@ -1587,15 +1584,12 @@ class HttpOverHttp2Test {
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("ABC")
     assertThat(response.protocol).isEqualTo(protocol)
-    val logs = testLogHandler.takeAll()
+    val logs = clientTestRule.takeFrameLogs()
     assertThat(firstFrame(logs, "HEADERS")!!, "header logged")
       .contains("HEADERS       END_HEADERS")
-    // While MockWebServer waits to read the client's HEADERS frame before sending the response, it
-    // doesn't wait to read the client's DATA frame and may send a DATA frame before the client
-    // does. So we can't assume the client's empty DATA will be logged first.
-    assertThat(countFrames(logs, "FINE: >> 0x00000003     0 DATA          END_STREAM"))
+    assertThat(countFrames(logs, ">> 0x00000003     0 DATA          END_STREAM"))
       .isEqualTo(1)
-    assertThat(countFrames(logs, "FINE: >> 0x00000003     3 DATA          END_STREAM"))
+    assertThat(countFrames(logs, "<< 0x00000003     3 DATA          END_STREAM"))
       .isEqualTo(1)
   }
 
@@ -1624,15 +1618,11 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("ABC")
     assertThat(response.protocol).isEqualTo(protocol)
 
-    // Confirm a single ping was sent and received, and its reply was sent and received.
-    val logs = testLogHandler.takeAll()
-    assertThat(countFrames(logs, "FINE: >> 0x00000000     8 PING          "))
+    // Confirm a single ping was sent, and its reply was received.
+    val logs = clientTestRule.takeFrameLogs()
+    assertThat(countFrames(logs, ">> 0x00000000     8 PING          "))
       .isEqualTo(1)
-    assertThat(countFrames(logs, "FINE: << 0x00000000     8 PING          "))
-      .isEqualTo(1)
-    assertThat(countFrames(logs, "FINE: >> 0x00000000     8 PING          ACK"))
-      .isEqualTo(1)
-    assertThat(countFrames(logs, "FINE: << 0x00000000     8 PING          ACK"))
+    assertThat(countFrames(logs, "<< 0x00000000     8 PING          ACK"))
       .isEqualTo(1)
   }
 
@@ -1673,10 +1663,10 @@ class HttpOverHttp2Test {
       .isCloseTo(1000.0, 250.0)
 
     // Confirm a single ping was sent but not acknowledged.
-    val logs = testLogHandler.takeAll()
-    assertThat(countFrames(logs, "FINE: >> 0x00000000     8 PING          "))
+    val logs = clientTestRule.takeFrameLogs()
+    assertThat(countFrames(logs, ">> 0x00000000     8 PING          "))
       .isEqualTo(1)
-    assertThat(countFrames(logs, "FINE: << 0x00000000     8 PING          ACK"))
+    assertThat(countFrames(logs, "<< 0x00000000     8 PING          ACK"))
       .isEqualTo(0)
   }
 

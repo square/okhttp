@@ -17,6 +17,7 @@ package okhttp3.internal.concurrent
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import okhttp3.internal.concurrent.TaskLogger.Logging.formatDuration
 import org.junit.jupiter.api.Test
 
 class TaskLoggerTest {

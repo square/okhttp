@@ -17,8 +17,6 @@ package okhttp3.internal.http2
 
 import java.io.Closeable
 import java.io.IOException
-import java.util.logging.Level.FINE
-import java.util.logging.Logger
 import okhttp3.internal.format
 import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
 import okhttp3.internal.http2.Http2.FLAG_ACK
@@ -43,9 +41,10 @@ import okio.BufferedSink
 
 /** Writes HTTP/2 transport frames. */
 @Suppress("NAME_SHADOWING")
-class Http2Writer(
+class Http2Writer internal constructor(
   private val sink: BufferedSink,
   private val client: Boolean,
+  private val frameLogger: FrameLogger = FrameLogger.Noop
 ) : Closeable {
   private val hpackBuffer: Buffer = Buffer()
   private var maxFrameSize: Int = INITIAL_MAX_FRAME_SIZE
@@ -57,9 +56,7 @@ class Http2Writer(
   fun connectionPreface() {
     if (closed) throw IOException("closed")
     if (!client) return // Nothing to write; servers don't send connection headers!
-    if (logger.isLoggable(FINE)) {
-      logger.fine(format(">> CONNECTION ${CONNECTION_PREFACE.hex()}"))
-    }
+    frameLogger.logFrame { format(">> CONNECTION ${CONNECTION_PREFACE.hex()}") }
     sink.write(CONNECTION_PREFACE)
     sink.flush()
   }
@@ -279,14 +276,13 @@ class Http2Writer(
     require(windowSizeIncrement != 0L && windowSizeIncrement <= 0x7fffffffL) {
       "windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL: $windowSizeIncrement"
     }
-    if (logger.isLoggable(FINE)) {
-      logger.fine(
-        frameLogWindowUpdate(
-          inbound = false,
-          streamId = streamId,
-          length = 4,
-          windowSizeIncrement = windowSizeIncrement,
-        ),
+
+    frameLogger.logFrame {
+      frameLogWindowUpdate(
+        inbound = false,
+        streamId = streamId,
+        length = 4,
+        windowSizeIncrement = windowSizeIncrement,
       )
     }
     frameHeader(
@@ -306,8 +302,10 @@ class Http2Writer(
     type: Int,
     flags: Int,
   ) {
-    if (type != TYPE_WINDOW_UPDATE && logger.isLoggable(FINE)) {
-      logger.fine(frameLog(false, streamId, length, type, flags))
+    if (type != TYPE_WINDOW_UPDATE) {
+      frameLogger.logFrame {
+        frameLog(false, streamId, length, type, flags)
+      }
     }
     require(length <= maxFrameSize) { "FRAME_SIZE_ERROR length > $maxFrameSize: $length" }
     require(streamId and 0x80000000.toInt() == 0) { "reserved bit set: $streamId" }
@@ -366,9 +364,5 @@ class Http2Writer(
     sink.write(hpackBuffer, length)
 
     if (byteCount > length) writeContinuationFrames(streamId, byteCount - length)
-  }
-
-  companion object {
-    private val logger = Logger.getLogger(Http2::class.java.name)
   }
 }

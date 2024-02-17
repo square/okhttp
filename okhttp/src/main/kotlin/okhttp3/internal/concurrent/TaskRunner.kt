@@ -16,13 +16,13 @@
 package okhttp3.internal.concurrent
 
 import java.util.concurrent.BlockingQueue
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
-import java.util.logging.Logger
 import kotlin.concurrent.withLock
 import okhttp3.internal.addIfAbsent
 import okhttp3.internal.assertHeld
@@ -41,10 +41,12 @@ import okhttp3.internal.threadFactory
  *
  * Most applications should share a process-wide [TaskRunner] and use queues for per-client work.
  */
-class TaskRunner(
+class TaskRunner internal constructor(
   val backend: Backend,
-  internal val logger: Logger = TaskRunner.logger,
+  internal val logger: TaskLogger,
 ) {
+  constructor(backend: Backend): this(backend, TaskLogger.Noop)
+
   val lock: ReentrantLock = ReentrantLock()
   val condition: Condition = lock.newCondition()
 
@@ -285,9 +287,9 @@ class TaskRunner(
     )
   }
 
-  class RealBackend(threadFactory: ThreadFactory) : Backend {
-    val executor =
-      ThreadPoolExecutor(
+  class RealBackend internal constructor(val executor: ExecutorService) : Backend {
+    constructor(threadFactory: ThreadFactory) :
+      this(ThreadPoolExecutor(
         // corePoolSize:
         0,
         // maximumPoolSize:
@@ -297,7 +299,7 @@ class TaskRunner(
         TimeUnit.SECONDS,
         SynchronousQueue(),
         threadFactory,
-      )
+      ))
 
     override fun nanoTime() = System.nanoTime()
 
@@ -336,9 +338,7 @@ class TaskRunner(
   }
 
   companion object {
-    val logger: Logger = Logger.getLogger(TaskRunner::class.java.name)
-
     @JvmField
-    val INSTANCE = TaskRunner(RealBackend(threadFactory("$okHttpName TaskRunner", daemon = true)))
+    val INSTANCE = TaskRunner(RealBackend(threadFactory("$okHttpName TaskRunner", daemon = true)), logger = TaskLogger.Logging)
   }
 }

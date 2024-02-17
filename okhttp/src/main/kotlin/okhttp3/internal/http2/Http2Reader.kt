@@ -18,8 +18,6 @@ package okhttp3.internal.http2
 import java.io.Closeable
 import java.io.EOFException
 import java.io.IOException
-import java.util.logging.Level.FINE
-import java.util.logging.Logger
 import okhttp3.internal.and
 import okhttp3.internal.format
 import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
@@ -56,12 +54,13 @@ import okio.Timeout
  * This implementation assumes we do not send an increased [frame][Settings.getMaxFrameSize] to the
  * peer. Hence, we expect all frames to have a max length of [Http2.INITIAL_MAX_FRAME_SIZE].
  */
-class Http2Reader(
+class Http2Reader internal constructor(
   /** Creates a frame reader with max header table size of 4096. */
   private val source: BufferedSource,
   private val client: Boolean,
+  private val frameLogger: FrameLogger = FrameLogger.Noop
 ) : Closeable {
-  private val continuation: ContinuationSource = ContinuationSource(this.source)
+  private val continuation: ContinuationSource = ContinuationSource(this.source, frameLogger)
   private val hpackReader: Hpack.Reader =
     Hpack.Reader(
       source = continuation,
@@ -78,7 +77,9 @@ class Http2Reader(
     } else {
       // The server reads the CONNECTION_PREFACE byte string.
       val connectionPreface = source.readByteString(CONNECTION_PREFACE.size.toLong())
-      if (logger.isLoggable(FINE)) logger.fine(format("<< CONNECTION ${connectionPreface.hex()}"))
+      frameLogger.logFrame {
+        format("<< CONNECTION ${connectionPreface.hex()}")
+      }
       if (CONNECTION_PREFACE != connectionPreface) {
         throw IOException("Expected a connection header but was ${connectionPreface.utf8()}")
       }
@@ -114,8 +115,8 @@ class Http2Reader(
     val type = source.readByte() and 0xff
     val flags = source.readByte() and 0xff
     val streamId = source.readInt() and 0x7fffffff // Ignore reserved bit.
-    if (type != TYPE_WINDOW_UPDATE && logger.isLoggable(FINE)) {
-      logger.fine(frameLog(true, streamId, length, type, flags))
+    if (type != TYPE_WINDOW_UPDATE) {
+      frameLogger.logFrame { frameLog(true, streamId, length, type, flags) }
     }
 
     if (requireSettings && type != TYPE_SETTINGS) {
@@ -376,17 +377,15 @@ class Http2Reader(
       increment = source.readInt() and 0x7fffffffL
       if (increment == 0L) throw IOException("windowSizeIncrement was 0")
     } catch (e: Exception) {
-      logger.fine(frameLog(true, streamId, length, TYPE_WINDOW_UPDATE, flags))
+      frameLogger.logFrame { frameLog(true, streamId, length, TYPE_WINDOW_UPDATE, flags) }
       throw e
     }
-    if (logger.isLoggable(FINE)) {
-      logger.fine(
-        frameLogWindowUpdate(
-          inbound = true,
-          streamId = streamId,
-          length = length,
-          windowSizeIncrement = increment,
-        ),
+    frameLogger.logFrame {
+      frameLogWindowUpdate(
+            inbound = true,
+            streamId = streamId,
+            length = length,
+            windowSizeIncrement = increment,
       )
     }
     handler.windowUpdate(streamId, increment)
@@ -403,6 +402,7 @@ class Http2Reader(
    */
   internal class ContinuationSource(
     private val source: BufferedSource,
+    private val frameLogger: FrameLogger
   ) : Source {
     var length: Int = 0
     var flags: Int = 0
@@ -444,7 +444,7 @@ class Http2Reader(
       length = left
       val type = source.readByte() and 0xff
       flags = source.readByte() and 0xff
-      if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags))
+      frameLogger.logFrame { frameLog(true, streamId, length, type, flags) }
       streamId = source.readInt() and 0x7fffffff
       if (type != TYPE_CONTINUATION) throw IOException("$type != TYPE_CONTINUATION")
       if (streamId != previousStreamId) throw IOException("TYPE_CONTINUATION streamId changed")
@@ -587,8 +587,6 @@ class Http2Reader(
   }
 
   companion object {
-    val logger: Logger = Logger.getLogger(Http2::class.java.name)
-
     @Throws(IOException::class)
     fun lengthWithoutPadding(
       length: Int,

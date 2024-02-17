@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 package okhttp3.internal.concurrent
 
 import assertk.assertThat
@@ -164,7 +165,6 @@ class TaskFaker : Closeable {
 
         override fun <T> decorate(queue: BlockingQueue<T>) = TaskFakerBlockingQueue(queue)
       },
-      logger = logger,
     )
 
   /** Wait for the test thread to proceed. */
