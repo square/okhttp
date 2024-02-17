@@ -186,6 +186,10 @@ subprojects {
 
     systemProperty("okhttp.platform", platform)
     systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
+    systemProperty("junit.jupiter.execution.parallel.enabled", "true")
+    systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
+    systemProperty("junit.jupiter.execution.parallel.config.strategy", "dynamic")
+    systemProperty("junit.jupiter.execution.parallel.config.dynamic.factor", "1.0")
   }
 
   // https://publicobject.com/2023/04/16/read-a-project-file-in-a-kotlin-multiplatform-test/
