@@ -119,9 +119,11 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.parallel.Isolated
 import org.junitpioneer.jupiter.RetryingTest
 
 @Timeout(30)
+@Isolated
 open class CallTest {
   private val fileSystem = FakeFileSystem()
 

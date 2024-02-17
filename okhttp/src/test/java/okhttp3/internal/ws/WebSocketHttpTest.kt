@@ -74,9 +74,11 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.parallel.Isolated
 
 @Flaky
 @Tag("Slow")
+@Isolated
 class WebSocketHttpTest {
   // Flaky https://github.com/square/okhttp/issues/4515
   // Flaky https://github.com/square/okhttp/issues/4953
