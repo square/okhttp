@@ -27,7 +27,6 @@ import java.io.IOException
 import java.net.CookieManager
 import java.net.Proxy
 import java.net.ProxySelector
-import java.net.ResponseCache
 import java.net.SocketAddress
 import java.net.URI
 import java.time.Duration
@@ -47,7 +46,9 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.parallel.Isolated
 
+@Isolated
 class OkHttpClientTest {
   @RegisterExtension
   var platform = PlatformRule()
@@ -64,7 +65,6 @@ class OkHttpClientTest {
   @AfterEach fun tearDown() {
     ProxySelector.setDefault(DEFAULT_PROXY_SELECTOR)
     CookieManager.setDefault(DEFAULT_COOKIE_HANDLER)
-    ResponseCache.setDefault(DEFAULT_RESPONSE_CACHE)
   }
 
   @Test fun durationDefaults() {
@@ -441,6 +441,5 @@ class OkHttpClientTest {
   companion object {
     private val DEFAULT_PROXY_SELECTOR = ProxySelector.getDefault()
     private val DEFAULT_COOKIE_HANDLER = CookieManager.getDefault()
-    private val DEFAULT_RESPONSE_CACHE = ResponseCache.getDefault()
   }
 }

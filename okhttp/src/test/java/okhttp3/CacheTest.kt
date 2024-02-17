@@ -65,8 +65,10 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.parallel.Isolated
 
 @Tag("Slow")
+@Isolated
 class CacheTest {
   val fileSystem = FakeFileSystem()
 
