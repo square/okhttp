@@ -18,6 +18,7 @@
 package okhttp3
 
 import android.annotation.SuppressLint
+import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import java.util.logging.Handler
@@ -166,7 +167,7 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
         .dispatcher(Dispatcher(backend.executor))
         .taskRunnerInternal(taskRunner)
     } else {
-      val backend = TaskRunner.RealBackend(loomThreadFactory())
+      val backend = TaskRunner.RealBackend(SharedExecutor)
       val taskRunner = TaskRunner(backend, logger = taskLogger)
 
       OkHttpClient.Builder()
@@ -331,6 +332,8 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   }
 
   companion object {
+    val SharedExecutor by lazy { Executors.newCachedThreadPool() }
+
     /**
      * A network that resolves only one IP address per host. Use this when testing route selection
      * fallbacks to prevent the host machine's various IP addresses from interfering.
