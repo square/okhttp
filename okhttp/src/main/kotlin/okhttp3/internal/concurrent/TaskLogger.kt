@@ -104,7 +104,7 @@ internal interface TaskLogger {
     fun logString(
       queue: TaskQueue,
       message: String,
-      task: Task
+      task: Task,
     ) = "${queue.name} ${"%-22s".format(message)}: ${task.name}"
 
     /**

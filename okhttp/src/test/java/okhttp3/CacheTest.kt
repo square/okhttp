@@ -2699,6 +2699,8 @@ class CacheTest {
    */
   @Test
   fun testGoldenCacheResponse() {
+    platform.assumeNotWindows()
+
     cache.close()
     server.enqueue(
       MockResponse.Builder()
@@ -2755,6 +2757,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   /** Exercise the cache format in OkHttp 2.7 and all earlier releases.  */
   @Test
   fun testGoldenCacheHttpsResponseOkHttp27() {
+    platform.assumeNotWindows()
+
     val url = server.url("/")
     val urlKey = key(url)
     val prefix = get().getPrefix()
@@ -2803,6 +2807,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   /** The TLS version is present in OkHttp 3.0 and beyond.  */
   @Test
   fun testGoldenCacheHttpsResponseOkHttp30() {
+    platform.assumeNotWindows()
+
     val url = server.url("/")
     val urlKey = key(url)
     val prefix = get().getPrefix()
@@ -2855,6 +2861,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
   @Test
   fun testGoldenCacheHttpResponseOkHttp30() {
+    platform.assumeNotWindows()
+
     val url = server.url("/")
     val urlKey = key(url)
     val prefix = get().getPrefix()

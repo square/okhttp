@@ -166,7 +166,7 @@ class TaskFaker : Closeable {
 
         override fun <T> decorate(queue: BlockingQueue<T>) = TaskFakerBlockingQueue(queue)
       },
-      logger = taskLogger
+      logger = taskLogger,
     )
 
   /** Wait for the test thread to proceed. */
