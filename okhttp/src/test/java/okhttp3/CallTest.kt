@@ -87,7 +87,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.asResponseBody
 import okhttp3.TestUtil.assumeNotWindows
-import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.internal.DoubleInetAddressDns
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.USER_AGENT
@@ -119,6 +118,7 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.parallel.Isolated
 import org.junitpioneer.jupiter.RetryingTest
 
 @Timeout(30)
@@ -130,9 +130,6 @@ open class CallTest {
 
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
-
-  @RegisterExtension
-  val testLogHandler = TestLogHandler(OkHttpClient::class.java)
 
   private lateinit var server: MockWebServer
   private lateinit var server2: MockWebServer
@@ -794,31 +791,6 @@ open class CallTest {
       .assertHeader("Content-Type", "text/plain")
       .assertBody("abc")
     assertThat(server.takeRequest().headers["User-Agent"]).isEqualTo("AsyncApiTest")
-  }
-
-  @Test
-  fun exceptionThrownByOnResponseIsRedactedAndLogged() {
-    server.enqueue(MockResponse())
-    val request = Request(server.url("/secret"))
-    client.newCall(request).enqueue(
-      object : Callback {
-        override fun onFailure(
-          call: Call,
-          e: IOException,
-        ) {
-          fail("")
-        }
-
-        override fun onResponse(
-          call: Call,
-          response: Response,
-        ) {
-          throw IOException("a")
-        }
-      },
-    )
-    assertThat(testLogHandler.take())
-      .isEqualTo("INFO: Callback failure for call to " + server.url("/") + "...")
   }
 
   @Test
@@ -4199,63 +4171,6 @@ open class CallTest {
       .assertCode(200)
       .assertHeader("abc", "def")
       .assertBody("")
-  }
-
-  @Test
-  fun leakedResponseBodyLogsStackTrace() {
-    server.enqueue(
-      MockResponse(body = "This gets leaked."),
-    )
-    client =
-      clientTestRule.newClientBuilder()
-        .connectionPool(ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
-        .build()
-    val request = Request(server.url("/"))
-    client.newCall(request).execute() // Ignore the response so it gets leaked then GC'd.
-    awaitGarbageCollection()
-    val message = testLogHandler.take()
-    assertThat(message).contains(
-      "A connection to ${server.url("/")} was leaked. Did you forget to close a response body?",
-    )
-  }
-
-  @Tag("Slowish")
-  @Test
-  fun asyncLeakedResponseBodyLogsStackTrace() {
-    server.enqueue(MockResponse(body = "This gets leaked."))
-    client =
-      clientTestRule.newClientBuilder()
-        .connectionPool(ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
-        .build()
-    val request = Request(server.url("/"))
-    val latch = CountDownLatch(1)
-    client.newCall(request).enqueue(
-      object : Callback {
-        override fun onFailure(
-          call: Call,
-          e: IOException,
-        ) {
-          fail("")
-        }
-
-        override fun onResponse(
-          call: Call,
-          response: Response,
-        ) {
-          // Ignore the response so it gets leaked then GC'd.
-          latch.countDown()
-        }
-      },
-    )
-    latch.await()
-    // There's some flakiness when triggering a GC for objects in a separate thread. Adding a
-    // small delay appears to ensure the objects will get GC'd.
-    Thread.sleep(200)
-    awaitGarbageCollection()
-    val message = testLogHandler.take()
-    assertThat(message).contains(
-      "A connection to ${server.url("/")} was leaked. Did you forget to close a response body?",
-    )
   }
 
   @Test
