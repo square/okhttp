@@ -19,6 +19,7 @@ import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
+import assertk.fail
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 import okhttp3.Response
@@ -96,7 +97,8 @@ class EventSourceRecorder : EventSourceListener() {
   }
 
   fun assertOpen(): EventSource {
-    val event = nextEvent() as Open
+    val event = nextEvent()
+    check(event is Open) { "Expected Open but was $event" }
     return event.eventSource
   }
 
@@ -105,7 +107,8 @@ class EventSourceRecorder : EventSourceListener() {
   }
 
   fun assertFailure(message: String?) {
-    val event = nextEvent() as Failure
+    val event = nextEvent()
+    check(event is Failure) { "Expected Failure but was $event" }
     if (message != null) {
       assertThat(event.t!!.message).isEqualTo(message)
     } else {
