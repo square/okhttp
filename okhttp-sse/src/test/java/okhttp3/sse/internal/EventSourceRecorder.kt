@@ -19,7 +19,6 @@ import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
-import assertk.fail
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 import okhttp3.Response
