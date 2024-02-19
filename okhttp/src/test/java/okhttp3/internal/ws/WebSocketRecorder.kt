@@ -168,12 +168,14 @@ class WebSocketRecorder(
   }
 
   fun assertOpen(): WebSocket {
-    val event = nextEvent() as Open
+    val event = nextEvent()
+    check(event is Open) { "Expected Open but was $event" }
     return event.webSocket
   }
 
   fun assertFailure(t: Throwable?) {
-    val event = nextEvent() as Failure
+    val event = nextEvent()
+    check(event is Failure) { "Expected Failure but was $event" }
     assertThat(event.response).isNull()
     assertThat(event.t).isSameAs(t)
   }
@@ -182,7 +184,8 @@ class WebSocketRecorder(
     cls: Class<out IOException?>?,
     vararg messages: String,
   ) {
-    val event = nextEvent() as Failure
+    val event = nextEvent()
+    check(event is Failure) { "Expected Failure but was $event" }
     assertThat(event.response).isNull()
     assertThat(event.t.javaClass).isEqualTo(cls)
     if (messages.isNotEmpty()) {
@@ -191,7 +194,8 @@ class WebSocketRecorder(
   }
 
   fun assertFailure() {
-    nextEvent() as Failure
+    val event = nextEvent()
+    check(event is Failure) { "Expected Failure but was $event" }
   }
 
   fun assertFailure(
@@ -200,7 +204,8 @@ class WebSocketRecorder(
     cls: Class<out IOException?>?,
     message: String?,
   ) {
-    val event = nextEvent() as Failure
+    val event = nextEvent()
+    check(event is Failure) { "Expected Failure but was $event" }
     assertThat(event.response!!.code).isEqualTo(code)
     if (body != null) {
       assertThat(event.responseBody).isEqualTo(body)
