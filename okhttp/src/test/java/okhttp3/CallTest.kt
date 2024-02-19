@@ -31,7 +31,6 @@ import assertk.assertions.isNotSameAs
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.assertions.startsWith
-import assertk.fail
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -118,7 +117,6 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.api.parallel.Isolated
 import org.junitpioneer.jupiter.RetryingTest
 
 @Timeout(30)

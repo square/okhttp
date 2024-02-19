@@ -83,6 +83,7 @@ open class CallWithLogsTest {
     cache.close()
     fileSystem.checkNoOpenFiles()
   }
+
   @Test
   fun exceptionThrownByOnResponseIsRedactedAndLogged() {
     server.enqueue(MockResponse())
