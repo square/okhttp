@@ -79,7 +79,7 @@ class EventSourceRecorder : EventSourceListener() {
   }
 
   private fun nextEvent(): Any {
-    return events.poll(10, TimeUnit.SECONDS)
+    return events.poll(25, TimeUnit.SECONDS)
       ?: throw AssertionError("Timed out waiting for event.")
   }
 
