@@ -50,7 +50,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: gradle/wrapper-validation-action@v1
       - name: Validate Renovate
-        uses: rinchsan/renovate-config-validator@v0.0.12
+        uses: rinchsan/renovate-config-validator@v0.2.0
         with:
           pattern: '.github/renovate.json'
 
