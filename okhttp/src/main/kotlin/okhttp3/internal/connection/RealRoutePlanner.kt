@@ -226,8 +226,13 @@ class RealRoutePlanner(
       }
 
     return ConnectPlan(
-      client = client,
-      call = call,
+      taskRunner = client.taskRunner,
+      connectionPool = client.connectionPool.delegate,
+      readTimeoutMillis = client.readTimeoutMillis,
+      writeTimeoutMillis = client.writeTimeoutMillis,
+      pingIntervalMillis = client.pingIntervalMillis,
+      retryOnConnectionFailure = client.retryOnConnectionFailure,
+      user = CallConnectionUser(call, connectionListener),
       chain = chain,
       routePlanner = this,
       route = route,
@@ -236,7 +241,6 @@ class RealRoutePlanner(
       tunnelRequest = tunnelRequest,
       connectionSpecIndex = -1,
       isTlsFallback = false,
-      connectionListener = connectionListener,
     )
   }
 
