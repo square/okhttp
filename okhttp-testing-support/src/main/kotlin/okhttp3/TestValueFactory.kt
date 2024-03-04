@@ -177,7 +177,7 @@ class TestValueFactory : Closeable {
     address: Address = newAddress(),
   ): RealRoutePlanner {
     val call = RealCall(client, Request(address.url), forWebSocket = false)
-    return RealRoutePlanner(client, address, call, newChain(call), ConnectionListener.NONE)
+    return client.buildRoutePlanner(call, address, newChain(call))
   }
 
   override fun close() {

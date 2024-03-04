@@ -71,7 +71,7 @@ class RealConnectionPool(
   }
 
   /**
-   * Attempts to acquire a recycled connection to [address] for [call]. Returns the connection if it
+   * Attempts to acquire a recycled connection to [address] for [connectionUser]. Returns the connection if it
    * was acquired, or null if no connection was acquired. The acquired connection will also be
    * assigned to [RealCall.connection].
    *
@@ -85,7 +85,7 @@ class RealConnectionPool(
   fun callAcquirePooledConnection(
     doExtensiveHealthChecks: Boolean,
     address: Address,
-    call: RealCall,
+    connectionUser: ConnectionUser,
     routes: List<Route>?,
     requireMultiplexed: Boolean,
   ): RealConnection? {
@@ -97,7 +97,7 @@ class RealConnectionPool(
             requireMultiplexed && !connection.isMultiplexed -> false
             !connection.isEligible(address, routes) -> false
             else -> {
-              call.acquireConnectionNoEvents(connection)
+              connectionUser.acquireConnectionNoEvents(connection)
               true
             }
           }
@@ -114,7 +114,7 @@ class RealConnectionPool(
         synchronized(connection) {
           noNewExchangesEvent = !connection.noNewExchanges
           connection.noNewExchanges = true
-          call.releaseConnectionNoEvents()
+          connectionUser.releaseConnectionNoEvents()
         }
       if (toClose != null) {
         toClose.closeQuietly()

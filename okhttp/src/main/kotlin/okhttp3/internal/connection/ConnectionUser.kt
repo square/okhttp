@@ -1,8 +1,12 @@
 package okhttp3.internal.connection
 
 import java.io.IOException
+import java.net.InetAddress
+import java.net.Proxy
+import java.net.Socket
 import okhttp3.Connection
 import okhttp3.Handshake
+import okhttp3.HttpUrl
 import okhttp3.Protocol
 import okhttp3.Route
 
@@ -42,5 +46,36 @@ interface ConnectionUser {
 
   fun acquireConnectionNoEvents(connection: RealConnection)
 
-  fun connectionConnectionAcquired(connection: Connection)
+  fun releaseConnectionNoEvents(): Socket?
+
+  fun connectionReleased(connection: Connection)
+
+  // TODO "connectionConnection" -- these names suck
+  fun connectionConnectionAcquired(connection: RealConnection)
+
+  fun connectionConnectionReleased(connection: RealConnection)
+
+  fun connectionConnectionClosed(connection: RealConnection)
+
+  fun noNewExchanges(connection: RealConnection)
+
+  fun doExtensiveHealthChecks(): Boolean
+
+  fun isCanceled(): Boolean
+
+  fun candidateConnection(): RealConnection?
+
+  fun proxySelectStart(url: HttpUrl)
+
+  fun proxySelectEnd(
+    url: HttpUrl,
+    proxies: List<Proxy>,
+  )
+
+  fun dnsStart(socketHost: String)
+
+  fun dnsEnd(
+    socketHost: String,
+    result: List<InetAddress>,
+  )
 }

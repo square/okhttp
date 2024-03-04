@@ -247,11 +247,17 @@ class RealCall(
     if (newRoutePlanner) {
       val routePlanner =
         RealRoutePlanner(
-          client,
-          createAddress(request.url),
-          this,
-          chain,
-          connectionListener = connectionPool.connectionListener,
+          taskRunner = client.taskRunner,
+          connectionPool = connectionPool,
+          readTimeoutMillis = client.readTimeoutMillis,
+          writeTimeoutMillis = client.writeTimeoutMillis,
+          connectTimeoutMillis = client.connectTimeoutMillis,
+          pingIntervalMillis = client.pingIntervalMillis,
+          retryOnConnectionFailure = client.retryOnConnectionFailure,
+          fastFallback = client.fastFallback,
+          address = createAddress(request.url),
+          connectionUser = CallConnectionUser(this, connectionPool.connectionListener, chain),
+          routeDatabase = client.routeDatabase,
         )
       this.exchangeFinder =
         when {

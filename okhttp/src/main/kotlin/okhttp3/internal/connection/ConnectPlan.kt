@@ -30,7 +30,6 @@ import okhttp3.CertificatePinner
 import okhttp3.ConnectionSpec
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
-import okhttp3.Interceptor
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Route
@@ -64,10 +63,10 @@ class ConnectPlan(
   private val connectionPool: RealConnectionPool,
   private val readTimeoutMillis: Int,
   private val writeTimeoutMillis: Int,
+  private val connectTimeoutMillis: Int,
   private val pingIntervalMillis: Int,
   private val retryOnConnectionFailure: Boolean,
   private val user: ConnectionUser,
-  private val chain: Interceptor.Chain,
   private val routePlanner: RealRoutePlanner,
   // Specifics to this plan.
   override val route: Route,
@@ -111,10 +110,10 @@ class ConnectPlan(
       connectionPool = connectionPool,
       readTimeoutMillis = readTimeoutMillis,
       writeTimeoutMillis = writeTimeoutMillis,
+      connectTimeoutMillis = connectTimeoutMillis,
       pingIntervalMillis = pingIntervalMillis,
       retryOnConnectionFailure = retryOnConnectionFailure,
       user = user,
-      chain = chain,
       routePlanner = routePlanner,
       route = route,
       routes = routes,
@@ -265,9 +264,9 @@ class ConnectPlan(
       throw IOException("canceled")
     }
 
-    rawSocket.soTimeout = chain.readTimeoutMillis()
+    rawSocket.soTimeout = readTimeoutMillis
     try {
-      Platform.get().connectSocket(rawSocket, route.socketAddress, chain.connectTimeoutMillis())
+      Platform.get().connectSocket(rawSocket, route.socketAddress, connectTimeoutMillis)
     } catch (e: ConnectException) {
       throw ConnectException("Failed to connect to ${route.socketAddress}").apply {
         initCause(e)
@@ -535,10 +534,10 @@ class ConnectPlan(
       connectionPool = connectionPool,
       readTimeoutMillis = readTimeoutMillis,
       writeTimeoutMillis = writeTimeoutMillis,
+      connectTimeoutMillis = connectTimeoutMillis,
       pingIntervalMillis = pingIntervalMillis,
       retryOnConnectionFailure = retryOnConnectionFailure,
       user = user,
-      chain = chain,
       routePlanner = routePlanner,
       route = route,
       routes = routes,
