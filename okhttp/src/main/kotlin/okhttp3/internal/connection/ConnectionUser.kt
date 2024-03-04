@@ -22,20 +22,25 @@ interface ConnectionUser {
 
   fun secureConnectEnd(handshake: Handshake?)
 
-  fun callConnectEnd(route: Route, protocol: Protocol?)
+  fun callConnectEnd(
+    route: Route,
+    protocol: Protocol?,
+  )
 
   fun connectionConnectEnd(
-      connection: Connection,
-      route: Route,
+    connection: Connection,
+    route: Route,
   )
 
   fun connectFailed(
-      route: Route,
-      protocol: Protocol?,
-      e: IOException
+    route: Route,
+    protocol: Protocol?,
+    e: IOException,
   )
 
   fun connectionAcquired(connection: Connection)
+
   fun acquireConnectionNoEvents(connection: RealConnection)
+
   fun connectionConnectionAcquired(connection: Connection)
 }

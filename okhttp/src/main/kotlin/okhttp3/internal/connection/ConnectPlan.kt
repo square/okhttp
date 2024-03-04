@@ -77,7 +77,6 @@ class ConnectPlan(
   internal val connectionSpecIndex: Int,
   internal val isTlsFallback: Boolean,
 ) : RoutePlanner.Plan, ExchangeCodec.Carrier {
-
   /** True if this connect was canceled; typically because it lost a race. */
   @Volatile private var canceled = false
 
