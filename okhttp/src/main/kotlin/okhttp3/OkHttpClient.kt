@@ -35,11 +35,8 @@ import okhttp3.Protocol.HTTP_2
 import okhttp3.internal.asFactory
 import okhttp3.internal.checkDuration
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.connection.CallConnectionUser
 import okhttp3.internal.connection.RealCall
-import okhttp3.internal.connection.RealRoutePlanner
 import okhttp3.internal.connection.RouteDatabase
-import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.proxy.NullProxySelector
@@ -547,27 +544,6 @@ open class OkHttpClient internal constructor(
     level = DeprecationLevel.ERROR,
   )
   fun pingIntervalMillis(): Int = pingIntervalMillis
-
-  // TODO this is probably a bad idea
-  fun buildRoutePlanner(
-    call: RealCall,
-    address: Address,
-    chain: RealInterceptorChain,
-  ): RealRoutePlanner {
-    return RealRoutePlanner(
-      taskRunner = taskRunner,
-      connectionPool = connectionPool.delegate,
-      readTimeoutMillis = readTimeoutMillis,
-      writeTimeoutMillis = writeTimeoutMillis,
-      connectTimeoutMillis = connectTimeoutMillis,
-      pingIntervalMillis = pingIntervalMillis,
-      retryOnConnectionFailure = retryOnConnectionFailure,
-      fastFallback = fastFallback,
-      address = address,
-      routeDatabase = routeDatabase,
-      connectionUser = CallConnectionUser(call, connectionPool.delegate.connectionListener, chain),
-    )
-  }
 
   class Builder() {
     internal var dispatcher: Dispatcher = Dispatcher()

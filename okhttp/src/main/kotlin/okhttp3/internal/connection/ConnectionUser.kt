@@ -50,7 +50,6 @@ interface ConnectionUser {
 
   fun connectionReleased(connection: Connection)
 
-  // TODO "connectionConnection" -- these names suck
   fun connectionConnectionAcquired(connection: RealConnection)
 
   fun connectionConnectionReleased(connection: RealConnection)
