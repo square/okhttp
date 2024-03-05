@@ -73,7 +73,7 @@ class RealConnectionPool(
   /**
    * Attempts to acquire a recycled connection to [address] for [connectionUser]. Returns the connection if it
    * was acquired, or null if no connection was acquired. The acquired connection will also be
-   * assigned to [RealCall.connection].
+   * given to [connectionUser] who may (for example) assign it to a [RealCall.connection].
    *
    * This confirms the returned connection is healthy before returning it. If this encounters any
    * unhealthy connections in its search, this will clean them up.

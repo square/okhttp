@@ -63,7 +63,8 @@ class ConnectPlan(
   private val connectionPool: RealConnectionPool,
   private val readTimeoutMillis: Int,
   private val writeTimeoutMillis: Int,
-  private val connectTimeoutMillis: Int,
+  private val socketConnectTimeoutMillis: Int,
+  private val socketReadTimeoutMillis: Int,
   private val pingIntervalMillis: Int,
   private val retryOnConnectionFailure: Boolean,
   private val user: ConnectionUser,
@@ -110,7 +111,8 @@ class ConnectPlan(
       connectionPool = connectionPool,
       readTimeoutMillis = readTimeoutMillis,
       writeTimeoutMillis = writeTimeoutMillis,
-      connectTimeoutMillis = connectTimeoutMillis,
+      socketConnectTimeoutMillis = socketConnectTimeoutMillis,
+      socketReadTimeoutMillis = socketReadTimeoutMillis,
       pingIntervalMillis = pingIntervalMillis,
       retryOnConnectionFailure = retryOnConnectionFailure,
       user = user,
@@ -264,9 +266,9 @@ class ConnectPlan(
       throw IOException("canceled")
     }
 
-    rawSocket.soTimeout = readTimeoutMillis
+    rawSocket.soTimeout = socketReadTimeoutMillis
     try {
-      Platform.get().connectSocket(rawSocket, route.socketAddress, connectTimeoutMillis)
+      Platform.get().connectSocket(rawSocket, route.socketAddress, socketConnectTimeoutMillis)
     } catch (e: ConnectException) {
       throw ConnectException("Failed to connect to ${route.socketAddress}").apply {
         initCause(e)
@@ -534,7 +536,8 @@ class ConnectPlan(
       connectionPool = connectionPool,
       readTimeoutMillis = readTimeoutMillis,
       writeTimeoutMillis = writeTimeoutMillis,
-      connectTimeoutMillis = connectTimeoutMillis,
+      socketConnectTimeoutMillis = socketConnectTimeoutMillis,
+      socketReadTimeoutMillis = socketReadTimeoutMillis,
       pingIntervalMillis = pingIntervalMillis,
       retryOnConnectionFailure = retryOnConnectionFailure,
       user = user,

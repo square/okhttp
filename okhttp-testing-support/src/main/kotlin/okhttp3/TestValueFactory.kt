@@ -184,12 +184,14 @@ class TestValueFactory : Closeable {
     address: Address = newAddress(),
   ): RealRoutePlanner {
     val call = RealCall(client, Request(address.url), forWebSocket = false)
+    val chain = newChain(call)
     return RealRoutePlanner(
       taskRunner = client.taskRunner,
       connectionPool = client.connectionPool.delegate,
       readTimeoutMillis = client.readTimeoutMillis,
       writeTimeoutMillis = client.writeTimeoutMillis,
-      connectTimeoutMillis = client.connectTimeoutMillis,
+      socketConnectTimeoutMillis = chain.connectTimeoutMillis,
+      socketReadTimeoutMillis = chain.readTimeoutMillis,
       pingIntervalMillis = client.pingIntervalMillis,
       retryOnConnectionFailure = client.retryOnConnectionFailure,
       fastFallback = client.fastFallback,
@@ -199,7 +201,7 @@ class TestValueFactory : Closeable {
         CallConnectionUser(
           call,
           client.connectionPool.delegate.connectionListener,
-          newChain(call),
+          chain,
         ),
     )
   }
