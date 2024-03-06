@@ -20,10 +20,8 @@ import java.net.HttpURLConnection
 import java.net.Socket
 import java.net.UnknownServiceException
 import okhttp3.Address
-import okhttp3.ConnectionListener
 import okhttp3.ConnectionSpec
 import okhttp3.HttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
@@ -31,27 +29,32 @@ import okhttp3.Route
 import okhttp3.internal.USER_AGENT
 import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RoutePlanner.Plan
-import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.toHostHeader
 
 class RealRoutePlanner(
-  private val client: OkHttpClient,
+  private val taskRunner: TaskRunner,
+  private val connectionPool: RealConnectionPool,
+  private val readTimeoutMillis: Int,
+  private val writeTimeoutMillis: Int,
+  private val socketConnectTimeoutMillis: Int,
+  private val socketReadTimeoutMillis: Int,
+  private val pingIntervalMillis: Int,
+  private val retryOnConnectionFailure: Boolean,
+  private val fastFallback: Boolean,
   override val address: Address,
-  private val call: RealCall,
-  private val chain: RealInterceptorChain,
-  private val connectionListener: ConnectionListener,
+  private val routeDatabase: RouteDatabase,
+  private val connectionUser: ConnectionUser,
 ) : RoutePlanner {
-  private val doExtensiveHealthChecks = chain.request.method != "GET"
-
   private var routeSelection: RouteSelector.Selection? = null
   private var routeSelector: RouteSelector? = null
   private var nextRouteToTry: Route? = null
 
   override val deferredPlans = ArrayDeque<Plan>()
 
-  override fun isCanceled(): Boolean = call.isCanceled()
+  override fun isCanceled(): Boolean = connectionUser.isCanceled()
 
   @Throws(IOException::class)
   override fun plan(): Plan {
@@ -84,11 +87,11 @@ class RealRoutePlanner(
    */
   private fun planReuseCallConnection(): ReusePlan? {
     // This may be mutated by releaseConnectionNoEvents()!
-    val candidate = call.connection ?: return null
+    val candidate = connectionUser.candidateConnection() ?: return null
 
     // Make sure this connection is healthy & eligible for new exchanges. If it's no longer needed
     // then we're on the hook to close it.
-    val healthy = candidate.isHealthy(doExtensiveHealthChecks)
+    val healthy = candidate.isHealthy(connectionUser.doExtensiveHealthChecks())
     var noNewExchangesEvent = false
     val toClose: Socket? =
       synchronized(candidate) {
@@ -96,10 +99,10 @@ class RealRoutePlanner(
           !healthy -> {
             noNewExchangesEvent = !candidate.noNewExchanges
             candidate.noNewExchanges = true
-            call.releaseConnectionNoEvents()
+            connectionUser.releaseConnectionNoEvents()
           }
           candidate.noNewExchanges || !sameHostAndPort(candidate.route().address.url) -> {
-            call.releaseConnectionNoEvents()
+            connectionUser.releaseConnectionNoEvents()
           }
           else -> null
         }
@@ -107,19 +110,19 @@ class RealRoutePlanner(
 
     // If the call's connection wasn't released, reuse it. We don't call connectionAcquired() here
     // because we already acquired it.
-    if (call.connection != null) {
+    if (connectionUser.candidateConnection() != null) {
       check(toClose == null)
       return ReusePlan(candidate)
     }
 
     // The call's connection was released.
     toClose?.closeQuietly()
-    call.eventListener.connectionReleased(call, candidate)
-    candidate.connectionListener.connectionReleased(candidate, call)
+    connectionUser.connectionReleased(candidate)
+    connectionUser.connectionConnectionReleased(candidate)
     if (toClose != null) {
-      candidate.connectionListener.connectionClosed(candidate)
+      connectionUser.connectionConnectionClosed(candidate)
     } else if (noNewExchangesEvent) {
-      candidate.connectionListener.noNewExchanges(candidate)
+      connectionUser.noNewExchanges(candidate)
     }
     return null
   }
@@ -146,10 +149,9 @@ class RealRoutePlanner(
       newRouteSelector =
         RouteSelector(
           address = address,
-          routeDatabase = call.client.routeDatabase,
-          call = call,
-          fastFallback = client.fastFallback,
-          eventListener = call.eventListener,
+          routeDatabase = routeDatabase,
+          connectionUser = connectionUser,
+          fastFallback = fastFallback,
         )
       routeSelector = newRouteSelector
     }
@@ -159,7 +161,7 @@ class RealRoutePlanner(
     val newRouteSelection = newRouteSelector.next()
     routeSelection = newRouteSelection
 
-    if (call.isCanceled()) throw IOException("Canceled")
+    if (isCanceled()) throw IOException("Canceled")
 
     return planConnectToRoute(newRouteSelection.next(), newRouteSelection.routes)
   }
@@ -176,10 +178,10 @@ class RealRoutePlanner(
     routes: List<Route>? = null,
   ): ReusePlan? {
     val result =
-      client.connectionPool.delegate.callAcquirePooledConnection(
-        doExtensiveHealthChecks = doExtensiveHealthChecks,
+      connectionPool.callAcquirePooledConnection(
+        doExtensiveHealthChecks = connectionUser.doExtensiveHealthChecks(),
         address = address,
-        call = call,
+        connectionUser = connectionUser,
         routes = routes,
         requireMultiplexed = planToReplace != null && planToReplace.isReady,
       ) ?: return null
@@ -191,8 +193,8 @@ class RealRoutePlanner(
       planToReplace.closeQuietly()
     }
 
-    call.eventListener.connectionAcquired(call, result)
-    result.connectionListener.connectionAcquired(result, call)
+    connectionUser.connectionAcquired(result)
+    connectionUser.connectionConnectionAcquired(result)
     return ReusePlan(result)
   }
 
@@ -226,9 +228,15 @@ class RealRoutePlanner(
       }
 
     return ConnectPlan(
-      client = client,
-      call = call,
-      chain = chain,
+      taskRunner = taskRunner,
+      connectionPool = connectionPool,
+      readTimeoutMillis = readTimeoutMillis,
+      writeTimeoutMillis = writeTimeoutMillis,
+      socketConnectTimeoutMillis = socketConnectTimeoutMillis,
+      socketReadTimeoutMillis = socketReadTimeoutMillis,
+      pingIntervalMillis = pingIntervalMillis,
+      retryOnConnectionFailure = retryOnConnectionFailure,
+      user = connectionUser,
       routePlanner = this,
       route = route,
       routes = routes,
@@ -236,7 +244,6 @@ class RealRoutePlanner(
       tunnelRequest = tunnelRequest,
       connectionSpecIndex = -1,
       isTlsFallback = false,
-      connectionListener = connectionListener,
     )
   }
 

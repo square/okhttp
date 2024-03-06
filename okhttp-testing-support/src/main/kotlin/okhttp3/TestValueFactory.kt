@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress(
+  "CANNOT_OVERRIDE_INVISIBLE_MEMBER",
+  "INVISIBLE_MEMBER",
+  "INVISIBLE_REFERENCE",
+)
+
 package okhttp3
 
 import java.io.Closeable
@@ -28,6 +34,7 @@ import javax.net.ssl.SSLSocketFactory
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.CallConnectionUser
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RealConnectionPool
@@ -177,7 +184,26 @@ class TestValueFactory : Closeable {
     address: Address = newAddress(),
   ): RealRoutePlanner {
     val call = RealCall(client, Request(address.url), forWebSocket = false)
-    return RealRoutePlanner(client, address, call, newChain(call), ConnectionListener.NONE)
+    val chain = newChain(call)
+    return RealRoutePlanner(
+      taskRunner = client.taskRunner,
+      connectionPool = client.connectionPool.delegate,
+      readTimeoutMillis = client.readTimeoutMillis,
+      writeTimeoutMillis = client.writeTimeoutMillis,
+      socketConnectTimeoutMillis = chain.connectTimeoutMillis,
+      socketReadTimeoutMillis = chain.readTimeoutMillis,
+      pingIntervalMillis = client.pingIntervalMillis,
+      retryOnConnectionFailure = client.retryOnConnectionFailure,
+      fastFallback = client.fastFallback,
+      address = address,
+      routeDatabase = client.routeDatabase,
+      connectionUser =
+        CallConnectionUser(
+          call,
+          client.connectionPool.delegate.connectionListener,
+          chain,
+        ),
+    )
   }
 
   override fun close() {
