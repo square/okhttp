@@ -110,6 +110,7 @@ class ConnectionPool internal constructor(
     delegate.evictAll()
   }
 
+  @ExperimentalOkHttpApi
   fun setPolicy(
     address: Address,
     policy: AddressPolicy,
