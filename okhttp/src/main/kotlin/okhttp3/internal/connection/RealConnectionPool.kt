@@ -18,6 +18,7 @@ package okhttp3.internal.connection
 
 import java.net.Socket
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 import okhttp3.Address
 import okhttp3.ConnectionListener
@@ -33,7 +34,7 @@ import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 
 class RealConnectionPool(
-  taskRunner: TaskRunner,
+  private val taskRunner: TaskRunner,
   /** The maximum number of idle connections for each address. */
   private val maxIdleConnections: Int,
   keepAliveDuration: Long,
@@ -41,11 +42,18 @@ class RealConnectionPool(
   internal val connectionListener: ConnectionListener,
 ) {
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
+  private val policies: MutableMap<Address, ConnectionPool.AddressPolicy> = mutableMapOf()
 
   private val cleanupQueue: TaskQueue = taskRunner.newQueue()
   private val cleanupTask =
-    object : Task("$okHttpName ConnectionPool") {
+    object : Task("$okHttpName ConnectionPool cleanup") {
       override fun runOnce(): Long = cleanup(System.nanoTime())
+    }
+
+  private val minConnectionQueue: TaskQueue = taskRunner.newQueue()
+  private fun minConnectionTask(address: Address) =
+    object : Task("$okHttpName ConnectionPool min connections") {
+      override fun runOnce(): Long = ensureMinimumConnections(address)
     }
 
   /**
@@ -286,7 +294,83 @@ class RealConnectionPool(
     return references.size
   }
 
+  fun setPolicy(
+    address: Address,
+    policy: ConnectionPool.AddressPolicy,
+  ) {
+    // TODO: it's quite awkward that we have a new policy object that doesn't contain the max
+    require(policy.minimumConcurrentCalls <= maxIdleConnections) {
+      "minimumConcurrentCalls must be <= maxIdleConnections"
+    }
+
+    // Race conditions are fine; worst case, we check for min connections more often than needed
+    if (!policies.contains(address)) {
+      minConnectionQueue.schedule(minConnectionTask(address))
+    }
+
+    policies[address] = policy
+  }
+
+  fun ensureMinimumConnections(address: Address): Long {
+    val policy = policies[address]!!
+    val relevantConnections = connections.filter { it.isEligible(address, null) }
+
+    when {
+      // We already have an existing http/2 connection that can handle all of our streams
+      relevantConnections.any { it.isMultiplexed } -> {}
+
+      // We already have enough connections to handle every call
+      relevantConnections.size >= policy.minimumConcurrentCalls -> {}
+
+      // This policy is unsatisfied -- open a connection!
+      relevantConnections.isEmpty() -> {
+        try {
+          val exchangeFinder = buildExchangeFinder(address)
+          val connection = exchangeFinder.find()
+          put(connection)
+
+          return 0 // run again immediately to create more connections if needed
+        } catch (ex: Exception) {
+          // TODO do something with exception?
+
+          // we'll try again later
+          return policy.backoffDelayMillis.jitterBy(policy.backoffJitterMillis) * 1_000_000
+        }
+      }
+    }
+
+    return MIN_CONNECTION_CHECK_INTERVAL_NANOS
+  }
+
+  private fun buildExchangeFinder(address: Address) =
+    FastFallbackExchangeFinder(
+      ForceConnectRoutePlanner(
+        RealRoutePlanner(
+          taskRunner = taskRunner,
+          connectionPool = this,
+          // TODO revisit these values -- is it important to get them from the OkHttpClient?
+          readTimeoutMillis = 10_000,
+          writeTimeoutMillis = 10_000,
+          socketConnectTimeoutMillis = 10_000,
+          socketReadTimeoutMillis = 10_000,
+          pingIntervalMillis = 10_000,
+          retryOnConnectionFailure = true,
+          fastFallback = true,
+          address = address,
+          routeDatabase = RouteDatabase(),
+          connectionUser = PoolConnectionUser(),
+        ),
+      ),
+      taskRunner,
+    )
+
+  private fun Long.jitterBy(amount: Int): Long {
+    return this + ThreadLocalRandom.current().nextInt(amount * -1, amount)
+  }
+
   companion object {
     fun get(connectionPool: ConnectionPool): RealConnectionPool = connectionPool.delegate
+
+    private const val MIN_CONNECTION_CHECK_INTERVAL_NANOS = 1_000_000_000L // 1 second
   }
 }

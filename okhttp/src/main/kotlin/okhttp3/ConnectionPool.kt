@@ -92,4 +92,25 @@ class ConnectionPool internal constructor(
   fun evictAll() {
     delegate.evictAll()
   }
+
+  fun setPolicy(
+    address: Address,
+    policy: AddressPolicy,
+  ) {
+    delegate.setPolicy(address, policy)
+  }
+
+  /**
+   * A policy for how the pool should treat a specific address.
+   *
+   * @param minimumConcurrentCalls How many concurrent calls should be possible to make at any time.
+   *    The pool will passively try to pre-emptively open connections to satisfy this minimum.
+   * @param backoffDelayMillis How long to wait to retry pre-emptive connection attempts that fail.
+   * @param backoffJitterMillis How much jitter to introduce in connection retry backoff delays
+   */
+  data class AddressPolicy(
+    val minimumConcurrentCalls: Int,
+    val backoffDelayMillis: Long = 60 * 1000,
+    val backoffJitterMillis: Int = 100,
+  )
 }
