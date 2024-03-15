@@ -18,7 +18,11 @@ package okhttp3
 
 import java.util.concurrent.TimeUnit
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.FastFallbackExchangeFinder
+import okhttp3.internal.connection.ForceConnectRoutePlanner
+import okhttp3.internal.connection.PoolConnectionUser
 import okhttp3.internal.connection.RealConnectionPool
+import okhttp3.internal.connection.RealRoutePlanner
 import okhttp3.internal.connection.RouteDatabase
 
 /**
@@ -55,14 +59,28 @@ class ConnectionPool internal constructor(
       keepAliveDuration = keepAliveDuration,
       timeUnit = timeUnit,
       connectionListener = connectionListener,
-      readTimeoutMillis = readTimeoutMillis,
-      writeTimeoutMillis = writeTimeoutMillis,
-      socketConnectTimeoutMillis = socketConnectTimeoutMillis,
-      socketReadTimeoutMillis = socketReadTimeoutMillis,
-      pingIntervalMillis = pingIntervalMillis,
-      retryOnConnectionFailure = retryOnConnectionFailure,
-      fastFallback = fastFallback,
-      routeDatabase = routeDatabase,
+      exchangeFinderFactory =  { pool, address, user ->
+        FastFallbackExchangeFinder(
+          ForceConnectRoutePlanner(
+            RealRoutePlanner(
+              taskRunner = taskRunner,
+              connectionPool = pool,
+              readTimeoutMillis = readTimeoutMillis,
+              writeTimeoutMillis = writeTimeoutMillis,
+              socketConnectTimeoutMillis = socketConnectTimeoutMillis,
+              socketReadTimeoutMillis = socketReadTimeoutMillis,
+              pingIntervalMillis = pingIntervalMillis,
+              retryOnConnectionFailure = retryOnConnectionFailure,
+              fastFallback = fastFallback,
+              address = address,
+              routeDatabase = routeDatabase,
+              connectionUser = user,
+            ),
+          ),
+          taskRunner,
+        )
+      }
+
     ),
   )
 

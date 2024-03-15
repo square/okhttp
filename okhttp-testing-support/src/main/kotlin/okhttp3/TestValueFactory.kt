@@ -35,11 +35,14 @@ import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.CallConnectionUser
+import okhttp3.internal.connection.ExchangeFinder
+import okhttp3.internal.connection.FastFallbackExchangeFinder
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RealConnectionPool
 import okhttp3.internal.connection.RealRoutePlanner
 import okhttp3.internal.connection.RouteDatabase
+import okhttp3.internal.connection.RoutePlanner
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.tls.HandshakeCertificates
@@ -98,6 +101,7 @@ class TestValueFactory : Closeable {
   fun newConnectionPool(
     taskRunner: TaskRunner = this.taskRunner,
     maxIdleConnections: Int = Int.MAX_VALUE,
+    routePlanner: RoutePlanner? = null,
   ): RealConnectionPool {
     return RealConnectionPool(
       taskRunner = taskRunner,
@@ -105,14 +109,25 @@ class TestValueFactory : Closeable {
       keepAliveDuration = 100L,
       timeUnit = TimeUnit.NANOSECONDS,
       connectionListener = ConnectionListener.NONE,
-      readTimeoutMillis = 10_000,
-      writeTimeoutMillis = 10_000,
-      socketConnectTimeoutMillis = 10_000,
-      socketReadTimeoutMillis = 10_000,
-      pingIntervalMillis = 10_000,
-      retryOnConnectionFailure = true,
-      fastFallback = true,
-      routeDatabase = RouteDatabase(),
+      exchangeFinderFactory = { pool, address, user ->
+        FastFallbackExchangeFinder(
+          routePlanner ?: RealRoutePlanner(
+            taskRunner = taskRunner,
+            connectionPool = pool,
+            readTimeoutMillis = 10_000,
+            writeTimeoutMillis = 10_000,
+            socketConnectTimeoutMillis = 10_000,
+            socketReadTimeoutMillis = 10_000,
+            pingIntervalMillis = 10_000,
+            retryOnConnectionFailure = false,
+            fastFallback = true,
+            address = address,
+            routeDatabase = RouteDatabase(),
+            connectionUser = user
+          ),
+          taskRunner
+        )
+      },
     )
   }
 

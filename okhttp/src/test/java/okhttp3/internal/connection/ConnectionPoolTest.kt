@@ -21,14 +21,20 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isTrue
+import okhttp3.Address
 import okhttp3.ConnectionPool
+import okhttp3.FakeRoutePlanner
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
+import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
 import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.TestValueFactory
 import okhttp3.internal.concurrent.TaskRunner
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 class ConnectionPoolTest {
   private val factory = TestValueFactory()
@@ -40,6 +46,8 @@ class ConnectionPoolTest {
   private val routeB1 = factory.newRoute(addressB)
   private val addressC = factory.newAddress("c")
   private val routeC1 = factory.newRoute(addressC)
+
+  private val routePlanner = FakeRoutePlanner(factory.taskFaker)
 
   @AfterEach fun tearDown() {
     factory.close()
@@ -190,6 +198,47 @@ class ConnectionPoolTest {
     }
     Thread.sleep(100)
     assertThat(realTaskRunner.activeQueues()).isEmpty()
+  }
+
+  @Test fun connectionPreWarming() {
+    val address = routePlanner.address
+    val pool = factory.newConnectionPool(routePlanner = routePlanner)
+
+    // Set the policy, wait for connection to be created
+    routePlanner.addPlan()
+    pool.setPolicy(address, ConnectionPool.AddressPolicy(1))
+    // TODO why does runTasks() spin forever if I don't first call runNextTask() twice?
+    factory.taskFaker.runNextTask()
+    factory.taskFaker.runNextTask()
+    factory.taskFaker.runTasks()
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    // Evict the connection, make sure it gets recreated after forcing task to run again
+    pool.evictAll()
+    assertThat(pool.connectionCount()).isEqualTo(0)
+    routePlanner.addPlan()
+    factory.taskRunner.newQueue().execute("forced min connection creation") {
+      pool.ensureMinimumConnections(address)
+    }
+    factory.taskFaker.runTasks()
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    // Force the task to run again, make sure it doesn't duplicate the connection unnecessarily
+    routePlanner.addPlan()
+    factory.taskRunner.newQueue().execute("forced min connection creation") {
+      pool.ensureMinimumConnections(address)
+    }
+    factory.taskFaker.runTasks()
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    // Mutate the policy to require more connections, make sure they get created
+    routePlanner.addPlan()
+    pool.setPolicy(address, ConnectionPool.AddressPolicy(2))
+    factory.taskRunner.newQueue().execute("forced min connection creation") {
+      pool.ensureMinimumConnections(address)
+    }
+    factory.taskFaker.runTasks()
+    assertThat(pool.connectionCount()).isEqualTo(2)
   }
 
   /** Use a helper method so there's no hidden reference remaining on the stack.  */

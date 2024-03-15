@@ -302,6 +302,32 @@ open class OkHttpClient internal constructor(
     verifyClientState()
   }
 
+  fun createAddress(url: HttpUrl): Address {
+    var useSslSocketFactory: SSLSocketFactory? = null
+    var useHostnameVerifier: HostnameVerifier? = null
+    var useCertificatePinner: CertificatePinner? = null
+    if (url.isHttps) {
+      useSslSocketFactory = sslSocketFactory
+      useHostnameVerifier = hostnameVerifier
+      useCertificatePinner = certificatePinner
+    }
+
+    return Address(
+      uriHost = url.host,
+      uriPort = url.port,
+      dns = dns,
+      socketFactory = socketFactory,
+      sslSocketFactory = useSslSocketFactory,
+      hostnameVerifier = useHostnameVerifier,
+      certificatePinner = useCertificatePinner,
+      proxyAuthenticator = proxyAuthenticator,
+      proxy = proxy,
+      protocols = protocols,
+      connectionSpecs = connectionSpecs,
+      proxySelector = proxySelector,
+    )
+  }
+
   private fun verifyClientState() {
     check(null !in (interceptors as List<Interceptor?>)) {
       "Null interceptor: $interceptors"
