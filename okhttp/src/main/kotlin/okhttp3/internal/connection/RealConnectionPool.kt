@@ -40,6 +40,14 @@ class RealConnectionPool(
   keepAliveDuration: Long,
   timeUnit: TimeUnit,
   internal val connectionListener: ConnectionListener,
+  private val readTimeoutMillis: Int,
+  private val writeTimeoutMillis: Int,
+  private val socketConnectTimeoutMillis: Int,
+  private val socketReadTimeoutMillis: Int,
+  private val pingIntervalMillis: Int,
+  private val retryOnConnectionFailure: Boolean,
+  private val fastFallback: Boolean,
+  private val routeDatabase: RouteDatabase,
 ) {
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
   private val policies: MutableMap<Address, ConnectionPool.AddressPolicy> = mutableMapOf()
@@ -51,6 +59,7 @@ class RealConnectionPool(
     }
 
   private val minConnectionQueue: TaskQueue = taskRunner.newQueue()
+
   private fun minConnectionTask(address: Address) =
     object : Task("$okHttpName ConnectionPool min connections") {
       override fun runOnce(): Long = ensureMinimumConnections(address)
@@ -348,16 +357,15 @@ class RealConnectionPool(
         RealRoutePlanner(
           taskRunner = taskRunner,
           connectionPool = this,
-          // TODO revisit these values -- is it important to get them from the OkHttpClient?
-          readTimeoutMillis = 10_000,
-          writeTimeoutMillis = 10_000,
-          socketConnectTimeoutMillis = 10_000,
-          socketReadTimeoutMillis = 10_000,
-          pingIntervalMillis = 10_000,
-          retryOnConnectionFailure = true,
-          fastFallback = true,
+          readTimeoutMillis = readTimeoutMillis,
+          writeTimeoutMillis = writeTimeoutMillis,
+          socketConnectTimeoutMillis = socketConnectTimeoutMillis,
+          socketReadTimeoutMillis = socketReadTimeoutMillis,
+          pingIntervalMillis = pingIntervalMillis,
+          retryOnConnectionFailure = retryOnConnectionFailure,
+          fastFallback = fastFallback,
           address = address,
-          routeDatabase = RouteDatabase(),
+          routeDatabase = routeDatabase,
           connectionUser = PoolConnectionUser(),
         ),
       ),

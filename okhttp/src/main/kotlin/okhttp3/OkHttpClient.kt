@@ -136,9 +136,6 @@ open class OkHttpClient internal constructor(
   @get:JvmName("dispatcher")
   val dispatcher: Dispatcher = builder.dispatcher
 
-  @get:JvmName("connectionPool")
-  val connectionPool: ConnectionPool = builder.connectionPool
-
   /**
    * Returns an immutable list of interceptors that observe the full span of each call: from before
    * the connection is established (if any) until after the response source is selected (either the
@@ -264,6 +261,19 @@ open class OkHttpClient internal constructor(
 
   internal val routeDatabase: RouteDatabase = builder.routeDatabase ?: RouteDatabase()
   internal val taskRunner: TaskRunner = builder.taskRunner ?: TaskRunner.INSTANCE
+
+  @get:JvmName("connectionPool")
+  val connectionPool: ConnectionPool =
+    builder.connectionPool ?: ConnectionPool(
+      readTimeoutMillis = readTimeoutMillis,
+      writeTimeoutMillis = writeTimeoutMillis,
+      socketConnectTimeoutMillis = connectTimeoutMillis,
+      socketReadTimeoutMillis = readTimeoutMillis,
+      pingIntervalMillis = pingIntervalMillis,
+      retryOnConnectionFailure = retryOnConnectionFailure,
+      fastFallback = fastFallback,
+      routeDatabase = routeDatabase,
+    )
 
   constructor() : this(Builder())
 
@@ -547,7 +557,7 @@ open class OkHttpClient internal constructor(
 
   class Builder() {
     internal var dispatcher: Dispatcher = Dispatcher()
-    internal var connectionPool: ConnectionPool = ConnectionPool()
+    internal var connectionPool: ConnectionPool? = null
     internal val interceptors: MutableList<Interceptor> = mutableListOf()
     internal val networkInterceptors: MutableList<Interceptor> = mutableListOf()
     internal var eventListenerFactory: EventListener.Factory = EventListener.NONE.asFactory()
