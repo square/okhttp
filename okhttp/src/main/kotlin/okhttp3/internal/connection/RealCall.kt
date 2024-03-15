@@ -256,7 +256,7 @@ class RealCall(
           pingIntervalMillis = client.pingIntervalMillis,
           retryOnConnectionFailure = client.retryOnConnectionFailure,
           fastFallback = client.fastFallback,
-          address = createAddress(request.url),
+          address = client.createAddress(request.url),
           connectionUser = CallConnectionUser(this, connectionPool.connectionListener, chain),
           routeDatabase = client.routeDatabase,
         )
@@ -457,32 +457,6 @@ class RealCall(
     }
 
     interceptorScopedExchange = null
-  }
-
-  private fun createAddress(url: HttpUrl): Address {
-    var sslSocketFactory: SSLSocketFactory? = null
-    var hostnameVerifier: HostnameVerifier? = null
-    var certificatePinner: CertificatePinner? = null
-    if (url.isHttps) {
-      sslSocketFactory = client.sslSocketFactory
-      hostnameVerifier = client.hostnameVerifier
-      certificatePinner = client.certificatePinner
-    }
-
-    return Address(
-      uriHost = url.host,
-      uriPort = url.port,
-      dns = client.dns,
-      socketFactory = client.socketFactory,
-      sslSocketFactory = sslSocketFactory,
-      hostnameVerifier = hostnameVerifier,
-      certificatePinner = certificatePinner,
-      proxyAuthenticator = client.proxyAuthenticator,
-      proxy = client.proxy,
-      protocols = client.protocols,
-      connectionSpecs = client.connectionSpecs,
-      proxySelector = client.proxySelector,
-    )
   }
 
   fun retryAfterFailure(): Boolean {

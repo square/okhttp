@@ -34,23 +34,17 @@ import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 
 class RealConnectionPool(
-  private val taskRunner: TaskRunner,
+  taskRunner: TaskRunner,
   /** The maximum number of idle connections for each address. */
   private val maxIdleConnections: Int,
   keepAliveDuration: Long,
   timeUnit: TimeUnit,
   internal val connectionListener: ConnectionListener,
-  private val readTimeoutMillis: Int,
-  private val writeTimeoutMillis: Int,
-  private val socketConnectTimeoutMillis: Int,
-  private val socketReadTimeoutMillis: Int,
-  private val pingIntervalMillis: Int,
-  private val retryOnConnectionFailure: Boolean,
-  private val fastFallback: Boolean,
-  private val routeDatabase: RouteDatabase,
+  private val exchangeFinderFactory: (RealConnectionPool, Address, ConnectionUser) -> ExchangeFinder
 ) {
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
   private val policies: MutableMap<Address, ConnectionPool.AddressPolicy> = mutableMapOf()
+  private val user = PoolConnectionUser()
 
   private val cleanupQueue: TaskQueue = taskRunner.newQueue()
   private val cleanupTask =
@@ -303,6 +297,10 @@ class RealConnectionPool(
     return references.size
   }
 
+  /**
+   * Adds or replaces the policy for [address].
+   * This will trigger a background task to start creating connections as needed.
+   */
   fun setPolicy(
     address: Address,
     policy: ConnectionPool.AddressPolicy,
@@ -314,15 +312,24 @@ class RealConnectionPool(
 
     // Race conditions are fine; worst case, we check for min connections more often than needed
     if (!policies.contains(address)) {
+      policies[address] = policy
       minConnectionQueue.schedule(minConnectionTask(address))
     }
 
+    // Regardless of whether we had to start a new task, make sure the policy gets updated
     policies[address] = policy
   }
 
+  /**
+   * Ensure enough connections open to [address] to satisfy its [ConnectionPool.AddressPolicy].
+   * If there are already enough connections, we'll check again later.
+   * If not, we create one and then schedule the task to run again immediately.
+   */
   fun ensureMinimumConnections(address: Address): Long {
-    val policy = policies[address]!!
-    val relevantConnections = connections.filter { it.isEligible(address, null) }
+    val policy = policies[address] ?: return -1 // No need to keep checking if there is no policy
+    val relevantConnections = connections.filter {
+      synchronized(it) { it.isEligible(address, null) }
+    }
 
     when {
       // We already have an existing http/2 connection that can handle all of our streams
@@ -332,11 +339,16 @@ class RealConnectionPool(
       relevantConnections.size >= policy.minimumConcurrentCalls -> {}
 
       // This policy is unsatisfied -- open a connection!
-      relevantConnections.isEmpty() -> {
+      else -> {
         try {
-          val exchangeFinder = buildExchangeFinder(address)
-          val connection = exchangeFinder.find()
-          put(connection)
+          val connection = exchangeFinderFactory(this, address, user).find()
+
+          // RealRoutePlanner will add the connection to the pool itself, other RoutePlanners may not
+          if (!connections.contains(connection)) {
+            synchronized(connection) {
+              put(connection)
+            }
+          }
 
           return 0 // run again immediately to create more connections if needed
         } catch (ex: Exception) {
@@ -351,27 +363,6 @@ class RealConnectionPool(
     return MIN_CONNECTION_CHECK_INTERVAL_NANOS
   }
 
-  private fun buildExchangeFinder(address: Address) =
-    FastFallbackExchangeFinder(
-      ForceConnectRoutePlanner(
-        RealRoutePlanner(
-          taskRunner = taskRunner,
-          connectionPool = this,
-          readTimeoutMillis = readTimeoutMillis,
-          writeTimeoutMillis = writeTimeoutMillis,
-          socketConnectTimeoutMillis = socketConnectTimeoutMillis,
-          socketReadTimeoutMillis = socketReadTimeoutMillis,
-          pingIntervalMillis = pingIntervalMillis,
-          retryOnConnectionFailure = retryOnConnectionFailure,
-          fastFallback = fastFallback,
-          address = address,
-          routeDatabase = routeDatabase,
-          connectionUser = PoolConnectionUser(),
-        ),
-      ),
-      taskRunner,
-    )
-
   private fun Long.jitterBy(amount: Int): Long {
     return this + ThreadLocalRandom.current().nextInt(amount * -1, amount)
   }
@@ -379,6 +370,6 @@ class RealConnectionPool(
   companion object {
     fun get(connectionPool: ConnectionPool): RealConnectionPool = connectionPool.delegate
 
-    private const val MIN_CONNECTION_CHECK_INTERVAL_NANOS = 1_000_000_000L // 1 second
+    internal const val MIN_CONNECTION_CHECK_INTERVAL_NANOS = 1_000_000_000L // 1 second
   }
 }
