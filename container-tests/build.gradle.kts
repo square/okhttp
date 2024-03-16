@@ -2,14 +2,15 @@ plugins {
   kotlin("jvm")
 }
 
+val platform = System.getProperty("okhttp.platform", "loom")
+val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
+
 tasks.withType<Test> {
   useJUnitPlatform()
   onlyIf("By default not in CI") {
     System.getenv("CI") == null
       || (project.hasProperty("containerTests") && project.property("containerTests").toString().toBoolean())
   }
-
-  val platform = System.getProperty("okhttp.platform", "loom")
 
   jvmArgs(
     "-Dokhttp.platform=$platform",
@@ -20,6 +21,11 @@ tasks.withType<Test> {
       "-Djdk.tracePinnedThreads=short",
     )
   }
+
+  val javaToolchains = project.extensions.getByType<JavaToolchainService>()
+  javaLauncher.set(javaToolchains.launcherFor {
+    languageVersion.set(JavaLanguageVersion.of(testJavaVersion))
+  })
 }
 
 dependencies {
