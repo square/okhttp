@@ -557,7 +557,7 @@ jobs:
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: test -Dokhttp.platform=loom -Dtest.java.version=21
+          arguments: test -Dokhttp.platform=loom -Dtest.java.version=21 -PcontainerTests=true
 
 
   testandroidregression:

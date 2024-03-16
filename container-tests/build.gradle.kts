@@ -8,6 +8,18 @@ tasks.withType<Test> {
     System.getenv("CI") == null
       || (project.hasProperty("containerTests") && project.property("containerTests").toString().toBoolean())
   }
+
+  val platform = System.getProperty("okhttp.platform", "loom")
+
+  jvmArgs(
+    "-Dokhttp.platform=$platform",
+  )
+
+  if (platform == "loom") {
+    jvmArgs(
+      "-Djdk.tracePinnedThreads=short",
+    )
+  }
 }
 
 dependencies {

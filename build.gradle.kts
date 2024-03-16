@@ -169,8 +169,7 @@ subprojects {
 
     if (platform == "loom") {
       jvmArgs(
-        "-Djdk.tracePinnedThread=full",
-        "--enable-preview"
+        "-Djdk.tracePinnedThreads=short",
       )
     }
 
