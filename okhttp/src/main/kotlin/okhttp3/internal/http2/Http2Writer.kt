@@ -20,6 +20,7 @@ import java.io.IOException
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level.FINE
 import java.util.logging.Logger
+import kotlin.concurrent.withLock
 import okhttp3.internal.assertHeld
 import okhttp3.internal.format
 import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
@@ -42,7 +43,6 @@ import okhttp3.internal.http2.Http2.frameLogWindowUpdate
 import okhttp3.internal.writeMedium
 import okio.Buffer
 import okio.BufferedSink
-import okio.withLock
 
 /** Writes HTTP/2 transport frames. */
 @Suppress("NAME_SHADOWING")

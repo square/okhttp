@@ -19,6 +19,7 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.Socket
 import java.net.UnknownServiceException
+import kotlin.concurrent.withLock
 import okhttp3.Address
 import okhttp3.ConnectionSpec
 import okhttp3.HttpUrl
@@ -319,7 +320,7 @@ class RealRoutePlanner(
    * connections.
    */
   private fun retryRoute(connection: RealConnection): Route? {
-    return connection.withLock {
+    return connection.lock.withLock {
       when {
         connection.routeFailureCount != 0 -> null
 

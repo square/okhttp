@@ -21,6 +21,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isTrue
+import kotlin.concurrent.withLock
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -203,6 +204,6 @@ class ConnectionPoolTest {
         .build()
     val call = client.newCall(Request(connection.route().address.url)) as RealCall
     call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
-    connection.withLock { call.acquireConnectionNoEvents(connection) }
+    connection.lock.withLock { call.acquireConnectionNoEvents(connection) }
   }
 }

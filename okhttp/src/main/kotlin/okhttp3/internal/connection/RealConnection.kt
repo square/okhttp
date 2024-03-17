@@ -55,7 +55,6 @@ import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.ws.RealWebSocket
 import okio.BufferedSink
 import okio.BufferedSource
-import okio.withLock
 
 /**
  * A connection to a remote web server capable of carrying 1 or more concurrent streams.
@@ -441,10 +440,6 @@ class RealConnection(
       " hostAddress=${route.socketAddress}" +
       " cipherSuite=${handshake?.cipherSuite ?: "none"}" +
       " protocol=$protocol}"
-  }
-
-  internal inline fun <T> withLock(action: () -> T): T {
-    return lock.withLock(action)
   }
 
   companion object {

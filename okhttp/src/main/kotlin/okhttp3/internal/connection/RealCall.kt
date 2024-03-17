@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
+import kotlin.concurrent.withLock
 import okhttp3.Address
 import okhttp3.Call
 import okhttp3.Callback
@@ -51,7 +52,6 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadName
 import okio.AsyncTimeout
 import okio.Timeout
-import okio.withLock
 
 /**
  * Bridge between OkHttp's application and network layers. This class exposes high-level application
@@ -105,7 +105,7 @@ class RealCall(
   internal var interceptorScopedExchange: Exchange? = null
     private set
 
-  // These properties are guarded by this. They are typically only accessed by the thread executing
+  // These properties are guarded by lock. They are typically only accessed by the thread executing
   // the call, but they may be accessed by other threads for duplex requests.
 
   /** True if this call still has a request body open. */
@@ -378,7 +378,7 @@ class RealCall(
     if (connection != null) {
       connection.lock.assertNotHeld()
       val toClose: Socket? =
-        connection.withLock {
+        connection.lock.withLock {
           // Sets this.connection to null.
           releaseConnectionNoEvents()
         }

@@ -19,6 +19,7 @@ package okhttp3.internal.connection
 import java.net.Socket
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.withLock
 import okhttp3.Address
 import okhttp3.ConnectionListener
 import okhttp3.ConnectionPool
@@ -92,7 +93,7 @@ class RealConnectionPool(
     for (connection in connections) {
       // In the first synchronized block, acquire the connection if it can satisfy this call.
       val acquired =
-        connection.withLock {
+        connection.lock.withLock {
           when {
             requireMultiplexed && !connection.isMultiplexed -> false
             !connection.isEligible(address, routes) -> false
@@ -109,9 +110,9 @@ class RealConnectionPool(
 
       // In the second synchronized block, release the unhealthy acquired connection. We're also on
       // the hook to close this connection if it's no longer in use.
-      var noNewExchangesEvent: Boolean = false
+      val noNewExchangesEvent: Boolean
       val toClose: Socket? =
-        connection.withLock {
+        connection.lock.withLock {
           noNewExchangesEvent = !connection.noNewExchanges
           connection.noNewExchanges = true
           connectionUser.releaseConnectionNoEvents()
@@ -157,7 +158,7 @@ class RealConnectionPool(
     while (i.hasNext()) {
       val connection = i.next()
       val socketToClose =
-        connection.withLock {
+        connection.lock.withLock {
           if (connection.calls.isEmpty()) {
             i.remove()
             connection.noNewExchanges = true
@@ -190,7 +191,7 @@ class RealConnectionPool(
 
     // Find either a connection to evict, or the time that the next eviction is due.
     for (connection in connections) {
-      connection.withLock {
+      connection.lock.withLock {
         // If the connection is in use, keep searching.
         if (pruneAndGetAllocationCount(connection, now) > 0) {
           inUseConnectionCount++
@@ -214,7 +215,7 @@ class RealConnectionPool(
         idleConnectionCount > this.maxIdleConnections -> {
         // We've chosen a connection to evict. Confirm it's still okay to be evict, then close it.
         val connection = longestIdleConnection!!
-        connection.withLock {
+        connection.lock.withLock {
           if (connection.calls.isNotEmpty()) return 0L // No longer idle.
           if (connection.idleAtNs + longestIdleDurationNs != now) return 0L // No longer oldest.
           connection.noNewExchanges = true
