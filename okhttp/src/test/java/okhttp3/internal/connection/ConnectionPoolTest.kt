@@ -203,6 +203,6 @@ class ConnectionPoolTest {
         .build()
     val call = client.newCall(Request(connection.route().address.url)) as RealCall
     call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
-    synchronized(connection) { call.acquireConnectionNoEvents(connection) }
+    connection.withLock { call.acquireConnectionNoEvents(connection) }
   }
 }

@@ -23,8 +23,10 @@ import java.net.Socket
 import java.net.SocketException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.locks.ReentrantLock
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
+import kotlin.concurrent.withLock
 import okhttp3.Address
 import okhttp3.Connection
 import okhttp3.ConnectionListener
@@ -33,8 +35,8 @@ import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Route
-import okhttp3.internal.assertThreadDoesntHoldLock
-import okhttp3.internal.assertThreadHoldsLock
+import okhttp3.internal.assertHeld
+import okhttp3.internal.assertNotHeld
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http.ExchangeCodec
@@ -53,6 +55,7 @@ import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.ws.RealWebSocket
 import okio.BufferedSink
 import okio.BufferedSource
+import okio.withLock
 
 /**
  * A connection to a remote web server capable of carrying 1 or more concurrent streams.
@@ -80,7 +83,9 @@ class RealConnection(
 ) : Http2Connection.Listener(), Connection, ExchangeCodec.Carrier {
   private var http2Connection: Http2Connection? = null
 
-  // These properties are guarded by this.
+  val lock: ReentrantLock = ReentrantLock()
+
+  // These properties are guarded by lock.
 
   /**
    * If true, no new exchanges can be created on this connection. It is necessary to set this to
@@ -128,19 +133,23 @@ class RealConnection(
 
   /** Prevent further exchanges from being created on this connection. */
   override fun noNewExchanges() {
-    synchronized(this) {
+    lock.withLock {
       noNewExchanges = true
     }
     connectionListener.noNewExchanges(this)
   }
 
   /** Prevent this connection from being used for hosts other than the one in [route]. */
-  @Synchronized internal fun noCoalescedConnections() {
-    noCoalescedConnections = true
+  internal fun noCoalescedConnections() {
+    lock.withLock {
+      noCoalescedConnections = true
+    }
   }
 
-  @Synchronized internal fun incrementSuccessCount() {
-    successCount++
+  internal fun incrementSuccessCount() {
+    lock.withLock {
+      successCount++
+    }
   }
 
   @Throws(IOException::class)
@@ -178,7 +187,7 @@ class RealConnection(
     address: Address,
     routes: List<Route>?,
   ): Boolean {
-    assertThreadHoldsLock()
+    lock.assertHeld()
 
     // If this connection is not accepting new exchanges, we're done.
     if (calls.size >= allocationLimit || noNewExchanges) return false
@@ -231,7 +240,7 @@ class RealConnection(
   }
 
   private fun supportsUrl(url: HttpUrl): Boolean {
-    assertThreadHoldsLock()
+    lock.assertHeld()
 
     val routeUrl = route.address.url
 
@@ -307,7 +316,7 @@ class RealConnection(
 
   /** Returns true if this connection is ready to host new streams. */
   fun isHealthy(doExtensiveChecks: Boolean): Boolean {
-    assertThreadDoesntHoldLock()
+    lock.assertNotHeld()
 
     val nowNs = System.nanoTime()
 
@@ -325,7 +334,7 @@ class RealConnection(
       return http2Connection.isHealthy(nowNs)
     }
 
-    val idleDurationNs = synchronized(this) { nowNs - idleAtNs }
+    val idleDurationNs = lock.withLock { nowNs - idleAtNs }
     if (idleDurationNs >= IDLE_CONNECTION_HEALTHY_NS && doExtensiveChecks) {
       return socket.isHealthy(source)
     }
@@ -340,11 +349,13 @@ class RealConnection(
   }
 
   /** When settings are received, adjust the allocation limit. */
-  @Synchronized override fun onSettings(
+  override fun onSettings(
     connection: Http2Connection,
     settings: Settings,
   ) {
-    allocationLimit = settings.getMaxConcurrentStreams()
+    lock.withLock {
+      allocationLimit = settings.getMaxConcurrentStreams()
+    }
   }
 
   override fun handshake(): Handshake? = handshake
@@ -377,7 +388,7 @@ class RealConnection(
     e: IOException?,
   ) {
     var noNewExchangesEvent = false
-    synchronized(this) {
+    lock.withLock {
       if (e is StreamResetException) {
         when {
           e.errorCode == ErrorCode.REFUSED_STREAM -> {
@@ -430,6 +441,10 @@ class RealConnection(
       " hostAddress=${route.socketAddress}" +
       " cipherSuite=${handshake?.cipherSuite ?: "none"}" +
       " protocol=$protocol}"
+  }
+
+  inline fun <T> withLock(action: () -> T): T {
+    return lock.withLock(action)
   }
 
   companion object {

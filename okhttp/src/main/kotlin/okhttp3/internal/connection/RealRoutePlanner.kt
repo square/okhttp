@@ -319,7 +319,7 @@ class RealRoutePlanner(
    * connections.
    */
   private fun retryRoute(connection: RealConnection): Route? {
-    return synchronized(connection) {
+    return connection.withLock {
       when {
         connection.routeFailureCount != 0 -> null
 

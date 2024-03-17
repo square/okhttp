@@ -503,7 +503,7 @@ class ConnectPlan(
     val pooled3 = routePlanner.planReusePooledConnection(this, routes)
     if (pooled3 != null) return pooled3.connection
 
-    synchronized(connection) {
+    connection.withLock {
       connectionPool.put(connection)
       user.acquireConnectionNoEvents(connection)
     }
