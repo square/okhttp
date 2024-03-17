@@ -68,7 +68,7 @@ class RealCall(
   val originalRequest: Request,
   val forWebSocket: Boolean,
 ) : Call, Cloneable {
-  val lock: ReentrantLock = ReentrantLock()
+  internal val lock: ReentrantLock = ReentrantLock()
 
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
 

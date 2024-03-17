@@ -83,7 +83,7 @@ class RealConnection(
 ) : Http2Connection.Listener(), Connection, ExchangeCodec.Carrier {
   private var http2Connection: Http2Connection? = null
 
-  val lock: ReentrantLock = ReentrantLock()
+  internal val lock: ReentrantLock = ReentrantLock()
 
   // These properties are guarded by lock.
 
@@ -443,7 +443,7 @@ class RealConnection(
       " protocol=$protocol}"
   }
 
-  inline fun <T> withLock(action: () -> T): T {
+  internal inline fun <T> withLock(action: () -> T): T {
     return lock.withLock(action)
   }
 
