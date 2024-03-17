@@ -164,13 +164,11 @@ subprojects {
     useJUnitPlatform()
     jvmArgs(
       "-Dokhttp.platform=$platform",
-      "-XX:+HeapDumpOnOutOfMemoryError"
     )
 
     if (platform == "loom") {
       jvmArgs(
-        "-Djdk.tracePinnedThread=full",
-        "--enable-preview"
+        "-Djdk.tracePinnedThreads=short",
       )
     }
 
