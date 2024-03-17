@@ -78,15 +78,16 @@ class BasicLoomTest {
         )
         .respond(response().withBody("Peter the person!"))
 
-      val results = (1..20).map {
-        executor.submit {
-          val response =
-            client.newCall(Request((mockServer.secureEndpoint + "/person?name=peter").toHttpUrl())).execute()
+      val results =
+        (1..20).map {
+          executor.submit {
+            val response =
+              client.newCall(Request((mockServer.secureEndpoint + "/person?name=peter").toHttpUrl())).execute()
 
-          val body = response.body.string()
-          assertThat(body).contains("Peter the person")
+            val body = response.body.string()
+            assertThat(body).contains("Peter the person")
+          }
         }
-      }
 
       results.forEach {
         it.get()

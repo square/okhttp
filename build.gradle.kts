@@ -164,7 +164,6 @@ subprojects {
     useJUnitPlatform()
     jvmArgs(
       "-Dokhttp.platform=$platform",
-      "-XX:+HeapDumpOnOutOfMemoryError"
     )
 
     if (platform == "loom") {
