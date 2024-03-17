@@ -297,7 +297,7 @@ class RealCall(
   }
 
   fun acquireConnectionNoEvents(connection: RealConnection) {
-    lock.assertHeld()
+    connection.lock.assertHeld()
 
     check(this.connection == null)
     this.connection = connection
