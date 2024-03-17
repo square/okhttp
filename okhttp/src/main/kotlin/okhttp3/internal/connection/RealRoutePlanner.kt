@@ -95,7 +95,7 @@ class RealRoutePlanner(
     val healthy = candidate.isHealthy(connectionUser.doExtensiveHealthChecks())
     var noNewExchangesEvent = false
     val toClose: Socket? =
-      synchronized(candidate) {
+      candidate.lock.withLock {
         when {
           !healthy -> {
             noNewExchangesEvent = !candidate.noNewExchanges
