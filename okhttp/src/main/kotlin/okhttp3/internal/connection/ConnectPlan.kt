@@ -26,6 +26,7 @@ import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
+import kotlin.concurrent.withLock
 import okhttp3.CertificatePinner
 import okhttp3.ConnectionSpec
 import okhttp3.Handshake
@@ -503,7 +504,7 @@ class ConnectPlan(
     val pooled3 = routePlanner.planReusePooledConnection(this, routes)
     if (pooled3 != null) return pooled3.connection
 
-    synchronized(connection) {
+    connection.lock.withLock {
       connectionPool.put(connection)
       user.acquireConnectionNoEvents(connection)
     }
