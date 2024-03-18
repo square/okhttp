@@ -90,26 +90,29 @@ class Dispatcher() {
    */
   var idleCallback: Runnable? = null
     get() = lock.withLock { field }
-    set(value) { lock.withLock { field = value } }
+    set(value) {
+      lock.withLock { field = value }
+    }
 
   private var executorServiceOrNull: ExecutorService? = null
 
   @get:JvmName("executorService")
   val executorService: ExecutorService
-    get() = lock.withLock {
-      if (executorServiceOrNull == null) {
-        executorServiceOrNull =
-          ThreadPoolExecutor(
-            0,
-            Int.MAX_VALUE,
-            60,
-            TimeUnit.SECONDS,
-            SynchronousQueue(),
-            threadFactory("$okHttpName Dispatcher", false),
-          )
+    get() =
+      lock.withLock {
+        if (executorServiceOrNull == null) {
+          executorServiceOrNull =
+            ThreadPoolExecutor(
+              0,
+              Int.MAX_VALUE,
+              60,
+              TimeUnit.SECONDS,
+              SynchronousQueue(),
+              threadFactory("$okHttpName Dispatcher", false),
+            )
+        }
+        return executorServiceOrNull!!
       }
-      return executorServiceOrNull!!
-    }
 
   /** Ready async calls in the order they'll be run. */
   private val readyAsyncCalls = ArrayDeque<AsyncCall>()

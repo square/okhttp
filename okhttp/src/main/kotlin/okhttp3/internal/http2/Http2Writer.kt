@@ -21,7 +21,6 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level.FINE
 import java.util.logging.Logger
 import kotlin.concurrent.withLock
-import okhttp3.internal.assertHeld
 import okhttp3.internal.format
 import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
 import okhttp3.internal.http2.Http2.FLAG_ACK
@@ -186,9 +185,6 @@ class Http2Writer(
     buffer: Buffer?,
     byteCount: Int,
   ) {
-    // TODO check if needed
-    lock.assertHeld()
-
     frameHeader(
       streamId = streamId,
       length = byteCount,
@@ -324,9 +320,6 @@ class Http2Writer(
     type: Int,
     flags: Int,
   ) {
-    // TODO check if needed
-    lock.assertHeld()
-
     if (type != TYPE_WINDOW_UPDATE && logger.isLoggable(FINE)) {
       logger.fine(frameLog(false, streamId, length, type, flags))
     }
@@ -351,9 +344,6 @@ class Http2Writer(
     streamId: Int,
     byteCount: Long,
   ) {
-    // TODO check if needed
-    lock.assertHeld()
-
     var byteCount = byteCount
     while (byteCount > 0L) {
       val length = minOf(maxFrameSize.toLong(), byteCount)
