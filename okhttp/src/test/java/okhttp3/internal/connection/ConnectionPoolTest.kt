@@ -28,6 +28,7 @@ import okhttp3.Request
 import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.TestValueFactory
 import okhttp3.internal.concurrent.TaskRunner
+import okio.withLock
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
@@ -86,7 +87,7 @@ class ConnectionPoolTest {
         .build()
     val call = client.newCall(Request(addressA.url)) as RealCall
     call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
-    synchronized(c1) { call.acquireConnectionNoEvents(c1) }
+    c1.lock.withLock { call.acquireConnectionNoEvents(c1) }
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
     assertThat(pool.cleanup(50L)).isEqualTo(100L)
