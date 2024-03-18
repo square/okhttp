@@ -128,6 +128,10 @@ class ConnectionPool internal constructor(
     delegate.evictAll()
   }
 
+  /**
+   * Sets a policy that applies to [address].
+   * Overwrites any existing policy for that address.
+   */
   @ExperimentalOkHttpApi
   fun setPolicy(
     address: Address,
@@ -138,15 +142,18 @@ class ConnectionPool internal constructor(
 
   /**
    * A policy for how the pool should treat a specific address.
-   *
-   * @param minimumConcurrentCalls How many concurrent calls should be possible to make at any time.
-   *    The pool will passively try to pre-emptively open connections to satisfy this minimum.
-   * @param backoffDelayMillis How long to wait to retry pre-emptive connection attempts that fail.
-   * @param backoffJitterMillis How much jitter to introduce in connection retry backoff delays
    */
-  data class AddressPolicy(
-    val minimumConcurrentCalls: Int,
-    val backoffDelayMillis: Long = 60 * 1000,
-    val backoffJitterMillis: Int = 100,
+  class AddressPolicy(
+    /**
+     * How many concurrent calls should be possible to make at any time.
+     * The pool will routinely try to pre-emptively open connections to satisfy this minimum.
+     */
+    @JvmField val minimumConcurrentCalls: Int,
+
+    /** How long to wait to retry pre-emptive connection attempts that fail. */
+    @JvmField val backoffDelayMillis: Long = 60 * 1000,
+
+    /** How much jitter to introduce in connection retry backoff delays */
+    @JvmField val backoffJitterMillis: Int = 100,
   )
 }
