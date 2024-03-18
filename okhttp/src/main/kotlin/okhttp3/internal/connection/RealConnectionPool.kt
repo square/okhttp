@@ -40,7 +40,7 @@ class RealConnectionPool(
   keepAliveDuration: Long,
   timeUnit: TimeUnit,
   internal val connectionListener: ConnectionListener,
-  private val exchangeFinderFactory: (RealConnectionPool, Address, ConnectionUser) -> ExchangeFinder
+  private val exchangeFinderFactory: (RealConnectionPool, Address, ConnectionUser) -> ExchangeFinder,
 ) {
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
   private val policies: MutableMap<Address, ConnectionPool.AddressPolicy> = mutableMapOf()
@@ -327,9 +327,10 @@ class RealConnectionPool(
    */
   fun ensureMinimumConnections(address: Address): Long {
     val policy = policies[address] ?: return -1 // No need to keep checking if there is no policy
-    val relevantConnections = connections.filter {
-      synchronized(it) { it.isEligible(address, null) }
-    }
+    val relevantConnections =
+      connections.filter {
+        synchronized(it) { it.isEligible(address, null) }
+      }
 
     when {
       // We already have an existing http/2 connection that can handle all of our streams

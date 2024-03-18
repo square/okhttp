@@ -302,6 +302,9 @@ open class OkHttpClient internal constructor(
     verifyClientState()
   }
 
+  /**
+   * Creates an [Address] of out of the provided [HttpUrl].
+   */
   fun createAddress(url: HttpUrl): Address {
     var useSslSocketFactory: SSLSocketFactory? = null
     var useHostnameVerifier: HostnameVerifier? = null

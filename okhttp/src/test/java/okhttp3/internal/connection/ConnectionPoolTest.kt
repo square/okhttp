@@ -21,20 +21,15 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isTrue
-import okhttp3.Address
 import okhttp3.ConnectionPool
 import okhttp3.FakeRoutePlanner
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
-import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
 import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.TestValueFactory
 import okhttp3.internal.concurrent.TaskRunner
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 
 class ConnectionPoolTest {
   private val factory = TestValueFactory()

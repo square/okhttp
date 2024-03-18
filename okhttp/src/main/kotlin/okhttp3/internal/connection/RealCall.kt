@@ -25,14 +25,9 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLSocketFactory
-import okhttp3.Address
 import okhttp3.Call
 import okhttp3.Callback
-import okhttp3.CertificatePinner
 import okhttp3.EventListener
-import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request

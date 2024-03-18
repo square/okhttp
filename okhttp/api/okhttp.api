@@ -391,6 +391,7 @@ public final class okhttp3/ConnectionPool$AddressPolicy {
 	public final field backoffDelayMillis J
 	public final field backoffJitterMillis I
 	public final field minimumConcurrentCalls I
+	public fun <init> ()V
 	public fun <init> (IJI)V
 	public synthetic fun <init> (IJIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
