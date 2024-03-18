@@ -384,6 +384,15 @@ public final class okhttp3/ConnectionPool {
 	public final fun connectionCount ()I
 	public final fun evictAll ()V
 	public final fun idleConnectionCount ()I
+	public final fun setPolicy (Lokhttp3/Address;Lokhttp3/ConnectionPool$AddressPolicy;)V
+}
+
+public final class okhttp3/ConnectionPool$AddressPolicy {
+	public final field backoffDelayMillis J
+	public final field backoffJitterMillis I
+	public final field minimumConcurrentCalls I
+	public fun <init> (IJI)V
+	public synthetic fun <init> (IJIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class okhttp3/ConnectionSpec {
@@ -922,6 +931,7 @@ public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Fact
 	public final fun connectionPool ()Lokhttp3/ConnectionPool;
 	public final fun connectionSpecs ()Ljava/util/List;
 	public final fun cookieJar ()Lokhttp3/CookieJar;
+	public final fun createAddress (Lokhttp3/HttpUrl;)Lokhttp3/Address;
 	public final fun dispatcher ()Lokhttp3/Dispatcher;
 	public final fun dns ()Lokhttp3/Dns;
 	public final fun eventListenerFactory ()Lokhttp3/EventListener$Factory;
