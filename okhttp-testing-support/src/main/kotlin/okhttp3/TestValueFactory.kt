@@ -35,7 +35,6 @@ import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.CallConnectionUser
-import okhttp3.internal.connection.ExchangeFinder
 import okhttp3.internal.connection.FastFallbackExchangeFinder
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealConnection
@@ -123,9 +122,9 @@ class TestValueFactory : Closeable {
             fastFallback = true,
             address = address,
             routeDatabase = RouteDatabase(),
-            connectionUser = user
+            connectionUser = user,
           ),
-          taskRunner
+          taskRunner,
         )
       },
     )
