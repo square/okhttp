@@ -22,7 +22,7 @@ Code Contributions
 Get working code on a personal branch with tests passing before you submit a PR:
 
 ```
-./gradlew clean check
+./gradlew clean check test
 ```
 
 Please make every effort to follow existing conventions and style in order to keep the code as
