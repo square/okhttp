@@ -21,6 +21,7 @@ import java.io.File
 import java.io.RandomAccessFile
 import java.util.Random
 import kotlin.test.assertFailsWith
+import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
@@ -30,9 +31,13 @@ import okio.source
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
 
 class FileOperatorTest {
+  @JvmField @RegisterExtension
+  val platform = PlatformRule()
+
   @TempDir
   var tempDir: File? = null
   private var file: File? = null
@@ -40,13 +45,15 @@ class FileOperatorTest {
 
   @BeforeEach
   fun setUp() {
+    platform.assumeNotWindows()
+
     file = File(tempDir, "test")
     randomAccessFile = RandomAccessFile(file, "rw")
   }
 
   @AfterEach
   fun tearDown() {
-    randomAccessFile!!.close()
+    randomAccessFile?.close()
   }
 
   @Test

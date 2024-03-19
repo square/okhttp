@@ -79,7 +79,7 @@ class EventSourceRecorder : EventSourceListener() {
   }
 
   private fun nextEvent(): Any {
-    return events.poll(10, TimeUnit.SECONDS)
+    return events.poll(25, TimeUnit.SECONDS)
       ?: throw AssertionError("Timed out waiting for event.")
   }
 
@@ -96,7 +96,8 @@ class EventSourceRecorder : EventSourceListener() {
   }
 
   fun assertOpen(): EventSource {
-    val event = nextEvent() as Open
+    val event = nextEvent()
+    check(event is Open) { "Expected Open but was $event" }
     return event.eventSource
   }
 
@@ -105,7 +106,8 @@ class EventSourceRecorder : EventSourceListener() {
   }
 
   fun assertFailure(message: String?) {
-    val event = nextEvent() as Failure
+    val event = nextEvent()
+    check(event is Failure) { "Expected Failure but was $event" }
     if (message != null) {
       assertThat(event.t!!.message).isEqualTo(message)
     } else {

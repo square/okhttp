@@ -159,7 +159,7 @@ class RealConnection(
     socket.soTimeout = 0 // HTTP/2 connection timeouts are set per-stream.
     val flowControlListener = connectionListener as? FlowControlListener ?: FlowControlListener.None
     val http2Connection =
-      Http2Connection.Builder(client = true, taskRunner)
+      Http2Connection.Builder(client = true, taskRunner, frameLogger = connectionPool.frameLogger)
         .socket(socket, route.address.url.host, source, sink)
         .listener(this)
         .pingIntervalMillis(pingIntervalMillis)

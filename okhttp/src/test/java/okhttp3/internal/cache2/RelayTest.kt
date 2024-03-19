@@ -27,6 +27,7 @@ import java.util.concurrent.Executors
 import kotlin.test.assertFailsWith
 import okhttp3.internal.cache2.Relay.Companion.edit
 import okhttp3.internal.cache2.Relay.Companion.read
+import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
@@ -38,10 +39,14 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
 
 @Tag("Slowish")
 class RelayTest {
+  @JvmField @RegisterExtension
+  val platform = PlatformRule()
+
   @TempDir
   var tempDir: File? = null
   private val executor = Executors.newCachedThreadPool()
@@ -157,6 +162,8 @@ class RelayTest {
 
   @Test
   fun closeBeforeExhaustLeavesDirtyFile() {
+    platform.assumeNotWindows()
+
     val upstream = Buffer()
     upstream.writeUtf8("abcdefghij")
     val relay1 = edit(file, upstream, metadata, 5)

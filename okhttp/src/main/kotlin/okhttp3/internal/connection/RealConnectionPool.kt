@@ -29,6 +29,7 @@ import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskQueue
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealCall.CallReference
+import okhttp3.internal.http2.FrameLogger
 import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 
@@ -47,6 +48,9 @@ class RealConnectionPool(
     object : Task("$okHttpName ConnectionPool") {
       override fun runOnce(): Long = cleanup(System.nanoTime())
     }
+
+  internal val frameLogger: FrameLogger =
+    if (connectionListener is FrameLogger) connectionListener else FrameLogger.Logging
 
   /**
    * Holding the lock of the connection being added or removed when mutating this, and check its

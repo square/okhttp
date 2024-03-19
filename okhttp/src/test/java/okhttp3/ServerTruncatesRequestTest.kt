@@ -69,6 +69,9 @@ class ServerTruncatesRequestTest {
 
   @Test
   fun serverTruncatesRequestOnLongPostHttp1() {
+    // java.net.SocketException: An established connection was aborted by the software in your host machine
+    platform.assumeNotWindows()
+
     serverTruncatesRequestOnLongPost(https = false)
   }
 
@@ -171,6 +174,9 @@ class ServerTruncatesRequestTest {
 
   @Test
   fun serverTruncatesRequestButTrailersCanStillBeReadHttp1() {
+    // java.net.SocketException: An established connection was aborted by the software in your host machine
+    platform.assumeNotWindows()
+
     serverTruncatesRequestButTrailersCanStillBeRead(http2 = false)
   }
 

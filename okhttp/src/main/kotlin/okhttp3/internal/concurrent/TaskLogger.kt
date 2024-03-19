@@ -18,70 +18,114 @@ package okhttp3.internal.concurrent
 import java.util.logging.Level
 import java.util.logging.Logger
 
-internal inline fun Logger.taskLog(
-  task: Task,
-  queue: TaskQueue,
-  messageBlock: () -> String,
-) {
-  if (isLoggable(Level.FINE)) {
-    log(task, queue, messageBlock())
-  }
-}
+/**
+ * Internal interface for OkHttp TaskRunner logging.
+ */
+internal interface TaskLogger {
+  fun taskLog(
+    task: Task,
+    queue: TaskQueue,
+    messageBlock: () -> String,
+  )
 
-internal inline fun <T> Logger.logElapsed(
-  task: Task,
-  queue: TaskQueue,
-  block: () -> T,
-): T {
-  var startNs = -1L
-  val loggingEnabled = isLoggable(Level.FINE)
-  if (loggingEnabled) {
-    startNs = queue.taskRunner.backend.nanoTime()
-    log(task, queue, "starting")
-  }
+  val loggingEnabled: Boolean
 
-  var completedNormally = false
-  try {
-    val result = block()
-    completedNormally = true
-    return result
-  } finally {
+  fun <T> logElapsed(
+    task: Task,
+    queue: TaskQueue,
+    block: () -> T,
+  ): T {
+    var startNs = -1L
     if (loggingEnabled) {
-      val elapsedNs = queue.taskRunner.backend.nanoTime() - startNs
-      if (completedNormally) {
-        log(task, queue, "finished run in ${formatDuration(elapsedNs)}")
-      } else {
-        log(task, queue, "failed a run in ${formatDuration(elapsedNs)}")
+      startNs = queue.taskRunner.backend.nanoTime()
+      taskLog(task, queue) { "starting" }
+    }
+
+    var completedNormally = false
+    try {
+      val result = block()
+      completedNormally = true
+      return result
+    } finally {
+      if (loggingEnabled) {
+        val elapsedNs = queue.taskRunner.backend.nanoTime() - startNs
+        if (completedNormally) {
+          taskLog(task, queue) { "finished run in ${Logging.formatDuration(elapsedNs)}" }
+        } else {
+          taskLog(task, queue) { "failed a run in ${Logging.formatDuration(elapsedNs)}" }
+        }
       }
     }
   }
-}
 
-private fun Logger.log(
-  task: Task,
-  queue: TaskQueue,
-  message: String,
-) {
-  fine("${queue.name} ${String.format("%-22s", message)}: ${task.name}")
-}
-
-/**
- * Returns a duration in the nearest whole-number units like "999 µs" or "  1 s ". This rounds 0.5
- * units away from 0 and 0.499 towards 0. The smallest unit this returns is "µs"; the largest unit
- * it returns is "s". For values in [-499..499] this returns "  0 µs".
- *
- * The returned string attempts to be column-aligned to 6 characters. For negative and large values
- * the returned string may be longer.
- */
-fun formatDuration(ns: Long): String {
-  val s =
-    when {
-      ns <= -999_500_000 -> "${(ns - 500_000_000) / 1_000_000_000} s "
-      ns <= -999_500 -> "${(ns - 500_000) / 1_000_000} ms"
-      ns <= 0 -> "${(ns - 500) / 1_000} µs"
-      ns < 999_500 -> "${(ns + 500) / 1_000} µs"
-      ns < 999_500_000 -> "${(ns + 500_000) / 1_000_000} ms"
-      else -> "${(ns + 500_000_000) / 1_000_000_000} s "
+  object Noop : TaskLogger {
+    override fun taskLog(
+      task: Task,
+      queue: TaskQueue,
+      messageBlock: () -> String,
+    ) {
     }
-  return String.format("%6s", s)
+
+    override fun <T> logElapsed(
+      task: Task,
+      queue: TaskQueue,
+      block: () -> T,
+    ): T {
+      return block()
+    }
+
+    override val loggingEnabled: Boolean = false
+  }
+
+  object Logging : TaskLogger {
+    private val logger: Logger = Logger.getLogger(TaskRunner::class.java.name)
+
+    override val loggingEnabled: Boolean
+      get() = logger.isLoggable(Level.FINE)
+
+    override fun taskLog(
+      task: Task,
+      queue: TaskQueue,
+      messageBlock: () -> String,
+    ) {
+      if (logger.isLoggable(Level.FINE)) {
+        logger.log(task, queue, messageBlock())
+      }
+    }
+
+    private fun Logger.log(
+      task: Task,
+      queue: TaskQueue,
+      message: String,
+    ) {
+      fine(logString(queue, message, task))
+    }
+
+    fun logString(
+      queue: TaskQueue,
+      message: String,
+      task: Task,
+    ) = "${queue.name} ${"%-22s".format(message)}: ${task.name}"
+
+    /**
+     * Returns a duration in the nearest whole-number units like "999 µs" or "  1 s ". This rounds 0.5
+     * units away from 0 and 0.499 towards 0. The smallest unit this returns is "µs"; the largest unit
+     * it returns is "s". For values in [-499..499] this returns "  0 µs".
+     *
+     * The returned string attempts to be column-aligned to 6 characters. For negative and large values
+     * the returned string may be longer.
+     */
+    fun formatDuration(ns: Long): String {
+      val s =
+        when {
+          ns <= -999_500_000 -> "${(ns - 500_000_000) / 1_000_000_000} s "
+          ns <= -999_500 -> "${(ns - 500_000) / 1_000_000} ms"
+          ns <= 0 -> "${(ns - 500) / 1_000} µs"
+          ns < 999_500 -> "${(ns + 500) / 1_000} µs"
+          ns < 999_500_000 -> "${(ns + 500_000) / 1_000_000} ms"
+          else -> "${(ns + 500_000_000) / 1_000_000_000} s "
+        }
+      return "%6s".format(s)
+    }
+  }
 }

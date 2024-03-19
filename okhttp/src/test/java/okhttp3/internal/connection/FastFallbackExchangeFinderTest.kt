@@ -18,7 +18,7 @@ package okhttp3.internal.connection
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.hasMessage
-import assertk.assertions.isEqualTo
+import assertk.assertions.isSameInstanceAs
 import java.io.IOException
 import java.net.UnknownServiceException
 import kotlin.test.assertFailsWith
@@ -28,6 +28,7 @@ import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.testing.Flaky
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.parallel.Isolated
 import org.junitpioneer.jupiter.RetryingTest
 
 /**
@@ -40,6 +41,7 @@ import org.junitpioneer.jupiter.RetryingTest
  *  * attempt to find a connection
  *  * step through time, asserting that the expected side effects are performed.
  */
+@Isolated
 internal class FastFallbackExchangeFinderTest {
   private val taskFaker = TaskFaker()
   private val taskRunner = taskFaker.taskRunner
@@ -59,7 +61,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan0.connection)
+      assertThat(result0).isSameInstanceAs(plan0.connection)
     }
 
     taskFaker.runTasks()
@@ -77,7 +79,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan0.connection)
+      assertThat(result0).isSameInstanceAs(plan0.connection)
     }
 
     taskFaker.runTasks()
@@ -103,7 +105,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan0.connection)
+      assertThat(result0).isSameInstanceAs(plan0.connection)
     }
 
     taskFaker.runTasks()
@@ -141,7 +143,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan1.connection)
+      assertThat(result0).isSameInstanceAs(plan1.connection)
     }
 
     taskFaker.runTasks()
@@ -171,7 +173,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan1.connection)
+      assertThat(result0).isSameInstanceAs(plan1.connection)
     }
 
     taskFaker.runTasks()
@@ -211,7 +213,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan2.connection)
+      assertThat(result0).isSameInstanceAs(plan2.connection)
     }
 
     taskFaker.runTasks()
@@ -253,9 +255,9 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan0.connection)
+      assertThat(result0).isSameInstanceAs(plan0.connection)
       val result1 = finder.find()
-      assertThat(result1).isEqualTo(plan1.connection)
+      assertThat(result1).isSameInstanceAs(plan1.connection)
     }
 
     taskFaker.runTasks()
@@ -278,9 +280,9 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan1.connection)
+      assertThat(result0).isSameInstanceAs(plan1.connection)
       val result1 = finder.find()
-      assertThat(result1).isEqualTo(plan2.connection)
+      assertThat(result1).isSameInstanceAs(plan2.connection)
     }
 
     taskFaker.runTasks()
@@ -351,7 +353,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan1.connection)
+      assertThat(result0).isSameInstanceAs(plan1.connection)
     }
 
     taskFaker.runTasks()
@@ -447,7 +449,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan1.connection)
+      assertThat(result0).isSameInstanceAs(plan1.connection)
     }
 
     taskFaker.runTasks()
@@ -476,7 +478,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan2.connection)
+      assertThat(result0).isSameInstanceAs(plan2.connection)
     }
 
     taskFaker.runTasks()
@@ -521,7 +523,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan0.connection)
+      assertThat(result0).isSameInstanceAs(plan0.connection)
     }
 
     taskFaker.runTasks()
@@ -563,7 +565,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan1.connection)
+      assertThat(result0).isSameInstanceAs(plan1.connection)
     }
 
     taskFaker.runTasks()
@@ -587,7 +589,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan1.connection)
+      assertThat(result0).isSameInstanceAs(plan1.connection)
     }
 
     taskFaker.runTasks()
@@ -637,7 +639,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan3.connection)
+      assertThat(result0).isSameInstanceAs(plan3.connection)
     }
 
     taskFaker.runTasks()
@@ -716,7 +718,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan4.connection)
+      assertThat(result0).isSameInstanceAs(plan4.connection)
     }
 
     taskFaker.runTasks()
@@ -802,7 +804,7 @@ internal class FastFallbackExchangeFinderTest {
 
     taskRunner.newQueue().execute("connect") {
       val result0 = finder.find()
-      assertThat(result0).isEqualTo(plan0.connection)
+      assertThat(result0).isSameInstanceAs(plan0.connection)
     }
 
     taskFaker.runTasks()

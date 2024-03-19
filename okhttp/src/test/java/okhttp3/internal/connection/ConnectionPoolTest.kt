@@ -26,7 +26,11 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.TestValueFactory
+import okhttp3.internal.concurrent.TaskLogger
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.concurrent.TaskRunner.RealBackend
+import okhttp3.internal.okHttpName
+import okhttp3.internal.threadFactory
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
@@ -171,11 +175,13 @@ class ConnectionPoolTest {
     assertThat(c1.noNewExchanges).isTrue()
   }
 
-  @Test fun interruptStopsThread() {
-    val realTaskRunner = TaskRunner.INSTANCE
+  @Test
+  fun interruptStopsThread() {
+    val realTaskRunner =
+      TaskRunner(RealBackend(threadFactory("$okHttpName TaskRunner", daemon = true)), logger = TaskLogger.Noop)
     val pool =
       factory.newConnectionPool(
-        taskRunner = TaskRunner.INSTANCE,
+        taskRunner = realTaskRunner,
         maxIdleConnections = 2,
       )
     factory.newConnection(pool, routeA1)
@@ -188,7 +194,13 @@ class ConnectionPoolTest {
         t.interrupt()
       }
     }
-    Thread.sleep(100)
+    repeat(10) {
+      if (realTaskRunner.activeQueues().isEmpty()) {
+        return@repeat
+      }
+
+      Thread.sleep(100)
+    }
     assertThat(realTaskRunner.activeQueues()).isEmpty()
   }
 

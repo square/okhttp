@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.parallel.Isolated
 
 /**
  * Integration test to confirm that [TaskRunner] works with a real backend. Business logic is all
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.Test
  * busiest of CI servers.
  */
 @Tag("Slowish")
+@Isolated
 class TaskRunnerRealBackendTest {
   private val log = LinkedBlockingDeque<String>()
 

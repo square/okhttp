@@ -20,6 +20,7 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import okhttp3.internal.assertNotHeld
+import okhttp3.internal.concurrent.TaskLogger.Logging.formatDuration
 import okhttp3.internal.okHttpName
 
 /**

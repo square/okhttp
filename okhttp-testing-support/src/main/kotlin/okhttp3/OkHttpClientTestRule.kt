@@ -18,6 +18,7 @@
 package okhttp3
 
 import android.annotation.SuppressLint
+import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import java.util.logging.Handler
@@ -29,7 +30,6 @@ import kotlin.concurrent.withLock
 import okhttp3.internal.buildConnectionPool
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealConnectionPool
-import okhttp3.internal.http2.Http2
 import okhttp3.internal.taskRunnerInternal
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule.Companion.LOOM_PROPERTY
@@ -55,6 +55,7 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   private var defaultUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
   private var taskQueuesWereIdle: Boolean = false
   val connectionListener = RecordingConnectionListener()
+  val taskLogger = RecordingTaskLogger()
 
   var logger: Logger? = null
 
@@ -88,8 +89,6 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
       override fun publish(record: LogRecord) {
         val recorded =
           when (record.loggerName) {
-            TaskRunner::class.java.name -> recordTaskRunner
-            Http2::class.java.name -> recordFrames
             "javax.net.ssl" -> recordSslDebug && !sslExcludeFilter.matches(record.message)
             else -> false
           }
@@ -121,8 +120,6 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   private fun applyLogger(fn: Logger.() -> Unit) {
     Logger.getLogger(OkHttpClient::class.java.`package`.name).fn()
     Logger.getLogger(OkHttpClient::class.java.name).fn()
-    Logger.getLogger(Http2::class.java.name).fn()
-    Logger.getLogger(TaskRunner::class.java.name).fn()
     Logger.getLogger("javax.net.ssl").fn()
   }
 
@@ -158,7 +155,7 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   private fun initialClientBuilder(): OkHttpClient.Builder =
     if (isLoom()) {
       val backend = TaskRunner.RealBackend(loomThreadFactory())
-      val taskRunner = TaskRunner(backend)
+      val taskRunner = TaskRunner(backend, logger = taskLogger)
 
       OkHttpClient.Builder()
         .connectionPool(
@@ -170,8 +167,12 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
         .dispatcher(Dispatcher(backend.executor))
         .taskRunnerInternal(taskRunner)
     } else {
+      val backend = TaskRunner.RealBackend(SharedExecutor)
+      val taskRunner = TaskRunner(backend, logger = taskLogger)
+
       OkHttpClient.Builder()
         .connectionPool(ConnectionPool(connectionListener = connectionListener))
+        .taskRunnerInternal(taskRunner)
     }
 
   private fun loomThreadFactory(): ThreadFactory {
@@ -322,7 +323,17 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
     return connectionListener.recordedEventTypes()
   }
 
+  fun takeFrameLogs(): List<String> {
+    return connectionListener.takeFrameLogs()
+  }
+
+  fun takeFrameLog(): String {
+    return connectionListener.takeFrameLog()
+  }
+
   companion object {
+    val SharedExecutor by lazy { Executors.newCachedThreadPool() }
+
     /**
      * A network that resolves only one IP address per host. Use this when testing route selection
      * fallbacks to prevent the host machine's various IP addresses from interfering.

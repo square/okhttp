@@ -19,7 +19,6 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.startsWith
 import java.net.CookieManager
-import java.net.ResponseCache
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -41,7 +40,9 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.parallel.Isolated
 
+@Isolated
 class CacheCorruptionTest {
   var fileSystem = FakeFileSystem()
 
@@ -77,7 +78,6 @@ class CacheCorruptionTest {
 
   @AfterEach
   fun tearDown() {
-    ResponseCache.setDefault(null)
     if (this::cache.isInitialized) {
       cache.delete()
     }
