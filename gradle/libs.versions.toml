@@ -45,7 +45,7 @@ gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:3.1.0"
 gradlePlugin-graal = "com.palantir.graal:gradle-graal:0.12.0"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "org-jetbrains-kotlin" }
-gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.27.0"
+gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.28.0"
 gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:8.0.0"
 gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.25.0"
 guava-jre = "com.google.guava:guava:33.1.0-jre"
