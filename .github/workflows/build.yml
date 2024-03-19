@@ -35,7 +35,7 @@ jobs:
           java-version: 17
 
       - name: Upload Artifacts
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: clean publish --stacktrace
         env:
@@ -78,7 +78,7 @@ jobs:
           java-version: 17
 
       - name: Run Checks
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: check -PandroidBuild=true -PgraalBuild=true -x test -x test
 
@@ -106,7 +106,7 @@ jobs:
           java-version: 17
 
       - name: Run Checks
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test -Dtest.java.version=11
 
@@ -147,7 +147,7 @@ jobs:
           java-version: 17
 
       - name: Run Checks
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test -Dtest.java.version=11
 
@@ -174,7 +174,7 @@ jobs:
           java-version: 17
 
       - name: Run Checks
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test -Dtest.java.version=8
 
@@ -207,7 +207,7 @@ jobs:
           java-version: 17
 
       - name: Run Checks
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
 
@@ -234,7 +234,7 @@ jobs:
           java-version: 17
 
       - name: Run Checks
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test -Dtest.java.version=8 -Dokhttp.platform=openjsse
 
@@ -261,7 +261,7 @@ jobs:
           java-version: 17
 
       - name: Run Checks
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test -Dokhttp.platform=conscrypt
 
@@ -288,7 +288,7 @@ jobs:
           java-version: 17
 
       - name: Run Checks
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test -Dokhttp.platform=bouncycastle
 
@@ -316,7 +316,7 @@ jobs:
           java-version: 17
 
       - name: Run Checks
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test -Dokhttp.platform=corretto
 
@@ -344,7 +344,7 @@ jobs:
           java-version: 17
 
       - name: Run Checks
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test -Dtest.java.version=17
 
@@ -378,7 +378,7 @@ jobs:
           java-version: 17
 
       - name: Run Checks
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test -Dtest.java.version=21
 
@@ -406,7 +406,7 @@ jobs:
           java-version: 17
 
       - name: Test
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test
 
@@ -434,12 +434,12 @@ jobs:
           java-version: 17
 
       - name: Build okcurl
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: okcurl:nativeImage
 
       - name: Build ConsoleLauncher
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: -PgraalBuild=true native-image-tests:nativeImage
 
@@ -484,7 +484,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Gradle cache
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: -PandroidBuild=true :okhttp-android:test
 
@@ -555,7 +555,7 @@ jobs:
           java-version: 17
 
       - name: Run Checks
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test -Dokhttp.platform=loom -Dtest.java.version=21 -PcontainerTests=true
 
@@ -596,7 +596,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Gradle cache
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
 
       - name: AVD cache
         uses: actions/cache@v4

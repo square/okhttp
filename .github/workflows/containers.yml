@@ -33,6 +33,6 @@ jobs:
           java-version: 17
 
       - name: Run Container Tests
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: container-tests:test -PcontainerTests=true
