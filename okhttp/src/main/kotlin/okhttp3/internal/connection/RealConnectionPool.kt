@@ -35,7 +35,10 @@ import okhttp3.internal.platform.Platform
 
 class RealConnectionPool(
   taskRunner: TaskRunner,
-  /** The maximum number of idle connections for each address. */
+  /**
+   * The maximum number of idle connections across all addresses.
+   * Connections needed to satisfy a [ConnectionPool.AddressPolicy] are not considered idle.
+   */
   private val maxIdleConnections: Int,
   keepAliveDuration: Long,
   timeUnit: TimeUnit,
@@ -198,12 +201,25 @@ class RealConnectionPool(
     var idleConnectionCount = 0
     var longestIdleConnection: RealConnection? = null
     var longestIdleDurationNs = Long.MIN_VALUE
+    val policyConnectionsNeeded =
+      policies.mapValues { it.value.minimumConcurrentCalls }.toMutableMap()
 
     // Find either a connection to evict, or the time that the next eviction is due.
     for (connection in connections) {
       synchronized(connection) {
-        // If the connection is in use, keep searching.
+        val satisfiablePolicy =
+          policyConnectionsNeeded.entries
+            .filter { it.value > 0 }
+            .firstOrNull { connection.isEligible(it.key, null) }
+
         if (pruneAndGetAllocationCount(connection, now) > 0) {
+          // If the connection is in use, keep searching.
+          inUseConnectionCount++
+        } else if (satisfiablePolicy != null) {
+          // If the connection helps satisfy a policy, keep searching.
+          // A multiplexed connection can satisfy the entire policy.
+          policyConnectionsNeeded[satisfiablePolicy.key] =
+            if (connection.isMultiplexed) 0 else satisfiablePolicy.value - 1
           inUseConnectionCount++
         } else {
           idleConnectionCount++
@@ -305,11 +321,6 @@ class RealConnectionPool(
     address: Address,
     policy: ConnectionPool.AddressPolicy,
   ) {
-    // TODO: it's quite awkward that we have a new policy object that doesn't contain the max
-    require(policy.minimumConcurrentCalls <= maxIdleConnections) {
-      "minimumConcurrentCalls must be <= maxIdleConnections"
-    }
-
     // Race conditions are fine; worst case, we check for min connections more often than needed
     if (!policies.contains(address)) {
       policies[address] = policy
