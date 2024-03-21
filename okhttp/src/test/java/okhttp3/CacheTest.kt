@@ -3278,7 +3278,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   }
 
   @Test
-  fun postWithOverrideResponseIsCorrect() {
+  fun postWithOverrideResponse() {
     val url = server.url("/abc?token=123")
     val cacheUrlOverride = url.newBuilder().removeAllQueryParameters("token").build()
 
