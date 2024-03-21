@@ -325,7 +325,8 @@ class Request internal constructor(builder: Builder) {
      * Override the [Request.url] for caching, if it is either polluted with
      * transient query params, or has a canonical URL possibly for a CDN.
      *
-     * If set, this will also allow caching for POST requests.
+     * Note that POST requests will not be sent to the server if this URL is set
+     * and matches a cached response.
      */
     fun cacheUrlOverride(cacheUrlOverride: HttpUrl?) =
       apply {
