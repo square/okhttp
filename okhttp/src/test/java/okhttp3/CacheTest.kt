@@ -1003,7 +1003,7 @@ class CacheTest {
   }
 
   @Test
-  fun requestMethodPostIsNotCachedUnlessOverriden() {
+  fun requestMethodPostIsNotCachedUnlessOverridden() {
     // Supported via cacheUrlOverride
     testRequestMethod("POST", true, withOverride = true)
   }
