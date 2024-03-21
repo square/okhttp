@@ -3268,7 +3268,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   }
 
   @Test
-  fun getHasCorrectResponseIsCorrect() {
+  fun getHasCorrectResponse() {
     val request = Request(server.url("/abc"))
 
     val response = testBasicCachingRules(request)
