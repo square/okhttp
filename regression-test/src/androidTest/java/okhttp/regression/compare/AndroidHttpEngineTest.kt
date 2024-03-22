@@ -32,9 +32,7 @@ import java.nio.ByteBuffer
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import javax.net.ssl.HttpsURLConnection
 import kotlin.coroutines.cancellation.CancellationException
-import okhttp3.Protocol
 import okio.Buffer
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -50,27 +48,29 @@ import org.junit.runner.RunWith
 class AndroidHttpEngineTest {
   val context = InstrumentationRegistry.getInstrumentation().context
 
-  val cacheDir = context.cacheDir.resolve("httpEngine").also {
-    it.mkdirs()
-  }
-  val engine = HttpEngine.Builder(context)
-    .setEnableHttp2(true)
-    .setEnableQuic(true)
-    .setEnableBrotli(true)
-    .setStoragePath(cacheDir.path)
-    .setConnectionMigrationOptions(
-      ConnectionMigrationOptions.Builder()
-        .setDefaultNetworkMigration(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
-        .setPathDegradationMigration(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
-        .setAllowNonDefaultNetworkUsage(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
-        .build()
-    )
-    .setQuicOptions(
-      QuicOptions.Builder()
-        .addAllowedQuicHost("google.com")
-        .build()
-    )
-    .build()
+  val cacheDir =
+    context.cacheDir.resolve("httpEngine").also {
+      it.mkdirs()
+    }
+  val engine =
+    HttpEngine.Builder(context)
+      .setEnableHttp2(true)
+      .setEnableQuic(true)
+      .setEnableBrotli(true)
+      .setStoragePath(cacheDir.path)
+      .setConnectionMigrationOptions(
+        ConnectionMigrationOptions.Builder()
+          .setDefaultNetworkMigration(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
+          .setPathDegradationMigration(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
+          .setAllowNonDefaultNetworkUsage(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
+          .build(),
+      )
+      .setQuicOptions(
+        QuicOptions.Builder()
+          .addAllowedQuicHost("google.com")
+          .build(),
+      )
+      .build()
 
   @After
   fun tearDown() {
@@ -92,44 +92,70 @@ class AndroidHttpEngineTest {
   private fun execute(
     engine: HttpEngine,
     executor: ExecutorService,
-    url: String
+    url: String,
   ): CompletableFuture<Pair<String, Int>> {
     val completableFuture = CompletableFuture<Pair<String, Int>>()
     val buffer = Buffer()
     var code: Int? = null
 
-    val req = engine.newUrlRequestBuilder(url, executor, object : Callback {
-      override fun onRedirectReceived(request: UrlRequest, info: UrlResponseInfo, newLocationUrl: String) {
-        println("request " + info.httpStatusCode + " " + newLocationUrl)
-        request.followRedirect()
-      }
+    val req =
+      engine.newUrlRequestBuilder(
+        url,
+        executor,
+        object : Callback {
+          override fun onRedirectReceived(
+            request: UrlRequest,
+            info: UrlResponseInfo,
+            newLocationUrl: String,
+          ) {
+            println("request " + info.httpStatusCode + " " + newLocationUrl)
+            request.followRedirect()
+          }
 
-      override fun onResponseStarted(request: UrlRequest, info: UrlResponseInfo) {
-        println("onResponseStarted $info")
-        code = info.httpStatusCode
-      }
+          override fun onResponseStarted(
+            request: UrlRequest,
+            info: UrlResponseInfo,
+          ) {
+            println("onResponseStarted $info")
+            code = info.httpStatusCode
+          }
 
-      override fun onReadCompleted(request: UrlRequest, info: UrlResponseInfo, byteBuffer: ByteBuffer) {
-        println("onReadCompleted $info")
-        buffer.write(byteBuffer)
-      }
+          override fun onReadCompleted(
+            request: UrlRequest,
+            info: UrlResponseInfo,
+            byteBuffer: ByteBuffer,
+          ) {
+            println("onReadCompleted $info")
+            buffer.write(byteBuffer)
+          }
 
-      override fun onSucceeded(request: UrlRequest, info: UrlResponseInfo) {
-        completableFuture.complete(Pair(buffer.readUtf8(), code!!))
-      }
+          override fun onSucceeded(
+            request: UrlRequest,
+            info: UrlResponseInfo,
+          ) {
+            completableFuture.complete(Pair(buffer.readUtf8(), code!!))
+          }
 
-      override fun onFailed(request: UrlRequest, info: UrlResponseInfo?, error: HttpException) {
-        completableFuture.completeExceptionally(error)
-      }
+          override fun onFailed(
+            request: UrlRequest,
+            info: UrlResponseInfo?,
+            error: HttpException,
+          ) {
+            completableFuture.completeExceptionally(error)
+          }
 
-      override fun onCanceled(request: UrlRequest, info: UrlResponseInfo?) {
-        completableFuture.completeExceptionally(CancellationException())
-      }
-    })
-      .setPriority(REQUEST_PRIORITY_MEDIUM)
-      .setDirectExecutorAllowed(true)
-      .setTrafficStatsTag(101)
-      .build()
+          override fun onCanceled(
+            request: UrlRequest,
+            info: UrlResponseInfo?,
+          ) {
+            completableFuture.completeExceptionally(CancellationException())
+          }
+        },
+      )
+        .setPriority(REQUEST_PRIORITY_MEDIUM)
+        .setDirectExecutorAllowed(true)
+        .setTrafficStatsTag(101)
+        .build()
 
     req.start()
     return completableFuture
@@ -139,9 +165,10 @@ class AndroidHttpEngineTest {
   fun urlConnection() {
     val conn = engine.openConnection(URL("https://google.com/robots.txt")) as HttpURLConnection
 
-    val text = conn.inputStream.use {
-      it.bufferedReader().readText()
-    }
+    val text =
+      conn.inputStream.use {
+        it.bufferedReader().readText()
+      }
 
     assertEquals(200, conn.responseCode)
 
