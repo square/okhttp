@@ -27,13 +27,6 @@ import android.net.http.UrlResponseInfo
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import okhttp3.OkHttpClient
-import okhttp3.Protocol
-import okhttp3.Request
-import org.junit.Assert
-import org.junit.Test
-import org.junit.runner.RunWith
-import java.io.IOException
 import java.net.URL
 import java.nio.ByteBuffer
 import java.util.concurrent.CompletableFuture
@@ -41,12 +34,14 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import javax.net.ssl.HttpsURLConnection
 import kotlin.coroutines.cancellation.CancellationException
+import okhttp3.Protocol
 import okio.Buffer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Assume
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
 
 /**
  * Android HttpEngine.
