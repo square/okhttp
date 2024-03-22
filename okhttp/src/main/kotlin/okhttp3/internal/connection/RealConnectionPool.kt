@@ -47,7 +47,7 @@ class RealConnectionPool(
 ) {
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
   private val policies: MutableMap<Address, ConnectionPool.AddressPolicy> = mutableMapOf()
-  private val user = PoolConnectionUser()
+  private val user = PoolConnectionUser
 
   private val cleanupQueue: TaskQueue = taskRunner.newQueue()
   private val cleanupTask =

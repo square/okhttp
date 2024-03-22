@@ -145,9 +145,6 @@ class ConnectionPool internal constructor(
     /**
      * How many concurrent calls should be possible to make at any time.
      * The pool will routinely try to pre-emptively open connections to satisfy this minimum.
-     *
-     * This feature must not be used on Android because it may result in network traffic while
-     * the app is backgrounded. On Android, leave this set to 0.
      */
     @JvmField val minimumConcurrentCalls: Int = 0,
     /** How long to wait to retry pre-emptive connection attempts that fail. */
