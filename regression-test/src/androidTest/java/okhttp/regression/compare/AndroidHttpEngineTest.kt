@@ -26,6 +26,7 @@ import android.net.http.UrlResponseInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
+import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.ByteBuffer
 import java.util.concurrent.CompletableFuture
@@ -136,14 +137,13 @@ class AndroidHttpEngineTest {
 
   @Test
   fun urlConnection() {
-    val conn = engine.openConnection(URL("https://google.com/robots.txt")) as HttpsURLConnection
+    val conn = engine.openConnection(URL("https://google.com/robots.txt")) as HttpURLConnection
 
-    val text = conn.getInputStream().use {
+    val text = conn.inputStream.use {
       it.bufferedReader().readText()
     }
 
     assertEquals(200, conn.responseCode)
-    assertEquals(Protocol.HTTP_2, conn.requestProperties)
 
     assertTrue(text.contains("Disallow"))
   }
