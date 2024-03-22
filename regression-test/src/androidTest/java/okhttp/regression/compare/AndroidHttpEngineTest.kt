@@ -32,6 +32,7 @@ import java.nio.ByteBuffer
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 import okio.Buffer
 import org.junit.After
@@ -83,7 +84,7 @@ class AndroidHttpEngineTest {
 
     val completableFuture = execute(engine, executor, "https://google.com/robots.txt")
 
-    val (text, code) = completableFuture.get()
+    val (text, code) = completableFuture.get(10, TimeUnit.SECONDS)
 
     assertEquals(200, code)
     assertTrue(text.contains("Disallow"))
