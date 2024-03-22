@@ -35,6 +35,7 @@ import javax.net.ssl.HttpsURLConnection
 import kotlin.coroutines.cancellation.CancellationException
 import okhttp3.Protocol
 import okio.Buffer
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -48,11 +49,14 @@ import org.junit.runner.RunWith
 class AndroidHttpEngineTest {
   val context = InstrumentationRegistry.getInstrumentation().context
 
+  val cacheDir = context.cacheDir.resolve("httpEngine").also {
+    it.mkdirs()
+  }
   val engine = HttpEngine.Builder(context)
     .setEnableHttp2(true)
     .setEnableQuic(true)
     .setEnableBrotli(true)
-    .setStoragePath(context.cacheDir.resolve("httpEngine").path)
+    .setStoragePath(cacheDir.path)
     .setConnectionMigrationOptions(
       ConnectionMigrationOptions.Builder()
         .setDefaultNetworkMigration(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
@@ -66,6 +70,11 @@ class AndroidHttpEngineTest {
         .build()
     )
     .build()
+
+  @After
+  fun tearDown() {
+    cacheDir.deleteRecursively()
+  }
 
   @Test
   fun get() {
