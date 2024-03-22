@@ -15,7 +15,6 @@
  */
 package okhttp.regression.compare
 
-import android.content.Context
 import android.net.http.ConnectionMigrationOptions
 import android.net.http.HttpEngine
 import android.net.http.HttpException
@@ -24,8 +23,8 @@ import android.net.http.UrlRequest
 import android.net.http.UrlRequest.Callback
 import android.net.http.UrlRequest.REQUEST_PRIORITY_MEDIUM
 import android.net.http.UrlResponseInfo
-import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import java.net.URL
 import java.nio.ByteBuffer
@@ -38,8 +37,6 @@ import okhttp3.Protocol
 import okio.Buffer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeTrue
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -47,35 +44,28 @@ import org.junit.runner.RunWith
  * Android HttpEngine.
  */
 @RunWith(AndroidJUnit4::class)
+@SdkSuppress(minSdkVersion = 34)
 class AndroidHttpEngineTest {
-  private lateinit var engine: HttpEngine
-  private lateinit var context: Context
+  val context = InstrumentationRegistry.getInstrumentation().context
 
-  @Before
-  fun setup() {
-    assumeTrue(Build.VERSION.SDK_INT >= 34)
-
-    context = InstrumentationRegistry.getInstrumentation().context
-
-    engine = HttpEngine.Builder(context)
-      .setEnableHttp2(true)
-      .setEnableQuic(true)
-      .setEnableBrotli(true)
-      .setStoragePath(context.cacheDir.resolve("httpEngine").path)
-      .setConnectionMigrationOptions(
-        ConnectionMigrationOptions.Builder()
-          .setDefaultNetworkMigration(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
-          .setPathDegradationMigration(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
-          .setAllowNonDefaultNetworkUsage(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
-          .build()
-      )
-      .setQuicOptions(
-        QuicOptions.Builder()
-          .addAllowedQuicHost("google.com")
-          .build()
-      )
-      .build()
-  }
+  val engine = HttpEngine.Builder(context)
+    .setEnableHttp2(true)
+    .setEnableQuic(true)
+    .setEnableBrotli(true)
+    .setStoragePath(context.cacheDir.resolve("httpEngine").path)
+    .setConnectionMigrationOptions(
+      ConnectionMigrationOptions.Builder()
+        .setDefaultNetworkMigration(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
+        .setPathDegradationMigration(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
+        .setAllowNonDefaultNetworkUsage(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
+        .build()
+    )
+    .setQuicOptions(
+      QuicOptions.Builder()
+        .addAllowedQuicHost("google.com")
+        .build()
+    )
+    .build()
 
   @Test
   fun get() {
