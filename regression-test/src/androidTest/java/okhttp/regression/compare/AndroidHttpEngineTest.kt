@@ -68,14 +68,17 @@ class AndroidHttpEngineTest {
           .setAllowNonDefaultNetworkUsage(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
           .build(),
       )
-      .setDnsOptions(DnsOptions.Builder()
-        .setUseHttpStackDnsResolver(DnsOptions.DNS_OPTION_ENABLED)
-        .setStaleDns(DnsOptions.DNS_OPTION_ENABLED)
-        .setPersistHostCache(DnsOptions.DNS_OPTION_ENABLED)
-        .build())
+      .setDnsOptions(
+        DnsOptions.Builder()
+          .setUseHttpStackDnsResolver(DnsOptions.DNS_OPTION_ENABLED)
+          .setStaleDns(DnsOptions.DNS_OPTION_ENABLED)
+          .setPersistHostCache(DnsOptions.DNS_OPTION_ENABLED)
+          .build(),
+      )
       .setQuicOptions(
         QuicOptions.Builder()
           .addAllowedQuicHost("google.com")
+          .addAllowedQuicHost("www.google.com")
           .build(),
       )
       .build()
