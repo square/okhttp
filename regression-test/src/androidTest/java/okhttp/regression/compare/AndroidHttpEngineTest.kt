@@ -30,6 +30,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.ByteBuffer
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -84,7 +85,11 @@ class AndroidHttpEngineTest {
 
     val completableFuture = execute(engine, executor, "https://google.com/robots.txt")
 
-    val (text, code) = completableFuture.get(10, TimeUnit.SECONDS)
+    try {
+      val (text, code) = completableFuture.get(10, TimeUnit.SECONDS)
+    } catch (ee: ExecutionException) {
+      throw ee.cause!!
+    }
 
     assertEquals(200, code)
     assertTrue(text.contains("Disallow"))
