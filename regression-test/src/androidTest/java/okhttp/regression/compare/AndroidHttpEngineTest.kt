@@ -119,6 +119,7 @@ class AndroidHttpEngineTest {
           ) {
             println("onResponseStarted $info")
             code = info.httpStatusCode
+            request.read(ByteBuffer.allocate(4096))
           }
 
           override fun onReadCompleted(
@@ -128,6 +129,7 @@ class AndroidHttpEngineTest {
           ) {
             println("onReadCompleted $info")
             buffer.write(byteBuffer)
+            request.read(byteBuffer)
           }
 
           override fun onSucceeded(
