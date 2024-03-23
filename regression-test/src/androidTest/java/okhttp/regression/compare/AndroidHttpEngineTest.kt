@@ -128,7 +128,7 @@ class AndroidHttpEngineTest {
             request: UrlRequest,
             info: UrlResponseInfo,
           ) {
-            println("onResponseStarted ${info.headers.asMap}")
+            println("onResponseStarted ${info.headers.asMap} ${info.negotiatedProtocol}")
             code = info.httpStatusCode
             request.read(ByteBuffer.allocateDirect(4096 * 8))
           }
@@ -149,6 +149,7 @@ class AndroidHttpEngineTest {
             request: UrlRequest,
             info: UrlResponseInfo,
           ) {
+            println("onSucceeded ${info.headers.asMap}")
             completableFuture.complete(Pair(buffer.readUtf8(), code!!))
           }
 
@@ -157,6 +158,7 @@ class AndroidHttpEngineTest {
             info: UrlResponseInfo?,
             error: HttpException,
           ) {
+            println("onSucceeded ${info?.headers?.asMap}")
             completableFuture.completeExceptionally(error)
           }
 
