@@ -128,7 +128,7 @@ class AndroidHttpEngineTest {
             request: UrlRequest,
             info: UrlResponseInfo,
           ) {
-            println("onResponseStarted $info")
+            println("onResponseStarted ${info.headers.asMap}")
             code = info.httpStatusCode
             request.read(ByteBuffer.allocateDirect(4096 * 8))
           }
@@ -138,9 +138,10 @@ class AndroidHttpEngineTest {
             info: UrlResponseInfo,
             byteBuffer: ByteBuffer,
           ) {
-            println("onReadCompleted $info")
+            println("onReadCompleted ${info.headers.asMap}")
             byteBuffer.flip()
             buffer.write(byteBuffer)
+            byteBuffer.clear()
             request.read(byteBuffer)
           }
 
