@@ -91,7 +91,7 @@ class AndroidHttpEngineTest {
       assertEquals(200, code)
       assertTrue(text.contains("Disallow"))
     } catch (ee: ExecutionException) {
-      throw ee.cause!!
+      throw ee.cause?.cause ?: ee.cause!!
     }
   }
 
