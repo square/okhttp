@@ -1443,7 +1443,7 @@ class HttpOverHttp2Test {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
 
-    // Let the first request proceed. It should discard the the held HTTP/2 connection and get a new
+    // Let the first request proceed. It should discard the held HTTP/2 connection and get a new
     // one.
     latch.countDown()
     val response3 = responses.take()
