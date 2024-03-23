@@ -16,6 +16,7 @@
 package okhttp.regression.compare
 
 import android.net.http.ConnectionMigrationOptions
+import android.net.http.DnsOptions
 import android.net.http.HttpEngine
 import android.net.http.HttpException
 import android.net.http.QuicOptions
@@ -67,6 +68,11 @@ class AndroidHttpEngineTest {
           .setAllowNonDefaultNetworkUsage(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
           .build(),
       )
+      .setDnsOptions(DnsOptions.Builder()
+        .setUseHttpStackDnsResolver(DnsOptions.DNS_OPTION_ENABLED)
+        .setStaleDns(DnsOptions.DNS_OPTION_ENABLED)
+        .setPersistHostCache(DnsOptions.DNS_OPTION_ENABLED)
+        .build())
       .setQuicOptions(
         QuicOptions.Builder()
           .addAllowedQuicHost("google.com")
@@ -133,6 +139,7 @@ class AndroidHttpEngineTest {
             byteBuffer: ByteBuffer,
           ) {
             println("onReadCompleted $info")
+            byteBuffer.flip()
             buffer.write(byteBuffer)
             request.read(byteBuffer)
           }
