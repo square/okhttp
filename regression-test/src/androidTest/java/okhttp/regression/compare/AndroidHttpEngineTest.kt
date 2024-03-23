@@ -87,12 +87,12 @@ class AndroidHttpEngineTest {
 
     try {
       val (text, code) = completableFuture.get(10, TimeUnit.SECONDS)
+
+      assertEquals(200, code)
+      assertTrue(text.contains("Disallow"))
     } catch (ee: ExecutionException) {
       throw ee.cause!!
     }
-
-    assertEquals(200, code)
-    assertTrue(text.contains("Disallow"))
   }
 
   private fun execute(
