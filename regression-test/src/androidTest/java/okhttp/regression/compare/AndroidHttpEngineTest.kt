@@ -110,7 +110,7 @@ class AndroidHttpEngineTest {
   data class Response(
     val code: Int,
     val negotiatedProtocol: String,
-    val content: String
+    val content: String,
   )
 
   private fun execute(
@@ -126,7 +126,6 @@ class AndroidHttpEngineTest {
         url,
         executor,
         object : Callback {
-
           override fun onRedirectReceived(
             request: UrlRequest,
             info: UrlResponseInfo,
