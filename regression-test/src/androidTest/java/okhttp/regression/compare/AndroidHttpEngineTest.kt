@@ -86,6 +86,7 @@ class AndroidHttpEngineTest {
 
   @After
   fun tearDown() {
+    engine.shutdown()
     cacheDir.deleteRecursively()
   }
 
