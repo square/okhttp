@@ -57,11 +57,9 @@ class AndroidHttpEngineTest {
     }
   val engine =
     HttpEngine.Builder(context)
-      .setEnableHttp2(true)
-      .setEnableQuic(true)
       .setEnableBrotli(true)
-      .setEnableHttpCache(HttpEngine.Builder.HTTP_CACHE_DISK, 10_000_000)
       .setStoragePath(cacheDir.path)
+      .setEnableHttpCache(HttpEngine.Builder.HTTP_CACHE_DISK, 10_000_000)
       .setConnectionMigrationOptions(
         ConnectionMigrationOptions.Builder()
           .setDefaultNetworkMigration(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
