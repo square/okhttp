@@ -60,6 +60,7 @@ class AndroidHttpEngineTest {
       .setEnableHttp2(true)
       .setEnableQuic(true)
       .setEnableBrotli(true)
+      .setEnableHttpCache(HttpEngine.Builder.HTTP_CACHE_DISK, 10_000_000)
       .setStoragePath(cacheDir.path)
       .setConnectionMigrationOptions(
         ConnectionMigrationOptions.Builder()
@@ -81,6 +82,8 @@ class AndroidHttpEngineTest {
           .addAllowedQuicHost("www.google.com")
           .build(),
       )
+      .addQuicHint("google.com", 443, 443)
+      .addQuicHint("www.google.com", 443, 443)
       .build()
 
   @After
@@ -95,29 +98,36 @@ class AndroidHttpEngineTest {
     val completableFuture = execute(engine, executor, "https://google.com/robots.txt")
 
     try {
-      val (text, code) = completableFuture.get(10, TimeUnit.SECONDS)
+      val response = completableFuture.get(10, TimeUnit.SECONDS)
 
-      assertEquals(200, code)
-      assertTrue(text.contains("Disallow"))
+      assertEquals(200, response.code)
+      assertEquals("h3", response.negotiatedProtocol)
+      assertTrue(response.content.contains("Disallow"))
     } catch (ee: ExecutionException) {
       throw ee.cause?.cause ?: ee.cause!!
     }
   }
 
+  data class Response(
+    val code: Int,
+    val negotiatedProtocol: String,
+    val content: String
+  )
+
   private fun execute(
     engine: HttpEngine,
     executor: ExecutorService,
     url: String,
-  ): CompletableFuture<Pair<String, Int>> {
-    val completableFuture = CompletableFuture<Pair<String, Int>>()
+  ): CompletableFuture<Response> {
+    val completableFuture = CompletableFuture<Response>()
     val buffer = Buffer()
-    var code: Int? = null
 
     val req =
       engine.newUrlRequestBuilder(
         url,
         executor,
         object : Callback {
+
           override fun onRedirectReceived(
             request: UrlRequest,
             info: UrlResponseInfo,
@@ -132,7 +142,6 @@ class AndroidHttpEngineTest {
             info: UrlResponseInfo,
           ) {
             println("onResponseStarted ${info.headers.asMap} ${info.negotiatedProtocol}")
-            code = info.httpStatusCode
             request.read(ByteBuffer.allocateDirect(4096 * 8))
           }
 
@@ -153,7 +162,7 @@ class AndroidHttpEngineTest {
             info: UrlResponseInfo,
           ) {
             println("onSucceeded ${info.headers.asMap}")
-            completableFuture.complete(Pair(buffer.readUtf8(), code!!))
+            completableFuture.complete(Response(info.httpStatusCode, info.negotiatedProtocol, buffer.readUtf8()))
           }
 
           override fun onFailed(
