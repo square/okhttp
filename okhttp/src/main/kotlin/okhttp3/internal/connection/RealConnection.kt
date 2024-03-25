@@ -111,7 +111,8 @@ class RealConnection(
    * The maximum number of concurrent streams that can be carried by this connection. If
    * `allocations.size() < allocationLimit` then new streams can be created on this connection.
    */
-  private var allocationLimit = 1
+  internal var allocationLimit = 1
+    private set
 
   /** Current calls carried by this connection. */
   val calls = mutableListOf<Reference<RealCall>>()
@@ -344,7 +345,16 @@ class RealConnection(
     connection: Http2Connection,
     settings: Settings,
   ) {
+    val oldLimit = allocationLimit
     allocationLimit = settings.getMaxConcurrentStreams()
+
+    if (oldLimit > allocationLimit) {
+      // We might need new connections to keep policies satisfied
+      connectionPool.checkAllPolicies()
+    } else if (oldLimit < allocationLimit) {
+      // We might no longer need some connections
+      connectionPool.scheduleCleanup()
+    }
   }
 
   override fun handshake(): Handshake? = handshake

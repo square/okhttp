@@ -202,36 +202,29 @@ class ConnectionPoolTest {
     // Set the policy, wait for connection to be created
     routePlanner.addPlan()
     pool.setPolicy(address, ConnectionPool.AddressPolicy(1))
-    // TODO why does runTasks() spin forever if I don't first call runNextTask() twice?
+    // TODO why does runTasks() spin forever if we don't first call runNextTask() twice?
     factory.taskFaker.runNextTask()
     factory.taskFaker.runNextTask()
     factory.taskFaker.runTasks()
     assertThat(pool.connectionCount()).isEqualTo(1)
 
-    // Evict the connection, make sure it gets recreated after forcing task to run again
-    pool.evictAll()
-    assertThat(pool.connectionCount()).isEqualTo(0)
+    // Evict the connection, make sure it gets recreated
     routePlanner.addPlan()
-    factory.taskRunner.newQueue().execute("forced min connection creation") {
-      pool.ensureMinimumConnections(address)
-    }
+    pool.evictAll()
+    Thread.sleep(1)
+    factory.taskFaker.runNextTask()
     factory.taskFaker.runTasks()
     assertThat(pool.connectionCount()).isEqualTo(1)
 
     // Force the task to run again, make sure it doesn't duplicate the connection unnecessarily
     routePlanner.addPlan()
-    factory.taskRunner.newQueue().execute("forced min connection creation") {
-      pool.ensureMinimumConnections(address)
-    }
+    pool.checkAllPolicies()
     factory.taskFaker.runTasks()
     assertThat(pool.connectionCount()).isEqualTo(1)
 
     // Mutate the policy to require more connections, make sure they get created
     routePlanner.addPlan()
     pool.setPolicy(address, ConnectionPool.AddressPolicy(2))
-    factory.taskRunner.newQueue().execute("forced min connection creation") {
-      pool.ensureMinimumConnections(address)
-    }
     factory.taskFaker.runTasks()
     assertThat(pool.connectionCount()).isEqualTo(2)
   }
