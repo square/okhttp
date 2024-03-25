@@ -27,7 +27,7 @@ class PublicInternalApiTest {
   @Test
   fun permitsRequestBody() {
     assertTrue(permitsRequestBody("POST"))
-    assertFalse(permitsRequestBody("GET"))
+    assertFalse(permitsRequestBody("HEAD"))
   }
 
   @Test

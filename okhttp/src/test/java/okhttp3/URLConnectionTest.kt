@@ -1829,7 +1829,7 @@ class URLConnectionTest {
 
   @Test
   fun setValidRequestMethod() {
-    assertMethodForbidsRequestBody("GET")
+    assertMethodPermitsRequestBody("GET")
     assertMethodPermitsRequestBody("DELETE")
     assertMethodForbidsRequestBody("HEAD")
     assertMethodPermitsRequestBody("OPTIONS")
