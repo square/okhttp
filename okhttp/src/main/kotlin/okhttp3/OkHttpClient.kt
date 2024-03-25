@@ -273,7 +273,10 @@ open class OkHttpClient internal constructor(
       retryOnConnectionFailure = retryOnConnectionFailure,
       fastFallback = fastFallback,
       routeDatabase = routeDatabase,
-    )
+    ).also {
+      // Cache the pool in the builder so that it will be shared with other clients
+      builder.connectionPool = it
+    }
 
   constructor() : this(Builder())
 
