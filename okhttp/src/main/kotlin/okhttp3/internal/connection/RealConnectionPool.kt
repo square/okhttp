@@ -34,7 +34,7 @@ import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 
 class RealConnectionPool(
-  taskRunner: TaskRunner,
+  private val taskRunner: TaskRunner,
   /**
    * The maximum number of idle connections across all addresses.
    * Connections needed to satisfy a [ConnectionPool.AddressPolicy] are not considered idle.
@@ -46,7 +46,7 @@ class RealConnectionPool(
   private val exchangeFinderFactory: (RealConnectionPool, Address, ConnectionUser) -> ExchangeFinder,
 ) {
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
-  private val policies: MutableMap<Address, ConnectionPool.AddressPolicy> = mutableMapOf()
+  private var policies: Map<Address, MinimumConnectionState> = mapOf()
   private val user = PoolConnectionUser
 
   private val cleanupQueue: TaskQueue = taskRunner.newQueue()
@@ -55,12 +55,13 @@ class RealConnectionPool(
       override fun runOnce(): Long = cleanup(System.nanoTime())
     }
 
-  private val minConnectionQueue: TaskQueue = taskRunner.newQueue()
-
-  private fun minConnectionTask(address: Address) =
-    object : Task("$okHttpName ConnectionPool min connections") {
-      override fun runOnce(): Long = ensureMinimumConnections(address)
-    }
+  // We create one task per policy each time a policy changes or a connection changes
+  private fun minConnectionTask(
+    address: Address,
+    minimumConnectionState: MinimumConnectionState,
+  ) = object : Task("$okHttpName ConnectionPool min connections") {
+    override fun runOnce(): Long = ensureMinimumConnections(address, minimumConnectionState)
+  }
 
   /**
    * Holding the lock of the connection being added or removed when mutating this, and check its
@@ -145,7 +146,7 @@ class RealConnectionPool(
 
     connections.add(connection)
 //    connection.queueEvent { connectionListener.connectEnd(connection) }
-    cleanupQueue.schedule(cleanupTask)
+    scheduleCleanup()
   }
 
   /**
@@ -159,9 +160,10 @@ class RealConnectionPool(
       connection.noNewExchanges = true
       connections.remove(connection)
       if (connections.isEmpty()) cleanupQueue.cancelAll()
+      checkAllPolicies()
       true
     } else {
-      cleanupQueue.schedule(cleanupTask)
+      scheduleCleanup()
       false
     }
   }
@@ -187,6 +189,7 @@ class RealConnectionPool(
     }
 
     if (connections.isEmpty()) cleanupQueue.cancelAll()
+    checkAllPolicies()
   }
 
   /**
@@ -201,25 +204,23 @@ class RealConnectionPool(
     var idleConnectionCount = 0
     var longestIdleConnection: RealConnection? = null
     var longestIdleDurationNs = Long.MIN_VALUE
-    val policyConnectionsNeeded =
-      policies.mapValues { it.value.minimumConcurrentCalls }.toMutableMap()
+    policies
+      .forEach { it.value.unsatisfiedCountCleanupTask = it.value.policy.minimumConcurrentCalls }
 
     // Find either a connection to evict, or the time that the next eviction is due.
     for (connection in connections) {
       synchronized(connection) {
         val satisfiablePolicy =
-          policyConnectionsNeeded.entries
-            .filter { it.value > 0 }
-            .firstOrNull { connection.isEligible(it.key, null) }
+          policies.entries.firstOrNull {
+            it.value.unsatisfiedCountCleanupTask > 0 && connection.isEligible(it.key, null)
+          }
 
         if (pruneAndGetAllocationCount(connection, now) > 0) {
           // If the connection is in use, keep searching.
           inUseConnectionCount++
         } else if (satisfiablePolicy != null) {
           // If the connection helps satisfy a policy, keep searching.
-          // A multiplexed connection can satisfy the entire policy.
-          policyConnectionsNeeded[satisfiablePolicy.key] =
-            if (connection.isMultiplexed) 0 else satisfiablePolicy.value - 1
+          satisfiablePolicy.value.unsatisfiedCountCleanupTask -= connection.allocationLimit
           inUseConnectionCount++
         } else {
           idleConnectionCount++
@@ -321,67 +322,84 @@ class RealConnectionPool(
     address: Address,
     policy: ConnectionPool.AddressPolicy,
   ) {
-    // Race conditions are fine; worst case, we check for min connections more often than needed
-    if (!policies.contains(address)) {
-      policies[address] = policy
-      minConnectionQueue.schedule(minConnectionTask(address))
-    }
+    val state = MinimumConnectionState(taskRunner.newQueue(), policy)
+    policies = policies + (address to state)
+    state.queue.schedule(minConnectionTask(address, state))
+  }
 
-    // Regardless of whether we had to start a new task, make sure the policy gets updated
-    policies[address] = policy
+  fun checkAllPolicies() {
+    policies.forEach {
+      it.value.queue.schedule(minConnectionTask(it.key, it.value))
+    }
+  }
+
+  fun scheduleCleanup() {
+    cleanupQueue.schedule(cleanupTask)
   }
 
   /**
    * Ensure enough connections open to [address] to satisfy its [ConnectionPool.AddressPolicy].
-   * If there are already enough connections, we'll check again later.
+   * If there are already enough connections, we're done.
    * If not, we create one and then schedule the task to run again immediately.
    */
-  fun ensureMinimumConnections(address: Address): Long {
-    val policy = policies[address] ?: return -1 // No need to keep checking if there is no policy
-    val relevantConnections =
-      connections.filter {
-        synchronized(it) { it.isEligible(address, null) }
-      }
+  private fun ensureMinimumConnections(
+    address: Address,
+    state: MinimumConnectionState,
+  ): Long {
+    // This policy does not require minimum connections, don't run again
+    if (state.policy.minimumConcurrentCalls < 1) return -1
 
-    when {
-      // We already have an existing http/2 connection that can handle all of our streams
-      relevantConnections.any { it.isMultiplexed } -> {}
+    state.unsatisfiedCountMinTask = state.policy.minimumConcurrentCalls
 
-      // We already have enough connections to handle every call
-      relevantConnections.size >= policy.minimumConcurrentCalls -> {}
-
-      // This policy is unsatisfied -- open a connection!
-      else -> {
-        try {
-          val connection = exchangeFinderFactory(this, address, user).find()
-
-          // RealRoutePlanner will add the connection to the pool itself, other RoutePlanners may not
-          if (!connections.contains(connection)) {
-            synchronized(connection) {
-              put(connection)
-            }
-          }
-
-          return 0 // run again immediately to create more connections if needed
-        } catch (ex: Exception) {
-          // TODO do something with exception?
-
-          // we'll try again later
-          return policy.backoffDelayMillis.jitterBy(policy.backoffJitterMillis) * 1_000_000
+    for (connection in connections) {
+      synchronized(connection) {
+        if (connection.isEligible(address, null)) {
+          state.unsatisfiedCountMinTask -= connection.allocationLimit
         }
       }
+
+      // The policy was satisfied by existing connections, don't run again
+      if (state.unsatisfiedCountMinTask < 1) return -1
     }
 
-    return MIN_CONNECTION_CHECK_INTERVAL_NANOS
+    // If we got here then the policy was not satisfied -- open a connection!
+    try {
+      val connection = exchangeFinderFactory(this, address, user).find()
+
+      // RealRoutePlanner will add the connection to the pool itself, other RoutePlanners may not
+      if (connection !in connections) {
+        synchronized(connection) { put(connection) }
+      }
+
+      return 0 // run again immediately to create more connections if needed
+    } catch (ex: Exception) {
+      // No need to log, user.connectFailed() will already have been called. Just try again later.
+      return state.policy.backoffDelayMillis.jitterBy(state.policy.backoffJitterMillis) * 1_000_000
+    }
   }
 
   private fun Long.jitterBy(amount: Int): Long {
     return this + ThreadLocalRandom.current().nextInt(amount * -1, amount)
   }
 
+  class MinimumConnectionState(
+    val queue: TaskQueue,
+    var policy: ConnectionPool.AddressPolicy,
+  ) {
+    /**
+     * This field is only ever accessed by the minimum connections task, and it tracks
+     * how many concurrent calls are not yet satisfied by existing connections.
+     */
+    var unsatisfiedCountMinTask: Int = 0
+
+    /**
+     * This field is only ever accessed by the cleanup task, and it tracks
+     * how many concurrent calls are already satisfied by existing connections.
+     */
+    var unsatisfiedCountCleanupTask: Int = 0
+  }
+
   companion object {
     fun get(connectionPool: ConnectionPool): RealConnectionPool = connectionPool.delegate
-
-    internal const val MIN_CONNECTION_CHECK_INTERVAL_NANOS = 1_000_000_000L // 1 second
   }
 }
