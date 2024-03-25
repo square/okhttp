@@ -29,20 +29,13 @@ fun uncompress(response: Response): Response {
   }
   val body = response.body
   val encoding = response.header("Content-Encoding") ?: return response
-  val bombChecker = DecompressionBombChecker(100L)
 
   val decompressedSource =
     when {
       encoding.equals("br", ignoreCase = true) ->
-        bombChecker.wrapOutput(
-          BrotliInputStream(
-            bombChecker.wrapInput(body.source()).buffer().inputStream(),
-          ).source(),
-        ).buffer()
-
+        BrotliInputStream(body.source().inputStream()).source().buffer()
       encoding.equals("gzip", ignoreCase = true) ->
         GzipSource(body.source()).buffer()
-
       else -> return response
     }
 
