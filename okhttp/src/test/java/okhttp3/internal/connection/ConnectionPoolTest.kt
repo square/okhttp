@@ -22,6 +22,7 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isTrue
 import okhttp3.ConnectionPool
+import okhttp3.FakeRoutePlanner
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.TestUtil.awaitGarbageCollection
@@ -40,6 +41,8 @@ class ConnectionPoolTest {
   private val routeB1 = factory.newRoute(addressB)
   private val addressC = factory.newAddress("c")
   private val routeC1 = factory.newRoute(addressC)
+
+  private val routePlanner = FakeRoutePlanner(factory.taskFaker)
 
   @AfterEach fun tearDown() {
     factory.close()
@@ -190,6 +193,40 @@ class ConnectionPoolTest {
     }
     Thread.sleep(100)
     assertThat(realTaskRunner.activeQueues()).isEmpty()
+  }
+
+  @Test fun connectionPreWarming() {
+    val address = routePlanner.address
+    val pool = factory.newConnectionPool(routePlanner = routePlanner)
+
+    // Set the policy, wait for connection to be created
+    routePlanner.addPlan()
+    pool.setPolicy(address, ConnectionPool.AddressPolicy(1))
+    // TODO why does runTasks() spin forever if we don't first call runNextTask() twice?
+    factory.taskFaker.runNextTask()
+    factory.taskFaker.runNextTask()
+    factory.taskFaker.runTasks()
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    // Evict the connection, make sure it gets recreated
+    routePlanner.addPlan()
+    pool.evictAll()
+    Thread.sleep(1)
+    factory.taskFaker.runNextTask()
+    factory.taskFaker.runTasks()
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    // Force the task to run again, make sure it doesn't duplicate the connection unnecessarily
+    routePlanner.addPlan()
+    pool.scheduleConnectionOpener()
+    factory.taskFaker.runTasks()
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    // Mutate the policy to require more connections, make sure they get created
+    routePlanner.addPlan()
+    pool.setPolicy(address, ConnectionPool.AddressPolicy(2))
+    factory.taskFaker.runTasks()
+    assertThat(pool.connectionCount()).isEqualTo(2)
   }
 
   /** Use a helper method so there's no hidden reference remaining on the stack.  */
