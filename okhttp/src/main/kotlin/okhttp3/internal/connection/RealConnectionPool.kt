@@ -216,19 +216,19 @@ class RealConnectionPool(
           policies.entries.firstOrNull {
             it.value.unsatisfiedCountCleanupTask > 0 && connection.isEligible(it.key, null)
           }
+        val idleDurationNs = now - connection.idleAtNs
 
         if (pruneAndGetAllocationCount(connection, now) > 0) {
           // If the connection is in use, keep searching.
           inUseConnectionCount++
-        } else if (satisfiablePolicy != null) {
-          // If the connection helps satisfy a policy, keep searching.
+        } else if (satisfiablePolicy != null && idleDurationNs < this.keepAliveDurationNs) {
+          // If the connection hasn't expired and helps satisfy a policy, keep searching.
           satisfiablePolicy.value.unsatisfiedCountCleanupTask -= connection.allocationLimit
           inUseConnectionCount++
         } else {
           idleConnectionCount++
 
           // If the connection is ready to be evicted, we're done.
-          val idleDurationNs = now - connection.idleAtNs
           if (idleDurationNs > longestIdleDurationNs) {
             longestIdleDurationNs = idleDurationNs
             longestIdleConnection = connection
