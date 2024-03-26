@@ -251,7 +251,7 @@ class RealCall(
           pingIntervalMillis = client.pingIntervalMillis,
           retryOnConnectionFailure = client.retryOnConnectionFailure,
           fastFallback = client.fastFallback,
-          address = client.createAddress(request.url),
+          address = client.address(request.url),
           connectionUser = CallConnectionUser(this, connectionPool.connectionListener, chain),
           routeDatabase = client.routeDatabase,
         )
