@@ -923,6 +923,7 @@ public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Fact
 	public final fun -deprecated_sslSocketFactory ()Ljavax/net/ssl/SSLSocketFactory;
 	public final fun -deprecated_writeTimeoutMillis ()I
 	public fun <init> ()V
+	public final fun address (Lokhttp3/HttpUrl;)Lokhttp3/Address;
 	public final fun authenticator ()Lokhttp3/Authenticator;
 	public final fun cache ()Lokhttp3/Cache;
 	public final fun callTimeoutMillis ()I
@@ -932,7 +933,6 @@ public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Fact
 	public final fun connectionPool ()Lokhttp3/ConnectionPool;
 	public final fun connectionSpecs ()Ljava/util/List;
 	public final fun cookieJar ()Lokhttp3/CookieJar;
-	public final fun createAddress (Lokhttp3/HttpUrl;)Lokhttp3/Address;
 	public final fun dispatcher ()Lokhttp3/Dispatcher;
 	public final fun dns ()Lokhttp3/Dns;
 	public final fun eventListenerFactory ()Lokhttp3/EventListener$Factory;
