@@ -348,12 +348,12 @@ class RealConnection(
     val oldLimit = allocationLimit
     allocationLimit = settings.getMaxConcurrentStreams()
 
-    if (oldLimit > allocationLimit) {
+    if (allocationLimit < oldLimit) {
       // We might need new connections to keep policies satisfied
-      connectionPool.checkAllPolicies()
-    } else if (oldLimit < allocationLimit) {
+      connectionPool.scheduleConnectionOpener()
+    } else if (allocationLimit > oldLimit) {
       // We might no longer need some connections
-      connectionPool.scheduleCleanup()
+      connectionPool.scheduleConnectionCloser()
     }
   }
 

@@ -218,7 +218,7 @@ class ConnectionPoolTest {
 
     // Force the task to run again, make sure it doesn't duplicate the connection unnecessarily
     routePlanner.addPlan()
-    pool.checkAllPolicies()
+    pool.scheduleConnectionOpener()
     factory.taskFaker.runTasks()
     assertThat(pool.connectionCount()).isEqualTo(1)
 

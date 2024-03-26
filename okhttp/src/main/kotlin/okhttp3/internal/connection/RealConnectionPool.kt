@@ -46,12 +46,14 @@ class RealConnectionPool(
   private val exchangeFinderFactory: (RealConnectionPool, Address, ConnectionUser) -> ExchangeFinder,
 ) {
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
+
+  // guarded by [this]
   private var policies: Map<Address, MinimumConnectionState> = mapOf()
   private val user = PoolConnectionUser
 
   private val cleanupQueue: TaskQueue = taskRunner.newQueue()
   private val cleanupTask =
-    object : Task("$okHttpName ConnectionPool cleanup") {
+    object : Task("$okHttpName ConnectionPool connection closer") {
       override fun runOnce(): Long = cleanup(System.nanoTime())
     }
 
@@ -59,7 +61,7 @@ class RealConnectionPool(
   private fun minConnectionTask(
     address: Address,
     minimumConnectionState: MinimumConnectionState,
-  ) = object : Task("$okHttpName ConnectionPool min connections") {
+  ) = object : Task("$okHttpName ConnectionPool connection opener") {
     override fun runOnce(): Long = ensureMinimumConnections(address, minimumConnectionState)
   }
 
@@ -146,7 +148,7 @@ class RealConnectionPool(
 
     connections.add(connection)
 //    connection.queueEvent { connectionListener.connectEnd(connection) }
-    scheduleCleanup()
+    scheduleConnectionCloser()
   }
 
   /**
@@ -160,10 +162,10 @@ class RealConnectionPool(
       connection.noNewExchanges = true
       connections.remove(connection)
       if (connections.isEmpty()) cleanupQueue.cancelAll()
-      checkAllPolicies()
+      scheduleConnectionOpener()
       true
     } else {
-      scheduleCleanup()
+      scheduleConnectionCloser()
       false
     }
   }
@@ -189,7 +191,7 @@ class RealConnectionPool(
     }
 
     if (connections.isEmpty()) cleanupQueue.cancelAll()
-    checkAllPolicies()
+    scheduleConnectionOpener()
   }
 
   /**
@@ -240,7 +242,7 @@ class RealConnectionPool(
     when {
       longestIdleDurationNs >= this.keepAliveDurationNs ||
         idleConnectionCount > this.maxIdleConnections -> {
-        // We've chosen a connection to evict. Confirm it's still okay to be evict, then close it.
+        // We've chosen a connection to evict. Confirm it's still okay to be evicted, then close it.
         val connection = longestIdleConnection!!
         synchronized(connection) {
           if (connection.calls.isNotEmpty()) return 0L // No longer idle.
@@ -323,17 +325,19 @@ class RealConnectionPool(
     policy: ConnectionPool.AddressPolicy,
   ) {
     val state = MinimumConnectionState(taskRunner.newQueue(), policy)
-    policies = policies + (address to state)
+    synchronized(this) {
+      policies = policies + (address to state)
+    }
     state.queue.schedule(minConnectionTask(address, state))
   }
 
-  fun checkAllPolicies() {
+  fun scheduleConnectionOpener() {
     policies.forEach {
       it.value.queue.schedule(minConnectionTask(it.key, it.value))
     }
   }
 
-  fun scheduleCleanup() {
+  fun scheduleConnectionCloser() {
     cleanupQueue.schedule(cleanupTask)
   }
 
@@ -349,17 +353,17 @@ class RealConnectionPool(
     // This policy does not require minimum connections, don't run again
     if (state.policy.minimumConcurrentCalls < 1) return -1
 
-    state.unsatisfiedCountMinTask = state.policy.minimumConcurrentCalls
+    var unsatisfiedCountMinTask = state.policy.minimumConcurrentCalls
 
     for (connection in connections) {
       synchronized(connection) {
         if (connection.isEligible(address, null)) {
-          state.unsatisfiedCountMinTask -= connection.allocationLimit
+          unsatisfiedCountMinTask -= connection.allocationLimit
         }
       }
 
       // The policy was satisfied by existing connections, don't run again
-      if (state.unsatisfiedCountMinTask < 1) return -1
+      if (unsatisfiedCountMinTask < 1) return -1
     }
 
     // If we got here then the policy was not satisfied -- open a connection!
@@ -367,6 +371,7 @@ class RealConnectionPool(
       val connection = exchangeFinderFactory(this, address, user).find()
 
       // RealRoutePlanner will add the connection to the pool itself, other RoutePlanners may not
+      // TODO: make all RoutePlanners consistent in this behavior
       if (connection !in connections) {
         synchronized(connection) { put(connection) }
       }
@@ -386,12 +391,6 @@ class RealConnectionPool(
     val queue: TaskQueue,
     var policy: ConnectionPool.AddressPolicy,
   ) {
-    /**
-     * This field is only ever accessed by the minimum connections task, and it tracks
-     * how many concurrent calls are not yet satisfied by existing connections.
-     */
-    var unsatisfiedCountMinTask: Int = 0
-
     /**
      * This field is only ever accessed by the cleanup task, and it tracks
      * how many concurrent calls are already satisfied by existing connections.
