@@ -463,6 +463,7 @@ class RealWebSocketTest {
             responseHeaders,
           ),
           RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE,
+          RealWebSocket.CANCEL_AFTER_CLOSE_MILLIS,
         )
       webSocket!!.initReaderAndWriter(name, this)
     }
