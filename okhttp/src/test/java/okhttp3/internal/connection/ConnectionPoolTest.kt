@@ -21,6 +21,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isTrue
+import okhttp3.Address
 import okhttp3.ConnectionPool
 import okhttp3.FakeRoutePlanner
 import okhttp3.OkHttpClient
@@ -196,53 +197,54 @@ class ConnectionPoolTest {
   }
 
   @Test fun connectionPreWarming() {
-    // TODO this test spins forever due to bugs in TaskFaker.runTasks()
+    routePlanner.autoGeneratePlans = true
+    routePlanner.defaultConnectionIdleAtNanos = System.nanoTime() + 1_000_000_000_000
+    val address = routePlanner.address
+    val pool = factory.newConnectionPool(routePlanner = routePlanner)
 
-    // routePlanner.autoGeneratePlans = true
-    // routePlanner.defaultConnectionIdleAtNanos = System.nanoTime() + 1_000_000_000_000
-    // val address = routePlanner.address
-    // val pool = factory.newConnectionPool(routePlanner = routePlanner)
-    //
-    // // Connections are created as soon as a policy is set
-    // setPolicy(pool, address, ConnectionPool.AddressPolicy(2))
-    // assertThat(pool.connectionCount()).isEqualTo(2)
-    //
-    // // Connections are replaced if they idle out or are evicted from the pool
-    // evictAllConnections(pool)
-    // assertThat(pool.connectionCount()).isEqualTo(2)
-    // forceConnectionsToExpire(pool, routePlanner)
-    // assertThat(pool.connectionCount()).isEqualTo(2)
-    //
-    // // Excess connections aren't removed until they idle out, even if no longer needed
-    // setPolicy(pool, address, ConnectionPool.AddressPolicy(1))
-    // assertThat(pool.connectionCount()).isEqualTo(2)
-    // forceConnectionsToExpire(pool, routePlanner)
-    // assertThat(pool.connectionCount()).isEqualTo(1)
+    // Connections are created as soon as a policy is set
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(2))
+    assertThat(pool.connectionCount()).isEqualTo(2)
+
+    // Connections are replaced if they idle out or are evicted from the pool
+    evictAllConnections(pool)
+    assertThat(pool.connectionCount()).isEqualTo(2)
+    forceConnectionsToExpire(pool, routePlanner)
+    assertThat(pool.connectionCount()).isEqualTo(2)
+
+    // Excess connections aren't removed until they idle out, even if no longer needed
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(1))
+    assertThat(pool.connectionCount()).isEqualTo(2)
+    forceConnectionsToExpire(pool, routePlanner)
+    assertThat(pool.connectionCount()).isEqualTo(1)
 
     // TODO test that http/2 connections will be opened/closed based on concurrent stream settings
   }
 
-  // private fun setPolicy(
-  //   pool: RealConnectionPool,
-  //   address: Address,
-  //   policy: ConnectionPool.AddressPolicy
-  // ) {
-  //   pool.setPolicy(address, policy)
-  //   factory.taskFaker.runTasks()
-  // }
-  //
-  // private fun evictAllConnections(pool: RealConnectionPool) {
-  //   pool.evictAll()
-  //   assertThat(pool.connectionCount()).isEqualTo(0)
-  //   factory.taskFaker.runTasks()
-  // }
-  //
-  // private fun forceConnectionsToExpire(pool: RealConnectionPool, routePlanner: FakeRoutePlanner) {
-  //   val idleTimeNanos = routePlanner.defaultConnectionIdleAtNanos + pool.keepAliveDurationNs
-  //   repeat(pool.connectionCount()) { pool.cleanup(idleTimeNanos) }
-  //   assertThat(pool.connectionCount()).isEqualTo(0)
-  //   factory.taskFaker.runTasks()
-  // }
+  private fun setPolicy(
+    pool: RealConnectionPool,
+    address: Address,
+    policy: ConnectionPool.AddressPolicy,
+  ) {
+    pool.setPolicy(address, policy)
+    factory.taskFaker.runTasks()
+  }
+
+  private fun evictAllConnections(pool: RealConnectionPool) {
+    pool.evictAll()
+    assertThat(pool.connectionCount()).isEqualTo(0)
+    factory.taskFaker.runTasks()
+  }
+
+  private fun forceConnectionsToExpire(
+    pool: RealConnectionPool,
+    routePlanner: FakeRoutePlanner,
+  ) {
+    val idleTimeNanos = routePlanner.defaultConnectionIdleAtNanos + pool.keepAliveDurationNs
+    repeat(pool.connectionCount()) { pool.cleanup(idleTimeNanos) }
+    assertThat(pool.connectionCount()).isEqualTo(0)
+    factory.taskFaker.runTasks()
+  }
 
   /** Use a helper method so there's no hidden reference remaining on the stack.  */
   private fun allocateAndLeakAllocation(

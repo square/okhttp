@@ -22,8 +22,8 @@ import java.util.AbstractQueue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
 import kotlin.concurrent.withLock
 import okhttp3.OkHttpClient
@@ -64,10 +64,18 @@ class TaskFaker : Closeable {
   val logger = Logger.getLogger("TaskFaker." + instance++)
 
   /** Though this executor service may hold many threads, they are not executed concurrently. */
-  private val tasksExecutor = Executors.newCachedThreadPool()
+  private val tasksExecutor =
+    Executors.newCachedThreadPool(
+      object : ThreadFactory {
+        private var nextThreadId = 1
+
+        override fun newThread(runnable: Runnable) = Thread(runnable, "TaskFaker-${nextThreadId++}")
+      },
+    )
 
   /** The number of runnables known to [tasksExecutor]. Guarded by [taskRunner]. */
   private var tasksRunningCount = 0
+  private var threadsRunning = mutableListOf<Thread>()
 
   /**
    * Threads in this list are waiting for either [interruptCoordinatorThread] or [notifyAll].
@@ -105,15 +113,16 @@ class TaskFaker : Closeable {
           taskRunner: TaskRunner,
           runnable: Runnable,
         ) {
-          taskRunner.assertThreadHoldsLock()
-          val acquiredTaskRunnerLock = AtomicBoolean()
+          // taskRunner.assertThreadHoldsLock()
+          // val acquiredTaskRunnerLock = AtomicBoolean()
 
           tasksExecutor.execute {
             taskRunner.lock.withLock {
-              acquiredTaskRunnerLock.set(true)
-              taskRunner.condition.signalAll()
+              // acquiredTaskRunnerLock.set(true)
+              // taskRunner.condition.signalAll()
 
               tasksRunningCount++
+              threadsRunning.add(Thread.currentThread())
               if (tasksRunningCount > 1) isParallel = true
               try {
                 if (!isRunningAllTasks) {
@@ -124,15 +133,16 @@ class TaskFaker : Closeable {
                 if (!tasksExecutor.isShutdown) throw e // Ignore shutdown-triggered interruptions.
               } finally {
                 tasksRunningCount--
+                threadsRunning.remove(Thread.currentThread())
                 taskBecameStalled.release()
               }
             }
           }
 
           // Execute() must not return until the launched task stalls.
-          while (!acquiredTaskRunnerLock.get()) {
-            taskRunner.condition.await()
-          }
+          // while (!acquiredTaskRunnerLock.get()) {
+          //   taskRunner.condition.await()
+          // }
         }
 
         override fun nanoTime() = nanoTime
@@ -201,12 +211,39 @@ class TaskFaker : Closeable {
     taskRunner.assertThreadDoesntHoldLock()
 
     taskRunner.lock.withLock {
-      isRunningAllTasks = true
       nanoTime = newTime
-      unstallTasks()
     }
 
-    waitForTasksToStall()
+    waitForTasksToComplete()
+  }
+
+  private fun TaskRunner.nextTaskNanoTime(): Long? =
+    activeQueues().mapNotNull { it.scheduledTasks.firstOrNull()?.nextExecuteNanoTime }.minOrNull()
+
+  private fun waitForTasksToComplete() {
+    taskRunner.assertThreadDoesntHoldLock()
+
+    while (true) {
+      taskRunner.lock.withLock {
+        val nextTaskNanoTime = taskRunner.nextTaskNanoTime()
+        println("wait to complete: tasksRunningCount=$threadsRunning, stalledTasks=$stalledTasks")
+        val idleThreadCount =
+          when {
+            taskRunner.coordinatorWaiting -> 1
+            else -> 0
+          }
+        if (tasksRunningCount == idleThreadCount && (nextTaskNanoTime == null || nextTaskNanoTime > nanoTime)) {
+          isRunningAllTasks = false
+          return@waitForTasksToComplete // No tasks are runnable at the moment.
+        }
+        // Unblock some stuff.
+        isRunningAllTasks = true
+        stalledTasks.clear()
+        taskRunner.condition.signalAll()
+        taskBecameStalled.drainPermits()
+      }
+      taskBecameStalled.acquire()
+    }
   }
 
   private fun waitForTasksToStall() {
@@ -214,6 +251,7 @@ class TaskFaker : Closeable {
 
     while (true) {
       taskRunner.lock.withLock {
+        println("wait to stall: tasksRunningCount=$threadsRunning, stalledTasks=$stalledTasks")
         if (tasksRunningCount == stalledTasks.size) {
           isRunningAllTasks = false
           return@waitForTasksToStall // All stalled.

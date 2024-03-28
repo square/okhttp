@@ -49,7 +49,8 @@ class TaskRunner(
   val condition: Condition = lock.newCondition()
 
   private var nextQueueName = 10000
-  private var coordinatorWaiting = false
+  var coordinatorWaiting = false
+    private set
   private var coordinatorWakeUpAt = 0L
 
   /** Queues with tasks that are currently executing their [TaskQueue.activeTask]. */

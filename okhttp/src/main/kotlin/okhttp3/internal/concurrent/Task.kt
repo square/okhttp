@@ -54,7 +54,8 @@ abstract class Task(
   internal var queue: TaskQueue? = null
 
   /** Undefined unless this is in [TaskQueue.futureTasks]. */
-  internal var nextExecuteNanoTime = -1L
+  var nextExecuteNanoTime = -1L
+    internal set
 
   /** Returns the delay in nanoseconds until the next execution, or -1L to not reschedule. */
   abstract fun runOnce(): Long
