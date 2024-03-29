@@ -145,6 +145,7 @@ class ConnectionPool internal constructor(
     /**
      * How many concurrent calls should be possible to make at any time.
      * The pool will routinely try to pre-emptively open connections to satisfy this minimum.
+     * Connections will still be closed if they idle beyond the keep-alive but will be replaced.
      */
     @JvmField val minimumConcurrentCalls: Int = 0,
     /** How long to wait to retry pre-emptive connection attempts that fail. */
