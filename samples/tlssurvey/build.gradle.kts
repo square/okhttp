@@ -13,7 +13,7 @@ dependencies {
   implementation("com.squareup.okhttp3:okhttp-coroutines:5.0.0-alpha.12")
   implementation(libs.conscrypt.openjdk)
 
-  implementation("com.squareup.retrofit2:retrofit:2.10.0")
+  implementation("com.squareup.retrofit2:retrofit:2.11.0")
   implementation("com.squareup.retrofit2:converter-moshi:2.10.0")
   implementation(libs.squareup.moshi)
   implementation(libs.squareup.moshi.kotlin)
