@@ -14,7 +14,7 @@ dependencies {
   implementation(libs.conscrypt.openjdk)
 
   implementation("com.squareup.retrofit2:retrofit:2.11.0")
-  implementation("com.squareup.retrofit2:converter-moshi:2.10.0")
+  implementation("com.squareup.retrofit2:converter-moshi:2.11.0")
   implementation(libs.squareup.moshi)
   implementation(libs.squareup.moshi.kotlin)
 
