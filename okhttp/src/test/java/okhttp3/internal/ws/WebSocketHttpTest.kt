@@ -1216,6 +1216,7 @@ class WebSocketHttpTest {
         client.pingIntervalMillis.toLong(),
         null,
         0L,
+        client.closeTimeoutMillis.toLong(),
       )
     webSocket.connect(client)
     return webSocket
