@@ -27,6 +27,8 @@ import java.net.ProtocolException
 import java.net.SocketTimeoutException
 import java.util.Random
 import kotlin.test.assertFailsWith
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Protocol
@@ -58,8 +60,8 @@ class RealWebSocketTest {
 
   @BeforeEach
   fun setUp() {
-    client.initWebSocket(random, 0)
-    server.initWebSocket(random, 0)
+    client.initWebSocket(random)
+    server.initWebSocket(random)
   }
 
   @AfterEach
@@ -198,6 +200,43 @@ class RealWebSocketTest {
   }
 
   @Test
+  fun clientCloseCancelsConnectionAfterTimeout() {
+    client.webSocket!!.close(1000, "Hello!")
+    taskFaker.runTasks()
+    // Note: we don't process server frames so our client 'close' doesn't receive a server 'close'.
+    assertThat(client.canceled).isFalse()
+
+    taskFaker.advanceUntil(ns(RealWebSocket.CANCEL_AFTER_CLOSE_MILLIS - 1))
+    assertThat(client.canceled).isFalse()
+
+    taskFaker.advanceUntil(ns(RealWebSocket.CANCEL_AFTER_CLOSE_MILLIS))
+    assertThat(client.canceled).isTrue()
+
+    client.processNextFrame() // This won't get a frame, but it will get a closed pipe.
+    client.listener.assertFailure(IOException::class.java, "canceled")
+    taskFaker.runTasks()
+  }
+
+  @Test
+  fun clientCloseCancelsConnectionAfterCustomTimeout() {
+    client.initWebSocket(random, webSocketCloseTimeout = 5_000)
+    client.webSocket!!.close(1000, "Hello!")
+    taskFaker.runTasks()
+    // Note: we don't process server frames so our client 'close' doesn't receive a server 'close'.
+    assertThat(client.canceled).isFalse()
+
+    taskFaker.advanceUntil(ns(4_999))
+    assertThat(client.canceled).isFalse()
+
+    taskFaker.advanceUntil(ns(5_000))
+    assertThat(client.canceled).isTrue()
+
+    client.processNextFrame() // This won't get a frame, but it will get a closed pipe.
+    client.listener.assertFailure(IOException::class.java, "canceled")
+    taskFaker.runTasks()
+  }
+
+  @Test
   fun serverCloseClosesConnection() {
     server.webSocket!!.close(1000, "Hello!")
     taskFaker.runTasks()
@@ -333,7 +372,7 @@ class RealWebSocketTest {
 
   @Test
   fun pingOnInterval() {
-    client.initWebSocket(random, 500)
+    client.initWebSocket(random, pingIntervalMillis = 500)
     taskFaker.advanceUntil(ns(500L))
     server.processNextFrame() // Ping.
     client.processNextFrame() // Pong.
@@ -347,7 +386,7 @@ class RealWebSocketTest {
 
   @Test
   fun unacknowledgedPingFailsConnection() {
-    client.initWebSocket(random, 500)
+    client.initWebSocket(random, pingIntervalMillis = 500)
 
     // Don't process the ping and pong frames!
     taskFaker.advanceUntil(ns(500L))
@@ -360,7 +399,7 @@ class RealWebSocketTest {
 
   @Test
   fun unexpectedPongsDoNotInterfereWithFailureDetection() {
-    client.initWebSocket(random, 500)
+    client.initWebSocket(random, pingIntervalMillis = 500)
 
     // At 0ms the server sends 3 unexpected pongs. The client accepts 'em and ignores em.
     server.webSocket!!.pong("pong 1".encodeUtf8())
@@ -401,8 +440,8 @@ class RealWebSocketTest {
   @Test
   fun messagesCompressedWhenConfigured() {
     val headers = headersOf("Sec-WebSocket-Extensions", "permessage-deflate")
-    client.initWebSocket(random, 0, headers)
-    server.initWebSocket(random, 0, headers)
+    client.initWebSocket(random, responseHeaders = headers)
+    server.initWebSocket(random, responseHeaders = headers)
     val message = repeat('a', RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE.toInt())
     server.webSocket!!.send(message)
     taskFaker.runTasks()
@@ -415,8 +454,8 @@ class RealWebSocketTest {
   @Test
   fun smallMessagesNotCompressed() {
     val headers = headersOf("Sec-WebSocket-Extensions", "permessage-deflate")
-    client.initWebSocket(random, 0, headers)
-    server.initWebSocket(random, 0, headers)
+    client.initWebSocket(random, responseHeaders = headers)
+    server.initWebSocket(random, responseHeaders = headers)
     val message = repeat('a', RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE.toInt() - 1)
     server.webSocket!!.send(message)
     taskFaker.runTasks()
@@ -437,11 +476,13 @@ class RealWebSocketTest {
     val listener = WebSocketRecorder(name)
     var webSocket: RealWebSocket? = null
     var closed = false
+    var canceled = false
 
     fun initWebSocket(
       random: Random?,
-      pingIntervalMillis: Int,
+      pingIntervalMillis: Int = 0,
       responseHeaders: Headers? = headersOf(),
+      webSocketCloseTimeout: Long = RealWebSocket.CANCEL_AFTER_CLOSE_MILLIS,
     ) {
       val url = "http://example.com/websocket"
       val response =
@@ -463,8 +504,23 @@ class RealWebSocketTest {
             responseHeaders,
           ),
           RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE,
-          RealWebSocket.CANCEL_AFTER_CLOSE_MILLIS,
-        )
+          webSocketCloseTimeout,
+        ).apply {
+          if (client) {
+            call = object : Call {
+              override fun request() = error("unexpected")
+              override fun execute() = error("unexpected")
+              override fun enqueue(responseCallback: Callback) = error("unexpected")
+              override fun cancel() {
+                this@TestStreams.cancel()
+              }
+              override fun isExecuted() = error("unexpected")
+              override fun isCanceled() = canceled
+              override fun timeout() = error("unexpected")
+              override fun clone() = error("unexpected")
+            }
+          }
+        }
       webSocket!!.initReaderAndWriter(name, this)
     }
 
@@ -497,6 +553,7 @@ class RealWebSocketTest {
     }
 
     override fun cancel() {
+      canceled = true
       sourcePipe.cancel()
       sinkPipe.cancel()
     }
