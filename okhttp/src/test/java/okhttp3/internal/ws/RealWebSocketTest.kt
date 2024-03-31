@@ -27,8 +27,7 @@ import java.net.ProtocolException
 import java.net.SocketTimeoutException
 import java.util.Random
 import kotlin.test.assertFailsWith
-import okhttp3.Call
-import okhttp3.Callback
+import okhttp3.FailingCall
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Protocol
@@ -507,18 +506,12 @@ class RealWebSocketTest {
           webSocketCloseTimeout,
         ).apply {
           if (client) {
-            call = object : Call {
-              override fun request() = error("unexpected")
-              override fun execute() = error("unexpected")
-              override fun enqueue(responseCallback: Callback) = error("unexpected")
-              override fun cancel() {
-                this@TestStreams.cancel()
+            call =
+              object : FailingCall() {
+                override fun cancel() {
+                  this@TestStreams.cancel()
+                }
               }
-              override fun isExecuted() = error("unexpected")
-              override fun isCanceled() = canceled
-              override fun timeout() = error("unexpected")
-              override fun clone() = error("unexpected")
-            }
           }
         }
       webSocket!!.initReaderAndWriter(name, this)
