@@ -64,7 +64,7 @@ class RealWebSocket(
   private var extensions: WebSocketExtensions?,
   /** If compression is negotiated, outbound messages of this size and larger will be compressed. */
   private var minimumDeflateSize: Long,
-  private val closeTimeoutMillis: Long,
+  private val webSocketCloseTimeout: Long,
 ) : WebSocket, WebSocketReader.FrameCallback {
   private val key: String
 
@@ -470,7 +470,7 @@ class RealWebSocket(
     code: Int,
     reason: String?,
   ): Boolean {
-    return close(code, reason, closeTimeoutMillis)
+    return close(code, reason, webSocketCloseTimeout)
   }
 
   @Synchronized fun close(
