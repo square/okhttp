@@ -918,7 +918,6 @@ public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Fact
 	public final fun callTimeoutMillis ()I
 	public final fun certificateChainCleaner ()Lokhttp3/internal/tls/CertificateChainCleaner;
 	public final fun certificatePinner ()Lokhttp3/CertificatePinner;
-	public final fun closeTimeoutMillis ()I
 	public final fun connectTimeoutMillis ()I
 	public final fun connectionPool ()Lokhttp3/ConnectionPool;
 	public final fun connectionSpecs ()Ljava/util/List;
@@ -945,6 +944,7 @@ public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Fact
 	public final fun retryOnConnectionFailure ()Z
 	public final fun socketFactory ()Ljavax/net/SocketFactory;
 	public final fun sslSocketFactory ()Ljavax/net/ssl/SSLSocketFactory;
+	public final fun webSocketCloseTimeout ()I
 	public final fun writeTimeoutMillis ()I
 	public final fun x509TrustManager ()Ljavax/net/ssl/X509TrustManager;
 }
@@ -962,9 +962,6 @@ public final class okhttp3/OkHttpClient$Builder {
 	public final fun callTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
 	public final fun callTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun certificatePinner (Lokhttp3/CertificatePinner;)Lokhttp3/OkHttpClient$Builder;
-	public final fun closeTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
-	public final fun closeTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
-	public final fun closeTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun connectTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
 	public final fun connectTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
 	public final fun connectTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
@@ -996,6 +993,9 @@ public final class okhttp3/OkHttpClient$Builder {
 	public final fun socketFactory (Ljavax/net/SocketFactory;)Lokhttp3/OkHttpClient$Builder;
 	public final fun sslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;)Lokhttp3/OkHttpClient$Builder;
 	public final fun sslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;Ljavax/net/ssl/X509TrustManager;)Lokhttp3/OkHttpClient$Builder;
+	public final fun webSocketCloseTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
+	public final fun webSocketCloseTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun webSocketCloseTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun writeTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
 	public final fun writeTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
 	public final fun writeTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
