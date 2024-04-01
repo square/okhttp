@@ -45,7 +45,7 @@ class AndroidLoggingTest {
 
   @Test
   fun testHttpLoggingInterceptor() {
-    val interceptor = HttpLoggingInterceptor.AndroidLogging(tag = "testHttpLoggingInterceptor").apply {
+    val interceptor = HttpLoggingInterceptor.androidLogging(tag = "testHttpLoggingInterceptor").apply {
       level = HttpLoggingInterceptor.Level.BASIC
     }
 
@@ -70,7 +70,7 @@ class AndroidLoggingTest {
   @Test
   fun testLoggingEventListener() {
     val client =
-      clientBuilder.eventListenerFactory(LoggingEventListener.AndroidLogging(tag = "testLoggingEventListener")).build()
+      clientBuilder.eventListenerFactory(LoggingEventListener.androidLogging(tag = "testLoggingEventListener")).build()
 
     try {
       client.newCall(request).execute()
