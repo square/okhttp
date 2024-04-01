@@ -27,19 +27,19 @@ import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.Request
 
-internal fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? =
+fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? =
     Cookie.parse(currentTimeMillis, url, setCookie)
 
-internal fun cookieToString(cookie: Cookie, forObsoleteRfc2965: Boolean) =
+fun cookieToString(cookie: Cookie, forObsoleteRfc2965: Boolean) =
     cookie.toString(forObsoleteRfc2965)
 
-internal fun addHeaderLenient(builder: Headers.Builder, line: String) =
+fun addHeaderLenient(builder: Headers.Builder, line: String) =
     builder.addLenient(line)
 
-internal fun addHeaderLenient(builder: Headers.Builder, name: String, value: String) =
+fun addHeaderLenient(builder: Headers.Builder, name: String, value: String) =
     builder.addLenient(name, value)
 
-internal fun cacheGet(cache: Cache, request: Request) = cache.get(request)
+fun cacheGet(cache: Cache, request: Request) = cache.get(request)
 
-internal fun applyConnectionSpec(connectionSpec: ConnectionSpec, sslSocket: SSLSocket, isFallback: Boolean) =
+fun applyConnectionSpec(connectionSpec: ConnectionSpec, sslSocket: SSLSocket, isFallback: Boolean) =
     connectionSpec.apply(sslSocket, isFallback)

@@ -57,14 +57,14 @@ import okio.Options
 import okio.Source
 
 @JvmField
-internal val EMPTY_BYTE_ARRAY = ByteArray(0)
+val EMPTY_BYTE_ARRAY = ByteArray(0)
 @JvmField
-internal val EMPTY_HEADERS = headersOf()
+val EMPTY_HEADERS = headersOf()
 
 @JvmField
-internal val EMPTY_RESPONSE = EMPTY_BYTE_ARRAY.toResponseBody()
+val EMPTY_RESPONSE = EMPTY_BYTE_ARRAY.toResponseBody()
 @JvmField
-internal val EMPTY_REQUEST = EMPTY_BYTE_ARRAY.toRequestBody()
+val EMPTY_REQUEST = EMPTY_BYTE_ARRAY.toRequestBody()
 
 /** Byte order marks. */
 private val UNICODE_BOMS = Options.of(
@@ -77,7 +77,7 @@ private val UNICODE_BOMS = Options.of(
 
 /** GMT and UTC are equivalent for our purposes. */
 @JvmField
-internal val UTC = TimeZone.getTimeZone("GMT")!!
+val UTC = TimeZone.getTimeZone("GMT")!!
 
 /**
  * Quick and dirty pattern to differentiate IP addresses from hostnames. This is an approximation
@@ -92,13 +92,13 @@ internal val UTC = TimeZone.getTimeZone("GMT")!!
 private val VERIFY_AS_IP_ADDRESS =
     "([0-9a-fA-F]*:[0-9a-fA-F:.]*)|([\\d.]+)".toRegex()
 
-internal fun checkOffsetAndCount(arrayLength: Long, offset: Long, count: Long) {
+fun checkOffsetAndCount(arrayLength: Long, offset: Long, count: Long) {
   if (offset or count < 0L || offset > arrayLength || arrayLength - offset < count) {
     throw ArrayIndexOutOfBoundsException()
   }
 }
 
-internal fun threadFactory(
+fun threadFactory(
   name: String,
   daemon: Boolean
 ): ThreadFactory = ThreadFactory { runnable ->
@@ -111,7 +111,7 @@ internal fun threadFactory(
  * Returns an array containing only elements found in this array and also in [other]. The returned
  * elements are in the same order as in this.
  */
-internal fun Array<String>.intersect(
+fun Array<String>.intersect(
   other: Array<String>,
   comparator: Comparator<in String>
 ): Array<String> {
@@ -133,7 +133,7 @@ internal fun Array<String>.intersect(
  * likelihood of an intersection so great, that it is not worth the CPU cost of sorting or the
  * memory cost of hashing.
  */
-internal fun Array<String>.hasIntersection(
+fun Array<String>.hasIntersection(
   other: Array<String>?,
   comparator: Comparator<in String>
 ): Boolean {
@@ -150,7 +150,7 @@ internal fun Array<String>.hasIntersection(
   return false
 }
 
-internal fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
+fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
   val host = if (":" in host) {
     "[$host]"
   } else {
@@ -163,11 +163,11 @@ internal fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
   }
 }
 
-internal fun Array<String>.indexOf(value: String, comparator: Comparator<String>): Int =
+fun Array<String>.indexOf(value: String, comparator: Comparator<String>): Int =
     indexOfFirst { comparator.compare(it, value) == 0 }
 
 @Suppress("UNCHECKED_CAST")
-internal fun Array<String>.concat(value: String): Array<String> {
+fun Array<String>.concat(value: String): Array<String> {
   val result = copyOf(size + 1)
   result[result.lastIndex] = value
   return result as Array<String>
@@ -176,7 +176,7 @@ internal fun Array<String>.concat(value: String): Array<String> {
 /**
  * Increments [startIndex] until this string is not ASCII whitespace. Stops at [endIndex].
  */
-internal fun String.indexOfFirstNonAsciiWhitespace(startIndex: Int = 0, endIndex: Int = length): Int {
+fun String.indexOfFirstNonAsciiWhitespace(startIndex: Int = 0, endIndex: Int = length): Int {
   for (i in startIndex until endIndex) {
     when (this[i]) {
       '\t', '\n', '\u000C', '\r', ' ' -> Unit
@@ -189,7 +189,7 @@ internal fun String.indexOfFirstNonAsciiWhitespace(startIndex: Int = 0, endIndex
 /**
  * Decrements [endIndex] until `input[endIndex - 1]` is not ASCII whitespace. Stops at [startIndex].
  */
-internal fun String.indexOfLastNonAsciiWhitespace(startIndex: Int = 0, endIndex: Int = length): Int {
+fun String.indexOfLastNonAsciiWhitespace(startIndex: Int = 0, endIndex: Int = length): Int {
   for (i in endIndex - 1 downTo startIndex) {
     when (this[i]) {
       '\t', '\n', '\u000C', '\r', ' ' -> Unit
@@ -200,7 +200,7 @@ internal fun String.indexOfLastNonAsciiWhitespace(startIndex: Int = 0, endIndex:
 }
 
 /** Equivalent to `string.substring(startIndex, endIndex).trim()`. */
-internal fun String.trimSubstring(startIndex: Int = 0, endIndex: Int = length): String {
+fun String.trimSubstring(startIndex: Int = 0, endIndex: Int = length): String {
   val start = indexOfFirstNonAsciiWhitespace(startIndex, endIndex)
   val end = indexOfLastNonAsciiWhitespace(start, endIndex)
   return substring(start, end)
@@ -210,7 +210,7 @@ internal fun String.trimSubstring(startIndex: Int = 0, endIndex: Int = length): 
  * Returns the index of the first character in this string that contains a character in
  * [delimiters]. Returns endIndex if there is no such character.
  */
-internal fun String.delimiterOffset(delimiters: String, startIndex: Int = 0, endIndex: Int = length): Int {
+fun String.delimiterOffset(delimiters: String, startIndex: Int = 0, endIndex: Int = length): Int {
   for (i in startIndex until endIndex) {
     if (this[i] in delimiters) return i
   }
@@ -221,7 +221,7 @@ internal fun String.delimiterOffset(delimiters: String, startIndex: Int = 0, end
  * Returns the index of the first character in this string that is [delimiter]. Returns [endIndex]
  * if there is no such character.
  */
-internal fun String.delimiterOffset(delimiter: Char, startIndex: Int = 0, endIndex: Int = length): Int {
+fun String.delimiterOffset(delimiter: Char, startIndex: Int = 0, endIndex: Int = length): Int {
   for (i in startIndex until endIndex) {
     if (this[i] == delimiter) return i
   }
@@ -232,7 +232,7 @@ internal fun String.delimiterOffset(delimiter: Char, startIndex: Int = 0, endInd
  * Returns the index of the first character in this string that is either a control character (like
  * `\u0000` or `\n`) or a non-ASCII character. Returns -1 if this string has no such characters.
  */
-internal fun String.indexOfControlOrNonAscii(): Int {
+fun String.indexOfControlOrNonAscii(): Int {
   for (i in 0 until length) {
     val c = this[i]
     if (c <= '\u001f' || c >= '\u007f') {
@@ -243,12 +243,12 @@ internal fun String.indexOfControlOrNonAscii(): Int {
 }
 
 /** Returns true if this string is not a host name and might be an IP address. */
-internal fun String.canParseAsIpAddress(): Boolean {
+fun String.canParseAsIpAddress(): Boolean {
   return VERIFY_AS_IP_ADDRESS.matches(this)
 }
 
 /** Returns true if we should void putting this this header in an exception or toString(). */
-internal fun isSensitiveHeader(name: String): Boolean {
+fun isSensitiveHeader(name: String): Boolean {
   return name.equals("Authorization", ignoreCase = true) ||
       name.equals("Cookie", ignoreCase = true) ||
       name.equals("Proxy-Authorization", ignoreCase = true) ||
@@ -256,12 +256,12 @@ internal fun isSensitiveHeader(name: String): Boolean {
 }
 
 /** Returns a [Locale.US] formatted [String]. */
-internal fun format(format: String, vararg args: Any): String {
+fun format(format: String, vararg args: Any): String {
   return String.format(Locale.US, format, *args)
 }
 
 @Throws(IOException::class)
-internal fun BufferedSource.readBomAsCharset(default: Charset): Charset {
+fun BufferedSource.readBomAsCharset(default: Charset): Charset {
   return when (select(UNICODE_BOMS)) {
     0 -> UTF_8
     1 -> UTF_16BE
@@ -273,7 +273,7 @@ internal fun BufferedSource.readBomAsCharset(default: Charset): Charset {
   }
 }
 
-internal fun checkDuration(name: String, duration: Long, unit: TimeUnit?): Int {
+fun checkDuration(name: String, duration: Long, unit: TimeUnit?): Int {
   check(duration >= 0L) { "$name < 0" }
   check(unit != null) { "unit == null" }
   val millis = unit.toMillis(duration)
@@ -282,14 +282,14 @@ internal fun checkDuration(name: String, duration: Long, unit: TimeUnit?): Int {
   return millis.toInt()
 }
 
-internal fun Char.parseHexDigit(): Int = when (this) {
+fun Char.parseHexDigit(): Int = when (this) {
   in '0'..'9' -> this - '0'
   in 'a'..'f' -> this - 'a' + 10
   in 'A'..'F' -> this - 'A' + 10
   else -> -1
 }
 
-internal fun List<Header>.toHeaders(): Headers {
+fun List<Header>.toHeaders(): Headers {
   val builder = Headers.Builder()
   for ((name, value) in this) {
     builder.addLenient(name.utf8(), value.utf8())
@@ -297,30 +297,30 @@ internal fun List<Header>.toHeaders(): Headers {
   return builder.build()
 }
 
-internal fun Headers.toHeaderList(): List<Header> = (0 until size).map {
+fun Headers.toHeaderList(): List<Header> = (0 until size).map {
   Header(name(it), value(it))
 }
 
 /** Returns true if an HTTP request for this URL and [other] can reuse a connection. */
-internal fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean = host == other.host &&
+fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean = host == other.host &&
     port == other.port &&
     scheme == other.scheme
 
-internal fun EventListener.asFactory() = EventListener.Factory { this }
+fun EventListener.asFactory() = EventListener.Factory { this }
 
-internal infix fun Byte.and(mask: Int): Int = toInt() and mask
-internal infix fun Short.and(mask: Int): Int = toInt() and mask
-internal infix fun Int.and(mask: Long): Long = toLong() and mask
+infix fun Byte.and(mask: Int): Int = toInt() and mask
+infix fun Short.and(mask: Int): Int = toInt() and mask
+infix fun Int.and(mask: Long): Long = toLong() and mask
 
 @Throws(IOException::class)
-internal fun BufferedSink.writeMedium(medium: Int) {
+fun BufferedSink.writeMedium(medium: Int) {
   writeByte(medium.ushr(16) and 0xff)
   writeByte(medium.ushr(8) and 0xff)
   writeByte(medium and 0xff)
 }
 
 @Throws(IOException::class)
-internal fun BufferedSource.readMedium(): Int {
+fun BufferedSource.readMedium(): Int {
   return (readByte() and 0xff shl 16
       or (readByte() and 0xff shl 8)
       or (readByte() and 0xff))
@@ -331,7 +331,7 @@ internal fun BufferedSource.readMedium(): Int {
  * deadline if one exists already.
  */
 @Throws(IOException::class)
-internal fun Source.skipAll(duration: Int, timeUnit: TimeUnit): Boolean {
+fun Source.skipAll(duration: Int, timeUnit: TimeUnit): Boolean {
   val nowNs = System.nanoTime()
   val originalDurationNs = if (timeout().hasDeadline()) {
     timeout().deadlineNanoTime() - nowNs
@@ -361,13 +361,13 @@ internal fun Source.skipAll(duration: Int, timeUnit: TimeUnit): Boolean {
  * source is helpful, such as when doing so completes a cache body or frees a socket connection for
  * reuse.
  */
-internal fun Source.discard(timeout: Int, timeUnit: TimeUnit): Boolean = try {
+fun Source.discard(timeout: Int, timeUnit: TimeUnit): Boolean = try {
   this.skipAll(timeout, timeUnit)
 } catch (_: IOException) {
   false
 }
 
-internal fun Socket.peerName(): String {
+fun Socket.peerName(): String {
   val address = remoteSocketAddress
   return if (address is InetSocketAddress) address.hostName else address.toString()
 }
@@ -381,7 +381,7 @@ internal fun Socket.peerName(): String {
  *
  * @param source the source used to read bytes from the socket.
  */
-internal fun Socket.isHealthy(source: BufferedSource): Boolean {
+fun Socket.isHealthy(source: BufferedSource): Boolean {
   return try {
     val readTimeout = soTimeout
     try {
@@ -398,14 +398,14 @@ internal fun Socket.isHealthy(source: BufferedSource): Boolean {
 }
 
 /** Run [block] until it either throws an [IOException] or completes. */
-internal inline fun ignoreIoExceptions(block: () -> Unit) {
+inline fun ignoreIoExceptions(block: () -> Unit) {
   try {
     block()
   } catch (_: IOException) {
   }
 }
 
-internal inline fun threadName(name: String, block: () -> Unit) {
+inline fun threadName(name: String, block: () -> Unit) {
   val currentThread = Thread.currentThread()
   val oldName = currentThread.name
   currentThread.name = name
@@ -416,7 +416,7 @@ internal inline fun threadName(name: String, block: () -> Unit) {
   }
 }
 
-internal fun Buffer.skipAll(b: Byte): Int {
+fun Buffer.skipAll(b: Byte): Int {
   var count = 0
   while (!exhausted() && this[0] == b) {
     count++
@@ -429,7 +429,7 @@ internal fun Buffer.skipAll(b: Byte): Int {
  * Returns the index of the next non-whitespace character in this. Result is undefined if input
  * contains newline characters.
  */
-internal fun String.indexOfNonWhitespace(startIndex: Int = 0): Int {
+fun String.indexOfNonWhitespace(startIndex: Int = 0): Int {
   for (i in startIndex until length) {
     val c = this[i]
     if (c != ' ' && c != '\t') {
@@ -440,11 +440,11 @@ internal fun String.indexOfNonWhitespace(startIndex: Int = 0): Int {
 }
 
 /** Returns the Content-Length as reported by the response headers. */
-internal fun Response.headersContentLength(): Long {
+fun Response.headersContentLength(): Long {
   return headers["Content-Length"]?.toLongOrDefault(-1L) ?: -1L
 }
 
-internal fun String.toLongOrDefault(defaultValue: Long): Long {
+fun String.toLongOrDefault(defaultValue: Long): Long {
   return try {
     toLong()
   } catch (_: NumberFormatException) {
@@ -456,7 +456,7 @@ internal fun String.toLongOrDefault(defaultValue: Long): Long {
  * Returns this as a non-negative integer, or 0 if it is negative, or [Int.MAX_VALUE] if it is too
  * large, or [defaultValue] if it cannot be parsed.
  */
-internal fun String?.toNonNegativeInt(defaultValue: Int): Int {
+fun String?.toNonNegativeInt(defaultValue: Int): Int {
   try {
     val value = this?.toLong() ?: return defaultValue
     return when {
@@ -470,18 +470,18 @@ internal fun String?.toNonNegativeInt(defaultValue: Int): Int {
 }
 
 /** Returns an immutable copy of this. */
-internal fun <T> List<T>.toImmutableList(): List<T> {
+fun <T> List<T>.toImmutableList(): List<T> {
   return Collections.unmodifiableList(toMutableList())
 }
 
 /** Returns an immutable list containing [elements]. */
 @SafeVarargs
-internal fun <T> immutableListOf(vararg elements: T): List<T> {
+fun <T> immutableListOf(vararg elements: T): List<T> {
   return Collections.unmodifiableList(listOf(*elements.clone()))
 }
 
 /** Returns an immutable copy of this. */
-internal fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V> {
+fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V> {
   return if (isEmpty()) {
     emptyMap()
   } else {
@@ -490,7 +490,7 @@ internal fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V> {
 }
 
 /** Closes this, ignoring any checked exceptions. */
-internal fun Closeable.closeQuietly() {
+fun Closeable.closeQuietly() {
   try {
     close()
   } catch (rethrown: RuntimeException) {
@@ -500,7 +500,7 @@ internal fun Closeable.closeQuietly() {
 }
 
 /** Closes this, ignoring any checked exceptions. */
-internal fun Socket.closeQuietly() {
+fun Socket.closeQuietly() {
   try {
     close()
   } catch (e: AssertionError) {
@@ -517,7 +517,7 @@ internal fun Socket.closeQuietly() {
 }
 
 /** Closes this, ignoring any checked exceptions.  */
-internal fun ServerSocket.closeQuietly() {
+fun ServerSocket.closeQuietly() {
   try {
     close()
   } catch (rethrown: RuntimeException) {
@@ -537,7 +537,7 @@ internal fun ServerSocket.closeQuietly() {
  *
  * @param file a file in the directory to check. This file shouldn't already exist!
  */
-internal fun FileSystem.isCivilized(file: File): Boolean {
+fun FileSystem.isCivilized(file: File): Boolean {
   sink(file).use {
     try {
       delete(file)
@@ -549,20 +549,20 @@ internal fun FileSystem.isCivilized(file: File): Boolean {
   return false
 }
 
-internal fun Long.toHexString(): String = java.lang.Long.toHexString(this)
+fun Long.toHexString(): String = java.lang.Long.toHexString(this)
 
-internal fun Int.toHexString(): String = Integer.toHexString(this)
-
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-internal inline fun Any.wait() = (this as Object).wait()
+fun Int.toHexString(): String = Integer.toHexString(this)
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-internal inline fun Any.notify() = (this as Object).notify()
+inline fun Any.wait() = (this as Object).wait()
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-internal inline fun Any.notifyAll() = (this as Object).notifyAll()
+inline fun Any.notify() = (this as Object).notify()
 
-internal fun <T> readFieldOrNull(instance: Any, fieldType: Class<T>, fieldName: String): T? {
+@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
+inline fun Any.notifyAll() = (this as Object).notifyAll()
+
+fun <T> readFieldOrNull(instance: Any, fieldType: Class<T>, fieldName: String): T? {
   var c: Class<*> = instance.javaClass
   while (c != Any::class.java) {
     try {
@@ -617,11 +617,11 @@ internal inline fun Any.assertThreadDoesntHoldLock() {
   }
 }
 
-internal fun Exception.withSuppressed(suppressed: List<Exception>): Throwable = apply {
+fun Exception.withSuppressed(suppressed: List<Exception>): Throwable = apply {
   for (e in suppressed) addSuppressed(e)
 }
 
-internal inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List<T> {
+inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List<T> {
   var result: List<T> = emptyList()
   for (i in this) {
     if (predicate(i)) {
