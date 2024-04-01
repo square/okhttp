@@ -6,7 +6,7 @@ Support for Kotlin clients using coroutines.
 ```kotlin
 val call = client.newCall(request)
 
-call.executeAsync().use {
+call.executeAsync().use { response ->
   withContext(Dispatchers.IO) {
     println(response.body?.string())
   }

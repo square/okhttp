@@ -48,6 +48,7 @@ public final class okhttp3/AsyncDns$Companion {
 public final class okhttp3/AsyncDns$DnsClass : java/lang/Enum {
 	public static final field IPV4 Lokhttp3/AsyncDns$DnsClass;
 	public static final field IPV6 Lokhttp3/AsyncDns$DnsClass;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun getType ()I
 	public static fun valueOf (Ljava/lang/String;)Lokhttp3/AsyncDns$DnsClass;
 	public static fun values ()[Lokhttp3/AsyncDns$DnsClass;
@@ -430,7 +431,7 @@ public final class okhttp3/Cookie {
 	public final fun -deprecated_persistent ()Z
 	public final fun -deprecated_secure ()Z
 	public final fun -deprecated_value ()Ljava/lang/String;
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;ZZZZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;ZZZZLjava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun domain ()Ljava/lang/String;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun expiresAt ()J
@@ -444,6 +445,7 @@ public final class okhttp3/Cookie {
 	public static final fun parseAll (Lokhttp3/HttpUrl;Lokhttp3/Headers;)Ljava/util/List;
 	public final fun path ()Ljava/lang/String;
 	public final fun persistent ()Z
+	public final fun sameSite ()Ljava/lang/String;
 	public final fun secure ()Z
 	public fun toString ()Ljava/lang/String;
 	public final fun value ()Ljava/lang/String;
@@ -458,6 +460,7 @@ public final class okhttp3/Cookie$Builder {
 	public final fun httpOnly ()Lokhttp3/Cookie$Builder;
 	public final fun name (Ljava/lang/String;)Lokhttp3/Cookie$Builder;
 	public final fun path (Ljava/lang/String;)Lokhttp3/Cookie$Builder;
+	public final fun sameSite (Ljava/lang/String;)Lokhttp3/Cookie$Builder;
 	public final fun secure ()Lokhttp3/Cookie$Builder;
 	public final fun value (Ljava/lang/String;)Lokhttp3/Cookie$Builder;
 }
@@ -551,6 +554,9 @@ public final class okhttp3/EventListener$Companion {
 
 public abstract interface class okhttp3/EventListener$Factory {
 	public abstract fun create (Lokhttp3/Call;)Lokhttp3/EventListener;
+}
+
+public abstract interface annotation class okhttp3/ExperimentalOkHttpApi : java/lang/annotation/Annotation {
 }
 
 public final class okhttp3/FormBody : okhttp3/RequestBody {
@@ -671,6 +677,7 @@ public final class okhttp3/HttpUrl {
 	public final fun -deprecated_uri ()Ljava/net/URI;
 	public final fun -deprecated_url ()Ljava/net/URL;
 	public final fun -deprecated_username ()Ljava/lang/String;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public static final fun defaultPort (Ljava/lang/String;)I
 	public final fun encodedFragment ()Ljava/lang/String;
 	public final fun encodedPassword ()Ljava/lang/String;
@@ -813,6 +820,7 @@ public final class okhttp3/MultipartBody : okhttp3/RequestBody {
 	public final fun boundary ()Ljava/lang/String;
 	public fun contentLength ()J
 	public fun contentType ()Lokhttp3/MediaType;
+	public fun isOneShot ()Z
 	public final fun part (I)Lokhttp3/MultipartBody$Part;
 	public final fun parts ()Ljava/util/List;
 	public final fun size ()I
@@ -936,6 +944,7 @@ public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Fact
 	public final fun retryOnConnectionFailure ()Z
 	public final fun socketFactory ()Ljavax/net/SocketFactory;
 	public final fun sslSocketFactory ()Ljavax/net/ssl/SSLSocketFactory;
+	public final fun webSocketCloseTimeout ()I
 	public final fun writeTimeoutMillis ()I
 	public final fun x509TrustManager ()Ljavax/net/ssl/X509TrustManager;
 }
@@ -951,9 +960,11 @@ public final class okhttp3/OkHttpClient$Builder {
 	public final fun cache (Lokhttp3/Cache;)Lokhttp3/OkHttpClient$Builder;
 	public final fun callTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
 	public final fun callTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun callTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun certificatePinner (Lokhttp3/CertificatePinner;)Lokhttp3/OkHttpClient$Builder;
 	public final fun connectTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
 	public final fun connectTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun connectTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun connectionPool (Lokhttp3/ConnectionPool;)Lokhttp3/OkHttpClient$Builder;
 	public final fun connectionSpecs (Ljava/util/List;)Lokhttp3/OkHttpClient$Builder;
 	public final fun cookieJar (Lokhttp3/CookieJar;)Lokhttp3/OkHttpClient$Builder;
@@ -970,18 +981,24 @@ public final class okhttp3/OkHttpClient$Builder {
 	public final fun networkInterceptors ()Ljava/util/List;
 	public final fun pingInterval (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
 	public final fun pingInterval (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun pingInterval-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun protocols (Ljava/util/List;)Lokhttp3/OkHttpClient$Builder;
 	public final fun proxy (Ljava/net/Proxy;)Lokhttp3/OkHttpClient$Builder;
 	public final fun proxyAuthenticator (Lokhttp3/Authenticator;)Lokhttp3/OkHttpClient$Builder;
 	public final fun proxySelector (Ljava/net/ProxySelector;)Lokhttp3/OkHttpClient$Builder;
 	public final fun readTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
 	public final fun readTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun readTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun retryOnConnectionFailure (Z)Lokhttp3/OkHttpClient$Builder;
 	public final fun socketFactory (Ljavax/net/SocketFactory;)Lokhttp3/OkHttpClient$Builder;
 	public final fun sslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;)Lokhttp3/OkHttpClient$Builder;
 	public final fun sslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;Ljavax/net/ssl/X509TrustManager;)Lokhttp3/OkHttpClient$Builder;
+	public final fun webSocketCloseTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
+	public final fun webSocketCloseTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun webSocketCloseTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun writeTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
 	public final fun writeTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun writeTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 }
 
 public final class okhttp3/OkHttpClient$Companion {
@@ -997,6 +1014,7 @@ public final class okhttp3/Protocol : java/lang/Enum {
 	public static final field QUIC Lokhttp3/Protocol;
 	public static final field SPDY_3 Lokhttp3/Protocol;
 	public static final fun get (Ljava/lang/String;)Lokhttp3/Protocol;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public fun toString ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lokhttp3/Protocol;
 	public static fun values ()[Lokhttp3/Protocol;
@@ -1016,6 +1034,7 @@ public final class okhttp3/Request {
 	public synthetic fun <init> (Lokhttp3/HttpUrl;Lokhttp3/Headers;Ljava/lang/String;Lokhttp3/RequestBody;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun body ()Lokhttp3/RequestBody;
 	public final fun cacheControl ()Lokhttp3/CacheControl;
+	public final fun cacheUrlOverride ()Lokhttp3/HttpUrl;
 	public final fun header (Ljava/lang/String;)Ljava/lang/String;
 	public final fun headers ()Lokhttp3/Headers;
 	public final fun headers (Ljava/lang/String;)Ljava/util/List;
@@ -1034,6 +1053,7 @@ public class okhttp3/Request$Builder {
 	public fun addHeader (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/Request$Builder;
 	public fun build ()Lokhttp3/Request;
 	public fun cacheControl (Lokhttp3/CacheControl;)Lokhttp3/Request$Builder;
+	public final fun cacheUrlOverride (Lokhttp3/HttpUrl;)Lokhttp3/Request$Builder;
 	public final fun delete ()Lokhttp3/Request$Builder;
 	public fun delete (Lokhttp3/RequestBody;)Lokhttp3/Request$Builder;
 	public static synthetic fun delete$default (Lokhttp3/Request$Builder;Lokhttp3/RequestBody;ILjava/lang/Object;)Lokhttp3/Request$Builder;
@@ -1228,6 +1248,7 @@ public final class okhttp3/TlsVersion : java/lang/Enum {
 	public static final field TLS_1_3 Lokhttp3/TlsVersion;
 	public final fun -deprecated_javaName ()Ljava/lang/String;
 	public static final fun forJavaName (Ljava/lang/String;)Lokhttp3/TlsVersion;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun javaName ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lokhttp3/TlsVersion;
 	public static fun values ()[Lokhttp3/TlsVersion;

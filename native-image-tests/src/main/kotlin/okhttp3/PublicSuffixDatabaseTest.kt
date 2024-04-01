@@ -20,9 +20,16 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isGreaterThan
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
+import okhttp3.testing.PlatformRule
+import okio.FileSystem
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 class PublicSuffixDatabaseTest {
+  @RegisterExtension
+  @JvmField
+  val platform = PlatformRule()
+
   @Test
   fun testResourcesLoaded() {
     val url = "https://api.twitter.com".toHttpUrl()
@@ -32,8 +39,9 @@ class PublicSuffixDatabaseTest {
 
   @Test
   fun testPublicSuffixes() {
-    PublicSuffixDatabase::class.java.getResourceAsStream(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE).use {
-      assertThat(it.available()).isGreaterThan(30000)
-    }
+    platform.assumeNotGraalVMImage()
+
+    val metadata = FileSystem.RESOURCES.metadata(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE)
+    assertThat(metadata.size!!).isGreaterThan(30000)
   }
 }

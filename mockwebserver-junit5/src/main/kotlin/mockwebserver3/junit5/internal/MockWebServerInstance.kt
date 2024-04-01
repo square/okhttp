@@ -15,6 +15,9 @@
  */
 package mockwebserver3.junit5.internal
 
+import okhttp3.ExperimentalOkHttpApi
+
+@ExperimentalOkHttpApi
 annotation class MockWebServerInstance(
-  val name: String
+  val name: String,
 )

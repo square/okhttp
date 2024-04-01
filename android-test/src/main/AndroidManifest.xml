@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="okhttp.android.test">
-  <application
-      android:usesCleartextTraffic="true" />
+          xmlns:tools="http://schemas.android.com/tools" package="okhttp.android.test">
+
   <uses-permission android:name="android.permission.INTERNET" />
+
+  <application android:usesCleartextTraffic="true" tools:targetApi="m"/>
+
 </manifest>

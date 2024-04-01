@@ -35,7 +35,8 @@ fun parseIanaCsvRow(s: String): SuiteId? {
 }
 
 class IanaSuites(
-  val name: String, val suites: List<SuiteId>
+  val name: String,
+  val suites: List<SuiteId>,
 ) {
   fun fromJavaName(javaName: String): SuiteId {
     for (suiteId in suites) {
@@ -53,12 +54,13 @@ suspend fun fetchIanaSuites(okHttpClient: OkHttpClient): IanaSuites {
 
   val call = okHttpClient.newCall(Request(url.toHttpUrl()))
 
-  val suites = call.executeAsync().use {
-    if (!it.isSuccessful) {
-      throw IOException("Failed ${it.code} ${it.message}")
-    }
-    it.body.string().lines()
-  }.mapNotNull { parseIanaCsvRow(it) }
+  val suites =
+    call.executeAsync().use {
+      if (!it.isSuccessful) {
+        throw IOException("Failed ${it.code} ${it.message}")
+      }
+      it.body.string().lines()
+    }.mapNotNull { parseIanaCsvRow(it) }
 
   return IanaSuites("current", suites)
 }

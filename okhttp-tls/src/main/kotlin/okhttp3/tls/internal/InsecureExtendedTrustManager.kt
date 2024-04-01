@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+
 package okhttp3.tls.internal
 
 import java.net.Socket
@@ -33,14 +34,14 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 @IgnoreJRERequirement
 internal class InsecureExtendedTrustManager(
   private val delegate: X509ExtendedTrustManager,
-  private val insecureHosts: List<String>
+  private val insecureHosts: List<String>,
 ) : X509ExtendedTrustManager() {
   override fun getAcceptedIssuers(): Array<X509Certificate> = delegate.acceptedIssuers
 
   override fun checkServerTrusted(
     chain: Array<out X509Certificate>,
     authType: String,
-    socket: Socket
+    socket: Socket,
   ) {
     if (socket.peerName() !in insecureHosts) {
       delegate.checkServerTrusted(chain, authType, socket)
@@ -50,28 +51,32 @@ internal class InsecureExtendedTrustManager(
   override fun checkServerTrusted(
     chain: Array<out X509Certificate>,
     authType: String,
-    engine: SSLEngine
+    engine: SSLEngine,
   ) {
     if (engine.peerHost !in insecureHosts) {
       delegate.checkServerTrusted(chain, authType, engine)
     }
   }
 
-  override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) =
-    throw CertificateException("Unsupported operation")
-
-  override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String?) =
-    throw CertificateException("Unsupported operation")
+  override fun checkServerTrusted(
+    chain: Array<out X509Certificate>,
+    authType: String,
+  ) = throw CertificateException("Unsupported operation")
 
   override fun checkClientTrusted(
     chain: Array<out X509Certificate>,
-    authType: String,
-    engine: SSLEngine?
+    authType: String?,
   ) = throw CertificateException("Unsupported operation")
 
   override fun checkClientTrusted(
     chain: Array<out X509Certificate>,
     authType: String,
-    socket: Socket?
+    engine: SSLEngine?,
+  ) = throw CertificateException("Unsupported operation")
+
+  override fun checkClientTrusted(
+    chain: Array<out X509Certificate>,
+    authType: String,
+    socket: Socket?,
   ) = throw CertificateException("Unsupported operation")
 }

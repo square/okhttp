@@ -17,7 +17,8 @@ public abstract class okhttp3/sse/EventSourceListener {
 
 public final class okhttp3/sse/EventSources {
 	public static final field INSTANCE Lokhttp3/sse/EventSources;
-	public static final fun createFactory (Lokhttp3/OkHttpClient;)Lokhttp3/sse/EventSource$Factory;
+	public static final fun createFactory (Lokhttp3/Call$Factory;)Lokhttp3/sse/EventSource$Factory;
+	public static final synthetic fun createFactory (Lokhttp3/OkHttpClient;)Lokhttp3/sse/EventSource$Factory;
 	public static final fun processResponse (Lokhttp3/Response;Lokhttp3/sse/EventSourceListener;)V
 }
 

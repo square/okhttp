@@ -1,15 +1,17 @@
+@file:Suppress("UnstableApiUsage")
+
+import com.diffplug.gradle.spotless.KotlinExtension
+import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
-import groovy.util.Node
-import groovy.util.NodeList
-import java.net.URL
+import java.net.URI
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.jetbrains.dokka.gradle.DokkaTask
-import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
-import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
-import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
+import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapper
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.js.translate.context.Namer.kotlin
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 buildscript {
@@ -37,6 +39,14 @@ buildscript {
 }
 
 apply(plugin = "org.jetbrains.dokka")
+apply(plugin = "com.diffplug.spotless")
+
+configure<SpotlessExtension> {
+  kotlin {
+    target("**/*.kt")
+    ktlint()
+  }
+}
 
 allprojects {
   group = "com.squareup.okhttp3"
@@ -75,6 +85,8 @@ subprojects {
   if (project.name == "okhttp-android") return@subprojects
   if (project.name == "android-test") return@subprojects
   if (project.name == "regression-test") return@subprojects
+  if (project.name == "android-test-app") return@subprojects
+  if (project.name == "container-tests") return@subprojects
 
   apply(plugin = "checkstyle")
   apply(plugin = "ru.vyarus.animalsniffer")
@@ -86,7 +98,7 @@ subprojects {
 
   configure<JavaPluginExtension> {
     toolchain {
-      languageVersion.set(JavaLanguageVersion.of(11))
+      languageVersion.set(JavaLanguageVersion.of(17))
     }
   }
 
@@ -140,7 +152,7 @@ subprojects {
   }
 
   val platform = System.getProperty("okhttp.platform", "jdk9")
-  val testJavaVersion = System.getProperty("test.java.version", "11").toInt()
+  val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
 
   val testRuntimeOnly: Configuration by configurations.getting
   dependencies {
@@ -150,15 +162,13 @@ subprojects {
 
   tasks.withType<Test> {
     useJUnitPlatform()
-    jvmArgs = jvmArgs!! + listOf(
+    jvmArgs(
       "-Dokhttp.platform=$platform",
-      "-XX:+HeapDumpOnOutOfMemoryError"
     )
 
     if (platform == "loom") {
-      jvmArgs = jvmArgs!! + listOf(
-        "-Djdk.tracePinnedThread=full",
-        "--enable-preview"
+      jvmArgs(
+        "-Djdk.tracePinnedThreads=short",
       )
     }
 
@@ -177,15 +187,8 @@ subprojects {
   }
 
   // https://publicobject.com/2023/04/16/read-a-project-file-in-a-kotlin-multiplatform-test/
-  tasks.withType<KotlinJvmTest>().configureEach {
+  tasks.withType<Test>().configureEach {
     environment("OKHTTP_ROOT", rootDir)
-  }
-  tasks.withType<KotlinNativeTest>().configureEach {
-    environment("SIMCTL_CHILD_OKHTTP_ROOT", rootDir)
-    environment("OKHTTP_ROOT", rootDir)
-  }
-  tasks.withType<KotlinJsTest>().configureEach {
-    environment("OKHTTP_ROOT", rootDir.toString())
   }
 
   if (platform == "jdk8alpn") {
@@ -196,7 +199,7 @@ subprojects {
         dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")
       ).singleFile
       tasks.withType<Test> {
-        jvmArgs = jvmArgs!! + listOf("-Xbootclasspath/p:${alpnBootJar}")
+        jvmArgs("-Xbootclasspath/p:${alpnBootJar}")
       }
     }
   } else if (platform == "conscrypt") {
@@ -215,31 +218,38 @@ subprojects {
   }
 }
 
+// Opt-in to @ExperimentalOkHttpApi everywhere.
+subprojects {
+  plugins.withId("org.jetbrains.kotlin.jvm") {
+    kotlinExtension.sourceSets.configureEach {
+      languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
+    }
+  }
+  plugins.withId("org.jetbrains.kotlin.android") {
+    kotlinExtension.sourceSets.configureEach {
+      languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
+    }
+  }
+}
+
 /** Configure publishing and signing for published Java and JavaPlatform subprojects. */
 subprojects {
-  tasks.withType<DokkaTask>().configureEach {
+  tasks.withType<DokkaTaskPartial>().configureEach {
     dokkaSourceSets.configureEach {
       reportUndocumented.set(false)
       skipDeprecated.set(true)
       jdkVersion.set(8)
       perPackageOption {
-        matchingRegex.set("okhttp3\\.internal.*")
-        suppress.set(true)
-      }
-      perPackageOption {
-        matchingRegex.set("mockwebserver3\\.internal.*")
+        matchingRegex.set(".*\\.internal.*")
         suppress.set(true)
       }
       if (project.file("Module.md").exists()) {
         includes.from(project.file("Module.md"))
       }
       externalDocumentationLink {
-        url.set(URL("https://square.github.io/okio/2.x/okio/"))
-        packageListUrl.set(URL("https://square.github.io/okio/2.x/okio/package-list"))
+        url.set(URI.create("https://square.github.io/okio/3.x/okio/").toURL())
+        packageListUrl.set(URI.create("https://square.github.io/okio/3.x/okio/okio/package-list").toURL())
       }
-    }
-    if (name == "dokkaGfm") {
-      outputDirectory.set(file("${rootDir}/docs/4.x"))
     }
   }
 
@@ -270,31 +280,6 @@ subprojects {
           }
         }
       }
-
-      // Configure the kotlinMultiplatform artifact to depend on the JVM artifact in pom.xml only.
-      // This hack allows Maven users to continue using our original OkHttp artifact names (like
-      // com.squareup.okhttp3:okhttp:5.x.y) even though we changed that artifact from JVM-only
-      // to Kotlin Multiplatform. Note that module.json doesn't need this hack.
-      val mavenPublications = publishingExtension.publications.withType<MavenPublication>()
-      mavenPublications.configureEach {
-        if (name != "jvm") return@configureEach
-        val jvmPublication = this
-        val kmpPublication = mavenPublications.getByName("kotlinMultiplatform")
-        kmpPublication.pom.withXml {
-          val root = asNode()
-          val dependencies = (root["dependencies"] as NodeList).firstOrNull() as Node?
-            ?: root.appendNode("dependencies")
-          for (child in dependencies.children().toList()) {
-            dependencies.remove(child as Node)
-          }
-          dependencies.appendNode("dependency").apply {
-            appendNode("groupId", jvmPublication.groupId)
-            appendNode("artifactId", jvmPublication.artifactId)
-            appendNode("version", jvmPublication.version)
-            appendNode("scope", "compile")
-          }
-        }
-      }
     }
   }
 
@@ -307,13 +292,6 @@ subprojects {
       ignoredPackages += "okhttp3.brotli.internal"
       ignoredPackages += "okhttp3.sse.internal"
       ignoredPackages += "okhttp3.tls.internal"
-    }
-  }
-
-  plugins.withId("org.jetbrains.kotlin.jvm") {
-    val jvmTest by tasks.creating {
-      description = "Get 'gradlew jvmTest' to run the tests of JVM-only modules"
-      dependsOn("test")
     }
   }
 }

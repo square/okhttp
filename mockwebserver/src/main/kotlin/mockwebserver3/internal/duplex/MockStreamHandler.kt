@@ -34,37 +34,41 @@ class MockStreamHandler : StreamHandler {
   private val actions = LinkedBlockingQueue<Action>()
   private val results = LinkedBlockingQueue<FutureTask<Void>>()
 
-  fun receiveRequest(expected: String) = apply {
-    actions += { stream ->
-      val actual = stream.requestBody.readUtf8(expected.utf8Size())
-      if (actual != expected) throw AssertionError("$actual != $expected")
-    }
-  }
-
-  fun exhaustRequest() = apply {
-    actions += { stream ->
-      if (!stream.requestBody.exhausted()) throw AssertionError("expected exhausted")
-    }
-  }
-
-  fun cancelStream() = apply {
-    actions += { stream -> stream.cancel() }
-  }
-
-  fun requestIOException() = apply {
-    actions += { stream ->
-      try {
-        stream.requestBody.exhausted()
-        throw AssertionError("expected IOException")
-      } catch (expected: IOException) {
+  fun receiveRequest(expected: String) =
+    apply {
+      actions += { stream ->
+        val actual = stream.requestBody.readUtf8(expected.utf8Size())
+        if (actual != expected) throw AssertionError("$actual != $expected")
       }
     }
-  }
+
+  fun exhaustRequest() =
+    apply {
+      actions += { stream ->
+        if (!stream.requestBody.exhausted()) throw AssertionError("expected exhausted")
+      }
+    }
+
+  fun cancelStream() =
+    apply {
+      actions += { stream -> stream.cancel() }
+    }
+
+  fun requestIOException() =
+    apply {
+      actions += { stream ->
+        try {
+          stream.requestBody.exhausted()
+          throw AssertionError("expected IOException")
+        } catch (expected: IOException) {
+        }
+      }
+    }
 
   @JvmOverloads
   fun sendResponse(
     s: String,
-    responseSent: CountDownLatch = CountDownLatch(0)
+    responseSent: CountDownLatch = CountDownLatch(0),
   ) = apply {
     actions += { stream ->
       stream.responseBody.writeUtf8(s)
@@ -73,11 +77,15 @@ class MockStreamHandler : StreamHandler {
     }
   }
 
-  fun exhaustResponse() = apply {
-    actions += { stream -> stream.responseBody.close() }
-  }
+  fun exhaustResponse() =
+    apply {
+      actions += { stream -> stream.responseBody.close() }
+    }
 
-  fun sleep(duration: Long, unit: TimeUnit) = apply {
+  fun sleep(
+    duration: Long,
+    unit: TimeUnit,
+  ) = apply {
     actions += { Thread.sleep(unit.toMillis(duration)) }
   }
 
@@ -88,9 +96,7 @@ class MockStreamHandler : StreamHandler {
   }
 
   /** Returns a task that processes both request and response from [stream]. */
-  private fun serviceStreamTask(
-    stream: Stream,
-  ): FutureTask<Void> {
+  private fun serviceStreamTask(stream: Stream): FutureTask<Void> {
     return FutureTask<Void> {
       stream.requestBody.use {
         stream.responseBody.use {
@@ -106,8 +112,9 @@ class MockStreamHandler : StreamHandler {
 
   /** Returns once all stream actions complete successfully. */
   fun awaitSuccess() {
-    val futureTask = results.poll(5, TimeUnit.SECONDS)
-      ?: throw AssertionError("no onRequest call received")
+    val futureTask =
+      results.poll(5, TimeUnit.SECONDS)
+        ?: throw AssertionError("no onRequest call received")
     futureTask.get(5, TimeUnit.SECONDS)
   }
 }

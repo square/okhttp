@@ -22,13 +22,21 @@ abstract class EventSourceListener {
    * Invoked when an event source has been accepted by the remote peer and may begin transmitting
    * events.
    */
-  open fun onOpen(eventSource: EventSource, response: Response) {
+  open fun onOpen(
+    eventSource: EventSource,
+    response: Response,
+  ) {
   }
 
   /**
    * TODO description.
    */
-  open fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
+  open fun onEvent(
+    eventSource: EventSource,
+    id: String?,
+    type: String?,
+    data: String,
+  ) {
   }
 
   /**
@@ -43,6 +51,10 @@ abstract class EventSourceListener {
    * Invoked when an event source has been closed due to an error reading from or writing to the
    * network. Incoming events may have been lost. No further calls to this listener will be made.
    */
-  open fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
+  open fun onFailure(
+    eventSource: EventSource,
+    t: Throwable?,
+    response: Response?,
+  ) {
   }
 }

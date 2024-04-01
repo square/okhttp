@@ -17,16 +17,11 @@ project.applyOsgi(
 
 dependencies {
   api(projects.okhttp)
+  api(projects.okhttpJavaNetCookiejar)
   compileOnly(libs.findbugs.jsr305)
   compileOnly(libs.animalsniffer.annotations)
-
-  testImplementation(projects.okhttpTestingSupport)
-  testImplementation(projects.okhttpTls)
-  testImplementation(projects.mockwebserver)
-  testImplementation(libs.junit)
-  testImplementation(libs.assertj.core)
 }
 
 mavenPublishing {
-  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+  configure(KotlinJvm(javadocJar = JavadocJar.Empty()))
 }

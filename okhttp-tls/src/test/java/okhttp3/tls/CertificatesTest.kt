@@ -20,7 +20,8 @@ import org.junit.jupiter.api.Test
 
 class CertificatesTest {
   @Test fun testRoundtrip() {
-    val certificateString = """
+    val certificateString =
+      """
       -----BEGIN CERTIFICATE-----
       MIIBmjCCAQOgAwIBAgIBATANBgkqhkiG9w0BAQsFADATMREwDwYDVQQDEwhjYXNo
       LmFwcDAeFw03MDAxMDEwMDAwMDBaFw03MDAxMDEwMDAwMDFaMBMxETAPBgNVBAMT

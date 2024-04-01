@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.idn
 
+import kotlin.math.abs
 import okio.ByteString
 
 internal sealed interface MappedRange {
@@ -22,22 +23,22 @@ internal sealed interface MappedRange {
 
   data class Constant(
     override val rangeStart: Int,
-    val type: Int
+    val type: Int,
   ) : MappedRange {
     val b1: Int
-      get() = when (type) {
-        TYPE_IGNORED -> 119
-        TYPE_VALID -> 120
-        TYPE_DISALLOWED -> 121
-        else -> error("unexpected type: $type")
-      }
+      get() =
+        when (type) {
+          TYPE_IGNORED -> 119
+          TYPE_VALID -> 120
+          TYPE_DISALLOWED -> 121
+          else -> error("unexpected type: $type")
+        }
   }
 
   data class Inline1(
     override val rangeStart: Int,
-    private val mappedTo: ByteString
+    private val mappedTo: ByteString,
   ) : MappedRange {
-
     val b1: Int
       get() {
         val b3bit8 = mappedTo[0] and 0x80 != 0
@@ -50,9 +51,8 @@ internal sealed interface MappedRange {
 
   data class Inline2(
     override val rangeStart: Int,
-    private val mappedTo: ByteString
+    private val mappedTo: ByteString,
   ) : MappedRange {
-
     val b1: Int
       get() {
         val b2bit8 = mappedTo[0] and 0x80 != 0
@@ -72,8 +72,33 @@ internal sealed interface MappedRange {
       get() = mappedTo[1] and 0x7f
   }
 
+  data class InlineDelta(
+    override val rangeStart: Int,
+    val codepointDelta: Int,
+  ) : MappedRange {
+    private val absoluteDelta = abs(codepointDelta)
+
+    val b1: Int
+      get() =
+        when {
+          codepointDelta < 0 -> 0x40 or (absoluteDelta shr 14)
+          codepointDelta > 0 -> 0x50 or (absoluteDelta shr 14)
+          else -> error("Unexpected codepointDelta of 0")
+        }
+
+    val b2: Int
+      get() = absoluteDelta shr 7 and 0x7f
+
+    val b3: Int
+      get() = absoluteDelta and 0x7f
+
+    companion object {
+      const val MAX_VALUE = 0x3FFFF
+    }
+  }
+
   data class External(
     override val rangeStart: Int,
-    val mappedTo: ByteString
+    val mappedTo: ByteString,
   ) : MappedRange
 }

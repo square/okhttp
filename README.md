@@ -97,10 +97,10 @@ Releases
 
 Our [change log][changelog] has release history.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/4.11.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/4.12.0/jar).
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp:4.11.0")
+implementation("com.squareup.okhttp3:okhttp:4.12.0")
 ```
 
 Snapshot builds are [available][snap]. [R8 and ProGuard][r8_proguard] rules are available.
@@ -110,7 +110,7 @@ Also, we have a [bill of materials (BOM)][bom] available to help you keep OkHttp
 ```kotlin
     dependencies {
        // define a BOM and its version
-       implementation(platform("com.squareup.okhttp3:okhttp-bom:4.11.0"))
+       implementation(platform("com.squareup.okhttp3:okhttp-bom:4.12.0"))
 
        // define any required OkHttp artifacts without version
        implementation("com.squareup.okhttp3:okhttp")
@@ -123,10 +123,10 @@ MockWebServer
 
 OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/4.11.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/4.12.0/jar).
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:4.11.0")
+testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 ```
 
 GraalVM Native Image
@@ -167,7 +167,7 @@ limitations under the License.
  [conscrypt]: https://github.com/google/conscrypt/
  [get_example]: https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/GetExample.java
  [kotlin]: https://kotlinlang.org/
- [okhttp3_pro]: https://raw.githubusercontent.com/square/okhttp/master/okhttp/src/jvmMain/resources/META-INF/proguard/okhttp3.pro
+ [okhttp3_pro]: https://raw.githubusercontent.com/square/okhttp/master/okhttp/src/main/resources/META-INF/proguard/okhttp3.pro
  [okhttp_312x]: https://github.com/square/okhttp/tree/okhttp_3.12.x
  [okhttp]: https://square.github.io/okhttp/
  [okio]: https://github.com/square/okio

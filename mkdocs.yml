@@ -102,15 +102,7 @@ nav:
     - 'Providers': security/security_providers.md
     - 'Configuration History': security/tls_configuration_history.md
   - 'Works with OkHttp': works_with_okhttp.md
-  - 'API':
-    - 'okhttp': 4.x/okhttp/okhttp3/index.html
-    - 'brotli': 4.x/okhttp-brotli/okhttp3.brotli/index.html
-    - 'dnsoverhttps': 4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/index.html
-    - 'logging-interceptor': 4.x/logging-interceptor/okhttp3.logging/index.html
-    - 'sse': 4.x/okhttp-sse/okhttp3.sse/index.html
-    - 'tls': 4.x/okhttp-tls/okhttp3.tls/index.html
-    - 'urlconnection': 4.x/okhttp-urlconnection/okhttp3/index.html
-    - 'mockwebserver': 4.x/mockwebserver/okhttp3.mockwebserver/index.html
+  - 'API': 5.x/okhttp/okhttp3/
   - 'Change Logs':
     - 'Change Log': changelogs/changelog.md
     - '4.x Change Log': changelogs/changelog_4x.md
@@ -123,4 +115,3 @@ nav:
     - 'Code of Conduct': contribute/code_of_conduct.md
     - 'Concurrency': contribute/concurrency.md
     - 'Debug Logging': contribute/debug_logging.md
-

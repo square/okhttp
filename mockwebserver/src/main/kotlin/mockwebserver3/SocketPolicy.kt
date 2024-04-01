@@ -16,6 +16,8 @@
 
 package mockwebserver3
 
+import okhttp3.ExperimentalOkHttpApi
+
 /**
  * What should be done with the incoming socket.
  *
@@ -29,8 +31,8 @@ package mockwebserver3
  * client behavior non-deterministic. Add delays in the client to improve the chances that the
  * server has closed the socket before follow up requests are made.
  */
+@ExperimentalOkHttpApi
 sealed interface SocketPolicy {
-
   /**
    * Shutdown [MockWebServer] after writing response.
    */
@@ -116,6 +118,7 @@ sealed interface SocketPolicy {
   /**
    * Fail HTTP/2 requests without processing them by sending [http2ErrorCode].
    */
+  @ExperimentalOkHttpApi
   class ResetStreamAtStart(
     val http2ErrorCode: Int = 0,
   ) : SocketPolicy

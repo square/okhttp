@@ -20,6 +20,7 @@ import java.io.IOException
 import java.net.Inet6Address
 import java.net.Socket
 import javax.net.ssl.SSLSocket
+import okhttp3.ExperimentalOkHttpApi
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers
@@ -29,36 +30,31 @@ import okhttp3.internal.platform.Platform
 import okio.Buffer
 
 /** An HTTP request that came into the mock web server. */
+@ExperimentalOkHttpApi
 class RecordedRequest(
   val requestLine: String,
-
   /** All headers. */
   val headers: Headers,
-
   /**
    * The sizes of the chunks of this request's body, or an empty list if the request's body
    * was empty or unchunked.
    */
   val chunkSizes: List<Int>,
-
   /** The total size of the body of this POST request (before truncation).*/
   val bodySize: Long,
-
   /** The body of this POST request. This may be truncated. */
   val body: Buffer,
-
   /**
    * The index of this request on its HTTP connection. Since a single HTTP connection may serve
    * multiple requests, each request is assigned its own sequence number.
    */
   val sequenceNumber: Int,
   socket: Socket,
-
   /**
    * The failure MockWebServer recorded when attempting to decode this request. If, for example,
    * the inbound request was truncated, this exception will be non-null.
    */
-  val failure: IOException? = null
+  val failure: IOException? = null,
 ) {
   val method: String?
   val path: String?
@@ -102,12 +98,13 @@ class RecordedRequest(
 
       val scheme = if (socket is SSLSocket) "https" else "http"
       val localPort = socket.localPort
-      val hostAndPort = headers[":authority"]
-        ?: headers["Host"]
-        ?: when (val inetAddress = socket.localAddress) {
-          is Inet6Address -> "[${inetAddress.hostAddress}]:$localPort"
-          else -> "${inetAddress.hostAddress}:$localPort"
-        }
+      val hostAndPort =
+        headers[":authority"]
+          ?: headers["Host"]
+          ?: when (val inetAddress = socket.localAddress) {
+            is Inet6Address -> "[${inetAddress.hostAddress}]:$localPort"
+            else -> "${inetAddress.hostAddress}:$localPort"
+          }
 
       // Allow null in failure case to allow for testing bad requests
       this.requestUrl = "$scheme://$hostAndPort$path".toHttpUrlOrNull()

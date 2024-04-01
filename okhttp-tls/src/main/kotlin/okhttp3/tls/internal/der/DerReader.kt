@@ -112,43 +112,45 @@ internal class DerReader(source: Source) {
     val tagAndClass = source.readByte().toInt() and 0xff
     val tagClass = tagAndClass and 0b1100_0000
     val constructed = (tagAndClass and 0b0010_0000) == 0b0010_0000
-    val tag = when (val tag0 = tagAndClass and 0b0001_1111) {
-      0b0001_1111 -> readVariableLengthLong()
-      else -> tag0.toLong()
-    }
+    val tag =
+      when (val tag0 = tagAndClass and 0b0001_1111) {
+        0b0001_1111 -> readVariableLengthLong()
+        else -> tag0.toLong()
+      }
 
     // Read the length.
     val length0 = source.readByte().toInt() and 0xff
-    val length = when {
-      length0 == 0b1000_0000 -> {
-        throw ProtocolException("indefinite length not permitted for DER")
-      }
-      (length0 and 0b1000_0000) == 0b1000_0000 -> {
-        // Length specified over multiple bytes.
-        val lengthBytes = length0 and 0b0111_1111
-        if (lengthBytes > 8) {
-          throw ProtocolException("length encoded with more than 8 bytes is not supported")
+    val length =
+      when {
+        length0 == 0b1000_0000 -> {
+          throw ProtocolException("indefinite length not permitted for DER")
         }
+        (length0 and 0b1000_0000) == 0b1000_0000 -> {
+          // Length specified over multiple bytes.
+          val lengthBytes = length0 and 0b0111_1111
+          if (lengthBytes > 8) {
+            throw ProtocolException("length encoded with more than 8 bytes is not supported")
+          }
 
-        var lengthBits = source.readByte().toLong() and 0xff
-        if (lengthBits == 0L || lengthBytes == 1 && lengthBits and 0b1000_0000 == 0L) {
-          throw ProtocolException("invalid encoding for length")
+          var lengthBits = source.readByte().toLong() and 0xff
+          if (lengthBits == 0L || lengthBytes == 1 && lengthBits and 0b1000_0000 == 0L) {
+            throw ProtocolException("invalid encoding for length")
+          }
+
+          for (i in 1 until lengthBytes) {
+            lengthBits = lengthBits shl 8
+            lengthBits += source.readByte().toInt() and 0xff
+          }
+
+          if (lengthBits < 0) throw ProtocolException("length > Long.MAX_VALUE")
+
+          lengthBits
         }
-
-        for (i in 1 until lengthBytes) {
-          lengthBits = lengthBits shl 8
-          lengthBits += source.readByte().toInt() and 0xff
+        else -> {
+          // Length is 127 or fewer bytes.
+          (length0 and 0b0111_1111).toLong()
         }
-
-        if (lengthBits < 0) throw ProtocolException("length > Long.MAX_VALUE")
-
-        lengthBits
       }
-      else -> {
-        // Length is 127 or fewer bytes.
-        (length0 and 0b0111_1111).toLong()
-      }
-    }
 
     // Note that this may be be an encoded "end of data" header.
     return DerHeader(tagClass, tag, constructed, length)
@@ -158,7 +160,10 @@ internal class DerReader(source: Source) {
    * Consume a header and execute [block], which should consume the entire value described by the
    * header. It is an error to not consume a full value in [block].
    */
-  internal inline fun <T> read(name: String?, block: (DerHeader) -> T): T {
+  internal inline fun <T> read(
+    name: String?,
+    block: (DerHeader) -> T,
+  ): T {
     if (!hasNext()) throw ProtocolException("expected a value")
 
     val header = peekedHeader!!
@@ -319,19 +324,23 @@ internal class DerReader(source: Source) {
      * show up in ASN.1 streams to also indicate the end of SEQUENCE, SET or other constructed
      * value.
      */
-    private val END_OF_DATA = DerHeader(
+    private val END_OF_DATA =
+      DerHeader(
         tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
         tag = DerHeader.TAG_END_OF_CONTENTS,
         constructed = false,
-        length = -1L
-    )
+        length = -1L,
+      )
   }
 
   /** A source that keeps track of how many bytes it's consumed. */
   private class CountingSource(source: Source) : ForwardingSource(source) {
     var bytesRead = 0L
 
-    override fun read(sink: Buffer, byteCount: Long): Long {
+    override fun read(
+      sink: Buffer,
+      byteCount: Long,
+    ): Long {
       val result = delegate.read(sink, byteCount)
       if (result == -1L) return -1L
       bytesRead += result

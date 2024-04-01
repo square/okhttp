@@ -39,7 +39,7 @@ import okio.source
 /** A basic HTTP/2 server that serves the contents of a local directory.  */
 class Http2Server(
   private val baseDirectory: File,
-  private val sslSocketFactory: SSLSocketFactory
+  private val sslSocketFactory: SSLSocketFactory,
 ) : Http2Connection.Listener() {
   private fun run() {
     val serverSocket = ServerSocket(8888)
@@ -54,10 +54,11 @@ class Http2Server(
         if (protocol != Protocol.HTTP_2) {
           throw ProtocolException("Protocol $protocol unsupported")
         }
-        val connection = Http2Connection.Builder(false, TaskRunner.INSTANCE)
-          .socket(sslSocket)
-          .listener(this)
-          .build()
+        val connection =
+          Http2Connection.Builder(false, TaskRunner.INSTANCE)
+            .socket(sslSocket)
+            .listener(this)
+            .build()
         connection.start()
       } catch (e: IOException) {
         logger.log(Level.INFO, "Http2Server connection failure: $e")
@@ -70,11 +71,13 @@ class Http2Server(
   }
 
   private fun doSsl(socket: Socket): SSLSocket {
-    val sslSocket = sslSocketFactory.createSocket(
-      socket, socket.inetAddress.hostAddress,
-      socket.port,
-      true
-    ) as SSLSocket
+    val sslSocket =
+      sslSocketFactory.createSocket(
+        socket,
+        socket.inetAddress.hostAddress,
+        socket.port,
+        true,
+      ) as SSLSocket
     sslSocket.useClientMode = false
     Platform.get().configureTlsExtensions(sslSocket, null, listOf(Protocol.HTTP_2))
     sslSocket.startHandshake()
@@ -111,32 +114,40 @@ class Http2Server(
     }
   }
 
-  private fun send404(stream: Http2Stream, path: String) {
-    val responseHeaders = listOf(
-      Header(":status", "404"),
-      Header(":version", "HTTP/1.1"),
-      Header("content-type", "text/plain")
-    )
+  private fun send404(
+    stream: Http2Stream,
+    path: String,
+  ) {
+    val responseHeaders =
+      listOf(
+        Header(":status", "404"),
+        Header(":version", "HTTP/1.1"),
+        Header("content-type", "text/plain"),
+      )
     stream.writeHeaders(
       responseHeaders = responseHeaders,
       outFinished = false,
-      flushHeaders = false
+      flushHeaders = false,
     )
     val out = stream.getSink().buffer()
     out.writeUtf8("Not found: $path")
     out.close()
   }
 
-  private fun serveDirectory(stream: Http2Stream, files: Array<File>) {
-    val responseHeaders = listOf(
-      Header(":status", "200"),
-      Header(":version", "HTTP/1.1"),
-      Header("content-type", "text/html; charset=UTF-8")
-    )
+  private fun serveDirectory(
+    stream: Http2Stream,
+    files: Array<File>,
+  ) {
+    val responseHeaders =
+      listOf(
+        Header(":status", "200"),
+        Header(":version", "HTTP/1.1"),
+        Header("content-type", "text/html; charset=UTF-8"),
+      )
     stream.writeHeaders(
       responseHeaders = responseHeaders,
       outFinished = false,
-      flushHeaders = false
+      flushHeaders = false,
     )
     val out = stream.getSink().buffer()
     for (file in files) {
@@ -146,16 +157,20 @@ class Http2Server(
     out.close()
   }
 
-  private fun serveFile(stream: Http2Stream, file: File) {
-    val responseHeaders = listOf(
-      Header(":status", "200"),
-      Header(":version", "HTTP/1.1"),
-      Header("content-type", contentType(file))
-    )
+  private fun serveFile(
+    stream: Http2Stream,
+    file: File,
+  ) {
+    val responseHeaders =
+      listOf(
+        Header(":status", "200"),
+        Header(":version", "HTTP/1.1"),
+        Header("content-type", contentType(file)),
+      )
     stream.writeHeaders(
       responseHeaders = responseHeaders,
       outFinished = false,
-      flushHeaders = false
+      flushHeaders = false,
     )
     file.source().use { source ->
       stream.getSink().buffer().use { sink ->
@@ -186,10 +201,11 @@ class Http2Server(
         println("Usage: Http2Server <base directory>")
         return
       }
-      val server = Http2Server(
-        File(args[0]),
-        localhost().sslContext().socketFactory
-      )
+      val server =
+        Http2Server(
+          File(args[0]),
+          localhost().sslContext().socketFactory,
+        )
       server.run()
     }
   }

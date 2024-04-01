@@ -1,6 +1,27 @@
 OkHttp 4.x Change Log
 =====================
 
+## Version 4.12.0
+
+_2023-10-16_
+
+ *  Fix: Don't hang taking headers for HTTP 103 responses.
+ *  Fix: Recover gracefully when a cache entry's certificate is corrupted.
+ *  Fix: Fail permanently when there's a failure loading the bundled public suffix database.
+    This is the dataset that powers `HttpUrl.topPrivateDomain()`.
+ *  Fix: Immediately update the connection's flow control window instead of waiting for the
+    receiving stream to process it.
+
+    This change may increase OkHttp's memory use for applications that make many concurrent HTTP
+    calls and that can receive data faster than they can process it. Previously, OkHttp limited
+    HTTP/2 to 16 MiB of unacknowledged data per connection. With this fix there is a limit of 16 MiB
+    of unacknowledged data per stream and no per-connection limit.
+ *  Fix: Don't operate on a connection after it's been returned to the pool. This race occurred
+    on failed web socket connection attempts.
+ *  Upgrade: [Okio 3.6.0][okio_3_6_0].
+ *  Upgrade: [Kotlin 1.8.21][kotlin_1_8_21].
+
+
 ## Version 4.11.0
 
 _2023-04-22_
@@ -559,6 +580,7 @@ _2019-06-03_
  [kotlin_1_3_71]: https://github.com/JetBrains/kotlin/releases/tag/v1.3.71
  [kotlin_1_4_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.10
  [kotlin_1_6_20]: https://github.com/JetBrains/kotlin/releases/tag/v1.6.20
+ [kotlin_1_8_21]: https://github.com/JetBrains/kotlin/releases/tag/v1.8.21
  [legacy_interceptor]: https://gist.github.com/swankjesse/80135f4e03629527e723ab3bcf64be0b
  [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
  [okio.FileSystem]: https://square.github.io/okio/file_system/
@@ -566,6 +588,7 @@ _2019-06-03_
  [okio_2_7_0]: https://square.github.io/okio/changelog/#version-270
  [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
  [okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
+ [okio_3_6_0]: https://square.github.io/okio/changelog/#version-360
  [public_suffix]: https://publicsuffix.org/
  [rfc_2045]: https://tools.ietf.org/html/rfc2045
  [rfc_7231_647]: https://tools.ietf.org/html/rfc7231#section-6.4.7

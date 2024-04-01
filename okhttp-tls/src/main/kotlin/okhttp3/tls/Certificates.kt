@@ -45,9 +45,11 @@ import okio.ByteString.Companion.toByteString
 fun String.decodeCertificatePem(): X509Certificate {
   try {
     val certificateFactory = CertificateFactory.getInstance("X.509")
-    val certificates = certificateFactory
+    val certificates =
+      certificateFactory
         .generateCertificates(
-            Buffer().writeUtf8(this).inputStream())
+          Buffer().writeUtf8(this).inputStream(),
+        )
 
     return certificates.single() as X509Certificate
   } catch (nsee: NoSuchElementException) {

@@ -50,7 +50,10 @@ internal interface DerAdapter<T> {
    *
    * If this does write a value, it will write a tag and a length and a full value.
    */
-  fun toDer(writer: DerWriter, value: T)
+  fun toDer(
+    writer: DerWriter,
+    value: T,
+  )
 
   fun toDer(value: T): ByteString {
     val buffer = Buffer()
@@ -77,23 +80,28 @@ internal interface DerAdapter<T> {
   fun withExplicitBox(
     tagClass: Int = DerHeader.TAG_CLASS_CONTEXT_SPECIFIC,
     tag: Long,
-    forceConstructed: Boolean? = null
+    forceConstructed: Boolean? = null,
   ): BasicDerAdapter<T> {
-    val codec = object : BasicDerAdapter.Codec<T> {
-      override fun decode(reader: DerReader): T = fromDer(reader)
-      override fun encode(writer: DerWriter, value: T) {
-        toDer(writer, value)
-        if (forceConstructed != null) {
-          writer.constructed = forceConstructed
+    val codec =
+      object : BasicDerAdapter.Codec<T> {
+        override fun decode(reader: DerReader): T = fromDer(reader)
+
+        override fun encode(
+          writer: DerWriter,
+          value: T,
+        ) {
+          toDer(writer, value)
+          if (forceConstructed != null) {
+            writer.constructed = forceConstructed
+          }
         }
       }
-    }
 
     return BasicDerAdapter(
-        name = "EXPLICIT",
-        tagClass = tagClass,
-        tag = tag,
-        codec = codec
+      name = "EXPLICIT",
+      tagClass = tagClass,
+      tag = tag,
+      codec = codec,
     )
   }
 
@@ -101,23 +109,27 @@ internal interface DerAdapter<T> {
   fun asSequenceOf(
     name: String = "SEQUENCE OF",
     tagClass: Int = DerHeader.TAG_CLASS_UNIVERSAL,
-    tag: Long = 16L
+    tag: Long = 16L,
   ): BasicDerAdapter<List<T>> {
-    val codec = object : BasicDerAdapter.Codec<List<T>> {
-      override fun encode(writer: DerWriter, value: List<T>) {
-        for (v in value) {
-          toDer(writer, v)
+    val codec =
+      object : BasicDerAdapter.Codec<List<T>> {
+        override fun encode(
+          writer: DerWriter,
+          value: List<T>,
+        ) {
+          for (v in value) {
+            toDer(writer, v)
+          }
         }
-      }
 
-      override fun decode(reader: DerReader): List<T> {
-        val result = mutableListOf<T>()
-        while (reader.hasNext()) {
-          result += fromDer(reader)
+        override fun decode(reader: DerReader): List<T> {
+          val result = mutableListOf<T>()
+          while (reader.hasNext()) {
+            result += fromDer(reader)
+          }
+          return result
         }
-        return result
       }
-    }
 
     return BasicDerAdapter(name, tagClass, tag, codec)
   }
@@ -125,9 +137,9 @@ internal interface DerAdapter<T> {
   /** Returns an adapter that returns a set of values of this type. */
   fun asSetOf(): BasicDerAdapter<List<T>> {
     return asSequenceOf(
-        name = "SET OF",
-        tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-        tag = 17L
+      name = "SET OF",
+      tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
+      tag = 17L,
     )
   }
 }
