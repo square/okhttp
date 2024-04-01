@@ -69,7 +69,7 @@ class RealWebSocket(
   private val key: String
 
   /** Non-null for client web sockets. These can be canceled. */
-  private var call: Call? = null
+  internal var call: Call? = null
 
   /** This task processes the outgoing queues. Call [runWriter] to after enqueueing. */
   private var writerTask: Task? = null

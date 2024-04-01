@@ -185,7 +185,24 @@ class KotlinSourceModernTest {
 
   @Test
   fun call() {
-    val call: Call = newCall()
+    val call: Call =
+      object : Call {
+        override fun request(): Request = TODO()
+
+        override fun execute(): Response = TODO()
+
+        override fun enqueue(responseCallback: Callback) = TODO()
+
+        override fun cancel() = TODO()
+
+        override fun isExecuted(): Boolean = TODO()
+
+        override fun isCanceled(): Boolean = TODO()
+
+        override fun timeout(): Timeout = TODO()
+
+        override fun clone(): Call = TODO()
+      }
   }
 
   @Test
@@ -734,7 +751,7 @@ class KotlinSourceModernTest {
 
   @Test
   fun loggingEventListener() {
-    var loggingEventListener: EventListener = LoggingEventListener.Factory().create(newCall())
+    var loggingEventListener: EventListener = LoggingEventListener.Factory().create(FailingCall())
   }
 
   @Test
@@ -745,7 +762,7 @@ class KotlinSourceModernTest {
       object : LoggingEventListener.Factory() {
         override fun create(call: Call): EventListener = TODO()
       }
-    val eventListener: EventListener = factory.create(newCall())
+    val eventListener: EventListener = factory.create(FailingCall())
   }
 
   @Test
@@ -1282,26 +1299,6 @@ class KotlinSourceModernTest {
           response: Response?,
         ) = TODO()
       }
-  }
-
-  private fun newCall(): Call {
-    return object : Call {
-      override fun request(): Request = TODO()
-
-      override fun execute(): Response = TODO()
-
-      override fun enqueue(responseCallback: Callback) = TODO()
-
-      override fun cancel() = TODO()
-
-      override fun isExecuted(): Boolean = TODO()
-
-      override fun isCanceled(): Boolean = TODO()
-
-      override fun timeout(): Timeout = TODO()
-
-      override fun clone(): Call = TODO()
-    }
   }
 
   private fun newCookieHandler(): CookieHandler {
