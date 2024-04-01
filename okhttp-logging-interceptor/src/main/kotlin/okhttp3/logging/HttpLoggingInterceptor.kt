@@ -330,4 +330,6 @@ class HttpLoggingInterceptor
       val contentType = response.body.contentType()
       return contentType != null && contentType.type == "text" && contentType.subtype == "event-stream"
     }
+
+    companion object
   }

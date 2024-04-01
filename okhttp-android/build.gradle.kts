@@ -48,6 +48,7 @@ android {
 dependencies {
   api(libs.squareup.okio)
   api(projects.okhttp)
+  api(projects.loggingInterceptor)
   compileOnly(libs.androidx.annotation)
   compileOnly(libs.findbugs.jsr305)
   debugImplementation(libs.androidx.annotation)
