@@ -16,7 +16,6 @@
 package okhttp3.internal.cache
 
 import android.annotation.SuppressLint
-import android.os.Build
 import java.io.Closeable
 import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption
