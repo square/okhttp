@@ -35,19 +35,21 @@ import org.robolectric.shadows.ShadowLog
 
 @RunWith(RobolectricTestRunner::class)
 class AndroidLoggingTest {
-  val clientBuilder = OkHttpClient.Builder()
-    .connectionSpecs(listOf(ConnectionSpec.CLEARTEXT))
-    .dns {
-      throw UnknownHostException("shortcircuit")
-    }
+  val clientBuilder =
+    OkHttpClient.Builder()
+      .connectionSpecs(listOf(ConnectionSpec.CLEARTEXT))
+      .dns {
+        throw UnknownHostException("shortcircuit")
+      }
 
   val request = Request("http://google.com/robots.txt".toHttpUrl())
 
   @Test
   fun testHttpLoggingInterceptor() {
-    val interceptor = HttpLoggingInterceptor.androidLogging(tag = "testHttpLoggingInterceptor").apply {
-      level = HttpLoggingInterceptor.Level.BASIC
-    }
+    val interceptor =
+      HttpLoggingInterceptor.androidLogging(tag = "testHttpLoggingInterceptor").apply {
+        level = HttpLoggingInterceptor.Level.BASIC
+      }
 
     val client = clientBuilder.addInterceptor(interceptor).build()
 
@@ -58,13 +60,13 @@ class AndroidLoggingTest {
     }
 
     val logs = ShadowLog.getLogsForTag("testHttpLoggingInterceptor")
-    assertThat(logs.map { it.type }).containsOnly( Log.INFO )
+    assertThat(logs.map { it.type }).containsOnly(Log.INFO)
     assertThat(logs.map { it.msg }).containsExactly(
       "--> GET http://google.com/robots.txt",
       "<-- HTTP FAILED: java.net.UnknownHostException: shortcircuit",
     )
     // We should consider if these logs should retain Exceptions
-     assertThat(logs.last().throwable).isNull()
+    assertThat(logs.last().throwable).isNull()
   }
 
   @Test
@@ -79,18 +81,20 @@ class AndroidLoggingTest {
     }
 
     val logs = ShadowLog.getLogsForTag("testLoggingEventListener")
-    assertThat(logs.map { it.type }).containsOnly( Log.INFO )
-    assertThat(logs.map {
-      it.msg.replace(
-        "\\[\\d+ ms] ".toRegex(),
-        ""
-      )
-    }).containsExactly(
+    assertThat(logs.map { it.type }).containsOnly(Log.INFO)
+    assertThat(
+      logs.map {
+        it.msg.replace(
+          "\\[\\d+ ms] ".toRegex(),
+          "",
+        )
+      },
+    ).containsExactly(
       "callStart: Request{method=GET, url=http://google.com/robots.txt}",
       "proxySelectStart: http://google.com/",
       "proxySelectEnd: [DIRECT]",
       "dnsStart: google.com",
-      "callFailed: java.net.UnknownHostException: shortcircuit"
+      "callFailed: java.net.UnknownHostException: shortcircuit",
     )
     // We should consider if these logs should retain Exceptions
     assertThat(logs.last().throwable).isNull()
