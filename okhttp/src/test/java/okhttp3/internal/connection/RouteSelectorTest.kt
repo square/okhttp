@@ -31,14 +31,14 @@ import java.net.URI
 import java.net.UnknownHostException
 import kotlin.test.assertFailsWith
 import okhttp3.Address
-import okhttp3.Call
-import okhttp3.EventListener
+import okhttp3.ConnectionListener
 import okhttp3.FakeDns
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
 import okhttp3.Route
 import okhttp3.TestValueFactory
 import okhttp3.internal.connection.RouteSelector.Companion.socketHost
+import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.AfterEach
@@ -65,7 +65,7 @@ class RouteSelectorTest {
       this.uriPort = this@RouteSelectorTest.uriPort
     }
 
-  private lateinit var call: Call
+  private lateinit var call: RealCall
   private val routeDatabase = RouteDatabase()
 
   @BeforeEach fun setUp() {
@@ -74,7 +74,7 @@ class RouteSelectorTest {
         Request.Builder()
           .url("https://$uriHost:$uriPort/")
           .build(),
-      )
+      ) as RealCall
   }
 
   @AfterEach fun tearDown() {
@@ -550,14 +550,26 @@ class RouteSelectorTest {
     address: Address,
     routeDatabase: RouteDatabase = this.routeDatabase,
     fastFallback: Boolean = false,
-    call: Call = this.call,
+    call: RealCall = this.call,
   ): RouteSelector {
     return RouteSelector(
       address = address,
       routeDatabase = routeDatabase,
-      call = call,
       fastFallback = fastFallback,
-      eventListener = EventListener.NONE,
+      connectionUser = CallConnectionUser(call, ConnectionListener.NONE, newChain(call)),
+    )
+  }
+
+  private fun newChain(call: RealCall): RealInterceptorChain {
+    return RealInterceptorChain(
+      call = call,
+      interceptors = listOf(),
+      index = 0,
+      exchange = null,
+      request = call.request(),
+      connectTimeoutMillis = 10_000,
+      readTimeoutMillis = 10_000,
+      writeTimeoutMillis = 10_000,
     )
   }
 

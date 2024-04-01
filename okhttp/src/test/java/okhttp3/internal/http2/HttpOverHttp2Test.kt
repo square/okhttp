@@ -24,7 +24,6 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.fail
-import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
@@ -86,7 +85,9 @@ import okhttp3.tls.HandshakeCertificates
 import okio.Buffer
 import okio.BufferedSink
 import okio.GzipSink
+import okio.Path.Companion.toPath
 import okio.buffer
+import okio.fakefilesystem.FakeFileSystem
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -94,7 +95,6 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
@@ -106,9 +106,6 @@ class HttpOverHttp2Test {
   class ProtocolParamProvider : SimpleProvider() {
     override fun arguments() = listOf(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_2)
   }
-
-  @TempDir
-  lateinit var tempDir: File
 
   @RegisterExtension
   val platform: PlatformRule = PlatformRule()
@@ -127,7 +124,8 @@ class HttpOverHttp2Test {
   private lateinit var server: MockWebServer
   private lateinit var protocol: Protocol
   private lateinit var client: OkHttpClient
-  private lateinit var cache: Cache
+  private val fileSystem: FakeFileSystem = FakeFileSystem()
+  private val cache: Cache = Cache("/tmp/cache".toPath(), Long.MAX_VALUE, fileSystem)
   private lateinit var scheme: String
 
   private fun configureClientTestRule(): OkHttpClientTestRule {
@@ -164,10 +162,13 @@ class HttpOverHttp2Test {
           .build()
       scheme = "http"
     }
-    cache = Cache(tempDir, Int.MAX_VALUE.toLong())
   }
 
   @AfterEach fun tearDown() {
+//    TODO reenable after https://github.com/square/okhttp/issues/8206
+//    fileSystem.checkNoOpenFiles()
+    cache.close()
+
     java.net.Authenticator.setDefault(null)
   }
 

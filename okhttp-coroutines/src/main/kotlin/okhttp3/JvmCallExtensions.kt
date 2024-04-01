@@ -23,6 +23,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import okio.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@ExperimentalOkHttpApi
 suspend fun Call.executeAsync(): Response =
   suspendCancellableCoroutine { continuation ->
     continuation.invokeOnCancellation {

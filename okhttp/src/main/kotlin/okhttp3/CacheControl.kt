@@ -189,16 +189,19 @@ class CacheControl internal constructor(
      * @param maxAge a non-negative integer. This is stored and transmitted with [TimeUnit.SECONDS]
      *     precision; finer precision will be lost.
      */
+    @ExperimentalOkHttpApi
     fun maxAge(
       maxAge: Int,
       timeUnit: DurationUnit,
     ) = commonMaxAge(maxAge, timeUnit)
 
+    @ExperimentalOkHttpApi
     fun maxStale(
       maxStale: Int,
       timeUnit: DurationUnit,
     ) = commonMaxStale(maxStale, timeUnit)
 
+    @ExperimentalOkHttpApi
     fun minFresh(
       minFresh: Int,
       timeUnit: DurationUnit,

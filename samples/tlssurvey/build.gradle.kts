@@ -1,7 +1,7 @@
 plugins {
   kotlin("jvm")
   application
-  id("com.google.devtools.ksp").version("1.9.22-1.0.16")
+  id("com.google.devtools.ksp").version("1.9.23-1.0.19")
 }
 
 application {
@@ -13,12 +13,12 @@ dependencies {
   implementation("com.squareup.okhttp3:okhttp-coroutines:5.0.0-alpha.12")
   implementation(libs.conscrypt.openjdk)
 
-  implementation("com.squareup.retrofit2:retrofit:2.9.0")
-  implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
+  implementation("com.squareup.retrofit2:retrofit:2.11.0")
+  implementation("com.squareup.retrofit2:converter-moshi:2.11.0")
   implementation(libs.squareup.moshi)
   implementation(libs.squareup.moshi.kotlin)
 
-  ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
+  ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
 }
 
 tasks.compileJava {

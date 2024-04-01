@@ -17,39 +17,55 @@ package mockwebserver3.junit5.internal
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNotSameInstanceAs
 import assertk.assertions.isSameInstanceAs
 import assertk.assertions.isTrue
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
-class ExtensionLifecycleTest(private val constructorServer: MockWebServer) {
+class ExtensionLifecycleTest(
+  server: MockWebServer,
+) {
+  init {
+    assertThat(server).isSameInstanceAs(staticServer)
+  }
+
+  private lateinit var instanceServer: MockWebServer
+
   @RegisterExtension
   val clientTestRule: OkHttpClientTestRule = OkHttpClientTestRule()
 
   @BeforeEach
-  fun setup(server: MockWebServer) {
-    assertThat(constructorServer).isSameInstanceAs(server)
+  fun beforeEach(server: MockWebServer) {
+    instanceServer = server
+
+    assertThat(instanceServer).isNotSameInstanceAs(staticServer)
+    assertThat(instanceServer).isSameInstanceAs(server)
+
     assertThat(server.started).isTrue()
     server.enqueue(MockResponse())
   }
 
   @AfterEach
-  fun tearDown(server: MockWebServer) {
-    assertThat(constructorServer).isSameInstanceAs(server)
-    assertThat(server.started).isTrue()
-    server.enqueue(MockResponse())
+  fun afterEach(server: MockWebServer) {
+    assertThat(server).isSameInstanceAs(instanceServer)
   }
 
   @Test
   fun testClient(server: MockWebServer) {
-    assertThat(constructorServer).isSameInstanceAs(server)
-    assertThat(server.started).isTrue()
+    assertThat(server).isSameInstanceAs(instanceServer)
+
     clientTestRule.newClient().newCall(Request(server.url("/"))).execute().use {
       assertThat(it.code).isEqualTo(200)
     }
@@ -57,10 +73,39 @@ class ExtensionLifecycleTest(private val constructorServer: MockWebServer) {
 
   @Test
   fun testClient2(server: MockWebServer) {
-    assertThat(constructorServer).isSameInstanceAs(server)
-    assertThat(server.started).isTrue()
+    assertThat(server).isSameInstanceAs(instanceServer)
+
     clientTestRule.newClient().newCall(Request(server.url("/"))).execute().use {
       assertThat(it.code).isEqualTo(200)
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = [1, 2])
+  fun paramTest(
+    instance: Int,
+    server: MockWebServer,
+  ) {
+    assertThat(server).isSameInstanceAs(instanceServer)
+  }
+
+  companion object {
+    private lateinit var staticServer: MockWebServer
+
+    @JvmStatic
+    @BeforeAll
+    fun beforeAll(server: MockWebServer) {
+      staticServer = server
+      assertThat(staticServer.started).isTrue()
+    }
+
+    @JvmStatic
+    @AfterAll
+    fun afterAll(
+      server: MockWebServer,
+      testInfo: TestInfo,
+    ) {
+      assertThat(server).isSameInstanceAs(staticServer)
     }
   }
 }

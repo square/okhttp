@@ -54,6 +54,9 @@ class Request internal constructor(builder: Builder) {
   @get:JvmName("body")
   val body: RequestBody? = builder.body
 
+  @get:JvmName("cacheUrlOverride")
+  val cacheUrlOverride: HttpUrl? = builder.cacheUrlOverride
+
   internal val tags: Map<KClass<*>, Any> = builder.tags.toMap()
 
   internal var lazyCacheControl: CacheControl? = null
@@ -68,6 +71,7 @@ class Request internal constructor(builder: Builder) {
    *
    * @param method defaults to "GET" if [body] is null, and "POST" otherwise.
    */
+  @ExperimentalOkHttpApi
   constructor(
     url: HttpUrl,
     headers: Headers = headersOf(),
@@ -97,6 +101,7 @@ class Request internal constructor(builder: Builder) {
   inline fun <reified T : Any> tag(): T? = tag(T::class)
 
   /** Returns the tag attached with [type] as a key, or null if no tag is attached with that key. */
+  @ExperimentalOkHttpApi
   fun <T : Any> tag(type: KClass<T>): T? = type.java.cast(tags[type])
 
   /**
@@ -181,6 +186,7 @@ class Request internal constructor(builder: Builder) {
     internal var method: String
     internal var headers: Headers.Builder
     internal var body: RequestBody? = null
+    internal var cacheUrlOverride: HttpUrl? = null
 
     /** A mutable map of tags, or an immutable empty map if we don't have any. */
     internal var tags = mapOf<KClass<*>, Any>()
@@ -200,6 +206,7 @@ class Request internal constructor(builder: Builder) {
           else -> request.tags.toMutableMap()
         }
       this.headers = request.headers.newBuilder()
+      this.cacheUrlOverride = request.cacheUrlOverride
     }
 
     open fun url(url: HttpUrl): Builder =
@@ -293,6 +300,7 @@ class Request internal constructor(builder: Builder) {
      * Use this API to attach timing, debugging, or other application data to a request so that
      * you may read it in interceptors, event listeners, or callbacks.
      */
+    @ExperimentalOkHttpApi
     fun <T : Any> tag(
       type: KClass<T>,
       tag: T?,
@@ -312,6 +320,18 @@ class Request internal constructor(builder: Builder) {
       type: Class<in T>,
       tag: T?,
     ) = commonTag(type.kotlin, tag)
+
+    /**
+     * Override the [Request.url] for caching, if it is either polluted with
+     * transient query params, or has a canonical URL possibly for a CDN.
+     *
+     * Note that POST requests will not be sent to the server if this URL is set
+     * and matches a cached response.
+     */
+    fun cacheUrlOverride(cacheUrlOverride: HttpUrl?) =
+      apply {
+        this.cacheUrlOverride = cacheUrlOverride
+      }
 
     open fun build(): Request = Request(this)
   }

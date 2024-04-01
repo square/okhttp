@@ -20,10 +20,12 @@ import java.net.HttpURLConnection.HTTP_UNAVAILABLE
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.logging.Logger
+import okhttp3.ExperimentalOkHttpApi
 
 /**
  * Default dispatcher that processes a script of responses. Populate the script by calling [enqueueResponse].
  */
+@ExperimentalOkHttpApi
 open class QueueDispatcher : Dispatcher() {
   protected val responseQueue: BlockingQueue<MockResponse> = LinkedBlockingQueue()
   private var failFastResponse: MockResponse? = null
@@ -81,6 +83,7 @@ open class QueueDispatcher : Dispatcher() {
     this.failFastResponse = failFastResponse
   }
 
+  @ExperimentalOkHttpApi
   companion object {
     /**
      * Enqueued on shutdown to release threads waiting on [dispatch]. Note that this response

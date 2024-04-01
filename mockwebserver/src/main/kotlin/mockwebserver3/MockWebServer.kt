@@ -63,6 +63,7 @@ import mockwebserver3.internal.ThrottledSink
 import mockwebserver3.internal.TriggerSink
 import mockwebserver3.internal.duplex.RealStream
 import mockwebserver3.internal.sleepNanos
+import okhttp3.ExperimentalOkHttpApi
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
@@ -97,6 +98,7 @@ import okio.source
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
  * in sequence.
  */
+@ExperimentalOkHttpApi
 class MockWebServer : Closeable {
   private val taskRunnerBackend =
     TaskRunner.RealBackend(
@@ -811,6 +813,7 @@ class MockWebServer : Closeable {
         extensions = WebSocketExtensions.parse(webSocketResponse.headers),
         // Compress all messages if compression is enabled.
         minimumDeflateSize = 0L,
+        webSocketCloseTimeout = RealWebSocket.CANCEL_AFTER_CLOSE_MILLIS,
       )
     val name = "MockWebServer WebSocket ${request.path!!}"
     webSocket.initReaderAndWriter(name, streams)
@@ -1164,6 +1167,7 @@ class MockWebServer : Closeable {
     }
   }
 
+  @ExperimentalOkHttpApi
   companion object {
     private const val CLIENT_AUTH_NONE = 0
     private const val CLIENT_AUTH_REQUESTED = 1

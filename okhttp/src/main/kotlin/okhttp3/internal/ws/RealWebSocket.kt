@@ -64,6 +64,7 @@ class RealWebSocket(
   private var extensions: WebSocketExtensions?,
   /** If compression is negotiated, outbound messages of this size and larger will be compressed. */
   private var minimumDeflateSize: Long,
+  private val webSocketCloseTimeout: Long,
 ) : WebSocket, WebSocketReader.FrameCallback {
   private val key: String
 
@@ -469,7 +470,7 @@ class RealWebSocket(
     code: Int,
     reason: String?,
   ): Boolean {
-    return close(code, reason, CANCEL_AFTER_CLOSE_MILLIS)
+    return close(code, reason, webSocketCloseTimeout)
   }
 
   @Synchronized fun close(
@@ -712,7 +713,7 @@ class RealWebSocket(
      * The maximum amount of time after the client calls [close] to wait for a graceful shutdown. If
      * the server doesn't respond the web socket will be canceled.
      */
-    private const val CANCEL_AFTER_CLOSE_MILLIS = 60L * 1000
+    const val CANCEL_AFTER_CLOSE_MILLIS = 60L * 1000
 
     /**
      * The smallest message that will be compressed. We use 1024 because smaller messages already

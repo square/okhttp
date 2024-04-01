@@ -944,6 +944,7 @@ public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Fact
 	public final fun retryOnConnectionFailure ()Z
 	public final fun socketFactory ()Ljavax/net/SocketFactory;
 	public final fun sslSocketFactory ()Ljavax/net/ssl/SSLSocketFactory;
+	public final fun webSocketCloseTimeout ()I
 	public final fun writeTimeoutMillis ()I
 	public final fun x509TrustManager ()Ljavax/net/ssl/X509TrustManager;
 }
@@ -992,6 +993,9 @@ public final class okhttp3/OkHttpClient$Builder {
 	public final fun socketFactory (Ljavax/net/SocketFactory;)Lokhttp3/OkHttpClient$Builder;
 	public final fun sslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;)Lokhttp3/OkHttpClient$Builder;
 	public final fun sslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;Ljavax/net/ssl/X509TrustManager;)Lokhttp3/OkHttpClient$Builder;
+	public final fun webSocketCloseTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
+	public final fun webSocketCloseTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun webSocketCloseTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun writeTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
 	public final fun writeTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
 	public final fun writeTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
@@ -1030,6 +1034,7 @@ public final class okhttp3/Request {
 	public synthetic fun <init> (Lokhttp3/HttpUrl;Lokhttp3/Headers;Ljava/lang/String;Lokhttp3/RequestBody;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun body ()Lokhttp3/RequestBody;
 	public final fun cacheControl ()Lokhttp3/CacheControl;
+	public final fun cacheUrlOverride ()Lokhttp3/HttpUrl;
 	public final fun header (Ljava/lang/String;)Ljava/lang/String;
 	public final fun headers ()Lokhttp3/Headers;
 	public final fun headers (Ljava/lang/String;)Ljava/util/List;
@@ -1048,6 +1053,7 @@ public class okhttp3/Request$Builder {
 	public fun addHeader (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/Request$Builder;
 	public fun build ()Lokhttp3/Request;
 	public fun cacheControl (Lokhttp3/CacheControl;)Lokhttp3/Request$Builder;
+	public final fun cacheUrlOverride (Lokhttp3/HttpUrl;)Lokhttp3/Request$Builder;
 	public final fun delete ()Lokhttp3/Request$Builder;
 	public fun delete (Lokhttp3/RequestBody;)Lokhttp3/Request$Builder;
 	public static synthetic fun delete$default (Lokhttp3/Request$Builder;Lokhttp3/RequestBody;ILjava/lang/Object;)Lokhttp3/Request$Builder;

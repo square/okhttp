@@ -74,6 +74,7 @@ class OkHttpClientTest {
     assertThat(client.readTimeoutMillis).isEqualTo(10000)
     assertThat(client.writeTimeoutMillis).isEqualTo(10000)
     assertThat(client.pingIntervalMillis).isEqualTo(0)
+    assertThat(client.webSocketCloseTimeout).isEqualTo(60_000)
   }
 
   @Test fun webSocketDefaults() {
