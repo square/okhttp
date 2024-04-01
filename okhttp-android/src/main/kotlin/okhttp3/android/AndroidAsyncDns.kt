@@ -76,6 +76,8 @@ class AndroidAsyncDns(
         },
       )
     } catch (e: Exception) {
+      // Handle any errors that might leak out
+      // https://issuetracker.google.com/issues/319957694
       callback.onFailure(
         hostname,
         UnknownHostException(e.message).apply {
