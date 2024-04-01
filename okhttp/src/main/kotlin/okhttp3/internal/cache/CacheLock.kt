@@ -22,13 +22,15 @@ import java.nio.file.StandardOpenOption
 import java.util.Collections
 import okhttp3.internal.platform.Platform
 import okio.FileSystem
-import okio.IOException
 import okio.Path
 
 internal object CacheLock {
   private val openCaches = Collections.synchronizedMap(mutableMapOf<Path, Exception>())
 
-  fun openLock(fileSystem: FileSystem, directory: Path): Closeable {
+  fun openLock(
+    fileSystem: FileSystem,
+    directory: Path,
+  ): Closeable {
     return if (fileSystem == FileSystem.SYSTEM && !Platform.isAndroid) {
       fileSystemLock(inMemoryLock(directory), directory)
     } else {
@@ -36,10 +38,10 @@ internal object CacheLock {
     }
   }
 
-  @SuppressLint("NewApi")
   /**
    * Create an in-memory lock, avoiding two open Cache instances.
    */
+  @SuppressLint("NewApi")
   fun inMemoryLock(directory: Path): Closeable {
     // TODO solution for Android N?
     val existing = openCaches.putIfAbsent(directory, Exception("CacheLock($directory)"))
@@ -51,12 +53,15 @@ internal object CacheLock {
     }
   }
 
-  @SuppressLint("NewApi")
   /**
    * Create a file system lock, that excludes other processes. However within the process a
    * memory lock is also needed, since locks don't work within a single process.
    */
-  fun fileSystemLock(memoryLock: Closeable, directory: Path): Closeable {
+  @SuppressLint("NewApi")
+  fun fileSystemLock(
+    memoryLock: Closeable,
+    directory: Path,
+  ): Closeable {
     val lockFile = directory / "lock"
     lockFile.toFile().createNewFile()
     val channel = FileChannel.open(lockFile.toNioPath(), StandardOpenOption.APPEND)

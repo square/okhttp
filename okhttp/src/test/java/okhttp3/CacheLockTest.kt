@@ -20,7 +20,6 @@ import assertk.assertions.isEqualTo
 import java.nio.file.Path
 import okio.Closeable
 import okio.FileSystem
-import okio.IOException
 import okio.Path.Companion.toOkioPath
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -29,7 +28,6 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 
 class CacheLockTest {
-
   private lateinit var tempDir: okio.Path
   private val toClose = mutableListOf<Closeable>()
 
@@ -41,8 +39,7 @@ class CacheLockTest {
   }
 
   @AfterEach
-  fun cleanup(
-  ) {
+  fun cleanup() {
     toClose.forEach {
       it.close()
     }
@@ -52,9 +49,10 @@ class CacheLockTest {
   fun testCacheLock() {
     openCache(tempDir)
 
-    val ioe = assertThrows<IllegalStateException> {
-      openCache(tempDir)
-    }
+    val ioe =
+      assertThrows<IllegalStateException> {
+        openCache(tempDir)
+      }
     assertThat(ioe.message).isEqualTo("Cache already open at '$tempDir' in same process")
   }
 
