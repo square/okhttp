@@ -45,16 +45,17 @@ class SslLabsClient(
         userAgent = userAgent.name,
         version = userAgent.version,
         platform = userAgent.platform,
-        enabled = userAgent.suiteNames.map { SuiteId(null, it) }
+        enabled = userAgent.suiteNames.map { SuiteId(null, it) },
       )
     }
   }
 }
 
 suspend fun main() {
-  val sslLabsClient = SslLabsClient(
-    callFactory = OkHttpClient()
-  )
+  val sslLabsClient =
+    SslLabsClient(
+      callFactory = OkHttpClient(),
+    )
 
   for (client in sslLabsClient.clients()) {
     println(client)

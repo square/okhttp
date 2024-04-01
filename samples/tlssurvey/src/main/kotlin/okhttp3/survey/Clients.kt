@@ -29,12 +29,14 @@ fun currentOkHttp(ianaSuites: IanaSuites): Client {
   return Client(
     userAgent = "OkHttp",
     version = OkHttp.VERSION,
-    enabled = ConnectionSpec.MODERN_TLS.cipherSuites!!.map {
-      ianaSuites.fromJavaName(it.javaName)
-    },
-    supported = ConnectionSpec.COMPATIBLE_TLS.cipherSuites!!.map {
-      ianaSuites.fromJavaName(it.javaName)
-    },
+    enabled =
+      ConnectionSpec.MODERN_TLS.cipherSuites!!.map {
+        ianaSuites.fromJavaName(it.javaName)
+      },
+    supported =
+      ConnectionSpec.COMPATIBLE_TLS.cipherSuites!!.map {
+        ianaSuites.fromJavaName(it.javaName)
+      },
   )
 }
 
@@ -56,7 +58,7 @@ fun currentVm(ianaSuites: IanaSuites): Client {
   return systemDefault(
     name = System.getProperty("java.vm.name"),
     version = System.getProperty("java.version"),
-    ianaSuites = ianaSuites
+    ianaSuites = ianaSuites,
   )
 }
 
