@@ -37,6 +37,9 @@ internal object CacheLock {
   }
 
   @SuppressLint("NewApi")
+  /**
+   * Create an in-memory lock, avoiding two open Cache instances.
+   */
   fun inMemoryLock(directory: Path): Closeable {
     // TODO solution for Android N?
     val existing = openCaches.putIfAbsent(directory, Exception("CacheLock($directory)"))
@@ -49,6 +52,10 @@ internal object CacheLock {
   }
 
   @SuppressLint("NewApi")
+  /**
+   * Create a file system lock, that excludes other processes. However within the process a
+   * memory lock is also needed, since locks don't work within a single process.
+   */
   fun fileSystemLock(memoryLock: Closeable, directory: Path): Closeable {
     val lockFile = directory / "lock"
     lockFile.toFile().createNewFile()
