@@ -19,12 +19,18 @@ import android.util.Log
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.LoggingEventListener
 
+/**
+ * An OkHttp [LoggingEventListener], with android Log as the target.
+ */
 fun LoggingEventListener.Companion.AndroidLogging(
   priority: Int = Log.INFO,
   tag: String = "OkHttp"
 ) = LoggingEventListener.Factory { Log.println(priority, tag, it) }
 
 
+/**
+ * An OkHttp [HttpLoggingInterceptor], with android Log as the target.
+ */
 fun HttpLoggingInterceptor.Companion.AndroidLogging(
   priority: Int = Log.INFO,
   tag: String = "OkHttp"
