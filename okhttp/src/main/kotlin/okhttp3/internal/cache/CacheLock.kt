@@ -16,6 +16,7 @@
 package okhttp3.internal.cache
 
 import android.annotation.SuppressLint
+import android.os.Build
 import java.io.Closeable
 import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption
@@ -23,6 +24,7 @@ import java.util.Collections
 import okhttp3.internal.platform.Platform
 import okio.FileSystem
 import okio.Path
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 internal object CacheLock {
   private val openCaches = Collections.synchronizedMap(mutableMapOf<Path, Exception>())
@@ -42,8 +44,8 @@ internal object CacheLock {
    * Create an in-memory lock, avoiding two open Cache instances.
    */
   @SuppressLint("NewApi")
+  @IgnoreJRERequirement // D8 supports put if absent
   fun inMemoryLock(directory: Path): Closeable {
-    // TODO solution for Android N?
     val existing = openCaches.putIfAbsent(directory, Exception("CacheLock($directory)"))
     if (existing != null) {
       throw IllegalStateException("Cache already open at '$directory' in same process", existing)
@@ -58,6 +60,7 @@ internal object CacheLock {
    * memory lock is also needed, since locks don't work within a single process.
    */
   @SuppressLint("NewApi")
+  @IgnoreJRERequirement // only called on JVM
   fun fileSystemLock(
     memoryLock: Closeable,
     directory: Path,
