@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Block, Inc.
+ * Copyright (C) 2024 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ internal object CacheLock {
     // TODO solution for Android N?
     val existing = openCaches.putIfAbsent(directory, Exception("CacheLock($directory)"))
     if (existing != null) {
-      throw IllegalStateException("Cache already open at '$directory'", existing)
+      throw IllegalStateException("Cache already open at '$directory' in same process", existing)
     }
     return okio.Closeable {
       openCaches.remove(directory)
@@ -61,7 +61,9 @@ internal object CacheLock {
     lockFile.toFile().createNewFile()
     val channel = FileChannel.open(lockFile.toNioPath(), StandardOpenOption.APPEND)
 
-    channel.tryLock() ?: throw IOException("Cache $directory is locked by another process")
+    checkNotNull(channel.tryLock()) {
+      "Cache already open at '$directory' in another process"
+    }
 
     return okio.Closeable {
       memoryLock.close()
