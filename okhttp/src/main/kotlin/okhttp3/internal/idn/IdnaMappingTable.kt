@@ -57,8 +57,8 @@ import okio.BufferedSink
  *
  * ```
  *  0..63 : Length of the UTF-16 sequence that this range maps to. The offset is b2b3.
- * 64..79 : Offset by a fixed negative offset. The bottom 4 bits of the offset are the top 4 bits of the offset.
- * 80..95 : Offset by a fixed positive offset. The bottom 4 bits of the offset are the top 4 bits of the offset.
+ * 64..79 : Offset by a fixed negative offset. The bottom 4 bits of b1 are the top 4 bits of the offset.
+ * 80..95 : Offset by a fixed positive offset. The bottom 4 bits of b1 are the top 4 bits of the offset.
  *    119 : Ignored.
  *    120 : Valid.
  *    121 : Disallowed
@@ -198,7 +198,7 @@ internal class IdnaMappingTable internal constructor(
   }
 
   /**
-   * Binary search [sections] for [codePoint].
+   * Binary search [sections] for [codePoint], looking at its top 14 bits.
    *
    * This binary searches over 4-byte entries, and so it needs to adjust binary search indices
    * in (by dividing by 4) and out (by multiplying by 4).
@@ -222,7 +222,7 @@ internal class IdnaMappingTable internal constructor(
   }
 
   /**
-   * Binary search [sections] for [codePoint].
+   * Binary search [ranges] for [codePoint], looking at its bottom 7 bits.
    *
    * This binary searches over 4-byte entries, and so it needs to adjust binary search indices
    * in (by dividing by 4) and out (by multiplying by 4).
@@ -244,7 +244,7 @@ internal class IdnaMappingTable internal constructor(
       }
 
     return when {
-      offset >= 0 -> offset * 4 // This section was found by binary search.
+      offset >= 0 -> offset * 4 // This entry was found by binary search.
       else -> (-offset - 2) * 4 // Not found? Use the preceding element.
     }
   }
@@ -258,7 +258,7 @@ internal fun String.read14BitInt(index: Int): Int {
 
 /**
  * An extremely generic binary search that doesn't know what data it's searching over. The caller
- * provides indexes and a comparison function, and this
+ * provides indexes and a comparison function, and this calls that function iteratively.
  *
  * @return the index of the match. If no match is found this is `(-1 - insertionPoint)`, where the
  *     inserting the element at `insertionPoint` will retain sorted order.
