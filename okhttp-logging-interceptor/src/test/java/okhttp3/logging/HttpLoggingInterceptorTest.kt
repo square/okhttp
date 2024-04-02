@@ -935,20 +935,20 @@ class HttpLoggingInterceptorTest {
         )
         .execute()
     response.body.close()
-    val sanitizedUrl = networkInterceptor.sanitizeUrl(url)
-    val sanitizedUrlPattern = sanitizedUrl.replace("?", """\?""")
+    val redactedUrl = networkInterceptor.redactUrl(url)
+    val redactedUrlPattern = redactedUrl.replace("?", """\?""")
     applicationLogs
-      .assertLogEqual("--> GET $sanitizedUrl")
-      .assertLogMatch(Regex("""<-- 200 OK $sanitizedUrlPattern \(\d+ms, \d+-byte body\)"""))
+      .assertLogEqual("--> GET $redactedUrl")
+      .assertLogMatch(Regex("""<-- 200 OK $redactedUrlPattern \(\d+ms, \d+-byte body\)"""))
       .assertNoMoreLogs()
     networkLogs
-      .assertLogEqual("--> GET $sanitizedUrl http/1.1")
-      .assertLogMatch(Regex("""<-- 200 OK $sanitizedUrlPattern \(\d+ms, \d+-byte body\)"""))
+      .assertLogEqual("--> GET $redactedUrl http/1.1")
+      .assertLogMatch(Regex("""<-- 200 OK $redactedUrlPattern \(\d+ms, \d+-byte body\)"""))
       .assertNoMoreLogs()
   }
 
   @Test
-  fun preserveQueryParamsAfterSanitized() {
+  fun preserveQueryParamsAfterRedacted() {
     url = server.url("""/api/login?
       |user=test_user&
       |authentication=basic&
@@ -984,15 +984,15 @@ class HttpLoggingInterceptorTest {
         )
         .execute()
     response.body.close()
-    val sanitizedUrl = networkInterceptor.sanitizeUrl(url)
-    val sanitizedUrlPattern = sanitizedUrl.replace("?", """\?""")
+    val redactedUrl = networkInterceptor.redactUrl(url)
+    val redactedUrlPattern = redactedUrl.replace("?", """\?""")
     applicationLogs
-      .assertLogEqual("--> GET $sanitizedUrl")
-      .assertLogMatch(Regex("""<-- 200 OK $sanitizedUrlPattern \(\d+ms, \d+-byte body\)"""))
+      .assertLogEqual("--> GET $redactedUrl")
+      .assertLogMatch(Regex("""<-- 200 OK $redactedUrlPattern \(\d+ms, \d+-byte body\)"""))
       .assertNoMoreLogs()
     networkLogs
-      .assertLogEqual("--> GET $sanitizedUrl http/1.1")
-      .assertLogMatch(Regex("""<-- 200 OK $sanitizedUrlPattern \(\d+ms, \d+-byte body\)"""))
+      .assertLogEqual("--> GET $redactedUrl http/1.1")
+      .assertLogMatch(Regex("""<-- 200 OK $redactedUrlPattern \(\d+ms, \d+-byte body\)"""))
       .assertNoMoreLogs()
   }
 
