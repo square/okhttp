@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Square, Inc.
+ * Copyright (C) 2022 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.survey.types
+package okhttp3.survey.ssllabs
 
-data class Record(val java: String, val android: String)
+import retrofit2.http.GET
+
+interface SslLabsApi {
+  @GET("getClients")
+  suspend fun clients(): List<UserAgentCapabilities>
+
+  companion object {
+    const val BASE_URL = "https://api.ssllabs.com/api/v3/"
+  }
+}

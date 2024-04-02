@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Square, Inc.
+ * Copyright (C) 2022 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import okhttp3.survey.types.SuiteId
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 
-class SslLabsScraper(
-  private val callFactory: Call.Factory,
+class SslLabsClient(
+  callFactory: Call.Factory,
 ) {
   private val moshi = Moshi.Builder().build()
 
@@ -32,27 +32,32 @@ class SslLabsScraper(
 
   private val retrofit =
     Retrofit.Builder()
-      .baseUrl(SslLabsService.BASE_URL)
+      .baseUrl(SslLabsApi.BASE_URL)
       .addConverterFactory(moshiConverterFactory)
       .callFactory(callFactory)
       .build()
 
-  private val api = retrofit.create(SslLabsService::class.java)
+  private val sslLabsApi = retrofit.create(SslLabsApi::class.java)
 
-  suspend fun query(): List<Client> {
-    return api.clients().map { userAgent ->
-      Client(userAgent.name, userAgent.version, userAgent.platform, enabled = userAgent.suiteNames.map { SuiteId(null, it) })
+  suspend fun clients(): List<Client> {
+    return sslLabsApi.clients().map { userAgent ->
+      Client(
+        userAgent = userAgent.name,
+        version = userAgent.version,
+        platform = userAgent.platform,
+        enabled = userAgent.suiteNames.map { SuiteId(null, it) },
+      )
     }
   }
 }
 
 suspend fun main() {
-  val client = OkHttpClient()
+  val sslLabsClient =
+    SslLabsClient(
+      callFactory = OkHttpClient(),
+    )
 
-  val scraper = SslLabsScraper(client)
-
-  println(scraper.query())
-
-  client.connectionPool.evictAll()
-  client.dispatcher.executorService.shutdown()
+  for (client in sslLabsClient.clients()) {
+    println(client)
+  }
 }
