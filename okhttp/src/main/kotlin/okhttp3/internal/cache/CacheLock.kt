@@ -32,7 +32,7 @@ internal object CacheLock {
     fileSystem: FileSystem,
     directory: Path,
   ): Closeable {
-    return if (fileSystem == FileSystem.SYSTEM && !Platform.isAndroid) {
+    return if (!Platform.isAndroid) {
       fileSystemLock(inMemoryLock(directory), directory)
     } else {
       inMemoryLock(directory)

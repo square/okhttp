@@ -18,17 +18,25 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import java.nio.file.Path
+import okhttp3.testing.PlatformRule
+import okhttp3.testing.PlatformVersion
 import okio.Closeable
 import okio.FileSystem
 import okio.Path.Companion.toOkioPath
+import okio.Path.Companion.toPath
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
 
 @org.junit.jupiter.api.parallel.Isolated
 class CacheLockTest {
+  @JvmField
+  @RegisterExtension
+  val platform = PlatformRule()
+
   private lateinit var tempDir: okio.Path
   private val toClose = mutableListOf<Closeable>()
 
@@ -78,28 +86,33 @@ class CacheLockTest {
     val lockFile = tempDir / "lock"
     lockFile.toFile().createNewFile()
 
+    val javaExe = if (PlatformVersion.majorVersion >= 9) {
+      @Suppress("Since15")
+      ProcessHandle.current().info().command().get().toPath()
+    } else {
+      System.getenv("JAVA_HOME").toPath() / "bin/java"
+    }
+
+    assertThat(FileSystem.SYSTEM.exists(javaExe))
+
     val process =
-      ProcessBuilder().command("java", "src/test/java/okhttp3/LockTestProgram.java", (lockFile.toString()))
+      ProcessBuilder().command(javaExe.toString(), "src/test/java/okhttp3/LockTestProgram.java", (lockFile.toString()))
         .redirectErrorStream(true)
         .start()
 
-    println(1)
     val output = process.inputStream.bufferedReader()
 
     try {
-      println(2)
       assertThat(output.readLine()).isEqualTo("Locking $lockFile")
       assertThat(output.readLine()).isEqualTo("Locked $lockFile")
 
-      println(3)
       val ioe =
         assertThrows<IllegalStateException> {
           openCache(tempDir)
         }
-      assertThat(ioe.message).isEqualTo("Cache already open at '$tempDir' in same process")
+      assertThat(ioe.message).isEqualTo("Cache already open at '$tempDir' in another process")
     } finally {
       process.destroy()
-      println(process.outputStream)
     }
   }
 
