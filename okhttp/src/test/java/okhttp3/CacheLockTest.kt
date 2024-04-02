@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 
+@org.junit.jupiter.api.parallel.Isolated
 class CacheLockTest {
   private lateinit var tempDir: okio.Path
   private val toClose = mutableListOf<Closeable>()
@@ -70,6 +71,36 @@ class CacheLockTest {
     openCache(tempDir / "a")
 
     openCache(tempDir / "b")
+  }
+
+  @Test
+  fun testCacheLockDifferentProcess() {
+    val lockFile = tempDir / "lock"
+    lockFile.toFile().createNewFile()
+
+    val process =
+      ProcessBuilder().command("java", "src/test/java/okhttp3/LockTestProgram.java", (lockFile.toString()))
+        .redirectErrorStream(true)
+        .start()
+
+    println(1)
+    val output = process.inputStream.bufferedReader()
+
+    try {
+      println(2)
+      assertThat(output.readLine()).isEqualTo("Locking $lockFile")
+      assertThat(output.readLine()).isEqualTo("Locked $lockFile")
+
+      println(3)
+      val ioe =
+        assertThrows<IllegalStateException> {
+          openCache(tempDir)
+        }
+      assertThat(ioe.message).isEqualTo("Cache already open at '$tempDir' in same process")
+    } finally {
+      process.destroy()
+      println(process.outputStream)
+    }
   }
 
   private fun openCache(directory: okio.Path): Cache {

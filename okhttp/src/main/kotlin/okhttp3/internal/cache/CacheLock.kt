@@ -65,6 +65,7 @@ internal object CacheLock {
     directory: Path,
   ): Closeable {
     val lockFile = directory / "lock"
+    println("Locking $lockFile")
     lockFile.toFile().createNewFile()
     val channel = FileChannel.open(lockFile.toNioPath(), StandardOpenOption.APPEND)
 
