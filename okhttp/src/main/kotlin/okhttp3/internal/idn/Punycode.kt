@@ -25,10 +25,11 @@ import okio.ByteString.Companion.encodeUtf8
  * This class contains a Kotlin implementation of the pseudocode specified by RFC 3492. It includes
  * direct translation of the pseudocode presented there.
  *
- * Partner this class with [Stringprep] to implement IDNA [RFC 3490].
+ * Partner this class with [UTS #46] to implement IDNA2008 [RFC 5890] like most browsers do.
  *
- * [RFC 3490]: https://datatracker.ietf.org/doc/html/rfc3490
  * [RFC 3492]: https://datatracker.ietf.org/doc/html/rfc3492
+ * [RFC 5890]: https://datatracker.ietf.org/doc/html/rfc5890
+ * [UTS #46]: https://www.unicode.org/reports/tr46/
  */
 object Punycode {
   val PREFIX_STRING = "xn--"
