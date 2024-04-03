@@ -36,6 +36,8 @@ class FakeRoutePlanner(
 
   val events = LinkedBlockingDeque<String>()
   var canceled = false
+  var autoGeneratePlans = false
+  var defaultConnectionIdleAtNanos = Long.MAX_VALUE
   private var nextPlanId = 0
   private var nextPlanIndex = 0
   private val plans = mutableListOf<FakePlan>()
@@ -56,8 +58,10 @@ class FakeRoutePlanner(
     // Return deferred plans preferentially. These don't require addPlan().
     if (deferredPlans.isNotEmpty()) return deferredPlans.removeFirst() as FakePlan
 
+    if (nextPlanIndex >= plans.size && autoGeneratePlans) addPlan()
+
     require(nextPlanIndex < plans.size) {
-      "not enough plans! call addPlan() in the test to set this up"
+      "not enough plans! call addPlan() or set autoGeneratePlans=true in the test to set this up"
     }
     val result = plans[nextPlanIndex++]
     events += "take plan ${result.id}"
@@ -73,7 +77,7 @@ class FakeRoutePlanner(
   }
 
   override fun hasNext(failedConnection: RealConnection?): Boolean {
-    return deferredPlans.isNotEmpty() || nextPlanIndex < plans.size
+    return deferredPlans.isNotEmpty() || nextPlanIndex < plans.size || autoGeneratePlans
   }
 
   override fun sameHostAndPort(url: HttpUrl): Boolean {
@@ -90,7 +94,12 @@ class FakeRoutePlanner(
     var planningThrowable: Throwable? = null
     var canceled = false
     var connectState = ConnectState.READY
-    val connection = factory.newConnection(pool, factory.newRoute(address))
+    val connection =
+      factory.newConnection(
+        pool = pool,
+        route = factory.newRoute(address),
+        idleAtNanos = defaultConnectionIdleAtNanos,
+      )
     var retry: FakePlan? = null
     var retryTaken = false
     var yieldBeforePlanReturns = false

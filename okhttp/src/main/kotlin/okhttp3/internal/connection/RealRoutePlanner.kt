@@ -129,7 +129,7 @@ class RealRoutePlanner(
 
   /** Plans to make a new connection by deciding which route to try next. */
   @Throws(IOException::class)
-  private fun planConnect(): ConnectPlan {
+  internal fun planConnect(): ConnectPlan {
     // Use a route from a preceding coalesced connection.
     val localNextRouteToTry = nextRouteToTry
     if (localNextRouteToTry != null) {

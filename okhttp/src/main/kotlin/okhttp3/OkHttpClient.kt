@@ -136,9 +136,6 @@ open class OkHttpClient internal constructor(
   @get:JvmName("dispatcher")
   val dispatcher: Dispatcher = builder.dispatcher
 
-  @get:JvmName("connectionPool")
-  val connectionPool: ConnectionPool = builder.connectionPool
-
   /**
    * Returns an immutable list of interceptors that observe the full span of each call: from before
    * the connection is established (if any) until after the response source is selected (either the
@@ -269,6 +266,22 @@ open class OkHttpClient internal constructor(
   internal val routeDatabase: RouteDatabase = builder.routeDatabase ?: RouteDatabase()
   internal val taskRunner: TaskRunner = builder.taskRunner ?: TaskRunner.INSTANCE
 
+  @get:JvmName("connectionPool")
+  val connectionPool: ConnectionPool =
+    builder.connectionPool ?: ConnectionPool(
+      readTimeoutMillis = readTimeoutMillis,
+      writeTimeoutMillis = writeTimeoutMillis,
+      socketConnectTimeoutMillis = connectTimeoutMillis,
+      socketReadTimeoutMillis = readTimeoutMillis,
+      pingIntervalMillis = pingIntervalMillis,
+      retryOnConnectionFailure = retryOnConnectionFailure,
+      fastFallback = fastFallback,
+      routeDatabase = routeDatabase,
+    ).also {
+      // Cache the pool in the builder so that it will be shared with other clients
+      builder.connectionPool = it
+    }
+
   constructor() : this(Builder())
 
   init {
@@ -294,6 +307,36 @@ open class OkHttpClient internal constructor(
     }
 
     verifyClientState()
+  }
+
+  /**
+   * Creates an [Address] of out of the provided [HttpUrl]
+   * that uses this client’s DNS, TLS, and proxy configuration.
+   */
+  fun address(url: HttpUrl): Address {
+    var useSslSocketFactory: SSLSocketFactory? = null
+    var useHostnameVerifier: HostnameVerifier? = null
+    var useCertificatePinner: CertificatePinner? = null
+    if (url.isHttps) {
+      useSslSocketFactory = sslSocketFactory
+      useHostnameVerifier = hostnameVerifier
+      useCertificatePinner = certificatePinner
+    }
+
+    return Address(
+      uriHost = url.host,
+      uriPort = url.port,
+      dns = dns,
+      socketFactory = socketFactory,
+      sslSocketFactory = useSslSocketFactory,
+      hostnameVerifier = useHostnameVerifier,
+      certificatePinner = useCertificatePinner,
+      proxyAuthenticator = proxyAuthenticator,
+      proxy = proxy,
+      protocols = protocols,
+      connectionSpecs = connectionSpecs,
+      proxySelector = proxySelector,
+    )
   }
 
   private fun verifyClientState() {
@@ -552,7 +595,7 @@ open class OkHttpClient internal constructor(
 
   class Builder() {
     internal var dispatcher: Dispatcher = Dispatcher()
-    internal var connectionPool: ConnectionPool = ConnectionPool()
+    internal var connectionPool: ConnectionPool? = null
     internal val interceptors: MutableList<Interceptor> = mutableListOf()
     internal val networkInterceptors: MutableList<Interceptor> = mutableListOf()
     internal var eventListenerFactory: EventListener.Factory = EventListener.NONE.asFactory()
