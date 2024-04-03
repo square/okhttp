@@ -28,7 +28,6 @@ import okio.FileSystem
 import okio.Path.Companion.toOkioPath
 import okio.Path.Companion.toPath
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -87,43 +86,45 @@ class CacheLockTest {
   }
 
   @Test
-  fun testCacheLockDifferentProcess() = runBlocking {
-    // No java command to execute LockTestProgram.java
-    platform.assumeNotAndroid()
-    assumeTrue(PlatformVersion.majorVersion >= 11)
+  fun testCacheLockDifferentProcess() =
+    runBlocking {
+      // No java command to execute LockTestProgram.java
+      platform.assumeNotAndroid()
+      assumeTrue(PlatformVersion.majorVersion >= 11)
 
-    val lockFile = tempDir / "lock"
-    lockFile.toFile().createNewFile()
+      val lockFile = tempDir / "lock"
+      lockFile.toFile().createNewFile()
 
-    val javaExe = if (PlatformVersion.majorVersion >= 9) {
-      @Suppress("Since15")
-      ProcessHandle.current().info().command().get().toPath()
-    } else {
-      System.getenv("JAVA_HOME").toPath() / "bin/java"
-    }
-
-    val process =
-      ProcessBuilder().command(javaExe.toString(), "src/test/java/okhttp3/LockTestProgram.java", (lockFile.toString()))
-        .redirectErrorStream(true)
-        .start()
-
-    val output = process.inputStream.bufferedReader()
-
-    try {
-      withTimeout(5.seconds) {
-        assertThat(output.readLine()).isEqualTo("Locking $lockFile")
-        assertThat(output.readLine()).isEqualTo("Locked $lockFile")
-      }
-
-      val ioe =
-        assertThrows<IllegalStateException> {
-          openCache(tempDir)
+      val javaExe =
+        if (PlatformVersion.majorVersion >= 9) {
+          @Suppress("Since15")
+          ProcessHandle.current().info().command().get().toPath()
+        } else {
+          System.getenv("JAVA_HOME").toPath() / "bin/java"
         }
-      assertThat(ioe.message).isEqualTo("Cache already open at '$tempDir' in another process")
-    } finally {
-      process.destroy()
+
+      val process =
+        ProcessBuilder().command(javaExe.toString(), "src/test/java/okhttp3/LockTestProgram.java", (lockFile.toString()))
+          .redirectErrorStream(true)
+          .start()
+
+      val output = process.inputStream.bufferedReader()
+
+      try {
+        withTimeout(5.seconds) {
+          assertThat(output.readLine()).isEqualTo("Locking $lockFile")
+          assertThat(output.readLine()).isEqualTo("Locked $lockFile")
+        }
+
+        val ioe =
+          assertThrows<IllegalStateException> {
+            openCache(tempDir)
+          }
+        assertThat(ioe.message).isEqualTo("Cache already open at '$tempDir' in another process")
+      } finally {
+        process.destroy()
+      }
     }
-  }
 
   private fun openCache(directory: okio.Path): Cache {
     return Cache(directory, 10_000, FileSystem.SYSTEM).apply {

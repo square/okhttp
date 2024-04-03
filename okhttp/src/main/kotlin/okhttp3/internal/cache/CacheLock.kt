@@ -20,7 +20,6 @@ import java.io.Closeable
 import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption
 import java.util.Collections
-import okhttp3.internal.platform.Platform
 import okio.FileSystem
 import okio.Path
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
@@ -32,7 +31,7 @@ internal object CacheLock {
     fileSystem: FileSystem,
     directory: Path,
   ): Closeable {
-    val useFileSystemLock = true //!Platform.isAndroid
+    val useFileSystemLock = true // !Platform.isAndroid
     return if (useFileSystemLock) {
       fileSystemLock(inMemoryLock(directory), directory)
     } else {
