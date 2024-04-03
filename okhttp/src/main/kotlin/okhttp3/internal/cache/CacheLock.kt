@@ -31,7 +31,8 @@ internal object CacheLock {
     fileSystem: FileSystem,
     directory: Path,
   ): Closeable {
-    val useFileSystemLock = true // !Platform.isAndroid
+    // TODO solve this
+    val useFileSystemLock = !fileSystem.toString().contains("FakeFileSystem") // !Platform.isAndroid
     return if (useFileSystemLock) {
       fileSystemLock(inMemoryLock(directory), directory)
     } else {
