@@ -32,7 +32,8 @@ internal object CacheLock {
     fileSystem: FileSystem,
     directory: Path,
   ): Closeable {
-    return if (!Platform.isAndroid) {
+    val useFileSystemLock = true //!Platform.isAndroid
+    return if (useFileSystemLock) {
       fileSystemLock(inMemoryLock(directory), directory)
     } else {
       inMemoryLock(directory)
@@ -65,7 +66,6 @@ internal object CacheLock {
     directory: Path,
   ): Closeable {
     val lockFile = directory / "lock"
-    println("Locking $lockFile")
     lockFile.toFile().createNewFile()
     val channel = FileChannel.open(lockFile.toNioPath(), StandardOpenOption.APPEND)
 

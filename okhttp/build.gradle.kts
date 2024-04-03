@@ -131,6 +131,7 @@ dependencies {
   testImplementation(projects.okhttpSse)
   testImplementation(projects.okhttpCoroutines)
   testImplementation(libs.kotlinx.coroutines.core)
+  testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.squareup.moshi)
   testImplementation(libs.squareup.moshi.kotlin)
   testImplementation(libs.squareup.okio.fakefilesystem)

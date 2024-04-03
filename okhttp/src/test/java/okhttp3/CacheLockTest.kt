@@ -18,6 +18,9 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
 import okio.Closeable
@@ -25,6 +28,8 @@ import okio.FileSystem
 import okio.Path.Companion.toOkioPath
 import okio.Path.Companion.toPath
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -82,7 +87,11 @@ class CacheLockTest {
   }
 
   @Test
-  fun testCacheLockDifferentProcess() {
+  fun testCacheLockDifferentProcess() = runBlocking {
+    // No java command to execute LockTestProgram.java
+    platform.assumeNotAndroid()
+    assumeTrue(PlatformVersion.majorVersion >= 11)
+
     val lockFile = tempDir / "lock"
     lockFile.toFile().createNewFile()
 
@@ -93,8 +102,6 @@ class CacheLockTest {
       System.getenv("JAVA_HOME").toPath() / "bin/java"
     }
 
-    assertThat(FileSystem.SYSTEM.exists(javaExe))
-
     val process =
       ProcessBuilder().command(javaExe.toString(), "src/test/java/okhttp3/LockTestProgram.java", (lockFile.toString()))
         .redirectErrorStream(true)
@@ -103,8 +110,10 @@ class CacheLockTest {
     val output = process.inputStream.bufferedReader()
 
     try {
-      assertThat(output.readLine()).isEqualTo("Locking $lockFile")
-      assertThat(output.readLine()).isEqualTo("Locked $lockFile")
+      withTimeout(5.seconds) {
+        assertThat(output.readLine()).isEqualTo("Locking $lockFile")
+        assertThat(output.readLine()).isEqualTo("Locked $lockFile")
+      }
 
       val ioe =
         assertThrows<IllegalStateException> {
