@@ -26,15 +26,23 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.job
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.DisconnectAfterRequest
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okio.Buffer
+import okio.ForwardingSource
+import okio.buffer
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -146,6 +154,65 @@ class SuspendCallTest {
           }
         }
       }
+    }
+  }
+
+  @Test
+  fun responseClosedIfCoroutineCanceled() {
+    runTest {
+      val call = ClosableCall()
+
+      supervisorScope {
+        assertFailsWith<CancellationException> {
+          coroutineScope {
+            call.afterCallbackOnResponse = {
+              coroutineContext.job.cancel()
+            }
+            call.executeAsync()
+          }
+        }
+      }
+
+      assertThat(call.canceled).isTrue()
+      assertThat(call.responseClosed).isTrue()
+    }
+  }
+
+  /** A call that keeps track of whether its response body is closed. */
+  private class ClosableCall : FailingCall() {
+    private val response =
+      Response.Builder()
+        .request(Request("https://example.com/".toHttpUrl()))
+        .protocol(Protocol.HTTP_1_1)
+        .message("OK")
+        .code(200)
+        .body(
+          object : ResponseBody() {
+            override fun contentType() = null
+
+            override fun contentLength() = -1L
+
+            override fun source() =
+              object : ForwardingSource(Buffer()) {
+                override fun close() {
+                  responseClosed = true
+                }
+              }.buffer()
+          },
+        )
+        .build()
+
+    var responseClosed = false
+    var canceled = false
+    var afterCallbackOnResponse: () -> Unit = {}
+
+    override fun cancel() {
+      canceled = true
+    }
+
+    override fun enqueue(responseCallback: Callback) {
+      responseCallback.onResponse(this, response)
+      afterCallbackOnResponse()
     }
   }
 }
