@@ -180,21 +180,27 @@ class SuspendCallTest {
 
   /** A call that keeps track of whether its response body is closed. */
   private class ClosableCall : FailingCall() {
-    private val response = Response.Builder()
-      .request(Request("https://example.com/".toHttpUrl()))
-      .protocol(Protocol.HTTP_1_1)
-      .message("OK")
-      .code(200)
-      .body(object : ResponseBody() {
-        override fun contentType() = null
-        override fun contentLength() = -1L
-        override fun source() = object : ForwardingSource(Buffer()) {
-          override fun close() {
-            responseClosed = true
-          }
-        }.buffer()
-      })
-      .build()
+    private val response =
+      Response.Builder()
+        .request(Request("https://example.com/".toHttpUrl()))
+        .protocol(Protocol.HTTP_1_1)
+        .message("OK")
+        .code(200)
+        .body(
+          object : ResponseBody() {
+            override fun contentType() = null
+
+            override fun contentLength() = -1L
+
+            override fun source() =
+              object : ForwardingSource(Buffer()) {
+                override fun close() {
+                  responseClosed = true
+                }
+              }.buffer()
+          },
+        )
+        .build()
 
     var responseClosed = false
     var canceled = false
