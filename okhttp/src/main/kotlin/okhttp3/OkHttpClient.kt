@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import kotlin.time.Duration as KotlinDuration
 import android.annotation.SuppressLint
 import java.net.Proxy
 import java.net.ProxySelector
@@ -29,7 +30,6 @@ import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
-import kotlin.time.Duration as KotlinDuration
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
 import okhttp3.internal.asFactory
@@ -163,7 +163,6 @@ open class OkHttpClient internal constructor(
     builder.retryOnConnectionFailure
 
   @get:JvmName("fastFallback")
-  @ExperimentalOkHttpApi
   val fastFallback: Boolean = builder.fastFallback
 
   @get:JvmName("authenticator")
@@ -770,7 +769,6 @@ open class OkHttpClient internal constructor(
      *
      * [rfc_6555]: https://datatracker.ietf.org/doc/html/rfc6555
      */
-    @ExperimentalOkHttpApi
     fun fastFallback(fastFallback: Boolean) =
       apply {
         this.fastFallback = fastFallback
