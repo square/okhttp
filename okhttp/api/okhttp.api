@@ -68,7 +68,7 @@ public final class okhttp3/Cache : java/io/Closeable, java/io/Flushable {
 	public static final field Companion Lokhttp3/Cache$Companion;
 	public final fun -deprecated_directory ()Ljava/io/File;
 	public fun <init> (Ljava/io/File;J)V
-	public fun <init> (Lokio/Path;JLokio/FileSystem;)V
+	public fun <init> (Lokio/FileSystem;Lokio/Path;J)V
 	public fun close ()V
 	public final fun delete ()V
 	public final fun directory ()Ljava/io/File;
