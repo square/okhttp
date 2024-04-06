@@ -15,7 +15,6 @@
  */
 package okhttp3
 
-import kotlin.time.Duration as KotlinDuration
 import android.annotation.SuppressLint
 import java.net.Proxy
 import java.net.ProxySelector
@@ -30,6 +29,7 @@ import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import kotlin.time.Duration as KotlinDuration
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
 import okhttp3.internal.asFactory
