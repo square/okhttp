@@ -71,7 +71,6 @@ class Request internal constructor(builder: Builder) {
    *
    * @param method defaults to "GET" if [body] is null, and "POST" otherwise.
    */
-  @ExperimentalOkHttpApi
   constructor(
     url: HttpUrl,
     headers: Headers = headersOf(),
