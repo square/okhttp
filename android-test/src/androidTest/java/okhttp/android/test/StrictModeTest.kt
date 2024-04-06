@@ -13,10 +13,7 @@ import okhttp3.Request
 import okhttp3.internal.platform.Platform
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.fail
 import org.junit.jupiter.api.parallel.Isolated
-import org.opentest4j.AssertionFailedError
 
 @Isolated
 class StrictModeTest {
