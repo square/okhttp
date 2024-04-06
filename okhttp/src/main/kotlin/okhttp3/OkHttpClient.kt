@@ -163,7 +163,6 @@ open class OkHttpClient internal constructor(
     builder.retryOnConnectionFailure
 
   @get:JvmName("fastFallback")
-  @ExperimentalOkHttpApi
   val fastFallback: Boolean = builder.fastFallback
 
   @get:JvmName("authenticator")
@@ -770,7 +769,6 @@ open class OkHttpClient internal constructor(
      *
      * [rfc_6555]: https://datatracker.ietf.org/doc/html/rfc6555
      */
-    @ExperimentalOkHttpApi
     fun fastFallback(fastFallback: Boolean) =
       apply {
         this.fastFallback = fastFallback
