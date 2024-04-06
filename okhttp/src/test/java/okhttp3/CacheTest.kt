@@ -3498,21 +3498,21 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
           return path
         }
       }
-    val c = Cache(path, 100000L, loggingFileSystem)
-    assertThat(c.directoryPath).isEqualTo(path)
+    val c = Cache(cachePath, 100000L, loggingFileSystem)
+    assertThat(c.directoryPath).isEqualTo(cachePath)
     c.size()
     assertThat(events).containsExactly(
-      "metadataOrNull:/cache/journal.bkp",
-      "metadataOrNull:/cache",
-      "sink:/cache/journal.bkp",
-      "delete:/cache/journal.bkp",
-      "metadataOrNull:/cache/journal",
-      "metadataOrNull:/cache",
-      "sink:/cache/journal.tmp",
-      "metadataOrNull:/cache/journal",
-      "atomicMove:/cache/journal.tmp",
-      "atomicMove:/cache/journal",
-      "appendingSink:/cache/journal",
+      "metadataOrNull:$cachePath/journal.bkp",
+      "metadataOrNull:$cachePath",
+      "sink:$cachePath/journal.bkp",
+      "delete:$cachePath/journal.bkp",
+      "metadataOrNull:$cachePath/journal",
+      "metadataOrNull:$cachePath",
+      "sink:$cachePath/journal.tmp",
+      "metadataOrNull:$cachePath/journal",
+      "atomicMove:$cachePath/journal.tmp",
+      "atomicMove:$cachePath/journal",
+      "appendingSink:$cachePath/journal",
     )
     events.clear()
     c.size()
