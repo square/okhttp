@@ -3498,9 +3498,9 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
           return path
         }
       }
-    val c = Cache(cachePath, 100000L, loggingFileSystem)
-    assertThat(c.directoryPath).isEqualTo(cachePath)
-    c.size()
+    cache = Cache(cachePath, 100000L, loggingFileSystem)
+    assertThat(cache.directoryPath).isEqualTo(cachePath)
+    cache.size()
     assertThat(events).containsExactly(
       "metadataOrNull:$cachePath/journal.bkp",
       "metadataOrNull:$cachePath",
@@ -3515,7 +3515,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
       "appendingSink:$cachePath/journal",
     )
     events.clear()
-    c.size()
+    cache.size()
     assertThat(events).isEmpty()
   }
 
