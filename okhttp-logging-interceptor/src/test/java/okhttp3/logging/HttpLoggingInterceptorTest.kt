@@ -951,12 +951,15 @@ class HttpLoggingInterceptorTest {
   @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
   @Test
   fun preserveQueryParamsAfterRedacted() {
-    url = server.url("""/api/login?
+    url =
+      server.url(
+        """/api/login?
       |user=test_user&
       |authentication=basic&
       |password=confidential_password&
       |authentication=rather simple login method
-    """.trimMargin())
+        """.trimMargin(),
+      )
     val networkInterceptor =
       HttpLoggingInterceptor(networkLogs).setLevel(
         Level.BASIC,
