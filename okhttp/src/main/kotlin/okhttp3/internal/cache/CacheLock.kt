@@ -23,12 +23,16 @@ import java.nio.file.StandardOpenOption
 import java.util.Collections
 import okio.FileSystem
 import okio.Path
+import okio.Path.Companion.toOkioPath
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 internal object CacheLock {
   private val openCaches = Collections.synchronizedMap(mutableMapOf<Path, Exception>())
 
-  fun openLock(directory: Path): Closeable {
+  fun openLock(
+    fileSystem: FileSystem,
+    directory: Path,
+  ): Closeable {
     val memoryLock = inMemoryLock(directory)
 
     // check if possibly a non System file system
@@ -41,7 +45,7 @@ internal object CacheLock {
           fileSystemLock.close()
         }
       } catch (e: Exception) {
-        if (fileSystemSupportsLock()) {
+        if (fileSystemSupportsLock(fileSystem)) {
           memoryLock.close()
           throw e
         }
@@ -51,8 +55,12 @@ internal object CacheLock {
     return memoryLock
   }
 
-  internal fun fileSystemSupportsLock(): Boolean {
+  internal fun fileSystemSupportsLock(fileSystem: FileSystem): Boolean {
     val tmpLockFile = File.createTempFile("test-", ".lock")
+
+    if (!fileSystem.exists(tmpLockFile.toOkioPath())) {
+      return false
+    }
 
     val channel = FileChannel.open(tmpLockFile.toPath(), StandardOpenOption.APPEND)
 
