@@ -81,6 +81,7 @@ class CacheTest {
   private lateinit var client: OkHttpClient
   private lateinit var cache: Cache
   private val cookieManager = CookieManager()
+  private val cachePath = "/cache-CacheTest".toPath()
 
   @BeforeEach
   fun setUp(
@@ -92,7 +93,7 @@ class CacheTest {
     platform.assumeNotOpenJSSE()
     server.protocolNegotiationEnabled = false
     fileSystem.emulateUnix()
-    cache = Cache("/cache".toPath(), Long.MAX_VALUE, fileSystem)
+    cache = Cache(cachePath, Long.MAX_VALUE, fileSystem)
     client =
       clientTestRule.newClientBuilder()
         .cache(cache)
@@ -3497,7 +3498,6 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
           return path
         }
       }
-    val path: Path = "/cache".toPath()
     val c = Cache(path, 100000L, loggingFileSystem)
     assertThat(c.directoryPath).isEqualTo(path)
     c.size()
