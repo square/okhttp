@@ -92,7 +92,7 @@ class CacheTest {
     platform.assumeNotOpenJSSE()
     server.protocolNegotiationEnabled = false
     fileSystem.emulateUnix()
-    cache = Cache("/cache/".toPath(), Long.MAX_VALUE, fileSystem)
+    cache = Cache(fileSystem, "/cache/".toPath(), Long.MAX_VALUE)
     client =
       clientTestRule.newClientBuilder()
         .cache(cache)
@@ -2758,7 +2758,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.0", entryMetadata)
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
-    cache = Cache(cache.directory.path.toPath(), Int.MAX_VALUE.toLong(), fileSystem)
+    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
     client =
       client.newBuilder()
         .cache(cache)
@@ -2807,7 +2807,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(cache.directory.path.toPath(), Int.MAX_VALUE.toLong(), fileSystem)
+    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
     client =
       client.newBuilder()
         .cache(cache)
@@ -2860,7 +2860,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(cache.directory.path.toPath(), Int.MAX_VALUE.toLong(), fileSystem)
+    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
     client =
       client.newBuilder()
         .cache(cache)
@@ -2905,7 +2905,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(cache.directory.path.toPath(), Int.MAX_VALUE.toLong(), fileSystem)
+    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
     client =
       client.newBuilder()
         .cache(cache)
@@ -3496,7 +3496,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         }
       }
     val path: Path = "/cache".toPath()
-    val c = Cache(path, 100000L, loggingFileSystem)
+    val c = Cache(loggingFileSystem, path, 100000L)
     assertThat(c.directoryPath).isEqualTo(path)
     c.size()
     assertThat(events).containsExactly(

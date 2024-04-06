@@ -151,16 +151,23 @@ class Cache internal constructor(
   fileSystem: FileSystem,
   taskRunner: TaskRunner,
 ) : Closeable, Flushable {
-  @ExperimentalOkHttpApi
+  /** Create a cache of at most [maxSize] bytes in [directory]. */
   constructor(
+    fileSystem: FileSystem,
     directory: Path,
     maxSize: Long,
-    fileSystem: FileSystem,
   ) : this(
     directory,
     maxSize,
     fileSystem,
     TaskRunner.INSTANCE,
+  )
+
+  /** Create a cache of at most [maxSize] bytes in [directory]. */
+  constructor(directory: File, maxSize: Long) : this(
+    FileSystem.SYSTEM,
+    directory.toOkioPath(),
+    maxSize,
   )
 
   internal val cache =
@@ -182,13 +189,6 @@ class Cache internal constructor(
 
   val isClosed: Boolean
     get() = cache.isClosed()
-
-  /** Create a cache of at most [maxSize] bytes in [directory]. */
-  constructor(directory: File, maxSize: Long) : this(
-    directory.toOkioPath(),
-    maxSize,
-    FileSystem.SYSTEM,
-  )
 
   internal fun get(request: Request): Response? {
     val key = key(request.url)
@@ -389,7 +389,6 @@ class Cache internal constructor(
     get() = cache.directory.toFile()
 
   @get:JvmName("directoryPath")
-  @ExperimentalOkHttpApi
   val directoryPath: Path
     get() = cache.directory
 

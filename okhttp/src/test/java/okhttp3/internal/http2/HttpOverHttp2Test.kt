@@ -125,7 +125,7 @@ class HttpOverHttp2Test {
   private lateinit var protocol: Protocol
   private lateinit var client: OkHttpClient
   private val fileSystem: FakeFileSystem = FakeFileSystem()
-  private val cache: Cache = Cache("/tmp/cache".toPath(), Long.MAX_VALUE, fileSystem)
+  private val cache: Cache = Cache(fileSystem, "/tmp/cache".toPath(), Long.MAX_VALUE)
   private lateinit var scheme: String
 
   private fun configureClientTestRule(): OkHttpClientTestRule {

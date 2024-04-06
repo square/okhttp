@@ -170,7 +170,7 @@ class DnsOverHttpsTest {
   // 5. unsuccessful response
   @Test
   fun usesCache() {
-    val cache = Cache("cache".toPath(), (100 * 1024).toLong(), cacheFs)
+    val cache = Cache(cacheFs, "cache".toPath(), (100 * 1024).toLong())
     val cachedClient = bootstrapClient.newBuilder().cache(cache).build()
     val cachedDns = buildLocalhost(cachedClient, false)
 
@@ -208,7 +208,7 @@ class DnsOverHttpsTest {
 
   @Test
   fun usesCacheEvenForPost() {
-    val cache = Cache("cache".toPath(), (100 * 1024).toLong(), cacheFs)
+    val cache = Cache(cacheFs, "cache".toPath(), (100 * 1024).toLong())
     val cachedClient = bootstrapClient.newBuilder().cache(cache).build()
     val cachedDns = buildLocalhost(cachedClient, false, post = true)
     repeat(2) {
