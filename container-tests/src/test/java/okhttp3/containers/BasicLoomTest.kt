@@ -49,6 +49,8 @@ class BasicLoomTest {
   @RegisterExtension
   val platform = PlatformRule()
 
+  // Use mock server so we are strictly testing OkHttp client only in this test.
+  // We should test MockWebServer later.
   @Container
   val mockServer: MockServerContainer = MockServerContainer(MOCKSERVER_IMAGE)
 
@@ -71,6 +73,8 @@ class BasicLoomTest {
 
     executor = newVirtualThreadPerTaskExecutor()
 
+    // Capture non-deterministic but probable sysout warnings of pinned threads
+    // https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html
     System.setOut(PrintStream(capturedOut))
   }
 
