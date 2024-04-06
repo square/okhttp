@@ -118,7 +118,6 @@ class Cookie private constructor(
    *    value.
    */
   @get:JvmName("sameSite")
-  @property:ExperimentalOkHttpApi
   val sameSite: String?,
 ) {
   /**
@@ -288,7 +287,6 @@ class Cookie private constructor(
     }
   }
 
-  @ExperimentalOkHttpApi
   fun newBuilder(): Builder = Builder(this)
 
   /**
@@ -380,7 +378,6 @@ class Cookie private constructor(
         this.httpOnly = true
       }
 
-    @ExperimentalOkHttpApi
     fun sameSite(sameSite: String) =
       apply {
         require(sameSite.trim() == sameSite) { "sameSite is not trimmed" }

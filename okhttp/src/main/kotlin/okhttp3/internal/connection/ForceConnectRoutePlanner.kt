@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Square, Inc.
+ * Copyright (C) 2024 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.curl.logging
+package okhttp3.internal.connection
 
-import java.util.logging.LogRecord
-import java.util.logging.SimpleFormatter
-
-object MessageFormatter : SimpleFormatter() {
-  override fun format(record: LogRecord): String {
-    return String.format("%s%n", record.message)
-  }
+/**
+ * A RoutePlanner that will always establish a new connection, ignoring any connection pooling
+ */
+class ForceConnectRoutePlanner(private val delegate: RealRoutePlanner) : RoutePlanner by delegate {
+  override fun plan(): RoutePlanner.Plan = delegate.planConnect() // not delegate.plan()
 }

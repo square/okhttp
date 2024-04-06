@@ -18,7 +18,11 @@ package okhttp3
 
 import java.util.concurrent.TimeUnit
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.FastFallbackExchangeFinder
+import okhttp3.internal.connection.ForceConnectRoutePlanner
 import okhttp3.internal.connection.RealConnectionPool
+import okhttp3.internal.connection.RealRoutePlanner
+import okhttp3.internal.connection.RouteDatabase
 
 /**
  * Manages reuse of HTTP and HTTP/2 connections for reduced network latency. HTTP requests that
@@ -39,6 +43,14 @@ class ConnectionPool internal constructor(
     timeUnit: TimeUnit = TimeUnit.MINUTES,
     taskRunner: TaskRunner = TaskRunner.INSTANCE,
     connectionListener: ConnectionListener = ConnectionListener.NONE,
+    readTimeoutMillis: Int = 10_000,
+    writeTimeoutMillis: Int = 10_000,
+    socketConnectTimeoutMillis: Int = 10_000,
+    socketReadTimeoutMillis: Int = 10_000,
+    pingIntervalMillis: Int = 10_000,
+    retryOnConnectionFailure: Boolean = true,
+    fastFallback: Boolean = true,
+    routeDatabase: RouteDatabase = RouteDatabase(),
   ) : this(
     RealConnectionPool(
       taskRunner = taskRunner,
@@ -46,6 +58,27 @@ class ConnectionPool internal constructor(
       keepAliveDuration = keepAliveDuration,
       timeUnit = timeUnit,
       connectionListener = connectionListener,
+      exchangeFinderFactory = { pool, address, user ->
+        FastFallbackExchangeFinder(
+          ForceConnectRoutePlanner(
+            RealRoutePlanner(
+              taskRunner = taskRunner,
+              connectionPool = pool,
+              readTimeoutMillis = readTimeoutMillis,
+              writeTimeoutMillis = writeTimeoutMillis,
+              socketConnectTimeoutMillis = socketConnectTimeoutMillis,
+              socketReadTimeoutMillis = socketReadTimeoutMillis,
+              pingIntervalMillis = pingIntervalMillis,
+              retryOnConnectionFailure = retryOnConnectionFailure,
+              fastFallback = fastFallback,
+              address = address,
+              routeDatabase = routeDatabase,
+              connectionUser = user,
+            ),
+          ),
+          taskRunner,
+        )
+      },
     ),
   )
 
@@ -92,4 +125,32 @@ class ConnectionPool internal constructor(
   fun evictAll() {
     delegate.evictAll()
   }
+
+  /**
+   * Sets a policy that applies to [address].
+   * Overwrites any existing policy for that address.
+   */
+  @ExperimentalOkHttpApi
+  fun setPolicy(
+    address: Address,
+    policy: AddressPolicy,
+  ) {
+    delegate.setPolicy(address, policy)
+  }
+
+  /**
+   * A policy for how the pool should treat a specific address.
+   */
+  class AddressPolicy(
+    /**
+     * How many concurrent calls should be possible to make at any time.
+     * The pool will routinely try to pre-emptively open connections to satisfy this minimum.
+     * Connections will still be closed if they idle beyond the keep-alive but will be replaced.
+     */
+    @JvmField val minimumConcurrentCalls: Int = 0,
+    /** How long to wait to retry pre-emptive connection attempts that fail. */
+    @JvmField val backoffDelayMillis: Long = 60 * 1000,
+    /** How much jitter to introduce in connection retry backoff delays */
+    @JvmField val backoffJitterMillis: Int = 100,
+  )
 }

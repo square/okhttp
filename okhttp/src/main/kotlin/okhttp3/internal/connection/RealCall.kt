@@ -25,14 +25,9 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLSocketFactory
-import okhttp3.Address
 import okhttp3.Call
 import okhttp3.Callback
-import okhttp3.CertificatePinner
 import okhttp3.EventListener
-import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -256,7 +251,7 @@ class RealCall(
           pingIntervalMillis = client.pingIntervalMillis,
           retryOnConnectionFailure = client.retryOnConnectionFailure,
           fastFallback = client.fastFallback,
-          address = createAddress(request.url),
+          address = client.address(request.url),
           connectionUser = CallConnectionUser(this, connectionPool.connectionListener, chain),
           routeDatabase = client.routeDatabase,
         )
@@ -457,32 +452,6 @@ class RealCall(
     }
 
     interceptorScopedExchange = null
-  }
-
-  private fun createAddress(url: HttpUrl): Address {
-    var sslSocketFactory: SSLSocketFactory? = null
-    var hostnameVerifier: HostnameVerifier? = null
-    var certificatePinner: CertificatePinner? = null
-    if (url.isHttps) {
-      sslSocketFactory = client.sslSocketFactory
-      hostnameVerifier = client.hostnameVerifier
-      certificatePinner = client.certificatePinner
-    }
-
-    return Address(
-      uriHost = url.host,
-      uriPort = url.port,
-      dns = client.dns,
-      socketFactory = client.socketFactory,
-      sslSocketFactory = sslSocketFactory,
-      hostnameVerifier = hostnameVerifier,
-      certificatePinner = certificatePinner,
-      proxyAuthenticator = client.proxyAuthenticator,
-      proxy = client.proxy,
-      protocols = client.protocols,
-      connectionSpecs = client.connectionSpecs,
-      proxySelector = client.proxySelector,
-    )
   }
 
   fun retryAfterFailure(): Boolean {

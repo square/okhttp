@@ -16,7 +16,6 @@
 package okhttp3.sse
 
 import okhttp3.Call
-import okhttp3.ExperimentalOkHttpApi
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.sse.internal.RealEventSource
@@ -30,7 +29,6 @@ object EventSources {
   fun createFactory(client: OkHttpClient) = createFactory(client as Call.Factory)
 
   @JvmStatic
-  @ExperimentalOkHttpApi
   fun createFactory(callFactory: Call.Factory): EventSource.Factory {
     return EventSource.Factory { request, listener ->
       val actualRequest =
