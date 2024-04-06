@@ -903,6 +903,104 @@ class HttpLoggingInterceptorTest {
       .assertNoMoreLogs()
   }
 
+  @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+  @Test
+  fun sensitiveQueryParamsAreRedacted() {
+    url = server.url("/api/login?user=test_user&authentication=basic&password=confidential_password")
+    val networkInterceptor =
+      HttpLoggingInterceptor(networkLogs).setLevel(
+        Level.BASIC,
+      )
+    networkInterceptor.redactQueryParams("user", "passWord")
+
+    val applicationInterceptor =
+      HttpLoggingInterceptor(applicationLogs).setLevel(
+        Level.BASIC,
+      )
+    applicationInterceptor.redactQueryParams("user", "PassworD")
+
+    client =
+      OkHttpClient.Builder()
+        .addNetworkInterceptor(networkInterceptor)
+        .addInterceptor(applicationInterceptor)
+        .build()
+    server.enqueue(
+      MockResponse.Builder()
+        .build(),
+    )
+    val response =
+      client
+        .newCall(
+          request()
+            .build(),
+        )
+        .execute()
+    response.body.close()
+    val redactedUrl = networkInterceptor.redactUrl(url)
+    val redactedUrlPattern = redactedUrl.replace("?", """\?""")
+    applicationLogs
+      .assertLogEqual("--> GET $redactedUrl")
+      .assertLogMatch(Regex("""<-- 200 OK $redactedUrlPattern \(\d+ms, \d+-byte body\)"""))
+      .assertNoMoreLogs()
+    networkLogs
+      .assertLogEqual("--> GET $redactedUrl http/1.1")
+      .assertLogMatch(Regex("""<-- 200 OK $redactedUrlPattern \(\d+ms, \d+-byte body\)"""))
+      .assertNoMoreLogs()
+  }
+
+  @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+  @Test
+  fun preserveQueryParamsAfterRedacted() {
+    url =
+      server.url(
+        """/api/login?
+      |user=test_user&
+      |authentication=basic&
+      |password=confidential_password&
+      |authentication=rather simple login method
+        """.trimMargin(),
+      )
+    val networkInterceptor =
+      HttpLoggingInterceptor(networkLogs).setLevel(
+        Level.BASIC,
+      )
+    networkInterceptor.redactQueryParams("user", "passWord")
+
+    val applicationInterceptor =
+      HttpLoggingInterceptor(applicationLogs).setLevel(
+        Level.BASIC,
+      )
+    applicationInterceptor.redactQueryParams("user", "PassworD")
+
+    client =
+      OkHttpClient.Builder()
+        .addNetworkInterceptor(networkInterceptor)
+        .addInterceptor(applicationInterceptor)
+        .build()
+    server.enqueue(
+      MockResponse.Builder()
+        .build(),
+    )
+    val response =
+      client
+        .newCall(
+          request()
+            .build(),
+        )
+        .execute()
+    response.body.close()
+    val redactedUrl = networkInterceptor.redactUrl(url)
+    val redactedUrlPattern = redactedUrl.replace("?", """\?""")
+    applicationLogs
+      .assertLogEqual("--> GET $redactedUrl")
+      .assertLogMatch(Regex("""<-- 200 OK $redactedUrlPattern \(\d+ms, \d+-byte body\)"""))
+      .assertNoMoreLogs()
+    networkLogs
+      .assertLogEqual("--> GET $redactedUrl http/1.1")
+      .assertLogMatch(Regex("""<-- 200 OK $redactedUrlPattern \(\d+ms, \d+-byte body\)"""))
+      .assertNoMoreLogs()
+  }
+
   @Test
   fun duplexRequestsAreNotLogged() {
     platform.assumeHttp2Support()
