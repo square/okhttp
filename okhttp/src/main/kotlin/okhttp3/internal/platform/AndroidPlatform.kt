@@ -25,6 +25,7 @@ import java.net.InetSocketAddress
 import java.net.Socket
 import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
+import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -43,10 +44,6 @@ import okhttp3.internal.tls.TrustRootIndex
 /** Android 5 to 9 (API 21 to 28). */
 @SuppressSignatureCheck
 class AndroidPlatform : Platform() {
-  init {
-      StrictMode.noteSlowCall("okhttp3.internal.platform.Pl")
-  }
-
   private val socketAdapters =
     listOfNotNull(
       StandardAndroidSocketAdapter.buildIfSupported(),
@@ -73,6 +70,12 @@ class AndroidPlatform : Platform() {
         throw e
       }
     }
+  }
+
+  override fun newSSLContext(): SSLContext {
+    StrictMode.noteSlowCall("newSSLContext")
+
+    return super.newSSLContext()
   }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
@@ -105,6 +108,8 @@ class AndroidPlatform : Platform() {
 
   override fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex =
     try {
+      StrictMode.noteSlowCall("buildTrustRootIndex")
+
       // From org.conscrypt.TrustManagerImpl, we want the method with this signature:
       // private TrustAnchor findTrustAnchorByIssuerAndSignature(X509Certificate lastCert);
       val method =
