@@ -28,9 +28,7 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 internal object CacheLock {
   private val openCaches = Collections.synchronizedMap(mutableMapOf<Path, Exception>())
 
-  fun openLock(
-    directory: Path,
-  ): Closeable {
+  fun openLock(directory: Path): Closeable {
     val memoryLock = inMemoryLock(directory)
 
     // check if possibly a non System file system
@@ -67,7 +65,7 @@ internal object CacheLock {
   @SuppressLint("NewApi")
   @IgnoreJRERequirement // D8 supports put if absent
   fun inMemoryLock(directory: Path): Closeable {
-    val existing = openCaches.putIfAbsent(directory, Exception("CacheLock($directory)"))
+    val existing = openCaches.putIfAbsent(directory, LockException("Existing CacheLock($directory) opened at"))
     if (existing != null) {
       throw LockException("Cache already open at '$directory' in same process", existing)
     }
@@ -82,9 +80,7 @@ internal object CacheLock {
    */
   @SuppressLint("NewApi")
   @IgnoreJRERequirement // only called on JVM
-  fun fileSystemLock(
-    directory: Path,
-  ): Closeable {
+  fun fileSystemLock(directory: Path): Closeable {
     // update once https://github.com/square/okio/issues/1464 is available
 
     val lockFile = directory / "lock"

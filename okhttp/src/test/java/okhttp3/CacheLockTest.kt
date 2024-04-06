@@ -64,7 +64,8 @@ class CacheLockTest {
   fun testCacheLock() {
     openCache(tempDir)
 
-    val lockException = assertThrows<LockException> {
+    val lockException =
+      assertThrows<LockException> {
         openCache(tempDir)
       }
     assertThat(lockException.message).isEqualTo("Cache already open at '$tempDir' in same process")
@@ -108,7 +109,7 @@ class CacheLockTest {
         ProcessBuilder().command(
           javaExe.toString(),
           "src/test/java/okhttp3/LockTestProgram.java",
-          (lockFile.toString())
+          (lockFile.toString()),
         )
           .redirectErrorStream(true)
           .start()
@@ -121,9 +122,10 @@ class CacheLockTest {
           assertThat(output.readLine()).isEqualTo("Locked $lockFile")
         }
 
-        val lockException = assertThrows<LockException> {
-          openCache(tempDir)
-        }
+        val lockException =
+          assertThrows<LockException> {
+            openCache(tempDir)
+          }
         assertThat(lockException.message).isEqualTo("Cache already open at '$tempDir' in another process")
       } finally {
         process.destroy()
