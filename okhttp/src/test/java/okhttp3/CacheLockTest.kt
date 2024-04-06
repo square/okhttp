@@ -29,6 +29,8 @@ import okio.Closeable
 import okio.FileSystem
 import okio.Path.Companion.toOkioPath
 import okio.Path.Companion.toPath
+import okio.SYSTEM
+import okio.fakefilesystem.FakeFileSystem
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
@@ -138,8 +140,29 @@ class CacheLockTest {
     }
   }
 
-  private fun openCache(directory: okio.Path): Cache {
-    return Cache(directory, 10_000, FileSystem.SYSTEM).apply {
+  @Test
+  fun testCacheLockOnFakeFileSystem() {
+    val fileSystem = FakeFileSystem()
+    val fakeCacheDir = "/missing".toPath()
+
+    val cache = openCache(fakeCacheDir, fileSystem)
+
+    val lockException =
+      assertThrows<LockException> {
+        openCache(fakeCacheDir, fileSystem)
+      }
+    assertThat(lockException.message).isEqualTo("Cache already open at '$fakeCacheDir' in same process")
+
+    cache.close()
+
+    openCache(fakeCacheDir, fileSystem)
+  }
+
+  private fun openCache(
+    directory: okio.Path,
+    fileSystem: FileSystem = FileSystem.SYSTEM,
+  ): Cache {
+    return Cache(directory, 10_000, fileSystem).apply {
       // force early LRU initialisation
       initialize()
       toClose.add(this)

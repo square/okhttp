@@ -26,9 +26,20 @@ import okio.Path
 import okio.Path.Companion.toOkioPath
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
+/**
+ * An implementation of directory locking to ensure exclusive access in a Cache instance.
+ * Always applies for the current process, and uses a file system lock if supported.
+ */
 internal object CacheLock {
   private val openCaches = Collections.synchronizedMap(mutableMapOf<Path, Exception>())
 
+  /**
+   * Open a lock, which if successful remains until the returned [Closeable] is closed.
+   * The lock file will be a file with name "lock" inside directory.
+   *
+   * @param fileSystem the file system containing the lock files.
+   * @param directory the cache directory.
+   */
   fun openLock(
     fileSystem: FileSystem,
     directory: Path,
@@ -44,10 +55,10 @@ internal object CacheLock {
           memoryLock.close()
           fileSystemLock.close()
         }
-      } catch (e: Exception) {
+      } catch (le: LockException) {
         if (fileSystemSupportsLock(fileSystem)) {
           memoryLock.close()
-          throw e
+          throw le
         }
       }
     }
@@ -73,7 +84,7 @@ internal object CacheLock {
    */
   @SuppressLint("NewApi")
   @IgnoreJRERequirement // D8 supports put if absent
-  fun inMemoryLock(directory: Path): Closeable {
+  internal fun inMemoryLock(directory: Path): Closeable {
     val existing = openCaches.putIfAbsent(directory, LockException("Existing CacheLock($directory) opened at"))
     if (existing != null) {
       throw LockException("Cache already open at '$directory' in same process", existing)
@@ -89,7 +100,7 @@ internal object CacheLock {
    */
   @SuppressLint("NewApi")
   @IgnoreJRERequirement // Not called on legacy Android
-  fun fileSystemLock(directory: Path): Closeable {
+  internal fun fileSystemLock(directory: Path): Closeable {
     // update once https://github.com/square/okio/issues/1464 is available
 
     val lockFile = directory / "lock"
