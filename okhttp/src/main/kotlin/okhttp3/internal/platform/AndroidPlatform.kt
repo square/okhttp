@@ -16,6 +16,7 @@
 package okhttp3.internal.platform
 
 import android.os.Build
+import android.os.StrictMode
 import android.security.NetworkSecurityPolicy
 import java.io.IOException
 import java.lang.reflect.InvocationTargetException
@@ -42,6 +43,10 @@ import okhttp3.internal.tls.TrustRootIndex
 /** Android 5 to 9 (API 21 to 28). */
 @SuppressSignatureCheck
 class AndroidPlatform : Platform() {
+  init {
+      StrictMode.noteSlowCall("okhttp3.internal.platform.Pl")
+  }
+
   private val socketAdapters =
     listOfNotNull(
       StandardAndroidSocketAdapter.buildIfSupported(),
