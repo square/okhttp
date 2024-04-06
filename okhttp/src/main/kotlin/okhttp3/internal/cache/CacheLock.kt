@@ -55,6 +55,7 @@ internal object CacheLock {
     return memoryLock
   }
 
+  @IgnoreJRERequirement // Not called on legacy Android
   internal fun fileSystemSupportsLock(fileSystem: FileSystem): Boolean {
     val tmpLockFile = File.createTempFile("test-", ".lock")
 
@@ -87,7 +88,7 @@ internal object CacheLock {
    * memory lock is also needed, since locks don't work within a single process.
    */
   @SuppressLint("NewApi")
-  @IgnoreJRERequirement // only called on JVM
+  @IgnoreJRERequirement // Not called on legacy Android
   fun fileSystemLock(directory: Path): Closeable {
     // update once https://github.com/square/okio/issues/1464 is available
 
