@@ -245,7 +245,7 @@ class DiskLruCache(
 
     civilizedFileSystem = fileSystem.isCivilized(journalFileBackup)
 
-    cacheLock = openLock(fileSystem, directory)
+    cacheLock = openLock(directory)
 
     // Prefer to pick up where we left off.
     if (fileSystem.exists(journalFile)) {

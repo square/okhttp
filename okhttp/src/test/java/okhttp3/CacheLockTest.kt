@@ -19,8 +19,10 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import okhttp3.internal.cache.LockException
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
 import okio.Closeable
@@ -62,11 +64,10 @@ class CacheLockTest {
   fun testCacheLock() {
     openCache(tempDir)
 
-    val ioe =
-      assertThrows<IllegalStateException> {
+    val lockException = assertThrows<LockException> {
         openCache(tempDir)
       }
-    assertThat(ioe.message).isEqualTo("Cache already open at '$tempDir' in same process")
+    assertThat(lockException.message).isEqualTo("Cache already open at '$tempDir' in same process")
   }
 
   @Test
@@ -86,7 +87,7 @@ class CacheLockTest {
   }
 
   @Test
-  fun testCacheLockDifferentProcess() =
+  fun testCacheLockDifferentProcess() {
     runBlocking {
       // No java command to execute LockTestProgram.java
       platform.assumeNotAndroid()
@@ -104,7 +105,11 @@ class CacheLockTest {
         }
 
       val process =
-        ProcessBuilder().command(javaExe.toString(), "src/test/java/okhttp3/LockTestProgram.java", (lockFile.toString()))
+        ProcessBuilder().command(
+          javaExe.toString(),
+          "src/test/java/okhttp3/LockTestProgram.java",
+          (lockFile.toString())
+        )
           .redirectErrorStream(true)
           .start()
 
@@ -116,15 +121,20 @@ class CacheLockTest {
           assertThat(output.readLine()).isEqualTo("Locked $lockFile")
         }
 
-        val ioe =
-          assertThrows<IllegalStateException> {
-            openCache(tempDir)
-          }
-        assertThat(ioe.message).isEqualTo("Cache already open at '$tempDir' in another process")
+        val lockException = assertThrows<LockException> {
+          openCache(tempDir)
+        }
+        assertThat(lockException.message).isEqualTo("Cache already open at '$tempDir' in another process")
       } finally {
         process.destroy()
       }
+
+      delay(100)
+
+      // Should work again once process is killed
+      openCache(tempDir)
     }
+  }
 
   private fun openCache(directory: okio.Path): Cache {
     return Cache(directory, 10_000, FileSystem.SYSTEM).apply {

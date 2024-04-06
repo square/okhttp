@@ -17,6 +17,7 @@ package okhttp3.internal.cache
 
 import android.annotation.SuppressLint
 import java.io.Closeable
+import java.io.File
 import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption
 import java.util.Collections
@@ -28,16 +29,36 @@ internal object CacheLock {
   private val openCaches = Collections.synchronizedMap(mutableMapOf<Path, Exception>())
 
   fun openLock(
-    fileSystem: FileSystem,
     directory: Path,
   ): Closeable {
-    // TODO solve this
-    val useFileSystemLock = !fileSystem.toString().contains("FakeFileSystem") // !Platform.isAndroid
-    return if (useFileSystemLock) {
-      fileSystemLock(inMemoryLock(directory), directory)
-    } else {
-      inMemoryLock(directory)
+    val memoryLock = inMemoryLock(directory)
+
+    // check if possibly a non System file system
+    if (FileSystem.SYSTEM.exists(directory)) {
+      try {
+        val fileSystemLock = fileSystemLock(directory)
+
+        return Closeable {
+          memoryLock.close()
+          fileSystemLock.close()
+        }
+      } catch (e: Exception) {
+        if (fileSystemSupportsLock()) {
+          memoryLock.close()
+          throw e
+        }
+      }
     }
+
+    return memoryLock
+  }
+
+  internal fun fileSystemSupportsLock(): Boolean {
+    val tmpLockFile = File.createTempFile("test-", ".lock")
+
+    val channel = FileChannel.open(tmpLockFile.toPath(), StandardOpenOption.APPEND)
+
+    return channel.tryLock().apply { close() } != null
   }
 
   /**
@@ -48,7 +69,7 @@ internal object CacheLock {
   fun inMemoryLock(directory: Path): Closeable {
     val existing = openCaches.putIfAbsent(directory, Exception("CacheLock($directory)"))
     if (existing != null) {
-      throw IllegalStateException("Cache already open at '$directory' in same process", existing)
+      throw LockException("Cache already open at '$directory' in same process", existing)
     }
     return okio.Closeable {
       openCaches.remove(directory)
@@ -62,20 +83,20 @@ internal object CacheLock {
   @SuppressLint("NewApi")
   @IgnoreJRERequirement // only called on JVM
   fun fileSystemLock(
-    memoryLock: Closeable,
     directory: Path,
   ): Closeable {
+    // update once https://github.com/square/okio/issues/1464 is available
+
     val lockFile = directory / "lock"
     lockFile.toFile().createNewFile()
     val channel = FileChannel.open(lockFile.toNioPath(), StandardOpenOption.APPEND)
 
-    checkNotNull(channel.tryLock()) {
-      "Cache already open at '$directory' in another process"
-    }
+    channel.tryLock() ?: throw LockException("Cache already open at '$directory' in another process")
 
     return okio.Closeable {
-      memoryLock.close()
       channel.close()
     }
   }
 }
+
+class LockException(message: String, cause: Exception? = null) : Exception(message, cause)
