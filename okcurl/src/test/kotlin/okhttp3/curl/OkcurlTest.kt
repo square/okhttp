@@ -16,10 +16,21 @@
 package okhttp3.curl
 
 import kotlin.test.Test
+import okhttp3.TestUtil
+import org.junit.jupiter.api.BeforeAll
 
 class OkcurlTest {
   @Test
   fun simple() {
     Main().main(listOf("--help"))
+  }
+
+  companion object {
+    @JvmStatic
+    @BeforeAll
+    fun beforeAll() {
+//    https://github.com/square/okhttp/issues/8342
+      TestUtil.assumeNotWindows()
+    }
   }
 }
