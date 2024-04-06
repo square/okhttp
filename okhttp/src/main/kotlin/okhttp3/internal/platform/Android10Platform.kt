@@ -17,8 +17,10 @@ package okhttp3.internal.platform
 
 import android.annotation.SuppressLint
 import android.os.Build
+import android.os.StrictMode
 import android.security.NetworkSecurityPolicy
 import android.util.CloseGuard
+import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -31,6 +33,7 @@ import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.tls.CertificateChainCleaner
+import okhttp3.internal.tls.TrustRootIndex
 
 /** Android 10+ (API 29+). */
 @SuppressSignatureCheck
@@ -47,6 +50,18 @@ class Android10Platform : Platform() {
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
     socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
       ?.trustManager(sslSocketFactory)
+
+  override fun newSSLContext(): SSLContext {
+    StrictMode.noteSlowCall("newSSLContext")
+
+    return super.newSSLContext()
+  }
+
+  override fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex {
+    StrictMode.noteSlowCall("buildTrustRootIndex")
+
+    return super.buildTrustRootIndex(trustManager)
+  }
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
