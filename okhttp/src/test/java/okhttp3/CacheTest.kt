@@ -3473,6 +3473,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
   @Test
   fun testPublicPathConstructor() {
+    cache.close()
+
     val events: MutableList<String> = ArrayList()
     fileSystem.createDirectories(cache.directoryPath)
     fileSystem.createDirectories(cache.directoryPath)
@@ -3495,22 +3497,22 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
           return path
         }
       }
-    val path: Path = "/cache2".toPath()
+    val path: Path = "/cache".toPath()
     val c = Cache(path, 100000L, loggingFileSystem)
     assertThat(c.directoryPath).isEqualTo(path)
     c.size()
     assertThat(events).containsExactly(
-      "metadataOrNull:/cache2/journal.bkp",
-      "metadataOrNull:/cache2",
-      "sink:/cache2/journal.bkp",
-      "delete:/cache2/journal.bkp",
-      "metadataOrNull:/cache2/journal",
-      "metadataOrNull:/cache2",
-      "sink:/cache2/journal.tmp",
-      "metadataOrNull:/cache2/journal",
-      "atomicMove:/cache2/journal.tmp",
-      "atomicMove:/cache2/journal",
-      "appendingSink:/cache2/journal",
+      "metadataOrNull:/cache/journal.bkp",
+      "metadataOrNull:/cache",
+      "sink:/cache/journal.bkp",
+      "delete:/cache/journal.bkp",
+      "metadataOrNull:/cache/journal",
+      "metadataOrNull:/cache",
+      "sink:/cache/journal.tmp",
+      "metadataOrNull:/cache/journal",
+      "atomicMove:/cache/journal.tmp",
+      "atomicMove:/cache/journal",
+      "appendingSink:/cache/journal",
     )
     events.clear()
     c.size()
