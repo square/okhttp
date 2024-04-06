@@ -4,7 +4,6 @@ import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
 import android.os.strictmode.Violation
 import assertk.assertThat
-import assertk.assertions.hasMessage
 import assertk.assertions.hasSize
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
