@@ -2759,7 +2759,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.0", entryMetadata)
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
-    cache = Cache(cache.directory.path.toPath(), Int.MAX_VALUE.toLong(), fileSystem)
+    cache = Cache(cachePath, Int.MAX_VALUE.toLong(), fileSystem)
     client =
       client.newBuilder()
         .cache(cache)
@@ -2808,7 +2808,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(cache.directory.path.toPath(), Int.MAX_VALUE.toLong(), fileSystem)
+    cache = Cache(cachePath, Int.MAX_VALUE.toLong(), fileSystem)
     client =
       client.newBuilder()
         .cache(cache)
@@ -2861,7 +2861,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(cache.directory.path.toPath(), Int.MAX_VALUE.toLong(), fileSystem)
+    cache = Cache(cachePath, Int.MAX_VALUE.toLong(), fileSystem)
     client =
       client.newBuilder()
         .cache(cache)
@@ -2906,7 +2906,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(cache.directory.path.toPath(), Int.MAX_VALUE.toLong(), fileSystem)
+    cache = Cache(cachePath, Int.MAX_VALUE.toLong(), fileSystem)
     client =
       client.newBuilder()
         .cache(cache)

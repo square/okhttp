@@ -27,6 +27,7 @@ import okio.ByteString.Companion.encodeUtf8
 import okio.buffer
 import okio.sink
 import okio.source
+import okio.use
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -34,9 +35,9 @@ import org.junit.jupiter.api.io.TempDir
 
 class FileOperatorTest {
   @TempDir
-  var tempDir: File? = null
-  private var file: File? = null
-  private var randomAccessFile: RandomAccessFile? = null
+  lateinit var tempDir: File
+  private lateinit var file: File
+  private lateinit var randomAccessFile: RandomAccessFile
 
   @BeforeEach
   fun setUp() {
@@ -46,7 +47,7 @@ class FileOperatorTest {
 
   @AfterEach
   fun tearDown() {
-    randomAccessFile!!.close()
+    randomAccessFile.close()
   }
 
   @Test
@@ -54,7 +55,7 @@ class FileOperatorTest {
     write("Hello, World".encodeUtf8())
     val operator =
       FileOperator(
-        randomAccessFile!!.getChannel(),
+        randomAccessFile.getChannel(),
       )
     val buffer = Buffer()
     operator.read(0, buffer, 5)
@@ -64,10 +65,12 @@ class FileOperatorTest {
   }
 
   @Test
-  fun write() {
+  fun
+    write() {
+    val fileChannel = randomAccessFile.getChannel()
     val operator =
       FileOperator(
-        randomAccessFile!!.getChannel(),
+        fileChannel,
       )
     val buffer1 = Buffer().writeUtf8("Hello, World")
     operator.write(0, buffer1, 5)
@@ -76,13 +79,14 @@ class FileOperatorTest {
     operator.write(3, buffer2, 7)
     assertThat(buffer2.readUtf8()).isEqualTo("!")
     assertThat<ByteString>(snapshot()).isEqualTo("Helicopter".encodeUtf8())
+    fileChannel.close()
   }
 
   @Test
   fun readAndWrite() {
     val operator =
       FileOperator(
-        randomAccessFile!!.getChannel(),
+        randomAccessFile.getChannel(),
       )
     write("woman god creates dinosaurs destroys. ".encodeUtf8())
     val buffer = Buffer()
@@ -120,11 +124,11 @@ class FileOperatorTest {
   fun multipleOperatorsShareOneFile() {
     val operatorA =
       FileOperator(
-        randomAccessFile!!.getChannel(),
+        randomAccessFile.getChannel(),
       )
     val operatorB =
       FileOperator(
-        randomAccessFile!!.getChannel(),
+        randomAccessFile.getChannel(),
       )
     val bufferA = Buffer()
     val bufferB = Buffer()
@@ -148,7 +152,7 @@ class FileOperatorTest {
     write(data)
     val operator =
       FileOperator(
-        randomAccessFile!!.getChannel(),
+        randomAccessFile.getChannel(),
       )
     val buffer = Buffer()
     operator.read(0, buffer, data.size.toLong())
@@ -160,7 +164,7 @@ class FileOperatorTest {
     val data = randomByteString(1000000)
     val operator =
       FileOperator(
-        randomAccessFile!!.getChannel(),
+        randomAccessFile.getChannel(),
       )
     val buffer = Buffer().write(data)
     operator.write(0, buffer, data.size.toLong())
@@ -171,7 +175,7 @@ class FileOperatorTest {
   fun readBounds() {
     val operator =
       FileOperator(
-        randomAccessFile!!.getChannel(),
+        randomAccessFile.getChannel(),
       )
     val buffer = Buffer()
     assertFailsWith<IndexOutOfBoundsException> {
@@ -183,7 +187,7 @@ class FileOperatorTest {
   fun writeBounds() {
     val operator =
       FileOperator(
-        randomAccessFile!!.getChannel(),
+        randomAccessFile.getChannel(),
       )
     val buffer = Buffer().writeUtf8("abc")
     assertFailsWith<IndexOutOfBoundsException> {
@@ -201,14 +205,13 @@ class FileOperatorTest {
   }
 
   private fun snapshot(): ByteString {
-    randomAccessFile!!.getChannel().force(false)
-    val source = file!!.source().buffer()
-    return source.readByteString()
+    randomAccessFile.getChannel().force(false)
+    return file.source().buffer().use { it.readByteString() }
   }
 
   private fun write(data: ByteString) {
-    val sink = file!!.sink().buffer()
-    sink.write(data)
-    sink.close()
+    val sink = file.sink().buffer().use {
+      it.write(data)
+    }
   }
 }

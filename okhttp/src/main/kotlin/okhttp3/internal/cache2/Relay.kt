@@ -344,7 +344,10 @@ class Relay private constructor(
       val header = Buffer()
       fileOperator.read(0, header, FILE_HEADER_SIZE)
       val prefix = header.readByteString(PREFIX_CLEAN.size.toLong())
-      if (prefix != PREFIX_CLEAN) throw IOException("unreadable cache file")
+      if (prefix != PREFIX_CLEAN) {
+        randomAccessFile.close()
+        throw IOException("unreadable cache file")
+      }
       val upstreamSize = header.readLong()
       val metadataSize = header.readLong()
 
