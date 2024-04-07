@@ -65,8 +65,7 @@ class FileOperatorTest {
   }
 
   @Test
-  fun
-    write() {
+  fun write() {
     val fileChannel = randomAccessFile.getChannel()
     val operator =
       FileOperator(
@@ -210,8 +209,9 @@ class FileOperatorTest {
   }
 
   private fun write(data: ByteString) {
-    val sink = file.sink().buffer().use {
-      it.write(data)
-    }
+    val sink =
+      file.sink().buffer().use {
+        it.write(data)
+      }
   }
 }
