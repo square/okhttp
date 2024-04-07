@@ -1,3 +1,5 @@
+import java.util.Properties
+
 rootProject.name = "okhttp-parent"
 
 plugins {
@@ -51,7 +53,15 @@ include(":container-tests")
 
 project(":okhttp-logging-interceptor").name = "logging-interceptor"
 
-if (!isKnownBrokenIntelliJ()) {
+val androidHome = System.getenv("ANDROID_HOME")
+val localProperties = Properties().apply {
+  val file = File("local.properties")
+  if (file.exists()) {
+    load(file.inputStream())
+  }
+}
+val sdkDir = localProperties.getProperty("sdk.dir")
+if ((androidHome != null || sdkDir != null) && !isKnownBrokenIntelliJ()) {
   include(":okhttp-android")
   include(":android-test")
   include(":android-test-app")
