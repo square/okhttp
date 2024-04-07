@@ -381,7 +381,7 @@ class RealConnectionPool(
     while (true) {
       val oldMap = this.addressStates
       val newMap = oldMap + (address to state)
-      if (policiesUpdater.compareAndSet(this, oldMap, newMap)) {
+      if (addressStatesUpdater.compareAndSet(this, oldMap, newMap)) {
         val oldPolicyMinimumConcurrentCalls = oldMap[address]?.policy?.minimumConcurrentCalls ?: 0
         newConnectionsNeeded = policy.minimumConcurrentCalls - oldPolicyMinimumConcurrentCalls
         break
@@ -459,7 +459,7 @@ class RealConnectionPool(
   companion object {
     fun get(connectionPool: ConnectionPool): RealConnectionPool = connectionPool.delegate
 
-    private var policiesUpdater =
+    private var addressStatesUpdater =
       AtomicReferenceFieldUpdater.newUpdater(
         RealConnectionPool::class.java,
         Map::class.java,
