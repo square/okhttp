@@ -234,11 +234,13 @@ class RealConnectionPool(
     var earliestOldConnection: RealConnection? = null
     var earliestEvictableIdleAtNs = Long.MAX_VALUE
     var earliestEvictableConnection: RealConnection? = null
+    var inUseConnectionCount = 0
     var evictableConnectionCount = 0
     for (connection in connections) {
       synchronized(connection) {
         // If the connection is in use, keep searching.
         if (pruneAndGetAllocationCount(connection, now) > 0) {
+          inUseConnectionCount++
           return@synchronized
         }
 
@@ -301,6 +303,11 @@ class RealConnectionPool(
       earliestEvictableConnection != null -> {
         // A connection will be ready to evict soon.
         return earliestEvictableIdleAtNs + keepAliveDurationNs - now
+      }
+
+      inUseConnectionCount > 0 -> {
+        // All connections are in use. It'll be at least the keep alive duration 'til we run again.
+        return keepAliveDurationNs
       }
 
       else -> {
@@ -452,8 +459,11 @@ class RealConnectionPool(
   companion object {
     fun get(connectionPool: ConnectionPool): RealConnectionPool = connectionPool.delegate
 
-    private var policiesUpdater = AtomicReferenceFieldUpdater.newUpdater(
-      RealConnectionPool::class.java, Map::class.java, "policies"
-    )
+    private var policiesUpdater =
+      AtomicReferenceFieldUpdater.newUpdater(
+        RealConnectionPool::class.java,
+        Map::class.java,
+        "addressStates",
+      )
   }
 }
