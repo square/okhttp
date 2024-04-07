@@ -21,7 +21,6 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
-import com.sun.tools.javac.platform.PlatformUtils
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.ProtocolException
