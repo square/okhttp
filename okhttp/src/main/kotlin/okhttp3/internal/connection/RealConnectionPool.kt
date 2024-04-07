@@ -207,7 +207,7 @@ class RealConnectionPool(
    */
   fun closeConnections(now: Long): Long {
     // Compute the concurrent call capacity for each address. We won't close a connection if doing
-    // so would violate a policy.
+    // so would violate a policy, unless it's OLD.
     val addressStates = this.addressStates
     for (state in addressStates.values) {
       state.concurrentCallCapacity = 0
