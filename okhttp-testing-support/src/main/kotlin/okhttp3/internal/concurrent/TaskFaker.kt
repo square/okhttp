@@ -16,7 +16,7 @@
 package okhttp3.internal.concurrent
 
 import assertk.assertThat
-import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
 import java.io.Closeable
 import java.util.AbstractQueue
 import java.util.concurrent.BlockingQueue
@@ -32,18 +32,14 @@ import okhttp3.OkHttpClient
  * deterministic.
  *
  * This class ensures that at most one thread is running at a time. This is initially the JUnit test
- * thread, which temporarily shares its execution privilege by calling [runTasks], [runNextTask], or
- * [advanceUntil]. These methods wait for its task threads to stop executing before it returns.
+ * thread, which yields its execution privilege while calling [runTasks], [runNextTask], or
+ * [advanceUntil]. These functions don't return until the task threads are all idle.
  *
- * Task threads stall execution in these ways:
+ * Task threads release their execution privilege in these ways:
  *
- *  * By being ready to start. Newly-created tasks don't run immediately.
- *  * By finishing their work. This occurs when [Runnable.run] returns.
- *  * By waiting until the simulated clock reaches a specific time.
- *  * By requesting to wait by calling [TaskRunner.Backend.coordinatorWait].
- *
- * Most test methods start by unblocking task threads, then wait for those task threads to stall
- * again before returning.
+ *  * By yielding in [TaskRunner.Backend.coordinatorWait].
+ *  * By yielding in [BlockingQueue.poll].
+ *  * By completing.
  */
 class TaskFaker : Closeable {
   @Suppress("NOTHING_TO_INLINE")
@@ -78,17 +74,22 @@ class TaskFaker : Closeable {
   var nanoTime = 0L
     private set
 
-  /** The thread currently waiting for time to advance. Guarded by [taskRunner]. */
-  private var waitingCoordinatorThread: Thread? = null
-
-  /** Tasks to run in sequence. Guarded by [taskRunner]. */
+  /** Backlog of tasks to run. Only one task runs at a time. Guarded by [taskRunner]. */
   private val serialTaskQueue = ArrayDeque<SerialTask>()
 
-  /** The task that's currently executing, or null if idle. Guarded by [taskRunner]. */
-  private var currentTask: SerialTask? = null
+  /** The task that's currently executing. Guarded by [taskRunner]. */
+  private var currentTask: SerialTask = TestThreadSerialTask
+
+  /** The coordinator task if it's waiting, and how it will resume. Guarded by [taskRunner]. */
+  private var waitingCoordinatorTask: SerialTask? = null
+  private var waitingCoordinatorInterrupted = false
+  private var waitingCoordinatorNotified = false
 
   /** How many times a new task has been started. Guarded by [taskRunner]. */
   private var contextSwitchCount = 0
+
+  /** Guarded by [taskRunner]. */
+  private var activeThreads = 0
 
   /** A task runner that posts tasks to this fake. Tasks won't be executed until requested. */
   val taskRunner: TaskRunner =
@@ -109,10 +110,18 @@ class TaskFaker : Closeable {
 
         override fun coordinatorNotify(taskRunner: TaskRunner) {
           taskRunner.assertThreadHoldsLock()
-          check(waitingCoordinatorThread != null)
+          check(waitingCoordinatorTask != null)
 
-          waitingCoordinatorThread = null
-          taskRunner.condition.signalAll()
+          // Queue a task to resume the waiting coordinator.
+          serialTaskQueue += object : SerialTask {
+            override fun start() {
+              taskRunner.assertThreadHoldsLock()
+              waitingCoordinatorNotified = true
+              val coordinatorTask = waitingCoordinatorTask ?: error("no coordinator waiting")
+              currentTask = coordinatorTask
+              taskRunner.condition.signalAll()
+            }
+          }
         }
 
         override fun coordinatorWait(
@@ -120,16 +129,24 @@ class TaskFaker : Closeable {
           nanos: Long,
         ) {
           taskRunner.assertThreadHoldsLock()
-
-          check(waitingCoordinatorThread == null)
+          check(waitingCoordinatorTask == null)
           if (nanos == 0L) return
 
+          // Yield until notified, interrupted, or the duration elapses.
           val waitUntil = nanoTime + nanos
-          val currentThread = Thread.currentThread()
-          waitingCoordinatorThread = currentThread
-          yieldUntil { waitingCoordinatorThread != currentThread || nanoTime >= waitUntil }
-          if (waitingCoordinatorThread == currentThread) {
-            waitingCoordinatorThread = null
+          val self = currentTask
+          waitingCoordinatorTask = self
+          waitingCoordinatorNotified = false
+          waitingCoordinatorInterrupted = false
+          yieldUntil {
+            waitingCoordinatorNotified || waitingCoordinatorInterrupted || nanoTime >= waitUntil
+          }
+
+          waitingCoordinatorTask = null
+          waitingCoordinatorNotified = false
+          if (waitingCoordinatorInterrupted) {
+            waitingCoordinatorInterrupted = false
+            throw InterruptedException()
           }
         }
 
@@ -148,14 +165,9 @@ class TaskFaker : Closeable {
     taskRunner.assertThreadDoesntHoldLock()
 
     taskRunner.lock.withLock {
-      check(currentTask == null)
+      check(currentTask == TestThreadSerialTask)
       nanoTime = newTime
-      currentTask = TestThreadSerialTask
-      try {
-        yieldUntil(untilExhausted = true)
-      } finally {
-        currentTask = null
-      }
+      yieldUntil(yieldUntilExhausted = true)
     }
   }
 
@@ -164,21 +176,24 @@ class TaskFaker : Closeable {
     taskRunner.assertThreadDoesntHoldLock()
 
     taskRunner.lock.withLock {
-      assertThat(serialTaskQueue).isEmpty()
+      assertThat(activeThreads).isEqualTo(0)
     }
   }
 
   /** Unblock a waiting task thread. Used by the test thread only. */
   fun interruptCoordinatorThread() {
     taskRunner.assertThreadDoesntHoldLock()
-    require(currentTask == null)
+    require(currentTask == TestThreadSerialTask)
 
-    // Make sure the coordinator is ready to be interrupted.
-    runTasks()
-
-    taskRunner.lock.withLock {
-      val toInterrupt = waitingCoordinatorThread ?: error("no thread currently waiting")
-      toInterrupt.interrupt()
+    // Queue a task to interrupt the waiting coordinator.
+    serialTaskQueue += object : SerialTask {
+      override fun start() {
+        taskRunner.assertThreadHoldsLock()
+        waitingCoordinatorInterrupted = true
+        val coordinatorTask = waitingCoordinatorTask ?: error("no coordinator waiting")
+        currentTask = coordinatorTask
+        taskRunner.condition.signalAll()
+      }
     }
 
     // Let the coordinator process its interruption.
@@ -214,23 +229,24 @@ class TaskFaker : Closeable {
   }
 
   /**
-   * Process the queue until [untilConditionIsMet] returns true.
+   * Process the queue until [condition] returns true.
    *
    * @param resumeEagerly true to prioritize the current task over other queued tasks.
-   * @param untilExhausted true to keep yielding until there's no other runnable tasks.
+   * @param yieldUntilExhausted true to keep yielding until there's no other runnable tasks.
    */
   private tailrec fun yieldUntil(
     resumeEagerly: Boolean = false,
-    untilExhausted: Boolean = false,
-    untilConditionIsMet: () -> Boolean = { true },
+    yieldUntilExhausted: Boolean = false,
+    condition: () -> Boolean = { true },
   ) {
     taskRunner.assertThreadHoldsLock()
     val self = currentTask ?: error("no executing queue entry?")
 
     val yieldCompleteTask = object : SerialTask {
-      override fun isReady() = untilConditionIsMet()
+      override fun isReady() = condition()
 
       override fun start() {
+        taskRunner.assertThreadHoldsLock()
         currentTask = self
         taskRunner.condition.signalAll()
       }
@@ -242,24 +258,26 @@ class TaskFaker : Closeable {
       serialTaskQueue.addLast(yieldCompleteTask)
     }
 
-    currentTask = null
-
     val startedTask = startNextTask()
     val otherTasksStarted = startedTask != yieldCompleteTask
 
-    while (currentTask != self) {
-      taskRunner.condition.await()
+    try {
+      while (currentTask != self) {
+        taskRunner.condition.await()
+      }
+    } finally {
+      serialTaskQueue.remove(yieldCompleteTask)
     }
 
-    if (untilExhausted && otherTasksStarted) {
-      return yieldUntil(resumeEagerly, true, untilConditionIsMet)
+    // If we're yielding until we're exhausted and a task run, keep going until a task doesn't run.
+    if (yieldUntilExhausted && otherTasksStarted) {
+      return yieldUntil(resumeEagerly, true, condition)
     }
   }
 
   /** Returns the task that was started, or null if there were no tasks to start. */
   private fun startNextTask(): SerialTask? {
     taskRunner.assertThreadHoldsLock()
-    require(currentTask == null)
 
     val index = serialTaskQueue.indexOfFirst { it.isReady() }
     if (index == -1) return null
@@ -272,9 +290,10 @@ class TaskFaker : Closeable {
   }
 
   private interface SerialTask {
+    /** Returns true if this task is ready to start. */
     fun isReady() = true
 
-    /** Do this task's work, then start another, such as by calling [startNextTask]. */
+    /** Do this task's work, and then start another, such as by calling [startNextTask]. */
     fun start()
   }
 
@@ -285,23 +304,22 @@ class TaskFaker : Closeable {
   inner class RunnableSerialTask(
     private val runnable: Runnable,
   ) : SerialTask {
-    @Volatile
-    var started = false
-      private set
-
     override fun start() {
+      taskRunner.assertThreadHoldsLock()
       require(currentTask == this)
-      started = true
+      activeThreads++
+
       tasksExecutor.execute {
         taskRunner.assertThreadDoesntHoldLock()
         require(currentTask == this)
         try {
           runnable.run()
+          require(currentTask == this)
         } catch (e: InterruptedException) {
           if (!tasksExecutor.isShutdown) throw e // Ignore shutdown-triggered interruptions.
         } finally {
           taskRunner.lock.withLock {
-            currentTask = null
+            activeThreads--
             startNextTask()
           }
         }
