@@ -70,6 +70,7 @@ class RealWebSocketTest {
     server.listener.assertExhausted()
     server.source.close()
     client.source.close()
+    taskFaker.runTasks()
     server.webSocket!!.tearDown()
     client.webSocket!!.tearDown()
     taskFaker.close()
@@ -78,7 +79,6 @@ class RealWebSocketTest {
   @Test
   fun close() {
     client.webSocket!!.close(1000, "Hello!")
-    taskFaker.runTasks()
     // This will trigger a close response.
     assertThat(server.processNextFrame()).isFalse()
     server.listener.assertClosing(1000, "Hello!")
@@ -132,7 +132,6 @@ class RealWebSocketTest {
   @Test
   fun serverCloseThenWritingPingSucceeds() {
     server.webSocket!!.close(1000, "Hello!")
-    taskFaker.runTasks()
     client.processNextFrame()
     client.listener.assertClosing(1000, "Hello!")
     assertThat(client.webSocket!!.pong("Pong?".encodeUtf8())).isTrue()
@@ -141,7 +140,6 @@ class RealWebSocketTest {
   @Test
   fun clientCanWriteMessagesAfterServerClose() {
     server.webSocket!!.close(1000, "Hello!")
-    taskFaker.runTasks()
     client.processNextFrame()
     client.listener.assertClosing(1000, "Hello!")
     assertThat(client.webSocket!!.send("Hi!")).isTrue()
@@ -152,11 +150,11 @@ class RealWebSocketTest {
   @Test
   fun serverCloseThenClientClose() {
     server.webSocket!!.close(1000, "Hello!")
-    taskFaker.runTasks()
     client.processNextFrame()
     client.listener.assertClosing(1000, "Hello!")
     assertThat(client.webSocket!!.close(1000, "Bye!")).isTrue()
     client.webSocket!!.finishReader()
+    taskFaker.runTasks()
     client.listener.assertClosed(1000, "Hello!")
     server.processNextFrame()
     server.listener.assertClosing(1000, "Bye!")
@@ -171,7 +169,6 @@ class RealWebSocketTest {
     client.listener.assertClosing(1005, "")
     client.webSocket!!.finishReader()
     assertThat(client.webSocket!!.close(1000, "Bye!")).isTrue()
-    taskFaker.runTasks()
     server.processNextFrame()
     server.listener.assertClosing(1000, "Bye!")
     server.webSocket!!.finishReader()
@@ -238,7 +235,6 @@ class RealWebSocketTest {
   @Test
   fun serverCloseClosesConnection() {
     server.webSocket!!.close(1000, "Hello!")
-    taskFaker.runTasks()
     client.processNextFrame() // Read server close, send client close, close connection.
     assertThat(client.closed).isFalse()
     client.listener.assertClosing(1000, "Hello!")
@@ -256,7 +252,6 @@ class RealWebSocketTest {
   fun clientAndServerCloseClosesConnection() {
     // Send close from both sides at the same time.
     server.webSocket!!.close(1000, "Hello!")
-    taskFaker.runTasks()
     client.processNextFrame() // Read close, close connection close.
     assertThat(client.closed).isFalse()
     client.webSocket!!.close(1000, "Hi!")
@@ -277,7 +272,6 @@ class RealWebSocketTest {
   fun serverCloseBreaksReadMessageLoop() {
     server.webSocket!!.send("Hello!")
     server.webSocket!!.close(1000, "Bye!")
-    taskFaker.runTasks()
     assertThat(client.processNextFrame()).isTrue()
     client.listener.assertTextMessage("Hello!")
     assertThat(client.processNextFrame()).isFalse()
@@ -303,7 +297,6 @@ class RealWebSocketTest {
   @Test
   fun protocolErrorInCloseResponseClosesConnection() {
     client.webSocket!!.close(1000, "Hello")
-    taskFaker.runTasks()
     server.processNextFrame()
     // Not closed until close reply is received.
     assertThat(client.closed).isFalse()
@@ -324,7 +317,6 @@ class RealWebSocketTest {
   @Test
   fun protocolErrorAfterCloseDoesNotSendClose() {
     client.webSocket!!.close(1000, "Hello!")
-    taskFaker.runTasks()
     server.processNextFrame()
 
     // Not closed until close reply is received.
@@ -402,7 +394,6 @@ class RealWebSocketTest {
 
     // At 0ms the server sends 3 unexpected pongs. The client accepts 'em and ignores em.
     server.webSocket!!.pong("pong 1".encodeUtf8())
-    taskFaker.runTasks()
     client.processNextFrame()
     server.webSocket!!.pong("pong 2".encodeUtf8())
     client.processNextFrame()
@@ -527,6 +518,7 @@ class RealWebSocketTest {
     }
 
     fun processNextFrame(): Boolean {
+      taskFaker.runTasks()
       return webSocket!!.processNextFrame()
     }
 

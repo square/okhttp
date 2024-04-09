@@ -25,10 +25,8 @@ import kotlin.test.assertFailsWith
 import okhttp3.FakeRoutePlanner
 import okhttp3.FakeRoutePlanner.ConnectState.TLS_CONNECTED
 import okhttp3.internal.concurrent.TaskFaker
-import okhttp3.testing.Flaky
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import org.junitpioneer.jupiter.RetryingTest
 
 /**
  * Unit test for [FastFallbackExchangeFinder] implementation details.
@@ -790,8 +788,7 @@ internal class FastFallbackExchangeFinderTest {
    *
    * https://github.com/square/okhttp/issues/7152
    */
-  @RetryingTest(5)
-  @Flaky
+  @Test
   fun reusePlanAndNewConnectRace() {
     val plan0 = routePlanner.addPlan()
     plan0.tcpConnectDelayNanos = 250.ms
@@ -814,12 +811,8 @@ internal class FastFallbackExchangeFinderTest {
     taskFaker.advanceUntil(250.ms)
     assertEvents(
       "take plan 1",
-    )
-
-    taskFaker.runTasks()
-    assertEvents(
-      "plan 0 TCP connected",
       "plan 0 cancel",
+      "plan 0 TCP connect canceled",
     )
   }
 

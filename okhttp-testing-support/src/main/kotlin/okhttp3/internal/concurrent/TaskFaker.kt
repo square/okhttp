@@ -116,10 +116,14 @@ class TaskFaker : Closeable {
           serialTaskQueue += object : SerialTask {
             override fun start() {
               taskRunner.assertThreadHoldsLock()
-              waitingCoordinatorNotified = true
-              val coordinatorTask = waitingCoordinatorTask ?: error("no coordinator waiting")
-              currentTask = coordinatorTask
-              taskRunner.condition.signalAll()
+              val coordinatorTask = waitingCoordinatorTask
+              if (coordinatorTask != null) {
+                waitingCoordinatorNotified = true
+                currentTask = coordinatorTask
+                taskRunner.condition.signalAll()
+              } else {
+                startNextTask()
+              }
             }
           }
         }
@@ -212,9 +216,10 @@ class TaskFaker : Closeable {
 
   /** Sleep until [durationNanos] elapses. For use by the task threads. */
   fun sleep(durationNanos: Long) {
-    taskRunner.assertThreadHoldsLock()
-    val sleepUntil = nanoTime + durationNanos
-    yieldUntil { nanoTime >= sleepUntil }
+    taskRunner.lock.withLock {
+      val sleepUntil = nanoTime + durationNanos
+      yieldUntil { nanoTime >= sleepUntil }
+    }
   }
 
   /**
@@ -240,7 +245,7 @@ class TaskFaker : Closeable {
     condition: () -> Boolean = { true },
   ) {
     taskRunner.assertThreadHoldsLock()
-    val self = currentTask ?: error("no executing queue entry?")
+    val self = currentTask
 
     val yieldCompleteTask = object : SerialTask {
       override fun isReady() = condition()
@@ -314,9 +319,7 @@ class TaskFaker : Closeable {
         require(currentTask == this)
         try {
           runnable.run()
-          require(currentTask == this)
-        } catch (e: InterruptedException) {
-          if (!tasksExecutor.isShutdown) throw e // Ignore shutdown-triggered interruptions.
+          require(currentTask == this) { "unexpected current task: $currentTask" }
         } finally {
           taskRunner.lock.withLock {
             activeThreads--
@@ -344,25 +347,23 @@ class TaskFaker : Closeable {
       timeout: Long,
       unit: TimeUnit,
     ): T? {
-      taskRunner.assertThreadHoldsLock()
-
-      val waitUntil = nanoTime + unit.toNanos(timeout)
-      while (true) {
-        val result = poll()
-        if (result != null) return result
-        if (nanoTime >= waitUntil) return null
-        val editCountBefore = editCount
-        yieldUntil { editCount > editCountBefore }
+      taskRunner.lock.withLock {
+        val waitUntil = nanoTime + unit.toNanos(timeout)
+        while (true) {
+          val result = poll()
+          if (result != null) return result
+          if (nanoTime >= waitUntil) return null
+          val editCountBefore = editCount
+          yieldUntil { nanoTime >= waitUntil || editCount > editCountBefore }
+        }
       }
     }
 
     override fun put(element: T) {
-      taskRunner.assertThreadHoldsLock()
-
-      delegate.put(element)
-
-      editCount++
-      taskRunner.condition.signalAll()
+      taskRunner.lock.withLock {
+        delegate.put(element)
+        editCount++
+      }
     }
 
     override fun iterator() = error("unsupported")
