@@ -350,10 +350,10 @@ class RealConnection(
 
     if (allocationLimit < oldLimit) {
       // We might need new connections to keep policies satisfied
-      connectionPool.scheduleConnectionOpener()
+      connectionPool.scheduleOpener(route.address)
     } else if (allocationLimit > oldLimit) {
       // We might no longer need some connections
-      connectionPool.scheduleConnectionCloser()
+      connectionPool.scheduleCloser()
     }
   }
 
