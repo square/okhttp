@@ -59,10 +59,14 @@ class TaskFaker : Closeable {
   val logger = Logger.getLogger("TaskFaker." + instance++)
 
   /** Though this executor service may hold many threads, they are not executed concurrently. */
-  private val tasksExecutor = Executors.newCachedThreadPool(object : ThreadFactory {
-    private var nextId = 1
-    override fun newThread(runnable: Runnable) = Thread(runnable, "TaskFaker-${nextId++}")
-  })
+  private val tasksExecutor =
+    Executors.newCachedThreadPool(
+      object : ThreadFactory {
+        private var nextId = 1
+
+        override fun newThread(runnable: Runnable) = Thread(runnable, "TaskFaker-${nextId++}")
+      },
+    )
 
   /**
    * True if this task faker has ever had multiple tasks scheduled to run concurrently. Guarded by
@@ -113,19 +117,20 @@ class TaskFaker : Closeable {
           check(waitingCoordinatorTask != null)
 
           // Queue a task to resume the waiting coordinator.
-          serialTaskQueue += object : SerialTask {
-            override fun start() {
-              taskRunner.assertThreadHoldsLock()
-              val coordinatorTask = waitingCoordinatorTask
-              if (coordinatorTask != null) {
-                waitingCoordinatorNotified = true
-                currentTask = coordinatorTask
-                taskRunner.condition.signalAll()
-              } else {
-                startNextTask()
+          serialTaskQueue +=
+            object : SerialTask {
+              override fun start() {
+                taskRunner.assertThreadHoldsLock()
+                val coordinatorTask = waitingCoordinatorTask
+                if (coordinatorTask != null) {
+                  waitingCoordinatorNotified = true
+                  currentTask = coordinatorTask
+                  taskRunner.condition.signalAll()
+                } else {
+                  startNextTask()
+                }
               }
             }
-          }
         }
 
         override fun coordinatorWait(
@@ -190,15 +195,16 @@ class TaskFaker : Closeable {
     require(currentTask == TestThreadSerialTask)
 
     // Queue a task to interrupt the waiting coordinator.
-    serialTaskQueue += object : SerialTask {
-      override fun start() {
-        taskRunner.assertThreadHoldsLock()
-        waitingCoordinatorInterrupted = true
-        val coordinatorTask = waitingCoordinatorTask ?: error("no coordinator waiting")
-        currentTask = coordinatorTask
-        taskRunner.condition.signalAll()
+    serialTaskQueue +=
+      object : SerialTask {
+        override fun start() {
+          taskRunner.assertThreadHoldsLock()
+          waitingCoordinatorInterrupted = true
+          val coordinatorTask = waitingCoordinatorTask ?: error("no coordinator waiting")
+          currentTask = coordinatorTask
+          taskRunner.condition.signalAll()
+        }
       }
-    }
 
     // Let the coordinator process its interruption.
     runTasks()
@@ -247,15 +253,16 @@ class TaskFaker : Closeable {
     taskRunner.assertThreadHoldsLock()
     val self = currentTask
 
-    val yieldCompleteTask = object : SerialTask {
-      override fun isReady() = condition()
+    val yieldCompleteTask =
+      object : SerialTask {
+        override fun isReady() = condition()
 
-      override fun start() {
-        taskRunner.assertThreadHoldsLock()
-        currentTask = self
-        taskRunner.condition.signalAll()
+        override fun start() {
+          taskRunner.assertThreadHoldsLock()
+          currentTask = self
+          taskRunner.condition.signalAll()
+        }
       }
-    }
 
     if (resumeEagerly) {
       serialTaskQueue.addFirst(yieldCompleteTask)
