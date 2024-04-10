@@ -51,7 +51,7 @@ class RobolectricOkHttpClientTest {
     context = ApplicationProvider.getApplicationContext<Application>()
     client =
       OkHttpClient.Builder()
-        .cache(Cache("/cache".toPath(), 10_000_000, FakeFileSystem()))
+        .cache(Cache(FakeFileSystem(), "/cache".toPath(), 10_000_000))
         .build()
   }
 

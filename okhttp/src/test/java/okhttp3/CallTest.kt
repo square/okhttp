@@ -146,9 +146,9 @@ open class CallTest {
   private val callback = RecordingCallback()
   private val cache =
     Cache(
+      fileSystem = LoggingFilesystem(fileSystem),
       directory = "/cache".toPath(),
       maxSize = Int.MAX_VALUE.toLong(),
-      fileSystem = LoggingFilesystem(fileSystem),
     )
 
   @BeforeEach

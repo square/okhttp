@@ -31,7 +31,7 @@ suspend fun main() {
 
   val client =
     OkHttpClient.Builder()
-      .cache(Cache("build/okhttp_cache".toPath(), 100_000_000, FileSystem.SYSTEM))
+      .cache(Cache(FileSystem.SYSTEM, "build/okhttp_cache".toPath(), 100_000_000))
       .build()
 
   val sslLabsClients = SslLabsClient(client).clients()

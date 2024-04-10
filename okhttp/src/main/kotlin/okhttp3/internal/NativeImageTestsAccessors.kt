@@ -29,7 +29,7 @@ internal fun buildCache(
   maxSize: Long,
   fileSystem: FileSystem,
 ): Cache {
-  return Cache(file, maxSize, fileSystem)
+  return Cache(fileSystem, file, maxSize)
 }
 
 internal var RealConnection.idleAtNsAccessor: Long
