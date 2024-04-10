@@ -20,7 +20,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import kotlin.test.Test
-import kotlin.time.DurationUnit
+import kotlin.time.Duration.Companion.seconds
 
 class CacheControlTest {
   @Test
@@ -48,9 +48,9 @@ class CacheControlTest {
       CacheControl.Builder()
         .noCache()
         .noStore()
-        .maxAge(1, DurationUnit.SECONDS)
-        .maxStale(2, DurationUnit.SECONDS)
-        .minFresh(3, DurationUnit.SECONDS)
+        .maxAge(1.seconds)
+        .maxStale(2.seconds)
+        .minFresh(3.seconds)
         .onlyIfCached()
         .noTransform()
         .immutable()
