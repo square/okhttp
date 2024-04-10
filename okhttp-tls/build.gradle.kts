@@ -22,7 +22,7 @@ dependencies {
   compileOnly(libs.animalsniffer.annotations)
 
   testImplementation(projects.okhttpTestingSupport)
-  testImplementation(projects.mockwebserver3Junit5)
+  testImplementation(projects.mockwebserverJunit5)
   testImplementation(libs.junit)
   testImplementation(libs.kotlin.test.common)
   testImplementation(libs.kotlin.test.junit)

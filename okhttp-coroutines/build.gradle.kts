@@ -26,7 +26,7 @@ dependencies {
   testApi(libs.assertk)
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(libs.kotlinx.coroutines.test)
-  testImplementation(projects.mockwebserver3Junit5)
+  testImplementation(projects.mockwebserverJunit5)
 }
 
 mavenPublishing {

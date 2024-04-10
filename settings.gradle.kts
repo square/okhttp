@@ -5,13 +5,9 @@ plugins {
 }
 
 include(":mockwebserver")
-project(":mockwebserver").name = "mockwebserver3"
-include(":mockwebserver-deprecated")
-project(":mockwebserver-deprecated").name = "mockwebserver"
+include(":mockwebserver-2015")
 include(":mockwebserver-junit4")
-project(":mockwebserver-junit4").name = "mockwebserver3-junit4"
 include(":mockwebserver-junit5")
-project(":mockwebserver-junit5").name = "mockwebserver3-junit5"
 
 val androidBuild: String by settings
 val graalBuild: String by settings

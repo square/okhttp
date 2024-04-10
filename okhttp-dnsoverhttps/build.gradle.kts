@@ -20,7 +20,7 @@ dependencies {
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.mockwebserver)
-  testImplementation(projects.mockwebserver3Junit5)
+  testImplementation(projects.mockwebserverJunit5)
   testImplementation(libs.squareup.okio.fakefilesystem)
   testImplementation(libs.conscrypt.openjdk)
   testImplementation(libs.junit)

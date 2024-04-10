@@ -67,7 +67,7 @@ dependencies {
 
   androidTestImplementation(projects.okhttpTls)
   androidTestImplementation(libs.assertk)
-  androidTestImplementation(projects.mockwebserver3Junit4)
+  androidTestImplementation(projects.mockwebserverJunit4)
   androidTestImplementation(libs.androidx.test.runner)
 }
 

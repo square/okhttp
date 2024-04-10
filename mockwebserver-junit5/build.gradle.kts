@@ -21,7 +21,7 @@ tasks {
 }
 
 dependencies {
-  api(projects.mockwebserver3)
+  api(projects.mockwebserver)
   api(libs.junit.jupiter.api)
   compileOnly(libs.animalsniffer.annotations)
 

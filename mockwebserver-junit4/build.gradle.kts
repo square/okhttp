@@ -15,7 +15,7 @@ tasks.jar {
 }
 
 dependencies {
-  api(projects.mockwebserver3)
+  api(projects.mockwebserver)
   api(libs.junit)
 
   testImplementation(libs.assertk)

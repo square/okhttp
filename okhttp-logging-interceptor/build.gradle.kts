@@ -20,8 +20,8 @@ dependencies {
 
   testCompileOnly(libs.findbugs.jsr305)
   testImplementation(libs.junit)
-  testImplementation(projects.mockwebserver3)
-  testImplementation(projects.mockwebserver3Junit5)
+  testImplementation(projects.mockwebserver)
+  testImplementation(projects.mockwebserverJunit5)
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.okhttpTls)
   testImplementation(libs.assertk)
