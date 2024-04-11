@@ -21,11 +21,11 @@ import java.io.Closeable
 import java.util.AbstractQueue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
-import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 import kotlin.concurrent.withLock
 import okhttp3.OkHttpClient
+import okhttp3.TestUtil.threadFactory
 
 /**
  * Runs a [TaskRunner] in a controlled environment so that everything is sequential and
@@ -59,14 +59,7 @@ class TaskFaker : Closeable {
   val logger = Logger.getLogger("TaskFaker." + instance++)
 
   /** Though this executor service may hold many threads, they are not executed concurrently. */
-  private val tasksExecutor =
-    Executors.newCachedThreadPool(
-      object : ThreadFactory {
-        private var nextId = 1
-
-        override fun newThread(runnable: Runnable) = Thread(runnable, "TaskFaker-${nextId++}")
-      },
-    )
+  private val tasksExecutor = Executors.newCachedThreadPool(threadFactory("TaskFaker"))
 
   /**
    * True if this task faker has ever had multiple tasks scheduled to run concurrently. Guarded by

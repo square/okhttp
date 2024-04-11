@@ -20,6 +20,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
 import java.util.Arrays
+import java.util.concurrent.ThreadFactory
 import okhttp3.internal.http2.Header
 import okio.Buffer
 import okio.FileSystem
@@ -121,6 +122,17 @@ object TestUtil {
   fun Throwable.assertSuppressed(block: (List<@JvmSuppressWildcards Throwable>) -> Unit) {
     if (isGraalVmImage) return
     block(suppressed.toList())
+  }
+
+  @JvmStatic
+  fun threadFactory(name: String): ThreadFactory {
+    return object : ThreadFactory {
+      private var nextId = 1
+
+      override fun newThread(runnable: Runnable): Thread {
+        return Thread(runnable, "$name-${nextId++}")
+      }
+    }
   }
 }
 

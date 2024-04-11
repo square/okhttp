@@ -24,8 +24,8 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.logging.Logger
+import okhttp3.TestUtil.threadFactory
 import okhttp3.internal.closeQuietly
-import okhttp3.internal.threadFactory
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
@@ -41,7 +41,7 @@ class MockHttp2Peer : Closeable {
   private val outFrames: MutableList<OutFrame> = ArrayList()
   private val inFrames: BlockingQueue<InFrame> = LinkedBlockingQueue()
   private var port = 0
-  private val executor = Executors.newSingleThreadExecutor(threadFactory("MockHttp2Peer", false))
+  private val executor = Executors.newSingleThreadExecutor(threadFactory("MockHttp2Peer"))
   private var serverSocket: ServerSocket? = null
   private var socket: Socket? = null
 
