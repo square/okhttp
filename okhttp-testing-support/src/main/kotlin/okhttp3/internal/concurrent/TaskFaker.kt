@@ -176,7 +176,7 @@ class TaskFaker : Closeable {
     taskRunner.lock.withLock {
       check(currentTask == TestThreadSerialTask)
       nanoTime = newTime
-      yieldUntil(yieldUntilExhausted = true)
+      yieldUntil(ResumePriority.AfterOtherTasks)
     }
   }
 
@@ -216,7 +216,9 @@ class TaskFaker : Closeable {
 
     taskRunner.lock.withLock {
       val contextSwitchCountBefore = contextSwitchCount
-      yieldUntil(resumeEagerly = true) { contextSwitchCount > contextSwitchCountBefore }
+      yieldUntil(ResumePriority.BeforeOtherTasks) {
+        contextSwitchCount > contextSwitchCountBefore
+      }
     }
   }
 
@@ -239,15 +241,9 @@ class TaskFaker : Closeable {
     }
   }
 
-  /**
-   * Process the queue until [condition] returns true.
-   *
-   * @param resumeEagerly true to prioritize the current task over other queued tasks.
-   * @param yieldUntilExhausted true to keep yielding until there's no other runnable tasks.
-   */
+  /** Process the queue until [condition] returns true. */
   private tailrec fun yieldUntil(
-    resumeEagerly: Boolean = false,
-    yieldUntilExhausted: Boolean = false,
+    strategy: ResumePriority = ResumePriority.AfterEnqueuedTasks,
     condition: () -> Boolean = { true },
   ) {
     taskRunner.assertThreadHoldsLock()
@@ -264,7 +260,7 @@ class TaskFaker : Closeable {
         }
       }
 
-    if (resumeEagerly) {
+    if (strategy == ResumePriority.BeforeOtherTasks) {
       serialTaskQueue.addFirst(yieldCompleteTask)
     } else {
       serialTaskQueue.addLast(yieldCompleteTask)
@@ -282,9 +278,20 @@ class TaskFaker : Closeable {
     }
 
     // If we're yielding until we're exhausted and a task run, keep going until a task doesn't run.
-    if (yieldUntilExhausted && otherTasksStarted) {
-      return yieldUntil(resumeEagerly, true, condition)
+    if (strategy == ResumePriority.AfterOtherTasks && otherTasksStarted) {
+      return yieldUntil(strategy, condition)
     }
+  }
+
+  private enum class ResumePriority {
+    /** Resumes as soon as the condition is satisfied. */
+    BeforeOtherTasks,
+
+    /** Resumes after the already-enqueued tasks. */
+    AfterEnqueuedTasks,
+
+    /** Resumes after all other tasks, including tasks enqueued while yielding. */
+    AfterOtherTasks,
   }
 
   /** Returns the task that was started, or null if there were no tasks to start. */
