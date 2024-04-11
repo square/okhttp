@@ -74,6 +74,7 @@ import okhttp3.SimpleProvider
 import okhttp3.TestLogHandler
 import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.TestUtil.repeat
+import okhttp3.TestUtil.threadFactory
 import okhttp3.internal.DoubleInetAddressDns
 import okhttp3.internal.EMPTY_REQUEST
 import okhttp3.internal.RecordingOkAuthenticator
@@ -509,7 +510,7 @@ class HttpOverHttp2Test {
     setUp(protocol, mockWebServer)
     server.enqueue(MockResponse(body = "A"))
     server.enqueue(MockResponse(body = "A"))
-    val executor = Executors.newCachedThreadPool()
+    val executor = Executors.newCachedThreadPool(threadFactory("HttpOverHttp2Test"))
     val countDownLatch = CountDownLatch(2)
     executor.execute(AsyncRequest("/r1", countDownLatch))
     executor.execute(AsyncRequest("/r2", countDownLatch))

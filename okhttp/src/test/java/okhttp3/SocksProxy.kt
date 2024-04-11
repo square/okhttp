@@ -30,9 +30,9 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Level
 import java.util.logging.Logger
+import okhttp3.TestUtil.threadFactory
 import okhttp3.internal.and
 import okhttp3.internal.closeQuietly
-import okhttp3.internal.threadFactory
 import okhttp3.internal.threadName
 import okio.Buffer
 import okio.BufferedSink
@@ -47,7 +47,7 @@ import okio.use
  * See [RFC 1928](https://www.ietf.org/rfc/rfc1928.txt).
  */
 class SocksProxy {
-  private val executor = Executors.newCachedThreadPool(threadFactory("SocksProxy", false))
+  private val executor = Executors.newCachedThreadPool(threadFactory("SocksProxy"))
   private var serverSocket: ServerSocket? = null
   private val connectionCount = AtomicInteger()
   private val openSockets = Collections.newSetFromMap(ConcurrentHashMap<Socket, Boolean>())

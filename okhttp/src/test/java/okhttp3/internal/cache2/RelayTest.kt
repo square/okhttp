@@ -25,6 +25,7 @@ import java.io.IOException
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import kotlin.test.assertFailsWith
+import okhttp3.TestUtil.threadFactory
 import okhttp3.internal.cache2.Relay.Companion.edit
 import okhttp3.internal.cache2.Relay.Companion.read
 import okio.Buffer
@@ -44,7 +45,7 @@ import org.junit.jupiter.api.io.TempDir
 class RelayTest {
   @TempDir
   var tempDir: File? = null
-  private val executor = Executors.newCachedThreadPool()
+  private val executor = Executors.newCachedThreadPool(threadFactory("RelayTest"))
   private val metadata: ByteString = "great metadata!".encodeUtf8()
   private lateinit var file: File
 

@@ -30,6 +30,7 @@ import javax.net.SocketFactory
 import javax.net.ssl.SSLSocket
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
+import okhttp3.TestUtil.threadFactory
 import okhttp3.internal.closeQuietly
 import okhttp3.testing.PlatformRule
 import okio.ByteString.Companion.toByteString
@@ -47,7 +48,7 @@ class HandshakeCertificatesTest {
   private var serverSocket: ServerSocket? = null
 
   @BeforeEach fun setUp() {
-    executorService = Executors.newCachedThreadPool()
+    executorService = Executors.newCachedThreadPool(threadFactory("HandshakeCertificatesTest"))
   }
 
   @AfterEach fun tearDown() {
