@@ -21,6 +21,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isTrue
+import okhttp3.Address
 import okhttp3.ConnectionPool
 import okhttp3.FakeRoutePlanner
 import okhttp3.OkHttpClient
@@ -28,11 +29,17 @@ import okhttp3.Request
 import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.TestValueFactory
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.http2.Http2
+import okhttp3.internal.http2.Http2Connection
+import okhttp3.internal.http2.Http2ConnectionTest
+import okhttp3.internal.http2.MockHttp2Peer
+import okhttp3.internal.http2.Settings
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
 class ConnectionPoolTest {
   private val factory = TestValueFactory()
+  private val peer = MockHttp2Peer()
 
   /** The fake task runner prevents the cleanup runnable from being started.  */
   private val addressA = factory.newAddress("a")
@@ -46,6 +53,7 @@ class ConnectionPoolTest {
 
   @AfterEach fun tearDown() {
     factory.close()
+    peer.close()
   }
 
   @Test fun connectionsEvictedWhenIdleLongEnough() {
@@ -195,54 +203,133 @@ class ConnectionPoolTest {
     assertThat(realTaskRunner.activeQueues()).isEmpty()
   }
 
-  @Test fun connectionPreWarming() {
-    // TODO this test spins forever due to bugs in TaskFaker.runTasks()
+  @Test fun connectionPreWarmingHttp1() {
+    val expireTime = System.nanoTime() + 1_000_000_000_000
 
-    // routePlanner.autoGeneratePlans = true
-    // routePlanner.defaultConnectionIdleAtNanos = System.nanoTime() + 1_000_000_000_000
-    // val address = routePlanner.address
-    // val pool = factory.newConnectionPool(routePlanner = routePlanner)
-    //
-    // // Connections are created as soon as a policy is set
-    // setPolicy(pool, address, ConnectionPool.AddressPolicy(2))
-    // assertThat(pool.connectionCount()).isEqualTo(2)
-    //
-    // // Connections are replaced if they idle out or are evicted from the pool
-    // evictAllConnections(pool)
-    // assertThat(pool.connectionCount()).isEqualTo(2)
-    // forceConnectionsToExpire(pool, routePlanner)
-    // assertThat(pool.connectionCount()).isEqualTo(2)
-    //
-    // // Excess connections aren't removed until they idle out, even if no longer needed
-    // setPolicy(pool, address, ConnectionPool.AddressPolicy(1))
-    // assertThat(pool.connectionCount()).isEqualTo(2)
-    // forceConnectionsToExpire(pool, routePlanner)
-    // assertThat(pool.connectionCount()).isEqualTo(1)
+    routePlanner.autoGeneratePlans = true
+    routePlanner.defaultConnectionIdleAtNanos = expireTime
+    val address = routePlanner.address
+    val pool = routePlanner.pool
 
-    // TODO test that http/2 connections will be opened/closed based on concurrent stream settings
+    // Connections are created as soon as a policy is set
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(2))
+    assertThat(pool.connectionCount()).isEqualTo(2)
+
+    // Connections are replaced if they idle out or are evicted from the pool
+    evictAllConnections(pool)
+    assertThat(pool.connectionCount()).isEqualTo(2)
+    forceConnectionsToExpire(pool, routePlanner, expireTime)
+    assertThat(pool.connectionCount()).isEqualTo(2)
+
+    // Excess connections aren't removed until they idle out, even if no longer needed
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(1))
+    assertThat(pool.connectionCount()).isEqualTo(2)
+    forceConnectionsToExpire(pool, routePlanner, expireTime)
+    assertThat(pool.connectionCount()).isEqualTo(1)
   }
 
-  // private fun setPolicy(
-  //   pool: RealConnectionPool,
-  //   address: Address,
-  //   policy: ConnectionPool.AddressPolicy
-  // ) {
-  //   pool.setPolicy(address, policy)
-  //   factory.taskFaker.runTasks()
-  // }
-  //
-  // private fun evictAllConnections(pool: RealConnectionPool) {
-  //   pool.evictAll()
-  //   assertThat(pool.connectionCount()).isEqualTo(0)
-  //   factory.taskFaker.runTasks()
-  // }
-  //
-  // private fun forceConnectionsToExpire(pool: RealConnectionPool, routePlanner: FakeRoutePlanner) {
-  //   val idleTimeNanos = routePlanner.defaultConnectionIdleAtNanos + pool.keepAliveDurationNs
-  //   repeat(pool.connectionCount()) { pool.cleanup(idleTimeNanos) }
-  //   assertThat(pool.connectionCount()).isEqualTo(0)
-  //   factory.taskFaker.runTasks()
-  // }
+  @Test fun connectionPreWarmingHttp2() {
+    val expireSooner = System.nanoTime() + 1_000_000_000_000
+    val expireLater = System.nanoTime() + 2_000_000_000_000
+
+    routePlanner.autoGeneratePlans = true
+    val address = routePlanner.address
+    val pool = routePlanner.pool
+
+    // Add a connection to the pool that won't expire for a while
+    routePlanner.defaultConnectionIdleAtNanos = expireLater
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(1))
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    // All other connections created will expire sooner
+    routePlanner.defaultConnectionIdleAtNanos = expireSooner
+
+    // Turn it into an http/2 connection that supports 5 concurrent streams
+    // which can satisfy a larger policy
+    val connection = routePlanner.plans.first().connection
+    val http2Connection = connectHttp2(peer, connection, 5)
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(5))
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    // Decrease the connection's max so that another connection is needed
+    updateMaxConcurrentStreams(http2Connection, 4)
+    assertThat(pool.connectionCount()).isEqualTo(2)
+
+    // Increase the connection's max so that the new connection is no longer needed
+    updateMaxConcurrentStreams(http2Connection, 5)
+    forceConnectionsToExpire(pool, routePlanner, expireSooner)
+    assertThat(pool.connectionCount()).isEqualTo(1)
+  }
+
+  private fun setPolicy(
+    pool: RealConnectionPool,
+    address: Address,
+    policy: ConnectionPool.AddressPolicy,
+  ) {
+    pool.setPolicy(address, policy)
+    routePlanner.factory.taskFaker.runTasks()
+  }
+
+  private fun evictAllConnections(pool: RealConnectionPool) {
+    pool.evictAll()
+    assertThat(pool.connectionCount()).isEqualTo(0)
+    routePlanner.factory.taskFaker.runTasks()
+  }
+
+  private fun forceConnectionsToExpire(
+    pool: RealConnectionPool,
+    routePlanner: FakeRoutePlanner,
+    expireTime: Long,
+  ) {
+    val idleTimeNanos = expireTime + pool.keepAliveDurationNs
+    repeat(pool.connectionCount()) { pool.closeConnections(idleTimeNanos) }
+    routePlanner.factory.taskFaker.runTasks()
+  }
+
+  private fun connectHttp2(
+    peer: MockHttp2Peer,
+    realConnection: RealConnection,
+    maxConcurrentStreams: Int,
+  ): Http2Connection {
+    // Write the mocking script.
+    val settings1 = Settings()
+    settings1[Settings.MAX_CONCURRENT_STREAMS] = maxConcurrentStreams
+    peer.sendFrame().settings(settings1)
+    peer.acceptFrame() // ACK
+    peer.sendFrame().ping(false, 2, 0)
+    peer.acceptFrame() // PING
+    peer.play()
+
+    // Play it back.
+    val connection =
+      Http2Connection.Builder(true, TaskRunner.INSTANCE)
+        .socket(peer.openSocket())
+        .pushObserver(Http2ConnectionTest.IGNORE)
+        .listener(realConnection)
+        .build()
+    connection.start(sendConnectionPreface = false)
+
+    // verify the peer received the ACK
+    val ackFrame = peer.takeFrame()
+    assertThat(ackFrame.type).isEqualTo(Http2.TYPE_SETTINGS)
+    assertThat(ackFrame.streamId).isEqualTo(0)
+    assertThat(ackFrame.ack).isTrue()
+
+    routePlanner.factory.taskFaker.runTasks()
+
+    return connection
+  }
+
+  private fun updateMaxConcurrentStreams(
+    connection: Http2Connection,
+    amount: Int,
+  ) {
+    val settings = Settings()
+    settings[Settings.MAX_CONCURRENT_STREAMS] = amount
+    connection.readerRunnable.applyAndAckSettings(true, settings)
+    assertThat(connection.peerSettings[Settings.MAX_CONCURRENT_STREAMS]).isEqualTo(amount)
+    routePlanner.factory.taskFaker.runTasks()
+  }
 
   /** Use a helper method so there's no hidden reference remaining on the stack.  */
   private fun allocateAndLeakAllocation(
