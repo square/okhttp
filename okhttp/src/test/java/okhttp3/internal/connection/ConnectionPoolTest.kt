@@ -204,7 +204,7 @@ class ConnectionPoolTest {
   }
 
   @Test fun connectionPreWarmingHttp1() {
-    val expireTime = System.nanoTime() + 1_000_000_000_000
+    val expireTime = factory.taskFaker.nanoTime + 1_000_000_000_000
 
     routePlanner.autoGeneratePlans = true
     routePlanner.defaultConnectionIdleAtNanos = expireTime
@@ -229,8 +229,8 @@ class ConnectionPoolTest {
   }
 
   @Test fun connectionPreWarmingHttp2() {
-    val expireSooner = System.nanoTime() + 1_000_000_000_000
-    val expireLater = System.nanoTime() + 2_000_000_000_000
+    val expireSooner = factory.taskFaker.nanoTime + 1_000_000_000_000
+    val expireLater = factory.taskFaker.nanoTime + 2_000_000_000_000
 
     routePlanner.autoGeneratePlans = true
     val address = routePlanner.address
