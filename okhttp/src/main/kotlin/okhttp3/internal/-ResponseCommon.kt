@@ -17,7 +17,10 @@
 
 package okhttp3.internal
 
-import kotlin.jvm.JvmOverloads
+import java.net.HttpURLConnection.HTTP_MOVED_PERM
+import java.net.HttpURLConnection.HTTP_MOVED_TEMP
+import java.net.HttpURLConnection.HTTP_MULT_CHOICE
+import java.net.HttpURLConnection.HTTP_SEE_OTHER
 import okhttp3.CacheControl
 import okhttp3.Headers
 import okhttp3.MediaType
@@ -26,11 +29,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.asResponseBody
-import okhttp3.internal.http.HTTP_MOVED_PERM
-import okhttp3.internal.http.HTTP_MOVED_TEMP
-import okhttp3.internal.http.HTTP_MULT_CHOICE
 import okhttp3.internal.http.HTTP_PERM_REDIRECT
-import okhttp3.internal.http.HTTP_SEE_OTHER
 import okhttp3.internal.http.HTTP_TEMP_REDIRECT
 import okio.Buffer
 import okio.IOException
