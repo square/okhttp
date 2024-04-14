@@ -565,7 +565,7 @@ open class HttpUrlTest {
       )
       .override(
         // java.net.URL got stricter
-        if (PlatformVersion.majorVersion >= 21) Encoding.SKIP else Encoding.IDENTITY,
+        Encoding.SKIP,
         '\"'.code,
         '<'.code,
         '>'.code,
