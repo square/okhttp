@@ -186,23 +186,26 @@ class CacheControl internal constructor(
      * @param maxAge a non-negative duration. This is stored and transmitted with [TimeUnit.SECONDS]
      *     precision; finer precision will be lost.
      */
-    fun maxAge(maxAge: Duration) = apply {
-      val maxAgeSeconds = maxAge.inWholeSeconds
-      require(maxAgeSeconds >= 0) { "maxAge < 0: $maxAgeSeconds" }
-      this.maxAgeSeconds = maxAgeSeconds.commonClampToInt()
-    }
+    fun maxAge(maxAge: Duration) =
+      apply {
+        val maxAgeSeconds = maxAge.inWholeSeconds
+        require(maxAgeSeconds >= 0) { "maxAge < 0: $maxAgeSeconds" }
+        this.maxAgeSeconds = maxAgeSeconds.commonClampToInt()
+      }
 
-    fun maxStale(maxStale: Duration) = apply {
-      val maxStaleSeconds = maxStale.inWholeSeconds
-      require(maxStaleSeconds >= 0) { "maxStale < 0: $maxStaleSeconds" }
-      this.maxStaleSeconds = maxStaleSeconds.commonClampToInt()
-    }
+    fun maxStale(maxStale: Duration) =
+      apply {
+        val maxStaleSeconds = maxStale.inWholeSeconds
+        require(maxStaleSeconds >= 0) { "maxStale < 0: $maxStaleSeconds" }
+        this.maxStaleSeconds = maxStaleSeconds.commonClampToInt()
+      }
 
-    fun minFresh(minFresh: Duration) = apply {
-      val minFreshSeconds = minFresh.inWholeSeconds
-      require(minFreshSeconds >= 0) { "minFresh < 0: $minFreshSeconds" }
-      this.minFreshSeconds = minFreshSeconds.commonClampToInt()
-    }
+    fun minFresh(minFresh: Duration) =
+      apply {
+        val minFreshSeconds = minFresh.inWholeSeconds
+        require(minFreshSeconds >= 0) { "minFresh < 0: $minFreshSeconds" }
+        this.minFreshSeconds = minFreshSeconds.commonClampToInt()
+      }
 
     /**
      * Sets the maximum age of a cached response. If the cache response's age exceeds [maxAge], it
