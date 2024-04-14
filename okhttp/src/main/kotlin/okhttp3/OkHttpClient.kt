@@ -1130,7 +1130,6 @@ open class OkHttpClient internal constructor(
      *
      * The default value is 0 which imposes no timeout.
      */
-    @JvmSynthetic // Don't expose @JvmInline types in the Java API.
     fun callTimeout(duration: KotlinDuration) =
       apply {
         callTimeout = checkDuration("duration", duration)
@@ -1171,7 +1170,6 @@ open class OkHttpClient internal constructor(
      * The connect timeout is applied when connecting a TCP socket to the target host. The default
      * value is 10 seconds.
      */
-    @JvmSynthetic // Don't expose @JvmInline types in the Java API.
     fun connectTimeout(duration: KotlinDuration) =
       apply {
         connectTimeout = checkDuration("duration", duration)
@@ -1221,7 +1219,6 @@ open class OkHttpClient internal constructor(
      * @see Socket.setSoTimeout
      * @see Source.timeout
      */
-    @JvmSynthetic // Don't expose @JvmInline types in the Java API.
     fun readTimeout(duration: KotlinDuration) =
       apply {
         readTimeout = checkDuration("duration", duration)
@@ -1268,7 +1265,6 @@ open class OkHttpClient internal constructor(
      *
      * @see Sink.timeout
      */
-    @JvmSynthetic // Don't expose @JvmInline types in the Java API.
     fun writeTimeout(duration: KotlinDuration) =
       apply {
         writeTimeout = checkDuration("duration", duration)
@@ -1327,7 +1323,6 @@ open class OkHttpClient internal constructor(
      *
      * The default value of 0 disables client-initiated pings.
      */
-    @JvmSynthetic // Don't expose @JvmInline types in the Java API.
     fun pingInterval(duration: KotlinDuration) =
       apply {
         pingInterval = checkDuration("duration", duration)
@@ -1371,7 +1366,6 @@ open class OkHttpClient internal constructor(
      * wait for a graceful shutdown. If the server doesn't respond the web socket will be canceled.
      * The default value is 60 seconds.
      */
-    @JvmSynthetic // Don't expose @JvmInline types in the Java API.
     fun webSocketCloseTimeout(duration: KotlinDuration) =
       apply {
         webSocketCloseTimeout = checkDuration("duration", duration)

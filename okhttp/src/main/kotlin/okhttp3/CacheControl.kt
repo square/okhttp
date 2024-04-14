@@ -186,22 +186,22 @@ class CacheControl internal constructor(
      * @param maxAge a non-negative duration. This is stored and transmitted with [TimeUnit.SECONDS]
      *     precision; finer precision will be lost.
      */
-    @JvmSynthetic // Don't expose @JvmInline types in the Java API.
     fun maxAge(maxAge: Duration) = apply {
-      require(maxAge.inWholeSeconds >= 0) { "maxAge < 0: ${maxAge.inWholeSeconds}" }
-      maxAgeSeconds = maxAge.inWholeSeconds.commonClampToInt()
+      val maxAgeSeconds = maxAge.inWholeSeconds
+      require(maxAgeSeconds >= 0) { "maxAge < 0: $maxAgeSeconds" }
+      this.maxAgeSeconds = maxAgeSeconds.commonClampToInt()
     }
 
-    @JvmSynthetic // Don't expose @JvmInline types in the Java API.
     fun maxStale(maxStale: Duration) = apply {
-      require(maxStale.inWholeSeconds >= 0) { "maxStale < 0: ${maxStale.inWholeSeconds}" }
-      maxStaleSeconds = maxStale.inWholeSeconds.commonClampToInt()
+      val maxStaleSeconds = maxStale.inWholeSeconds
+      require(maxStaleSeconds >= 0) { "maxStale < 0: $maxStaleSeconds" }
+      this.maxStaleSeconds = maxStaleSeconds.commonClampToInt()
     }
 
-    @JvmSynthetic // Don't expose @JvmInline types in the Java API.
     fun minFresh(minFresh: Duration) = apply {
-      require(minFresh.inWholeSeconds >= 0) { "minFresh < 0: ${minFresh.inWholeSeconds}" }
-      minFreshSeconds = minFresh.inWholeSeconds.commonClampToInt()
+      val minFreshSeconds = minFresh.inWholeSeconds
+      require(minFreshSeconds >= 0) { "minFresh < 0: $minFreshSeconds" }
+      this.minFreshSeconds = minFreshSeconds.commonClampToInt()
     }
 
     /**
