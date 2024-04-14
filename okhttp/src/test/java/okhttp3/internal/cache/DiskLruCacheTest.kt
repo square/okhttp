@@ -840,7 +840,7 @@ class DiskLruCacheTest {
     }
     taskFaker.runNextTask()
 
-    // Sanity check that a rebuilt journal behaves normally.
+    // Check that a rebuilt journal behaves normally.
     assertValue("a", "a", "a")
     assertValue("b", "b", "b")
   }
