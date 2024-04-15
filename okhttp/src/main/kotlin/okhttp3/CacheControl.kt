@@ -16,15 +16,12 @@
 package okhttp3
 
 import java.util.concurrent.TimeUnit
-import kotlin.time.DurationUnit
+import kotlin.time.Duration
 import okhttp3.internal.commonBuild
 import okhttp3.internal.commonClampToInt
 import okhttp3.internal.commonForceCache
 import okhttp3.internal.commonForceNetwork
 import okhttp3.internal.commonImmutable
-import okhttp3.internal.commonMaxAge
-import okhttp3.internal.commonMaxStale
-import okhttp3.internal.commonMinFresh
 import okhttp3.internal.commonNoCache
 import okhttp3.internal.commonNoStore
 import okhttp3.internal.commonNoTransform
@@ -186,26 +183,29 @@ class CacheControl internal constructor(
      * Sets the maximum age of a cached response. If the cache response's age exceeds [maxAge], it
      * will not be used and a network request will be made.
      *
-     * @param maxAge a non-negative integer. This is stored and transmitted with [TimeUnit.SECONDS]
+     * @param maxAge a non-negative duration. This is stored and transmitted with [TimeUnit.SECONDS]
      *     precision; finer precision will be lost.
      */
-    @ExperimentalOkHttpApi
-    fun maxAge(
-      maxAge: Int,
-      timeUnit: DurationUnit,
-    ) = commonMaxAge(maxAge, timeUnit)
+    fun maxAge(maxAge: Duration) =
+      apply {
+        val maxAgeSeconds = maxAge.inWholeSeconds
+        require(maxAgeSeconds >= 0) { "maxAge < 0: $maxAgeSeconds" }
+        this.maxAgeSeconds = maxAgeSeconds.commonClampToInt()
+      }
 
-    @ExperimentalOkHttpApi
-    fun maxStale(
-      maxStale: Int,
-      timeUnit: DurationUnit,
-    ) = commonMaxStale(maxStale, timeUnit)
+    fun maxStale(maxStale: Duration) =
+      apply {
+        val maxStaleSeconds = maxStale.inWholeSeconds
+        require(maxStaleSeconds >= 0) { "maxStale < 0: $maxStaleSeconds" }
+        this.maxStaleSeconds = maxStaleSeconds.commonClampToInt()
+      }
 
-    @ExperimentalOkHttpApi
-    fun minFresh(
-      minFresh: Int,
-      timeUnit: DurationUnit,
-    ) = commonMinFresh(minFresh, timeUnit)
+    fun minFresh(minFresh: Duration) =
+      apply {
+        val minFreshSeconds = minFresh.inWholeSeconds
+        require(minFreshSeconds >= 0) { "minFresh < 0: $minFreshSeconds" }
+        this.minFreshSeconds = minFreshSeconds.commonClampToInt()
+      }
 
     /**
      * Sets the maximum age of a cached response. If the cache response's age exceeds [maxAge], it
