@@ -28,7 +28,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.fail
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.UrlComponentEncodingTester.Encoding
-import okhttp3.testing.PlatformVersion
 
 @Suppress("HttpUrlsUsage") // Don't warn if we should be using https://.
 open class HttpUrlTest {
