@@ -112,19 +112,18 @@ object OkHostnameVerifier : HostnameVerifier {
   ): Boolean {
     var hostname = hostname
     var pattern = pattern
-    // Basic sanity checks
     if (hostname.isNullOrEmpty() ||
       hostname.startsWith(".") ||
       hostname.endsWith("..")
     ) {
-      // Invalid domain name
+      // Invalid domain name.
       return false
     }
     if (pattern.isNullOrEmpty() ||
       pattern.startsWith(".") ||
       pattern.endsWith("..")
     ) {
-      // Invalid pattern/domain name
+      // Invalid pattern.
       return false
     }
 
