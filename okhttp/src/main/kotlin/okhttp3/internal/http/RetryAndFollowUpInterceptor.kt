@@ -18,6 +18,14 @@ package okhttp3.internal.http
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InterruptedIOException
+import java.net.HttpURLConnection.HTTP_CLIENT_TIMEOUT
+import java.net.HttpURLConnection.HTTP_MOVED_PERM
+import java.net.HttpURLConnection.HTTP_MOVED_TEMP
+import java.net.HttpURLConnection.HTTP_MULT_CHOICE
+import java.net.HttpURLConnection.HTTP_PROXY_AUTH
+import java.net.HttpURLConnection.HTTP_SEE_OTHER
+import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
+import java.net.HttpURLConnection.HTTP_UNAVAILABLE
 import java.net.ProtocolException
 import java.net.Proxy
 import java.net.SocketTimeoutException
