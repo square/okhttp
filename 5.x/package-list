@@ -1,17 +1,6 @@
 $dokka.format:html-v1
 $dokka.linkExtension:html
-$dokka.location:okhttp3/Headers/byteCount/#/PointingToDeclaration/okhttp/okhttp3/-headers/[non-jvm]byte-count.html
-$dokka.location:okhttp3/Headers/hashCode/#/PointingToDeclaration/okhttp/okhttp3/-headers/[non-jvm]hash-code.html
-$dokka.location:okhttp3/HttpUrl.Builder/toString/#/PointingToDeclaration/okhttp/okhttp3/-http-url/-builder/[non-jvm]to-string.html
-$dokka.location:okhttp3/HttpUrl/equals/#kotlin.Any?/PointingToDeclaration/okhttp/okhttp3/-http-url/[non-jvm]equals.html
-$dokka.location:okhttp3/HttpUrl/hashCode/#/PointingToDeclaration/okhttp/okhttp3/-http-url/[non-jvm]hash-code.html
-$dokka.location:okhttp3/HttpUrl/toString/#/PointingToDeclaration/okhttp/okhttp3/-http-url/[non-jvm]to-string.html
-$dokka.location:okhttp3/MediaType/equals/#kotlin.Any?/PointingToDeclaration/okhttp/okhttp3/-media-type/[non-jvm]equals.html
-$dokka.location:okhttp3/MediaType/hashCode/#/PointingToDeclaration/okhttp/okhttp3/-media-type/[non-jvm]hash-code.html
-$dokka.location:okhttp3/Request/toString/#/PointingToDeclaration/okhttp/okhttp3/-request/[non-jvm]to-string.html
-$dokka.location:okhttp3/TlsVersion/entries/#/PointingToDeclaration/okhttp/okhttp3/-tls-version/[non-jvm]entries.html
-$dokka.location:okhttp3/TlsVersion/valueOf/#kotlin.String/PointingToDeclaration/okhttp/okhttp3/-tls-version/[non-jvm]value-of.html
-$dokka.location:okhttp3/TlsVersion/values/#/PointingToDeclaration/okhttp/okhttp3/-tls-version/[non-jvm]values.html
+
 module:logging-interceptor
 okhttp3.logging
 module:mockwebserver
@@ -25,8 +14,6 @@ okhttp3.curl
 okhttp3.curl.logging
 module:okhttp
 okhttp3
-module:okhttp-android
-okhttp3.android
 module:okhttp-brotli
 okhttp3.brotli
 module:okhttp-coroutines

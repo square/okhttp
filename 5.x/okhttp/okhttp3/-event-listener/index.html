@@ -45,7 +45,7 @@
             </div>
         </div>
         <div class="filter-section" id="filter-section">
-                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button>
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/main">jvm</button>
         </div>
     </div>
     <div class="navigation-controls">
@@ -58,32 +58,28 @@
                 <div class="sidebar--inner" id="sideMenu"></div>
             </div>
             <div id="main">
-<div class="main-content" data-page-type="classlike" id="content" pageids="okhttp::okhttp3/EventListener///PointingToDeclaration//-388523033">
+<div class="main-content" data-page-type="classlike" id="content" pageids="okhttp::okhttp3/EventListener///PointingToDeclaration//1481842020">
   <div class="breadcrumbs"><a href="../../index.html">okhttp</a><span class="delimiter">/</span><a href="../index.html">okhttp3</a><span class="delimiter">/</span><span class="current">EventListener</span></div>
   <div class="cover ">
     <h1 class="cover"><span>Event</span><wbr><span><span>Listener</span></span></h1>
-    <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-      <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">class </span><a href="index.html">EventListener</a></div><p class="paragraph">Listener for metrics events. Extend this class to monitor the quantity, size, and duration of your application's HTTP calls.</p><p class="paragraph">All start/connect/acquire events will eventually receive a matching end/release event, either successful (non-null parameters), or failed (non-null throwable). The first common parameters of each event pair are used to link the event in case of concurrent or repeated events e.g. <code class="lang-kotlin">dnsStart(call, domainName)</code> → <code class="lang-kotlin">dnsEnd(call, domainName, inetAddressList)</code>.</p><p class="paragraph">Events are typically nested with this structure:</p><ul><li><p class="paragraph">call (<a href="call-start.html">callStart</a>, <a href="call-end.html">callEnd</a>, <a href="call-failed.html">callFailed</a>)</p></li><ul><li><p class="paragraph">proxy selection (<a href="proxy-select-start.html">proxySelectStart</a>, <a href="proxy-select-end.html">proxySelectEnd</a>)</p></li><li><p class="paragraph">dns (<a href="dns-start.html">dnsStart</a>, <a href="dns-end.html">dnsEnd</a>)</p></li><li><p class="paragraph">connect (<a href="connect-start.html">connectStart</a>, <a href="connect-end.html">connectEnd</a>, <a href="connect-failed.html">connectFailed</a>)</p></li><ul><li><p class="paragraph">secure connect (<a href="secure-connect-start.html">secureConnectStart</a>, <a href="secure-connect-end.html">secureConnectEnd</a>)</p></li></ul><li><p class="paragraph">connection held (<a href="connection-acquired.html">connectionAcquired</a>, <a href="connection-released.html">connectionReleased</a>)</p></li><ul><li><p class="paragraph">request (<a href="request-failed.html">requestFailed</a>)</p></li><ul><li><p class="paragraph">headers (<a href="request-headers-start.html">requestHeadersStart</a>, <a href="request-headers-end.html">requestHeadersEnd</a>)</p></li><li><p class="paragraph">body (<a href="request-body-start.html">requestBodyStart</a>, <a href="request-body-end.html">requestBodyEnd</a>)</p></li></ul><li><p class="paragraph">response (<a href="response-failed.html">responseFailed</a>)</p></li><ul><li><p class="paragraph">headers (<a href="response-headers-start.html">responseHeadersStart</a>, <a href="response-headers-end.html">responseHeadersEnd</a>)</p></li><li><p class="paragraph">body (<a href="response-body-start.html">responseBodyStart</a>, <a href="response-body-end.html">responseBodyEnd</a>)</p></li></ul></ul></ul></ul><p class="paragraph">This nesting is typical but not strict. For example, when calls use "Expect: continue" the request body start and end events occur within the response header events. Similarly, <a href="../-request-body/is-duplex.html">duplex calls</a> interleave the request and response bodies.</p><p class="paragraph">Since connections may be reused, the proxy selection, DNS, and connect events may not be present for a call. In future releases of OkHttp these events may also occur concurrently to permit multiple routes to be attempted simultaneously.</p><p class="paragraph">Events and sequences of events may be repeated for retries and follow-ups.</p><p class="paragraph">All event methods must execute fast, without external locking, cannot throw exceptions, attempt to mutate the event parameters, or be re-entrant back into the client. Any IO - writing to files or network should be done asynchronously.</p></div>    </div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">class </span><a href="index.html">EventListener</a></div><p class="paragraph">Listener for metrics events. Extend this class to monitor the quantity, size, and duration of your application's HTTP calls.</p><p class="paragraph">All start/connect/acquire events will eventually receive a matching end/release event, either successful (non-null parameters), or failed (non-null throwable). The first common parameters of each event pair are used to link the event in case of concurrent or repeated events e.g. <code class="lang-kotlin">dnsStart(call, domainName)</code> → <code class="lang-kotlin">dnsEnd(call, domainName, inetAddressList)</code>.</p><p class="paragraph">Events are typically nested with this structure:</p><ul><li><p class="paragraph">call (<a href="call-start.html">callStart</a>, <a href="call-end.html">callEnd</a>, <a href="call-failed.html">callFailed</a>)</p></li><ul><li><p class="paragraph">proxy selection (<a href="proxy-select-start.html">proxySelectStart</a>, <a href="proxy-select-end.html">proxySelectEnd</a>)</p></li><li><p class="paragraph">dns (<a href="dns-start.html">dnsStart</a>, <a href="dns-end.html">dnsEnd</a>)</p></li><li><p class="paragraph">connect (<a href="connect-start.html">connectStart</a>, <a href="connect-end.html">connectEnd</a>, <a href="connect-failed.html">connectFailed</a>)</p></li><ul><li><p class="paragraph">secure connect (<a href="secure-connect-start.html">secureConnectStart</a>, <a href="secure-connect-end.html">secureConnectEnd</a>)</p></li></ul><li><p class="paragraph">connection held (<a href="connection-acquired.html">connectionAcquired</a>, <a href="connection-released.html">connectionReleased</a>)</p></li><ul><li><p class="paragraph">request (<a href="request-failed.html">requestFailed</a>)</p></li><ul><li><p class="paragraph">headers (<a href="request-headers-start.html">requestHeadersStart</a>, <a href="request-headers-end.html">requestHeadersEnd</a>)</p></li><li><p class="paragraph">body (<a href="request-body-start.html">requestBodyStart</a>, <a href="request-body-end.html">requestBodyEnd</a>)</p></li></ul><li><p class="paragraph">response (<a href="response-failed.html">responseFailed</a>)</p></li><ul><li><p class="paragraph">headers (<a href="response-headers-start.html">responseHeadersStart</a>, <a href="response-headers-end.html">responseHeadersEnd</a>)</p></li><li><p class="paragraph">body (<a href="response-body-start.html">responseBodyStart</a>, <a href="response-body-end.html">responseBodyEnd</a>)</p></li></ul></ul></ul></ul><p class="paragraph">This nesting is typical but not strict. For example, when calls use "Expect: continue" the request body start and end events occur within the response header events. Similarly, <a href="../-request-body/is-duplex.html">duplex calls</a> interleave the request and response bodies.</p><p class="paragraph">Since connections may be reused, the proxy selection, DNS, and connect events may not be present for a call. In future releases of OkHttp these events may also occur concurrently to permit multiple routes to be attempted simultaneously.</p><p class="paragraph">Events and sequences of events may be repeated for retries and follow-ups.</p><p class="paragraph">All event methods must execute fast, without external locking, cannot throw exceptions, attempt to mutate the event parameters, or be re-entrant back into the client. Any IO - writing to files or network should be done asynchronously.</p></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
     <div class="tabs-section-body">
       <div data-togglable="CONSTRUCTOR">
         <h2 class="">Constructors</h2>
-        <div class="table"><a data-name="-1954577456%2FConstructors%2F-388523033" anchor-label="EventListener" id="-1954577456%2FConstructors%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+        <div class="table"><a data-name="-1954577456%2FConstructors%2F1481842020" anchor-label="EventListener" id="-1954577456%2FConstructors%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-event-listener.html"><span>Event</span><wbr><span><span>Listener</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1954577456%2FConstructors%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1954577456%2FConstructors%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
                 </div>
               </div>
             </div>
@@ -92,36 +88,32 @@
       </div>
       <div data-togglable="TYPE">
         <h2 class="">Types</h2>
-        <div class="table"><a data-name="-1598067931%2FClasslikes%2F-388523033" anchor-label="Companion" id="-1598067931%2FClasslikes%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+        <div class="table"><a data-name="-1598067931%2FClasslikes%2F1481842020" anchor-label="Companion" id="-1598067931%2FClasslikes%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1598067931%2FClasslikes%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1598067931%2FClasslikes%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="539612903%2FClasslikes%2F-388523033" anchor-label="Factory" id="539612903%2FClasslikes%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="539612903%2FClasslikes%2F1481842020" anchor-label="Factory" id="539612903%2FClasslikes%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-factory/index.html"><span><span>Factory</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="539612903%2FClasslikes%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="539612903%2FClasslikes%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">fun </span><span class="token keyword">interface </span><a href="-factory/index.html">Factory</a></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">fun </span><span class="token keyword">interface </span><a href="-factory/index.html">Factory</a></div></div></div>
                 </div>
               </div>
             </div>
@@ -130,495 +122,437 @@
       </div>
       <div data-togglable="FUNCTION">
         <h2 class="">Functions</h2>
-        <div class="table"><a data-name="509284301%2FFunctions%2F-388523033" anchor-label="cacheConditionalHit" id="509284301%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+        <div class="table"><a data-name="509284301%2FFunctions%2F1481842020" anchor-label="cacheConditionalHit" id="509284301%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="cache-conditional-hit.html"><span>cache</span><wbr><span>Conditional</span><wbr><span><span>Hit</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="509284301%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="509284301%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="cache-conditional-hit.html"><span class="token function">cacheConditionalHit</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">cachedResponse<span class="token operator">: </span><a href="../-response/index.html">Response</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a response will be served from the cache or network based on validating the cached Response freshness. Will be followed by cacheHit or cacheMiss after the network Response is available.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="cache-conditional-hit.html"><span class="token function">cacheConditionalHit</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">cachedResponse<span class="token operator">: </span><a href="../-response/index.html">Response</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a response will be served from the cache or network based on validating the cached Response freshness. Will be followed by cacheHit or cacheMiss after the network Response is available.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="42947473%2FFunctions%2F-388523033" anchor-label="cacheHit" id="42947473%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="42947473%2FFunctions%2F1481842020" anchor-label="cacheHit" id="42947473%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="cache-hit.html"><span>cache</span><wbr><span><span>Hit</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="42947473%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="42947473%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="cache-hit.html"><span class="token function">cacheHit</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">response<span class="token operator">: </span><a href="../-response/index.html">Response</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a result is served from the cache. The Response provided is the top level Response and normal event sequences will not be received.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="cache-hit.html"><span class="token function">cacheHit</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">response<span class="token operator">: </span><a href="../-response/index.html">Response</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a result is served from the cache. The Response provided is the top level Response and normal event sequences will not be received.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="162947107%2FFunctions%2F-388523033" anchor-label="cacheMiss" id="162947107%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="162947107%2FFunctions%2F1481842020" anchor-label="cacheMiss" id="162947107%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="cache-miss.html"><span>cache</span><wbr><span><span>Miss</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="162947107%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="162947107%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="cache-miss.html"><span class="token function">cacheMiss</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a response will be served from the network. The Response will be available from normal event sequences.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="cache-miss.html"><span class="token function">cacheMiss</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a response will be served from the network. The Response will be available from normal event sequences.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-277127740%2FFunctions%2F-388523033" anchor-label="callEnd" id="-277127740%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-277127740%2FFunctions%2F1481842020" anchor-label="callEnd" id="-277127740%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="call-end.html"><span>call</span><wbr><span><span>End</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-277127740%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-277127740%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="call-end.html"><span class="token function">callEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after a call has completely ended.  This includes delayed consumption of response body by the caller.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="call-end.html"><span class="token function">callEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after a call has completely ended.  This includes delayed consumption of response body by the caller.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1341073286%2FFunctions%2F-388523033" anchor-label="callFailed" id="-1341073286%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-1341073286%2FFunctions%2F1481842020" anchor-label="callFailed" id="-1341073286%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="call-failed.html"><span>call</span><wbr><span><span>Failed</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1341073286%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1341073286%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="call-failed.html"><span class="token function">callFailed</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">ioe<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html">IOException</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a call fails permanently.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="call-failed.html"><span class="token function">callFailed</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">ioe<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html">IOException</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a call fails permanently.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="1068941021%2FFunctions%2F-388523033" anchor-label="callStart" id="1068941021%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="1068941021%2FFunctions%2F1481842020" anchor-label="callStart" id="1068941021%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="call-start.html"><span>call</span><wbr><span><span>Start</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1068941021%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1068941021%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="call-start.html"><span class="token function">callStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked as soon as a call is enqueued or executed by a client. In case of thread or stream limits, this call may be executed well before processing the request is able to begin.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="call-start.html"><span class="token function">callStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked as soon as a call is enqueued or executed by a client. In case of thread or stream limits, this call may be executed well before processing the request is able to begin.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="2058515110%2FFunctions%2F-388523033" anchor-label="canceled" id="2058515110%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="2058515110%2FFunctions%2F1481842020" anchor-label="canceled" id="2058515110%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="canceled.html"><span><span>canceled</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2058515110%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2058515110%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="canceled.html"><span class="token function">canceled</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a call is canceled.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="canceled.html"><span class="token function">canceled</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a call is canceled.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-813669688%2FFunctions%2F-388523033" anchor-label="connectEnd" id="-813669688%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-813669688%2FFunctions%2F1481842020" anchor-label="connectEnd" id="-813669688%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="connect-end.html"><span>connect</span><wbr><span><span>End</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-813669688%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-813669688%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="connect-end.html"><span class="token function">connectEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">inetSocketAddress<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a><span class="token punctuation">, </span></span><span class="parameter ">proxy<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a><span class="token punctuation">, </span></span><span class="parameter ">protocol<span class="token operator">: </span><a href="../-protocol/index.html">Protocol</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after a socket connection was attempted.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="connect-end.html"><span class="token function">connectEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">inetSocketAddress<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a><span class="token punctuation">, </span></span><span class="parameter ">proxy<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a><span class="token punctuation">, </span></span><span class="parameter ">protocol<span class="token operator">: </span><a href="../-protocol/index.html">Protocol</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after a socket connection was attempted.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1764769558%2FFunctions%2F-388523033" anchor-label="connectFailed" id="-1764769558%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-1764769558%2FFunctions%2F1481842020" anchor-label="connectFailed" id="-1764769558%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="connect-failed.html"><span>connect</span><wbr><span><span>Failed</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1764769558%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1764769558%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="connect-failed.html"><span class="token function">connectFailed</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">inetSocketAddress<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a><span class="token punctuation">, </span></span><span class="parameter ">proxy<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a><span class="token punctuation">, </span></span><span class="parameter ">protocol<span class="token operator">: </span><a href="../-protocol/index.html">Protocol</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">ioe<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html">IOException</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a connection attempt fails. This failure is not terminal if further routes are available and failure recovery is enabled.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="connect-failed.html"><span class="token function">connectFailed</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">inetSocketAddress<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a><span class="token punctuation">, </span></span><span class="parameter ">proxy<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a><span class="token punctuation">, </span></span><span class="parameter ">protocol<span class="token operator">: </span><a href="../-protocol/index.html">Protocol</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">ioe<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html">IOException</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a connection attempt fails. This failure is not terminal if further routes are available and failure recovery is enabled.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1913848721%2FFunctions%2F-388523033" anchor-label="connectionAcquired" id="-1913848721%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-1913848721%2FFunctions%2F1481842020" anchor-label="connectionAcquired" id="-1913848721%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="connection-acquired.html"><span>connection</span><wbr><span><span>Acquired</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1913848721%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1913848721%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="connection-acquired.html"><span class="token function">connectionAcquired</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">connection<span class="token operator">: </span><a href="../-connection/index.html">Connection</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked after a connection has been acquired for the <code class="lang-kotlin">call</code>.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="connection-acquired.html"><span class="token function">connectionAcquired</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">connection<span class="token operator">: </span><a href="../-connection/index.html">Connection</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked after a connection has been acquired for the <code class="lang-kotlin">call</code>.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="763527774%2FFunctions%2F-388523033" anchor-label="connectionReleased" id="763527774%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="763527774%2FFunctions%2F1481842020" anchor-label="connectionReleased" id="763527774%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="connection-released.html"><span>connection</span><wbr><span><span>Released</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="763527774%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="763527774%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="connection-released.html"><span class="token function">connectionReleased</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">connection<span class="token operator">: </span><a href="../-connection/index.html">Connection</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked after a connection has been released for the <code class="lang-kotlin">call</code>.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="connection-released.html"><span class="token function">connectionReleased</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">connection<span class="token operator">: </span><a href="../-connection/index.html">Connection</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked after a connection has been released for the <code class="lang-kotlin">call</code>.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="142723750%2FFunctions%2F-388523033" anchor-label="connectStart" id="142723750%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="142723750%2FFunctions%2F1481842020" anchor-label="connectStart" id="142723750%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="connect-start.html"><span>connect</span><wbr><span><span>Start</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="142723750%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="142723750%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="connect-start.html"><span class="token function">connectStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">inetSocketAddress<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a><span class="token punctuation">, </span></span><span class="parameter ">proxy<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked just prior to initiating a socket connection.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="connect-start.html"><span class="token function">connectStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">inetSocketAddress<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a><span class="token punctuation">, </span></span><span class="parameter ">proxy<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked just prior to initiating a socket connection.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1211485614%2FFunctions%2F-388523033" anchor-label="dnsEnd" id="-1211485614%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-1211485614%2FFunctions%2F1481842020" anchor-label="dnsEnd" id="-1211485614%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="dns-end.html"><span>dns</span><wbr><span><span>End</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1211485614%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1211485614%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="dns-end.html"><span class="token function">dnsEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">domainName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">inetAddressList<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-suppress-wildcards/index.html"><span class="token annotation builtin">JvmSuppressWildcards</span></a>&nbsp;</span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html">InetAddress</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after a DNS lookup.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="dns-end.html"><span class="token function">dnsEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">domainName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">inetAddressList<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-suppress-wildcards/index.html"><span class="token annotation builtin">JvmSuppressWildcards</span></a>&nbsp;</span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html">InetAddress</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after a DNS lookup.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1658492693%2FFunctions%2F-388523033" anchor-label="dnsStart" id="-1658492693%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-1658492693%2FFunctions%2F1481842020" anchor-label="dnsStart" id="-1658492693%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="dns-start.html"><span>dns</span><wbr><span><span>Start</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1658492693%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1658492693%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="dns-start.html"><span class="token function">dnsStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">domainName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked just prior to a DNS lookup. See <a href="../-dns/lookup.html">Dns.lookup</a>.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="dns-start.html"><span class="token function">dnsStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">domainName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked just prior to a DNS lookup. See <a href="../-dns/lookup.html">Dns.lookup</a>.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="1166423319%2FFunctions%2F-388523033" anchor-label="proxySelectEnd" id="1166423319%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="1166423319%2FFunctions%2F1481842020" anchor-label="proxySelectEnd" id="1166423319%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="proxy-select-end.html"><span>proxy</span><wbr><span>Select</span><wbr><span><span>End</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1166423319%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1166423319%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="proxy-select-end.html"><span class="token function">proxySelectEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">url<span class="token operator">: </span><a href="../-http-url/index.html">HttpUrl</a><span class="token punctuation">, </span></span><span class="parameter ">proxies<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><span><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-suppress-wildcards/index.html"><span class="token annotation builtin">JvmSuppressWildcards</span></a>&nbsp;</span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked after proxy selection.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="proxy-select-end.html"><span class="token function">proxySelectEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">url<span class="token operator">: </span><a href="../-http-url/index.html">HttpUrl</a><span class="token punctuation">, </span></span><span class="parameter ">proxies<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-suppress-wildcards/index.html"><span class="token annotation builtin">JvmSuppressWildcards</span></a>&nbsp;</span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked after proxy selection.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1549884926%2FFunctions%2F-388523033" anchor-label="proxySelectStart" id="-1549884926%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-1549884926%2FFunctions%2F1481842020" anchor-label="proxySelectStart" id="-1549884926%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="proxy-select-start.html"><span>proxy</span><wbr><span>Select</span><wbr><span><span>Start</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1549884926%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1549884926%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="proxy-select-start.html"><span class="token function">proxySelectStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">url<span class="token operator">: </span><a href="../-http-url/index.html">HttpUrl</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked prior to a proxy selection.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="proxy-select-start.html"><span class="token function">proxySelectStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">url<span class="token operator">: </span><a href="../-http-url/index.html">HttpUrl</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked prior to a proxy selection.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1304511441%2FFunctions%2F-388523033" anchor-label="requestBodyEnd" id="-1304511441%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-1304511441%2FFunctions%2F1481842020" anchor-label="requestBodyEnd" id="-1304511441%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="request-body-end.html"><span>request</span><wbr><span>Body</span><wbr><span><span>End</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1304511441%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1304511441%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="request-body-end.html"><span class="token function">requestBodyEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">byteCount<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after sending a request body.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="request-body-end.html"><span class="token function">requestBodyEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">byteCount<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after sending a request body.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="937321774%2FFunctions%2F-388523033" anchor-label="requestBodyStart" id="937321774%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="937321774%2FFunctions%2F1481842020" anchor-label="requestBodyStart" id="937321774%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="request-body-start.html"><span>request</span><wbr><span>Body</span><wbr><span><span>Start</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="937321774%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="937321774%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="request-body-start.html"><span class="token function">requestBodyStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked just prior to sending a request body.  Will only be invoked for request allowing and having a request body to send.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="request-body-start.html"><span class="token function">requestBodyStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked just prior to sending a request body.  Will only be invoked for request allowing and having a request body to send.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-432454197%2FFunctions%2F-388523033" anchor-label="requestFailed" id="-432454197%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-432454197%2FFunctions%2F1481842020" anchor-label="requestFailed" id="-432454197%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="request-failed.html"><span>request</span><wbr><span><span>Failed</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-432454197%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-432454197%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="request-failed.html"><span class="token function">requestFailed</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">ioe<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html">IOException</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a request fails to be written.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="request-failed.html"><span class="token function">requestFailed</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">ioe<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html">IOException</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a request fails to be written.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1694571728%2FFunctions%2F-388523033" anchor-label="requestHeadersEnd" id="-1694571728%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-1694571728%2FFunctions%2F1481842020" anchor-label="requestHeadersEnd" id="-1694571728%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="request-headers-end.html"><span>request</span><wbr><span>Headers</span><wbr><span><span>End</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1694571728%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1694571728%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="request-headers-end.html"><span class="token function">requestHeadersEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">request<span class="token operator">: </span><a href="../-request/index.html">Request</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after sending request headers.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="request-headers-end.html"><span class="token function">requestHeadersEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">request<span class="token operator">: </span><a href="../-request/index.html">Request</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after sending request headers.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="406324726%2FFunctions%2F-388523033" anchor-label="requestHeadersStart" id="406324726%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="406324726%2FFunctions%2F1481842020" anchor-label="requestHeadersStart" id="406324726%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="request-headers-start.html"><span>request</span><wbr><span>Headers</span><wbr><span><span>Start</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="406324726%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="406324726%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="request-headers-start.html"><span class="token function">requestHeadersStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked just prior to sending request headers.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="request-headers-start.html"><span class="token function">requestHeadersStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked just prior to sending request headers.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1592427325%2FFunctions%2F-388523033" anchor-label="responseBodyEnd" id="-1592427325%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-1592427325%2FFunctions%2F1481842020" anchor-label="responseBodyEnd" id="-1592427325%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="response-body-end.html"><span>response</span><wbr><span>Body</span><wbr><span><span>End</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1592427325%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1592427325%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="response-body-end.html"><span class="token function">responseBodyEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">byteCount<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after receiving a response body and completing reading it.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="response-body-end.html"><span class="token function">responseBodyEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">byteCount<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after receiving a response body and completing reading it.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1510142270%2FFunctions%2F-388523033" anchor-label="responseBodyStart" id="-1510142270%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-1510142270%2FFunctions%2F1481842020" anchor-label="responseBodyStart" id="-1510142270%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="response-body-start.html"><span>response</span><wbr><span>Body</span><wbr><span><span>Start</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1510142270%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1510142270%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="response-body-start.html"><span class="token function">responseBodyStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when data from the response body is first available to the application.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="response-body-start.html"><span class="token function">responseBodyStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when data from the response body is first available to the application.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1434945865%2FFunctions%2F-388523033" anchor-label="responseFailed" id="-1434945865%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-1434945865%2FFunctions%2F1481842020" anchor-label="responseFailed" id="-1434945865%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="response-failed.html"><span>response</span><wbr><span><span>Failed</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1434945865%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1434945865%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="response-failed.html"><span class="token function">responseFailed</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">ioe<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html">IOException</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a response fails to be read.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="response-failed.html"><span class="token function">responseFailed</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">ioe<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html">IOException</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a response fails to be read.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="2089753206%2FFunctions%2F-388523033" anchor-label="responseHeadersEnd" id="2089753206%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="2089753206%2FFunctions%2F1481842020" anchor-label="responseHeadersEnd" id="2089753206%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="response-headers-end.html"><span>response</span><wbr><span>Headers</span><wbr><span><span>End</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2089753206%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2089753206%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="response-headers-end.html"><span class="token function">responseHeadersEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">response<span class="token operator">: </span><a href="../-response/index.html">Response</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after receiving response headers.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="response-headers-end.html"><span class="token function">responseHeadersEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">response<span class="token operator">: </span><a href="../-response/index.html">Response</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after receiving response headers.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-630193182%2FFunctions%2F-388523033" anchor-label="responseHeadersStart" id="-630193182%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-630193182%2FFunctions%2F1481842020" anchor-label="responseHeadersStart" id="-630193182%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="response-headers-start.html"><span>response</span><wbr><span>Headers</span><wbr><span><span>Start</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-630193182%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-630193182%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="response-headers-start.html"><span class="token function">responseHeadersStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when response headers are first returned from the server.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="response-headers-start.html"><span class="token function">responseHeadersStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when response headers are first returned from the server.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="1925610140%2FFunctions%2F-388523033" anchor-label="satisfactionFailure" id="1925610140%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="1925610140%2FFunctions%2F1481842020" anchor-label="satisfactionFailure" id="1925610140%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="satisfaction-failure.html"><span>satisfaction</span><wbr><span><span>Failure</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1925610140%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1925610140%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="satisfaction-failure.html"><span class="token function">satisfactionFailure</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">response<span class="token operator">: </span><a href="../-response/index.html">Response</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a call fails due to cache rules. For example, we're forbidden from using the network and the cache is insufficient</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="satisfaction-failure.html"><span class="token function">satisfactionFailure</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">response<span class="token operator">: </span><a href="../-response/index.html">Response</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked when a call fails due to cache rules. For example, we're forbidden from using the network and the cache is insufficient</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1941455807%2FFunctions%2F-388523033" anchor-label="secureConnectEnd" id="-1941455807%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="-1941455807%2FFunctions%2F1481842020" anchor-label="secureConnectEnd" id="-1941455807%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="secure-connect-end.html"><span>secure</span><wbr><span>Connect</span><wbr><span><span>End</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1941455807%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1941455807%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="secure-connect-end.html"><span class="token function">secureConnectEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">handshake<span class="token operator">: </span><a href="../-handshake/index.html">Handshake</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after a TLS connection was attempted.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="secure-connect-end.html"><span class="token function">secureConnectEnd</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">handshake<span class="token operator">: </span><a href="../-handshake/index.html">Handshake</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked immediately after a TLS connection was attempted.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="1369233296%2FFunctions%2F-388523033" anchor-label="secureConnectStart" id="1369233296%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="1369233296%2FFunctions%2F1481842020" anchor-label="secureConnectStart" id="1369233296%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="secure-connect-start.html"><span>secure</span><wbr><span>Connect</span><wbr><span><span>Start</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1369233296%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1369233296%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="secure-connect-start.html"><span class="token function">secureConnectStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked just prior to initiating a TLS connection.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="secure-connect-start.html"><span class="token function">secureConnectStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invoked just prior to initiating a TLS connection.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -629,7 +563,7 @@
   </div>
 </div>
       <div class="footer">
-        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2024 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
       </div>
             </div>
         </div>

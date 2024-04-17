@@ -1,3 +1,7 @@
+/*
+ * Copyright 2014-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 @import url('./font-jb-sans-auto.css');
 @import url('https://fonts.googleapis.com/css?family=JetBrains+Mono');
 
@@ -338,6 +342,7 @@ td:first-child {
 /* --- Navigation controls --- */
 .navigation-controls {
     display: flex;
+    margin-left: 4px;
 }
 
 @media (min-width: 760px) {
@@ -350,37 +355,31 @@ td:first-child {
     display: none;
 }
 
-/* --- Navigation THEME --- */
-.navigation-controls--search {
+.navigation-controls--btn {
     display: inline-flex;
-    font-size: 0;
-    line-height: 0;
-}
-
-.navigation-controls--theme {
-    display: block;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background-color: inherit;
-    margin-left: 4px;
+    background-position: 50% 50%;
     padding: 0;
     border: none;
     cursor: pointer;
     font-size: 0;
     line-height: 0;
+    transition: background-color 200ms ease-in-out;
+    will-change: background-color;
 }
 
-.navigation-controls--theme::before {
-    height: 40px;
-    width: 40px;
+.navigation-controls--btn:hover {
+    background-color: var(--white-10);
 }
 
-.navigation-controls--theme:hover {
-    background: var(--white-10);
-}
-
-.navigation-controls--theme::before {
-    display: block;
-    content: url("../images/theme-toggle.svg");
+.navigation-controls--theme {
+    background-image: url("../images/theme-toggle.svg");
+    background-repeat: no-repeat;
 }
 
 @media (max-width: 759px) {
@@ -388,7 +387,18 @@ td:first-child {
         display: none;
     }
 }
-/* /--- Navigation THEME --- */
+
+.navigation-controls--homepage {
+    background-image: url("../images/homepage.svg");
+    background-repeat: no-repeat;
+    background-size:  24px 24px;
+}
+
+@media (max-width: 759px) {
+    .navigation-controls--homepage {
+        display: none;
+    }
+}
 
 .navigation .platform-selector:not([data-active]) {
     color: #fff;
@@ -652,6 +662,26 @@ code.paragraph {
     text-decoration: line-through;
 }
 
+/* Workaround for Firefox  https://github.com/Kotlin/dokka/issues/3156 */
+@-moz-document url-prefix() {
+    .strikethrough {
+        position: relative;
+        text-decoration: none;
+    }
+
+    /* complex selectors here are required to handle multiline cases */
+    .strikethrough::after, .strikethrough span:after  {
+        content: '';
+        position: absolute;
+        top: 7px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background-color: currentColor;
+        z-index: 1;
+    }
+}
+
 .symbol:empty {
     padding: 0;
 }
@@ -680,7 +710,7 @@ code {
 
 code:not(.block) {
     display: inline-block;
-    vertical-align: middle;
+    vertical-align: bottom;
 }
 
 .symbol > a {

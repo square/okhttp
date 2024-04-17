@@ -1,3 +1,7 @@
+/*
+ * Copyright 2014-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 filteringContext = {
     dependencies: {},
     restrictedDependencies: [],
@@ -14,8 +18,6 @@ const samplesLightThemeName = 'idea'
 window.addEventListener('load', () => {
     document.querySelectorAll("div[data-platform-hinted]")
         .forEach(elem => elem.addEventListener('click', (event) => togglePlatformDependent(event, elem)))
-    document.querySelectorAll("div[tabs-section]")
-        .forEach(elem => elem.addEventListener('click', (event) => toggleSectionsEventHandler(event)))
     const filterSection = document.getElementById('filter-section')
     if (filterSection) {
         filterSection.addEventListener('click', (event) => filterButtonHandler(event))
@@ -173,19 +175,30 @@ function handleAnchor() {
 }
 
 function initTabs() {
-    document.querySelectorAll("div[tabs-section]")
-        .forEach(element => {
-            showCorrespondingTabBody(element)
-            element.addEventListener('click', (event) => toggleSectionsEventHandler(event))
-        })
-    let cached = localStorage.getItem("active-tab")
-    if (cached) {
-        let parsed = JSON.parse(cached)
-        let tab = document.querySelector('div[tabs-section] > button[data-togglable="' + parsed + '"]')
-        if (tab) {
-            toggleSections(tab)
-        }
-    }
+    // we could have only a single type of data - classlike or package
+    const mainContent = document.querySelector('.main-content');
+    const type = mainContent ? mainContent.getAttribute("data-page-type") : null;
+    const localStorageKey = "active-tab-" + type;
+    document.querySelectorAll('div[tabs-section]').forEach(element => {
+        showCorrespondingTabBody(element);
+        element.addEventListener('click', ({target}) => {
+            const togglable = target ? target.getAttribute("data-togglable") : null;
+            if (!togglable) return;
+
+            localStorage.setItem(localStorageKey, JSON.stringify(togglable));
+            toggleSections(target);
+        });
+    });
+
+    const cached = localStorage.getItem(localStorageKey);
+    if (!cached) return;
+
+    const tab = document.querySelector(
+        'div[tabs-section] > button[data-togglable="' + JSON.parse(cached) + '"]'
+    );
+    if (!tab) return;
+
+    toggleSections(tab);
 }
 
 function showCorrespondingTabBody(element) {
@@ -287,12 +300,6 @@ function toggleSections(target) {
     }
     activateTabs("tabs-section")
     activateTabsBody("tabs-section-body")
-}
-
-function toggleSectionsEventHandler(evt) {
-    if (!evt.target.getAttribute("data-togglable")) return
-    localStorage.setItem('active-tab', JSON.stringify(evt.target.getAttribute("data-togglable")))
-    toggleSections(evt.target)
 }
 
 function togglePlatformDependent(e, container) {

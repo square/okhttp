@@ -1,3 +1,7 @@
+<!--
+  - Copyright 2014-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+  -->
+
 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g id="abstractClassKotlin">
 <path id="Fill 1" fill-rule="evenodd" clip-rule="evenodd" d="M3 3.1055C1.764 4.3685 1 6.0935 1 8.0005C1 9.9065 1.764 11.6315 3 12.8945V3.1055Z" fill="#9AA7B0" fill-opacity="0.8"/>

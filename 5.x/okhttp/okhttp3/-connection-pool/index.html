@@ -45,7 +45,7 @@
             </div>
         </div>
         <div class="filter-section" id="filter-section">
-                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button>
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/main">jvm</button>
         </div>
     </div>
     <div class="navigation-controls">
@@ -58,32 +58,47 @@
                 <div class="sidebar--inner" id="sideMenu"></div>
             </div>
             <div id="main">
-<div class="main-content" data-page-type="classlike" id="content" pageids="okhttp::okhttp3/ConnectionPool///PointingToDeclaration//-388523033">
+<div class="main-content" data-page-type="classlike" id="content" pageids="okhttp::okhttp3/ConnectionPool///PointingToDeclaration//1481842020">
   <div class="breadcrumbs"><a href="../../index.html">okhttp</a><span class="delimiter">/</span><a href="../index.html">okhttp3</a><span class="delimiter">/</span><span class="current">ConnectionPool</span></div>
   <div class="cover ">
     <h1 class="cover"><span>Connection</span><wbr><span><span>Pool</span></span></h1>
-    <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-      <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">ConnectionPool</a></div><p class="paragraph">Manages reuse of HTTP and HTTP/2 connections for reduced network latency. HTTP requests that share the same <a href="../-address/index.html">Address</a> may share a <a href="../-connection/index.html">Connection</a>. This class implements the policy of which connections to keep open for future use.</p></div>    </div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">ConnectionPool</a></div><p class="paragraph">Manages reuse of HTTP and HTTP/2 connections for reduced network latency. HTTP requests that share the same <a href="../-address/index.html">Address</a> may share a <a href="../-connection/index.html">Connection</a>. This class implements the policy of which connections to keep open for future use.</p></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
     <div class="tabs-section-body">
       <div data-togglable="CONSTRUCTOR">
         <h2 class="">Constructors</h2>
-        <div class="table"><a data-name="1526774784%2FConstructors%2F-388523033" anchor-label="ConnectionPool" id="1526774784%2FConstructors%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+        <div class="table"><a data-name="1526774784%2FConstructors%2F1481842020" anchor-label="ConnectionPool" id="1526774784%2FConstructors%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-connection-pool.html"><span>Connection</span><wbr><span><span>Pool</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1526774784%2FConstructors%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1526774784%2FConstructors%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">maxIdleConnections<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token operator"> = </span><span class="token constant">5</span><span class="token punctuation">, </span></span><span class="parameter ">keepAliveDuration<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="token operator"> = </span><span class="token constant">5</span><span class="token punctuation">, </span></span><span class="parameter ">timeUnit<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html">TimeUnit</a><span class="token operator"> = </span>TimeUnit.MINUTES<span class="token punctuation">, </span></span><span class="parameter ">connectionListener<span class="token operator">: </span><a href="../-connection-listener/index.html">ConnectionListener</a><span class="token operator"> = </span>ConnectionListener.NONE</span></span><span class="token punctuation">)</span></div><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">maxIdleConnections<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">keepAliveDuration<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">timeUnit<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html">TimeUnit</a></span></span><span class="token punctuation">)</span></div><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="../-experimental-ok-http-api/index.html"><span class="token annotation builtin">ExperimentalOkHttpApi</span></a></div></div><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">maxIdleConnections<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token operator"> = </span><span class="token constant">5</span><span class="token punctuation">, </span></span><span class="parameter ">keepAliveDuration<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="token operator"> = </span><span class="token constant">5</span><span class="token punctuation">, </span></span><span class="parameter ">timeUnit<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html">TimeUnit</a><span class="token operator"> = </span>TimeUnit.MINUTES<span class="token punctuation">, </span></span><span class="parameter ">connectionListener<span class="token operator">: </span><a href="../-connection-listener/index.html">ConnectionListener</a><span class="token operator"> = </span>ConnectionListener.NONE</span></span><span class="token punctuation">)</span></div><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">maxIdleConnections<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">keepAliveDuration<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">timeUnit<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html">TimeUnit</a></span></span><span class="token punctuation">)</span></div><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="TYPE">
+        <h2 class="">Types</h2>
+        <div class="table"><a data-name="-246091457%2FClasslikes%2F1481842020" anchor-label="AddressPolicy" id="-246091457%2FClasslikes%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-address-policy/index.html"><span>Address</span><wbr><span><span>Policy</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-246091457%2FClasslikes%2F1481842020"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="-address-policy/index.html">AddressPolicy</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>minimumConcurrentCalls<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token operator"> = </span><span class="token constant">0</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>backoffDelayMillis<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="token operator"> = </span>60 * 1000<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>backoffJitterMillis<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token operator"> = </span><span class="token constant">100</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">A policy for how the pool should treat a specific address.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -92,53 +107,62 @@
       </div>
       <div data-togglable="FUNCTION">
         <h2 class="">Functions</h2>
-        <div class="table"><a data-name="-18482047%2FFunctions%2F-388523033" anchor-label="connectionCount" id="-18482047%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+        <div class="table"><a data-name="-18482047%2FFunctions%2F1481842020" anchor-label="connectionCount" id="-18482047%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="connection-count.html"><span>connection</span><wbr><span><span>Count</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-18482047%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-18482047%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="connection-count.html"><span class="token function">connectionCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Returns total number of connections in the pool.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="connection-count.html"><span class="token function">connectionCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Returns total number of connections in the pool.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="561790800%2FFunctions%2F-388523033" anchor-label="evictAll" id="561790800%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="561790800%2FFunctions%2F1481842020" anchor-label="evictAll" id="561790800%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="evict-all.html"><span>evict</span><wbr><span><span>All</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="561790800%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="561790800%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="evict-all.html"><span class="token function">evictAll</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Close and remove all idle connections in the pool.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="evict-all.html"><span class="token function">evictAll</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Close and remove all idle connections in the pool.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="1057389045%2FFunctions%2F-388523033" anchor-label="idleConnectionCount" id="1057389045%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+<a data-name="1057389045%2FFunctions%2F1481842020" anchor-label="idleConnectionCount" id="1057389045%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="idle-connection-count.html"><span>idle</span><wbr><span>Connection</span><wbr><span><span>Count</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1057389045%2FFunctions%2F-388523033"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1057389045%2FFunctions%2F1481842020"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="idle-connection-count.html"><span class="token function">idleConnectionCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Returns the number of idle connections in the pool.</p></div></div>                  </div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="idle-connection-count.html"><span class="token function">idleConnectionCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Returns the number of idle connections in the pool.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="191180703%2FFunctions%2F1481842020" anchor-label="setPolicy" id="191180703%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-policy.html"><span>set</span><wbr><span><span>Policy</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="191180703%2FFunctions%2F1481842020"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="../-experimental-ok-http-api/index.html"><span class="token annotation builtin">ExperimentalOkHttpApi</span></a></div></div><span class="token keyword">fun </span><a href="set-policy.html"><span class="token function">setPolicy</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">address<span class="token operator">: </span><a href="../-address/index.html">Address</a><span class="token punctuation">, </span></span><span class="parameter ">policy<span class="token operator">: </span><a href="-address-policy/index.html">ConnectionPool.AddressPolicy</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Sets a policy that applies to <a href="set-policy.html">address</a>. Overwrites any existing policy for that address.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -149,7 +173,7 @@
   </div>
 </div>
       <div class="footer">
-        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2024 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
       </div>
             </div>
         </div>

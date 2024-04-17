@@ -45,7 +45,7 @@
             </div>
         </div>
         <div class="filter-section" id="filter-section">
-                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button>
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/main">jvm</button>
         </div>
     </div>
     <div class="navigation-controls">
@@ -58,17 +58,15 @@
                 <div class="sidebar--inner" id="sideMenu"></div>
             </div>
             <div id="main">
-<div class="main-content" data-page-type="member" id="content" pageids="okhttp::okhttp3/EventListener/canceled/#okhttp3.Call/PointingToDeclaration//-388523033">
+<div class="main-content" data-page-type="member" id="content" pageids="okhttp::okhttp3/EventListener/canceled/#okhttp3.Call/PointingToDeclaration//1481842020">
   <div class="breadcrumbs"><a href="../../index.html">okhttp</a><span class="delimiter">/</span><a href="../index.html">okhttp3</a><span class="delimiter">/</span><a href="index.html">EventListener</a><span class="delimiter">/</span><span class="current">canceled</span></div>
   <div class="cover ">
     <h1 class="cover"><span><span>canceled</span></span></h1>
   </div>
-  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
-    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
-<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="canceled.html"><span class="token function">canceled</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><p class="paragraph">Invoked when a call is canceled.</p><p class="paragraph">Like all methods in this interface, this is invoked on the thread that triggered the event. But while other events occur sequentially; cancels may occur concurrently with other events. For example, thread A may be executing <a href="response-body-start.html">responseBodyStart</a> while thread B executes <a href="canceled.html">canceled</a>. Implementations must support such concurrent calls.</p><p class="paragraph">Note that cancellation is best-effort and that a call may proceed normally after it has been canceled. For example, happy-path events like <a href="request-headers-start.html">requestHeadersStart</a> and <a href="request-headers-end.html">requestHeadersEnd</a> may occur after a call is canceled. Typically cancellation takes effect when an expensive I/O operation is required.</p><p class="paragraph">This is invoked at most once, even if <a href="../-call/cancel.html">Call.cancel</a> is invoked multiple times. It may be invoked at any point in a call's life, including before <a href="call-start.html">callStart</a> and after <a href="call-end.html">callEnd</a>.</p></div>  </div>
+  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="canceled.html"><span class="token function">canceled</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="../-call/index.html">Call</a></span></span><span class="token punctuation">)</span></div><p class="paragraph">Invoked when a call is canceled.</p><p class="paragraph">Like all methods in this interface, this is invoked on the thread that triggered the event. But while other events occur sequentially; cancels may occur concurrently with other events. For example, thread A may be executing <a href="response-body-start.html">responseBodyStart</a> while thread B executes <a href="canceled.html">canceled</a>. Implementations must support such concurrent calls.</p><p class="paragraph">Note that cancellation is best-effort and that a call may proceed normally after it has been canceled. For example, happy-path events like <a href="request-headers-start.html">requestHeadersStart</a> and <a href="request-headers-end.html">requestHeadersEnd</a> may occur after a call is canceled. Typically cancellation takes effect when an expensive I/O operation is required.</p><p class="paragraph">This is invoked at most once, even if <a href="../-call/cancel.html">Call.cancel</a> is invoked multiple times. It may be invoked at any point in a call's life, including before <a href="call-start.html">callStart</a> and after <a href="call-end.html">callEnd</a>.</p></div></div>
 </div>
       <div class="footer">
-        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2024 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
       </div>
             </div>
         </div>
