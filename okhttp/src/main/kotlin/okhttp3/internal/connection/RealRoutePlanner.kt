@@ -19,7 +19,6 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.Socket
 import java.net.UnknownServiceException
-import kotlin.concurrent.withLock
 import okhttp3.Address
 import okhttp3.ConnectionSpec
 import okhttp3.HttpUrl
@@ -95,7 +94,7 @@ class RealRoutePlanner(
     val healthy = candidate.isHealthy(connectionUser.doExtensiveHealthChecks())
     var noNewExchangesEvent = false
     val toClose: Socket? =
-      candidate.lock.withLock {
+      synchronized(candidate) {
         when {
           !healthy -> {
             noNewExchangesEvent = !candidate.noNewExchanges
@@ -320,7 +319,7 @@ class RealRoutePlanner(
    * connections.
    */
   private fun retryRoute(connection: RealConnection): Route? {
-    return connection.lock.withLock {
+    return synchronized(connection) {
       when {
         connection.routeFailureCount != 0 -> null
 

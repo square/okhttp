@@ -21,7 +21,6 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isTrue
-import kotlin.concurrent.withLock
 import okhttp3.Address
 import okhttp3.ConnectionPool
 import okhttp3.FakeRoutePlanner
@@ -97,7 +96,7 @@ class ConnectionPoolTest {
         .build()
     val call = client.newCall(Request(addressA.url)) as RealCall
     call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
-    c1.lock.withLock { call.acquireConnectionNoEvents(c1) }
+    synchronized(c1) { call.acquireConnectionNoEvents(c1) }
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
     assertThat(pool.closeConnections(50L)).isEqualTo(100L)
@@ -343,6 +342,6 @@ class ConnectionPoolTest {
         .build()
     val call = client.newCall(Request(connection.route().address.url)) as RealCall
     call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
-    connection.lock.withLock { call.acquireConnectionNoEvents(connection) }
+    synchronized(connection) { call.acquireConnectionNoEvents(connection) }
   }
 }
