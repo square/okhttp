@@ -205,7 +205,7 @@ class Dispatcher() {
         val asyncCall = executableCalls[i]
         asyncCall.callsPerHost.decrementAndGet()
 
-        synchronized(this) {
+        this.withLock {
           runningAsyncCalls.remove(asyncCall)
         }
 
@@ -223,7 +223,7 @@ class Dispatcher() {
   }
 
   /** Used by [Call.execute] to signal it is in-flight. */
-  @Synchronized internal fun executed(call: RealCall) {
+  internal fun executed(call: RealCall) = this.withLock {
     runningSyncCalls.add(call)
   }
 
@@ -256,18 +256,18 @@ class Dispatcher() {
   }
 
   /** Returns a snapshot of the calls currently awaiting execution. */
-  @Synchronized fun queuedCalls(): List<Call> {
+  fun queuedCalls(): List<Call> = this.withLock {
     return Collections.unmodifiableList(readyAsyncCalls.map { it.call })
   }
 
   /** Returns a snapshot of the calls currently being executed. */
-  @Synchronized fun runningCalls(): List<Call> {
+  fun runningCalls(): List<Call> = this.withLock {
     return Collections.unmodifiableList(runningSyncCalls + runningAsyncCalls.map { it.call })
   }
 
-  @Synchronized fun queuedCallsCount(): Int = readyAsyncCalls.size
+  fun queuedCallsCount(): Int = this.withLock { readyAsyncCalls.size }
 
-  @Synchronized fun runningCallsCount(): Int = runningAsyncCalls.size + runningSyncCalls.size
+  fun runningCallsCount(): Int = this.withLock { runningAsyncCalls.size + runningSyncCalls.size }
 
   @JvmName("-deprecated_executorService")
   @Deprecated(
