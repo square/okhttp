@@ -31,6 +31,7 @@ import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLSocketFactory
+import kotlin.concurrent.withLock
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
@@ -93,7 +94,7 @@ class TestValueFactory : Closeable {
         socket = Socket(),
         idleAtNs = idleAtNanos,
       )
-    synchronized(result) { pool.put(result) }
+    result.lock.withLock { pool.put(result) }
     return result
   }
 
