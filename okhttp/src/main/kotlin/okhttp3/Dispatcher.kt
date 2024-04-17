@@ -223,9 +223,10 @@ class Dispatcher() {
   }
 
   /** Used by [Call.execute] to signal it is in-flight. */
-  internal fun executed(call: RealCall) = this.withLock {
-    runningSyncCalls.add(call)
-  }
+  internal fun executed(call: RealCall) =
+    this.withLock {
+      runningSyncCalls.add(call)
+    }
 
   /** Used by [AsyncCall.run] to signal completion. */
   internal fun finished(call: AsyncCall) {
@@ -256,14 +257,16 @@ class Dispatcher() {
   }
 
   /** Returns a snapshot of the calls currently awaiting execution. */
-  fun queuedCalls(): List<Call> = this.withLock {
-    return Collections.unmodifiableList(readyAsyncCalls.map { it.call })
-  }
+  fun queuedCalls(): List<Call> =
+    this.withLock {
+      return Collections.unmodifiableList(readyAsyncCalls.map { it.call })
+    }
 
   /** Returns a snapshot of the calls currently being executed. */
-  fun runningCalls(): List<Call> = this.withLock {
-    return Collections.unmodifiableList(runningSyncCalls + runningAsyncCalls.map { it.call })
-  }
+  fun runningCalls(): List<Call> =
+    this.withLock {
+      return Collections.unmodifiableList(runningSyncCalls + runningAsyncCalls.map { it.call })
+    }
 
   fun queuedCallsCount(): Int = this.withLock { readyAsyncCalls.size }
 
