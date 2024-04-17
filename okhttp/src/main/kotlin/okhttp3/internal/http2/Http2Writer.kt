@@ -20,7 +20,7 @@ import java.io.IOException
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level.FINE
 import java.util.logging.Logger
-import kotlin.concurrent.withLock
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.format
 import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
 import okhttp3.internal.http2.Http2.FLAG_ACK
@@ -58,7 +58,7 @@ class Http2Writer(
 
   @Throws(IOException::class)
   fun connectionPreface() {
-    lock.withLock {
+    this.withLock {
       if (closed) throw IOException("closed")
       if (!client) return // Nothing to write; servers don't send connection headers!
       if (logger.isLoggable(FINE)) {
@@ -72,7 +72,7 @@ class Http2Writer(
   /** Applies `peerSettings` and then sends a settings ACK. */
   @Throws(IOException::class)
   fun applyAndAckSettings(peerSettings: Settings) {
-    lock.withLock {
+    this.withLock {
       if (closed) throw IOException("closed")
       this.maxFrameSize = peerSettings.getMaxFrameSize(maxFrameSize)
       if (peerSettings.headerTableSize != -1) {
@@ -106,7 +106,7 @@ class Http2Writer(
     promisedStreamId: Int,
     requestHeaders: List<Header>,
   ) {
-    lock.withLock {
+    this.withLock {
       if (closed) throw IOException("closed")
       hpackWriter.writeHeaders(requestHeaders)
 
@@ -127,7 +127,7 @@ class Http2Writer(
 
   @Throws(IOException::class)
   fun flush() {
-    lock.withLock {
+    this.withLock {
       if (closed) throw IOException("closed")
       sink.flush()
     }
@@ -138,7 +138,7 @@ class Http2Writer(
     streamId: Int,
     errorCode: ErrorCode,
   ) {
-    lock.withLock {
+    this.withLock {
       if (closed) throw IOException("closed")
       require(errorCode.httpCode != -1)
 
@@ -170,7 +170,7 @@ class Http2Writer(
     source: Buffer?,
     byteCount: Int,
   ) {
-    lock.withLock {
+    this.withLock {
       if (closed) throw IOException("closed")
       var flags = FLAG_NONE
       if (outFinished) flags = flags or FLAG_END_STREAM
@@ -199,7 +199,7 @@ class Http2Writer(
   /** Write okhttp's settings to the peer. */
   @Throws(IOException::class)
   fun settings(settings: Settings) {
-    lock.withLock {
+    this.withLock {
       if (closed) throw IOException("closed")
       frameHeader(
         streamId = 0,
@@ -232,7 +232,7 @@ class Http2Writer(
     payload1: Int,
     payload2: Int,
   ) {
-    lock.withLock {
+    this.withLock {
       if (closed) throw IOException("closed")
       frameHeader(
         streamId = 0,
@@ -260,7 +260,7 @@ class Http2Writer(
     errorCode: ErrorCode,
     debugData: ByteArray,
   ) {
-    lock.withLock {
+    this.withLock {
       if (closed) throw IOException("closed")
       require(errorCode.httpCode != -1) { "errorCode.httpCode == -1" }
       frameHeader(
@@ -287,7 +287,7 @@ class Http2Writer(
     streamId: Int,
     windowSizeIncrement: Long,
   ) {
-    lock.withLock {
+    this.withLock {
       if (closed) throw IOException("closed")
       require(windowSizeIncrement != 0L && windowSizeIncrement <= 0x7fffffffL) {
         "windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL: $windowSizeIncrement"
@@ -333,7 +333,7 @@ class Http2Writer(
 
   @Throws(IOException::class)
   override fun close() {
-    lock.withLock {
+    this.withLock {
       closed = true
       sink.close()
     }
@@ -364,7 +364,7 @@ class Http2Writer(
     streamId: Int,
     headerBlock: List<Header>,
   ) {
-    lock.withLock {
+    this.withLock {
       if (closed) throw IOException("closed")
       hpackWriter.writeHeaders(headerBlock)
 

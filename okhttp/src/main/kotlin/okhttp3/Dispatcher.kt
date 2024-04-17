@@ -23,8 +23,8 @@ import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 import okhttp3.internal.assertNotHeld
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealCall.AsyncCall
 import okhttp3.internal.okHttpName
@@ -48,10 +48,10 @@ class Dispatcher() {
    * remain in flight.
    */
   var maxRequests = 64
-    get() = lock.withLock { field }
+    get() = this.withLock { field }
     set(maxRequests) {
       require(maxRequests >= 1) { "max < 1: $maxRequests" }
-      lock.withLock {
+      this.withLock {
         field = maxRequests
       }
       promoteAndExecute()
@@ -68,10 +68,10 @@ class Dispatcher() {
    * WebSocket connections to hosts **do not** count against this limit.
    */
   var maxRequestsPerHost = 5
-    get() = lock.withLock { field }
+    get() = this.withLock { field }
     set(maxRequestsPerHost) {
       require(maxRequestsPerHost >= 1) { "max < 1: $maxRequestsPerHost" }
-      lock.withLock {
+      this.withLock {
         field = maxRequestsPerHost
       }
       promoteAndExecute()
@@ -89,9 +89,9 @@ class Dispatcher() {
    * until every returned [Response] has been closed.
    */
   var idleCallback: Runnable? = null
-    get() = lock.withLock { field }
+    get() = this.withLock { field }
     set(value) {
-      lock.withLock { field = value }
+      this.withLock { field = value }
     }
 
   private var executorServiceOrNull: ExecutorService? = null
@@ -99,7 +99,7 @@ class Dispatcher() {
   @get:JvmName("executorService")
   val executorService: ExecutorService
     get() =
-      lock.withLock {
+      this.withLock {
         if (executorServiceOrNull == null) {
           executorServiceOrNull =
             ThreadPoolExecutor(
@@ -128,7 +128,7 @@ class Dispatcher() {
   }
 
   internal fun enqueue(call: AsyncCall) {
-    lock.withLock {
+    this.withLock {
       readyAsyncCalls.add(call)
 
       // Mutate the AsyncCall so that it shares the AtomicInteger of an existing running call to
@@ -156,7 +156,7 @@ class Dispatcher() {
    * [synchronously][Call.execute] and [asynchronously][Call.enqueue].
    */
   fun cancelAll() {
-    lock.withLock {
+    this.withLock {
       for (call in readyAsyncCalls) {
         call.call.cancel()
       }
@@ -181,7 +181,7 @@ class Dispatcher() {
 
     val executableCalls = mutableListOf<AsyncCall>()
     val isRunning: Boolean
-    lock.withLock {
+    this.withLock {
       val i = readyAsyncCalls.iterator()
       while (i.hasNext()) {
         val asyncCall = i.next()
@@ -243,7 +243,7 @@ class Dispatcher() {
     call: T,
   ) {
     val idleCallback: Runnable?
-    synchronized(this) {
+    this.withLock {
       if (!calls.remove(call)) throw AssertionError("Call wasn't in-flight!")
       idleCallback = this.idleCallback
     }

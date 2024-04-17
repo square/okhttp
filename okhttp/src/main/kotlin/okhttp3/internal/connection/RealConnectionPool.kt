@@ -21,7 +21,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
-import kotlin.concurrent.withLock
 import okhttp3.Address
 import okhttp3.ConnectionListener
 import okhttp3.ConnectionPool
@@ -31,6 +30,7 @@ import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskQueue
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.connection.RealCall.CallReference
 import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
@@ -81,7 +81,7 @@ class RealConnectionPool(
 
   fun idleConnectionCount(): Int {
     return connections.count {
-      it.lock.withLock { it.calls.isEmpty() }
+      it.withLock { it.calls.isEmpty() }
     }
   }
 
@@ -111,7 +111,7 @@ class RealConnectionPool(
     for (connection in connections) {
       // In the first synchronized block, acquire the connection if it can satisfy this call.
       val acquired =
-        connection.lock.withLock {
+        connection.withLock {
           when {
             requireMultiplexed && !connection.isMultiplexed -> false
             !connection.isEligible(address, routes) -> false
@@ -130,7 +130,7 @@ class RealConnectionPool(
       // the hook to close this connection if it's no longer in use.
       val noNewExchangesEvent: Boolean
       val toClose: Socket? =
-        connection.lock.withLock {
+        connection.withLock {
           noNewExchangesEvent = !connection.noNewExchanges
           connection.noNewExchanges = true
           connectionUser.releaseConnectionNoEvents()
@@ -177,7 +177,7 @@ class RealConnectionPool(
     while (i.hasNext()) {
       val connection = i.next()
       val socketToClose =
-        connection.lock.withLock {
+        connection.withLock {
           if (connection.calls.isEmpty()) {
             i.remove()
             connection.noNewExchanges = true
@@ -215,7 +215,7 @@ class RealConnectionPool(
     }
     for (connection in connections) {
       val addressState = addressStates[connection.route.address] ?: continue
-      connection.lock.withLock {
+      connection.withLock {
         addressState.concurrentCallCapacity += connection.allocationLimit
       }
     }
@@ -238,7 +238,7 @@ class RealConnectionPool(
     var inUseConnectionCount = 0
     var evictableConnectionCount = 0
     for (connection in connections) {
-      connection.lock.withLock {
+      connection.withLock {
         // If the connection is in use, keep searching.
         if (pruneAndGetAllocationCount(connection, now) > 0) {
           inUseConnectionCount++
@@ -286,7 +286,7 @@ class RealConnectionPool(
     when {
       toEvict != null -> {
         // We've chosen a connection to evict. Confirm it's still okay to be evicted, then close it.
-        toEvict.lock.withLock {
+        toEvict.withLock {
           if (toEvict.calls.isNotEmpty()) return 0L // No longer idle.
           if (toEvict.idleAtNs != toEvictIdleAtNs) return 0L // No longer oldest.
           toEvict.noNewExchanges = true
@@ -416,7 +416,7 @@ class RealConnectionPool(
     var concurrentCallCapacity = 0
     for (connection in connections) {
       if (state.address != connection.route.address) continue
-      connection.lock.withLock {
+      connection.withLock {
         concurrentCallCapacity += connection.allocationLimit
       }
 
@@ -431,7 +431,7 @@ class RealConnectionPool(
       // RealRoutePlanner will add the connection to the pool itself, other RoutePlanners may not
       // TODO: make all RoutePlanners consistent in this behavior
       if (connection !in connections) {
-        connection.lock.withLock { put(connection) }
+        connection.withLock { put(connection) }
       }
 
       return 0L // run again immediately to create more connections if needed

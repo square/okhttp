@@ -22,10 +22,10 @@ import java.net.SocketTimeoutException
 import java.util.ArrayDeque
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 import okhttp3.Headers
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertNotHeld
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.http2.flowcontrol.WindowCounter
 import okhttp3.internal.toHeaderList
 import okio.AsyncTimeout
@@ -87,7 +87,7 @@ class Http2Stream internal constructor(
    * near-simultaneously) then this is the first reason known to this peer.
    */
   internal var errorCode: ErrorCode? = null
-    get() = lock.withLock { field }
+    get() = this.withLock { field }
 
   /** The exception that explains [errorCode]. Null if no exception was provided. */
   internal var errorException: IOException? = null
@@ -112,7 +112,7 @@ class Http2Stream internal constructor(
    */
   val isOpen: Boolean
     get() {
-      lock.withLock {
+      this.withLock {
         if (errorCode != null) {
           return false
         }
@@ -144,7 +144,7 @@ class Http2Stream internal constructor(
    */
   @Throws(IOException::class)
   fun takeHeaders(callerIsIdle: Boolean = false): Headers {
-    lock.withLock {
+    this.withLock {
       while (headersQueue.isEmpty() && errorCode == null) {
         val doReadTimeout = callerIsIdle || doReadTimeout()
         if (doReadTimeout) {
@@ -171,7 +171,7 @@ class Http2Stream internal constructor(
    */
   @Throws(IOException::class)
   fun trailers(): Headers {
-    lock.withLock {
+    this.withLock {
       if (source.finished && source.receiveBuffer.exhausted() && source.readBuffer.exhausted()) {
         return source.trailers ?: EMPTY_HEADERS
       }
@@ -199,7 +199,7 @@ class Http2Stream internal constructor(
     lock.assertNotHeld()
 
     var flushHeaders = flushHeaders
-    lock.withLock {
+    this.withLock {
       this.hasResponseHeaders = true
       if (outFinished) {
         this.sink.finished = true
@@ -210,7 +210,7 @@ class Http2Stream internal constructor(
     // Only DATA frames are subject to flow-control. Transmit the HEADER frame if the connection
     // flow-control window is fully depleted.
     if (!flushHeaders) {
-      lock.withLock {
+      this.withLock {
         flushHeaders = (connection.writeBytesTotal >= connection.writeBytesMaximum)
       }
     }
@@ -223,7 +223,7 @@ class Http2Stream internal constructor(
   }
 
   fun enqueueTrailers(trailers: Headers) {
-    lock.withLock {
+    this.withLock {
       check(!sink.finished) { "already finished" }
       require(trailers.size != 0) { "trailers.size() == 0" }
       this.sink.trailers = trailers
@@ -244,7 +244,7 @@ class Http2Stream internal constructor(
    *     not yet been sent.
    */
   fun getSink(): Sink {
-    lock.withLock {
+    this.withLock {
       check(hasResponseHeaders || isLocallyInitiated) {
         "reply before requesting the sink"
       }
@@ -284,7 +284,7 @@ class Http2Stream internal constructor(
   ): Boolean {
     lock.assertNotHeld()
 
-    lock.withLock {
+    this.withLock {
       if (this.errorCode != null) {
         return false
       }
@@ -317,7 +317,7 @@ class Http2Stream internal constructor(
     lock.assertNotHeld()
 
     val open: Boolean
-    lock.withLock {
+    this.withLock {
       if (!hasResponseHeaders ||
         headers[Header.RESPONSE_STATUS_UTF8] != null ||
         headers[Header.TARGET_METHOD_UTF8] != null
@@ -339,7 +339,7 @@ class Http2Stream internal constructor(
   }
 
   fun receiveRstStream(errorCode: ErrorCode) {
-    lock.withLock {
+    this.withLock {
       if (this.errorCode == null) {
         this.errorCode = errorCode
         condition.signalAll()
@@ -400,7 +400,7 @@ class Http2Stream internal constructor(
 
         // 1. Decide what to do in a synchronized block.
 
-        lock.withLock {
+        this@Http2Stream.withLock {
           val doReadTimeout = doReadTimeout()
           if (doReadTimeout) {
             readTimeout.enter()
@@ -484,7 +484,7 @@ class Http2Stream internal constructor(
       while (remainingByteCount > 0L) {
         val finished: Boolean
         val flowControlError: Boolean
-        lock.withLock {
+        this@Http2Stream.withLock {
           finished = this.finished
           flowControlError = remainingByteCount + readBuffer.size > maxByteCount
         }
@@ -510,7 +510,7 @@ class Http2Stream internal constructor(
         // Move the received data to the read buffer to the reader can read it. If this source has
         // been closed since this read began we must discard the incoming data and tell the
         // connection we've done so.
-        lock.withLock {
+        this@Http2Stream.withLock {
           if (closed) {
             receiveBuffer.clear()
           } else {
@@ -538,7 +538,7 @@ class Http2Stream internal constructor(
     @Throws(IOException::class)
     override fun close() {
       val bytesDiscarded: Long
-      lock.withLock {
+      this@Http2Stream.withLock {
         closed = true
         bytesDiscarded = readBuffer.size
         readBuffer.clear()
@@ -557,7 +557,7 @@ class Http2Stream internal constructor(
 
     val open: Boolean
     val cancel: Boolean
-    lock.withLock {
+    this.withLock {
       cancel = !source.finished && source.closed && (sink.finished || sink.closed)
       open = isOpen
     }
@@ -608,7 +608,7 @@ class Http2Stream internal constructor(
     private fun emitFrame(outFinishedOnLastFrame: Boolean) {
       val toWrite: Long
       val outFinished: Boolean
-      lock.withLock {
+      this@Http2Stream.withLock {
         writeTimeout.enter()
         try {
           while (writeBytesTotal >= writeBytesMaximum &&
@@ -640,7 +640,7 @@ class Http2Stream internal constructor(
     override fun flush() {
       lock.assertNotHeld()
 
-      lock.withLock {
+      this@Http2Stream.withLock {
         checkOutNotClosed()
       }
       // TODO(jwilson): flush the connection?!
@@ -657,7 +657,7 @@ class Http2Stream internal constructor(
       lock.assertNotHeld()
 
       val outFinished: Boolean
-      lock.withLock {
+      this@Http2Stream.withLock {
         if (closed) return
         outFinished = errorCode == null
       }
@@ -686,7 +686,7 @@ class Http2Stream internal constructor(
           }
         }
       }
-      lock.withLock {
+      this@Http2Stream.withLock {
         closed = true
         condition.signalAll() // Because doReadTimeout() may have changed.
       }

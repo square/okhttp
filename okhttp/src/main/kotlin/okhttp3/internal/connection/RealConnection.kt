@@ -39,6 +39,7 @@ import okhttp3.internal.assertHeld
 import okhttp3.internal.assertNotHeld
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http1.Http1ExchangeCodec
@@ -133,7 +134,7 @@ class RealConnection(
 
   /** Prevent further exchanges from being created on this connection. */
   override fun noNewExchanges() {
-    lock.withLock {
+    this.withLock {
       noNewExchanges = true
     }
     connectionListener.noNewExchanges(this)
@@ -141,13 +142,13 @@ class RealConnection(
 
   /** Prevent this connection from being used for hosts other than the one in [route]. */
   internal fun noCoalescedConnections() {
-    lock.withLock {
+    this.withLock {
       noCoalescedConnections = true
     }
   }
 
   internal fun incrementSuccessCount() {
-    lock.withLock {
+    this.withLock {
       successCount++
     }
   }
