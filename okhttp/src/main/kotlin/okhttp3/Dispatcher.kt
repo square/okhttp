@@ -22,9 +22,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
-import okhttp3.internal.assertNotHeld
+import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealCall.AsyncCall
 import okhttp3.internal.okHttpName
@@ -38,8 +36,6 @@ import okhttp3.internal.threadFactory
  * concurrently.
  */
 class Dispatcher() {
-  internal val lock: ReentrantLock = ReentrantLock()
-
   /**
    * The maximum number of requests to execute concurrently. Above this requests queue in memory,
    * waiting for the running calls to complete.
@@ -47,11 +43,10 @@ class Dispatcher() {
    * If more than [maxRequests] requests are in flight when this is invoked, those requests will
    * remain in flight.
    */
-  var maxRequests = 64
-    get() = lock.withLock { field }
+  @get:Synchronized var maxRequests = 64
     set(maxRequests) {
       require(maxRequests >= 1) { "max < 1: $maxRequests" }
-      lock.withLock {
+      synchronized(this) {
         field = maxRequests
       }
       promoteAndExecute()
@@ -67,11 +62,10 @@ class Dispatcher() {
    *
    * WebSocket connections to hosts **do not** count against this limit.
    */
-  var maxRequestsPerHost = 5
-    get() = lock.withLock { field }
+  @get:Synchronized var maxRequestsPerHost = 5
     set(maxRequestsPerHost) {
       require(maxRequestsPerHost >= 1) { "max < 1: $maxRequestsPerHost" }
-      lock.withLock {
+      synchronized(this) {
         field = maxRequestsPerHost
       }
       promoteAndExecute()
@@ -88,31 +82,29 @@ class Dispatcher() {
    * This means that if you are doing synchronous calls the network layer will not truly be idle
    * until every returned [Response] has been closed.
    */
+  @set:Synchronized
+  @get:Synchronized
   var idleCallback: Runnable? = null
-    get() = lock.withLock { field }
-    set(value) {
-      lock.withLock { field = value }
-    }
 
   private var executorServiceOrNull: ExecutorService? = null
 
+  @get:Synchronized
   @get:JvmName("executorService")
   val executorService: ExecutorService
-    get() =
-      lock.withLock {
-        if (executorServiceOrNull == null) {
-          executorServiceOrNull =
-            ThreadPoolExecutor(
-              0,
-              Int.MAX_VALUE,
-              60,
-              TimeUnit.SECONDS,
-              SynchronousQueue(),
-              threadFactory("$okHttpName Dispatcher", false),
-            )
-        }
-        return executorServiceOrNull!!
+    get() {
+      if (executorServiceOrNull == null) {
+        executorServiceOrNull =
+          ThreadPoolExecutor(
+            0,
+            Int.MAX_VALUE,
+            60,
+            TimeUnit.SECONDS,
+            SynchronousQueue(),
+            threadFactory("$okHttpName Dispatcher", false),
+          )
       }
+      return executorServiceOrNull!!
+    }
 
   /** Ready async calls in the order they'll be run. */
   private val readyAsyncCalls = ArrayDeque<AsyncCall>()
@@ -128,7 +120,7 @@ class Dispatcher() {
   }
 
   internal fun enqueue(call: AsyncCall) {
-    lock.withLock {
+    synchronized(this) {
       readyAsyncCalls.add(call)
 
       // Mutate the AsyncCall so that it shares the AtomicInteger of an existing running call to
@@ -155,17 +147,15 @@ class Dispatcher() {
    * Cancel all calls currently enqueued or executing. Includes calls executed both
    * [synchronously][Call.execute] and [asynchronously][Call.enqueue].
    */
-  fun cancelAll() {
-    lock.withLock {
-      for (call in readyAsyncCalls) {
-        call.call.cancel()
-      }
-      for (call in runningAsyncCalls) {
-        call.call.cancel()
-      }
-      for (call in runningSyncCalls) {
-        call.cancel()
-      }
+  @Synchronized fun cancelAll() {
+    for (call in readyAsyncCalls) {
+      call.call.cancel()
+    }
+    for (call in runningAsyncCalls) {
+      call.call.cancel()
+    }
+    for (call in runningSyncCalls) {
+      call.cancel()
     }
   }
 
@@ -177,11 +167,11 @@ class Dispatcher() {
    * @return true if the dispatcher is currently running calls.
    */
   private fun promoteAndExecute(): Boolean {
-    lock.assertNotHeld()
+    this.assertThreadDoesntHoldLock()
 
     val executableCalls = mutableListOf<AsyncCall>()
     val isRunning: Boolean
-    lock.withLock {
+    synchronized(this) {
       val i = readyAsyncCalls.iterator()
       while (i.hasNext()) {
         val asyncCall = i.next()
