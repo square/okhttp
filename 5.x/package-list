@@ -17,7 +17,7 @@ okhttp3
 module:okhttp-brotli
 okhttp3.brotli
 module:okhttp-coroutines
-okhttp3
+okhttp3.coroutines
 module:okhttp-dnsoverhttps
 okhttp3.dnsoverhttps
 module:okhttp-java-net-cookiejar
