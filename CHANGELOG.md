@@ -5,6 +5,18 @@ Change Log
 
 See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
 
+## Version 5.0.0-alpha.14
+
+_2024-04-17_
+
+ *  Breaking: Move coroutines extensions to okhttp3.coroutines. Previously this artifact shared the
+    `okhttp3` package name with our core module, which is incompatible with the Java Platform Module
+    System.
+
+ *  Fix in okhttp-coroutines: Publish a valid artifact. The coroutines JAR file in 5.0.0-alpha.13
+    was corrupt and should not be used.
+
+
 ## Version 5.0.0-alpha.13
 
 _2024-04-16_
