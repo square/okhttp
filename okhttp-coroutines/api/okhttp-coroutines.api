@@ -1,4 +1,4 @@
-public final class okhttp3/JvmCallExtensionsKt {
+public final class okhttp3/coroutines/ExecuteAsyncKt {
 	public static final fun executeAsync (Lokhttp3/Call;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 

@@ -22,7 +22,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.executeAsync
+import okhttp3.coroutines.executeAsync
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase.Companion.PUBLIC_SUFFIX_RESOURCE
 import okio.BufferedSink
 import okio.ByteString

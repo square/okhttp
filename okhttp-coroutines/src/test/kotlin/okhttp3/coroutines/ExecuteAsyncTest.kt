@@ -14,10 +14,7 @@
  * limitations under the License.
  *
  */
-
-@file:OptIn(ExperimentalCoroutinesApi::class)
-
-package okhttp3
+package okhttp3.coroutines
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -28,7 +25,6 @@ import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.job
@@ -39,7 +35,14 @@ import kotlinx.coroutines.withTimeout
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.DisconnectAfterRequest
+import okhttp3.Callback
+import okhttp3.FailingCall
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClientTestRule
+import okhttp3.Protocol
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.ResponseBody
 import okio.Buffer
 import okio.ForwardingSource
 import okio.buffer
@@ -48,7 +51,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
 
-class SuspendCallTest {
+class ExecuteAsyncTest {
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
 
