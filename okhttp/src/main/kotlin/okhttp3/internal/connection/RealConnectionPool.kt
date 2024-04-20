@@ -25,11 +25,12 @@ import okhttp3.Address
 import okhttp3.ConnectionListener
 import okhttp3.ConnectionPool
 import okhttp3.Route
-import okhttp3.internal.assertThreadHoldsLock
+import okhttp3.internal.assertHeld
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskQueue
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.connection.RealCall.CallReference
 import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
@@ -80,7 +81,7 @@ class RealConnectionPool(
 
   fun idleConnectionCount(): Int {
     return connections.count {
-      synchronized(it) { it.calls.isEmpty() }
+      it.withLock { it.calls.isEmpty() }
     }
   }
 
@@ -110,7 +111,7 @@ class RealConnectionPool(
     for (connection in connections) {
       // In the first synchronized block, acquire the connection if it can satisfy this call.
       val acquired =
-        synchronized(connection) {
+        connection.withLock {
           when {
             requireMultiplexed && !connection.isMultiplexed -> false
             !connection.isEligible(address, routes) -> false
@@ -129,7 +130,7 @@ class RealConnectionPool(
       // the hook to close this connection if it's no longer in use.
       val noNewExchangesEvent: Boolean
       val toClose: Socket? =
-        synchronized(connection) {
+        connection.withLock {
           noNewExchangesEvent = !connection.noNewExchanges
           connection.noNewExchanges = true
           connectionUser.releaseConnectionNoEvents()
@@ -145,7 +146,7 @@ class RealConnectionPool(
   }
 
   fun put(connection: RealConnection) {
-    connection.assertThreadHoldsLock()
+    connection.lock.assertHeld()
 
     connections.add(connection)
 //    connection.queueEvent { connectionListener.connectEnd(connection) }
@@ -157,7 +158,7 @@ class RealConnectionPool(
    * removed from the pool and should be closed.
    */
   fun connectionBecameIdle(connection: RealConnection): Boolean {
-    connection.assertThreadHoldsLock()
+    connection.lock.assertHeld()
 
     return if (connection.noNewExchanges || maxIdleConnections == 0) {
       connection.noNewExchanges = true
@@ -176,13 +177,13 @@ class RealConnectionPool(
     while (i.hasNext()) {
       val connection = i.next()
       val socketToClose =
-        synchronized(connection) {
+        connection.withLock {
           if (connection.calls.isEmpty()) {
             i.remove()
             connection.noNewExchanges = true
-            return@synchronized connection.socket()
+            return@withLock connection.socket()
           } else {
-            return@synchronized null
+            return@withLock null
           }
         }
       if (socketToClose != null) {
@@ -214,7 +215,7 @@ class RealConnectionPool(
     }
     for (connection in connections) {
       val addressState = addressStates[connection.route.address] ?: continue
-      synchronized(connection) {
+      connection.withLock {
         addressState.concurrentCallCapacity += connection.allocationLimit
       }
     }
@@ -237,11 +238,11 @@ class RealConnectionPool(
     var inUseConnectionCount = 0
     var evictableConnectionCount = 0
     for (connection in connections) {
-      synchronized(connection) {
+      connection.withLock {
         // If the connection is in use, keep searching.
         if (pruneAndGetAllocationCount(connection, now) > 0) {
           inUseConnectionCount++
-          return@synchronized
+          return@withLock
         }
 
         val idleAtNs = connection.idleAtNs
@@ -285,7 +286,7 @@ class RealConnectionPool(
     when {
       toEvict != null -> {
         // We've chosen a connection to evict. Confirm it's still okay to be evicted, then close it.
-        synchronized(toEvict) {
+        toEvict.withLock {
           if (toEvict.calls.isNotEmpty()) return 0L // No longer idle.
           if (toEvict.idleAtNs != toEvictIdleAtNs) return 0L // No longer oldest.
           toEvict.noNewExchanges = true
@@ -336,7 +337,7 @@ class RealConnectionPool(
     connection: RealConnection,
     now: Long,
   ): Int {
-    connection.assertThreadHoldsLock()
+    connection.lock.assertHeld()
 
     val references = connection.calls
     var i = 0
@@ -415,7 +416,7 @@ class RealConnectionPool(
     var concurrentCallCapacity = 0
     for (connection in connections) {
       if (state.address != connection.route.address) continue
-      synchronized(connection) {
+      connection.withLock {
         concurrentCallCapacity += connection.allocationLimit
       }
 
@@ -430,7 +431,7 @@ class RealConnectionPool(
       // RealRoutePlanner will add the connection to the pool itself, other RoutePlanners may not
       // TODO: make all RoutePlanners consistent in this behavior
       if (connection !in connections) {
-        synchronized(connection) { put(connection) }
+        connection.withLock { put(connection) }
       }
 
       return 0L // run again immediately to create more connections if needed

@@ -29,6 +29,7 @@ import okhttp3.Request
 import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.TestValueFactory
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.http2.Http2
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2ConnectionTest
@@ -96,7 +97,7 @@ class ConnectionPoolTest {
         .build()
     val call = client.newCall(Request(addressA.url)) as RealCall
     call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
-    synchronized(c1) { call.acquireConnectionNoEvents(c1) }
+    c1.withLock { call.acquireConnectionNoEvents(c1) }
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
     assertThat(pool.closeConnections(50L)).isEqualTo(100L)
@@ -342,6 +343,6 @@ class ConnectionPoolTest {
         .build()
     val call = client.newCall(Request(connection.route().address.url)) as RealCall
     call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
-    synchronized(connection) { call.acquireConnectionNoEvents(connection) }
+    connection.withLock { call.acquireConnectionNoEvents(connection) }
   }
 }

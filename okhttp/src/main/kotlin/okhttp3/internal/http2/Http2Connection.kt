@@ -20,22 +20,23 @@ import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.Socket
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.Condition
+import java.util.concurrent.locks.ReentrantLock
 import okhttp3.internal.EMPTY_BYTE_ARRAY
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.http2.ErrorCode.REFUSED_STREAM
 import okhttp3.internal.http2.Settings.Companion.DEFAULT_INITIAL_WINDOW_SIZE
 import okhttp3.internal.http2.flowcontrol.WindowCounter
 import okhttp3.internal.ignoreIoExceptions
-import okhttp3.internal.notifyAll
 import okhttp3.internal.okHttpName
 import okhttp3.internal.peerName
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
 import okhttp3.internal.toHeaders
-import okhttp3.internal.wait
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
@@ -54,7 +55,10 @@ import okio.source
  */
 @Suppress("NAME_SHADOWING")
 class Http2Connection internal constructor(builder: Builder) : Closeable {
-  // Internal state of this connection is guarded by 'this'. No blocking operations may be
+  internal val lock: ReentrantLock = ReentrantLock()
+  internal val condition: Condition = lock.newCondition()
+
+  // Internal state of this connection is guarded by 'lock'. No blocking operations may be
   // performed while holding this lock!
   //
   // Socket writes are guarded by frameWriter.
@@ -149,12 +153,12 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       val pingIntervalNanos = TimeUnit.MILLISECONDS.toNanos(builder.pingIntervalMillis.toLong())
       writerQueue.schedule("$connectionName ping", pingIntervalNanos) {
         val failDueToMissingPong =
-          synchronized(this@Http2Connection) {
+          this.withLock {
             if (intervalPongsReceived < intervalPingsSent) {
-              return@synchronized true
+              return@withLock true
             } else {
               intervalPingsSent++
-              return@synchronized false
+              return@withLock false
             }
           }
         if (failDueToMissingPong) {
@@ -171,30 +175,31 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   /**
    * Returns the number of [open streams][Http2Stream.isOpen] on this connection.
    */
-  @Synchronized
-  fun openStreamCount(): Int = streams.size
+  fun openStreamCount(): Int = this.withLock { streams.size }
 
-  @Synchronized
-  fun getStream(id: Int): Http2Stream? = streams[id]
+  fun getStream(id: Int): Http2Stream? = this.withLock { streams[id] }
 
-  @Synchronized
   internal fun removeStream(streamId: Int): Http2Stream? {
-    val stream = streams.remove(streamId)
+    this.withLock {
+      val stream = streams.remove(streamId)
 
-    // The removed stream may be blocked on a connection-wide window update.
-    notifyAll()
+      // The removed stream may be blocked on a connection-wide window update.
+      condition.signalAll()
 
-    return stream
+      return stream
+    }
   }
 
-  @Synchronized internal fun updateConnectionFlowControl(read: Long) {
-    readBytes.update(total = read)
-    val readBytesToAcknowledge = readBytes.unacknowledged
-    if (readBytesToAcknowledge >= okHttpSettings.initialWindowSize / 2) {
-      writeWindowUpdateLater(0, readBytesToAcknowledge)
-      readBytes.update(acknowledged = readBytesToAcknowledge)
+  internal fun updateConnectionFlowControl(read: Long) {
+    this.withLock {
+      readBytes.update(total = read)
+      val readBytesToAcknowledge = readBytes.unacknowledged
+      if (readBytesToAcknowledge >= okHttpSettings.initialWindowSize / 2) {
+        writeWindowUpdateLater(0, readBytesToAcknowledge)
+        readBytes.update(acknowledged = readBytesToAcknowledge)
+      }
+      flowControlListener.receivingConnectionWindowChanged(readBytes)
     }
-    flowControlListener.receivingConnectionWindowChanged(readBytes)
   }
 
   /**
@@ -240,8 +245,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     val stream: Http2Stream
     val streamId: Int
 
-    synchronized(writer) {
-      synchronized(this) {
+    writer.withLock {
+      this.withLock {
         if (nextStreamId > Int.MAX_VALUE / 2) {
           shutdown(REFUSED_STREAM)
         }
@@ -311,7 +316,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     var byteCount = byteCount
     while (byteCount > 0L) {
       var toWrite: Int
-      synchronized(this@Http2Connection) {
+      this.withLock {
         try {
           while (writeBytesTotal >= writeBytesMaximum) {
             // Before blocking, confirm that the stream we're writing is still open. It's possible
@@ -319,7 +324,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
             if (!streams.containsKey(streamId)) {
               throw IOException("stream closed")
             }
-            this@Http2Connection.wait() // Wait until we receive a WINDOW_UPDATE.
+            condition.await() // Wait until we receive a WINDOW_UPDATE.
           }
         } catch (e: InterruptedException) {
           Thread.currentThread().interrupt() // Retain interrupted status.
@@ -392,7 +397,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   /** For testing: sends a ping to be awaited with [awaitPong]. */
   @Throws(InterruptedException::class)
   fun writePing() {
-    synchronized(this) {
+    this.withLock {
       awaitPingsSent++
     }
 
@@ -401,11 +406,12 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   }
 
   /** For testing: awaits a pong. */
-  @Synchronized
   @Throws(InterruptedException::class)
   fun awaitPong() {
-    while (awaitPongsReceived < awaitPingsSent) {
-      wait()
+    this.withLock {
+      while (awaitPongsReceived < awaitPingsSent) {
+        condition.await()
+      }
     }
   }
 
@@ -421,9 +427,9 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
    */
   @Throws(IOException::class)
   fun shutdown(statusCode: ErrorCode) {
-    synchronized(writer) {
+    writer.withLock {
       val lastGoodStreamId: Int
-      synchronized(this) {
+      this.withLock {
         if (isShutdown) {
           return
         }
@@ -456,7 +462,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
 
     var streamsToClose: Array<Http2Stream>? = null
-    synchronized(this) {
+    this.withLock {
       if (streams.isNotEmpty()) {
         streamsToClose = streams.values.toTypedArray()
         streams.clear()
@@ -516,8 +522,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   /** Merges [settings] into this peer's settings and sends them to the remote peer. */
   @Throws(IOException::class)
   fun setSettings(settings: Settings) {
-    synchronized(writer) {
-      synchronized(this) {
+    writer.withLock {
+      this.withLock {
         if (isShutdown) {
           throw ConnectionShutdownException()
         }
@@ -527,14 +533,15 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
   }
 
-  @Synchronized
   fun isHealthy(nowNs: Long): Boolean {
-    if (isShutdown) return false
+    this.withLock {
+      if (isShutdown) return false
 
-    // A degraded pong is overdue.
-    if (degradedPongsReceived < degradedPingsSent && nowNs >= degradedPongDeadlineNs) return false
+      // A degraded pong is overdue.
+      if (degradedPongsReceived < degradedPingsSent && nowNs >= degradedPongDeadlineNs) return false
 
-    return true
+      return true
+    }
   }
 
   /**
@@ -553,7 +560,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
    * The deadline is currently hardcoded. We may make this configurable in the future!
    */
   internal fun sendDegradedPingLater() {
-    synchronized(this) {
+    this.withLock {
       if (degradedPongsReceived < degradedPingsSent) return // Already awaiting a degraded pong.
       degradedPingsSent++
       degradedPongDeadlineNs = System.nanoTime() + DEGRADED_PONG_TIMEOUT_NS
@@ -682,7 +689,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         return
       }
       val stream: Http2Stream?
-      synchronized(this@Http2Connection) {
+      this@Http2Connection.withLock {
         stream = getStream(streamId)
 
         if (stream == null) {
@@ -761,8 +768,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       var delta: Long
       var streamsToNotify: Array<Http2Stream>?
       var newPeerSettings: Settings
-      synchronized(writer) {
-        synchronized(this@Http2Connection) {
+      writer.withLock {
+        this@Http2Connection.withLock {
           val previousPeerSettings = peerSettings
           newPeerSettings =
             if (clearPrevious) {
@@ -796,7 +803,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       }
       if (streamsToNotify != null) {
         for (stream in streamsToNotify!!) {
-          synchronized(stream) {
+          stream.withLock {
             stream.addBytesToWriteWindow(delta)
           }
         }
@@ -813,7 +820,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       payload2: Int,
     ) {
       if (ack) {
-        synchronized(this@Http2Connection) {
+        this@Http2Connection.withLock {
           when (payload1) {
             INTERVAL_PING -> {
               intervalPongsReceived++
@@ -823,7 +830,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
             }
             AWAIT_PING -> {
               awaitPongsReceived++
-              this@Http2Connection.notifyAll()
+              condition.signalAll()
             }
             else -> {
               // Ignore an unexpected pong.
@@ -849,7 +856,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
       // Copy the streams first. We don't want to hold a lock when we call receiveRstStream().
       val streamsCopy: Array<Http2Stream>
-      synchronized(this@Http2Connection) {
+      this@Http2Connection.withLock {
         streamsCopy = streams.values.toTypedArray()
         isShutdown = true
       }
@@ -868,14 +875,14 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       windowSizeIncrement: Long,
     ) {
       if (streamId == 0) {
-        synchronized(this@Http2Connection) {
+        this@Http2Connection.withLock {
           writeBytesMaximum += windowSizeIncrement
-          this@Http2Connection.notifyAll()
+          condition.signalAll()
         }
       } else {
         val stream = getStream(streamId)
         if (stream != null) {
-          synchronized(stream) {
+          stream.withLock {
             stream.addBytesToWriteWindow(windowSizeIncrement)
           }
         }
@@ -918,7 +925,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     streamId: Int,
     requestHeaders: List<Header>,
   ) {
-    synchronized(this) {
+    this.withLock {
       if (streamId in currentPushRequests) {
         writeSynResetLater(streamId, ErrorCode.PROTOCOL_ERROR)
         return
@@ -930,7 +937,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       ignoreIoExceptions {
         if (cancel) {
           writer.rstStream(streamId, ErrorCode.CANCEL)
-          synchronized(this@Http2Connection) {
+          this.withLock {
             currentPushRequests.remove(streamId)
           }
         }
@@ -948,7 +955,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       ignoreIoExceptions {
         if (cancel) writer.rstStream(streamId, ErrorCode.CANCEL)
         if (cancel || inFinished) {
-          synchronized(this@Http2Connection) {
+          this.withLock {
             currentPushRequests.remove(streamId)
           }
         }
@@ -975,7 +982,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         val cancel = pushObserver.onData(streamId, buffer, byteCount, inFinished)
         if (cancel) writer.rstStream(streamId, ErrorCode.CANCEL)
         if (cancel || inFinished) {
-          synchronized(this@Http2Connection) {
+          this.withLock {
             currentPushRequests.remove(streamId)
           }
         }
@@ -989,7 +996,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   ) {
     pushQueue.execute("$connectionName[$streamId] onReset") {
       pushObserver.onReset(streamId, errorCode)
-      synchronized(this@Http2Connection) {
+      this.withLock {
         currentPushRequests.remove(streamId)
       }
     }

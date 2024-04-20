@@ -25,6 +25,7 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.ReentrantLock
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.EventListener
@@ -32,10 +33,12 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.internal.assertHeld
+import okhttp3.internal.assertNotHeld
 import okhttp3.internal.assertThreadDoesntHoldLock
-import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.cache.CacheInterceptor
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.http.BridgeInterceptor
 import okhttp3.internal.http.CallServerInterceptor
 import okhttp3.internal.http.RealInterceptorChain
@@ -60,6 +63,8 @@ class RealCall(
   val originalRequest: Request,
   val forWebSocket: Boolean,
 ) : Call, Cloneable {
+  internal val lock: ReentrantLock = ReentrantLock()
+
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
 
   internal val eventListener: EventListener = client.eventListenerFactory.create(this)
@@ -95,7 +100,7 @@ class RealCall(
   internal var interceptorScopedExchange: Exchange? = null
     private set
 
-  // These properties are guarded by this. They are typically only accessed by the thread executing
+  // These properties are guarded by [lock]. They are typically only accessed by the thread executing
   // the call, but they may be accessed by other threads for duplex requests.
 
   /** True if this call still has a request body open. */
@@ -231,7 +236,7 @@ class RealCall(
   ) {
     check(interceptorScopedExchange == null)
 
-    synchronized(this) {
+    this.withLock {
       check(!responseBodyOpen) {
         "cannot make a new request because the previous response is still open: " +
           "please call response.close()"
@@ -265,7 +270,7 @@ class RealCall(
 
   /** Finds a new or pooled connection to carry a forthcoming request and response. */
   internal fun initExchange(chain: RealInterceptorChain): Exchange {
-    synchronized(this) {
+    this.withLock {
       check(expectMoreExchanges) { "released" }
       check(!responseBodyOpen)
       check(!requestBodyOpen)
@@ -277,7 +282,7 @@ class RealCall(
     val result = Exchange(this, eventListener, exchangeFinder, codec)
     this.interceptorScopedExchange = result
     this.exchange = result
-    synchronized(this) {
+    this.withLock {
       this.requestBodyOpen = true
       this.responseBodyOpen = true
     }
@@ -287,7 +292,7 @@ class RealCall(
   }
 
   fun acquireConnectionNoEvents(connection: RealConnection) {
-    connection.assertThreadHoldsLock()
+    connection.lock.assertHeld()
 
     check(this.connection == null)
     this.connection = connection
@@ -312,7 +317,7 @@ class RealCall(
 
     var bothStreamsDone = false
     var callDone = false
-    synchronized(this) {
+    this.withLock {
       if (requestDone && requestBodyOpen || responseDone && responseBodyOpen) {
         if (requestDone) requestBodyOpen = false
         if (responseDone) responseBodyOpen = false
@@ -335,7 +340,7 @@ class RealCall(
 
   internal fun noMoreExchanges(e: IOException?): IOException? {
     var callDone = false
-    synchronized(this) {
+    this.withLock {
       if (expectMoreExchanges) {
         expectMoreExchanges = false
         callDone = !requestBodyOpen && !responseBodyOpen
@@ -362,13 +367,13 @@ class RealCall(
    * additional context. Otherwise [e] is returned as-is.
    */
   private fun <E : IOException?> callDone(e: E): E {
-    assertThreadDoesntHoldLock()
+    lock.assertNotHeld()
 
     val connection = this.connection
     if (connection != null) {
-      connection.assertThreadDoesntHoldLock()
+      connection.lock.assertNotHeld()
       val toClose: Socket? =
-        synchronized(connection) {
+        connection.withLock {
           // Sets this.connection to null.
           releaseConnectionNoEvents()
         }
@@ -399,7 +404,7 @@ class RealCall(
    */
   internal fun releaseConnectionNoEvents(): Socket? {
     val connection = this.connection!!
-    connection.assertThreadHoldsLock()
+    connection.lock.assertHeld()
 
     val calls = connection.calls
     val index = calls.indexOfFirst { it.get() == this@RealCall }
@@ -443,7 +448,7 @@ class RealCall(
    *     This is usually due to either an exception or a retry.
    */
   internal fun exitNetworkInterceptorExchange(closeExchange: Boolean) {
-    synchronized(this) {
+    this.withLock {
       check(expectMoreExchanges) { "released" }
     }
 

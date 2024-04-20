@@ -23,8 +23,10 @@ import java.net.Socket
 import java.net.SocketException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.locks.ReentrantLock
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
+import kotlin.concurrent.withLock
 import okhttp3.Address
 import okhttp3.Connection
 import okhttp3.ConnectionListener
@@ -33,10 +35,11 @@ import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Route
-import okhttp3.internal.assertThreadDoesntHoldLock
-import okhttp3.internal.assertThreadHoldsLock
+import okhttp3.internal.assertHeld
+import okhttp3.internal.assertNotHeld
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http1.Http1ExchangeCodec
@@ -80,7 +83,9 @@ class RealConnection(
 ) : Http2Connection.Listener(), Connection, ExchangeCodec.Carrier {
   private var http2Connection: Http2Connection? = null
 
-  // These properties are guarded by this.
+  internal val lock: ReentrantLock = ReentrantLock()
+
+  // These properties are guarded by [lock].
 
   /**
    * If true, no new exchanges can be created on this connection. It is necessary to set this to
@@ -129,19 +134,23 @@ class RealConnection(
 
   /** Prevent further exchanges from being created on this connection. */
   override fun noNewExchanges() {
-    synchronized(this) {
+    this.withLock {
       noNewExchanges = true
     }
     connectionListener.noNewExchanges(this)
   }
 
   /** Prevent this connection from being used for hosts other than the one in [route]. */
-  @Synchronized internal fun noCoalescedConnections() {
-    noCoalescedConnections = true
+  internal fun noCoalescedConnections() {
+    this.withLock {
+      noCoalescedConnections = true
+    }
   }
 
-  @Synchronized internal fun incrementSuccessCount() {
-    successCount++
+  internal fun incrementSuccessCount() {
+    this.withLock {
+      successCount++
+    }
   }
 
   @Throws(IOException::class)
@@ -179,7 +188,7 @@ class RealConnection(
     address: Address,
     routes: List<Route>?,
   ): Boolean {
-    assertThreadHoldsLock()
+    lock.assertHeld()
 
     // If this connection is not accepting new exchanges, we're done.
     if (calls.size >= allocationLimit || noNewExchanges) return false
@@ -232,7 +241,7 @@ class RealConnection(
   }
 
   private fun supportsUrl(url: HttpUrl): Boolean {
-    assertThreadHoldsLock()
+    lock.assertHeld()
 
     val routeUrl = route.address.url
 
@@ -308,7 +317,7 @@ class RealConnection(
 
   /** Returns true if this connection is ready to host new streams. */
   fun isHealthy(doExtensiveChecks: Boolean): Boolean {
-    assertThreadDoesntHoldLock()
+    lock.assertNotHeld()
 
     val nowNs = System.nanoTime()
 
@@ -326,7 +335,7 @@ class RealConnection(
       return http2Connection.isHealthy(nowNs)
     }
 
-    val idleDurationNs = synchronized(this) { nowNs - idleAtNs }
+    val idleDurationNs = lock.withLock { nowNs - idleAtNs }
     if (idleDurationNs >= IDLE_CONNECTION_HEALTHY_NS && doExtensiveChecks) {
       return socket.isHealthy(source)
     }
@@ -341,19 +350,21 @@ class RealConnection(
   }
 
   /** When settings are received, adjust the allocation limit. */
-  @Synchronized override fun onSettings(
+  override fun onSettings(
     connection: Http2Connection,
     settings: Settings,
   ) {
-    val oldLimit = allocationLimit
-    allocationLimit = settings.getMaxConcurrentStreams()
+    lock.withLock {
+      val oldLimit = allocationLimit
+      allocationLimit = settings.getMaxConcurrentStreams()
 
-    if (allocationLimit < oldLimit) {
-      // We might need new connections to keep policies satisfied
-      connectionPool.scheduleOpener(route.address)
-    } else if (allocationLimit > oldLimit) {
-      // We might no longer need some connections
-      connectionPool.scheduleCloser()
+      if (allocationLimit < oldLimit) {
+        // We might need new connections to keep policies satisfied
+        connectionPool.scheduleOpener(route.address)
+      } else if (allocationLimit > oldLimit) {
+        // We might no longer need some connections
+        connectionPool.scheduleCloser()
+      }
     }
   }
 
@@ -387,7 +398,7 @@ class RealConnection(
     e: IOException?,
   ) {
     var noNewExchangesEvent = false
-    synchronized(this) {
+    lock.withLock {
       if (e is StreamResetException) {
         when {
           e.errorCode == ErrorCode.REFUSED_STREAM -> {
