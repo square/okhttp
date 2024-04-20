@@ -47,7 +47,7 @@ class Http2Stream internal constructor(
   internal val lock: ReentrantLock = ReentrantLock()
   val condition: Condition = lock.newCondition()
 
-  // Internal state is guarded by lock. No long-running or potentially blocking operations are
+  // Internal state is guarded by [lock]. No long-running or potentially blocking operations are
   // performed while the lock is held.
 
   /** The bytes consumed and acknowledged by the stream. */

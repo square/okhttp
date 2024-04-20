@@ -22,7 +22,6 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import okhttp3.Dispatcher
-import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.http2.Http2Writer
@@ -33,44 +32,32 @@ import okhttp3.internal.http2.Http2Writer
 internal object Locks {
   inline fun <T> Dispatcher.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    // TODO remove
-    assertThreadDoesntHoldLock()
     return lock.withLock(action)
   }
 
   inline fun <T> RealConnection.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    // TODO remove
-    assertThreadDoesntHoldLock()
     return lock.withLock(action)
   }
 
   inline fun <T> RealCall.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    // TODO remove
-    assertThreadDoesntHoldLock()
     return lock.withLock(action)
   }
 
   inline fun <T> Http2Connection.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    // TODO remove
-    assertThreadDoesntHoldLock()
     return lock.withLock(action)
   }
 
   inline fun <T> Http2Stream.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    // TODO remove
-    assertThreadDoesntHoldLock()
     return lock.withLock(action)
   }
 
   inline fun <T> Http2Writer.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
 
-    // TODO remove
-    assertThreadDoesntHoldLock()
     // TODO can we assert we don't have the connection lock?
 
     return lock.withLock(action)

@@ -85,7 +85,7 @@ class RealConnection(
 
   internal val lock: ReentrantLock = ReentrantLock()
 
-  // These properties are guarded by lock.
+  // These properties are guarded by [lock].
 
   /**
    * If true, no new exchanges can be created on this connection. It is necessary to set this to

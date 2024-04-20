@@ -100,7 +100,7 @@ class RealCall(
   internal var interceptorScopedExchange: Exchange? = null
     private set
 
-  // These properties are guarded by lock. They are typically only accessed by the thread executing
+  // These properties are guarded by [lock]. They are typically only accessed by the thread executing
   // the call, but they may be accessed by other threads for duplex requests.
 
   /** True if this call still has a request body open. */
