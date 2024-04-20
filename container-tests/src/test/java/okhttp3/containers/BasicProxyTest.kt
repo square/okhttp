@@ -30,6 +30,7 @@ import okhttp3.containers.BasicMockServerTest.Companion.MOCKSERVER_IMAGE
 import okhttp3.containers.BasicMockServerTest.Companion.trustMockServer
 import okio.buffer
 import okio.source
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockserver.client.MockServerClient
 import org.mockserver.configuration.Configuration
@@ -118,6 +119,27 @@ class BasicProxyTest {
 
       assertThat(response.body.string()).contains("Peter the person")
       assertThat(response.protocol).isEqualTo(Protocol.HTTP_1_1)
+    }
+  }
+
+  @Test
+  @Disabled("https://github.com/square/okhttp/issues/8233")
+  fun testOkHttpSecureProxiedHttp2() {
+    testRequest {
+      val client =
+        OkHttpClient.Builder()
+          .trustMockServer()
+          .proxy(Proxy(Proxy.Type.HTTP, it.remoteAddress()))
+          .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+          .build()
+
+      val response =
+        client.newCall(
+          Request((mockServer.secureEndpoint + "/person?name=peter").toHttpUrl()),
+        ).execute()
+
+      assertThat(response.body.string()).contains("Peter the person")
+      assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
     }
   }
 
