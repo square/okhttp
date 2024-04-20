@@ -19,10 +19,11 @@ import java.io.IOException
 import java.net.Authenticator
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.Proxy
+import java.net.Proxy as JavaProxy
 import okhttp3.Credentials
 import okhttp3.Dns
 import okhttp3.HttpUrl
+import okhttp3.Proxy
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
@@ -41,7 +42,7 @@ class JavaNetAuthenticator(private val defaultDns: Dns = Dns.SYSTEM) : okhttp3.A
     val request = response.request
     val url = request.url
     val proxyAuthorization = response.code == 407
-    val proxy = route?.proxy ?: Proxy.NO_PROXY
+    val proxy = route?.proxyAddress ?: Proxy.Direct
 
     for (challenge in challenges) {
       if (!"Basic".equals(challenge.scheme, ignoreCase = true)) {
@@ -51,7 +52,7 @@ class JavaNetAuthenticator(private val defaultDns: Dns = Dns.SYSTEM) : okhttp3.A
       val dns = route?.address?.dns ?: defaultDns
       val auth =
         if (proxyAuthorization) {
-          val proxyAddress = proxy.address() as InetSocketAddress
+          val proxyAddress = proxy.socketAddress as InetSocketAddress
           Authenticator.requestPasswordAuthentication(
             proxyAddress.hostName,
             proxy.connectToInetAddress(url, dns),
@@ -97,9 +98,10 @@ class JavaNetAuthenticator(private val defaultDns: Dns = Dns.SYSTEM) : okhttp3.A
     url: HttpUrl,
     dns: Dns,
   ): InetAddress {
-    return when (type()) {
-      Proxy.Type.DIRECT -> dns.lookup(url.host).first()
-      else -> (address() as InetSocketAddress).address
+    return when (this) {
+      Proxy.Direct -> dns.lookup(url.host).first()
+      is Proxy.Socks4 -> socketAddress.address
+      is Proxy.Http -> socketAddress.address
     }
   }
 }

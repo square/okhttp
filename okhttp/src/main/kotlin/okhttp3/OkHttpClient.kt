@@ -16,7 +16,7 @@
 package okhttp3
 
 import android.annotation.SuppressLint
-import java.net.Proxy
+import java.net.Proxy as JavaProxy
 import java.net.ProxySelector
 import java.net.Socket
 import java.time.Duration
@@ -32,6 +32,7 @@ import javax.net.ssl.X509TrustManager
 import kotlin.time.Duration as KotlinDuration
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
+import okhttp3.Proxy.Companion.toOkHttpProxy
 import okhttp3.internal.asFactory
 import okhttp3.internal.checkDuration
 import okhttp3.internal.concurrent.TaskRunner
@@ -183,14 +184,18 @@ open class OkHttpClient internal constructor(
   @get:JvmName("dns")
   val dns: Dns = builder.dns
 
+  @get:JvmName("proxyAddress")
+  val proxyAddress: Proxy? = builder.proxyAddress
+
   @get:JvmName("proxy")
-  val proxy: Proxy? = builder.proxy
+  val proxy: JavaProxy?
+    get() = proxyAddress?.javaProxy
 
   @get:JvmName("proxySelector")
   val proxySelector: ProxySelector =
     when {
       // Defer calls to ProxySelector.getDefault() because it can throw a SecurityException.
-      builder.proxy != null -> NullProxySelector
+      builder.proxyAddress != null -> NullProxySelector
       else -> builder.proxySelector ?: ProxySelector.getDefault() ?: NullProxySelector
     }
 
@@ -331,7 +336,7 @@ open class OkHttpClient internal constructor(
       hostnameVerifier = useHostnameVerifier,
       certificatePinner = useCertificatePinner,
       proxyAuthenticator = proxyAuthenticator,
-      proxy = proxy,
+      proxyAddress = proxyAddress,
       protocols = protocols,
       connectionSpecs = connectionSpecs,
       proxySelector = proxySelector,
@@ -486,7 +491,7 @@ open class OkHttpClient internal constructor(
     replaceWith = ReplaceWith(expression = "proxy"),
     level = DeprecationLevel.ERROR,
   )
-  fun proxy(): Proxy? = proxy
+  fun proxy(): JavaProxy? = proxyAddress?.javaProxy
 
   @JvmName("-deprecated_proxySelector")
   @Deprecated(
@@ -606,7 +611,7 @@ open class OkHttpClient internal constructor(
     internal var cookieJar: CookieJar = CookieJar.NO_COOKIES
     internal var cache: Cache? = null
     internal var dns: Dns = Dns.SYSTEM
-    internal var proxy: Proxy? = null
+    internal var proxyAddress: Proxy? = null
     internal var proxySelector: ProxySelector? = null
     internal var proxyAuthenticator: Authenticator = Authenticator.NONE
     internal var socketFactory: SocketFactory = SocketFactory.getDefault()
@@ -641,7 +646,7 @@ open class OkHttpClient internal constructor(
       this.cookieJar = okHttpClient.cookieJar
       this.cache = okHttpClient.cache
       this.dns = okHttpClient.dns
-      this.proxy = okHttpClient.proxy
+      this.proxyAddress = okHttpClient.proxyAddress
       this.proxySelector = okHttpClient.proxySelector
       this.proxyAuthenticator = okHttpClient.proxyAuthenticator
       this.socketFactory = okHttpClient.socketFactory
@@ -842,12 +847,13 @@ open class OkHttpClient internal constructor(
      * precedence over [proxySelector], which is only honored when this proxy is null (which it is
      * by default). To disable proxy use completely, call `proxy(Proxy.NO_PROXY)`.
      */
-    fun proxy(proxy: Proxy?) =
+    fun proxy(proxy: JavaProxy?) =
       apply {
-        if (proxy != this.proxy) {
+        val newProxy = proxy?.toOkHttpProxy()
+        if (newProxy != this.proxyAddress) {
           this.routeDatabase = null
         }
-        this.proxy = proxy
+        this.proxyAddress = newProxy
       }
 
     /**

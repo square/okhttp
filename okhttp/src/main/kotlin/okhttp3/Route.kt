@@ -16,7 +16,7 @@
 package okhttp3
 
 import java.net.InetSocketAddress
-import java.net.Proxy
+import java.net.Proxy as JavaProxy
 import okhttp3.internal.toCanonicalHost
 
 /**
@@ -38,7 +38,7 @@ class Route(
    * **Warning:** This may disagree with [Address.proxy] when it is null. When the address's proxy
    * is null, the proxy selector is used.
    */
-  @get:JvmName("proxy") val proxy: Proxy,
+  @get:JvmName("proxy") val proxyAddress: Proxy,
   @get:JvmName("socketAddress") val socketAddress: InetSocketAddress,
 ) {
   @JvmName("-deprecated_address")
@@ -55,7 +55,16 @@ class Route(
     replaceWith = ReplaceWith(expression = "proxy"),
     level = DeprecationLevel.ERROR,
   )
-  fun proxy(): Proxy = proxy
+  fun proxy(): JavaProxy = proxyAddress.javaProxy
+
+  /**
+   * Returns the [Proxy] of this route.
+   *
+   * **Warning:** This may disagree with [Address.proxy] when it is null. When the address's proxy
+   * is null, the proxy selector is used.
+   */
+  @get:JvmName("proxy") val proxy: JavaProxy
+    get() = proxyAddress.javaProxy
 
   @JvmName("-deprecated_socketAddress")
   @Deprecated(
@@ -72,7 +81,7 @@ class Route(
    * [rfc_2817]: http://www.ietf.org/rfc/rfc2817.txt
    */
   fun requiresTunnel(): Boolean {
-    if (proxy.type() != Proxy.Type.HTTP) return false
+    if (proxyAddress !is Proxy.Http) return false
     return (address.sslSocketFactory != null) ||
       (Protocol.H2_PRIOR_KNOWLEDGE in address.protocols)
   }
@@ -80,7 +89,7 @@ class Route(
   override fun equals(other: Any?): Boolean {
     return other is Route &&
       other.address == address &&
-      other.proxy == proxy &&
+      other.proxyAddress == proxyAddress &&
       other.socketAddress == socketAddress
   }
 
@@ -115,8 +124,8 @@ class Route(
       }
 
       if (addressHostname != socketHostname) {
-        when (proxy) {
-          Proxy.NO_PROXY -> append(" at ")
+        when (proxyAddress) {
+          Proxy.Direct -> append(" at ")
           else -> append(" via proxy ")
         }
 

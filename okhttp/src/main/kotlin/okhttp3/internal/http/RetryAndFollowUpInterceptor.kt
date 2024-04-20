@@ -27,13 +27,14 @@ import java.net.HttpURLConnection.HTTP_SEE_OTHER
 import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
 import java.net.HttpURLConnection.HTTP_UNAVAILABLE
 import java.net.ProtocolException
-import java.net.Proxy
+import java.net.Proxy as JavaProxy
 import java.net.SocketTimeoutException
 import java.security.cert.CertificateException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.Proxy
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.canReuseConnectionFor
@@ -207,8 +208,8 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     val method = userResponse.request.method
     when (responseCode) {
       HTTP_PROXY_AUTH -> {
-        val selectedProxy = route!!.proxy
-        if (selectedProxy.type() != Proxy.Type.HTTP) {
+        val selectedProxy = route!!.proxyAddress
+        if (selectedProxy !is Proxy.Http) {
           throw ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy")
         }
         return client.proxyAuthenticator.authenticate(route, userResponse)

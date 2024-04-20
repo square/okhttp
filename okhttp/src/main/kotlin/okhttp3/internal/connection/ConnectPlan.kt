@@ -19,7 +19,7 @@ import java.io.IOException
 import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.net.ProtocolException
-import java.net.Proxy
+import java.net.Proxy as JavaProxy
 import java.net.Socket
 import java.net.UnknownServiceException
 import java.security.cert.X509Certificate
@@ -32,6 +32,7 @@ import okhttp3.ConnectionSpec
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.Protocol
+import okhttp3.Proxy
 import okhttp3.Request
 import okhttp3.Route
 import okhttp3.internal.closeQuietly
@@ -256,10 +257,23 @@ class ConnectPlan(
   /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
   @Throws(IOException::class)
   private fun connectSocket() {
+    val proxyAddress = route.proxyAddress
     val rawSocket =
-      when (route.proxy.type()) {
-        Proxy.Type.DIRECT, Proxy.Type.HTTP -> route.address.socketFactory.createSocket()!!
-        else -> Socket(route.proxy)
+      when (proxyAddress) {
+        Proxy.Direct -> {
+          route.address.socketFactory.createSocket()!!
+        }
+        is Proxy.Http -> {
+          if (proxyAddress.server.isHttps) {
+            // TODO check
+            route.address.sslSocketFactory!!.createSocket()!!
+          } else {
+            route.address.socketFactory.createSocket()!!
+          }
+        }
+        else -> {
+          Socket(proxyAddress.javaProxy)
+        }
       }
     this.rawSocket = rawSocket
 

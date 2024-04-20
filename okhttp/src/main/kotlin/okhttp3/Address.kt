@@ -15,7 +15,7 @@
  */
 package okhttp3
 
-import java.net.Proxy
+import java.net.Proxy as JavaProxy
 import java.net.ProxySelector
 import java.util.Objects
 import javax.net.SocketFactory
@@ -50,7 +50,7 @@ class Address(
    * Returns this address's explicitly-specified HTTP proxy, or null to delegate to the
    * [proxy selector][proxySelector].
    */
-  @get:JvmName("proxy") val proxy: Proxy?,
+  val proxyAddress: Proxy?,
   protocols: List<Protocol>,
   connectionSpecs: List<ConnectionSpec>,
   /**
@@ -59,6 +59,13 @@ class Address(
    */
   @get:JvmName("proxySelector") val proxySelector: ProxySelector,
 ) {
+  /**
+   * Returns this address's explicitly-specified HTTP proxy, or null to delegate to the
+   * [proxy selector][proxySelector].
+   */
+  @get:JvmName("proxy") val proxy: JavaProxy?
+    get() = proxyAddress?.javaProxy
+
   /**
    * Returns a URL with the hostname and port of the origin server. The path, query, and fragment of
    * this URL are always empty, since they are not significant for planning a route.
@@ -144,7 +151,7 @@ class Address(
     replaceWith = ReplaceWith(expression = "proxy"),
     level = DeprecationLevel.ERROR,
   )
-  fun proxy(): Proxy? = proxy
+  fun proxy(): JavaProxy? = proxyAddress?.javaProxy
 
   @JvmName("-deprecated_sslSocketFactory")
   @Deprecated(
@@ -184,7 +191,7 @@ class Address(
     result = 31 * result + protocols.hashCode()
     result = 31 * result + connectionSpecs.hashCode()
     result = 31 * result + proxySelector.hashCode()
-    result = 31 * result + Objects.hashCode(proxy)
+    result = 31 * result + Objects.hashCode(proxyAddress)
     result = 31 * result + Objects.hashCode(sslSocketFactory)
     result = 31 * result + Objects.hashCode(hostnameVerifier)
     result = 31 * result + Objects.hashCode(certificatePinner)
@@ -197,7 +204,7 @@ class Address(
       this.protocols == that.protocols &&
       this.connectionSpecs == that.connectionSpecs &&
       this.proxySelector == that.proxySelector &&
-      this.proxy == that.proxy &&
+      this.proxyAddress == that.proxyAddress &&
       this.sslSocketFactory == that.sslSocketFactory &&
       this.hostnameVerifier == that.hostnameVerifier &&
       this.certificatePinner == that.certificatePinner &&
@@ -207,7 +214,7 @@ class Address(
   override fun toString(): String {
     return "Address{" +
       "${url.host}:${url.port}, " +
-      (if (proxy != null) "proxy=$proxy" else "proxySelector=$proxySelector") +
+      (if (proxyAddress != null) "proxyAddress=$proxyAddress" else "proxySelector=$proxySelector") +
       "}"
   }
 }

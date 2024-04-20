@@ -18,12 +18,14 @@ package okhttp3.internal.connection
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.Proxy
+import java.net.Proxy as JavaProxy
 import java.net.SocketException
 import java.net.UnknownHostException
 import java.util.NoSuchElementException
 import okhttp3.Address
 import okhttp3.HttpUrl
+import okhttp3.Proxy
+import okhttp3.Proxy.Companion.toOkHttpProxy
 import okhttp3.Route
 import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.immutableListOf
@@ -50,7 +52,7 @@ class RouteSelector(
   private val postponedRoutes = mutableListOf<Route>()
 
   init {
-    resetNextProxy(address.url, address.proxy)
+    resetNextProxy(address.url, address.proxyAddress)
   }
 
   /**
@@ -103,13 +105,13 @@ class RouteSelector(
 
       // If the URI lacks a host (as in "http://</"), don't call the ProxySelector.
       val uri = url.toUri()
-      if (uri.host == null) return immutableListOf(Proxy.NO_PROXY)
+      if (uri.host == null) return immutableListOf(Proxy.Direct)
 
       // Try each of the ProxySelector choices until one connection succeeds.
       val proxiesOrNull = address.proxySelector.select(uri)
-      if (proxiesOrNull.isNullOrEmpty()) return immutableListOf(Proxy.NO_PROXY)
+      if (proxiesOrNull.isNullOrEmpty()) return immutableListOf(Proxy.Direct)
 
-      return proxiesOrNull.toImmutableList()
+      return proxiesOrNull.map { it.toOkHttpProxy() }.toImmutableList()
     }
 
     connectionUser.proxySelectStart(url)
@@ -143,15 +145,12 @@ class RouteSelector(
 
     val socketHost: String
     val socketPort: Int
-    if (proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.SOCKS) {
+    if (proxy is Proxy.Direct || proxy is Proxy.Socks4) {
       socketHost = address.url.host
       socketPort = address.url.port
     } else {
-      val proxyAddress = proxy.address()
-      require(proxyAddress is InetSocketAddress) {
-        "Proxy.address() is not an InetSocketAddress: ${proxyAddress.javaClass}"
-      }
-      socketHost = proxyAddress.socketHost
+      val proxyAddress = (proxy as Proxy.Http).server
+      socketHost = proxyAddress.host
       socketPort = proxyAddress.port
     }
 
@@ -159,7 +158,7 @@ class RouteSelector(
       throw SocketException("No route to $socketHost:$socketPort; port is out of range")
     }
 
-    if (proxy.type() == Proxy.Type.SOCKS) {
+    if (proxy is Proxy.Socks4) {
       mutableInetSocketAddresses += InetSocketAddress.createUnresolved(socketHost, socketPort)
     } else {
       val addresses =
