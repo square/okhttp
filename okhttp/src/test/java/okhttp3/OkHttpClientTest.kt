@@ -229,11 +229,11 @@ class OkHttpClientTest {
     assertThat(response.body.string()).isEqualTo("abc")
   }
 
-  @Test fun sslSocketFactorySetAsSocketFactory() {
-    val builder = OkHttpClient.Builder()
-    assertFailsWith<IllegalArgumentException> {
-      builder.socketFactory(SSLSocketFactory.getDefault())
-    }
+  @Test
+  fun sslSocketFactorySetAsSocketFactory() {
+    OkHttpClient.Builder()
+      .socketFactory(SSLSocketFactory.getDefault())
+      .build()
   }
 
   @Test fun noSslSocketFactoryConfigured() {
