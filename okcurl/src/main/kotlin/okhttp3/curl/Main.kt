@@ -16,12 +16,15 @@
 package okhttp3.curl
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.UsageError
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
+import java.net.InetSocketAddress
+import java.net.Proxy
 import java.security.cert.X509Certificate
 import java.util.Properties
 import java.util.concurrent.TimeUnit.SECONDS
@@ -74,6 +77,8 @@ class Main : CliktCommand(name = NAME, help = "A curl for the next-generation we
 
   val sslDebug: Boolean by option(help = "Output SSL Debug").flag()
 
+  val proxy: String? by option(help = "Proxy config")
+
   val url: String? by argument(name = "url", help = "Remote resource URL")
 
   var client: Call.Factory? = null
@@ -98,15 +103,36 @@ class Main : CliktCommand(name = NAME, help = "A curl for the next-generation we
     if (callTimeout != DEFAULT_TIMEOUT) {
       builder.callTimeout(callTimeout.toLong(), SECONDS)
     }
+    var sslSocketFactory: SSLSocketFactory? = null
     if (allowInsecure) {
       val trustManager = createInsecureTrustManager()
-      val sslSocketFactory = createInsecureSslSocketFactory(trustManager)
+      sslSocketFactory = createInsecureSslSocketFactory(trustManager)
       builder.sslSocketFactory(sslSocketFactory, trustManager)
       builder.hostnameVerifier(createInsecureHostnameVerifier())
     }
     if (verbose) {
       val logger = HttpLoggingInterceptor.Logger(::println)
       builder.eventListenerFactory(LoggingEventListener.Factory(logger))
+    }
+    proxy?.let {
+      val (type, host, port) = it.split(':', limit = 3)
+      val address = InetSocketAddress.createUnresolved(host, port.toInt())
+      when (type) {
+        "http" -> {
+          builder.proxy(Proxy(Proxy.Type.SOCKS, address))
+        }
+
+        "https" -> {
+          builder.proxy(Proxy(Proxy.Type.SOCKS, address))
+            .socketFactory(sslSocketFactory ?: Platform.get().newSslSocketFactory(Platform.get().platformTrustManager()))
+        }
+
+        "socks4" -> {
+          builder.proxy(Proxy(Proxy.Type.SOCKS, address))
+        }
+
+        else -> throw UsageError("Unknown proxy '$it'")
+      }
     }
     return builder.build()
   }
@@ -129,6 +155,7 @@ class Main : CliktCommand(name = NAME, help = "A curl for the next-generation we
       return prop.getProperty("version", "dev")
     }
 
+    @Suppress("TrustAllX509TrustManager", "CustomX509TrustManager")
     private fun createInsecureTrustManager(): X509TrustManager =
       object : X509TrustManager {
         override fun checkClientTrusted(
