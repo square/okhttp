@@ -31,7 +31,6 @@ import okhttp3.containers.BasicMockServerTest.Companion.trustManagerPair
 import okhttp3.containers.BasicMockServerTest.Companion.trustMockServer
 import okio.buffer
 import okio.source
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockserver.client.MockServerClient
 import org.mockserver.configuration.Configuration
