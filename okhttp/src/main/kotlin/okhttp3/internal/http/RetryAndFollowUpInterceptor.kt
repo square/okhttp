@@ -27,7 +27,6 @@ import java.net.HttpURLConnection.HTTP_SEE_OTHER
 import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
 import java.net.HttpURLConnection.HTTP_UNAVAILABLE
 import java.net.ProtocolException
-import java.net.Proxy as JavaProxy
 import java.net.SocketTimeoutException
 import java.security.cert.CertificateException
 import javax.net.ssl.SSLHandshakeException

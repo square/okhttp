@@ -30,7 +30,6 @@ import okhttp3.containers.BasicMockServerTest.Companion.MOCKSERVER_IMAGE
 import okhttp3.containers.BasicMockServerTest.Companion.trustMockServer
 import okio.buffer
 import okio.source
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockserver.client.MockServerClient
 import org.mockserver.configuration.Configuration
@@ -123,7 +122,6 @@ class BasicProxyTest {
   }
 
   @Test
-  @Disabled("https://github.com/square/okhttp/issues/8233")
   fun testOkHttpSecureProxiedHttp2() {
     testRequest {
       val client =

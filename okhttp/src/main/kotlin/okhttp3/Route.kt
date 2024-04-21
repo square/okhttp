@@ -38,7 +38,7 @@ class Route(
    * **Warning:** This may disagree with [Address.proxy] when it is null. When the address's proxy
    * is null, the proxy selector is used.
    */
-  @get:JvmName("proxy") val proxyAddress: Proxy,
+  internal val proxyAddress: Proxy,
   @get:JvmName("socketAddress") val socketAddress: InetSocketAddress,
 ) {
   @JvmName("-deprecated_address")
@@ -63,7 +63,8 @@ class Route(
    * **Warning:** This may disagree with [Address.proxy] when it is null. When the address's proxy
    * is null, the proxy selector is used.
    */
-  @get:JvmName("proxy") val proxy: JavaProxy
+  @get:JvmName("proxy")
+  val proxy: JavaProxy
     get() = proxyAddress.javaProxy
 
   @JvmName("-deprecated_socketAddress")

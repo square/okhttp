@@ -18,7 +18,6 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
-import java.net.Proxy
 import okhttp3.internal.http.RecordingProxySelector
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -54,8 +53,8 @@ class AddressTest {
   }
 
   @Test fun addressWithProxyToString() {
-    val address = factory.newAddress(proxy = Proxy.NO_PROXY)
+    val address = factory.newAddress(proxy = Proxy.Direct)
     assertThat(address.toString())
-      .isEqualTo("Address{example.com:80, proxy=${Proxy.NO_PROXY}}")
+      .isEqualTo("Address{example.com:80, proxy=${Proxy.Direct}}")
   }
 }

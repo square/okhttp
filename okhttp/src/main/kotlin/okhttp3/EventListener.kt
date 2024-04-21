@@ -18,7 +18,7 @@ package okhttp3
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.Proxy as JavaProxy
+import java.net.Proxy
 
 /**
  * Listener for metrics events. Extend this class to monitor the quantity, size, and duration of
@@ -98,19 +98,10 @@ abstract class EventListener {
    *
    * @param url a URL with only the scheme, hostname, and port specified.
    */
-  open fun proxySelectEnd2(
-    call: Call,
-    url: HttpUrl,
-    proxies: List<@JvmSuppressWildcards Proxy>,
-  ) {
-    proxySelectEnd(call, url, proxies.map { it.javaProxy })
-  }
-
-  @Deprecated("replaced by OkHttp proxy")
   open fun proxySelectEnd(
     call: Call,
     url: HttpUrl,
-    proxies: List<@JvmSuppressWildcards JavaProxy>,
+    proxies: List<@JvmSuppressWildcards Proxy>,
   ) {
   }
 

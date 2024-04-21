@@ -1,7 +1,7 @@
 package okhttp3
 
-import java.net.Proxy as JavaProxy
 import java.net.InetSocketAddress
+import java.net.Proxy as JavaProxy
 
 sealed interface Proxy {
   val javaProxy: JavaProxy
@@ -16,16 +16,26 @@ sealed interface Proxy {
   }
 
   data class Http(val server: HttpUrl) : Proxy {
-    override val javaProxy: JavaProxy
-      get() = JavaProxy(JavaProxy.Type.HTTP, socketAddress)
+    override val javaProxy: JavaProxy = JavaProxy(JavaProxy.Type.HTTP, socketAddress)
 
     override val socketAddress: InetSocketAddress
       get() = InetSocketAddress.createUnresolved(server.host, server.port)
+
+    companion object {
+      fun insecure(address: InetSocketAddress): Http {
+        return Http(
+          HttpUrl.Builder()
+            .scheme("http")
+            .host(address.hostString)
+            .port(address.port)
+            .build(),
+        )
+      }
+    }
   }
 
   data class Socks4(override val socketAddress: InetSocketAddress) : Proxy {
-    override val javaProxy: JavaProxy
-      get() = JavaProxy(JavaProxy.Type.SOCKS, socketAddress)
+    override val javaProxy: JavaProxy = JavaProxy(JavaProxy.Type.SOCKS, socketAddress)
   }
 
   companion object {
@@ -37,11 +47,13 @@ sealed interface Proxy {
         JavaProxy.Type.HTTP -> {
           // TODO is this safe
           val address = address() as InetSocketAddress
-          Http(HttpUrl.Builder()
-            .scheme("http")
-                  .host(address.hostString)
-                  .port(address.port)
-            .build())
+          Http(
+            HttpUrl.Builder()
+              .scheme("http")
+              .host(address.hostString)
+              .port(address.port)
+              .build(),
+          )
         }
         JavaProxy.Type.SOCKS -> {
           Socks4(address() as InetSocketAddress)
@@ -50,4 +62,3 @@ sealed interface Proxy {
     }
   }
 }
-

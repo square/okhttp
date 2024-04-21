@@ -18,8 +18,6 @@ package okhttp3.internal.authenticator
 import java.io.IOException
 import java.net.Authenticator
 import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.Proxy as JavaProxy
 import okhttp3.Credentials
 import okhttp3.Dns
 import okhttp3.HttpUrl
@@ -52,7 +50,7 @@ class JavaNetAuthenticator(private val defaultDns: Dns = Dns.SYSTEM) : okhttp3.A
       val dns = route?.address?.dns ?: defaultDns
       val auth =
         if (proxyAuthorization) {
-          val proxyAddress = proxy.socketAddress as InetSocketAddress
+          val proxyAddress = proxy.socketAddress!!
           Authenticator.requestPasswordAuthentication(
             proxyAddress.hostName,
             proxy.connectToInetAddress(url, dns),

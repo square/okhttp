@@ -23,7 +23,6 @@ package okhttp3
 
 import java.io.Closeable
 import java.net.InetSocketAddress
-import java.net.Proxy
 import java.net.ProxySelector
 import java.net.Socket
 import java.util.concurrent.TimeUnit
@@ -61,7 +60,7 @@ class TestValueFactory : Closeable {
   var taskFaker: TaskFaker = TaskFaker()
   var taskRunner: TaskRunner = taskFaker.taskRunner
   var dns: Dns = Dns.SYSTEM
-  var proxy: Proxy = Proxy.NO_PROXY
+  var proxy: Proxy = Proxy.Direct
   var proxySelector: ProxySelector = RecordingProxySelector()
   var proxyAuthenticator: Authenticator = RecordingOkAuthenticator("password", null)
   var connectionSpecs: List<ConnectionSpec> =
@@ -147,7 +146,7 @@ class TestValueFactory : Closeable {
       hostnameVerifier = null,
       certificatePinner = null,
       proxyAuthenticator = proxyAuthenticator,
-      proxy = proxy,
+      proxyAddress = proxy,
       protocols = protocols,
       connectionSpecs = connectionSpecs,
       proxySelector = proxySelector,
@@ -171,7 +170,7 @@ class TestValueFactory : Closeable {
       hostnameVerifier = hostnameVerifier,
       certificatePinner = null,
       proxyAuthenticator = proxyAuthenticator,
-      proxy = proxy,
+      proxyAddress = proxy,
       protocols = protocols,
       connectionSpecs = connectionSpecs,
       proxySelector = proxySelector,
@@ -185,7 +184,7 @@ class TestValueFactory : Closeable {
   ): Route {
     return Route(
       address = address,
-      proxy = proxy,
+      proxyAddress = proxy,
       socketAddress = socketAddress,
     )
   }

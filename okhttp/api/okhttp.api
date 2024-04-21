@@ -10,11 +10,12 @@ public final class okhttp3/Address {
 	public final fun -deprecated_socketFactory ()Ljavax/net/SocketFactory;
 	public final fun -deprecated_sslSocketFactory ()Ljavax/net/ssl/SSLSocketFactory;
 	public final fun -deprecated_url ()Lokhttp3/HttpUrl;
-	public fun <init> (Ljava/lang/String;ILokhttp3/Dns;Ljavax/net/SocketFactory;Ljavax/net/ssl/SSLSocketFactory;Ljavax/net/ssl/HostnameVerifier;Lokhttp3/CertificatePinner;Lokhttp3/Authenticator;Ljava/net/Proxy;Ljava/util/List;Ljava/util/List;Ljava/net/ProxySelector;)V
+	public fun <init> (Ljava/lang/String;ILokhttp3/Dns;Ljavax/net/SocketFactory;Ljavax/net/ssl/SSLSocketFactory;Ljavax/net/ssl/HostnameVerifier;Lokhttp3/CertificatePinner;Lokhttp3/Authenticator;Lokhttp3/Proxy;Ljava/util/List;Ljava/util/List;Ljava/net/ProxySelector;)V
 	public final fun certificatePinner ()Lokhttp3/CertificatePinner;
 	public final fun connectionSpecs ()Ljava/util/List;
 	public final fun dns ()Lokhttp3/Dns;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getProxyAddress ()Lokhttp3/Proxy;
 	public fun hashCode ()I
 	public final fun hostnameVerifier ()Ljavax/net/ssl/HostnameVerifier;
 	public final fun protocols ()Ljava/util/List;
@@ -949,6 +950,7 @@ public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Fact
 	public final fun pingIntervalMillis ()I
 	public final fun protocols ()Ljava/util/List;
 	public final fun proxy ()Ljava/net/Proxy;
+	public final fun proxyAddress ()Lokhttp3/Proxy;
 	public final fun proxyAuthenticator ()Lokhttp3/Authenticator;
 	public final fun proxySelector ()Ljava/net/ProxySelector;
 	public final fun readTimeoutMillis ()I
@@ -1033,6 +1035,52 @@ public final class okhttp3/Protocol : java/lang/Enum {
 
 public final class okhttp3/Protocol$Companion {
 	public final fun get (Ljava/lang/String;)Lokhttp3/Protocol;
+}
+
+public abstract interface class okhttp3/Proxy {
+	public static final field Companion Lokhttp3/Proxy$Companion;
+	public abstract fun getJavaProxy ()Ljava/net/Proxy;
+	public abstract fun getSocketAddress ()Ljava/net/InetSocketAddress;
+}
+
+public final class okhttp3/Proxy$Companion {
+	public final fun toOkHttpProxy (Ljava/net/Proxy;)Lokhttp3/Proxy;
+}
+
+public final class okhttp3/Proxy$Direct : okhttp3/Proxy {
+	public static final field INSTANCE Lokhttp3/Proxy$Direct;
+	public fun getJavaProxy ()Ljava/net/Proxy;
+	public fun getSocketAddress ()Ljava/net/InetSocketAddress;
+}
+
+public final class okhttp3/Proxy$Http : okhttp3/Proxy {
+	public static final field Companion Lokhttp3/Proxy$Http$Companion;
+	public fun <init> (Lokhttp3/HttpUrl;)V
+	public final fun component1 ()Lokhttp3/HttpUrl;
+	public final fun copy (Lokhttp3/HttpUrl;)Lokhttp3/Proxy$Http;
+	public static synthetic fun copy$default (Lokhttp3/Proxy$Http;Lokhttp3/HttpUrl;ILjava/lang/Object;)Lokhttp3/Proxy$Http;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getJavaProxy ()Ljava/net/Proxy;
+	public final fun getServer ()Lokhttp3/HttpUrl;
+	public fun getSocketAddress ()Ljava/net/InetSocketAddress;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class okhttp3/Proxy$Http$Companion {
+	public final fun insecure (Ljava/net/InetSocketAddress;)Lokhttp3/Proxy$Http;
+}
+
+public final class okhttp3/Proxy$Socks4 : okhttp3/Proxy {
+	public fun <init> (Ljava/net/InetSocketAddress;)V
+	public final fun component1 ()Ljava/net/InetSocketAddress;
+	public final fun copy (Ljava/net/InetSocketAddress;)Lokhttp3/Proxy$Socks4;
+	public static synthetic fun copy$default (Lokhttp3/Proxy$Socks4;Ljava/net/InetSocketAddress;ILjava/lang/Object;)Lokhttp3/Proxy$Socks4;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getJavaProxy ()Ljava/net/Proxy;
+	public fun getSocketAddress ()Ljava/net/InetSocketAddress;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class okhttp3/Request {
@@ -1240,7 +1288,7 @@ public final class okhttp3/Route {
 	public final fun -deprecated_address ()Lokhttp3/Address;
 	public final fun -deprecated_proxy ()Ljava/net/Proxy;
 	public final fun -deprecated_socketAddress ()Ljava/net/InetSocketAddress;
-	public fun <init> (Lokhttp3/Address;Ljava/net/Proxy;Ljava/net/InetSocketAddress;)V
+	public fun <init> (Lokhttp3/Address;Lokhttp3/Proxy;Ljava/net/InetSocketAddress;)V
 	public final fun address ()Lokhttp3/Address;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I

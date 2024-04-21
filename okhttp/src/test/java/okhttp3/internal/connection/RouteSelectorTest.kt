@@ -24,7 +24,7 @@ import assertk.assertions.isTrue
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.Proxy
+import java.net.Proxy as JavaProxy
 import java.net.ProxySelector
 import java.net.SocketAddress
 import java.net.URI
@@ -34,6 +34,7 @@ import okhttp3.Address
 import okhttp3.ConnectionListener
 import okhttp3.FakeDns
 import okhttp3.OkHttpClientTestRule
+import okhttp3.Proxy
 import okhttp3.Request
 import okhttp3.Route
 import okhttp3.TestValueFactory
@@ -87,7 +88,7 @@ class RouteSelectorTest {
     assertThat(routeSelector.hasNext()).isTrue()
     dns[uriHost] = dns.allocate(1)
     val selection = routeSelector.next()
-    assertRoute(selection.next(), address, Proxy.NO_PROXY, dns.lookup(uriHost, 0), uriPort)
+    assertRoute(selection.next(), address, Proxy.Direct, dns.lookup(uriHost, 0), uriPort)
     dns.assertRequests(uriHost)
     assertThat(selection.hasNext()).isFalse()
     assertFailsWith<NoSuchElementException> {
@@ -109,7 +110,7 @@ class RouteSelectorTest {
     routeDatabase.failed(route)
     routeSelector = newRouteSelector(address)
     selection = routeSelector.next()
-    assertRoute(selection.next(), address, Proxy.NO_PROXY, dns.lookup(uriHost, 0), uriPort)
+    assertRoute(selection.next(), address, Proxy.Direct, dns.lookup(uriHost, 0), uriPort)
     assertThat(selection.hasNext()).isFalse()
     assertFailsWith<NoSuchElementException> {
       selection.next()
@@ -140,14 +141,14 @@ class RouteSelectorTest {
   @Test fun explicitDirectProxy() {
     val address =
       factory.newAddress(
-        proxy = Proxy.NO_PROXY,
+        proxy = Proxy.Direct,
       )
     val routeSelector = newRouteSelector(address)
     assertThat(routeSelector.hasNext()).isTrue()
     dns[uriHost] = dns.allocate(2)
     val selection = routeSelector.next()
-    assertRoute(selection.next(), address, Proxy.NO_PROXY, dns.lookup(uriHost, 0), uriPort)
-    assertRoute(selection.next(), address, Proxy.NO_PROXY, dns.lookup(uriHost, 1), uriPort)
+    assertRoute(selection.next(), address, Proxy.Direct, dns.lookup(uriHost, 0), uriPort)
+    assertRoute(selection.next(), address, Proxy.Direct, dns.lookup(uriHost, 1), uriPort)
     assertThat(selection.hasNext()).isFalse()
     assertThat(routeSelector.hasNext()).isFalse()
     dns.assertRequests(uriHost)
@@ -171,7 +172,7 @@ class RouteSelectorTest {
     assertThat(routeSelector.hasNext()).isTrue()
     dns[bogusHostname] = dns.allocate(1)
     val selection = routeSelector.next()
-    assertRoute(selection.next(), address, Proxy.NO_PROXY, dns.lookup(bogusHostname, 0), uriPort)
+    assertRoute(selection.next(), address, Proxy.Direct, dns.lookup(bogusHostname, 0), uriPort)
     assertThat(selection.hasNext()).isFalse()
     assertThat(routeSelector.hasNext()).isFalse()
     dns.assertRequests(bogusHostname)
@@ -181,7 +182,7 @@ class RouteSelectorTest {
   @Test fun proxySelectorReturnsNull() {
     val nullProxySelector: ProxySelector =
       object : ProxySelector() {
-        override fun select(uri: URI): List<Proxy>? {
+        override fun select(uri: URI): List<JavaProxy>? {
           assertThat(uri.host).isEqualTo(uriHost)
           return null
         }
@@ -203,7 +204,7 @@ class RouteSelectorTest {
     assertThat(routeSelector.hasNext()).isTrue()
     dns[uriHost] = dns.allocate(1)
     val selection = routeSelector.next()
-    assertRoute(selection.next(), address, Proxy.NO_PROXY, dns.lookup(uriHost, 0), uriPort)
+    assertRoute(selection.next(), address, Proxy.Direct, dns.lookup(uriHost, 0), uriPort)
     dns.assertRequests(uriHost)
     assertThat(selection.hasNext()).isFalse()
     assertThat(routeSelector.hasNext()).isFalse()
@@ -215,8 +216,8 @@ class RouteSelectorTest {
     assertThat(routeSelector.hasNext()).isTrue()
     dns[uriHost] = dns.allocate(2)
     val selection = routeSelector.next()
-    assertRoute(selection.next(), address, Proxy.NO_PROXY, dns.lookup(uriHost, 0), uriPort)
-    assertRoute(selection.next(), address, Proxy.NO_PROXY, dns.lookup(uriHost, 1), uriPort)
+    assertRoute(selection.next(), address, Proxy.Direct, dns.lookup(uriHost, 0), uriPort)
+    assertRoute(selection.next(), address, Proxy.Direct, dns.lookup(uriHost, 1), uriPort)
     assertThat(selection.hasNext()).isFalse()
     assertThat(routeSelector.hasNext()).isFalse()
     dns.assertRequests(uriHost)
@@ -225,8 +226,8 @@ class RouteSelectorTest {
 
   @Test fun proxySelectorReturnsMultipleProxies() {
     val address = factory.newAddress()
-    proxySelector.proxies.add(proxyA)
-    proxySelector.proxies.add(proxyB)
+    proxySelector.proxies.add(proxyA.javaProxy)
+    proxySelector.proxies.add(proxyB.javaProxy)
     val routeSelector = newRouteSelector(address)
     proxySelector.assertRequests(address.url.toUri())
 
@@ -253,7 +254,7 @@ class RouteSelectorTest {
 
   @Test fun proxySelectorDirectConnectionsAreSkipped() {
     val address = factory.newAddress()
-    proxySelector.proxies.add(Proxy.NO_PROXY)
+    proxySelector.proxies.add(Proxy.Direct.javaProxy)
     val routeSelector = newRouteSelector(address)
     proxySelector.assertRequests(address.url.toUri())
 
@@ -261,7 +262,7 @@ class RouteSelectorTest {
     assertThat(routeSelector.hasNext()).isTrue()
     dns[uriHost] = dns.allocate(1)
     val selection = routeSelector.next()
-    assertRoute(selection.next(), address, Proxy.NO_PROXY, dns.lookup(uriHost, 0), uriPort)
+    assertRoute(selection.next(), address, Proxy.Direct, dns.lookup(uriHost, 0), uriPort)
     dns.assertRequests(uriHost)
     assertThat(selection.hasNext()).isFalse()
     assertThat(routeSelector.hasNext()).isFalse()
@@ -269,9 +270,9 @@ class RouteSelectorTest {
 
   @Test fun proxyDnsFailureContinuesToNextProxy() {
     val address = factory.newAddress()
-    proxySelector.proxies.add(proxyA)
-    proxySelector.proxies.add(proxyB)
-    proxySelector.proxies.add(proxyA)
+    proxySelector.proxies.add(proxyA.javaProxy)
+    proxySelector.proxies.add(proxyB.javaProxy)
+    proxySelector.proxies.add(proxyA.javaProxy)
     val routeSelector = newRouteSelector(address)
     proxySelector.assertRequests(address.url.toUri())
     assertThat(routeSelector.hasNext()).isTrue()
@@ -297,8 +298,8 @@ class RouteSelectorTest {
 
   @Test fun multipleProxiesMultipleInetAddressesMultipleConfigurations() {
     val address = factory.newHttpsAddress()
-    proxySelector.proxies.add(proxyA)
-    proxySelector.proxies.add(proxyB)
+    proxySelector.proxies.add(proxyA.javaProxy)
+    proxySelector.proxies.add(proxyB.javaProxy)
     val routeSelector = newRouteSelector(address)
 
     // Proxy A
@@ -352,8 +353,8 @@ class RouteSelectorTest {
 
   @Test fun failedRouteWithMultipleProxies() {
     val address = factory.newHttpsAddress()
-    proxySelector.proxies.add(proxyA)
-    proxySelector.proxies.add(proxyB)
+    proxySelector.proxies.add(proxyA.javaProxy)
+    proxySelector.proxies.add(proxyB.javaProxy)
     var routeSelector = newRouteSelector(address)
     dns[PROXY_A_HOST] = dns.allocate(1)
     dns[PROXY_B_HOST] = dns.allocate(1)
@@ -387,8 +388,8 @@ class RouteSelectorTest {
     val selection = routeSelector.next()
     dns.assertRequests(uriHost)
     val routes = selection.routes
-    assertRoute(routes[0], address, Proxy.NO_PROXY, dns.lookup(uriHost, 0), uriPort)
-    assertRoute(routes[1], address, Proxy.NO_PROXY, dns.lookup(uriHost, 1), uriPort)
+    assertRoute(routes[0], address, Proxy.Direct, dns.lookup(uriHost, 0), uriPort)
+    assertRoute(routes[1], address, Proxy.Direct, dns.lookup(uriHost, 1), uriPort)
     assertThat(selection.next()).isSameAs(routes[0])
     assertThat(selection.next()).isSameAs(routes[1])
     assertThat(selection.hasNext()).isFalse()
@@ -398,7 +399,7 @@ class RouteSelectorTest {
   @Test fun addressesNotSortedWhenFastFallbackIsOff() {
     val address =
       factory.newAddress(
-        proxy = Proxy.NO_PROXY,
+        proxy = Proxy.Direct,
       )
     val routeSelector =
       newRouteSelector(
@@ -422,7 +423,7 @@ class RouteSelectorTest {
   @Test fun addressesSortedWhenFastFallbackIsOn() {
     val address =
       factory.newAddress(
-        proxy = Proxy.NO_PROXY,
+        proxy = Proxy.Direct,
       )
     val routeSelector =
       newRouteSelector(
@@ -471,28 +472,28 @@ class RouteSelectorTest {
     assertThat(
       Route(
         factory.newAddress(uriHost = "1.2.3.4", uriPort = 1003),
-        Proxy.NO_PROXY,
+        Proxy.Direct,
         InetSocketAddress(ipv4Address, 1003),
       ).toString(),
     ).isEqualTo("1.2.3.4:1003")
     assertThat(
       Route(
         factory.newAddress(uriHost = "example.com", uriPort = 1003),
-        Proxy.NO_PROXY,
+        Proxy.Direct,
         InetSocketAddress(ipv4Address, 1003),
       ).toString(),
     ).isEqualTo("example.com at 1.2.3.4:1003")
     assertThat(
       Route(
         factory.newAddress(uriHost = "example.com", uriPort = 1003),
-        Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
+        Proxy.Http.insecure(InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
         InetSocketAddress(ipv4Address, 1003),
       ).toString(),
     ).isEqualTo("example.com via proxy 1.2.3.4:1003")
     assertThat(
       Route(
         factory.newAddress(uriHost = "example.com", uriPort = 1003),
-        Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
+        Proxy.Http.insecure(InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
         InetSocketAddress(ipv4Address, 5678),
       ).toString(),
     ).isEqualTo("example.com:1003 via proxy 1.2.3.4:5678")
@@ -506,28 +507,28 @@ class RouteSelectorTest {
     assertThat(
       Route(
         factory.newAddress(uriHost = "::1", uriPort = 1003),
-        Proxy.NO_PROXY,
+        Proxy.Direct,
         InetSocketAddress(ipv6Address, uriPort),
       ).toString(),
     ).isEqualTo("[::1]:1003")
     assertThat(
       Route(
         factory.newAddress(uriHost = "example.com", uriPort = 1003),
-        Proxy.NO_PROXY,
+        Proxy.Direct,
         InetSocketAddress(ipv6Address, uriPort),
       ).toString(),
     ).isEqualTo("example.com at [::1]:1003")
     assertThat(
       Route(
         factory.newAddress(uriHost = "example.com", uriPort = 1003),
-        Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
+        Proxy.Http.insecure(InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
         InetSocketAddress(ipv6Address, 5678),
       ).toString(),
     ).isEqualTo("example.com:1003 via proxy [::1]:5678")
     assertThat(
       Route(
         factory.newAddress(uriHost = "::2", uriPort = 1003),
-        Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
+        Proxy.Http.insecure(InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
         InetSocketAddress(ipv6Address, 5678),
       ).toString(),
     ).isEqualTo("[::2]:1003 via proxy [::1]:5678")
@@ -577,16 +578,14 @@ class RouteSelectorTest {
     private const val PROXY_A_PORT = 1001
     private const val PROXY_A_HOST = "proxya"
     private val proxyA =
-      Proxy(
-        Proxy.Type.HTTP,
+      Proxy.Http.insecure(
         InetSocketAddress.createUnresolved(PROXY_A_HOST, PROXY_A_PORT),
       )
 
     private const val PROXY_B_PORT = 1002
     private const val PROXY_B_HOST = "proxyb"
     private val proxyB =
-      Proxy(
-        Proxy.Type.HTTP,
+      Proxy.Http.insecure(
         InetSocketAddress.createUnresolved(PROXY_B_HOST, PROXY_B_PORT),
       )
   }

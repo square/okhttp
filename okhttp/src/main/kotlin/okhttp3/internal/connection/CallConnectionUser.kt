@@ -2,7 +2,7 @@ package okhttp3.internal.connection
 
 import java.io.IOException
 import java.net.InetAddress
-import java.net.Proxy as JavaProxy
+import java.net.Proxy
 import java.net.Socket
 import okhttp3.Connection
 import okhttp3.ConnectionListener
@@ -10,7 +10,6 @@ import okhttp3.EventListener
 import okhttp3.Handshake
 import okhttp3.HttpUrl
 import okhttp3.Protocol
-import okhttp3.Proxy
 import okhttp3.Route
 import okhttp3.internal.http.RealInterceptorChain
 
@@ -38,7 +37,7 @@ internal class CallConnectionUser(
   }
 
   override fun connectStart(route: Route) {
-    eventListener.connectStart(call, route.socketAddress, route.proxyAddress)
+    eventListener.connectStart(call, route.socketAddress, route.proxy)
     poolConnectionListener.connectStart(route, call)
   }
 
@@ -47,7 +46,7 @@ internal class CallConnectionUser(
     protocol: Protocol?,
     e: IOException,
   ) {
-    eventListener.connectFailed(call, route.socketAddress, route.proxyAddress, null, e)
+    eventListener.connectFailed(call, route.socketAddress, route.proxy, null, e)
     poolConnectionListener.connectFailed(route, call, e)
   }
 
@@ -63,7 +62,7 @@ internal class CallConnectionUser(
     route: Route,
     protocol: Protocol?,
   ) {
-    eventListener.connectEnd(call, route.socketAddress, route.proxyAddress, protocol)
+    eventListener.connectEnd(call, route.socketAddress, route.proxy, protocol)
   }
 
   override fun connectionConnectEnd(
@@ -125,7 +124,7 @@ internal class CallConnectionUser(
     url: HttpUrl,
     proxies: List<Proxy>,
   ) {
-    eventListener.proxySelectEnd2(call, url, proxies)
+    eventListener.proxySelectEnd(call, url, proxies)
   }
 
   override fun dnsStart(socketHost: String) {

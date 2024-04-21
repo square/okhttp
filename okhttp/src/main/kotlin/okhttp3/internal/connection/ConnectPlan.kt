@@ -19,7 +19,6 @@ import java.io.IOException
 import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.net.ProtocolException
-import java.net.Proxy as JavaProxy
 import java.net.Socket
 import java.net.UnknownServiceException
 import java.security.cert.X509Certificate

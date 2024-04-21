@@ -18,7 +18,6 @@ package okhttp3.internal.connection
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.Proxy as JavaProxy
 import java.net.SocketException
 import java.net.UnknownHostException
 import java.util.NoSuchElementException
@@ -117,7 +116,7 @@ class RouteSelector(
     connectionUser.proxySelectStart(url)
     proxies = selectProxies()
     nextProxyIndex = 0
-    connectionUser.proxySelectEnd(url, proxies)
+    connectionUser.proxySelectEnd(url, proxies.map { it.javaProxy })
   }
 
   /** Returns true if there's another proxy to try. */

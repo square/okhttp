@@ -63,7 +63,8 @@ class Address(
    * Returns this address's explicitly-specified HTTP proxy, or null to delegate to the
    * [proxy selector][proxySelector].
    */
-  @get:JvmName("proxy") val proxy: JavaProxy?
+  @get:JvmName("proxy")
+  val proxy: JavaProxy?
     get() = proxyAddress?.javaProxy
 
   /**
