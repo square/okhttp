@@ -119,11 +119,11 @@ class Main : CliktCommand(name = NAME, help = "A curl for the next-generation we
       val address = InetSocketAddress.createUnresolved(host, port.toInt())
       when (type) {
         "http" -> {
-          builder.proxy(Proxy(Proxy.Type.SOCKS, address))
+          builder.proxy(Proxy(Proxy.Type.HTTP, address))
         }
 
         "https" -> {
-          builder.proxy(Proxy(Proxy.Type.SOCKS, address))
+          builder.proxy(Proxy(Proxy.Type.HTTP, address))
             .socketFactory(sslSocketFactory ?: Platform.get().newSslSocketFactory(Platform.get().platformTrustManager()))
         }
 
