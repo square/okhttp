@@ -17,6 +17,7 @@ package okhttp3.containers
 
 import assertk.assertThat
 import assertk.assertions.contains
+import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -84,15 +85,20 @@ class BasicMockServerTest {
 
     fun OkHttpClient.Builder.trustMockServer(): OkHttpClient.Builder =
       apply {
-        val keyStoreFactory = KeyStoreFactory(Configuration.configuration(), MockServerLogger())
-
-        val socketFactory = keyStoreFactory.sslContext().socketFactory
-
-        val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-        trustManagerFactory.init(keyStoreFactory.loadOrCreateKeyStore())
-        val trustManager = trustManagerFactory.trustManagers.first() as X509TrustManager
+        val (socketFactory, trustManager) = trustManagerPair()
 
         sslSocketFactory(socketFactory, trustManager)
       }
+
+    fun trustManagerPair(): Pair<SSLSocketFactory, X509TrustManager> {
+      val keyStoreFactory = KeyStoreFactory(Configuration.configuration(), MockServerLogger())
+
+      val socketFactory = keyStoreFactory.sslContext().socketFactory
+
+      val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+      trustManagerFactory.init(keyStoreFactory.loadOrCreateKeyStore())
+      val trustManager = trustManagerFactory.trustManagers.first() as X509TrustManager
+      return Pair(socketFactory, trustManager)
+    }
   }
 }

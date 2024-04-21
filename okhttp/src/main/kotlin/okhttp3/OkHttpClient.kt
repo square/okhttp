@@ -356,6 +356,10 @@ open class OkHttpClient internal constructor(
       checkNotNull(certificateChainCleaner) { "certificateChainCleaner == null" }
       checkNotNull(x509TrustManager) { "x509TrustManager == null" }
     }
+
+    if ((proxy?.type() ?: Proxy.Type.DIRECT) == Proxy.Type.DIRECT && socketFactory is SSLSocketFactory) {
+      Platform.get().log("socketFactory is SSLSocketFactory without Proxy", Platform.WARN)
+    }
   }
 
   /** Prepares the [request] to be executed at some point in the future. */
@@ -890,8 +894,6 @@ open class OkHttpClient internal constructor(
      */
     fun socketFactory(socketFactory: SocketFactory) =
       apply {
-        require(socketFactory !is SSLSocketFactory) { "socketFactory instanceof SSLSocketFactory" }
-
         if (socketFactory != this.socketFactory) {
           this.routeDatabase = null
         }

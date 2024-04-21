@@ -27,6 +27,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.containers.BasicMockServerTest.Companion.MOCKSERVER_IMAGE
+import okhttp3.containers.BasicMockServerTest.Companion.trustManagerPair
 import okhttp3.containers.BasicMockServerTest.Companion.trustMockServer
 import okio.buffer
 import okio.source
@@ -123,14 +124,16 @@ class BasicProxyTest {
   }
 
   @Test
-  @Disabled("https://github.com/square/okhttp/issues/8233")
   fun testOkHttpSecureProxiedHttp2() {
     testRequest {
+      val (socketFactory, trustManager) = trustManagerPair()
+
       val client =
         OkHttpClient.Builder()
-          .trustMockServer()
+          .sslSocketFactory(socketFactory, trustManager)
           .proxy(Proxy(Proxy.Type.HTTP, it.remoteAddress()))
           .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+          .socketFactory(socketFactory)
           .build()
 
       val response =
