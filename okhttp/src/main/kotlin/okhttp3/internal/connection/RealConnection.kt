@@ -447,7 +447,7 @@ class RealConnection(
 
   override fun toString(): String {
     return "Connection{${route.address.url.host}:${route.address.url.port}," +
-      " proxy=${route.proxyAddress}" +
+      " proxy=${route.proxyAddress.javaProxy}" +
       " hostAddress=${route.socketAddress}" +
       " cipherSuite=${handshake?.cipherSuite ?: "none"}" +
       " protocol=$protocol}"

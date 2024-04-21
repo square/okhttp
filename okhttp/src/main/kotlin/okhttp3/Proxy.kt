@@ -13,6 +13,10 @@ sealed interface Proxy {
 
     override val socketAddress: InetSocketAddress?
       get() = null
+
+    override fun toString(): String {
+      return "Direct"
+    }
   }
 
   data class Http(val server: HttpUrl) : Proxy {
