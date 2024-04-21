@@ -105,6 +105,13 @@ class BasicProxyTest {
   @Test
   fun testOkHttpSecureProxiedHttp1() {
     testRequest {
+      it.withProxyConfiguration(
+        ProxyConfiguration.proxyConfiguration(
+          ProxyConfiguration.Type.HTTPS,
+          it.remoteAddress()
+        )
+      )
+
       val client =
         OkHttpClient.Builder()
           .trustMockServer()
@@ -125,6 +132,13 @@ class BasicProxyTest {
   @Test
   fun testOkHttpSecureProxiedHttp2() {
     testRequest {
+      it.withProxyConfiguration(
+        ProxyConfiguration.proxyConfiguration(
+          ProxyConfiguration.Type.HTTPS,
+          it.remoteAddress()
+        )
+      )
+
       val (socketFactory, trustManager) = trustManagerPair()
 
       val client =
@@ -193,6 +207,13 @@ class BasicProxyTest {
     HttpsURLConnection.setDefaultSSLSocketFactory(keyStoreFactory.sslContext().socketFactory)
 
     testRequest {
+      it.withProxyConfiguration(
+        ProxyConfiguration.proxyConfiguration(
+          ProxyConfiguration.Type.HTTPS,
+          it.remoteAddress()
+        )
+      )
+
       val proxy =
         Proxy(
           Proxy.Type.HTTP,
