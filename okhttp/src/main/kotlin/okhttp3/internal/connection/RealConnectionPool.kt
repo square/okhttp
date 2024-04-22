@@ -97,7 +97,7 @@ class RealConnectionPool(
    * This confirms the returned connection is healthy before returning it. If this encounters any
    * unhealthy connections in its search, this will clean them up.
    *
-   * If [routes] is non-null these are the resolved routes (ie. IP addresses) for the connection.
+   * If [routes] is non-null these are the resolved routes (i.e. IP addresses) for the connection.
    * This is used to coalesce related domains to the same HTTP/2 connection, such as `square.com`
    * and `square.ca`.
    */
@@ -389,10 +389,28 @@ class RealConnectionPool(
       }
     }
 
+    for (connection in connections) {
+      if (connection.route.address != address) {
+        continue
+      }
+      // This method takes a lock in order to recalculate the limit
+      // This will also change the maximum connections (if needed) for us
+      connection.recalculateAllocationLimit()
+    }
+
+    // change the minimum connections (if needed)
     when {
       newConnectionsNeeded > 0 -> state.scheduleOpener()
       newConnectionsNeeded < 0 -> scheduleCloser()
     }
+  }
+
+  /**
+   * Fetches a stored polity for a given [address]
+   * Returns null if no policy was set for that address.
+   */
+  fun getPolicy(address: Address): ConnectionPool.AddressPolicy? {
+    return this.addressStates[address]?.policy
   }
 
   /** Open connections to [address], if required by the address policy. */
@@ -405,7 +423,7 @@ class RealConnectionPool(
   }
 
   /**
-   * Ensure enough connections open to [address] to satisfy its [ConnectionPool.AddressPolicy].
+   * Ensure enough connections open to [AddressState.address] to satisfy its [ConnectionPool.AddressPolicy].
    * If there are already enough connections, we're done.
    * If not, we create one and then schedule the task to run again immediately.
    */

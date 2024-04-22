@@ -27,6 +27,7 @@ import java.util.concurrent.locks.ReentrantLock
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import kotlin.concurrent.withLock
+import kotlin.math.min
 import okhttp3.Address
 import okhttp3.Connection
 import okhttp3.ConnectionListener
@@ -119,6 +120,8 @@ class RealConnection(
   internal var allocationLimit = 1
     private set
 
+  private var lastMaxConcurrentStreamsFromSettings: Int = Int.MAX_VALUE
+
   /** Current calls carried by this connection. */
   val calls = mutableListOf<Reference<RealCall>>()
 
@@ -176,7 +179,8 @@ class RealConnection(
         .flowControlListener(flowControlListener)
         .build()
     this.http2Connection = http2Connection
-    this.allocationLimit = Http2Connection.DEFAULT_SETTINGS.getMaxConcurrentStreams()
+    this.lastMaxConcurrentStreamsFromSettings = Http2Connection.DEFAULT_SETTINGS.getMaxConcurrentStreams()
+    recalculateAllocationLimit()
     http2Connection.start()
   }
 
@@ -355,8 +359,20 @@ class RealConnection(
     settings: Settings,
   ) {
     lock.withLock {
+      this.lastMaxConcurrentStreamsFromSettings = settings.getMaxConcurrentStreams()
+      recalculateAllocationLimit()
+    }
+  }
+
+  /**
+   * Resets the [allocationLimit] field based on any settings which may have been applied
+   * Needed to allow for policy changes to adjust the limit, similarly to the change
+   * made during settings changes
+   */
+  internal fun recalculateAllocationLimit() {
+    lock.withLock {
       val oldLimit = allocationLimit
-      allocationLimit = settings.getMaxConcurrentStreams()
+      allocationLimit = getMaximumAllocationLimit()
 
       if (allocationLimit < oldLimit) {
         // We might need new connections to keep policies satisfied
@@ -366,6 +382,14 @@ class RealConnection(
         connectionPool.scheduleCloser()
       }
     }
+  }
+
+  private fun getMaximumAllocationLimit() : Int {
+    val maxConcurrentCalls = connectionPool.getPolicy(route.address)
+      ?.maximumConcurrentCallsPerConnection
+      ?: Int.MAX_VALUE
+
+    return min(lastMaxConcurrentStreamsFromSettings, maxConcurrentCalls)
   }
 
   override fun handshake(): Handshake? = handshake

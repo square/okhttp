@@ -227,6 +227,9 @@ class ConnectionPoolTest {
     assertThat(pool.connectionCount()).isEqualTo(2)
     forceConnectionsToExpire(pool, expireTime)
     assertThat(pool.connectionCount()).isEqualTo(1)
+
+//    setPolicy(pool, address, ConnectionPool.AddressPolicy(3))
+//    assertThat(pool.connectionCount()).isEqualTo(3)
   }
 
   @Test fun connectionPreWarmingHttp2() {
