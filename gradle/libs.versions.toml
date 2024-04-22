@@ -16,7 +16,7 @@ testcontainers = "1.19.7"
 
 [libraries]
 amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.3.3"
-androidx-activity = "androidx.activity:activity-ktx:1.8.2"
+androidx-activity = "androidx.activity:activity-ktx:1.9.0"
 androidx-annotation = "androidx.annotation:annotation:1.7.1"
 androidx-espresso-core = "androidx.test.espresso:espresso-core:3.5.1"
 androidx-junit = "androidx.test.ext:junit:1.1.5"
