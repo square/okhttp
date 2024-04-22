@@ -70,13 +70,14 @@ class DnsOverHttps internal constructor(
 
   @Throws(UnknownHostException::class)
   private fun lookupHttps(hostname: String): List<InetAddress> {
-    val networkRequests = buildList {
-      add(client.newCall(buildRequest(hostname, DnsRecordCodec.TYPE_A)))
+    val networkRequests =
+      buildList {
+        add(client.newCall(buildRequest(hostname, DnsRecordCodec.TYPE_A)))
 
-      if (includeIPv6) {
-        add(client.newCall(buildRequest(hostname, DnsRecordCodec.TYPE_AAAA)))
+        if (includeIPv6) {
+          add(client.newCall(buildRequest(hostname, DnsRecordCodec.TYPE_AAAA)))
+        }
       }
-    }
 
     val failures = ArrayList<Exception>(2)
     val results = ArrayList<InetAddress>(5)
@@ -276,8 +277,7 @@ class DnsOverHttps internal constructor(
         this.bootstrapDnsHosts = bootstrapDnsHosts
       }
 
-    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder =
-      bootstrapDnsHosts(bootstrapDnsHosts.toList())
+    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder = bootstrapDnsHosts(bootstrapDnsHosts.toList())
 
     fun systemDns(systemDns: Dns) =
       apply {
