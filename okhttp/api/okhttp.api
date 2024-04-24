@@ -393,8 +393,8 @@ public final class okhttp3/ConnectionPool$AddressPolicy {
 	public final field maximumConcurrentCallsPerConnection I
 	public final field minimumConcurrentCalls I
 	public fun <init> ()V
-	public fun <init> (IIJI)V
-	public synthetic fun <init> (IIJIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IJII)V
+	public synthetic fun <init> (IJIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class okhttp3/ConnectionSpec {

@@ -357,7 +357,7 @@ class RealConnection(
     connection: Http2Connection,
     settings: Settings,
   ) {
-   this.withLock {
+    this.withLock {
       this.lastMaxConcurrentStreamsFromSettings = settings.getMaxConcurrentStreams()
       recalculateAllocationLimit()
     }
@@ -369,7 +369,7 @@ class RealConnection(
    * made during settings changes
    */
   internal fun recalculateAllocationLimit() {
-   this.withLock {
+    this.withLock {
       val oldLimit = allocationLimit
       allocationLimit = getMaximumAllocationLimit()
 
@@ -425,7 +425,7 @@ class RealConnection(
     e: IOException?,
   ) {
     var noNewExchangesEvent = false
-   this.withLock {
+    this.withLock {
       if (e is StreamResetException) {
         when {
           e.errorCode == ErrorCode.REFUSED_STREAM -> {

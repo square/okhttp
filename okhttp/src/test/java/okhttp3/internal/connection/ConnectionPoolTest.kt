@@ -277,7 +277,7 @@ class ConnectionPoolTest {
 
     // Add a connection to the pool that won't expire for a while
     routePlanner.defaultConnectionIdleAtNanos = expireLater
-    setPolicy(pool, address, ConnectionPool.AddressPolicy(1))
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 1))
     assertThat(pool.connectionCount()).isEqualTo(1)
 
     // All other connections created will expire sooner
@@ -287,31 +287,31 @@ class ConnectionPoolTest {
     // which can satisfy a larger policy
     val connection = routePlanner.plans.first().connection
     val http2Connection = connectHttp2(peer, connection, 5)
-    setPolicy(pool, address, ConnectionPool.AddressPolicy(5))
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5))
     assertThat(pool.connectionCount()).isEqualTo(1)
 
     // Decrease the policy max connections, and check that new connections are created
-    setPolicy(pool, address, ConnectionPool.AddressPolicy(5, 1))
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5, maximumConcurrentCallsPerConnection = 1))
     // fills up the first connect and then adds single connections
     // 5 = 1 + 1 + 1 + 1 + 1 (five unique connections)
     assertThat(pool.connectionCount()).isEqualTo(5)
 
     // increase the policy max connections, and check that new connections are created
-    setPolicy(pool, address, ConnectionPool.AddressPolicy(5, 2))
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5, maximumConcurrentCallsPerConnection = 2))
     forceConnectionsToExpire(pool, expireSooner)
     // fills up the first connect and then adds single connections
     // 5 = 2 + 1 + 1 + 1 (four unique connections)
     assertThat(pool.connectionCount()).isEqualTo(4)
 
     // increase the policy max connections, and check that new connections are created
-    setPolicy(pool, address, ConnectionPool.AddressPolicy(5, 4))
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5, maximumConcurrentCallsPerConnection = 4))
     forceConnectionsToExpire(pool, expireSooner)
     // fills up the first connect and then adds single connections
     // 5 = 4 + 1 (two unique connections)
     assertThat(pool.connectionCount()).isEqualTo(2)
 
     // Decrease the policy max connections, and check that new connections are created
-    setPolicy(pool, address, ConnectionPool.AddressPolicy(5, 3))
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5, maximumConcurrentCallsPerConnection = 3))
     // fills up the first connect and then removes an unused after
     // 5 = 3 + 1 + 1 (three unique connections)
     assertThat(pool.connectionCount()).isEqualTo(3)

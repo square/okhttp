@@ -148,15 +148,14 @@ class ConnectionPool internal constructor(
      * Connections will still be closed if they idle beyond the keep-alive but will be replaced.
      */
     @JvmField val minimumConcurrentCalls: Int = 0,
-    /**
-     * The maximum number of concurrent calls per connection.
-     *
-     * Set this value to 1 to disable HTTP/2 connection coalescing
-     */
-    @JvmField val maximumConcurrentCallsPerConnection: Int = Int.MAX_VALUE,
     /** How long to wait to retry pre-emptive connection attempts that fail. */
     @JvmField val backoffDelayMillis: Long = 60 * 1000,
     /** How much jitter to introduce in connection retry backoff delays */
     @JvmField val backoffJitterMillis: Int = 100,
+    /**
+     * The maximum number of concurrent calls per connection.
+     * Set this value to 1 to disable HTTP/2 connection coalescing
+     */
+    @JvmField val maximumConcurrentCallsPerConnection: Int = Int.MAX_VALUE,
   )
 }
