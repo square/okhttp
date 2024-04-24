@@ -41,7 +41,12 @@ import org.junit.jupiter.api.Test
 internal class FastFallbackExchangeFinderTest {
   private val taskFaker = TaskFaker()
   private val taskRunner = taskFaker.taskRunner
-  private val routePlanner = FakeRoutePlanner(taskFaker)
+
+  /**
+   * Note that we don't use the same [TaskFaker] for this factory. That way off-topic tasks like
+   * connection pool maintenance tasks don't add noise to route planning tests.
+   */
+  private val routePlanner = FakeRoutePlanner(taskFaker = taskFaker)
   private val finder = FastFallbackExchangeFinder(routePlanner, taskRunner)
 
   @AfterEach
