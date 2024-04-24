@@ -333,7 +333,6 @@ class ConnectionPoolTest {
     assertThat(pool.connectionCount()).isEqualTo(3)
   }
 
-
   private fun setPolicy(
     pool: RealConnectionPool,
     address: Address,

@@ -384,13 +384,14 @@ class RealConnection(
     }
   }
 
-  private fun getMaximumAllocationLimit() : Int {
+  private fun getMaximumAllocationLimit(): Int {
     // if we have not negotiated a max per streams yet, don't check for the policy override
     val negotiatedMaxCurrentStreams = lastMaxConcurrentStreamsFromSettings ?: return 1
 
-    val maxPolicyValue = connectionPool.getPolicy(route.address)
-      ?.maximumConcurrentCallsPerConnection
-      ?: Int.MAX_VALUE
+    val maxPolicyValue =
+      connectionPool.getPolicy(route.address)
+        ?.maximumConcurrentCallsPerConnection
+        ?: Int.MAX_VALUE
 
     return min(maxPolicyValue, negotiatedMaxCurrentStreams)
   }
