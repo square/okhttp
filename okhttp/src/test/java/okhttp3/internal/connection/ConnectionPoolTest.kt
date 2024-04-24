@@ -228,8 +228,8 @@ class ConnectionPoolTest {
     forceConnectionsToExpire(pool, expireTime)
     assertThat(pool.connectionCount()).isEqualTo(1)
 
-//    setPolicy(pool, address, ConnectionPool.AddressPolicy(3))
-//    assertThat(pool.connectionCount()).isEqualTo(3)
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(3))
+    assertThat(pool.connectionCount()).isEqualTo(3)
   }
 
   @Test fun connectionPreWarmingHttp2() {
@@ -265,6 +265,74 @@ class ConnectionPoolTest {
     forceConnectionsToExpire(pool, expireSooner)
     assertThat(pool.connectionCount()).isEqualTo(1)
   }
+
+  @Test fun testSettingMaxConcurrentOnAddressPolicyHttp2() {
+    taskFaker.advanceUntil(System.nanoTime())
+    val expireSooner = taskFaker.nanoTime + 1_000_000_000_000
+    val expireLater = taskFaker.nanoTime + 2_000_000_000_000
+
+    routePlanner.autoGeneratePlans = true
+    val address = routePlanner.address
+    val pool = routePlanner.pool
+
+    // Add a connection to the pool that won't expire for a while
+    routePlanner.defaultConnectionIdleAtNanos = expireLater
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(1))
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    // All other connections created will expire sooner
+    routePlanner.defaultConnectionIdleAtNanos = expireSooner
+
+    // Turn it into an http/2 connection that supports 5 concurrent streams
+    // which can satisfy a larger policy
+    val connection = routePlanner.plans.first().connection
+    val http2Connection = connectHttp2(peer, connection, 5)
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(5))
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    // Decrease the policy max connections, and check that new connections are created
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(5, 1))
+    // fills up the first connect and then adds single connections
+    // 5 = 1 + 1 + 1 + 1 + 1 (five unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(5)
+
+    // increase the policy max connections, and check that new connections are created
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(5, 2))
+    forceConnectionsToExpire(pool, expireSooner)
+    // fills up the first connect and then adds single connections
+    // 5 = 2 + 1 + 1 + 1 (four unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(4)
+
+    // increase the policy max connections, and check that new connections are created
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(5, 4))
+    forceConnectionsToExpire(pool, expireSooner)
+    // fills up the first connect and then adds single connections
+    // 5 = 4 + 1 (two unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(2)
+
+    // Decrease the policy max connections, and check that new connections are created
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(5, 3))
+    // fills up the first connect and then removes an unused after
+    // 5 = 3 + 1 + 1 (three unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(3)
+
+    // If you update the settings to something smaller than the current
+    // set policy it should be adhered too
+    updateMaxConcurrentStreams(http2Connection, 2)
+    forceConnectionsToExpire(pool, expireSooner)
+    // fills up the first connect and then adds single connections
+    // 5 = 2 + 1 + 1 + 1 (four unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(4)
+
+    // If you update the settings to something more than the current
+    // set policy it should not go past the max in the policy
+    updateMaxConcurrentStreams(http2Connection, 5)
+    forceConnectionsToExpire(pool, expireSooner)
+    // fills up the first connect and then adds single connections
+    // 5 = 3 + 1 + 1 (three unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(3)
+  }
+
 
   private fun setPolicy(
     pool: RealConnectionPool,

@@ -120,7 +120,7 @@ class RealConnection(
   internal var allocationLimit = 1
     private set
 
-  private var lastMaxConcurrentStreamsFromSettings: Int = Int.MAX_VALUE
+  private var lastMaxConcurrentStreamsFromSettings: Int? = null
 
   /** Current calls carried by this connection. */
   val calls = mutableListOf<Reference<RealCall>>()
@@ -385,11 +385,14 @@ class RealConnection(
   }
 
   private fun getMaximumAllocationLimit() : Int {
-    val maxConcurrentCalls = connectionPool.getPolicy(route.address)
+    // if we have not negotiated a max per streams yet, don't check for the policy override
+    val negotiatedMaxCurrentStreams = lastMaxConcurrentStreamsFromSettings ?: return 1
+
+    val maxPolicyValue = connectionPool.getPolicy(route.address)
       ?.maximumConcurrentCallsPerConnection
       ?: Int.MAX_VALUE
 
-    return min(lastMaxConcurrentStreamsFromSettings, maxConcurrentCalls)
+    return min(maxPolicyValue, negotiatedMaxCurrentStreams)
   }
 
   override fun handshake(): Handshake? = handshake
