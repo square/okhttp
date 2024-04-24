@@ -24,13 +24,9 @@ import okhttp3.internal.connection.RoutePlanner
 import okhttp3.internal.connection.RoutePlanner.ConnectResult
 
 class FakeRoutePlanner(
-  private val taskFaker: TaskFaker,
+  val factory: TestValueFactory = TestValueFactory(),
+  val taskFaker: TaskFaker = factory.taskFaker,
 ) : RoutePlanner, Closeable {
-  /**
-   * Note that we don't use the same [TaskFaker] for this factory. That way off-topic tasks like
-   * connection pool maintenance tasks don't add noise to route planning tests.
-   */
-  val factory = TestValueFactory()
   val pool = factory.newConnectionPool(routePlanner = this)
   val events = LinkedBlockingDeque<String>()
   var canceled = false
