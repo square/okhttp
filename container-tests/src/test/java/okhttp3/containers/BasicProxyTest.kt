@@ -108,8 +108,8 @@ class BasicProxyTest {
       it.withProxyConfiguration(
         ProxyConfiguration.proxyConfiguration(
           ProxyConfiguration.Type.HTTPS,
-          it.remoteAddress()
-        )
+          it.remoteAddress(),
+        ),
       )
 
       val client =
@@ -135,8 +135,8 @@ class BasicProxyTest {
       it.withProxyConfiguration(
         ProxyConfiguration.proxyConfiguration(
           ProxyConfiguration.Type.HTTPS,
-          it.remoteAddress()
-        )
+          it.remoteAddress(),
+        ),
       )
 
       val (socketFactory, trustManager) = trustManagerPair()
@@ -210,8 +210,8 @@ class BasicProxyTest {
       it.withProxyConfiguration(
         ProxyConfiguration.proxyConfiguration(
           ProxyConfiguration.Type.HTTPS,
-          it.remoteAddress()
-        )
+          it.remoteAddress(),
+        ),
       )
 
       val proxy =
