@@ -36,6 +36,7 @@ import okhttp3.internal.http2.MockHttp2Peer
 import okhttp3.internal.http2.Settings
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class ConnectionPoolTest {
   private val routePlanner = FakeRoutePlanner()
@@ -333,36 +334,10 @@ class ConnectionPoolTest {
     assertThat(pool.connectionCount()).isEqualTo(3)
   }
 
-  @Test fun testSettingDefaultPolicyMinConnectionsHttp1() {
-    taskFaker.advanceUntil(System.nanoTime())
-    val expireTime = taskFaker.nanoTime + 1_000_000_000_000
-
-    routePlanner.autoGeneratePlans = true
-    routePlanner.defaultConnectionIdleAtNanos = expireTime
-    val address = routePlanner.address
-    val pool = routePlanner.pool
-
-    // set a default policy that has no bearing on HTTP/1 connections!
-    setDefaultPolicy(pool, ConnectionPool.ConnectionPoolPolicy(0))
-
-    // Connections are created as soon as a policy is set
-    setPolicy(pool, address, ConnectionPool.AddressPolicy(2))
-    assertThat(pool.connectionCount()).isEqualTo(2)
-
-    // Connections are replaced if they idle out or are evicted from the pool
-    evictAllConnections(pool)
-    assertThat(pool.connectionCount()).isEqualTo(2)
-    forceConnectionsToExpire(pool, expireTime)
-    assertThat(pool.connectionCount()).isEqualTo(2)
-
-    // Excess connections aren't removed until they idle out, even if no longer needed
-    setPolicy(pool, address, ConnectionPool.AddressPolicy(1))
-    assertThat(pool.connectionCount()).isEqualTo(2)
-    forceConnectionsToExpire(pool, expireTime)
-    assertThat(pool.connectionCount()).isEqualTo(1)
-
-    setPolicy(pool, address, ConnectionPool.AddressPolicy(3))
-    assertThat(pool.connectionCount()).isEqualTo(3)
+  @Test fun testDefaultConnectionPoolPoliciesOnlyAllowPositiveValues() {
+    assertThrows<IllegalArgumentException> {
+      ConnectionPool.ConnectionPoolPolicy(0)
+    }
   }
 
   @Test fun testSettingDefaultPolicyMaxConcurrentCallsHttp2() {

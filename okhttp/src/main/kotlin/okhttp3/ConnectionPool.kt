@@ -178,5 +178,11 @@ class ConnectionPool internal constructor(
      * Set this value to 1 to disable HTTP/2 connection coalescing
      */
     @JvmField val maximumConcurrentCallsPerConnection: Int = Int.MAX_VALUE,
-  )
+  ) {
+    init {
+      require(maximumConcurrentCallsPerConnection > 0) {
+        "maximumConcurrentCallsPerConnection is not allowed to be less than one (1)."
+      }
+    }
+  }
 }
