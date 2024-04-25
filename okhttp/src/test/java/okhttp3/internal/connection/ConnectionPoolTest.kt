@@ -333,12 +333,108 @@ class ConnectionPoolTest {
     assertThat(pool.connectionCount()).isEqualTo(3)
   }
 
+  @Test fun testSettingDefaultPolicyMinConnectionsHttp1() {
+    taskFaker.advanceUntil(System.nanoTime())
+    val expireTime = taskFaker.nanoTime + 1_000_000_000_000
+
+    routePlanner.autoGeneratePlans = true
+    routePlanner.defaultConnectionIdleAtNanos = expireTime
+    val address = routePlanner.address
+    val pool = routePlanner.pool
+
+    // set a default policy that has no bearing on HTTP/1 connections!
+    setDefaultPolicy(pool, ConnectionPool.ConnectionPoolPolicy(0))
+
+    // Connections are created as soon as a policy is set
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(2))
+    assertThat(pool.connectionCount()).isEqualTo(2)
+
+    // Connections are replaced if they idle out or are evicted from the pool
+    evictAllConnections(pool)
+    assertThat(pool.connectionCount()).isEqualTo(2)
+    forceConnectionsToExpire(pool, expireTime)
+    assertThat(pool.connectionCount()).isEqualTo(2)
+
+    // Excess connections aren't removed until they idle out, even if no longer needed
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(1))
+    assertThat(pool.connectionCount()).isEqualTo(2)
+    forceConnectionsToExpire(pool, expireTime)
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(3))
+    assertThat(pool.connectionCount()).isEqualTo(3)
+  }
+
+  @Test fun testSettingDefaultPolicyMaxConcurrentCallsHttp2() {
+    taskFaker.advanceUntil(System.nanoTime())
+    val expireSooner = taskFaker.nanoTime + 1_000_000_000_000
+    val expireLater = taskFaker.nanoTime + 2_000_000_000_000
+
+    routePlanner.autoGeneratePlans = true
+    val address = routePlanner.address
+    val pool = routePlanner.pool
+
+    setDefaultPolicy(pool, ConnectionPool.ConnectionPoolPolicy(3))
+
+    // Add a connection to the pool that won't expire for a while
+    routePlanner.defaultConnectionIdleAtNanos = expireLater
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 1))
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    // All other connections created will expire sooner
+    routePlanner.defaultConnectionIdleAtNanos = expireSooner
+
+    // Turn it into an http/2 connection that supports 5 concurrent streams
+    // which can satisfy a larger policy
+    val connection = routePlanner.plans.first().connection
+    connectHttp2(peer, connection, 5)
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5))
+    // fills up the first connect and then adds single connections
+    // 5 = 3 + 1 + 1 (three unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(3)
+
+    // override the default policy max connections, and check that new connections are created
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5, maximumConcurrentCallsPerConnection = 1))
+    // fills up the first connect and then adds single connections
+    // 5 = 1 + 1 + 1 + 1 + 1 (five unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(5)
+
+    // update the default policy max connections, and check that nothing new happened to override the specific
+    setDefaultPolicy(pool, ConnectionPool.ConnectionPoolPolicy(4))
+    forceConnectionsToExpire(pool, expireSooner)
+    // fills up the first connect and then adds single connections
+    // 5 = 1 + 1 + 1 + 1 + 1 (five unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(5)
+
+    // remove the specific max from the address policy, then the default will get used
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5))
+    forceConnectionsToExpire(pool, expireSooner)
+    // fills up the first connect and then adds single connections
+    // 5 = 4 + 1 (two unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(2)
+
+    // remove the specific max from the address policy, then the default will get used
+    setDefaultPolicy(pool, ConnectionPool.ConnectionPoolPolicy(3))
+    forceConnectionsToExpire(pool, expireSooner)
+    // fills up the first connect and then adds single connections
+    // 5 = 3 + 1 + 1 (three unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(3)
+  }
+
   private fun setPolicy(
     pool: RealConnectionPool,
     address: Address,
     policy: ConnectionPool.AddressPolicy,
   ) {
     pool.setPolicy(address, policy)
+    taskFaker.runTasks()
+  }
+
+  private fun setDefaultPolicy(
+    pool: RealConnectionPool,
+    policy: ConnectionPool.ConnectionPoolPolicy,
+  ) {
+    pool.setDefaultPolicy(policy)
     taskFaker.runTasks()
   }
 

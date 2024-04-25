@@ -53,6 +53,9 @@ class RealConnectionPool(
   @Volatile
   private var addressStates: Map<Address, AddressState> = mapOf()
 
+  @Volatile
+  private var defaultPolicy: ConnectionPool.ConnectionPoolPolicy? = null
+
   private val cleanupQueue: TaskQueue = taskRunner.newQueue()
   private val cleanupTask =
     object : Task("$okHttpName ConnectionPool connection closer") {
@@ -406,11 +409,41 @@ class RealConnectionPool(
   }
 
   /**
-   * Fetches a stored polity for a given [address]
-   * Returns null if no policy was set for that address.
+   * Fetches the maximum number of calls allowed for a connection, for a given address
    */
-  fun getPolicy(address: Address): ConnectionPool.AddressPolicy? {
-    return this.addressStates[address]?.policy
+  fun getMaximumCallsPerConnection(address: Address): Int? {
+    val specificMaximum = this.addressStates[address]?.policy?.maximumConcurrentCallsPerConnection
+    val globalMaximum = this.defaultPolicy?.maximumConcurrentCallsPerConnection
+
+    return specificMaximum ?: globalMaximum
+  }
+
+  fun setDefaultPolicy(policy: ConnectionPool.ConnectionPoolPolicy) {
+    val referencePolicy = this.defaultPolicy
+
+    while (true) {
+      val oldPolicy = this.defaultPolicy
+      if (defaultPolicyUpdater.compareAndSet(this, oldPolicy, policy)) {
+        break
+      }
+    }
+
+    if (referencePolicy?.maximumConcurrentCallsPerConnection == policy.maximumConcurrentCallsPerConnection) {
+      return
+    }
+
+    for (connection in connections) {
+      val existingPolicy = addressStates[connection.route.address]
+
+      // skip any address policy that already contains a max
+      if (existingPolicy?.policy?.maximumConcurrentCallsPerConnection != null) {
+        continue
+      }
+
+      // This method takes a lock in order to recalculate the limit
+      // This will also change the maximum connections (if needed) for us
+      connection.recalculateAllocationLimit()
+    }
   }
 
   /** Open connections to [address], if required by the address policy. */
@@ -483,6 +516,13 @@ class RealConnectionPool(
         RealConnectionPool::class.java,
         Map::class.java,
         "addressStates",
+      )
+
+    private var defaultPolicyUpdater =
+      AtomicReferenceFieldUpdater.newUpdater(
+        RealConnectionPool::class.java,
+        ConnectionPool.ConnectionPoolPolicy::class.java,
+        "defaultPolicy",
       )
   }
 }

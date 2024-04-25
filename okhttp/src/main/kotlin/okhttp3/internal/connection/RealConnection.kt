@@ -388,8 +388,7 @@ class RealConnection(
     val negotiatedMaxCurrentStreams = lastMaxConcurrentStreamsFromSettings ?: return 1
 
     val maxPolicyValue =
-      connectionPool.getPolicy(route.address)
-        ?.maximumConcurrentCallsPerConnection
+      connectionPool.getMaximumCallsPerConnection(route.address)
         ?: Int.MAX_VALUE
 
     return min(maxPolicyValue, negotiatedMaxCurrentStreams)
