@@ -23,6 +23,9 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Logger
+import kotlin.time.Duration.Companion.microseconds
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.measureTime
 import okhttp3.internal.addIfAbsent
 import okhttp3.internal.assertHeld
 import okhttp3.internal.concurrent.TaskRunner.Companion.INSTANCE
@@ -297,7 +300,7 @@ class TaskRunner(
         // keepAliveTime:
         60L,
         TimeUnit.SECONDS,
-        SynchronousQueue(),
+        SynchronousQueue(false),
         threadFactory,
       )
 
@@ -329,7 +332,13 @@ class TaskRunner(
       taskRunner: TaskRunner,
       runnable: Runnable,
     ) {
-      executor.execute(runnable)
+      val time = measureTime {
+        executor.execute(runnable)
+      }
+
+      if (time > 500.microseconds) {
+        println("executor.execute " + time)
+      }
     }
 
     fun shutdown() {

@@ -22,6 +22,8 @@ import java.net.Socket
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.measureTime
 import okhttp3.internal.EMPTY_BYTE_ARRAY
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertThreadDoesntHoldLock
@@ -793,7 +795,13 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
           peerSettings = newPeerSettings
 
           settingsListenerQueue.execute("$connectionName onSettings") {
-            listener.onSettings(this@Http2Connection, newPeerSettings)
+            measureTime {
+              listener.onSettings(this@Http2Connection, newPeerSettings)
+            }.also {
+              if (it > 1.milliseconds) {
+                println("onSettings " + it)
+              }
+            }
           }
         }
         try {
