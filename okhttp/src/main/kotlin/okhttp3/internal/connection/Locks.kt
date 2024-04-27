@@ -140,10 +140,10 @@ internal object Locks {
       }.also {
         val awaitDuration = threadLocalAwait.get()
         threadLocalAwait.remove()
-//        if (it.duration - awaitDuration > 1.milliseconds) {
+        if (it.duration - awaitDuration > 1.milliseconds) {
           println(Thread.currentThread().name + " lock " + it.duration + " " + awaitDuration)
 //          Exception().printStackTrace()
-//        }
+        }
       }.value
     } else {
       withLock(action)
