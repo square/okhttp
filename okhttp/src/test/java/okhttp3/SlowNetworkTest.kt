@@ -15,12 +15,15 @@
  */
 package okhttp3
 
+import java.net.Socket
+import java.net.SocketAddress
 import java.util.concurrent.CountDownLatch
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
+import okhttp3.internal.connection.RealConnection
 import okhttp3.testing.PlatformRule
 import okio.IOException
 import org.junit.jupiter.api.BeforeEach
@@ -50,8 +53,33 @@ class SlowNetworkTest {
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
         )
+        .socketFactory(object : DelegatingSocketFactory(getDefault()) {
+          override fun createSocket(): Socket {
+            return object : Socket() {
+              override fun connect(endpoint: SocketAddress?) {
+                Thread.sleep(100)
+                super.connect(endpoint)
+              }
+
+              override fun connect(endpoint: SocketAddress?, timeout: Int) {
+                Thread.sleep(100)
+                super.connect(endpoint, timeout)
+              }
+
+              override fun close() {
+                Thread.sleep(100)
+                super.close()
+              }
+            }
+          }
+        })
         .callTimeout(15.seconds)
         .connectTimeout(15.seconds)
+        .eventListener(object : EventListener() {
+          override fun connectionAcquired(call: Call, connection: Connection) {
+            (connection as RealConnection).noNewExchanges()
+          }
+        })
         .build()
 
     server.useHttps(handshakeCertificates.sslSocketFactory())
@@ -84,6 +112,7 @@ class SlowNetworkTest {
             call: Call,
             response: Response,
           ) {
+//            println("response")
             response.body.string()
             latch.countDown()
           }
