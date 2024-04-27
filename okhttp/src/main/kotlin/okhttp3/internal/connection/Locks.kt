@@ -17,13 +17,19 @@
 
 package okhttp3.internal.connection
 
+import java.util.Date
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.measureTimedValue
 import okhttp3.Dispatcher
+import okhttp3.internal.assertHeld
 import okhttp3.internal.concurrent.TaskQueue
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http2.Http2Connection
@@ -77,11 +83,73 @@ internal object Locks {
   }
 
   internal fun ReentrantLock.newLockCondition(): Condition {
-    return this.newCondition()
+      val condition = this.newCondition()
+      return object : Condition by condition {
+        override fun await() {
+          assertHeld()
+          return timeAwait { condition.await() }
+        }
+
+        override fun await(time: Long, unit: TimeUnit?): Boolean {
+          assertHeld()
+          return timeAwait { condition.await(time, unit) }
+        }
+
+        override fun awaitUninterruptibly() {
+          assertHeld()
+          return timeAwait { condition.awaitUninterruptibly() }
+        }
+
+        override fun awaitNanos(nanosTimeout: Long): Long {
+          assertHeld()
+          return timeAwait { condition.awaitNanos(nanosTimeout) }
+        }
+
+        override fun awaitUntil(deadline: Date): Boolean {
+          assertHeld()
+          return timeAwait { condition.awaitUntil(deadline) }
+        }
+      }
+  }
+
+  private fun <T> ReentrantLock.timeAwait(function: () -> T): T {
+    return if (this == lockToWatch) {
+      measureTimedValue { function() }.also {
+        val lockDuration = it.duration
+        if (lockDuration > 1.milliseconds) {
+//          println(Thread.currentThread().name + " await " + lockDuration)
+//          Exception().printStackTrace()
+          threadLocalAwait.set(threadLocalAwait.get() + lockDuration)
+        }
+      }.value
+    } else {
+      function()
+    }
   }
 
   inline fun <T> ReentrantLock.withMonitoredLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    return withLock(action)
+    return if (this == lockToWatch) {
+      withLock {
+        measureTimedValue {
+          action()
+        }
+      }.also {
+        val awaitDuration = threadLocalAwait.get()
+        threadLocalAwait.remove()
+        if (it.duration - awaitDuration > 1.milliseconds) {
+          println(Thread.currentThread().name + " lock " + it.duration + " " + awaitDuration)
+          Exception().printStackTrace()
+        }
+      }.value
+    } else {
+      withLock(action)
+    }
   }
+
+  @Suppress("NewApi")
+  val threadLocalAwait = ThreadLocal.withInitial { Duration.ZERO }
+
+  @Volatile
+  var lockToWatch: ReentrantLock? = null
 }

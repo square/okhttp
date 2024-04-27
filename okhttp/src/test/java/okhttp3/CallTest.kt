@@ -42,6 +42,8 @@ import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.ProtocolException
 import java.net.Proxy
+import java.net.Socket
+import java.net.SocketAddress
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.net.UnknownServiceException
@@ -55,6 +57,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import javax.net.SocketFactory
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
@@ -142,6 +145,22 @@ open class CallTest {
   private var client =
     clientTestRule.newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(listener))
+      .socketFactory(object: DelegatingSocketFactory(SocketFactory.getDefault()) {
+        override fun createSocket(): Socket {
+          Thread.sleep(1_000)
+          return object : Socket() {
+            override fun connect(endpoint: SocketAddress?) {
+              Thread.sleep(1_000)
+              super.connect(endpoint)
+            }
+
+            override fun connect(endpoint: SocketAddress?, timeout: Int) {
+              Thread.sleep(1_000)
+              super.connect(endpoint, timeout)
+            }
+          }
+        }
+      })
       .build()
   private val callback = RecordingCallback()
   private val cache =
