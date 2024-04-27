@@ -119,11 +119,11 @@ internal object Locks {
     return if (this == lockToWatch) {
       measureTimedValue { function() }.also {
         val lockDuration = it.duration
-        if (lockDuration > 1.milliseconds) {
+//        if (lockDuration > 1.milliseconds) {
 //          println(Thread.currentThread().name + " await " + lockDuration)
 //          Exception().printStackTrace()
           threadLocalAwait.set(threadLocalAwait.get() + lockDuration)
-        }
+//        }
       }.value
     } else {
       function()
@@ -140,10 +140,10 @@ internal object Locks {
       }.also {
         val awaitDuration = threadLocalAwait.get()
         threadLocalAwait.remove()
-        if (it.duration - awaitDuration > 1.milliseconds) {
+//        if (it.duration - awaitDuration > 1.milliseconds) {
           println(Thread.currentThread().name + " lock " + it.duration + " " + awaitDuration)
-          Exception().printStackTrace()
-        }
+//          Exception().printStackTrace()
+//        }
       }.value
     } else {
       withLock(action)

@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import java.util.concurrent.CountDownLatch
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import mockwebserver3.MockResponse
@@ -66,6 +67,8 @@ class SlowNetworkTest {
       )
     }
 
+    val latch = CountDownLatch(100)
+
     (1..100).map {
       client.newCall(Request(server.url("/"))).enqueue(
         object : Callback {
@@ -73,6 +76,8 @@ class SlowNetworkTest {
             call: Call,
             e: IOException,
           ) {
+            println(e)
+            latch.countDown()
           }
 
           override fun onResponse(
@@ -80,9 +85,12 @@ class SlowNetworkTest {
             response: Response,
           ) {
             response.body.string()
+            latch.countDown()
           }
         },
       )
     }
+
+    latch.await()
   }
 }

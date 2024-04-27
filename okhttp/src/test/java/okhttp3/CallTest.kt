@@ -151,7 +151,7 @@ open class CallTest {
             Thread.sleep(1_000)
             return object : Socket() {
               override fun connect(endpoint: SocketAddress?) {
-                Thread.sleep(1_000)
+                Thread.sleep(500)
                 super.connect(endpoint)
               }
 
@@ -159,8 +159,13 @@ open class CallTest {
                 endpoint: SocketAddress?,
                 timeout: Int,
               ) {
-                Thread.sleep(1_000)
+                Thread.sleep(500)
                 super.connect(endpoint, timeout)
+              }
+
+              override fun close() {
+                Thread.sleep(500)
+                super.close()
               }
             }
           }
