@@ -145,22 +145,27 @@ open class CallTest {
   private var client =
     clientTestRule.newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(listener))
-      .socketFactory(object: DelegatingSocketFactory(SocketFactory.getDefault()) {
-        override fun createSocket(): Socket {
-          Thread.sleep(1_000)
-          return object : Socket() {
-            override fun connect(endpoint: SocketAddress?) {
-              Thread.sleep(1_000)
-              super.connect(endpoint)
-            }
+      .socketFactory(
+        object : DelegatingSocketFactory(SocketFactory.getDefault()) {
+          override fun createSocket(): Socket {
+            Thread.sleep(1_000)
+            return object : Socket() {
+              override fun connect(endpoint: SocketAddress?) {
+                Thread.sleep(1_000)
+                super.connect(endpoint)
+              }
 
-            override fun connect(endpoint: SocketAddress?, timeout: Int) {
-              Thread.sleep(1_000)
-              super.connect(endpoint, timeout)
+              override fun connect(
+                endpoint: SocketAddress?,
+                timeout: Int,
+              ) {
+                Thread.sleep(1_000)
+                super.connect(endpoint, timeout)
+              }
             }
           }
-        }
-      })
+        },
+      )
       .build()
   private val callback = RecordingCallback()
   private val cache =

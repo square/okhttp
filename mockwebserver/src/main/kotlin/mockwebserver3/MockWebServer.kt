@@ -374,6 +374,12 @@ class MockWebServer : Closeable {
   @Throws(Exception::class)
   private fun acceptConnections() {
     while (true) {
+      val socketPolicy = dispatcher.peek().socketPolicy
+
+      if (socketPolicy is SocketPolicy.DelayAccept) {
+        Thread.sleep(socketPolicy.delay.inWholeMilliseconds)
+      }
+
       val socket: Socket
       try {
         socket = serverSocket!!.accept()
@@ -382,7 +388,6 @@ class MockWebServer : Closeable {
         return
       }
 
-      val socketPolicy = dispatcher.peek().socketPolicy
       if (socketPolicy === DisconnectAtStart) {
         dispatchBookkeepingRequest(0, socket)
         socket.close()

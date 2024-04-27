@@ -83,33 +83,36 @@ internal object Locks {
   }
 
   internal fun ReentrantLock.newLockCondition(): Condition {
-      val condition = this.newCondition()
-      return object : Condition by condition {
-        override fun await() {
-          assertHeld()
-          return timeAwait { condition.await() }
-        }
-
-        override fun await(time: Long, unit: TimeUnit?): Boolean {
-          assertHeld()
-          return timeAwait { condition.await(time, unit) }
-        }
-
-        override fun awaitUninterruptibly() {
-          assertHeld()
-          return timeAwait { condition.awaitUninterruptibly() }
-        }
-
-        override fun awaitNanos(nanosTimeout: Long): Long {
-          assertHeld()
-          return timeAwait { condition.awaitNanos(nanosTimeout) }
-        }
-
-        override fun awaitUntil(deadline: Date): Boolean {
-          assertHeld()
-          return timeAwait { condition.awaitUntil(deadline) }
-        }
+    val condition = this.newCondition()
+    return object : Condition by condition {
+      override fun await() {
+        assertHeld()
+        return timeAwait { condition.await() }
       }
+
+      override fun await(
+        time: Long,
+        unit: TimeUnit?,
+      ): Boolean {
+        assertHeld()
+        return timeAwait { condition.await(time, unit) }
+      }
+
+      override fun awaitUninterruptibly() {
+        assertHeld()
+        return timeAwait { condition.awaitUninterruptibly() }
+      }
+
+      override fun awaitNanos(nanosTimeout: Long): Long {
+        assertHeld()
+        return timeAwait { condition.awaitNanos(nanosTimeout) }
+      }
+
+      override fun awaitUntil(deadline: Date): Boolean {
+        assertHeld()
+        return timeAwait { condition.awaitUntil(deadline) }
+      }
+    }
   }
 
   private fun <T> ReentrantLock.timeAwait(function: () -> T): T {
