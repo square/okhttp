@@ -26,6 +26,7 @@ import java.util.logging.Logger
 import okhttp3.internal.addIfAbsent
 import okhttp3.internal.assertHeld
 import okhttp3.internal.concurrent.TaskRunner.Companion.INSTANCE
+import okhttp3.internal.connection.Locks.newLockCondition
 import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.okHttpName
 import okhttp3.internal.threadFactory
@@ -45,8 +46,8 @@ class TaskRunner(
   val backend: Backend,
   internal val logger: Logger = TaskRunner.logger,
 ) {
-  internal val lock_: ReentrantLock = ReentrantLock()
-  val condition: Condition = lock_.newCondition()
+  internal val lock: ReentrantLock = ReentrantLock()
+  val condition: Condition = lock.newLockCondition()
 
   private var nextQueueName = 10000
   private var coordinatorWaiting = false
@@ -86,7 +87,7 @@ class TaskRunner(
     }
 
   internal fun kickCoordinator(taskQueue: TaskQueue) {
-    lock_.assertHeld()
+    lock.assertHeld()
 
     if (taskQueue.activeTask == null) {
       if (taskQueue.futureTasks.isNotEmpty()) {
@@ -104,7 +105,7 @@ class TaskRunner(
   }
 
   private fun beforeRun(task: Task) {
-    lock_.assertHeld()
+    lock.assertHeld()
 
     task.nextExecuteNanoTime = -1L
     val queue = task.queue!!
@@ -134,7 +135,7 @@ class TaskRunner(
     task: Task,
     delayNanos: Long,
   ) {
-    lock_.assertHeld()
+    lock.assertHeld()
 
     val queue = task.queue!!
     check(queue.activeTask === task)
@@ -160,7 +161,7 @@ class TaskRunner(
    * this will launch another thread to handle that work.
    */
   fun awaitTaskToRun(): Task? {
-    lock_.assertHeld()
+    lock.assertHeld()
 
     while (true) {
       if (readyQueues.isEmpty()) {
@@ -254,7 +255,7 @@ class TaskRunner(
   }
 
   fun cancelAll() {
-    lock_.assertHeld()
+    lock.assertHeld()
     for (i in busyQueues.size - 1 downTo 0) {
       busyQueues[i].cancelAllAndDecide()
     }
@@ -315,7 +316,7 @@ class TaskRunner(
       taskRunner: TaskRunner,
       nanos: Long,
     ) {
-      taskRunner.lock_.assertHeld()
+      taskRunner.lock.assertHeld()
       if (nanos > 0) {
         taskRunner.condition.awaitNanos(nanos)
       }

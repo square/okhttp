@@ -17,10 +17,14 @@
 
 package okhttp3.internal.connection
 
+import java.util.concurrent.locks.Condition
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.measureTimedValue
 import okhttp3.Dispatcher
 import okhttp3.internal.concurrent.TaskQueue
 import okhttp3.internal.concurrent.TaskRunner
@@ -59,12 +63,12 @@ internal object Locks {
 
   inline fun <T> TaskRunner.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    return lock_.withLock(action)
+    return lock.withLock(action)
   }
 
   inline fun <T> TaskQueue.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    return lock_.withLock(action)
+    return lock.withLock(action)
   }
 
   inline fun <T> Http2Writer.withLock(action: () -> T): T {
@@ -73,5 +77,9 @@ internal object Locks {
     // TODO can we assert we don't have the connection lock?
 
     return lock.withLock(action)
+  }
+
+  internal fun ReentrantLock.newLockCondition(): Condition {
+    return this.newCondition()
   }
 }

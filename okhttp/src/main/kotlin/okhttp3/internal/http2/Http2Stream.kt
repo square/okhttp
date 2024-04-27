@@ -26,6 +26,7 @@ import okhttp3.Headers
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertNotHeld
 import okhttp3.internal.connection.Locks.withLock
+import okhttp3.internal.connection.Locks.newLockCondition
 import okhttp3.internal.http2.flowcontrol.WindowCounter
 import okhttp3.internal.toHeaderList
 import okio.AsyncTimeout
@@ -45,7 +46,7 @@ class Http2Stream internal constructor(
   headers: Headers?,
 ) {
   internal val lock: ReentrantLock = ReentrantLock()
-  val condition: Condition = lock.newCondition()
+  val condition: Condition = lock.newLockCondition()
 
   // Internal state is guarded by [lock]. No long-running or potentially blocking operations are
   // performed while the lock is held.

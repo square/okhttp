@@ -32,7 +32,7 @@ class TaskQueue internal constructor(
   internal val taskRunner: TaskRunner,
   internal val name: String,
 ) {
-  internal val lock_: ReentrantLock = ReentrantLock()
+  internal val lock: ReentrantLock = ReentrantLock()
 
   internal var shutdown = false
 
@@ -206,7 +206,7 @@ class TaskQueue internal constructor(
    * be removed from the execution schedule.
    */
   fun cancelAll() {
-    lock_.assertNotHeld()
+    lock.assertNotHeld()
 
     taskRunner.withLock {
       if (cancelAllAndDecide()) {
@@ -216,7 +216,7 @@ class TaskQueue internal constructor(
   }
 
   fun shutdown() {
-    lock_.assertNotHeld()
+    lock.assertNotHeld()
 
     taskRunner.withLock {
       shutdown = true

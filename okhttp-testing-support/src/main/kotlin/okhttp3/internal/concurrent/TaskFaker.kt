@@ -45,14 +45,14 @@ import okhttp3.TestUtil.threadFactory
 class TaskFaker : Closeable {
   @Suppress("NOTHING_TO_INLINE")
   internal inline fun Any.assertThreadHoldsLock() {
-    if (assertionsEnabled && !taskRunner.lock_.isHeldByCurrentThread) {
+    if (assertionsEnabled && !taskRunner.lock.isHeldByCurrentThread) {
       throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
     }
   }
 
   @Suppress("NOTHING_TO_INLINE")
   internal inline fun Any.assertThreadDoesntHoldLock() {
-    if (assertionsEnabled && taskRunner.lock_.isHeldByCurrentThread) {
+    if (assertionsEnabled && taskRunner.lock.isHeldByCurrentThread) {
       throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
     }
   }
