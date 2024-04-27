@@ -25,8 +25,8 @@ import java.util.concurrent.locks.ReentrantLock
 import okhttp3.Headers
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertNotHeld
-import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.connection.Locks.newLockCondition
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.http2.flowcontrol.WindowCounter
 import okhttp3.internal.toHeaderList
 import okio.AsyncTimeout

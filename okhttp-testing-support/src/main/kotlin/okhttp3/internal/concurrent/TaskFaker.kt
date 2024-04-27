@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+
 package okhttp3.internal.concurrent
 
 import assertk.assertThat
@@ -24,9 +25,9 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
-import okhttp3.internal.connection.Locks.withLock
 import okhttp3.OkHttpClient
 import okhttp3.TestUtil.threadFactory
+import okhttp3.internal.connection.Locks.withLock
 
 /**
  * Runs a [TaskRunner] in a controlled environment so that everything is sequential and

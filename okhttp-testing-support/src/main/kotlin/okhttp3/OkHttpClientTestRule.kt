@@ -25,9 +25,9 @@ import java.util.logging.Level
 import java.util.logging.LogManager
 import java.util.logging.LogRecord
 import java.util.logging.Logger
-import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.buildConnectionPool
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.connection.RealConnectionPool
 import okhttp3.internal.http2.Http2
 import okhttp3.internal.taskRunnerInternal
