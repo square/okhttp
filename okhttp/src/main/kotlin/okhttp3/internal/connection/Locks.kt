@@ -23,8 +23,6 @@ import kotlin.concurrent.withLock
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.measureTimedValue
 import okhttp3.Dispatcher
 import okhttp3.internal.concurrent.TaskQueue
 import okhttp3.internal.concurrent.TaskRunner
@@ -38,48 +36,52 @@ import okhttp3.internal.http2.Http2Writer
 internal object Locks {
   inline fun <T> Dispatcher.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    return lock.withLock(action)
+    return lock.withMonitoredLock(action)
   }
 
   inline fun <T> RealConnection.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    return lock.withLock(action)
+    return lock.withMonitoredLock(action)
   }
 
   inline fun <T> RealCall.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    return lock.withLock(action)
+    return lock.withMonitoredLock(action)
   }
 
   inline fun <T> Http2Connection.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    return lock.withLock(action)
+    return lock.withMonitoredLock(action)
   }
 
   inline fun <T> Http2Stream.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    return lock.withLock(action)
+    return lock.withMonitoredLock(action)
   }
 
   inline fun <T> TaskRunner.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    return lock.withLock(action)
+    return lock.withMonitoredLock(action)
   }
 
   inline fun <T> TaskQueue.withLock(action: () -> T): T {
     contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-    return lock.withLock(action)
+    return lock.withMonitoredLock(action)
   }
 
   inline fun <T> Http2Writer.withLock(action: () -> T): T {
-    contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
-
     // TODO can we assert we don't have the connection lock?
 
-    return lock.withLock(action)
+    contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
+    return lock.withMonitoredLock(action)
   }
 
   internal fun ReentrantLock.newLockCondition(): Condition {
     return this.newCondition()
+  }
+
+  inline fun <T> ReentrantLock.withMonitoredLock(action: () -> T): T {
+    contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
+    return withLock(action)
   }
 }
