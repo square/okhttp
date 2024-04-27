@@ -122,4 +122,25 @@ class SlowNetworkTest {
 
     latch.await()
   }
+
+  @Test
+  fun test1() {
+    repeat(10) {
+      slowRequests()
+    }
+  }
+
+  @Test
+  fun test2() {
+    repeat(10) {
+      slowRequests()
+    }
+  }
+
+  @Test
+  fun test3() {
+    repeat(10) {
+      slowRequests()
+    }
+  }
 }
