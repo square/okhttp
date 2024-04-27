@@ -16,6 +16,7 @@
 
 package mockwebserver3
 
+import kotlin.time.Duration
 import okhttp3.ExperimentalOkHttpApi
 
 /**
@@ -58,6 +59,11 @@ sealed interface SocketPolicy {
    * SSL servers closing connections in response to unrecognized TLS extensions.
    */
   object DisconnectAtStart : SocketPolicy
+
+  /**
+   * Delay before accepting on the ServerSocket.
+   */
+  class DelayAccept(val delay: Duration) : SocketPolicy
 
   /**
    * Close connection after reading the request but before writing the response. Use this to

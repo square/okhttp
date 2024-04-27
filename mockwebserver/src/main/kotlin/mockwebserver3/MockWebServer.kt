@@ -45,6 +45,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+import kotlin.time.Duration.Companion.milliseconds
 import mockwebserver3.SocketPolicy.DisconnectAfterRequest
 import mockwebserver3.SocketPolicy.DisconnectAtEnd
 import mockwebserver3.SocketPolicy.DisconnectAtStart
@@ -374,6 +375,12 @@ class MockWebServer : Closeable {
   @Throws(Exception::class)
   private fun acceptConnections() {
     while (true) {
+      val socketPolicy = dispatcher.peek().socketPolicy
+
+      if (socketPolicy is SocketPolicy.DelayAccept) {
+        Thread.sleep(100.milliseconds.inWholeMilliseconds)
+      }
+
       val socket: Socket
       try {
         socket = serverSocket!!.accept()
@@ -382,7 +389,6 @@ class MockWebServer : Closeable {
         return
       }
 
-      val socketPolicy = dispatcher.peek().socketPolicy
       if (socketPolicy === DisconnectAtStart) {
         dispatchBookkeepingRequest(0, socket)
         socket.close()
