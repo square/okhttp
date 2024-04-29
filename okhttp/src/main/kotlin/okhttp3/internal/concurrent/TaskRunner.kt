@@ -30,7 +30,6 @@ import okhttp3.internal.connection.Locks.newLockCondition
 import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.okHttpName
 import okhttp3.internal.threadFactory
-import okhttp3.internal.threadName
 
 /**
  * A set of worker threads that are shared among a set of task queues.
@@ -74,31 +73,34 @@ class TaskRunner(
   private val runnable: Runnable =
     object : Runnable {
       override fun run() {
-        var incrementedRunCallCount = false
-        while (true) {
-          val task =
-            this@TaskRunner.withLock {
-              if (!incrementedRunCallCount) {
-                incrementedRunCallCount = true
-                runCallCount++
-              }
+        var task: Task = withLock {
+            runCallCount++
+            awaitTaskToRun()
+          } ?: return
+
+        val currentThread = Thread.currentThread()
+        val oldName = currentThread.name
+        try {
+          while (true) {
+            currentThread.name = task.name
+            val delayNanos = logger.logElapsed(task, task.queue!!) {
+              task.runOnce()
+            }
+
+            // A task ran successfully. Update the execution state and take the next task.
+            task = withLock {
+              afterRun(task, delayNanos, true)
               awaitTaskToRun()
             } ?: return
-
-          logger.logElapsed(task, task.queue!!) {
-            var completedNormally = false
-            try {
-              runTask(task)
-              completedNormally = true
-            } finally {
-              // If the task is crashing start another thread to service the queues.
-              if (!completedNormally) {
-                this@TaskRunner.withLock {
-                  startAnotherThread()
-                }
-              }
-            }
           }
+        } catch (thrown: Throwable) {
+          // A task failed. Update execution state and re-throw the exception.
+          withLock {
+            afterRun(task, -1L, false)
+          }
+          throw thrown
+        } finally {
+          currentThread.name = oldName
         }
       }
     }
@@ -132,22 +134,10 @@ class TaskRunner(
     busyQueues.add(queue)
   }
 
-  private fun runTask(task: Task) {
-    threadName(task.name) {
-      var delayNanos = -1L
-      try {
-        delayNanos = task.runOnce()
-      } finally {
-        this.withLock {
-          afterRun(task, delayNanos)
-        }
-      }
-    }
-  }
-
   private fun afterRun(
     task: Task,
     delayNanos: Long,
+    completedNormally: Boolean,
   ) {
     lock.assertHeld()
 
@@ -165,6 +155,11 @@ class TaskRunner(
 
     if (queue.futureTasks.isNotEmpty()) {
       readyQueues.add(queue)
+
+      // If the task crashed, start another thread to run the next task.
+      if (!completedNormally) {
+        startAnotherThread()
+      }
     }
   }
 
