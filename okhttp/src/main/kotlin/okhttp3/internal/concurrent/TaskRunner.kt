@@ -83,9 +83,10 @@ class TaskRunner(
         try {
           while (true) {
             currentThread.name = task.name
-            val delayNanos = logger.logElapsed(task, task.queue!!) {
-              task.runOnce()
-            }
+            val delayNanos =
+              logger.logElapsed(task, task.queue!!) {
+                task.runOnce()
+              }
 
             // A task ran successfully. Update the execution state and take the next task.
             task = withLock {
