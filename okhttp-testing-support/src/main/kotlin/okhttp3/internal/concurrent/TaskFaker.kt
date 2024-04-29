@@ -63,29 +63,32 @@ class TaskFaker : Closeable {
 
   /**
    * True if this task faker has ever had multiple tasks scheduled to run concurrently. Guarded by
-   * [taskRunner].
+   * [TaskRunner.lock].
    */
   var isParallel = false
+
+  /** Number of calls to [TaskRunner.Backend.execute]. Guarded by [TaskRunner.lock]. */
+  var executeCallCount = 0
 
   /** Guarded by [taskRunner]. */
   var nanoTime = 0L
     private set
 
-  /** Backlog of tasks to run. Only one task runs at a time. Guarded by [taskRunner]. */
+  /** Backlog of tasks to run. Only one task runs at a time. Guarded by [TaskRunner.lock]. */
   private val serialTaskQueue = ArrayDeque<SerialTask>()
 
-  /** The task that's currently executing. Guarded by [taskRunner]. */
+  /** The task that's currently executing. Guarded by [TaskRunner.lock]. */
   private var currentTask: SerialTask = TestThreadSerialTask
 
-  /** The coordinator task if it's waiting, and how it will resume. Guarded by [taskRunner]. */
+  /** The coordinator task if it's waiting, and how it will resume. Guarded by [TaskRunner.lock]. */
   private var waitingCoordinatorTask: SerialTask? = null
   private var waitingCoordinatorInterrupted = false
   private var waitingCoordinatorNotified = false
 
-  /** How many times a new task has been started. Guarded by [taskRunner]. */
+  /** How many times a new task has been started. Guarded by [TaskRunner.lock]. */
   private var contextSwitchCount = 0
 
-  /** Guarded by [taskRunner]. */
+  /** Guarded by [TaskRunner.lock]. */
   private var activeThreads = 0
 
   /** A task runner that posts tasks to this fake. Tasks won't be executed until requested. */
@@ -100,6 +103,7 @@ class TaskFaker : Closeable {
 
           val queuedTask = RunnableSerialTask(runnable)
           serialTaskQueue += queuedTask
+          executeCallCount++
           isParallel = serialTaskQueue.size > 1
         }
 
