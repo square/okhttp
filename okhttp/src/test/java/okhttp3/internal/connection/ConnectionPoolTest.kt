@@ -470,6 +470,8 @@ class ConnectionPoolTest {
     settings[Settings.MAX_CONCURRENT_STREAMS] = amount
     connection.readerRunnable.applyAndAckSettings(true, settings)
     assertThat(connection.peerSettings[Settings.MAX_CONCURRENT_STREAMS]).isEqualTo(amount)
+    // temporary fix of flaky test until we can get Http/2 connections happy with serial task runners
+    Thread.sleep(100)
     taskFaker.runTasks()
   }
 
