@@ -2,7 +2,6 @@
 -dontwarn javax.annotation.**
 
 # A resource is loaded with a relative path so the package of this class must be preserved.
--keeppackagenames okhttp3.internal.publicsuffix.*
 -adaptresourcefilenames okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz
 
 # Animal Sniffer compileOnly dependency to ensure APIs are compatible with older versions of Java.

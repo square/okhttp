@@ -245,7 +245,7 @@ class PublicSuffixDatabase internal constructor(
 
   companion object {
     @JvmField
-    val PUBLIC_SUFFIX_RESOURCE = "/okhttp3/internal/publicsuffix/${PublicSuffixDatabase::class.java.simpleName}.gz".toPath()
+    val PUBLIC_SUFFIX_RESOURCE = "/${PublicSuffixDatabase::class.java.name.replace('.','/')}.gz".toPath()
 
     private val WILDCARD_LABEL = byteArrayOf('*'.code.toByte())
     private val PREVAILING_RULE = listOf("*")
