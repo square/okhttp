@@ -48,7 +48,7 @@ gradlePlugin-kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-seria
 gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.28.0"
 gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:8.0.0"
 gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.25.0"
-guava-jre = "com.google.guava:guava:33.1.0-jre"
+guava-jre = "com.google.guava:guava:33.2.0-jre"
 hamcrestLibrary = "org.hamcrest:hamcrest-library:2.2"
 httpClient5 = "org.apache.httpcomponents.client5:httpclient5:5.3"
 jettyClient = "org.eclipse.jetty:jetty-client:9.4.54.v20240208"
