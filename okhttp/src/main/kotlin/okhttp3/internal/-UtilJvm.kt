@@ -45,6 +45,7 @@ import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.internal.http2.Header
+import okhttp3.internal.socket.OkioSocket
 import okio.Buffer
 import okio.BufferedSource
 import okio.Source
@@ -218,7 +219,7 @@ internal fun Socket.peerName(): String {
  *
  * @param source the source used to read bytes from the socket.
  */
-internal fun Socket.isHealthy(source: BufferedSource): Boolean {
+internal fun OkioSocket.isHealthy(source: BufferedSource): Boolean {
   return try {
     val readTimeout = soTimeout
     try {

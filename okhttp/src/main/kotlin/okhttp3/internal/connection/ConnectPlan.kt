@@ -41,6 +41,9 @@ import okhttp3.internal.connection.RoutePlanner.ConnectResult
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http1.Http1ExchangeCodec
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.socket.OkioSocket
+import okhttp3.internal.socket.OkioSslSocket
+import okhttp3.internal.socket.RealOkioSslSocket
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.toHostHeader
 import okio.BufferedSink
@@ -85,13 +88,13 @@ class ConnectPlan(
   // These properties are initialized by connect() and never reassigned.
 
   /** The low-level TCP socket. */
-  private var rawSocket: Socket? = null
+  private var rawSocket: OkioSocket? = null
 
   /**
    * The application layer socket. Either an [SSLSocket] layered over [rawSocket], or [rawSocket]
    * itself if this connection does not use SSL.
    */
-  internal var socket: Socket? = null
+  internal var socket: OkioSocket? = null
   private var handshake: Handshake? = null
   private var protocol: Protocol? = null
   private var source: BufferedSource? = null
@@ -172,7 +175,8 @@ class ConnectPlan(
         }
       }
 
-      if (route.address.sslSocketFactory != null) {
+      val sslSocketFactory = route.address.okioSslSocketFactory
+      if (sslSocketFactory != null) {
         // Assume the server won't send a TLS ServerHello until we send a TLS ClientHello. If
         // that happens, then we will have buffered bytes that are needed by the SSLSocket!
         // This check is imperfect: it doesn't tell us whether a handshake will succeed, just
@@ -185,13 +189,11 @@ class ConnectPlan(
 
         // Create the wrapper over the connected socket.
         val sslSocket =
-          route.address.sslSocketFactory.createSocket(
-            rawSocket,
+          sslSocketFactory.createSocket(
+            rawSocket!!,
             route.address.url.host,
             route.address.url.port,
-            // autoClose:
-            true,
-          ) as SSLSocket
+          )
 
         val tlsEquipPlan = planWithCurrentOrInitialConnectionSpec(connectionSpecs, sslSocket)
         val connectionSpec = connectionSpecs[tlsEquipPlan.connectionSpecIndex]
@@ -258,8 +260,8 @@ class ConnectPlan(
   private fun connectSocket() {
     val rawSocket =
       when (route.proxy.type()) {
-        Proxy.Type.DIRECT, Proxy.Type.HTTP -> route.address.socketFactory.createSocket()!!
-        else -> Socket(route.proxy)
+        Proxy.Type.DIRECT, Proxy.Type.HTTP -> route.address.okioSocketFactory.createSocket()
+        else -> route.address.okioSocketFactory.createSocket(route.proxy)
       }
     this.rawSocket = rawSocket
 
@@ -282,8 +284,8 @@ class ConnectPlan(
     // https://github.com/square/okhttp/issues/3245
     // https://android-review.googlesource.com/#/c/271775/
     try {
-      source = rawSocket.source().buffer()
-      sink = rawSocket.sink().buffer()
+      source = rawSocket.source
+      sink = rawSocket.sink
     } catch (npe: NullPointerException) {
       if (npe.message == NPE_THROW_WITH_NULL) {
         throw IOException(npe)
@@ -334,20 +336,24 @@ class ConnectPlan(
 
   @Throws(IOException::class)
   private fun connectTls(
-    sslSocket: SSLSocket,
+    sslSocket: OkioSslSocket,
     connectionSpec: ConnectionSpec,
   ) {
     val address = route.address
     var success = false
     try {
       if (connectionSpec.supportsTlsExtensions) {
-        Platform.get().configureTlsExtensions(sslSocket, address.url.host, address.protocols)
+        Platform.get().configureTlsExtensions(
+          (sslSocket as RealOkioSslSocket).delegate,
+          address.url.host,
+          address.protocols,
+        )
       }
 
       // Force handshake. This can throw!
       sslSocket.startHandshake()
       // block for session establishment
-      val sslSocketSession = sslSocket.session
+      val sslSocketSession = (sslSocket as RealOkioSslSocket).delegate.session
       val unverifiedHandshake = sslSocketSession.handshake()
 
       // Verify that the socket's certificates are acceptable for the target host.
@@ -393,17 +399,17 @@ class ConnectPlan(
       // Success! Save the handshake and the ALPN protocol.
       val maybeProtocol =
         if (connectionSpec.supportsTlsExtensions) {
-          Platform.get().getSelectedProtocol(sslSocket)
+          Platform.get().getSelectedProtocol(sslSocket.delegate)
         } else {
           null
         }
       socket = sslSocket
-      source = sslSocket.source().buffer()
-      sink = sslSocket.sink().buffer()
+      source = sslSocket.source
+      sink = sslSocket.sink
       protocol = if (maybeProtocol != null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1
       success = true
     } finally {
-      Platform.get().afterHandshake(sslSocket)
+      Platform.get().afterHandshake((sslSocket as RealOkioSslSocket).delegate)
       if (!success) {
         sslSocket.closeQuietly()
       }
@@ -465,7 +471,7 @@ class ConnectPlan(
   @Throws(IOException::class)
   internal fun planWithCurrentOrInitialConnectionSpec(
     connectionSpecs: List<ConnectionSpec>,
-    sslSocket: SSLSocket,
+    sslSocket: OkioSslSocket,
   ): ConnectPlan {
     if (connectionSpecIndex != -1) return this
     return nextConnectionSpec(connectionSpecs, sslSocket)
@@ -473,7 +479,7 @@ class ConnectPlan(
         "Unable to find acceptable protocols." +
           " isFallback=$isTlsFallback," +
           " modes=$connectionSpecs," +
-          " supported protocols=${sslSocket.enabledProtocols!!.contentToString()}",
+          " supported protocols=${(sslSocket as RealOkioSslSocket).delegate.enabledProtocols!!.contentToString()}",
       )
   }
 
@@ -483,7 +489,7 @@ class ConnectPlan(
    */
   internal fun nextConnectionSpec(
     connectionSpecs: List<ConnectionSpec>,
-    sslSocket: SSLSocket,
+    sslSocket: OkioSslSocket,
   ): ConnectPlan? {
     for (i in connectionSpecIndex + 1 until connectionSpecs.size) {
       if (connectionSpecs[i].isCompatible(sslSocket)) {

@@ -21,6 +21,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.socket.RealOkioServerSocketFactory;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 
@@ -34,7 +35,9 @@ public class ClientAndServer {
     socketFile.delete(); // Clean up from previous runs.
 
     MockWebServer server = new MockWebServer();
-    server.setServerSocketFactory(new UnixDomainServerSocketFactory(socketFile));
+    RealOkioServerSocketFactory serverSocketFactory =
+      new RealOkioServerSocketFactory(new UnixDomainServerSocketFactory(socketFile));
+    server.setServerSocketFactory(serverSocketFactory);
     server.setProtocols(Collections.singletonList(Protocol.H2_PRIOR_KNOWLEDGE));
     server.enqueue(new MockResponse().setBody("hello"));
     server.start();

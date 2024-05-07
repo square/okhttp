@@ -24,6 +24,7 @@ import java.net.Socket
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.EMPTY_HEADERS
+import okhttp3.internal.socket.RealOkioSocket
 import okio.Buffer
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -38,7 +39,7 @@ class RecordedRequestTest {
         localAddress = InetAddress.getByAddress("127.0.0.1", byteArrayOf(127, 0, 0, 1)),
         localPort = 80,
       )
-    val request = RecordedRequest("GET / HTTP/1.1", headers, emptyList(), 0, Buffer(), 0, socket)
+    val request = RecordedRequest("GET / HTTP/1.1", headers, emptyList(), 0, Buffer(), 0, RealOkioSocket(socket))
     assertThat(request.requestUrl.toString()).isEqualTo("http://127.0.0.1/")
   }
 
@@ -52,7 +53,7 @@ class RecordedRequestTest {
           ),
         localPort = 80,
       )
-    val request = RecordedRequest("GET / HTTP/1.1", headers, emptyList(), 0, Buffer(), 0, socket)
+    val request = RecordedRequest("GET / HTTP/1.1", headers, emptyList(), 0, Buffer(), 0, RealOkioSocket(socket))
     assertThat(request.requestUrl.toString()).isEqualTo("http://[::1]/")
   }
 
@@ -62,7 +63,7 @@ class RecordedRequestTest {
         localAddress = InetAddress.getByAddress("127.0.0.1", byteArrayOf(127, 0, 0, 1)),
         localPort = 80,
       )
-    val request = RecordedRequest("GET / HTTP/1.1", headers, emptyList(), 0, Buffer(), 0, socket)
+    val request = RecordedRequest("GET / HTTP/1.1", headers, emptyList(), 0, Buffer(), 0, RealOkioSocket(socket))
     assertThat(request.requestUrl.toString()).isEqualTo("http://127.0.0.1/")
   }
 
@@ -77,7 +78,7 @@ class RecordedRequestTest {
           ),
         localPort = 80,
       )
-    val request = RecordedRequest("GET / HTTP/1.1", headers, emptyList(), 0, Buffer(), 0, socket)
+    val request = RecordedRequest("GET / HTTP/1.1", headers, emptyList(), 0, Buffer(), 0, RealOkioSocket(socket))
     assertThat(request.requestUrl.toString()).isEqualTo("http://host-from-header.com/")
   }
 

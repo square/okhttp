@@ -45,6 +45,7 @@ import okhttp3.internal.connection.RouteDatabase
 import okhttp3.internal.connection.RoutePlanner
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http.RecordingProxySelector
+import okhttp3.internal.socket.RealOkioSocket
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.internal.TlsUtil.localhost
 
@@ -91,7 +92,7 @@ class TestValueFactory : Closeable {
         taskRunner = taskRunner,
         connectionPool = pool,
         route = route,
-        socket = Socket(),
+        socket = RealOkioSocket(Socket()),
         idleAtNs = idleAtNanos,
       )
     result.withLock { pool.put(result) }

@@ -34,6 +34,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
+import okhttp3.internal.socket.RealOkioServerSocketFactory
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -245,7 +246,8 @@ class KotlinDeprecationErrorTest {
   fun mockWebServer() {
     val mockWebServer = MockWebServer()
     var port: Int = mockWebServer.getPort()
-    mockWebServer.setServerSocketFactory(ServerSocketFactory.getDefault())
+    mockWebServer
+      .setServerSocketFactory(RealOkioServerSocketFactory())
     mockWebServer.setBodyLimit(0L)
     mockWebServer.setProtocolNegotiationEnabled(false)
     mockWebServer.setProtocols(listOf(Protocol.HTTP_1_1))

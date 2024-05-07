@@ -26,8 +26,8 @@ import java.net.Socket
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
-import okio.buffer
-import okio.source
+import okhttp3.internal.socket.RealOkioServerSocket
+import okhttp3.internal.socket.RealOkioSocket
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -35,11 +35,11 @@ class UtilTest {
   @Test
   fun socketIsHealthy() {
     val localhost = InetAddress.getLoopbackAddress()
-    val serverSocket = ServerSocket(0, 1, localhost)
+    val serverSocket = RealOkioServerSocket(ServerSocket(0, 1, localhost))
 
-    val socket = Socket()
-    socket.connect(serverSocket.localSocketAddress)
-    val socketSource = socket.source().buffer()
+    val socket = RealOkioSocket(Socket())
+    socket.connect(serverSocket.localSocketAddress!!)
+    val socketSource = socket.source
 
     assertThat(socket.isHealthy(socketSource)).isTrue()
 

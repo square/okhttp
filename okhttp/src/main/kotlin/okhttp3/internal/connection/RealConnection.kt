@@ -52,6 +52,9 @@ import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.http2.Settings
 import okhttp3.internal.http2.StreamResetException
 import okhttp3.internal.isHealthy
+import okhttp3.internal.socket.OkioSocket
+import okhttp3.internal.socket.RealOkioSocket
+import okhttp3.internal.socket.RealOkioSslSocket
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.ws.RealWebSocket
 import okio.BufferedSink
@@ -68,12 +71,12 @@ class RealConnection(
   val connectionPool: RealConnectionPool,
   override val route: Route,
   /** The low-level TCP socket. */
-  private var rawSocket: Socket?,
+  private var rawSocket: OkioSocket?,
   /**
    * The application layer socket. Either an [SSLSocket] layered over [rawSocket], or [rawSocket]
    * itself if this connection does not use SSL.
    */
-  private var socket: Socket?,
+  private var socket: OkioSocket?,
   private var handshake: Handshake?,
   private var protocol: Protocol?,
   private var source: BufferedSource?,
@@ -313,7 +316,9 @@ class RealConnection(
     rawSocket?.closeQuietly()
   }
 
-  override fun socket(): Socket = socket!!
+  override fun socket(): Socket =
+    (socket as? RealOkioSslSocket)?.delegate
+      ?: (socket as RealOkioSocket).delegate
 
   /** Returns true if this connection is ready to host new streams. */
   fun isHealthy(doExtensiveChecks: Boolean): Boolean {
@@ -460,7 +465,7 @@ class RealConnection(
       taskRunner: TaskRunner,
       connectionPool: RealConnectionPool,
       route: Route,
-      socket: Socket,
+      socket: OkioSocket,
       idleAtNs: Long,
     ): RealConnection {
       val result =

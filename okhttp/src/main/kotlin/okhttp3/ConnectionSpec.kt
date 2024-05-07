@@ -24,6 +24,9 @@ import okhttp3.internal.effectiveCipherSuites
 import okhttp3.internal.hasIntersection
 import okhttp3.internal.indexOf
 import okhttp3.internal.intersect
+import okhttp3.internal.socket.OkioSslSocket
+import okhttp3.internal.socket.RealOkioSocket
+import okhttp3.internal.socket.RealOkioSslSocket
 
 /**
  * Specifies configuration for the socket connection that HTTP traffic travels through. For `https:`
@@ -96,6 +99,13 @@ class ConnectionSpec internal constructor(
 
   /** Applies this spec to [sslSocket]. */
   internal fun apply(
+    sslSocket: OkioSslSocket,
+    isFallback: Boolean,
+  ) {
+    return apply((sslSocket as RealOkioSslSocket).delegate, isFallback)
+  }
+
+  internal fun apply(
     sslSocket: SSLSocket,
     isFallback: Boolean,
   ) {
@@ -159,6 +169,10 @@ class ConnectionSpec internal constructor(
    * For protocols, at least one of the [required protocols][tlsVersions] must match the socket's
    * enabled protocols.
    */
+  fun isCompatible(socket: OkioSslSocket): Boolean {
+    return isCompatible((socket as RealOkioSslSocket).delegate)
+  }
+
   fun isCompatible(socket: SSLSocket): Boolean {
     if (!isTls) {
       return false

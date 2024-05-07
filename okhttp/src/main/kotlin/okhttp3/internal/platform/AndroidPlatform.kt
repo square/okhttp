@@ -21,7 +21,6 @@ import java.io.IOException
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.net.InetSocketAddress
-import java.net.Socket
 import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLSocket
@@ -35,6 +34,8 @@ import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.platform.android.StandardAndroidSocketAdapter
+import okhttp3.internal.socket.OkioSocket
+import okhttp3.internal.socket.OkioSslSocket
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
@@ -53,7 +54,7 @@ class AndroidPlatform : Platform() {
 
   @Throws(IOException::class)
   override fun connectSocket(
-    socket: Socket,
+    socket: OkioSocket,
     address: InetSocketAddress,
     connectTimeout: Int,
   ) {
@@ -113,7 +114,7 @@ class AndroidPlatform : Platform() {
       super.buildTrustRootIndex(trustManager)
     }
 
-  override fun getHandshakeServerNames(sslSocket: SSLSocket): List<String> {
+  override fun getHandshakeServerNames(sslSocket: OkioSslSocket): List<String> {
     // The superclass implementation requires APIs not available until API 24+.
     if (Build.VERSION.SDK_INT < 24) return listOf()
     return super.getHandshakeServerNames(sslSocket)

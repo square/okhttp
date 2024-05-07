@@ -25,6 +25,7 @@ import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.TlsVersion
+import okhttp3.internal.socket.OkioSslSocket
 import okio.Buffer
 
 class RecordedRequest {
@@ -97,9 +98,9 @@ class RecordedRequest {
     this.sequenceNumber = sequenceNumber
     this.failure = failure
 
-    if (socket is SSLSocket) {
+    if (socket is OkioSslSocket) {
       try {
-        this.handshake = socket.session.handshake()
+        this.handshake = socket.session?.handshake()
       } catch (e: IOException) {
         throw IllegalArgumentException(e)
       }
@@ -117,7 +118,7 @@ class RecordedRequest {
       }
       this.path = path
 
-      val scheme = if (socket is SSLSocket) "https" else "http"
+      val scheme = if (socket is OkioSslSocket) "https" else "http"
       val inetAddress = socket.localAddress
 
       var hostname = inetAddress.hostName

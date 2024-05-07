@@ -19,7 +19,6 @@ package okhttp3.internal.platform
 import android.annotation.SuppressLint
 import java.io.IOException
 import java.net.InetSocketAddress
-import java.net.Socket
 import java.security.GeneralSecurityException
 import java.security.KeyStore
 import java.security.Security
@@ -37,6 +36,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.internal.platform.android.AndroidLog
 import okhttp3.internal.readFieldOrNull
+import okhttp3.internal.socket.OkioSocket
+import okhttp3.internal.socket.OkioSslSocket
 import okhttp3.internal.tls.BasicCertificateChainCleaner
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
@@ -131,14 +132,14 @@ open class Platform {
   /** For MockWebServer. This returns the inbound SNI names. */
   @SuppressLint("NewApi")
   @IgnoreJRERequirement // This function is overridden to require API >= 24.
-  open fun getHandshakeServerNames(sslSocket: SSLSocket): List<String> {
+  open fun getHandshakeServerNames(sslSocket: OkioSslSocket): List<String> {
     val session = sslSocket.session as? ExtendedSSLSession ?: return listOf()
     return session.requestedServerNames.mapNotNull { (it as? SNIHostName)?.asciiName }
   }
 
   @Throws(IOException::class)
   open fun connectSocket(
-    socket: Socket,
+    socket: OkioSocket,
     address: InetSocketAddress,
     connectTimeout: Int,
   ) {

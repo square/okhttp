@@ -18,8 +18,6 @@ package mockwebserver3
 
 import java.io.IOException
 import java.net.Inet6Address
-import java.net.Socket
-import javax.net.ssl.SSLSocket
 import okhttp3.ExperimentalOkHttpApi
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
@@ -27,6 +25,8 @@ import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.socket.OkioSocket
+import okhttp3.internal.socket.OkioSslSocket
 import okio.Buffer
 
 /** An HTTP request that came into the mock web server. */
@@ -49,7 +49,7 @@ class RecordedRequest(
    * multiple requests, each request is assigned its own sequence number.
    */
   val sequenceNumber: Int,
-  socket: Socket,
+  socket: OkioSocket,
   /**
    * The failure MockWebServer recorded when attempting to decode this request. If, for example,
    * the inbound request was truncated, this exception will be non-null.
@@ -74,9 +74,9 @@ class RecordedRequest(
   val handshakeServerNames: List<String>
 
   init {
-    if (socket is SSLSocket) {
+    if (socket is OkioSslSocket) {
       try {
-        this.handshake = socket.session.handshake()
+        this.handshake = socket.session?.handshake()
         this.handshakeServerNames = Platform.get().getHandshakeServerNames(socket)
       } catch (e: IOException) {
         throw IllegalArgumentException(e)
@@ -96,7 +96,7 @@ class RecordedRequest(
       }
       this.path = path
 
-      val scheme = if (socket is SSLSocket) "https" else "http"
+      val scheme = if (socket is OkioSslSocket) "https" else "http"
       val localPort = socket.localPort
       val hostAndPort =
         headers[":authority"]

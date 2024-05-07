@@ -140,7 +140,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   var writeBytesMaximum: Long = peerSettings.initialWindowSize.toLong()
     private set
 
-  internal val socket: Socket = builder.socket
+  internal val socket: OkioSocket = builder.socket
   val writer = Http2Writer(builder.sink, client)
 
   // Visible for testing

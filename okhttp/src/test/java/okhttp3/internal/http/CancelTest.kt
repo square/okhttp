@@ -57,6 +57,7 @@ import okhttp3.internal.http.CancelTest.CancelMode.INTERRUPT
 import okhttp3.internal.http.CancelTest.ConnectionType.H2
 import okhttp3.internal.http.CancelTest.ConnectionType.HTTP
 import okhttp3.internal.http.CancelTest.ConnectionType.HTTPS
+import okhttp3.internal.socket.RealOkioServerSocketFactory
 import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.BufferedSink
@@ -111,13 +112,15 @@ class CancelTest {
     // required. These socket factories explicitly set the buffer sizes on sockets created.
     server = MockWebServer()
     server.serverSocketFactory =
-      object : DelegatingServerSocketFactory(ServerSocketFactory.getDefault()) {
-        @Throws(IOException::class)
-        override fun configureServerSocket(serverSocket: ServerSocket): ServerSocket {
-          serverSocket.receiveBufferSize = SOCKET_BUFFER_SIZE
-          return serverSocket
+      RealOkioServerSocketFactory(
+        object : DelegatingServerSocketFactory(ServerSocketFactory.getDefault()) {
+          @Throws(IOException::class)
+          override fun configureServerSocket(serverSocket: ServerSocket): ServerSocket {
+            serverSocket.receiveBufferSize = SOCKET_BUFFER_SIZE
+            return serverSocket
+          }
         }
-      }
+      )
     if (connectionType != HTTP) {
       server.useHttps(handshakeCertificates.sslSocketFactory())
     }
@@ -159,23 +162,23 @@ class CancelTest {
         Request(
           url = server.url("/"),
           body =
-            object : RequestBody() {
-              override fun contentType(): MediaType? {
-                return null
-              }
+          object : RequestBody() {
+            override fun contentType(): MediaType? {
+              return null
+            }
 
-              @Throws(
-                IOException::class,
-              )
-              override fun writeTo(sink: BufferedSink) {
-                for (i in 0..9) {
-                  sink.writeByte(0)
-                  sink.flush()
-                  sleep(100)
-                }
-                fail("Expected connection to be closed")
+            @Throws(
+              IOException::class,
+            )
+            override fun writeTo(sink: BufferedSink) {
+              for (i in 0..9) {
+                sink.writeByte(0)
+                sink.flush()
+                sleep(100)
               }
-            },
+              fail("Expected connection to be closed")
+            }
+          },
         ),
       )
     cancelLater(call, 500)

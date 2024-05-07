@@ -21,6 +21,10 @@ import java.util.Objects
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
+import okhttp3.internal.socket.OkioSocketFactory
+import okhttp3.internal.socket.OkioSslSocketFactory
+import okhttp3.internal.socket.RealOkioSocketFactory
+import okhttp3.internal.socket.RealOkioSslSocketFactory
 import okhttp3.internal.toImmutableList
 
 /**
@@ -31,15 +35,13 @@ import okhttp3.internal.toImmutableList
  *
  * HTTP requests that share the same [Address] may also share the same [Connection].
  */
-class Address(
+class Address internal constructor(
   uriHost: String,
   uriPort: Int,
   /** Returns the service that will be used to resolve IP addresses for hostnames. */
   @get:JvmName("dns") val dns: Dns,
-  /** Returns the socket factory for new connections. */
-  @get:JvmName("socketFactory") val socketFactory: SocketFactory,
-  /** Returns the SSL socket factory, or null if this is not an HTTPS address. */
-  @get:JvmName("sslSocketFactory") val sslSocketFactory: SSLSocketFactory?,
+  internal val okioSocketFactory: OkioSocketFactory,
+  internal val okioSslSocketFactory: OkioSslSocketFactory?,
   /** Returns the hostname verifier, or null if this is not an HTTPS address. */
   @get:JvmName("hostnameVerifier") val hostnameVerifier: HostnameVerifier?,
   /** Returns this address's certificate pinner, or null if this is not an HTTPS address. */
@@ -59,6 +61,42 @@ class Address(
    */
   @get:JvmName("proxySelector") val proxySelector: ProxySelector,
 ) {
+  /** Returns the socket factory for new connections. */
+  @get:JvmName("socketFactory") val socketFactory: SocketFactory
+     get() = (okioSocketFactory as RealOkioSocketFactory).delegate
+
+  /** Returns the SSL socket factory, or null if this is not an HTTPS address. */
+  @get:JvmName("sslSocketFactory") val sslSocketFactory: SSLSocketFactory?
+    get() = (okioSslSocketFactory as? RealOkioSslSocketFactory)?.delegate
+
+  constructor(
+    uriHost: String,
+    uriPort: Int,
+    dns: Dns,
+    socketFactory: SocketFactory,
+    sslSocketFactory: SSLSocketFactory?,
+    hostnameVerifier: HostnameVerifier?,
+    certificatePinner: CertificatePinner?,
+    proxyAuthenticator: Authenticator,
+    proxy: Proxy?,
+    protocols: List<Protocol>,
+    connectionSpecs: List<ConnectionSpec>,
+    proxySelector: ProxySelector,
+  ) : this(
+    uriHost = uriHost,
+    uriPort = uriPort,
+    dns = dns,
+    okioSocketFactory = RealOkioSocketFactory(socketFactory),
+    okioSslSocketFactory = sslSocketFactory?.let { RealOkioSslSocketFactory(it) },
+    hostnameVerifier = hostnameVerifier,
+    certificatePinner = certificatePinner,
+    proxyAuthenticator = proxyAuthenticator,
+    proxy = proxy,
+    protocols = protocols,
+    connectionSpecs = connectionSpecs,
+    proxySelector = proxySelector,
+  )
+
   /**
    * Returns a URL with the hostname and port of the origin server. The path, query, and fragment of
    * this URL are always empty, since they are not significant for planning a route.

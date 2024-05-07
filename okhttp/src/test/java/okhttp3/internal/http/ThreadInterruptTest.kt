@@ -28,6 +28,7 @@ import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.internal.socket.RealOkioServerSocketFactory
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
@@ -55,13 +56,15 @@ class ThreadInterruptTest {
     // required. These socket factories explicitly set the buffer sizes on sockets created.
     server = MockWebServer()
     server.serverSocketFactory =
-      object : DelegatingServerSocketFactory(getDefault()) {
-        @Throws(SocketException::class)
-        override fun configureServerSocket(serverSocket: ServerSocket): ServerSocket {
-          serverSocket.setReceiveBufferSize(SOCKET_BUFFER_SIZE)
-          return serverSocket
+      RealOkioServerSocketFactory(
+        object : DelegatingServerSocketFactory(getDefault()) {
+          @Throws(SocketException::class)
+          override fun configureServerSocket(serverSocket: ServerSocket): ServerSocket {
+            serverSocket.setReceiveBufferSize(SOCKET_BUFFER_SIZE)
+            return serverSocket
+          }
         }
-      }
+      )
     client =
       clientTestRule.newClientBuilder()
         .socketFactory(

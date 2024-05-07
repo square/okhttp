@@ -17,16 +17,20 @@ package okhttp3.internal.http2
 
 import java.io.Closeable
 import java.io.IOException
+import java.net.InetSocketAddress
 import java.net.Socket
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.logging.Logger
+import javax.net.SocketFactory
 import okhttp3.TestUtil.threadFactory
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.socket.OkioServerSocket
 import okhttp3.internal.socket.OkioSocket
+import okhttp3.internal.socket.OkioServerSocketFactory
 import okhttp3.internal.socket.OkioSocketFactory
+import okhttp3.internal.socket.RealOkioServerSocketFactory
 import okhttp3.internal.socket.RealOkioSocketFactory
 import okio.Buffer
 import okio.BufferedSource
@@ -34,6 +38,7 @@ import okio.ByteString
 
 /** Replays prerecorded outgoing frames and records incoming frames.  */
 class MockHttp2Peer(
+  private val serverSocketFactory: OkioServerSocketFactory = RealOkioServerSocketFactory(),
   private val socketFactory: OkioSocketFactory = RealOkioSocketFactory(),
 ) : Closeable {
   private var frameCount = 0
@@ -91,7 +96,9 @@ class MockHttp2Peer(
 
   fun play() {
     check(serverSocket == null)
-    serverSocket = socketFactory.newServerSocket()
+    serverSocket = serverSocketFactory.newServerSocket()
+    serverSocket!!.reuseAddress = false
+    serverSocket!!.bind(InetSocketAddress("localhost", 0), 1)
     port = serverSocket!!.localPort
     executor.execute {
       try {
@@ -155,7 +162,7 @@ class MockHttp2Peer(
     }
   }
 
-  fun openSocket(): Socket = Socket("localhost", port)
+  fun openSocket(): OkioSocket = socketFactory.createSocket("localhost", port)
 
   @Synchronized override fun close() {
     executor.shutdown()

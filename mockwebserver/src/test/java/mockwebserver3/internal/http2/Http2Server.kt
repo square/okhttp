@@ -32,6 +32,7 @@ import okhttp3.internal.http2.Header
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.socket.RealOkioSslSocket
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.buffer
 import okio.source
@@ -56,7 +57,7 @@ class Http2Server(
         }
         val connection =
           Http2Connection.Builder(false, TaskRunner.INSTANCE)
-            .socket(sslSocket)
+            .socket(RealOkioSslSocket(sslSocket))
             .listener(this)
             .build()
         connection.start()

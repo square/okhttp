@@ -22,11 +22,11 @@ import java.net.Proxy
 import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 import java.util.logging.Logger
-import javax.net.ServerSocketFactory
 import javax.net.ssl.SSLSocketFactory
 import okhttp3.ExperimentalOkHttpApi
 import okhttp3.HttpUrl
 import okhttp3.Protocol
+import okhttp3.internal.socket.OkioServerSocketFactory
 import org.junit.rules.ExternalResource
 
 class MockWebServer : ExternalResource(), Closeable {
@@ -37,7 +37,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
   var bodyLimit: Long by delegate::bodyLimit
 
-  var serverSocketFactory: ServerSocketFactory? by delegate::serverSocketFactory
+  var serverSocketFactory: OkioServerSocketFactory? by delegate::serverSocketFactory
 
   var dispatcher: Dispatcher = QueueDispatcher()
     set(value) {
@@ -103,7 +103,7 @@ class MockWebServer : ExternalResource(), Closeable {
       ),
     level = DeprecationLevel.ERROR,
   )
-  fun setServerSocketFactory(serverSocketFactory: ServerSocketFactory) {
+  fun setServerSocketFactory(serverSocketFactory: OkioServerSocketFactory) {
     delegate.serverSocketFactory = serverSocketFactory
   }
 

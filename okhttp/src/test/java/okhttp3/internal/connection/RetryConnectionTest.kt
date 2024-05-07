@@ -29,6 +29,8 @@ import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClientTestRule
 import okhttp3.TestValueFactory
 import okhttp3.TlsVersion
+import okhttp3.internal.socket.OkioSslSocket
+import okhttp3.internal.socket.RealOkioSslSocket
 import okhttp3.tls.internal.TlsUtil.localhost
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -104,14 +106,15 @@ class RetryConnectionTest {
     // sslV3 is not used because SSLv3 is not enabled on the socket.
   }
 
-  private fun createSocketWithEnabledProtocols(vararg tlsVersions: TlsVersion): SSLSocket {
-    return (handshakeCertificates.sslSocketFactory().createSocket() as SSLSocket).apply {
-      enabledProtocols = javaNames(*tlsVersions)
+  private fun createSocketWithEnabledProtocols(vararg tlsVersions: TlsVersion): OkioSslSocket {
+    return (handshakeCertificates.sslSocketFactory().createSocket() as SSLSocket).let {
+      it.enabledProtocols = javaNames(*tlsVersions)
+      RealOkioSslSocket(it)
     }
   }
 
   private fun assertEnabledProtocols(
-    socket: SSLSocket,
+    socket: OkioSslSocket,
     vararg required: TlsVersion,
   ) {
     assertThat(socket.enabledProtocols.toList()).containsExactlyInAnyOrder(*javaNames(*required))
