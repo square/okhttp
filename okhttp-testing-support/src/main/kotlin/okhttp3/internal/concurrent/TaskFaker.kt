@@ -239,7 +239,7 @@ class TaskFaker : Closeable {
   }
 
   /** Process the queue until [condition] returns true. */
-  private tailrec fun yieldUntil(
+  tailrec fun yieldUntil(
     strategy: ResumePriority = ResumePriority.AfterEnqueuedTasks,
     condition: () -> Boolean = { true },
   ) {
@@ -280,7 +280,7 @@ class TaskFaker : Closeable {
     }
   }
 
-  private enum class ResumePriority {
+  enum class ResumePriority {
     /** Resumes as soon as the condition is satisfied. */
     BeforeOtherTasks,
 
@@ -352,7 +352,7 @@ class TaskFaker : Closeable {
 
     private var editCount = 0
 
-    override fun poll(): T = delegate.poll()
+    override fun poll(): T = poll(Long.MAX_VALUE, TimeUnit.NANOSECONDS)!!
 
     override fun poll(
       timeout: Long,

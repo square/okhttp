@@ -36,6 +36,7 @@ import okhttp3.internal.okHttpName
 import okhttp3.internal.peerName
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
+import okhttp3.internal.socket.OkioSocket
 import okhttp3.internal.toHeaders
 import okio.Buffer
 import okio.BufferedSink
@@ -575,7 +576,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     internal var client: Boolean,
     internal val taskRunner: TaskRunner,
   ) {
-    internal lateinit var socket: Socket
+    internal lateinit var socket: OkioSocket
     internal lateinit var connectionName: String
     internal lateinit var source: BufferedSource
     internal lateinit var sink: BufferedSink
@@ -587,10 +588,10 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     @Throws(IOException::class)
     @JvmOverloads
     fun socket(
-      socket: Socket,
-      peerName: String = socket.peerName(),
-      source: BufferedSource = socket.source().buffer(),
-      sink: BufferedSink = socket.sink().buffer(),
+      socket: OkioSocket,
+      peerName: String = socket.peerName,
+      source: BufferedSource = socket.source,
+      sink: BufferedSink = socket.sink,
     ) = apply {
       this.socket = socket
       this.connectionName =

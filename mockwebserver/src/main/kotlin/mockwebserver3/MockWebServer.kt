@@ -80,6 +80,9 @@ import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.socket.OkioSocket
+import okhttp3.internal.socket.OkioSslSocketFactory
+import okhttp3.internal.socket.RealOkioSslSocketFactory
 import okhttp3.internal.threadFactory
 import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
@@ -137,7 +140,7 @@ class MockWebServer : Closeable {
     }
 
   private var serverSocket: ServerSocket? = null
-  private var sslSocketFactory: SSLSocketFactory? = null
+  private var sslSocketFactory: OkioSslSocketFactory? = null
   private var clientAuth = CLIENT_AUTH_NONE
 
   /**
@@ -426,7 +429,7 @@ class MockWebServer : Closeable {
     }
   }
 
-  internal inner class SocketHandler(private val raw: Socket) {
+  internal inner class SocketHandler(private val raw: OkioSocket) {
     private var sequenceNumber = 0
 
     @Throws(Exception::class)
@@ -435,7 +438,7 @@ class MockWebServer : Closeable {
 
       val socketPolicy = dispatcher.peek().socketPolicy
       val protocol: Protocol
-      val socket: Socket
+      val socket: OkioSocket
       when {
         sslSocketFactory != null -> {
           if (socketPolicy === FailHandshake) {
@@ -444,12 +447,7 @@ class MockWebServer : Closeable {
             return
           }
           socket =
-            sslSocketFactory!!.createSocket(
-              raw,
-              raw.inetAddress.hostAddress,
-              raw.port,
-              true,
-            )
+            sslSocketFactory!!.createSocket(raw)
           val sslSocket = socket as SSLSocket
           sslSocket.useClientMode = false
           if (clientAuth == CLIENT_AUTH_REQUIRED) {
@@ -621,16 +619,13 @@ class MockWebServer : Closeable {
   }
 
   @Throws(Exception::class)
-  private fun processHandshakeFailure(raw: Socket) {
+  private fun processHandshakeFailure(raw: OkioSocket) {
     val context = SSLContext.getInstance("TLS")
     context.init(null, arrayOf<TrustManager>(UNTRUSTED_TRUST_MANAGER), SecureRandom())
-    val sslSocketFactory = context.socketFactory
+    val sslSocketFactory = RealOkioSslSocketFactory(context.socketFactory)
     val socket =
       sslSocketFactory.createSocket(
         raw,
-        raw.inetAddress.hostAddress,
-        raw.port,
-        true,
       ) as SSLSocket
     try {
       socket.startHandshake() // we're testing a handshake failure

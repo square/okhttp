@@ -3,6 +3,8 @@ package okhttp3.internal.socket
 import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
+import javax.net.ssl.SSLSocketFactory
+import okhttp3.internal.peerName
 import okio.BufferedSink
 import okio.BufferedSource
 import okio.Closeable
@@ -14,6 +16,32 @@ interface OkioSocketFactory {
   fun newServerSocket(): OkioServerSocket
 }
 
+interface OkioSslSocketFactory {
+  fun createSocket(
+    socket: OkioSocket,
+  ): OkioSocket
+}
+
+interface OkioSslSocket : OkioSocket {
+  fun startHandshake()
+}
+
+class RealOkioSslSocketFactory(
+  val delegate: SSLSocketFactory,
+) : OkioSslSocketFactory {
+  override fun createSocket(socket: OkioSocket): OkioSocket {
+    val delegateSocket = (socket as RealOkioSocket).delegate
+    return RealOkioSocket(
+      delegate.createSocket(
+        delegateSocket,
+        delegateSocket.inetAddress.hostAddress,
+        delegateSocket.port,
+        true
+      )
+    )
+  }
+}
+
 class RealOkioSocketFactory : OkioSocketFactory {
   override fun newServerSocket(): OkioServerSocket {
     val serverSocket = ServerSocket()
@@ -23,9 +51,11 @@ class RealOkioSocketFactory : OkioSocketFactory {
   }
 }
 
-interface OkioSocket: Closeable {
+interface OkioSocket : Closeable {
   val source: BufferedSource
   val sink: BufferedSink
+
+  val peerName: String
 }
 
 interface OkioServerSocket : Closeable {
@@ -44,6 +74,9 @@ class RealOkioSocket(
       sink.flush()
     }
   }
+
+  override val peerName: String
+    get() = delegate.peerName()
 }
 
 class RealOkioServerSocket(
