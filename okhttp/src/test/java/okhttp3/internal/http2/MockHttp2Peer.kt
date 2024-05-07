@@ -17,8 +17,6 @@ package okhttp3.internal.http2
 
 import java.io.Closeable
 import java.io.IOException
-import java.net.InetSocketAddress
-import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
@@ -26,14 +24,18 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.logging.Logger
 import okhttp3.TestUtil.threadFactory
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.socket.OkioServerSocket
+import okhttp3.internal.socket.OkioSocket
+import okhttp3.internal.socket.OkioSocketFactory
+import okhttp3.internal.socket.RealOkioSocketFactory
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
-import okio.buffer
-import okio.source
 
 /** Replays prerecorded outgoing frames and records incoming frames.  */
-class MockHttp2Peer : Closeable {
+class MockHttp2Peer(
+  private val socketFactory: OkioSocketFactory = RealOkioSocketFactory(),
+) : Closeable {
   private var frameCount = 0
   private var client = false
   private val bytesOut = Buffer()
@@ -42,8 +44,8 @@ class MockHttp2Peer : Closeable {
   private val inFrames: BlockingQueue<InFrame> = LinkedBlockingQueue()
   private var port = 0
   private val executor = Executors.newSingleThreadExecutor(threadFactory("MockHttp2Peer"))
-  private var serverSocket: ServerSocket? = null
-  private var socket: Socket? = null
+  private var serverSocket: OkioServerSocket? = null
+  private var socket: OkioSocket? = null
 
   fun setClient(client: Boolean) {
     if (this.client == client) return
@@ -89,9 +91,7 @@ class MockHttp2Peer : Closeable {
 
   fun play() {
     check(serverSocket == null)
-    serverSocket = ServerSocket()
-    serverSocket!!.reuseAddress = false
-    serverSocket!!.bind(InetSocketAddress("localhost", 0), 1)
+    serverSocket = socketFactory.newServerSocket()
     port = serverSocket!!.localPort
     executor.execute {
       try {
@@ -105,7 +105,7 @@ class MockHttp2Peer : Closeable {
 
   private fun readAndWriteFrames() {
     check(socket == null)
-    val socket = serverSocket!!.accept()!!
+    val socket = serverSocket!!.accept()
     this.socket = socket
 
     // Bail out now if this instance was closed while waiting for the socket to accept.
@@ -115,9 +115,7 @@ class MockHttp2Peer : Closeable {
         return
       }
     }
-    val outputStream = socket.getOutputStream()
-    val inputStream = socket.getInputStream()
-    val reader = Http2Reader(inputStream.source().buffer(), client)
+    val reader = Http2Reader(socket.source, client)
     val outFramesIterator: Iterator<OutFrame> = outFrames.iterator()
     val outBytes = bytesOut.readByteArray()
     var nextOutFrame: OutFrame? = null
@@ -141,7 +139,8 @@ class MockHttp2Peer : Closeable {
 
         // Write a frame.
         val length = (end - start).toInt()
-        outputStream.write(outBytes, start.toInt(), length)
+        socket.sink.write(outBytes, start.toInt(), length)
+        socket.sink.flush()
 
         // If the last frame was truncated, immediately close the connection.
         if (truncated) {
