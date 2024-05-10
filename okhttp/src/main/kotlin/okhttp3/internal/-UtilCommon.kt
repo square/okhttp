@@ -61,7 +61,7 @@ internal val UNICODE_BOMS =
     "0000feff".decodeHex(),
     // UTF-32LE.
     "fffe0000".decodeHex(),
-  )
+  ).sortedByDescending { it.size }
 
 /**
  * Returns an array containing only elements found in this array and also in [other]. The returned
