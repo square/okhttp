@@ -62,7 +62,7 @@ class ResponseBodyJvmTest {
 
   @Test
   fun stringBomOverridesExplicitCharset() {
-    val body = body("0000ffff00000068000000650000006c0000006c0000006f", "utf-8")
+    val body = body("0000feff00000068000000650000006c0000006c0000006f", "utf-8")
     assertThat(body.string()).isEqualTo("hello")
   }
 
@@ -86,13 +86,13 @@ class ResponseBodyJvmTest {
 
   @Test
   fun stringBomUtf32Be() {
-    val body = body("0000ffff00000068000000650000006c0000006c0000006f")
+    val body = body("0000feff00000068000000650000006c0000006c0000006f")
     assertThat(body.string()).isEqualTo("hello")
   }
 
   @Test
   fun stringBomUtf32Le() {
-    val body = body("ffff000068000000650000006c0000006c0000006f000000")
+    val body = body("fffe000068000000650000006c0000006c0000006f000000")
     assertThat(body.string()).isEqualTo("hello")
   }
 
@@ -168,13 +168,13 @@ class ResponseBodyJvmTest {
 
   @Test
   fun readerBomUtf32Be() {
-    val body = body("0000ffff00000068000000650000006c0000006c0000006f")
+    val body = body("0000feff00000068000000650000006c0000006c0000006f")
     assertThat(exhaust(body.charStream())).isEqualTo("hello")
   }
 
   @Test
   fun readerBomUtf32Le() {
-    val body = body("ffff000068000000650000006c0000006c0000006f000000")
+    val body = body("fffe000068000000650000006c0000006c0000006f000000")
     assertThat(exhaust(body.charStream())).isEqualTo("hello")
   }
 
