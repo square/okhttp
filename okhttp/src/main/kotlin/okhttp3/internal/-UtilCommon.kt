@@ -55,12 +55,12 @@ internal val UNICODE_BOMS =
     "efbbbf".decodeHex(),
     // UTF-16BE.
     "feff".decodeHex(),
+    // UTF-32LE.
+    "fffe0000".decodeHex(),
     // UTF-16LE.
     "fffe".decodeHex(),
     // UTF-32BE.
-    "0000ffff".decodeHex(),
-    // UTF-32LE.
-    "ffff0000".decodeHex(),
+    "0000feff".decodeHex(),
   )
 
 /**
