@@ -127,8 +127,13 @@ interface OkioServerSocket : Closeable {
 class RealOkioSocket(
   val delegate: Socket,
 ) : OkioSocket {
-  override val source: BufferedSource by lazy { delegate.source().buffer() }
-  override val sink: BufferedSink by lazy { delegate.sink().buffer() }
+  private var source_: BufferedSource? = null
+  private var sink_: BufferedSink? = null
+
+  override val source: BufferedSource get() = source_
+    ?: delegate.source().buffer().also { source_ = it }
+  override val sink: BufferedSink get() = sink_
+    ?: delegate.sink().buffer().also { sink_ = it }
 
   override val localPort: Int by delegate::localPort
   override val inetAddress: InetAddress? by delegate::inetAddress
@@ -150,12 +155,9 @@ class RealOkioSocket(
   }
 
   override fun close() {
-    delegate.use {
-      // TODO this is probably wrong
-      if (delegate.isConnected && sink.isOpen) {
-        sink.flush()
-      }
-    }
+    // Note that this potentially leaves bytes in sink. This is necessary because Socket.close() is
+    // much more like cancel() (asynchronously interrupt) than close() (release resources).
+    delegate.close()
   }
 
   override fun shutdownOutput() {

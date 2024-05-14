@@ -331,6 +331,9 @@ class TaskFaker : Closeable {
         try {
           runnable.run()
           require(currentTask == this) { "unexpected current task: $currentTask" }
+        } catch (e: Throwable) {
+          e.printStackTrace()
+          throw e
         } finally {
           taskRunner.lock.withLock {
             activeThreads--
@@ -361,7 +364,7 @@ class TaskFaker : Closeable {
       taskRunner.lock.withLock {
         val waitUntil = nanoTime + unit.toNanos(timeout)
         while (true) {
-          val result = poll()
+          val result = delegate.poll()
           if (result != null) return result
           if (nanoTime >= waitUntil) return null
           val editCountBefore = editCount
