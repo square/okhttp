@@ -78,8 +78,8 @@ import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.socket.OkioServerSocket
-import okhttp3.internal.socket.OkioSocket
 import okhttp3.internal.socket.OkioServerSocketFactory
+import okhttp3.internal.socket.OkioSocket
 import okhttp3.internal.socket.OkioSslSocketFactory
 import okhttp3.internal.socket.RealOkioServerSocketFactory
 import okhttp3.internal.socket.RealOkioSslSocket

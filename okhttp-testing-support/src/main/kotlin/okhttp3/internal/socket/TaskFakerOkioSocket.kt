@@ -41,9 +41,11 @@ class TaskFakerOkioServerSocket(
     return sockets.poll()
   }
 
-  override fun bind(socketAddress: SocketAddress, port: Int) {
+  override fun bind(
+    socketAddress: SocketAddress,
+    port: Int,
+  ) {
   }
-
 
   override fun close() {
   }
@@ -57,35 +59,43 @@ class Stream(
   var sourceClosed = false
   var sinkClosed = false
 
-  val source = object : Source {
-    override fun read(sink: Buffer, byteCount: Long): Long {
-      require(!sourceClosed)
-      taskFaker.yieldUntil { sinkClosed || !buffer.exhausted() }
-      return buffer.read(sink, byteCount)
+  val source =
+    object : Source {
+      override fun read(
+        sink: Buffer,
+        byteCount: Long,
+      ): Long {
+        require(!sourceClosed)
+        taskFaker.yieldUntil { sinkClosed || !buffer.exhausted() }
+        return buffer.read(sink, byteCount)
+      }
+
+      override fun timeout() = Timeout.NONE // TODO
+
+      override fun close() {
+        sourceClosed = true
+      }
     }
 
-    override fun timeout() = Timeout.NONE // TODO
+  val sink =
+    object : Sink {
+      override fun timeout() = Timeout.NONE // TODO
 
-    override fun close() {
-      sourceClosed = true
+      override fun write(
+        source: Buffer,
+        byteCount: Long,
+      ) {
+        require(!sinkClosed)
+        return buffer.write(source, byteCount)
+      }
+
+      override fun flush() {
+      }
+
+      override fun close() {
+        sinkClosed = true
+      }
     }
-  }
-
-  val sink = object : Sink {
-    override fun timeout() = Timeout.NONE // TODO
-
-    override fun write(source: Buffer, byteCount: Long) {
-      require(!sinkClosed)
-      return buffer.write(source, byteCount)
-    }
-
-    override fun flush() {
-    }
-
-    override fun close() {
-      sinkClosed = true
-    }
-  }
 }
 
 class SocketPair(
@@ -96,19 +106,21 @@ class SocketPair(
   private val clientToServer = Stream(taskFaker)
   private val serverToClient = Stream(taskFaker)
 
-  val clientSocket = TaskFakerOkioSocket(
-    serverToClient.source.buffer(),
-    clientToServer.sink.buffer(),
-    clientAddress,
-    serverAddress,
-  )
+  val clientSocket =
+    TaskFakerOkioSocket(
+      serverToClient.source.buffer(),
+      clientToServer.sink.buffer(),
+      clientAddress,
+      serverAddress,
+    )
 
-  val serverSocket = TaskFakerOkioSocket(
-    clientToServer.source.buffer(),
-    serverToClient.sink.buffer(),
-    serverAddress,
-    clientAddress,
-  )
+  val serverSocket =
+    TaskFakerOkioSocket(
+      clientToServer.source.buffer(),
+      serverToClient.sink.buffer(),
+      serverAddress,
+      clientAddress,
+    )
 }
 
 class TaskFakerOkioSocket(
@@ -137,7 +149,10 @@ class TaskFakerOkioSocket(
     TODO("Not yet implemented")
   }
 
-  override fun connect(address: InetSocketAddress, connectTimeout: Int) {
+  override fun connect(
+    address: InetSocketAddress,
+    connectTimeout: Int,
+  ) {
     TODO("Not yet implemented")
   }
 

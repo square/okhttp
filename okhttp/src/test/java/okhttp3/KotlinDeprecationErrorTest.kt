@@ -27,7 +27,6 @@ import java.security.KeyPair
 import java.security.Principal
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
-import javax.net.ServerSocketFactory
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocket

@@ -20,7 +20,6 @@ import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.net.ProtocolException
 import java.net.Proxy
-import java.net.Socket
 import java.net.UnknownServiceException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit

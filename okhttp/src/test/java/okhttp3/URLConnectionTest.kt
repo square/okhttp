@@ -1948,7 +1948,7 @@ class URLConnectionTest {
         .addHeader("Date: 23/Jan/2004:08:54:59 UTC")
         .addHeader("Content-Type: text/plain")
         .body(
-          "STR;FFMJ2;Frankfurt;RTCM 2.1;1(1),3(19),16(59);0;GPS;GREF;DEU;50.12;8.68;0;1;GPSNet V2.10;none;N;N;560;Demo\nENDSOURCETABLE"
+          "STR;FFMJ2;Frankfurt;RTCM 2.1;1(1),3(19),16(59);0;GPS;GREF;DEU;50.12;8.68;0;1;GPSNet V2.10;none;N;N;560;Demo\nENDSOURCETABLE",
         )
         .build(),
     )
@@ -2099,10 +2099,10 @@ class URLConnectionTest {
       MockResponse(
         code = 401,
         headers =
-        headersOf(
-          "WWW-Authenticate",
-          "Basic realm=\"protected area\", charset=\"UTF-8\"",
-        ),
+          headersOf(
+            "WWW-Authenticate",
+            "Basic realm=\"protected area\", charset=\"UTF-8\"",
+          ),
         body = "Please authenticate with UTF-8.",
       ),
     )
@@ -2110,10 +2110,10 @@ class URLConnectionTest {
       MockResponse(
         code = 401,
         headers =
-        headersOf(
-          "WWW-Authenticate",
-          "Basic realm=\"protected area\"",
-        ),
+          headersOf(
+            "WWW-Authenticate",
+            "Basic realm=\"protected area\"",
+          ),
         body = "Please authenticate with ISO-8859-1.",
       ),
     )
@@ -2948,7 +2948,7 @@ class URLConnectionTest {
             serverSocket.receiveBufferSize = socketBufferSize
             return serverSocket
           }
-        }
+        },
       )
     client =
       client.newBuilder()
@@ -2973,16 +2973,16 @@ class URLConnectionTest {
       Request(
         url = server.url("/"),
         body =
-        object : RequestBody() {
-          override fun contentType(): MediaType? {
-            return null
-          }
+          object : RequestBody() {
+            override fun contentType(): MediaType? {
+              return null
+            }
 
-          override fun writeTo(sink: BufferedSink) {
-            val data = ByteArray(2 * 1024 * 1024) // 2 MiB.
-            sink.write(data)
-          }
-        },
+            override fun writeTo(sink: BufferedSink) {
+              val data = ByteArray(2 * 1024 * 1024) // 2 MiB.
+              sink.write(data)
+            }
+          },
       )
     assertFailsWith<SocketTimeoutException> {
       getResponse(request)
@@ -3047,12 +3047,12 @@ class URLConnectionTest {
       MockResponse(
         code = HttpURLConnection.HTTP_MOVED_TEMP,
         headers =
-        headersOf(
-          "Location",
-          "/foo",
-          "Connection",
-          "close",
-        ),
+          headersOf(
+            "Location",
+            "/foo",
+            "Connection",
+            "close",
+          ),
       ),
     )
     server.enqueue(MockResponse(body = "This is the new location!"))
@@ -3149,12 +3149,12 @@ class URLConnectionTest {
         Request(
           url = server.url("/"),
           body =
-          object : ForwardingRequestBody(transferKind.newRequestBody("def")) {
-            override fun writeTo(sink: BufferedSink) {
-              sinkReference.set(sink)
-              super.writeTo(sink)
-            }
-          },
+            object : ForwardingRequestBody(transferKind.newRequestBody("def")) {
+              override fun writeTo(sink: BufferedSink) {
+                sinkReference.set(sink)
+                super.writeTo(sink)
+              }
+            },
         ),
       )
     assertThat(readAscii(response.body.byteStream(), Int.MAX_VALUE))
@@ -3877,21 +3877,21 @@ class URLConnectionTest {
         Request(
           url = server.url("/"),
           body =
-          object : RequestBody() {
-            override fun contentType(): MediaType? = null
+            object : RequestBody() {
+              override fun contentType(): MediaType? = null
 
-            override fun contentLength(): Long = contentLength
+              override fun contentLength(): Long = contentLength
 
-            override fun writeTo(sink: BufferedSink) {
-              val buffer = ByteArray(1024 * 1024)
-              var bytesWritten: Long = 0
-              while (bytesWritten < contentLength) {
-                val byteCount = Math.min(buffer.size.toLong(), contentLength - bytesWritten).toInt()
-                bytesWritten += byteCount.toLong()
-                sink.write(buffer, 0, byteCount)
+              override fun writeTo(sink: BufferedSink) {
+                val buffer = ByteArray(1024 * 1024)
+                var bytesWritten: Long = 0
+                while (bytesWritten < contentLength) {
+                  val byteCount = Math.min(buffer.size.toLong(), contentLength - bytesWritten).toInt()
+                  bytesWritten += byteCount.toLong()
+                  sink.write(buffer, 0, byteCount)
+                }
               }
-            }
-          },
+            },
         ),
       )
     assertContent("", response)
@@ -4371,6 +4371,5 @@ class URLConnectionTest {
    * TLS_FALLBACK_SCSV cipher on fallback connections. See [FallbackTestClientSocketFactory]
    * for details.
    */
-  private fun suppressTlsFallbackClientSocketFactory() =
-    FallbackTestClientSocketFactory(handshakeCertificates.sslSocketFactory())
+  private fun suppressTlsFallbackClientSocketFactory() = FallbackTestClientSocketFactory(handshakeCertificates.sslSocketFactory())
 }

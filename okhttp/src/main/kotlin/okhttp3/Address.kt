@@ -62,11 +62,13 @@ class Address internal constructor(
   @get:JvmName("proxySelector") val proxySelector: ProxySelector,
 ) {
   /** Returns the socket factory for new connections. */
-  @get:JvmName("socketFactory") val socketFactory: SocketFactory
-     get() = (okioSocketFactory as RealOkioSocketFactory).delegate
+  @get:JvmName("socketFactory")
+  val socketFactory: SocketFactory
+    get() = (okioSocketFactory as RealOkioSocketFactory).delegate
 
   /** Returns the SSL socket factory, or null if this is not an HTTPS address. */
-  @get:JvmName("sslSocketFactory") val sslSocketFactory: SSLSocketFactory?
+  @get:JvmName("sslSocketFactory")
+  val sslSocketFactory: SSLSocketFactory?
     get() = (okioSslSocketFactory as? RealOkioSslSocketFactory)?.delegate
 
   constructor(

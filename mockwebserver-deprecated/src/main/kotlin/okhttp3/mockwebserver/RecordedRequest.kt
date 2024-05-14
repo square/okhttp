@@ -18,7 +18,6 @@ package okhttp3.mockwebserver
 import java.io.IOException
 import java.net.Inet6Address
 import java.net.Socket
-import javax.net.ssl.SSLSocket
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers

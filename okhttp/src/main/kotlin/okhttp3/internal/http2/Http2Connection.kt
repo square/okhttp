@@ -18,7 +18,6 @@ package okhttp3.internal.http2
 import java.io.Closeable
 import java.io.IOException
 import java.io.InterruptedIOException
-import java.net.Socket
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock

@@ -1,6 +1,5 @@
 package okhttp3.internal.socket
 
-import kotlin.Any as Any1
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Proxy
@@ -22,16 +21,24 @@ import okio.source
 
 interface OkioSocketFactory {
   fun createSocket(): OkioSocket
+
   fun createSocket(proxy: Proxy): OkioSocket
-  fun createSocket(host: String, port: Int): OkioSocket
+
+  fun createSocket(
+    host: String,
+    port: Int,
+  ): OkioSocket
 }
 
 class RealOkioSocketFactory(
   internal val delegate: SocketFactory = SocketFactory.getDefault(),
 ) : OkioSocketFactory {
   override fun createSocket() = RealOkioSocket(delegate.createSocket() ?: Socket())
-  override fun createSocket(host: String, port: Int): OkioSocket =
-    RealOkioSocket(delegate.createSocket(host, port) ?: Socket(host, port))
+
+  override fun createSocket(
+    host: String,
+    port: Int,
+  ): OkioSocket = RealOkioSocket(delegate.createSocket(host, port) ?: Socket(host, port))
 
   override fun createSocket(proxy: Proxy) = RealOkioSocket(Socket(proxy)) // Don't delegate.
 }
@@ -42,7 +49,12 @@ interface OkioServerSocketFactory {
 
 interface OkioSslSocketFactory {
   fun createSocket(socket: OkioSocket): OkioSslSocket
-  fun createSocket(socket: OkioSocket, host: String, port: Int): OkioSslSocket
+
+  fun createSocket(
+    socket: OkioSocket,
+    host: String,
+    port: Int,
+  ): OkioSslSocket
 }
 
 interface OkioSslSocket : OkioSocket {
@@ -74,14 +86,19 @@ class RealOkioSslSocketFactory(
     )
   }
 
-  override fun createSocket(socket: OkioSocket, host: String, port: Int): OkioSslSocket {
+  override fun createSocket(
+    socket: OkioSocket,
+    host: String,
+    port: Int,
+  ): OkioSslSocket {
     val delegateSocket = (socket as RealOkioSocket).delegate
-    val sslSocket = delegate.createSocket(
-      delegateSocket,
-      host,
-      port,
-      true
-    ) as SSLSocket
+    val sslSocket =
+      delegate.createSocket(
+        delegateSocket,
+        host,
+        port,
+        true,
+      ) as SSLSocket
     return RealOkioSslSocket(sslSocket)
   }
 }
@@ -110,30 +127,43 @@ interface OkioSocket : Closeable {
   val remoteSocketAddress: SocketAddress?
 
   fun connect(address: InetSocketAddress)
-  fun connect(address: InetSocketAddress, connectTimeout: Int)
+
+  fun connect(
+    address: InetSocketAddress,
+    connectTimeout: Int,
+  )
 
   fun shutdownOutput()
+
   fun shutdownInput()
 }
 
 interface OkioServerSocket : Closeable {
   val localPort: Int
   var reuseAddress: Boolean
+
   fun accept(): OkioSocket
-  fun bind(socketAddress: SocketAddress, port: Int)
+
+  fun bind(
+    socketAddress: SocketAddress,
+    port: Int,
+  )
+
   val localSocketAddress: SocketAddress?
 }
 
 class RealOkioSocket(
   val delegate: Socket,
 ) : OkioSocket {
-  private var source_: BufferedSource? = null
-  private var sink_: BufferedSink? = null
+  private var _source: BufferedSource? = null
+  private var _sink: BufferedSink? = null
 
-  override val source: BufferedSource get() = source_
-    ?: delegate.source().buffer().also { source_ = it }
-  override val sink: BufferedSink get() = sink_
-    ?: delegate.sink().buffer().also { sink_ = it }
+  override val source: BufferedSource get() =
+    _source
+      ?: delegate.source().buffer().also { _source = it }
+  override val sink: BufferedSink get() =
+    _sink
+      ?: delegate.sink().buffer().also { _sink = it }
 
   override val localPort: Int by delegate::localPort
   override val inetAddress: InetAddress? by delegate::inetAddress
@@ -150,7 +180,10 @@ class RealOkioSocket(
     delegate.connect(address)
   }
 
-  override fun connect(address: InetSocketAddress, connectTimeout: Int) {
+  override fun connect(
+    address: InetSocketAddress,
+    connectTimeout: Int,
+  ) {
     delegate.connect(address, connectTimeout)
   }
 
@@ -180,7 +213,10 @@ class RealOkioServerSocket(
     return RealOkioSocket(delegate.accept())
   }
 
-  override fun bind(socketAddress: SocketAddress, port: Int) {
+  override fun bind(
+    socketAddress: SocketAddress,
+    port: Int,
+  ) {
     delegate.bind(socketAddress, port)
   }
 

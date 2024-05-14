@@ -119,7 +119,7 @@ class CancelTest {
             serverSocket.receiveBufferSize = SOCKET_BUFFER_SIZE
             return serverSocket
           }
-        }
+        },
       )
     if (connectionType != HTTP) {
       server.useHttps(handshakeCertificates.sslSocketFactory())
@@ -162,23 +162,23 @@ class CancelTest {
         Request(
           url = server.url("/"),
           body =
-          object : RequestBody() {
-            override fun contentType(): MediaType? {
-              return null
-            }
-
-            @Throws(
-              IOException::class,
-            )
-            override fun writeTo(sink: BufferedSink) {
-              for (i in 0..9) {
-                sink.writeByte(0)
-                sink.flush()
-                sleep(100)
+            object : RequestBody() {
+              override fun contentType(): MediaType? {
+                return null
               }
-              fail("Expected connection to be closed")
-            }
-          },
+
+              @Throws(
+                IOException::class,
+              )
+              override fun writeTo(sink: BufferedSink) {
+                for (i in 0..9) {
+                  sink.writeByte(0)
+                  sink.flush()
+                  sleep(100)
+                }
+                fail("Expected connection to be closed")
+              }
+            },
         ),
       )
     cancelLater(call, 500)

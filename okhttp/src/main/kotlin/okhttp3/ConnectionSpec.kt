@@ -25,7 +25,6 @@ import okhttp3.internal.hasIntersection
 import okhttp3.internal.indexOf
 import okhttp3.internal.intersect
 import okhttp3.internal.socket.OkioSslSocket
-import okhttp3.internal.socket.RealOkioSocket
 import okhttp3.internal.socket.RealOkioSslSocket
 
 /**

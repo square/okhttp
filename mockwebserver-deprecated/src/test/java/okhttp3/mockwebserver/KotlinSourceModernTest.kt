@@ -19,7 +19,6 @@ import java.net.InetAddress
 import java.net.Proxy
 import java.net.Socket
 import java.util.concurrent.TimeUnit
-import javax.net.ServerSocketFactory
 import javax.net.ssl.SSLSocketFactory
 import okhttp3.Handshake
 import okhttp3.Headers

@@ -63,7 +63,7 @@ class ThreadInterruptTest {
             serverSocket.setReceiveBufferSize(SOCKET_BUFFER_SIZE)
             return serverSocket
           }
-        }
+        },
       )
     client =
       clientTestRule.newClientBuilder()
