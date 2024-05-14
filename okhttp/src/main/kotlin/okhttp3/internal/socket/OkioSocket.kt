@@ -1,16 +1,25 @@
+/*
+ * Copyright (C) 2024 Square, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package okhttp3.internal.socket
 
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.Proxy
-import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketAddress
-import javax.net.ServerSocketFactory
-import javax.net.SocketFactory
-import javax.net.ssl.SSLSession
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
 import okhttp3.internal.peerName
 import okio.BufferedSink
 import okio.BufferedSource
@@ -18,99 +27,6 @@ import okio.Closeable
 import okio.buffer
 import okio.sink
 import okio.source
-
-interface OkioSocketFactory {
-  fun createSocket(): OkioSocket
-
-  fun createSocket(proxy: Proxy): OkioSocket
-
-  fun createSocket(
-    host: String,
-    port: Int,
-  ): OkioSocket
-}
-
-class RealOkioSocketFactory(
-  internal val delegate: SocketFactory = SocketFactory.getDefault(),
-) : OkioSocketFactory {
-  override fun createSocket() = RealOkioSocket(delegate.createSocket() ?: Socket())
-
-  override fun createSocket(
-    host: String,
-    port: Int,
-  ): OkioSocket = RealOkioSocket(delegate.createSocket(host, port) ?: Socket(host, port))
-
-  override fun createSocket(proxy: Proxy) = RealOkioSocket(Socket(proxy)) // Don't delegate.
-}
-
-interface OkioServerSocketFactory {
-  fun newServerSocket(): OkioServerSocket
-}
-
-interface OkioSslSocketFactory {
-  fun createSocket(socket: OkioSocket): OkioSslSocket
-
-  fun createSocket(
-    socket: OkioSocket,
-    host: String,
-    port: Int,
-  ): OkioSslSocket
-}
-
-interface OkioSslSocket : OkioSocket {
-  val session: SSLSession?
-  val enabledProtocols: Array<String>
-
-  fun startHandshake()
-}
-
-class RealOkioSslSocket(internal val delegate: SSLSocket) :
-  OkioSslSocket, OkioSocket by RealOkioSocket(delegate) {
-  override val session: SSLSession? get() = delegate.session
-  override val enabledProtocols: Array<String> get() = delegate.enabledProtocols
-
-  override fun startHandshake() {
-    delegate.startHandshake()
-  }
-}
-
-class RealOkioSslSocketFactory(
-  val delegate: SSLSocketFactory,
-) : OkioSslSocketFactory {
-  override fun createSocket(socket: OkioSocket): OkioSslSocket {
-    val delegateSocket = (socket as RealOkioSocket).delegate
-    return createSocket(
-      socket,
-      delegateSocket.inetAddress.hostAddress,
-      delegateSocket.port,
-    )
-  }
-
-  override fun createSocket(
-    socket: OkioSocket,
-    host: String,
-    port: Int,
-  ): OkioSslSocket {
-    val delegateSocket = (socket as RealOkioSocket).delegate
-    val sslSocket =
-      delegate.createSocket(
-        delegateSocket,
-        host,
-        port,
-        true,
-      ) as SSLSocket
-    return RealOkioSslSocket(sslSocket)
-  }
-}
-
-class RealOkioServerSocketFactory(
-  private val delegate: ServerSocketFactory = ServerSocketFactory.getDefault(),
-) : OkioServerSocketFactory {
-  override fun newServerSocket(): OkioServerSocket {
-    val serverSocket = delegate.createServerSocket()
-    return RealOkioServerSocket(serverSocket)
-  }
-}
 
 interface OkioSocket : Closeable {
   val source: BufferedSource
@@ -138,32 +54,16 @@ interface OkioSocket : Closeable {
   fun shutdownInput()
 }
 
-interface OkioServerSocket : Closeable {
-  val localPort: Int
-  var reuseAddress: Boolean
-
-  fun accept(): OkioSocket
-
-  fun bind(
-    socketAddress: SocketAddress,
-    port: Int,
-  )
-
-  val localSocketAddress: SocketAddress?
-}
-
 class RealOkioSocket(
   val delegate: Socket,
 ) : OkioSocket {
   private var _source: BufferedSource? = null
   private var _sink: BufferedSink? = null
 
-  override val source: BufferedSource get() =
-    _source
-      ?: delegate.source().buffer().also { _source = it }
-  override val sink: BufferedSink get() =
-    _sink
-      ?: delegate.sink().buffer().also { _sink = it }
+  override val source: BufferedSource
+    get() = _source ?: delegate.source().buffer().also { _source = it }
+  override val sink: BufferedSink
+    get() = _sink ?: delegate.sink().buffer().also { _sink = it }
 
   override val localPort: Int by delegate::localPort
   override val inetAddress: InetAddress? by delegate::inetAddress
@@ -187,12 +87,6 @@ class RealOkioSocket(
     delegate.connect(address, connectTimeout)
   }
 
-  override fun close() {
-    // Note that this potentially leaves bytes in sink. This is necessary because Socket.close() is
-    // much more like cancel() (asynchronously interrupt) than close() (release resources).
-    delegate.close()
-  }
-
   override fun shutdownOutput() {
     delegate.shutdownOutput()
   }
@@ -200,27 +94,10 @@ class RealOkioSocket(
   override fun shutdownInput() {
     delegate.shutdownInput()
   }
-}
-
-class RealOkioServerSocket(
-  private val delegate: ServerSocket,
-) : OkioServerSocket {
-  override val localPort by delegate::localPort
-  override var reuseAddress by delegate::reuseAddress
-  override val localSocketAddress: InetSocketAddress? get() = delegate.localSocketAddress as? InetSocketAddress
-
-  override fun accept(): OkioSocket {
-    return RealOkioSocket(delegate.accept())
-  }
-
-  override fun bind(
-    socketAddress: SocketAddress,
-    port: Int,
-  ) {
-    delegate.bind(socketAddress, port)
-  }
 
   override fun close() {
+    // Note that this potentially leaves bytes in sink. This is necessary because Socket.close() is
+    // much more like cancel() (asynchronously interrupt) than close() (release resources).
     delegate.close()
   }
 }
