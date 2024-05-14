@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Square, Inc.
+ * Copyright (C) 2024 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -245,8 +245,7 @@ class KotlinDeprecationErrorTest {
   fun mockWebServer() {
     val mockWebServer = MockWebServer()
     var port: Int = mockWebServer.getPort()
-    mockWebServer
-      .setServerSocketFactory(RealOkioServerSocketFactory())
+    mockWebServer.setServerSocketFactory(RealOkioServerSocketFactory())
     mockWebServer.setBodyLimit(0L)
     mockWebServer.setProtocolNegotiationEnabled(false)
     mockWebServer.setProtocols(listOf(Protocol.HTTP_1_1))

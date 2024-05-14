@@ -47,13 +47,7 @@ class RealOkioSslSocketFactory(
     port: Int,
   ): OkioSslSocket {
     val delegateSocket = (socket as RealOkioSocket).delegate
-    val sslSocket =
-      delegate.createSocket(
-        delegateSocket,
-        host,
-        port,
-        true,
-      ) as SSLSocket
+    val sslSocket = delegate.createSocket(delegateSocket, host, port, true) as SSLSocket
     return RealOkioSslSocket(sslSocket)
   }
 }
