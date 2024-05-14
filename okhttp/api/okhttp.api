@@ -409,6 +409,7 @@ public final class okhttp3/ConnectionSpec {
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public final fun isCompatible (Ljavax/net/ssl/SSLSocket;)Z
+	public final fun isCompatible (Lokhttp3/internal/socket/OkioSslSocket;)Z
 	public final fun isTls ()Z
 	public final fun supportsTlsExtensions ()Z
 	public final fun tlsVersions ()Ljava/util/List;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (C) 2024 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,10 +168,22 @@ class ConnectionSpec internal constructor(
    * For protocols, at least one of the [required protocols][tlsVersions] must match the socket's
    * enabled protocols.
    */
+  @ExperimentalOkHttpApi
   fun isCompatible(socket: OkioSslSocket): Boolean {
     return isCompatible((socket as RealOkioSslSocket).delegate)
   }
 
+  /**
+   * Returns `true` if the socket, as currently configured, supports this connection spec. In
+   * order for a socket to be compatible the enabled cipher suites and protocols must intersect.
+   *
+   * For cipher suites, at least one of the [required cipher suites][cipherSuites] must match the
+   * socket's enabled cipher suites. If there are no required cipher suites the socket must have at
+   * least one cipher suite enabled.
+   *
+   * For protocols, at least one of the [required protocols][tlsVersions] must match the socket's
+   * enabled protocols.
+   */
   fun isCompatible(socket: SSLSocket): Boolean {
     if (!isTls) {
       return false

@@ -107,7 +107,7 @@ public final class mockwebserver3/MockWebServer : java/io/Closeable {
 	public final fun getProtocolNegotiationEnabled ()Z
 	public final fun getProtocols ()Ljava/util/List;
 	public final fun getRequestCount ()I
-	public final fun getServerSocketFactory ()Ljavax/net/ServerSocketFactory;
+	public final fun getServerSocketFactory ()Lokhttp3/internal/socket/OkioServerSocketFactory;
 	public final fun getStarted ()Z
 	public final fun noClientAuth ()V
 	public final fun requestClientAuth ()V
@@ -116,7 +116,7 @@ public final class mockwebserver3/MockWebServer : java/io/Closeable {
 	public final fun setDispatcher (Lmockwebserver3/Dispatcher;)V
 	public final fun setProtocolNegotiationEnabled (Z)V
 	public final fun setProtocols (Ljava/util/List;)V
-	public final fun setServerSocketFactory (Ljavax/net/ServerSocketFactory;)V
+	public final fun setServerSocketFactory (Lokhttp3/internal/socket/OkioServerSocketFactory;)V
 	public final fun setStarted (Z)V
 	public final fun shutdown ()V
 	public final fun start ()V
@@ -159,8 +159,8 @@ public final class mockwebserver3/QueueDispatcher$Companion {
 }
 
 public final class mockwebserver3/RecordedRequest {
-	public fun <init> (Ljava/lang/String;Lokhttp3/Headers;Ljava/util/List;JLokio/Buffer;ILjava/net/Socket;Ljava/io/IOException;)V
-	public synthetic fun <init> (Ljava/lang/String;Lokhttp3/Headers;Ljava/util/List;JLokio/Buffer;ILjava/net/Socket;Ljava/io/IOException;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Lokhttp3/Headers;Ljava/util/List;JLokio/Buffer;ILokhttp3/internal/socket/OkioSocket;Ljava/io/IOException;)V
+	public synthetic fun <init> (Ljava/lang/String;Lokhttp3/Headers;Ljava/util/List;JLokio/Buffer;ILokhttp3/internal/socket/OkioSocket;Ljava/io/IOException;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getBody ()Lokio/Buffer;
 	public final fun getBodySize ()J
 	public final fun getChunkSizes ()Ljava/util/List;

@@ -69,7 +69,7 @@ public final class okhttp3/mockwebserver/MockWebServer : org/junit/rules/Externa
 	public final fun -deprecated_protocols ()Ljava/util/List;
 	public final fun -deprecated_protocols (Ljava/util/List;)V
 	public final fun -deprecated_requestCount ()I
-	public final fun -deprecated_serverSocketFactory (Ljavax/net/ServerSocketFactory;)V
+	public final fun -deprecated_serverSocketFactory (Lokhttp3/internal/socket/OkioServerSocketFactory;)V
 	public fun <init> ()V
 	public fun close ()V
 	public final fun enqueue (Lokhttp3/mockwebserver/MockResponse;)V
@@ -80,7 +80,7 @@ public final class okhttp3/mockwebserver/MockWebServer : org/junit/rules/Externa
 	public final fun getPort ()I
 	public final fun getProtocolNegotiationEnabled ()Z
 	public final fun getRequestCount ()I
-	public final fun getServerSocketFactory ()Ljavax/net/ServerSocketFactory;
+	public final fun getServerSocketFactory ()Lokhttp3/internal/socket/OkioServerSocketFactory;
 	public final fun noClientAuth ()V
 	public final fun protocols ()Ljava/util/List;
 	public final fun requestClientAuth ()V
@@ -89,7 +89,7 @@ public final class okhttp3/mockwebserver/MockWebServer : org/junit/rules/Externa
 	public final fun setDispatcher (Lokhttp3/mockwebserver/Dispatcher;)V
 	public final fun setProtocolNegotiationEnabled (Z)V
 	public final fun setProtocols (Ljava/util/List;)V
-	public final fun setServerSocketFactory (Ljavax/net/ServerSocketFactory;)V
+	public final fun setServerSocketFactory (Lokhttp3/internal/socket/OkioServerSocketFactory;)V
 	public final fun shutdown ()V
 	public final fun start ()V
 	public final fun start (I)V
