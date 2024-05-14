@@ -316,7 +316,8 @@ class RouteFailureTest {
   fun proxyMoveTest(cleanShutdown: Boolean) {
     // Define a single Proxy at myproxy:8008 that will artificially move during the test
     val proxySelector = RecordingProxySelector()
-    proxySelector.proxies.add(Proxy(Proxy.Type.HTTP, InetSocketAddress("myproxy", 8008)))
+    val socketAddress = InetSocketAddress.createUnresolved("myproxy", 8008)
+    proxySelector.proxies.add(Proxy(Proxy.Type.HTTP, socketAddress))
 
     // Define two host names for the DNS routing of fake proxy servers
     val proxyServer1 = InetAddress.getByAddress("proxyServer1", byteArrayOf(127, 0, 0, 2))
