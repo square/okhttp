@@ -40,6 +40,7 @@ import java.net.CookiePolicy
 import java.net.HttpCookie
 import java.net.HttpURLConnection
 import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.net.ProtocolException
 import java.net.Proxy
 import java.net.SocketTimeoutException
@@ -1017,6 +1018,9 @@ open class CallTest {
     executeSynchronously(request)
       .assertCode(200)
       .assertBody("success!")
+
+    assertThat(proxySelector.failures)
+      .isEqualTo(listOf("http://android.com/ /198.51.100.1:8080:8080 Connect timed out"))
   }
 
   /** https://github.com/square/okhttp/issues/4875  */

@@ -30,8 +30,8 @@ import okhttp3.internal.format
 class RecordingProxySelector : ProxySelector() {
   @JvmField val proxies = mutableListOf<Proxy>()
 
-  private val requestedUris = mutableListOf<URI>()
-  private val failures = mutableListOf<String>()
+  val requestedUris = mutableListOf<URI>()
+  val failures = mutableListOf<String>()
 
   override fun select(uri: URI): List<Proxy> {
     requestedUris.add(uri)
