@@ -45,7 +45,7 @@ suspend fun Call.executeAsync(): Response =
           call: Call,
           response: Response,
         ) {
-          continuation.resume(response) {
+          continuation.resume(response) { _, _, _ ->
             response.closeQuietly()
           }
         }
