@@ -7,6 +7,7 @@ plugins {
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
+  id("io.github.usefulness.maven-sympathy") version "0.2.0"
 }
 
 // Build & use okhttp3/internal/-InternalVersion.kt
