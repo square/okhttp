@@ -32,7 +32,7 @@ cp CHANGELOG.md docs/changelogs/changelog.md
 cp CONTRIBUTING.md docs/contribute/contributing.md
 
 # Build the site and push the new files up to GitHub
-python3 -m venv venv
+java -m venv venv
 source venv/bin/activate
 pip install mkdocs-material mkdocs-redirects
 mkdocs gh-deploy
