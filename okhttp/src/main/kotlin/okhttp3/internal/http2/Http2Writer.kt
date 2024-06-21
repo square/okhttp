@@ -209,13 +209,7 @@ class Http2Writer(
       )
       for (i in 0 until Settings.COUNT) {
         if (!settings.isSet(i)) continue
-        val id =
-          when (i) {
-            4 -> 3 // SETTINGS_MAX_CONCURRENT_STREAMS renumbered.
-            7 -> 4 // SETTINGS_INITIAL_WINDOW_SIZE renumbered.
-            else -> i
-          }
-        sink.writeShort(id)
+        sink.writeShort(i)
         sink.writeInt(settings[i])
       }
       sink.flush()
