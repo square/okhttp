@@ -10,7 +10,7 @@ mockserverClient = "5.15.0"
 org-bouncycastle = "1.76"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.8.0"
-org-jetbrains-kotlin = "1.9.23"
+org-jetbrains-kotlin = "1.9.24"
 org-junit-jupiter = "5.10.2"
 testcontainers = "1.19.7"
 
