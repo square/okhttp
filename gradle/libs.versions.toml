@@ -89,7 +89,7 @@ squareup-moshi = { module = "com.squareup.moshi:moshi", version.ref = "com-squar
 squareup-moshi-compiler = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "com-squareup-moshi" }
 squareup-moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "com-squareup-moshi" }
 squareup-okhttp-icu = "com.squareup.okhttpicu:okhttp-icu:0.2.0"
-squareup-kotlinPoet = "com.squareup:kotlinpoet:1.16.0"
+squareup-kotlinPoet = "com.squareup:kotlinpoet:1.17.0"
 squareup-okio = { module = "com.squareup.okio:okio", version.ref = "com-squareup-okio" }
 squareup-okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "com-squareup-okio" }
 squareup-okio-nodefilesystem = { module = "com.squareup.okio:okio-nodefilesystem", version.ref = "com-squareup-okio" }
