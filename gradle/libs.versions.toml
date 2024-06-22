@@ -29,7 +29,7 @@ bouncycastle-bcprov = { module = "org.bouncycastle:bcprov-jdk15to18", version.re
 bouncycastle-bctls = { module = "org.bouncycastle:bctls-jdk15to18", version.ref = "org-bouncycastle" }
 brotli-dec = "org.brotli:dec:0.1.2"
 checkStyle = { module = "com.puppycrawl.tools:checkstyle", version.ref = "checkStyle" }
-clikt = "com.github.ajalt.clikt:clikt:4.3.0"
+clikt = "com.github.ajalt.clikt:clikt:4.4.0"
 codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
