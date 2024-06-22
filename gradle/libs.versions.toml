@@ -1,6 +1,6 @@
 [versions]
 biz-aQute-bnd = "6.4.0"
-checkStyle = "10.15.0"
+checkStyle = "10.17.0"
 com-squareup-moshi = "1.15.1"
 com-squareup-okio = "3.9.0"
 de-mannodermaus-junit5 = "1.4.0"
