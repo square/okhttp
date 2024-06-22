@@ -231,7 +231,8 @@ class ConnectionPoolTest {
   }
 
   @Disabled("https://github.com/square/okhttp/issues/8451")
-  @Test fun connectionPreWarmingHttp2() {
+  @Test
+  fun connectionPreWarmingHttp2() {
     taskFaker.advanceUntil(System.nanoTime())
     val expireSooner = taskFaker.nanoTime + 1_000_000_000_000
     val expireLater = taskFaker.nanoTime + 2_000_000_000_000
