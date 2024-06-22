@@ -26,6 +26,7 @@ buildscript {
     classpath(libs.gradlePlugin.spotless)
     classpath(libs.gradlePlugin.mavenPublish)
     classpath(libs.gradlePlugin.binaryCompatibilityValidator)
+    classpath(libs.gradlePlugin.mavenSympathy)
   }
 
   repositories {
@@ -88,6 +89,7 @@ subprojects {
   apply(plugin = "checkstyle")
   apply(plugin = "ru.vyarus.animalsniffer")
   apply(plugin = "biz.aQute.bnd.builder")
+  apply(plugin = "io.github.usefulness.maven-sympathy")
 
   tasks.withType<JavaCompile> {
     options.encoding = Charsets.UTF_8.toString()
