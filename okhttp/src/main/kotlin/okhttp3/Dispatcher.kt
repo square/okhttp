@@ -123,7 +123,7 @@ class Dispatcher() {
   /** Running synchronous calls. Includes canceled calls that haven't finished yet. */
   private val runningSyncCalls = ArrayDeque<RealCall>()
 
-  constructor(executorService: ExecutorService) : this() {
+  constructor(executorService: ExecutorService?) : this() {
     this.executorServiceOrNull = executorService
   }
 
