@@ -23,7 +23,7 @@ androidx-junit = "androidx.test.ext:junit:1.1.5"
 androidx-test-runner = "androidx.test:runner:1.5.2"
 animalsniffer-annotations = "org.codehaus.mojo:animal-sniffer-annotations:1.23"
 aqute-resolve = { module = "biz.aQute.bnd:biz.aQute.resolve", version.ref = "biz-aQute-bnd" }
-assertk = "com.willowtreeapps.assertk:assertk:0.28.0"
+assertk = "com.willowtreeapps.assertk:assertk:0.28.1"
 bouncycastle-bcpkix = { module = "org.bouncycastle:bcpkix-jdk15to18", version.ref = "org-bouncycastle" }
 bouncycastle-bcprov = { module = "org.bouncycastle:bcprov-jdk15to18", version.ref = "org-bouncycastle" }
 bouncycastle-bctls = { module = "org.bouncycastle:bctls-jdk15to18", version.ref = "org-bouncycastle" }
