@@ -6,12 +6,14 @@ com-squareup-okio = "3.9.0"
 de-mannodermaus-junit5 = "1.4.0"
 graalvm = "22.3.2"
 kotlinx-serialization = "1.6.3"
+ksp = "1.9.24-1.0.20"
 mockserverClient = "5.15.0"
 org-bouncycastle = "1.76"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.8.1"
-org-jetbrains-kotlin = "1.9.23"
+org-jetbrains-kotlin = "1.9.24"
 org-junit-jupiter = "5.10.2"
+retrofit = "2.11.0"
 testcontainers = "1.19.8"
 
 [libraries]
@@ -33,6 +35,7 @@ clikt = "com.github.ajalt.clikt:clikt:4.4.0"
 codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
+converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "retrofit" }
 eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.20.0"
 findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
 gradlePlugin-android = "com.android.tools.build:gradle:8.2.0"
@@ -46,6 +49,7 @@ gradlePlugin-graal = "com.palantir.graal:gradle-graal:0.12.0"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.29.0"
+gradlePlugin-mavenSympathy = "io.github.usefulness.maven-sympathy:io.github.usefulness.maven-sympathy.gradle.plugin:0.3.0"
 gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:8.0.0"
 gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.25.0"
 guava-jre = "com.google.guava:guava:33.2.1-jre"
@@ -81,6 +85,7 @@ mockserver-client = { module = "org.mock-server:mockserver-client-java-no-depend
 nativeImageSvm = { module = "org.graalvm.nativeimage:svm", version.ref = "graalvm" }
 openjsse = "org.openjsse:openjsse:1.1.14"
 playservices-safetynet = "com.google.android.gms:play-services-safetynet:18.1.0"
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 robolectric-android = "org.robolectric:android-all:14-robolectric-10818077"
 robolectric = "org.robolectric:robolectric:4.12.2"
 signature-android-apilevel21 = "net.sf.androidscents.signature:android-api-level-21:5.0.1_r2"
