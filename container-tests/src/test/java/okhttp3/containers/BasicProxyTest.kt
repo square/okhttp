@@ -27,6 +27,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.containers.BasicMockServerTest.Companion.MOCKSERVER_IMAGE
+import okhttp3.containers.BasicMockServerTest.Companion.trustManagerPair
 import okhttp3.containers.BasicMockServerTest.Companion.trustMockServer
 import okio.buffer
 import okio.source
@@ -104,6 +105,13 @@ class BasicProxyTest {
   @Test
   fun testOkHttpSecureProxiedHttp1() {
     testRequest {
+      it.withProxyConfiguration(
+        ProxyConfiguration.proxyConfiguration(
+          ProxyConfiguration.Type.HTTPS,
+          it.remoteAddress(),
+        ),
+      )
+
       val client =
         OkHttpClient.Builder()
           .trustMockServer()
@@ -118,6 +126,36 @@ class BasicProxyTest {
 
       assertThat(response.body.string()).contains("Peter the person")
       assertThat(response.protocol).isEqualTo(Protocol.HTTP_1_1)
+    }
+  }
+
+  @Test
+  fun testOkHttpSecureProxiedHttp2() {
+    testRequest {
+      it.withProxyConfiguration(
+        ProxyConfiguration.proxyConfiguration(
+          ProxyConfiguration.Type.HTTPS,
+          it.remoteAddress(),
+        ),
+      )
+
+      val (socketFactory, trustManager) = trustManagerPair()
+
+      val client =
+        OkHttpClient.Builder()
+          .sslSocketFactory(socketFactory, trustManager)
+          .proxy(Proxy(Proxy.Type.HTTP, it.remoteAddress()))
+          .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+          .socketFactory(socketFactory)
+          .build()
+
+      val response =
+        client.newCall(
+          Request((mockServer.secureEndpoint + "/person?name=peter").toHttpUrl()),
+        ).execute()
+
+      assertThat(response.body.string()).contains("Peter the person")
+      assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
     }
   }
 
@@ -169,6 +207,13 @@ class BasicProxyTest {
     HttpsURLConnection.setDefaultSSLSocketFactory(keyStoreFactory.sslContext().socketFactory)
 
     testRequest {
+      it.withProxyConfiguration(
+        ProxyConfiguration.proxyConfiguration(
+          ProxyConfiguration.Type.HTTPS,
+          it.remoteAddress(),
+        ),
+      )
+
       val proxy =
         Proxy(
           Proxy.Type.HTTP,
