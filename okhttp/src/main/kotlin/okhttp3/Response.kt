@@ -84,7 +84,7 @@ class Response internal constructor(
    * from [Call.execute]. Response bodies must be [closed][ResponseBody] and may
    * be consumed only once.
    *
-   * This always returns null on responses returned from [cacheResponse], [networkResponse],
+   * This always returns an unreadable [ResponseBody], which may implement [ResponseBody.contentType] and [ResponseBody.contentLength], on responses returned from [cacheResponse], [networkResponse],
    * and [priorResponse].
    */
   @get:JvmName("body") val body: ResponseBody,
