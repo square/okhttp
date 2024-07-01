@@ -95,11 +95,11 @@ class TaskRunnerTest {
     assertThat(testLogHandler.takeAll()).containsExactly(
       "FINE: Q10000 scheduled after 100 µs: task",
       "FINE: Q10000 starting              : task",
+      "FINE: Q10000 finished run in   0 µs: task",
       "FINE: Q10000 run again after  50 µs: task",
-      "FINE: Q10000 finished run in   0 µs: task",
       "FINE: Q10000 starting              : task",
-      "FINE: Q10000 run again after 150 µs: task",
       "FINE: Q10000 finished run in   0 µs: task",
+      "FINE: Q10000 run again after 150 µs: task",
       "FINE: Q10000 starting              : task",
       "FINE: Q10000 finished run in   0 µs: task",
     )
@@ -137,8 +137,8 @@ class TaskRunnerTest {
       "FINE: Q10000 scheduled after 100 µs: task",
       "FINE: Q10000 starting              : task",
       "FINE: Q10000 scheduled after  50 µs: task",
-      "FINE: Q10000 already scheduled     : task",
       "FINE: Q10000 finished run in   0 µs: task",
+      "FINE: Q10000 already scheduled     : task",
       "FINE: Q10000 starting              : task",
       "FINE: Q10000 finished run in   0 µs: task",
     )
@@ -176,8 +176,8 @@ class TaskRunnerTest {
       "FINE: Q10000 scheduled after 100 µs: task",
       "FINE: Q10000 starting              : task",
       "FINE: Q10000 scheduled after 200 µs: task",
-      "FINE: Q10000 run again after  50 µs: task",
       "FINE: Q10000 finished run in   0 µs: task",
+      "FINE: Q10000 run again after  50 µs: task",
       "FINE: Q10000 starting              : task",
       "FINE: Q10000 finished run in   0 µs: task",
     )
@@ -306,8 +306,8 @@ class TaskRunnerTest {
     assertThat(testLogHandler.takeAll()).containsExactly(
       "FINE: Q10000 scheduled after 100 µs: task",
       "FINE: Q10000 starting              : task",
-      "FINE: Q10000 run again after  50 µs: task",
       "FINE: Q10000 finished run in   0 µs: task",
+      "FINE: Q10000 run again after  50 µs: task",
       "FINE: Q10000 starting              : task",
       "FINE: Q10000 finished run in   0 µs: task",
     )
