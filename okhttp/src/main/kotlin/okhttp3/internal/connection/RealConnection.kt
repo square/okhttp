@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.locks.ReentrantLock
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
-import kotlin.concurrent.withLock
+import kotlin.math.min
 import okhttp3.Address
 import okhttp3.Connection
 import okhttp3.ConnectionListener
@@ -119,6 +119,8 @@ class RealConnection(
   internal var allocationLimit = 1
     private set
 
+  private var lastMaxConcurrentStreamsFromSettings: Int? = null
+
   /** Current calls carried by this connection. */
   val calls = mutableListOf<Reference<RealCall>>()
 
@@ -176,7 +178,8 @@ class RealConnection(
         .flowControlListener(flowControlListener)
         .build()
     this.http2Connection = http2Connection
-    this.allocationLimit = Http2Connection.DEFAULT_SETTINGS.getMaxConcurrentStreams()
+    this.lastMaxConcurrentStreamsFromSettings = Http2Connection.DEFAULT_SETTINGS.getMaxConcurrentStreams()
+    recalculateAllocationLimit()
     http2Connection.start()
   }
 
@@ -335,7 +338,7 @@ class RealConnection(
       return http2Connection.isHealthy(nowNs)
     }
 
-    val idleDurationNs = lock.withLock { nowNs - idleAtNs }
+    val idleDurationNs = this.withLock { nowNs - idleAtNs }
     if (idleDurationNs >= IDLE_CONNECTION_HEALTHY_NS && doExtensiveChecks) {
       return socket.isHealthy(source)
     }
@@ -354,9 +357,21 @@ class RealConnection(
     connection: Http2Connection,
     settings: Settings,
   ) {
-    lock.withLock {
+    this.withLock {
+      this.lastMaxConcurrentStreamsFromSettings = settings.getMaxConcurrentStreams()
+      recalculateAllocationLimit()
+    }
+  }
+
+  /**
+   * Resets the [allocationLimit] field based on any settings which may have been applied
+   * Needed to allow for policy changes to adjust the limit, similarly to the change
+   * made during settings changes
+   */
+  internal fun recalculateAllocationLimit() {
+    this.withLock {
       val oldLimit = allocationLimit
-      allocationLimit = settings.getMaxConcurrentStreams()
+      allocationLimit = getMaximumAllocationLimit()
 
       if (allocationLimit < oldLimit) {
         // We might need new connections to keep policies satisfied
@@ -366,6 +381,17 @@ class RealConnection(
         connectionPool.scheduleCloser()
       }
     }
+  }
+
+  private fun getMaximumAllocationLimit(): Int {
+    // if we have not negotiated a max per streams yet, don't check for the policy override
+    val negotiatedMaxCurrentStreams = lastMaxConcurrentStreamsFromSettings ?: return 1
+
+    val maxPolicyValue =
+      connectionPool.getMaximumCallsPerConnection(route.address)
+        ?: Int.MAX_VALUE
+
+    return min(maxPolicyValue, negotiatedMaxCurrentStreams)
   }
 
   override fun handshake(): Handshake? = handshake
@@ -398,7 +424,7 @@ class RealConnection(
     e: IOException?,
   ) {
     var noNewExchangesEvent = false
-    lock.withLock {
+    this.withLock {
       if (e is StreamResetException) {
         when {
           e.errorCode == ErrorCode.REFUSED_STREAM -> {
