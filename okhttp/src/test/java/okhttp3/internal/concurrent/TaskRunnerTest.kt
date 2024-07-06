@@ -680,6 +680,96 @@ class TaskRunnerTest {
     assertThat(idleLatch2).isSameAs(idleLatch1)
   }
 
+  @Test fun cancelAllWhenEmptyDoesNotStartWorkerThread() {
+    redQueue.execute("red task", 100.µs) {
+      error("expected to be canceled")
+    }
+    assertThat(taskFaker.executeCallCount).isEqualTo(1)
+
+    blueQueue.execute("task", 100.µs) {
+      error("expected to be canceled")
+    }
+    assertThat(taskFaker.executeCallCount).isEqualTo(1)
+
+    redQueue.cancelAll()
+    assertThat(taskFaker.executeCallCount).isEqualTo(1)
+
+    blueQueue.cancelAll()
+    assertThat(taskFaker.executeCallCount).isEqualTo(1)
+  }
+
+  @Test fun noMoreThanOneWorkerThreadWaitingToStartAtATime() {
+    // Enqueueing the red task starts a thread because the head of the queue changed.
+    redQueue.execute("red task") {
+      log += "red:starting@${taskFaker.nanoTime}"
+      taskFaker.sleep(100.µs)
+      log += "red:finishing@${taskFaker.nanoTime}"
+    }
+    assertThat(taskFaker.executeCallCount).isEqualTo(1)
+
+    // Enqueueing the blue task doesn't start a thread because the red one is still starting.
+    blueQueue.execute("blue task") {
+      log += "blue:starting@${taskFaker.nanoTime}"
+      taskFaker.sleep(100.µs)
+      log += "blue:finishing@${taskFaker.nanoTime}"
+    }
+    assertThat(taskFaker.executeCallCount).isEqualTo(1)
+
+    // Running the red task starts another thread, so the two can run in parallel.
+    taskFaker.runNextTask()
+    assertThat(log).containsExactly("red:starting@0")
+    assertThat(taskFaker.executeCallCount).isEqualTo(2)
+
+    // Next the blue task starts.
+    taskFaker.runNextTask()
+    assertThat(log).containsExactly(
+      "red:starting@0",
+      "blue:starting@0",
+    )
+    assertThat(taskFaker.executeCallCount).isEqualTo(2)
+
+    // Advance time until the tasks complete.
+    taskFaker.advanceUntil(100.µs)
+    assertThat(log).containsExactly(
+      "red:starting@0",
+      "blue:starting@0",
+      "red:finishing@100000",
+      "blue:finishing@100000",
+    )
+    taskFaker.assertNoMoreTasks()
+    assertThat(taskFaker.executeCallCount).isEqualTo(2)
+  }
+
+  @Test fun onlyOneCoordinatorWaitingToStartFutureTasks() {
+    // Enqueueing the red task starts a coordinator thread.
+    redQueue.execute("red task", 100.µs) {
+      log += "red:run@${taskFaker.nanoTime}"
+    }
+    assertThat(taskFaker.executeCallCount).isEqualTo(1)
+
+    // Enqueueing the blue task doesn't need a 2nd coordinator yet.
+    blueQueue.execute("blue task", 200.µs) {
+      log += "blue:run@${taskFaker.nanoTime}"
+    }
+    assertThat(taskFaker.executeCallCount).isEqualTo(1)
+
+    // Nothing to do.
+    taskFaker.runTasks()
+    assertThat(log).isEmpty()
+
+    // At 100.µs, the coordinator runs the red task and starts a thread for the new coordinator.
+    taskFaker.advanceUntil(100.µs)
+    assertThat(log).containsExactly("red:run@100000")
+    assertThat(taskFaker.executeCallCount).isEqualTo(2)
+
+    // At 200.µs, the blue task runs.
+    taskFaker.advanceUntil(200.µs)
+    assertThat(log).containsExactly("red:run@100000", "blue:run@200000")
+    assertThat(taskFaker.executeCallCount).isEqualTo(2)
+
+    taskFaker.assertNoMoreTasks()
+  }
+
   private val Int.µs: Long
     get() = this * 1_000L
 }

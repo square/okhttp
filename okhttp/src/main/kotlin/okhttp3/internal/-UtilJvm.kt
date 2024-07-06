@@ -94,14 +94,18 @@ internal fun format(
   return String.format(Locale.US, format, *args)
 }
 
+/**
+ * will also strip BOM from the source
+ */
 @Throws(IOException::class)
 internal fun BufferedSource.readBomAsCharset(default: Charset): Charset {
   return when (select(UNICODE_BOMS)) {
+    // a mapping from the index of encoding methods in UNICODE_BOMS to its corresponding encoding method
     0 -> UTF_8
     1 -> UTF_16BE
-    2 -> UTF_16LE
-    3 -> UTF_32BE
-    4 -> UTF_32LE
+    2 -> UTF_32LE
+    3 -> UTF_16LE
+    4 -> UTF_32BE
     -1 -> default
     else -> throw AssertionError()
   }
