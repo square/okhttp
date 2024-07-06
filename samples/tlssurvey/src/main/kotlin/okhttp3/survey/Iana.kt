@@ -18,7 +18,7 @@ package okhttp3.survey
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.executeAsync
+import okhttp3.coroutines.executeAsync
 import okhttp3.survey.types.SuiteId
 import okio.ByteString.Companion.decodeHex
 import okio.IOException

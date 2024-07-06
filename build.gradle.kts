@@ -1,6 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import com.diffplug.gradle.spotless.KotlinExtension
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
@@ -9,9 +8,7 @@ import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
-import org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapper
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.js.translate.context.Namer.kotlin
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 buildscript {
@@ -29,6 +26,7 @@ buildscript {
     classpath(libs.gradlePlugin.spotless)
     classpath(libs.gradlePlugin.mavenPublish)
     classpath(libs.gradlePlugin.binaryCompatibilityValidator)
+    classpath(libs.gradlePlugin.mavenSympathy)
   }
 
   repositories {
@@ -91,6 +89,7 @@ subprojects {
   apply(plugin = "checkstyle")
   apply(plugin = "ru.vyarus.animalsniffer")
   apply(plugin = "biz.aQute.bnd.builder")
+  apply(plugin = "io.github.usefulness.maven-sympathy")
 
   tasks.withType<JavaCompile> {
     options.encoding = Charsets.UTF_8.toString()

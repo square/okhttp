@@ -27,18 +27,21 @@ import okhttp3.FakeRoutePlanner
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.TestUtil.awaitGarbageCollection
-import okhttp3.TestValueFactory
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.http2.Http2
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2ConnectionTest
 import okhttp3.internal.http2.MockHttp2Peer
 import okhttp3.internal.http2.Settings
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class ConnectionPoolTest {
-  private val factory = TestValueFactory()
+  private val routePlanner = FakeRoutePlanner()
+  private val factory = routePlanner.factory
+  private val taskFaker = routePlanner.taskFaker
   private val peer = MockHttp2Peer()
 
   /** The fake task runner prevents the cleanup runnable from being started.  */
@@ -48,8 +51,6 @@ class ConnectionPoolTest {
   private val routeB1 = factory.newRoute(addressB)
   private val addressC = factory.newAddress("c")
   private val routeC1 = factory.newRoute(addressC)
-
-  private val routePlanner = FakeRoutePlanner(factory.taskFaker)
 
   @AfterEach fun tearDown() {
     factory.close()
@@ -96,7 +97,7 @@ class ConnectionPoolTest {
         .build()
     val call = client.newCall(Request(addressA.url)) as RealCall
     call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
-    synchronized(c1) { call.acquireConnectionNoEvents(c1) }
+    c1.withLock { call.acquireConnectionNoEvents(c1) }
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
     assertThat(pool.closeConnections(50L)).isEqualTo(100L)
@@ -204,7 +205,8 @@ class ConnectionPoolTest {
   }
 
   @Test fun connectionPreWarmingHttp1() {
-    val expireTime = factory.taskFaker.nanoTime + 1_000_000_000_000
+    taskFaker.advanceUntil(System.nanoTime())
+    val expireTime = taskFaker.nanoTime + 1_000_000_000_000
 
     routePlanner.autoGeneratePlans = true
     routePlanner.defaultConnectionIdleAtNanos = expireTime
@@ -218,19 +220,22 @@ class ConnectionPoolTest {
     // Connections are replaced if they idle out or are evicted from the pool
     evictAllConnections(pool)
     assertThat(pool.connectionCount()).isEqualTo(2)
-    forceConnectionsToExpire(pool, routePlanner, expireTime)
+    forceConnectionsToExpire(pool, expireTime)
     assertThat(pool.connectionCount()).isEqualTo(2)
 
     // Excess connections aren't removed until they idle out, even if no longer needed
     setPolicy(pool, address, ConnectionPool.AddressPolicy(1))
     assertThat(pool.connectionCount()).isEqualTo(2)
-    forceConnectionsToExpire(pool, routePlanner, expireTime)
+    forceConnectionsToExpire(pool, expireTime)
     assertThat(pool.connectionCount()).isEqualTo(1)
   }
 
-  @Test fun connectionPreWarmingHttp2() {
-    val expireSooner = factory.taskFaker.nanoTime + 1_000_000_000_000
-    val expireLater = factory.taskFaker.nanoTime + 2_000_000_000_000
+  @Disabled("https://github.com/square/okhttp/issues/8451")
+  @Test
+  fun connectionPreWarmingHttp2() {
+    taskFaker.advanceUntil(System.nanoTime())
+    val expireSooner = taskFaker.nanoTime + 1_000_000_000_000
+    val expireLater = taskFaker.nanoTime + 2_000_000_000_000
 
     routePlanner.autoGeneratePlans = true
     val address = routePlanner.address
@@ -257,7 +262,7 @@ class ConnectionPoolTest {
 
     // Increase the connection's max so that the new connection is no longer needed
     updateMaxConcurrentStreams(http2Connection, 5)
-    forceConnectionsToExpire(pool, routePlanner, expireSooner)
+    forceConnectionsToExpire(pool, expireSooner)
     assertThat(pool.connectionCount()).isEqualTo(1)
   }
 
@@ -267,23 +272,22 @@ class ConnectionPoolTest {
     policy: ConnectionPool.AddressPolicy,
   ) {
     pool.setPolicy(address, policy)
-    routePlanner.factory.taskFaker.runTasks()
+    taskFaker.runTasks()
   }
 
   private fun evictAllConnections(pool: RealConnectionPool) {
     pool.evictAll()
     assertThat(pool.connectionCount()).isEqualTo(0)
-    routePlanner.factory.taskFaker.runTasks()
+    taskFaker.runTasks()
   }
 
   private fun forceConnectionsToExpire(
     pool: RealConnectionPool,
-    routePlanner: FakeRoutePlanner,
     expireTime: Long,
   ) {
     val idleTimeNanos = expireTime + pool.keepAliveDurationNs
     repeat(pool.connectionCount()) { pool.closeConnections(idleTimeNanos) }
-    routePlanner.factory.taskFaker.runTasks()
+    taskFaker.runTasks()
   }
 
   private fun connectHttp2(
@@ -315,7 +319,7 @@ class ConnectionPoolTest {
     assertThat(ackFrame.streamId).isEqualTo(0)
     assertThat(ackFrame.ack).isTrue()
 
-    routePlanner.factory.taskFaker.runTasks()
+    taskFaker.runTasks()
 
     return connection
   }
@@ -328,7 +332,7 @@ class ConnectionPoolTest {
     settings[Settings.MAX_CONCURRENT_STREAMS] = amount
     connection.readerRunnable.applyAndAckSettings(true, settings)
     assertThat(connection.peerSettings[Settings.MAX_CONCURRENT_STREAMS]).isEqualTo(amount)
-    routePlanner.factory.taskFaker.runTasks()
+    taskFaker.runTasks()
   }
 
   /** Use a helper method so there's no hidden reference remaining on the stack.  */
@@ -342,6 +346,6 @@ class ConnectionPoolTest {
         .build()
     val call = client.newCall(Request(connection.route().address.url)) as RealCall
     call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
-    synchronized(connection) { call.acquireConnectionNoEvents(connection) }
+    connection.withLock { call.acquireConnectionNoEvents(connection) }
   }
 }

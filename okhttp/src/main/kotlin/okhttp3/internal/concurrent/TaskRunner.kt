@@ -52,6 +52,17 @@ class TaskRunner(
   private var coordinatorWaiting = false
   private var coordinatorWakeUpAt = 0L
 
+  /**
+   * When we need a new thread to run tasks, we call [Backend.execute]. A few microseconds later we
+   * expect a newly-started thread to call [Runnable.run]. We shouldn't request new threads until
+   * the already-requested ones are in service, otherwise we might create more threads than we need.
+   *
+   * We use [executeCallCount] and [runCallCount] to defend against starting more threads than we
+   * need. Both fields are guarded by [lock].
+   */
+  private var executeCallCount = 0
+  private var runCallCount = 0
+
   /** Queues with tasks that are currently executing their [TaskQueue.activeTask]. */
   private val busyQueues = mutableListOf<TaskQueue>()
 
@@ -61,9 +72,14 @@ class TaskRunner(
   private val runnable: Runnable =
     object : Runnable {
       override fun run() {
+        var incrementedRunCallCount = false
         while (true) {
           val task =
             this@TaskRunner.lock.withLock {
+              if (!incrementedRunCallCount) {
+                incrementedRunCallCount = true
+                runCallCount++
+              }
               awaitTaskToRun()
             } ?: return
 
@@ -76,7 +92,7 @@ class TaskRunner(
               // If the task is crashing start another thread to service the queues.
               if (!completedNormally) {
                 lock.withLock {
-                  backend.execute(this@TaskRunner, this)
+                  startAnotherThread()
                 }
               }
             }
@@ -99,7 +115,7 @@ class TaskRunner(
     if (coordinatorWaiting) {
       backend.coordinatorNotify(this@TaskRunner)
     } else {
-      backend.execute(this@TaskRunner, runnable)
+      startAnotherThread()
     }
   }
 
@@ -157,7 +173,7 @@ class TaskRunner(
    * Returns an immediately-executable task for the calling thread to execute, sleeping as necessary
    * until one is ready. If there are no ready queues, or if other threads have everything under
    * control this will return null. If there is more than a single task ready to execute immediately
-   * this will launch another thread to handle that work.
+   * this will start another thread to handle that work.
    */
   fun awaitTaskToRun(): Task? {
     lock.assertHeld()
@@ -207,7 +223,7 @@ class TaskRunner(
 
           // Also start another thread if there's more work or scheduling to do.
           if (multipleReadyTasks || !coordinatorWaiting && readyQueues.isNotEmpty()) {
-            backend.execute(this@TaskRunner, runnable)
+            startAnotherThread()
           }
 
           return readyTask
@@ -236,6 +252,15 @@ class TaskRunner(
         }
       }
     }
+  }
+
+  /** Start another thread, unless a new thread is already scheduled to start. */
+  private fun startAnotherThread() {
+    lock.assertHeld()
+    if (executeCallCount > runCallCount) return // A thread is still starting.
+
+    executeCallCount++
+    backend.execute(this@TaskRunner, runnable)
   }
 
   fun newQueue(): TaskQueue {

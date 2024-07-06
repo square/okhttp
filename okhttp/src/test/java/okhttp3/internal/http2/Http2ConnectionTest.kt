@@ -38,6 +38,7 @@ import okhttp3.internal.EMPTY_BYTE_ARRAY
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.notifyAll
 import okhttp3.internal.wait
 import okio.AsyncTimeout
@@ -968,7 +969,7 @@ class Http2ConnectionTest {
         }
       }
     val connection = connect(peer, IGNORE, listener)
-    synchronized(connection) {
+    connection.withLock {
       assertThat(connection.peerSettings.getMaxConcurrentStreams()).isEqualTo(10)
     }
     maxConcurrentStreamsUpdated.await()
@@ -997,7 +998,7 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     assertThat(peer.takeFrame().type).isEqualTo(Http2.TYPE_SETTINGS)
     assertThat(peer.takeFrame().type).isEqualTo(Http2.TYPE_PING)
-    synchronized(connection) {
+    connection.withLock {
       assertThat(connection.peerSettings.headerTableSize).isEqualTo(10000)
       assertThat(connection.peerSettings.initialWindowSize).isEqualTo(40000)
       assertThat(connection.peerSettings.getMaxFrameSize(-1)).isEqualTo(50000)
@@ -1024,7 +1025,7 @@ class Http2ConnectionTest {
     val settings2 = Settings()
     settings2[Settings.MAX_CONCURRENT_STREAMS] = 60000
     connection.readerRunnable.applyAndAckSettings(true, settings2)
-    synchronized(connection) {
+    connection.withLock {
       assertThat(connection.peerSettings.headerTableSize).isEqualTo(-1)
       assertThat(connection.peerSettings.initialWindowSize)
         .isEqualTo(Settings.DEFAULT_INITIAL_WINDOW_SIZE)
@@ -1393,7 +1394,7 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     connection.newStream(headerEntries("a", "android"), false)
-    synchronized(connection) {
+    connection.withLock {
       if (!connection.isHealthy(System.nanoTime())) {
         throw ConnectionShutdownException()
       }

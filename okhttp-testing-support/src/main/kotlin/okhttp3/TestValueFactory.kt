@@ -36,6 +36,7 @@ import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.CallConnectionUser
 import okhttp3.internal.connection.FastFallbackExchangeFinder
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RealConnectionPool
@@ -93,7 +94,7 @@ class TestValueFactory : Closeable {
         socket = Socket(),
         idleAtNs = idleAtNanos,
       )
-    synchronized(result) { pool.put(result) }
+    result.withLock { pool.put(result) }
     return result
   }
 

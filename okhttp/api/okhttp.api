@@ -130,11 +130,11 @@ public final class okhttp3/CacheControl$Builder {
 	public final fun build ()Lokhttp3/CacheControl;
 	public final fun immutable ()Lokhttp3/CacheControl$Builder;
 	public final fun maxAge (ILjava/util/concurrent/TimeUnit;)Lokhttp3/CacheControl$Builder;
-	public final fun maxAge (ILkotlin/time/DurationUnit;)Lokhttp3/CacheControl$Builder;
+	public final fun maxAge-LRDsOJo (J)Lokhttp3/CacheControl$Builder;
 	public final fun maxStale (ILjava/util/concurrent/TimeUnit;)Lokhttp3/CacheControl$Builder;
-	public final fun maxStale (ILkotlin/time/DurationUnit;)Lokhttp3/CacheControl$Builder;
+	public final fun maxStale-LRDsOJo (J)Lokhttp3/CacheControl$Builder;
 	public final fun minFresh (ILjava/util/concurrent/TimeUnit;)Lokhttp3/CacheControl$Builder;
-	public final fun minFresh (ILkotlin/time/DurationUnit;)Lokhttp3/CacheControl$Builder;
+	public final fun minFresh-LRDsOJo (J)Lokhttp3/CacheControl$Builder;
 	public final fun noCache ()Lokhttp3/CacheControl$Builder;
 	public final fun noStore ()Lokhttp3/CacheControl$Builder;
 	public final fun noTransform ()Lokhttp3/CacheControl$Builder;

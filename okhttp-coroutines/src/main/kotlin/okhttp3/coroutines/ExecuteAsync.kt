@@ -15,11 +15,14 @@
  *
  */
 
-package okhttp3
+package okhttp3.coroutines
 
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Response
 import okhttp3.internal.closeQuietly
 import okio.IOException
 
