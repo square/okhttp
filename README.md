@@ -1,4 +1,4 @@
-OkHttp
+Hotstar OkHttp
 ======
 
 See the [project website][okhttp] for documentation and APIs.
