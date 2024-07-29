@@ -17,7 +17,7 @@ retrofit = "2.11.0"
 testcontainers = "1.19.8"
 
 [libraries]
-amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.3.3"
+amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.4.1"
 androidx-activity = "androidx.activity:activity-ktx:1.9.1"
 androidx-annotation = "androidx.annotation:annotation:1.8.1"
 androidx-espresso-core = "androidx.test.espresso:espresso-core:3.6.1"
