@@ -37,6 +37,7 @@ import okhttp3.internal.http2.Settings
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class ConnectionPoolTest {
   private val routePlanner = FakeRoutePlanner()
@@ -228,6 +229,9 @@ class ConnectionPoolTest {
     assertThat(pool.connectionCount()).isEqualTo(2)
     forceConnectionsToExpire(pool, expireTime)
     assertThat(pool.connectionCount()).isEqualTo(1)
+
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(3))
+    assertThat(pool.connectionCount()).isEqualTo(3)
   }
 
   @Disabled("https://github.com/square/okhttp/issues/8451")
@@ -266,12 +270,149 @@ class ConnectionPoolTest {
     assertThat(pool.connectionCount()).isEqualTo(1)
   }
 
+  @Test fun testSettingMaxConcurrentOnAddressPolicyHttp2() {
+    taskFaker.advanceUntil(System.nanoTime())
+    val expireSooner = taskFaker.nanoTime + 1_000_000_000_000
+    val expireLater = taskFaker.nanoTime + 2_000_000_000_000
+
+    routePlanner.autoGeneratePlans = true
+    val address = routePlanner.address
+    val pool = routePlanner.pool
+
+    // Add a connection to the pool that won't expire for a while
+    routePlanner.defaultConnectionIdleAtNanos = expireLater
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 1))
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    // All other connections created will expire sooner
+    routePlanner.defaultConnectionIdleAtNanos = expireSooner
+
+    // Turn it into an http/2 connection that supports 5 concurrent streams
+    // which can satisfy a larger policy
+    val connection = routePlanner.plans.first().connection
+    val http2Connection = connectHttp2(peer, connection, 5)
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5))
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    // Decrease the policy max connections, and check that new connections are created
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5, maximumConcurrentCallsPerConnection = 1))
+    // fills up the first connect and then adds single connections
+    // 5 = 1 + 1 + 1 + 1 + 1 (five unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(5)
+
+    // increase the policy max connections, and check that new connections are created
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5, maximumConcurrentCallsPerConnection = 2))
+    forceConnectionsToExpire(pool, expireSooner)
+    // fills up the first connect and then adds single connections
+    // 5 = 2 + 1 + 1 + 1 (four unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(4)
+
+    // increase the policy max connections, and check that new connections are created
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5, maximumConcurrentCallsPerConnection = 4))
+    forceConnectionsToExpire(pool, expireSooner)
+    // fills up the first connect and then adds single connections
+    // 5 = 4 + 1 (two unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(2)
+
+    // Decrease the policy max connections, and check that new connections are created
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5, maximumConcurrentCallsPerConnection = 3))
+    // fills up the first connect and then removes an unused after
+    // 5 = 3 + 1 + 1 (three unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(3)
+
+    // If you update the settings to something smaller than the current
+    // set policy it should be adhered too
+    updateMaxConcurrentStreams(http2Connection, 2)
+    forceConnectionsToExpire(pool, expireSooner)
+    // fills up the first connect and then adds single connections
+    // 5 = 2 + 1 + 1 + 1 (four unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(4)
+
+    // If you update the settings to something more than the current
+    // set policy it should not go past the max in the policy
+    updateMaxConcurrentStreams(http2Connection, 5)
+    forceConnectionsToExpire(pool, expireSooner)
+    // fills up the first connect and then adds single connections
+    // 5 = 3 + 1 + 1 (three unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(3)
+  }
+
+  @Test fun testDefaultConnectionPoolPoliciesOnlyAllowPositiveValues() {
+    assertThrows<IllegalArgumentException> {
+      ConnectionPool.ConnectionPoolPolicy(0)
+    }
+  }
+
+  @Test fun testSettingDefaultPolicyMaxConcurrentCallsHttp2() {
+    taskFaker.advanceUntil(System.nanoTime())
+    val expireSooner = taskFaker.nanoTime + 1_000_000_000_000
+    val expireLater = taskFaker.nanoTime + 2_000_000_000_000
+
+    routePlanner.autoGeneratePlans = true
+    val address = routePlanner.address
+    val pool = routePlanner.pool
+
+    setDefaultPolicy(pool, ConnectionPool.ConnectionPoolPolicy(3))
+
+    // Add a connection to the pool that won't expire for a while
+    routePlanner.defaultConnectionIdleAtNanos = expireLater
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 1))
+    assertThat(pool.connectionCount()).isEqualTo(1)
+
+    // All other connections created will expire sooner
+    routePlanner.defaultConnectionIdleAtNanos = expireSooner
+
+    // Turn it into an http/2 connection that supports 5 concurrent streams
+    // which can satisfy a larger policy
+    val connection = routePlanner.plans.first().connection
+    connectHttp2(peer, connection, 5)
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5))
+    // fills up the first connect and then adds single connections
+    // 5 = 3 + 1 + 1 (three unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(3)
+
+    // override the default policy max connections, and check that new connections are created
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5, maximumConcurrentCallsPerConnection = 1))
+    // fills up the first connect and then adds single connections
+    // 5 = 1 + 1 + 1 + 1 + 1 (five unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(5)
+
+    // update the default policy max connections, and check that nothing new happened to override the specific
+    setDefaultPolicy(pool, ConnectionPool.ConnectionPoolPolicy(4))
+    forceConnectionsToExpire(pool, expireSooner)
+    // fills up the first connect and then adds single connections
+    // 5 = 1 + 1 + 1 + 1 + 1 (five unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(5)
+
+    // remove the specific max from the address policy, then the default will get used
+    setPolicy(pool, address, ConnectionPool.AddressPolicy(minimumConcurrentCalls = 5))
+    forceConnectionsToExpire(pool, expireSooner)
+    // fills up the first connect and then adds single connections
+    // 5 = 4 + 1 (two unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(2)
+
+    // remove the specific max from the address policy, then the default will get used
+    setDefaultPolicy(pool, ConnectionPool.ConnectionPoolPolicy(3))
+    forceConnectionsToExpire(pool, expireSooner)
+    // fills up the first connect and then adds single connections
+    // 5 = 3 + 1 + 1 (three unique connections)
+    assertThat(pool.connectionCount()).isEqualTo(3)
+  }
+
   private fun setPolicy(
     pool: RealConnectionPool,
     address: Address,
     policy: ConnectionPool.AddressPolicy,
   ) {
     pool.setPolicy(address, policy)
+    taskFaker.runTasks()
+  }
+
+  private fun setDefaultPolicy(
+    pool: RealConnectionPool,
+    policy: ConnectionPool.ConnectionPoolPolicy,
+  ) {
+    pool.setDefaultPolicy(policy)
     taskFaker.runTasks()
   }
 
@@ -332,6 +473,8 @@ class ConnectionPoolTest {
     settings[Settings.MAX_CONCURRENT_STREAMS] = amount
     connection.readerRunnable.applyAndAckSettings(true, settings)
     assertThat(connection.peerSettings[Settings.MAX_CONCURRENT_STREAMS]).isEqualTo(amount)
+    // temporary fix of flaky test until we can get Http/2 connections happy with serial task runners
+    Thread.sleep(100)
     taskFaker.runTasks()
   }
 

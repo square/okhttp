@@ -384,16 +384,25 @@ public final class okhttp3/ConnectionPool {
 	public final fun connectionCount ()I
 	public final fun evictAll ()V
 	public final fun idleConnectionCount ()I
+	public final fun setDefaultPolicy (Lokhttp3/ConnectionPool$ConnectionPoolPolicy;)V
 	public final fun setPolicy (Lokhttp3/Address;Lokhttp3/ConnectionPool$AddressPolicy;)V
 }
 
 public final class okhttp3/ConnectionPool$AddressPolicy {
 	public final field backoffDelayMillis J
 	public final field backoffJitterMillis I
+	public final field maximumConcurrentCallsPerConnection Ljava/lang/Integer;
 	public final field minimumConcurrentCalls I
 	public fun <init> ()V
-	public fun <init> (IJI)V
-	public synthetic fun <init> (IJIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IJILjava/lang/Integer;)V
+	public synthetic fun <init> (IJILjava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class okhttp3/ConnectionPool$ConnectionPoolPolicy {
+	public final field maximumConcurrentCallsPerConnection I
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class okhttp3/ConnectionSpec {

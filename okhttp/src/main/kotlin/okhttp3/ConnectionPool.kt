@@ -139,6 +139,15 @@ class ConnectionPool internal constructor(
   }
 
   /**
+   * Sets a default AddressPolicy that applies to all addresses.
+   * Overwrites any existing default policy.
+   */
+  @ExperimentalOkHttpApi
+  fun setDefaultPolicy(policy: ConnectionPoolPolicy) {
+    delegate.setDefaultPolicy(policy)
+  }
+
+  /**
    * A policy for how the pool should treat a specific address.
    */
   class AddressPolicy(
@@ -152,5 +161,28 @@ class ConnectionPool internal constructor(
     @JvmField val backoffDelayMillis: Long = 60 * 1000,
     /** How much jitter to introduce in connection retry backoff delays */
     @JvmField val backoffJitterMillis: Int = 100,
+    /**
+     * The maximum number of concurrent calls per connection for a given address.
+     * Set this value to 1 to disable HTTP/2 connection coalescing
+     */
+    @JvmField val maximumConcurrentCallsPerConnection: Int? = null,
   )
+
+  /**
+   * A default policy for all connections. Overridable by [AddressPolicy]
+   * for specific addresses.
+   */
+  class ConnectionPoolPolicy(
+    /**
+     * The maximum number of concurrent calls per connection.
+     * Set this value to 1 to disable HTTP/2 connection coalescing
+     */
+    @JvmField val maximumConcurrentCallsPerConnection: Int = Int.MAX_VALUE,
+  ) {
+    init {
+      require(maximumConcurrentCallsPerConnection > 0) {
+        "maximumConcurrentCallsPerConnection is not allowed to be less than one (1)."
+      }
+    }
+  }
 }
