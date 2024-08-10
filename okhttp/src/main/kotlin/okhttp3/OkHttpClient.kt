@@ -1401,7 +1401,7 @@ open class OkHttpClient internal constructor(
     fun headerSizeLimit(characters: Long) =
       apply {
         require(characters >= -1) {
-          "headerSizeLimit must me either positive or equals to -1: $characters"
+          "headerSizeLimit must be either positive or equals to -1: $characters"
         }
 
         this.headerSizeLimit = characters
