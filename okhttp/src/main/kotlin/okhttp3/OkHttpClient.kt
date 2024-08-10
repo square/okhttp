@@ -37,6 +37,7 @@ import okhttp3.internal.checkDuration
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RouteDatabase
+import okhttp3.internal.http1.HeadersReader
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.proxy.NullProxySelector
@@ -264,6 +265,7 @@ open class OkHttpClient internal constructor(
 
   internal val routeDatabase: RouteDatabase = builder.routeDatabase ?: RouteDatabase()
   internal val taskRunner: TaskRunner = builder.taskRunner ?: TaskRunner.INSTANCE
+  internal val headerSizeLimit: Long = builder.headerSizeLimit
 
   @get:JvmName("connectionPool")
   val connectionPool: ConnectionPool =
@@ -626,6 +628,7 @@ open class OkHttpClient internal constructor(
     internal var minWebSocketMessageToCompress = RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE
     internal var routeDatabase: RouteDatabase? = null
     internal var taskRunner: TaskRunner? = null
+    internal var headerSizeLimit: Long = HeadersReader.HEADER_LIMIT
 
     internal constructor(okHttpClient: OkHttpClient) : this() {
       this.dispatcher = okHttpClient.dispatcher
@@ -661,6 +664,7 @@ open class OkHttpClient internal constructor(
       this.minWebSocketMessageToCompress = okHttpClient.minWebSocketMessageToCompress
       this.routeDatabase = okHttpClient.routeDatabase
       this.taskRunner = okHttpClient.taskRunner
+      this.headerSizeLimit = okHttpClient.headerSizeLimit
     }
 
     /**
@@ -1385,6 +1389,22 @@ open class OkHttpClient internal constructor(
         }
 
         this.minWebSocketMessageToCompress = bytes
+      }
+
+    /**
+     * Sets the maximum length (in characters, excluding line breaks) of the header.
+     *
+     * Set to -1 to allow any size fot the header.
+     *
+     * [HeadersReader.HEADER_LIMIT] by default.
+     */
+    fun headerSizeLimit(characters: Long) =
+      apply {
+        require(characters >= -1) {
+          "headerSizeLimit must me either positive or equals to -1: $characters"
+        }
+
+        this.headerSizeLimit = characters
       }
 
     fun build(): OkHttpClient = OkHttpClient(this)

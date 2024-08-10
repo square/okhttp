@@ -19,15 +19,26 @@ import okhttp3.Headers
 import okio.BufferedSource
 
 /**
- * Parse all headers delimited by "\r\n" until an empty line. This throws if headers exceed 256 KiB.
+ * Parse all headers delimited by "\r\n" until an empty line. This throws if headers exceed `headerLimit`.
  */
-class HeadersReader(val source: BufferedSource) {
-  private var headerLimit = HEADER_LIMIT.toLong()
+class HeadersReader(
+  val source: BufferedSource,
+  private var headerLimit: Long = HEADER_LIMIT
+) {
 
   /** Read a single line counted against the header size limit. */
   fun readLine(): String {
-    val line = source.readUtf8LineStrict(headerLimit)
-    headerLimit -= line.length.toLong()
+    val line = if(headerLimit == -1L)
+        source.readUtf8LineStrict()
+      else
+        source.readUtf8LineStrict(headerLimit)
+    if(headerLimit != -1L) {
+      if(line.length.toLong() > headerLimit) {
+        headerLimit = -2
+      } else {
+        headerLimit -= line.length.toLong()
+      }
+    }
     return line
   }
 
@@ -43,6 +54,6 @@ class HeadersReader(val source: BufferedSource) {
   }
 
   companion object {
-    private const val HEADER_LIMIT = 256 * 1024
+    const val HEADER_LIMIT: Long = 256L * 1024L
   }
 }
