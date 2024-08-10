@@ -1394,7 +1394,7 @@ open class OkHttpClient internal constructor(
     /**
      * Sets the maximum length (in characters, excluding line breaks) of the header.
      *
-     * Set to -1 to allow any size fot the header.
+     * Set to [HeadersReader.HEADER_NO_LIMIT] to allow any size fot the header.
      *
      * [HeadersReader.HEADER_LIMIT] by default.
      */

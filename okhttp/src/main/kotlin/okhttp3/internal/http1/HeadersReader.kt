@@ -28,13 +28,13 @@ class HeadersReader(
 
   /** Read a single line counted against the header size limit. */
   fun readLine(): String {
-    val line = if(headerLimit == -1L)
+    val line = if(headerLimit == HEADER_NO_LIMIT)
         source.readUtf8LineStrict()
       else
         source.readUtf8LineStrict(headerLimit)
-    if(headerLimit != -1L) {
+    if(headerLimit != HEADER_NO_LIMIT) {
       if(line.length.toLong() > headerLimit) {
-        headerLimit = -2
+        headerLimit = HEADER_NO_LIMIT - 1L
       } else {
         headerLimit -= line.length.toLong()
       }
@@ -55,5 +55,6 @@ class HeadersReader(
 
   companion object {
     const val HEADER_LIMIT: Long = 256L * 1024L
+    const val HEADER_NO_LIMIT: Long = -1L
   }
 }
