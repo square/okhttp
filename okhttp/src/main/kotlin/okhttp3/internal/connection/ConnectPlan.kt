@@ -91,7 +91,7 @@ class ConnectPlan(
    * The application layer socket. Either an [SSLSocket] layered over [rawSocket], or [rawSocket]
    * itself if this connection does not use SSL.
    */
-  internal lateinit var socket: Socket
+  internal var socket: Socket? = null
   private var handshake: Handshake? = null
   private var protocol: Protocol? = null
   private lateinit var source: BufferedSource
@@ -217,7 +217,7 @@ class ConnectPlan(
           connectionPool = connectionPool,
           route = route,
           rawSocket = rawSocket,
-          socket = socket,
+          socket = socket!!,
           handshake = handshake,
           protocol = protocol,
           source = source,
@@ -248,7 +248,7 @@ class ConnectPlan(
       user.removePlanToCancel(this)
       if (!success) {
         socket?.closeQuietly()
-        rawSocket?.closeQuietly()
+        rawSocket.closeQuietly()
       }
     }
   }
@@ -421,8 +421,6 @@ class ConnectPlan(
     val url = route.address.url
     val requestLine = "CONNECT ${url.toHostHeader(includeDefaultPort = true)} HTTP/1.1"
     while (true) {
-      val source = this.source!!
-      val sink = this.sink!!
       val tunnelCodec =
         Http1ExchangeCodec(
           // No client for CONNECT tunnels:
