@@ -470,26 +470,34 @@ class RealConnection(
           socket = socket,
           handshake = null,
           protocol = null,
-          source = object : Source {
-            override fun close() = Unit
+          source =
+            object : Source {
+              override fun close() = Unit
 
-            override fun read(sink: Buffer, byteCount: Long): Long {
-              throw UnsupportedOperationException()
-            }
+              override fun read(
+                sink: Buffer,
+                byteCount: Long,
+              ): Long {
+                throw UnsupportedOperationException()
+              }
 
-            override fun timeout(): Timeout = Timeout.NONE
-          }.buffer(),
-          sink = object : Sink {
-            override fun close() = Unit
+              override fun timeout(): Timeout = Timeout.NONE
+            }.buffer(),
+          sink =
+            object : Sink {
+              override fun close() = Unit
 
-            override fun flush() = Unit
+              override fun flush() = Unit
 
-            override fun timeout(): Timeout = Timeout.NONE
+              override fun timeout(): Timeout = Timeout.NONE
 
-            override fun write(source: Buffer, byteCount: Long) {
-              throw UnsupportedOperationException()
-            }
-          }.buffer(),
+              override fun write(
+                source: Buffer,
+                byteCount: Long,
+              ) {
+                throw UnsupportedOperationException()
+              }
+            }.buffer(),
           pingIntervalMillis = 0,
           ConnectionListener.NONE,
         )
