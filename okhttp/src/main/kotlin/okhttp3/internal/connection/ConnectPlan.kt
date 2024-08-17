@@ -91,11 +91,11 @@ class ConnectPlan(
    * The application layer socket. Either an [SSLSocket] layered over [rawSocket], or [rawSocket]
    * itself if this connection does not use SSL.
    */
-  internal var socket: Socket? = null
+  internal lateinit var socket: Socket
   private var handshake: Handshake? = null
   private var protocol: Protocol? = null
-  private var source: BufferedSource? = null
-  private var sink: BufferedSink? = null
+  private lateinit var source: BufferedSource
+  private lateinit var sink: BufferedSink
   private var connection: RealConnection? = null
 
   /** True if this connection is ready for use, including TCP, tunnels, and TLS. */
@@ -153,7 +153,7 @@ class ConnectPlan(
   }
 
   override fun connectTlsEtc(): ConnectResult {
-    check(rawSocket != null) { "TCP not connected" }
+    val rawSocket = requireNotNull(rawSocket) { "TCP not connected" }
     check(!isReady) { "already connected" }
 
     val connectionSpecs = route.address.connectionSpecs
