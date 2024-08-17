@@ -35,7 +35,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Upload Artifacts
         run: ./gradlew clean publish --stacktrace
@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: gradle/actions/wrapper-validation@v3
+      - uses: gradle/actions/wrapper-validation@v4
       - name: Validate Renovate
         uses: rinchsan/renovate-config-validator@v0.2.0
         with:
@@ -79,7 +79,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
         run: ./gradlew check -PandroidBuild=true -PgraalBuild=true -x test -x test
@@ -108,7 +108,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=11
@@ -150,7 +150,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=11
@@ -178,7 +178,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=8
@@ -212,7 +212,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
@@ -240,7 +240,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=openjsse
@@ -268,7 +268,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
         run: ./gradlew test -Dokhttp.platform=conscrypt
@@ -296,7 +296,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
         run: ./gradlew test -Dokhttp.platform=bouncycastle
@@ -325,7 +325,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
         run: ./gradlew test -Dokhttp.platform=corretto
@@ -354,7 +354,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=17
@@ -389,7 +389,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=21
@@ -418,7 +418,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Test
         run: ./gradlew test
@@ -447,13 +447,13 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build okcurl
         run: ./gradlew okcurl:nativeImage
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build ConsoleLauncher
         run: ./gradlew -PgraalBuild=true native-image-tests:nativeImage
@@ -500,7 +500,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Gradle cache
         run: ./gradlew -PandroidBuild=true :okhttp-android:test
@@ -572,7 +572,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
         run: ./gradlew test -Dokhttp.platform=loom -Dtest.java.version=21 -PcontainerTests=true
@@ -616,7 +616,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Gradle cache
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: AVD cache
         uses: actions/cache@v4
