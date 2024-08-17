@@ -91,7 +91,7 @@ subprojects {
   apply(plugin = "checkstyle")
   apply(plugin = "ru.vyarus.animalsniffer")
   apply(plugin = "biz.aQute.bnd.builder")
-  apply(plugin = "io.github.usefulness.maven-sympathy")
+//  apply(plugin = "io.github.usefulness.maven-sympathy")
 
   tasks.withType<JavaCompile> {
     options.encoding = Charsets.UTF_8.toString()
