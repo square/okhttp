@@ -37,3 +37,4 @@ docs/index.md
 /.java-version
 /site/
 /docs/changelogs/changelog.md
+/.kotlin/**/*
