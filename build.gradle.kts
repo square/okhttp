@@ -85,6 +85,7 @@ subprojects {
   if (project.name == "regression-test") return@subprojects
   if (project.name == "android-test-app") return@subprojects
   if (project.name == "container-tests") return@subprojects
+  if (project.name == "native-image-tests") return@subprojects
 
   apply(plugin = "checkstyle")
   apply(plugin = "ru.vyarus.animalsniffer")
