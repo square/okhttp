@@ -73,14 +73,14 @@ class RealConnection(
   val connectionPool: RealConnectionPool,
   override val route: Route,
   /** The low-level TCP socket. */
-  private var rawSocket: Socket,
+  private val rawSocket: Socket,
   /**
    * The application layer socket. Either an [SSLSocket] layered over [rawSocket], or [rawSocket]
    * itself if this connection does not use SSL.
    */
-  private var socket: Socket,
-  private var handshake: Handshake?,
-  private var protocol: Protocol?,
+  private val socket: Socket,
+  private val handshake: Handshake?,
+  private val protocol: Protocol,
   private val source: BufferedSource,
   private val sink: BufferedSink,
   private val pingIntervalMillis: Int,
@@ -168,9 +168,6 @@ class RealConnection(
 
   @Throws(IOException::class)
   private fun startHttp2() {
-    val socket = this.socket
-    val source = this.source
-    val sink = this.sink
     socket.soTimeout = 0 // HTTP/2 connection timeouts are set per-stream.
     val flowControlListener = connectionListener as? FlowControlListener ?: FlowControlListener.None
     val http2Connection =
@@ -259,7 +256,7 @@ class RealConnection(
     }
 
     // We have a host mismatch. But if the certificate matches, we're still good.
-    return !noCoalescedConnections && handshake != null && certificateSupportHost(url, handshake!!)
+    return !noCoalescedConnections && handshake != null && certificateSupportHost(url, handshake)
   }
 
   private fun certificateSupportHost(
@@ -441,7 +438,7 @@ class RealConnection(
     }
   }
 
-  override fun protocol(): Protocol = protocol!!
+  override fun protocol(): Protocol = protocol
 
   override fun toString(): String {
     return "Connection{${route.address.url.host}:${route.address.url.port}," +
@@ -469,7 +466,7 @@ class RealConnection(
           rawSocket = Socket(),
           socket = socket,
           handshake = null,
-          protocol = null,
+          protocol = Protocol.HTTP_2,
           source =
             object : Source {
               override fun close() = Unit

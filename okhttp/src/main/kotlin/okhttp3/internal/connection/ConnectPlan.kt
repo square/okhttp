@@ -177,7 +177,7 @@ class ConnectPlan(
         // that happens, then we will have buffered bytes that are needed by the SSLSocket!
         // This check is imperfect: it doesn't tell us whether a handshake will succeed, just
         // that it will almost certainly fail because the proxy has sent unexpected data.
-        if (source?.buffer?.exhausted() == false || sink?.buffer?.exhausted() == false) {
+        if (!source.buffer.exhausted() || !sink.buffer.exhausted()) {
           throw IOException("TLS tunnel buffered too many bytes!")
         }
 
@@ -219,7 +219,7 @@ class ConnectPlan(
           rawSocket = rawSocket,
           socket = socket!!,
           handshake = handshake,
-          protocol = protocol,
+          protocol = protocol!!,
           source = source,
           sink = sink,
           pingIntervalMillis = pingIntervalMillis,
