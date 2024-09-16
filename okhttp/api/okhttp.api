@@ -986,6 +986,7 @@ public final class okhttp3/OkHttpClient$Builder {
 	public final fun fastFallback (Z)Lokhttp3/OkHttpClient$Builder;
 	public final fun followRedirects (Z)Lokhttp3/OkHttpClient$Builder;
 	public final fun followSslRedirects (Z)Lokhttp3/OkHttpClient$Builder;
+	public final fun headerSizeLimit (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun hostnameVerifier (Ljavax/net/ssl/HostnameVerifier;)Lokhttp3/OkHttpClient$Builder;
 	public final fun interceptors ()Ljava/util/List;
 	public final fun minWebSocketMessageToCompress (J)Lokhttp3/OkHttpClient$Builder;

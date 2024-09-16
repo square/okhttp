@@ -68,7 +68,10 @@ class Http1ExchangeCodec(
   private val sink: BufferedSink,
 ) : ExchangeCodec {
   private var state = STATE_IDLE
-  private val headersReader = HeadersReader(source)
+  private val headersReader = HeadersReader(
+    source = source,
+    headerLimit = client?.headerSizeLimit?:HeadersReader.HEADER_LIMIT
+  )
 
   private val Response.isChunked: Boolean
     get() = "chunked".equals(header("Transfer-Encoding"), ignoreCase = true)
