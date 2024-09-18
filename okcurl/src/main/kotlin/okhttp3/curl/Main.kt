@@ -16,6 +16,7 @@
 package okhttp3.curl
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
@@ -39,7 +40,10 @@ import okhttp3.internal.platform.Platform
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.LoggingEventListener
 
-class Main : CliktCommand(name = NAME, help = "A curl for the next-generation web.") {
+class Main : CliktCommand(NAME) {
+  override fun help(context: Context) =
+    "A curl for the next-generation web."
+
   val method: String? by option("-X", "--request", help = "Specify request command to use")
 
   val data: String? by option("-d", "--data", help = "HTTP POST data")
