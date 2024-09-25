@@ -261,7 +261,7 @@ class Http2Reader(
     if (length % 6 != 0) throw IOException("TYPE_SETTINGS length % 6 != 0: $length")
     val settings = Settings()
     for (i in 0 until length step 6) {
-      var id = source.readShort() and 0xffff
+      val id = source.readShort() and 0xffff
       val value = source.readInt()
 
       when (id) {
@@ -277,11 +277,11 @@ class Http2Reader(
         }
 
         // SETTINGS_MAX_CONCURRENT_STREAMS
-        3 -> id = 4 // Renumbered in draft 10.
+        3 -> {
+        }
 
         // SETTINGS_INITIAL_WINDOW_SIZE
         4 -> {
-          id = 7 // Renumbered in draft 10.
           if (value < 0) {
             throw IOException("PROTOCOL_ERROR SETTINGS_INITIAL_WINDOW_SIZE > 2^31 - 1")
           }
