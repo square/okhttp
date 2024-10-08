@@ -96,6 +96,8 @@ fun Request.Builder.commonPut(body: RequestBody): Request.Builder = method("PUT"
 
 fun Request.Builder.commonPatch(body: RequestBody): Request.Builder = method("PATCH", body)
 
+fun Request.Builder.commonQuery(body: RequestBody): Request.Builder = method("QUERY", body)
+
 fun Request.Builder.commonMethod(
   method: String,
   body: RequestBody?,
