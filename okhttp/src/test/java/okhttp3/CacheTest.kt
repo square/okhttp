@@ -524,13 +524,13 @@ class CacheTest {
 		val response3 = client.newCall(request3).execute()
 		assertThat(response3.body.string()).isEqualTo("DEF")
 		val recordedRequest3 = server.takeRequest()
-		assertThat(recordedRequest3.requestLine).isEqualTo("GET /baz HTTP/1.1")
+		assertThat(recordedRequest3.requestLine).isEqualTo("QUERY /baz HTTP/1.1")
 		assertThat(recordedRequest3.sequenceNumber).isEqualTo(2)
 		val request4 = Request.Builder().url(server.url("/bar")).query(commonEmptyRequestBody).build()
 		val response4 = client.newCall(request4).execute()
 		assertThat(response4.body.string()).isEqualTo("DEF")
 		val recordedRequest4 = server.takeRequest()
-		assertThat(recordedRequest4.requestLine).isEqualTo("GET /bar HTTP/1.1")
+		assertThat(recordedRequest4.requestLine).isEqualTo("QUERY /bar HTTP/1.1")
 		assertThat(recordedRequest4.sequenceNumber).isEqualTo(3)
 
 	}
