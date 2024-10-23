@@ -228,12 +228,12 @@ class Cache internal constructor(
       return null
     }
 
-    if (requestMethod !in CACHEABLE_METHODS) {
-      // Don't cache non-GET and non-QUERY responses. We're technically allowed to cache HEAD
-      // requests and some POST requests, but the complexity of doing so is high and the benefit
-      // is low.
-      return null
-    }
+		if (requestMethod != "GET" || requestMethod != "QUERY") {
+			// Don't cache non-GET and non-QUERY responses. We're technically allowed to cache HEAD
+			// requests and some POST requests, but the complexity of doing so is high and the benefit
+			// is low.
+			return null
+		}
 
     if (response.hasVaryAll()) {
       return null
@@ -739,9 +739,8 @@ class Cache internal constructor(
     private const val ENTRY_METADATA = 0
     private const val ENTRY_BODY = 1
     private const val ENTRY_COUNT = 2
-    private val CACHEABLE_METHODS = setOf("GET", "QUERY")
 
-    @JvmStatic
+		@JvmStatic
     fun key(url: HttpUrl): String = url.toString().encodeUtf8().md5().hex()
 
     @Throws(IOException::class)
