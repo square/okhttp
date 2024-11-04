@@ -3235,6 +3235,33 @@ open class CallTest {
   }
 
   @Test
+  fun serverRespondsWithProcessingMultiple() {
+    server.enqueue(
+      MockResponse.Builder()
+        .apply {
+          repeat(10) {
+            addInformationalResponse(
+              MockResponse(
+                code = HTTP_PROCESSING,
+              ),
+            )
+          }
+        }
+        .build(),
+    )
+    val request =
+      Request(
+        url = server.url("/"),
+        body = "abc".toRequestBody("text/plain".toMediaType()),
+      )
+    executeSynchronously(request)
+      .assertCode(200)
+      .assertSuccessful()
+    val recordedRequest = server.takeRequest()
+    assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
+  }
+
+  @Test
   fun serverRespondsWithUnsolicited100Continue_HTTP2() {
     enableProtocol(Protocol.HTTP_2)
     serverRespondsWithUnsolicited100Continue()
