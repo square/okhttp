@@ -53,6 +53,9 @@ class RealConnectionPool(
   @Volatile
   private var addressStates: Map<Address, AddressState> = mapOf()
 
+  @Volatile
+  private var defaultPolicy: ConnectionPool.ConnectionPoolPolicy? = null
+
   private val cleanupQueue: TaskQueue = taskRunner.newQueue()
   private val cleanupTask =
     object : Task("$okHttpName ConnectionPool connection closer") {
@@ -97,7 +100,7 @@ class RealConnectionPool(
    * This confirms the returned connection is healthy before returning it. If this encounters any
    * unhealthy connections in its search, this will clean them up.
    *
-   * If [routes] is non-null these are the resolved routes (ie. IP addresses) for the connection.
+   * If [routes] is non-null these are the resolved routes (i.e. IP addresses) for the connection.
    * This is used to coalesce related domains to the same HTTP/2 connection, such as `square.com`
    * and `square.ca`.
    */
@@ -389,9 +392,57 @@ class RealConnectionPool(
       }
     }
 
+    for (connection in connections) {
+      if (connection.route.address != address) {
+        continue
+      }
+      // This method takes a lock in order to recalculate the limit
+      // This will also change the maximum connections (if needed) for us
+      connection.recalculateAllocationLimit()
+    }
+
+    // change the minimum connections (if needed)
     when {
       newConnectionsNeeded > 0 -> state.scheduleOpener()
       newConnectionsNeeded < 0 -> scheduleCloser()
+    }
+  }
+
+  /**
+   * Fetches the maximum number of calls allowed for a connection, for a given address
+   */
+  fun getMaximumCallsPerConnection(address: Address): Int? {
+    val specificMaximum = this.addressStates[address]?.policy?.maximumConcurrentCallsPerConnection
+    val globalMaximum = this.defaultPolicy?.maximumConcurrentCallsPerConnection
+
+    return specificMaximum ?: globalMaximum
+  }
+
+  fun setDefaultPolicy(policy: ConnectionPool.ConnectionPoolPolicy) {
+    val referencePolicy = this.defaultPolicy
+
+    while (true) {
+      val oldPolicy = this.defaultPolicy
+      if (defaultPolicyUpdater.compareAndSet(this, oldPolicy, policy)) {
+        break
+      }
+    }
+
+    if (referencePolicy?.maximumConcurrentCallsPerConnection == policy.maximumConcurrentCallsPerConnection) {
+      return
+    }
+
+    for (connection in connections) {
+      val existingPolicy = addressStates[connection.route.address]
+
+      // skip any address policy that already contains a max
+      if (existingPolicy?.policy?.maximumConcurrentCallsPerConnection != null) {
+        continue
+      }
+
+      // This method takes a lock in order to recalculate the limit
+      // This will also change the maximum connections (if needed) for us
+      connection.recalculateAllocationLimit()
     }
   }
 
@@ -405,7 +456,7 @@ class RealConnectionPool(
   }
 
   /**
-   * Ensure enough connections open to [address] to satisfy its [ConnectionPool.AddressPolicy].
+   * Ensure enough connections open to [AddressState.address] to satisfy its [ConnectionPool.AddressPolicy].
    * If there are already enough connections, we're done.
    * If not, we create one and then schedule the task to run again immediately.
    */
@@ -465,6 +516,13 @@ class RealConnectionPool(
         RealConnectionPool::class.java,
         Map::class.java,
         "addressStates",
+      )
+
+    private var defaultPolicyUpdater =
+      AtomicReferenceFieldUpdater.newUpdater(
+        RealConnectionPool::class.java,
+        ConnectionPool.ConnectionPoolPolicy::class.java,
+        "defaultPolicy",
       )
   }
 }
