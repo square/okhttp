@@ -32,15 +32,17 @@ OkHttp follows modern HTTP specifications such as
 * Websockets - [RFC 6455](https://datatracker.ietf.org/doc/html/rfc6455)
 * SSE - [Server-sent events](https://html.spec.whatwg.org/multipage/server-sent-events.html#server-sent-events)
 
-Where the spec is ambiguous, OkHttp follows modern user agents such as Browsers or HTTP Libraries.
+Where the spec is ambiguous, OkHttp follows modern user agents such as popular Browsers or common HTTP Libraries.
 
 OkHttp is principled and avoids being overly configurable, especially when such configuration is
-to workaround a buggy server, or contradict the relevant RFC. 
+to workaround a buggy server, test invalid scenarios or that contradict the relevant RFC. 
+Other HTTP libraries exist that fill that gap allowing extensive customisation including potentially
+invalid requests.
 
-Examples
+Example Limitations
 
-* OkHttp does not allow GET with a body.
-* OkHttp Cache is not an interface with alternative implementations.
+* Does not allow GET with a body.
+* Cache is not an interface with alternative implementations.
 
 Get a URL
 ---------
