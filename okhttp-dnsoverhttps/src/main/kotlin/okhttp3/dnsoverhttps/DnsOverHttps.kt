@@ -223,7 +223,7 @@ class DnsOverHttps internal constructor(
     hostname: String,
     response: Response,
   ): List<InetAddress> {
-    if (response.cacheResponse == null && response.protocol !== Protocol.HTTP_2) {
+    if (response.cacheResponse == null && response.protocol !== Protocol.HTTP_2 && response.protocol !== Protocol.QUIC) {
       Platform.get().log("Incorrect protocol: ${response.protocol}", Platform.WARN)
     }
 

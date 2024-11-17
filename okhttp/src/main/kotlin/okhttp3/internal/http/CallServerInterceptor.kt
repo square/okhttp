@@ -105,7 +105,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           .build()
       var code = response.code
 
-      if (shouldIgnoreAndWaitForRealResponse(code, exchange)) {
+      while (shouldIgnoreAndWaitForRealResponse(code, exchange)) {
         responseBuilder = exchange.readResponseHeaders(expectContinue = false)!!
         if (invokeStartEvent) {
           exchange.responseHeadersStart()
