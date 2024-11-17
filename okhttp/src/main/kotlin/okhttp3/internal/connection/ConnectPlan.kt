@@ -26,7 +26,6 @@ import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
-import kotlin.concurrent.withLock
 import okhttp3.CertificatePinner
 import okhttp3.ConnectionSpec
 import okhttp3.Handshake
