@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.locks.ReentrantLock
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
-import kotlin.concurrent.withLock
 import okhttp3.Address
 import okhttp3.Connection
 import okhttp3.ConnectionListener
@@ -335,7 +334,7 @@ class RealConnection(
       return http2Connection.isHealthy(nowNs)
     }
 
-    val idleDurationNs = lock.withLock { nowNs - idleAtNs }
+    val idleDurationNs = this.withLock { nowNs - idleAtNs }
     if (idleDurationNs >= IDLE_CONNECTION_HEALTHY_NS && doExtensiveChecks) {
       return socket.isHealthy(source)
     }
@@ -354,7 +353,7 @@ class RealConnection(
     connection: Http2Connection,
     settings: Settings,
   ) {
-    lock.withLock {
+    this.withLock {
       val oldLimit = allocationLimit
       allocationLimit = settings.getMaxConcurrentStreams()
 
@@ -398,7 +397,7 @@ class RealConnection(
     e: IOException?,
   ) {
     var noNewExchangesEvent = false
-    lock.withLock {
+    this.withLock {
       if (e is StreamResetException) {
         when {
           e.errorCode == ErrorCode.REFUSED_STREAM -> {

@@ -27,6 +27,7 @@ import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.Locks.newLockCondition
 import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.http2.ErrorCode.REFUSED_STREAM
 import okhttp3.internal.http2.Settings.Companion.DEFAULT_INITIAL_WINDOW_SIZE
@@ -56,7 +57,7 @@ import okio.source
 @Suppress("NAME_SHADOWING")
 class Http2Connection internal constructor(builder: Builder) : Closeable {
   internal val lock: ReentrantLock = ReentrantLock()
-  internal val condition: Condition = lock.newCondition()
+  internal val condition: Condition = lock.newLockCondition()
 
   // Internal state of this connection is guarded by 'lock'. No blocking operations may be
   // performed while holding this lock!
