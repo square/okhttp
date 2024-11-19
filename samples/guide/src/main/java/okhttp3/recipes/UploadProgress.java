@@ -84,45 +84,49 @@ public final class UploadProgress {
 	private static class ProgressRequestBody extends RequestBody {
 
 		private final ProgressListener progressListener;
-		private final RequestBody requestBody;
+		private final RequestBody delegate;
 
-		public ProgressRequestBody(RequestBody requestBody, ProgressListener progressListener) {
-			this.requestBody = requestBody;
+		public ProgressRequestBody(RequestBody delegate, ProgressListener progressListener) {
+			this.delegate = delegate;
 			this.progressListener = progressListener;
 		}
 
 		@Override
 		public MediaType contentType() {
-			return requestBody.contentType();
+			return delegate.contentType();
 		}
 
 		@Override
 		public long contentLength() throws IOException {
-			return requestBody.contentLength();
+			return delegate.contentLength();
 		}
 
 		@Override
 		public void writeTo(BufferedSink sink) throws IOException {
-			BufferedSink bufferSink = Okio.buffer(sink(sink));
-			requestBody.writeTo(bufferSink);
-			bufferSink.close();
+			BufferedSink bufferedSink = Okio.buffer(sink(sink));
+			delegate.writeTo(bufferedSink);
+			bufferedSink.flush();
 		}
 
 		public Sink sink(Sink sink) {
 			return new ForwardingSink(sink) {
 				private long totalBytesWritten = 0L;
+				private boolean completed = false;
 
 				@Override
 				public void write(Buffer source, long byteCount) throws IOException {
 					super.write(source, byteCount);
 					totalBytesWritten += byteCount;
-					progressListener.update(totalBytesWritten, contentLength(), false);
+					progressListener.update(totalBytesWritten, contentLength(), completed);
 				}
 
 				@Override
 				public void close() throws IOException {
 					super.close();
-					progressListener.update(totalBytesWritten, contentLength(),true);
+					if (!completed) {
+						completed = true;
+						progressListener.update(totalBytesWritten, contentLength(), completed);
+					}
 				}
 			};
 		}
