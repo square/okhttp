@@ -93,8 +93,8 @@ class ConnectPlan(
   internal var socket: Socket? = null
   private var handshake: Handshake? = null
   private var protocol: Protocol? = null
-  private var source: BufferedSource? = null
-  private var sink: BufferedSink? = null
+  private lateinit var source: BufferedSource
+  private lateinit var sink: BufferedSink
   private var connection: RealConnection? = null
 
   /** True if this connection is ready for use, including TCP, tunnels, and TLS. */
@@ -152,7 +152,7 @@ class ConnectPlan(
   }
 
   override fun connectTlsEtc(): ConnectResult {
-    check(rawSocket != null) { "TCP not connected" }
+    val rawSocket = requireNotNull(rawSocket) { "TCP not connected" }
     check(!isReady) { "already connected" }
 
     val connectionSpecs = route.address.connectionSpecs
@@ -176,7 +176,7 @@ class ConnectPlan(
         // that happens, then we will have buffered bytes that are needed by the SSLSocket!
         // This check is imperfect: it doesn't tell us whether a handshake will succeed, just
         // that it will almost certainly fail because the proxy has sent unexpected data.
-        if (source?.buffer?.exhausted() == false || sink?.buffer?.exhausted() == false) {
+        if (!source.buffer.exhausted() || !sink.buffer.exhausted()) {
           throw IOException("TLS tunnel buffered too many bytes!")
         }
 
@@ -216,9 +216,9 @@ class ConnectPlan(
           connectionPool = connectionPool,
           route = route,
           rawSocket = rawSocket,
-          socket = socket,
+          socket = socket!!,
           handshake = handshake,
-          protocol = protocol,
+          protocol = protocol!!,
           source = source,
           sink = sink,
           pingIntervalMillis = pingIntervalMillis,
@@ -247,7 +247,7 @@ class ConnectPlan(
       user.removePlanToCancel(this)
       if (!success) {
         socket?.closeQuietly()
-        rawSocket?.closeQuietly()
+        rawSocket.closeQuietly()
       }
     }
   }
@@ -420,8 +420,6 @@ class ConnectPlan(
     val url = route.address.url
     val requestLine = "CONNECT ${url.toHostHeader(includeDefaultPort = true)} HTTP/1.1"
     while (true) {
-      val source = this.source!!
-      val sink = this.sink!!
       val tunnelCodec =
         Http1ExchangeCodec(
           // No client for CONNECT tunnels:
