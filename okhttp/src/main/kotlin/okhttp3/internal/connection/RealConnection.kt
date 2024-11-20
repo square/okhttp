@@ -53,8 +53,13 @@ import okhttp3.internal.http2.StreamResetException
 import okhttp3.internal.isHealthy
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.ws.RealWebSocket
+import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
+import okio.Sink
+import okio.Source
+import okio.Timeout
+import okio.buffer
 
 /**
  * A connection to a remote web server capable of carrying 1 or more concurrent streams.
@@ -67,16 +72,16 @@ class RealConnection(
   val connectionPool: RealConnectionPool,
   override val route: Route,
   /** The low-level TCP socket. */
-  private var rawSocket: Socket?,
+  private val rawSocket: Socket,
   /**
    * The application layer socket. Either an [SSLSocket] layered over [rawSocket], or [rawSocket]
    * itself if this connection does not use SSL.
    */
-  private var socket: Socket?,
-  private var handshake: Handshake?,
-  private var protocol: Protocol?,
-  private var source: BufferedSource?,
-  private var sink: BufferedSink?,
+  private val socket: Socket,
+  private val handshake: Handshake?,
+  private val protocol: Protocol,
+  private val source: BufferedSource,
+  private val sink: BufferedSink,
   private val pingIntervalMillis: Int,
   internal val connectionListener: ConnectionListener,
 ) : Http2Connection.Listener(), Connection, ExchangeCodec.Carrier {
@@ -162,9 +167,6 @@ class RealConnection(
 
   @Throws(IOException::class)
   private fun startHttp2() {
-    val socket = this.socket!!
-    val source = this.source!!
-    val sink = this.sink!!
     socket.soTimeout = 0 // HTTP/2 connection timeouts are set per-stream.
     val flowControlListener = connectionListener as? FlowControlListener ?: FlowControlListener.None
     val http2Connection =
@@ -253,7 +255,7 @@ class RealConnection(
     }
 
     // We have a host mismatch. But if the certificate matches, we're still good.
-    return !noCoalescedConnections && handshake != null && certificateSupportHost(url, handshake!!)
+    return !noCoalescedConnections && handshake != null && certificateSupportHost(url, handshake)
   }
 
   private fun certificateSupportHost(
@@ -271,9 +273,9 @@ class RealConnection(
     client: OkHttpClient,
     chain: RealInterceptorChain,
   ): ExchangeCodec {
-    val socket = this.socket!!
-    val source = this.source!!
-    val sink = this.sink!!
+    val socket = this.socket
+    val source = this.source
+    val sink = this.sink
     val http2Connection = this.http2Connection
 
     return if (http2Connection != null) {
@@ -288,10 +290,6 @@ class RealConnection(
 
   @Throws(SocketException::class)
   internal fun newWebSocketStreams(exchange: Exchange): RealWebSocket.Streams {
-    val socket = this.socket!!
-    val source = this.source!!
-    val sink = this.sink!!
-
     socket.soTimeout = 0
     noNewExchanges()
     return object : RealWebSocket.Streams(true, source, sink) {
@@ -309,10 +307,10 @@ class RealConnection(
 
   override fun cancel() {
     // Close the raw socket so we don't end up doing synchronous I/O.
-    rawSocket?.closeQuietly()
+    rawSocket.closeQuietly()
   }
 
-  override fun socket(): Socket = socket!!
+  override fun socket(): Socket = socket
 
   /** Returns true if this connection is ready to host new streams. */
   fun isHealthy(doExtensiveChecks: Boolean): Boolean {
@@ -320,9 +318,6 @@ class RealConnection(
 
     val nowNs = System.nanoTime()
 
-    val rawSocket = this.rawSocket!!
-    val socket = this.socket!!
-    val source = this.source!!
     if (rawSocket.isClosed || socket.isClosed || socket.isInputShutdown ||
       socket.isOutputShutdown
     ) {
@@ -442,7 +437,7 @@ class RealConnection(
     }
   }
 
-  override fun protocol(): Protocol = protocol!!
+  override fun protocol(): Protocol = protocol
 
   override fun toString(): String {
     return "Connection{${route.address.url.host}:${route.address.url.port}," +
@@ -467,12 +462,38 @@ class RealConnection(
           taskRunner = taskRunner,
           connectionPool = connectionPool,
           route = route,
-          rawSocket = null,
+          rawSocket = Socket(),
           socket = socket,
           handshake = null,
-          protocol = null,
-          source = null,
-          sink = null,
+          protocol = Protocol.HTTP_2,
+          source =
+            object : Source {
+              override fun close() = Unit
+
+              override fun read(
+                sink: Buffer,
+                byteCount: Long,
+              ): Long {
+                throw UnsupportedOperationException()
+              }
+
+              override fun timeout(): Timeout = Timeout.NONE
+            }.buffer(),
+          sink =
+            object : Sink {
+              override fun close() = Unit
+
+              override fun flush() = Unit
+
+              override fun timeout(): Timeout = Timeout.NONE
+
+              override fun write(
+                source: Buffer,
+                byteCount: Long,
+              ) {
+                throw UnsupportedOperationException()
+              }
+            }.buffer(),
           pingIntervalMillis = 0,
           ConnectionListener.NONE,
         )
