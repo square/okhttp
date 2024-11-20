@@ -23,10 +23,11 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Logger
-import kotlin.concurrent.withLock
 import okhttp3.internal.addIfAbsent
 import okhttp3.internal.assertHeld
 import okhttp3.internal.concurrent.TaskRunner.Companion.INSTANCE
+import okhttp3.internal.connection.Locks.newLockCondition
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.okHttpName
 import okhttp3.internal.threadFactory
 import okhttp3.internal.threadName
@@ -46,8 +47,8 @@ class TaskRunner(
   val backend: Backend,
   internal val logger: Logger = TaskRunner.logger,
 ) {
-  val lock: ReentrantLock = ReentrantLock()
-  val condition: Condition = lock.newCondition()
+  internal val lock: ReentrantLock = ReentrantLock()
+  val condition: Condition = lock.newLockCondition()
 
   private var nextQueueName = 10000
   private var coordinatorWaiting = false
@@ -76,7 +77,7 @@ class TaskRunner(
         var incrementedRunCallCount = false
         while (true) {
           val task =
-            this@TaskRunner.lock.withLock {
+            this@TaskRunner.withLock {
               if (!incrementedRunCallCount) {
                 incrementedRunCallCount = true
                 runCallCount++
@@ -92,7 +93,7 @@ class TaskRunner(
             } finally {
               // If the task is crashing start another thread to service the queues.
               if (!completedNormally) {
-                lock.withLock {
+                this@TaskRunner.withLock {
                   startAnotherThread()
                 }
               }
@@ -137,7 +138,7 @@ class TaskRunner(
       try {
         delayNanos = task.runOnce()
       } finally {
-        lock.withLock {
+        this.withLock {
           afterRun(task, delayNanos)
         }
       }
@@ -262,7 +263,7 @@ class TaskRunner(
   }
 
   fun newQueue(): TaskQueue {
-    val name = lock.withLock { nextQueueName++ }
+    val name = this.withLock { nextQueueName++ }
     return TaskQueue(this, "Q$name")
   }
 
@@ -271,7 +272,7 @@ class TaskRunner(
    * necessarily track queues that have no tasks scheduled.
    */
   fun activeQueues(): List<TaskQueue> {
-    lock.withLock {
+    this.withLock {
       return busyQueues + readyQueues
     }
   }
