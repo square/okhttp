@@ -1,6 +1,6 @@
 [versions]
 biz-aQute-bnd = "6.4.0"
-checkStyle = "10.18.1"
+checkStyle = "10.19.0"
 com-squareup-moshi = "1.15.1"
 com-squareup-okio = "3.9.1"
 de-mannodermaus-junit5 = "1.5.0"
@@ -12,13 +12,13 @@ org-bouncycastle = "1.76"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.8.1"
 org-jetbrains-kotlin = "1.9.25"
-org-junit-jupiter = "5.11.0"
+org-junit-jupiter = "5.11.3"
 retrofit = "2.11.0"
 testcontainers = "1.20.1"
 
 [libraries]
 amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.4.1"
-androidx-activity = "androidx.activity:activity-ktx:1.9.2"
+androidx-activity = "androidx.activity:activity-ktx:1.9.3"
 androidx-annotation = "androidx.annotation:annotation:1.8.2"
 androidx-espresso-core = "androidx.test.espresso:espresso-core:3.6.1"
 androidx-junit = "androidx.test.ext:junit:1.2.1"
@@ -39,7 +39,7 @@ converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.r
 eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.21.0"
 findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
 gradlePlugin-android = "com.android.tools.build:gradle:8.2.0"
-gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.11.0.0"
+gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.11.2.0"
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.7.1"
 gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.16.3"
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
@@ -56,15 +56,15 @@ guava-jre = "com.google.guava:guava:33.3.0-jre"
 hamcrestLibrary = "org.hamcrest:hamcrest-library:3.0"
 httpClient5 = "org.apache.httpcomponents.client5:httpclient5:5.3.1"
 jettyClient = "org.eclipse.jetty:jetty-client:9.4.56.v20240826"
-jnr-unixsocket = "com.github.jnr:jnr-unixsocket:0.38.22"
+jnr-unixsocket = "com.github.jnr:jnr-unixsocket:0.38.23"
 jsoup = "org.jsoup:jsoup:1.18.1"
 junit = "junit:junit:4.13.2"
 junit-ktx = "androidx.test.ext:junit-ktx:1.2.1"
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "org-junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "org-junit-jupiter" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "org-junit-jupiter" }
-junit-platform-console = "org.junit.platform:junit-platform-console:1.11.0"
-junit-vintage-engine = "org.junit.vintage:junit-vintage-engine:5.11.0"
+junit-platform-console = "org.junit.platform:junit-platform-console:1.11.3"
+junit-vintage-engine = "org.junit.vintage:junit-vintage-engine:5.11.3"
 junit-pioneer = "org.junit-pioneer:junit-pioneer:1.9.1"
 junit5android-core = { module = "de.mannodermaus.junit5:android-test-core", version.ref = "de-mannodermaus-junit5" }
 junit5android-runner = { module = "de.mannodermaus.junit5:android-test-runner", version.ref = "de-mannodermaus-junit5" }
