@@ -30,6 +30,7 @@ import okhttp3.internal.connection.Locks.newLockCondition
 import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.okHttpName
 import okhttp3.internal.threadFactory
+import okhttp3.internal.threadName
 
 /**
  * A set of worker threads that are shared among a set of task queues.
@@ -132,18 +133,15 @@ class TaskRunner(
   }
 
   private fun runTask(task: Task) {
-    val currentThread = Thread.currentThread()
-    val oldName = currentThread.name
-    currentThread.name = task.name
-
-    var delayNanos = -1L
-    try {
-      delayNanos = task.runOnce()
-    } finally {
-      this.withLock {
-        afterRun(task, delayNanos)
+    threadName(task.name) {
+      var delayNanos = -1L
+      try {
+        delayNanos = task.runOnce()
+      } finally {
+        this.withLock {
+          afterRun(task, delayNanos)
+        }
       }
-      currentThread.name = oldName
     }
   }
 
