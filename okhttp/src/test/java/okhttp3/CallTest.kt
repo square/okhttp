@@ -40,7 +40,6 @@ import java.net.CookiePolicy
 import java.net.HttpCookie
 import java.net.HttpURLConnection
 import java.net.InetAddress
-import java.net.InetSocketAddress
 import java.net.ProtocolException
 import java.net.Proxy
 import java.net.SocketTimeoutException
