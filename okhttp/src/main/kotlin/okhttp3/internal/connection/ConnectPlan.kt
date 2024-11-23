@@ -141,6 +141,14 @@ class ConnectPlan(
       success = true
       return ConnectResult(plan = this)
     } catch (e: IOException) {
+      // If we used the ProxySelector, and got a IOException during connect, report the failure.
+      if (route.address.proxy == null && route.proxy.type() != Proxy.Type.DIRECT) {
+        route.address.proxySelector.connectFailed(
+          route.address.url.toUri(),
+          route.proxy.address(),
+          e,
+        )
+      }
       user.connectFailed(route, null, e)
       return ConnectResult(plan = this, throwable = e)
     } finally {
