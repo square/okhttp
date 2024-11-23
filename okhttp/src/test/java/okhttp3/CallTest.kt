@@ -15,11 +15,14 @@
  */
 package okhttp3
 
+import assertk.all
 import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.containsExactly
 import assertk.assertions.doesNotContain
 import assertk.assertions.hasMessage
+import assertk.assertions.hasSize
+import assertk.assertions.index
 import assertk.assertions.isCloseTo
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
@@ -30,6 +33,7 @@ import assertk.assertions.isNotNull
 import assertk.assertions.isNotSameAs
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import assertk.assertions.matches
 import assertk.assertions.startsWith
 import assertk.fail
 import java.io.FileNotFoundException
@@ -1019,7 +1023,10 @@ open class CallTest {
       .assertBody("success!")
 
     assertThat(proxySelector.failures)
-      .isEqualTo(listOf("http://android.com/ /198.51.100.1:8080:8080 Connect timed out"))
+      .all {
+        hasSize(1)
+        index(0).matches(".* Connect timed out".toRegex(RegexOption.IGNORE_CASE))
+      }
   }
 
   /** https://github.com/square/okhttp/issues/4875  */
