@@ -281,6 +281,11 @@ class PublicSuffixDatabaseTest {
     checkPublicSuffix("xn--fiqs8s", null)
   }
 
+  @Test fun contentsMatch() {
+    assertEquals(list.bytes, EmbeddedPublicSuffixList.bytes)
+    assertEquals(list.exceptionBytes, EmbeddedPublicSuffixList.exceptionBytes)
+  }
+
   private fun checkPublicSuffix(
     domain: String,
     registrablePart: String?,
