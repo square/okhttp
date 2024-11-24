@@ -31,7 +31,8 @@ import okio.use
 import org.junit.jupiter.api.Test
 
 class PublicSuffixDatabaseTest {
-  private val publicSuffixDatabase = PublicSuffixDatabase()
+  private val list = ResourcePublicSuffixList()
+  private val publicSuffixDatabase = PublicSuffixDatabase(list)
 
   @Test fun longestMatchWins() {
     val buffer =
@@ -39,7 +40,7 @@ class PublicSuffixDatabaseTest {
         .writeUtf8("com\n")
         .writeUtf8("my.square.com\n")
         .writeUtf8("square.com\n")
-    publicSuffixDatabase.setListBytes(buffer.readByteArray(), byteArrayOf())
+    list.setListBytes(buffer.readByteArray(), byteArrayOf())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("example.com"))
       .isEqualTo("example.com")
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.example.com"))
@@ -56,7 +57,7 @@ class PublicSuffixDatabaseTest {
         .writeUtf8("*.square.com\n")
         .writeUtf8("com\n")
         .writeUtf8("example.com\n")
-    publicSuffixDatabase.setListBytes(buffer.readByteArray(), byteArrayOf())
+    list.setListBytes(buffer.readByteArray(), byteArrayOf())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("my.square.com")).isNull()
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.my.square.com"))
       .isEqualTo("foo.my.square.com")
@@ -70,7 +71,7 @@ class PublicSuffixDatabaseTest {
         .writeUtf8("bbb\n")
         .writeUtf8("ddd\n")
         .writeUtf8("fff\n")
-    publicSuffixDatabase.setListBytes(buffer.readByteArray(), byteArrayOf())
+    list.setListBytes(buffer.readByteArray(), byteArrayOf())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("aaa")).isNull()
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("ggg")).isNull()
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("ccc")).isNull()
@@ -87,7 +88,7 @@ class PublicSuffixDatabaseTest {
         .writeUtf8("*.square.jp\n")
         .writeUtf8("example.com\n")
         .writeUtf8("square.com\n")
-    publicSuffixDatabase.setListBytes(buffer.readByteArray(), exception.readByteArray())
+    list.setListBytes(buffer.readByteArray(), exception.readByteArray())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("my.square.jp"))
       .isEqualTo("my.square.jp")
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.my.square.jp"))
@@ -105,14 +106,14 @@ class PublicSuffixDatabaseTest {
         .writeUtf8("*.square.jp\n")
         .writeUtf8("example.com\n")
         .writeUtf8("square.com\n")
-    publicSuffixDatabase.setListBytes(buffer.readByteArray(), exception.readByteArray())
+    list.setListBytes(buffer.readByteArray(), exception.readByteArray())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("example.com")).isNull()
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.square.jp")).isNull()
   }
 
   @Test fun allPublicSuffixes() {
     val buffer = Buffer()
-    FileSystem.RESOURCES.source(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE).use { resource ->
+    FileSystem.RESOURCES.source(ResourcePublicSuffixList.PUBLIC_SUFFIX_RESOURCE).use { resource ->
       GzipSource(resource).buffer().use { source ->
         val length = source.readInt()
         buffer.write(source, length.toLong())
@@ -132,7 +133,7 @@ class PublicSuffixDatabaseTest {
 
   @Test fun publicSuffixExceptions() {
     val buffer = Buffer()
-    FileSystem.RESOURCES.source(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE).use { resource ->
+    FileSystem.RESOURCES.source(ResourcePublicSuffixList.PUBLIC_SUFFIX_RESOURCE).use { resource ->
       GzipSource(resource).buffer().use { source ->
         var length = source.readInt()
         source.skip(length.toLong())
@@ -163,7 +164,9 @@ class PublicSuffixDatabaseTest {
   @Test fun secondReadFailsSameAsFirst() {
     val badPublicSuffixDatabase =
       PublicSuffixDatabase(
-        path = "/xxx.gz".toPath(),
+        ResourcePublicSuffixList(
+          path = "/xxx.gz".toPath(),
+        )
       )
     lateinit var firstFailure: Exception
     assertFailsWith<Exception> {

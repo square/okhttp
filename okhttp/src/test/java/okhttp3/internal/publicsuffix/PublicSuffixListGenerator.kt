@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package okhttp3.internal.publicsuffix
 
 import java.util.SortedSet
 import java.util.TreeSet
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.coroutines.executeAsync
-import okhttp3.internal.publicsuffix.PublicSuffixDatabase.Companion.PUBLIC_SUFFIX_RESOURCE
+import okhttp3.internal.publicsuffix.ResourcePublicSuffixList.Companion.PUBLIC_SUFFIX_RESOURCE
 import okio.BufferedSink
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
@@ -49,15 +52,13 @@ class PublicSuffixListGenerator(
   val fileSystem: FileSystem = FileSystem.SYSTEM,
   val client: OkHttpClient = OkHttpClient(),
 ) {
-  private val resources = projectRoot / "okhttp/src/main/resources/okhttp3/internal/publicsuffix"
   private val testResources = projectRoot / "okhttp/src/test/resources/okhttp3/internal/publicsuffix"
   private val publicSuffixListDotDat = testResources / "public_suffix_list.dat"
-  private val outputFile = resources / PUBLIC_SUFFIX_RESOURCE
+  private val outputFile = testResources / PUBLIC_SUFFIX_RESOURCE
 
   val request = Request("https://publicsuffix.org/list/public_suffix_list.dat".toHttpUrl())
 
   suspend fun import() {
-    check(fileSystem.metadata(resources).isDirectory)
     check(fileSystem.metadata(testResources).isDirectory)
 
     updateLocalFile()

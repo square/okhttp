@@ -15,18 +15,8 @@
  */
 package okhttp3.internal.publicsuffix
 
-import java.io.IOException
-import java.io.InterruptedIOException
 import java.net.IDN
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.internal.and
-import okhttp3.internal.platform.Platform
-import okio.FileSystem
-import okio.GzipSource
-import okio.Path
-import okio.Path.Companion.toPath
-import okio.buffer
 
 /**
  * A database of public suffixes provided by [publicsuffix.org][publicsuffix_org].
@@ -34,21 +24,8 @@ import okio.buffer
  * [publicsuffix_org]: https://publicsuffix.org/
  */
 class PublicSuffixDatabase internal constructor(
-  val path: Path = PUBLIC_SUFFIX_RESOURCE,
-  val fileSystem: FileSystem = FileSystem.RESOURCES,
+  private val publicSuffixList: PublicSuffixList
 ) {
-  /** True after we've attempted to read the list for the first time. */
-  private val listRead = AtomicBoolean(false)
-
-  /** Used for concurrent threads reading the list for the first time. */
-  private val readCompleteLatch = CountDownLatch(1)
-
-  // The lists are held as a large array of UTF-8 bytes. This is to avoid allocating lots of strings
-  // that will likely never be used. Each rule is separated by '\n'. Please see the
-  // PublicSuffixListGenerator class for how these lists are generated.
-  // Guarded by this.
-  private lateinit var publicSuffixListBytes: ByteArray
-  private lateinit var publicSuffixExceptionListBytes: ByteArray
 
   /**
    * Returns the effective top-level domain plus one (eTLD+1) by referencing the public suffix list.
@@ -101,20 +78,7 @@ class PublicSuffixDatabase internal constructor(
   }
 
   private fun findMatchingRule(domainLabels: List<String>): List<String> {
-    if (!listRead.get() && listRead.compareAndSet(false, true)) {
-      readTheListUninterruptibly()
-    } else {
-      try {
-        readCompleteLatch.await()
-      } catch (_: InterruptedException) {
-        Thread.currentThread().interrupt() // Retain interrupted status.
-      }
-    }
-
-    check(::publicSuffixListBytes.isInitialized) {
-      // May have failed with an IOException
-      "Unable to load $PUBLIC_SUFFIX_RESOURCE resource from the classpath."
-    }
+    publicSuffixList.ensureLoaded()
 
     // Break apart the domain into UTF-8 labels, i.e. foo.bar.com turns into [foo, bar, com].
     val domainLabelsUtf8Bytes = Array(domainLabels.size) { i -> domainLabels[i].toByteArray() }
@@ -123,7 +87,7 @@ class PublicSuffixDatabase internal constructor(
     // will look like: [foo, bar, com], [bar, com], [com]. The longest matching rule wins.
     var exactMatch: String? = null
     for (i in domainLabelsUtf8Bytes.indices) {
-      val rule = publicSuffixListBytes.binarySearch(domainLabelsUtf8Bytes, i)
+      val rule = publicSuffixList.bytes.binarySearch(domainLabelsUtf8Bytes, i)
       if (rule != null) {
         exactMatch = rule
         break
@@ -140,7 +104,7 @@ class PublicSuffixDatabase internal constructor(
       val labelsWithWildcard = domainLabelsUtf8Bytes.clone()
       for (labelIndex in 0 until labelsWithWildcard.size - 1) {
         labelsWithWildcard[labelIndex] = WILDCARD_LABEL
-        val rule = publicSuffixListBytes.binarySearch(labelsWithWildcard, labelIndex)
+        val rule = publicSuffixList.bytes.binarySearch(labelsWithWildcard, labelIndex)
         if (rule != null) {
           wildcardMatch = rule
           break
@@ -153,7 +117,7 @@ class PublicSuffixDatabase internal constructor(
     if (wildcardMatch != null) {
       for (labelIndex in 0 until domainLabelsUtf8Bytes.size - 1) {
         val rule =
-          publicSuffixExceptionListBytes.binarySearch(
+          publicSuffixList.exceptionBytes.binarySearch(
             domainLabelsUtf8Bytes,
             labelIndex,
           )
@@ -182,77 +146,13 @@ class PublicSuffixDatabase internal constructor(
     }
   }
 
-  /**
-   * Reads the public suffix list treating the operation as uninterruptible. We always want to read
-   * the list otherwise we'll be left in a bad state. If the thread was interrupted prior to this
-   * operation, it will be re-interrupted after the list is read.
-   */
-  private fun readTheListUninterruptibly() {
-    var interrupted = false
-    try {
-      while (true) {
-        try {
-          readTheList()
-          return
-        } catch (_: InterruptedIOException) {
-          Thread.interrupted() // Temporarily clear the interrupted state.
-          interrupted = true
-        } catch (e: IOException) {
-          Platform.get().log("Failed to read public suffix list", Platform.WARN, e)
-          return
-        }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread().interrupt() // Retain interrupted status.
-      }
-    }
-  }
-
-  @Throws(IOException::class)
-  private fun readTheList() {
-    var publicSuffixListBytes: ByteArray?
-    var publicSuffixExceptionListBytes: ByteArray?
-
-    try {
-      GzipSource(fileSystem.source(path)).buffer().use { bufferedSource ->
-        val totalBytes = bufferedSource.readInt()
-        publicSuffixListBytes = bufferedSource.readByteArray(totalBytes.toLong())
-
-        val totalExceptionBytes = bufferedSource.readInt()
-        publicSuffixExceptionListBytes = bufferedSource.readByteArray(totalExceptionBytes.toLong())
-      }
-
-      synchronized(this) {
-        this.publicSuffixListBytes = publicSuffixListBytes!!
-        this.publicSuffixExceptionListBytes = publicSuffixExceptionListBytes!!
-      }
-    } finally {
-      readCompleteLatch.countDown()
-    }
-  }
-
-  /** Visible for testing. */
-  fun setListBytes(
-    publicSuffixListBytes: ByteArray,
-    publicSuffixExceptionListBytes: ByteArray,
-  ) {
-    this.publicSuffixListBytes = publicSuffixListBytes
-    this.publicSuffixExceptionListBytes = publicSuffixExceptionListBytes
-    listRead.set(true)
-    readCompleteLatch.countDown()
-  }
-
   companion object {
-    @JvmField
-    val PUBLIC_SUFFIX_RESOURCE = "/okhttp3/internal/publicsuffix/${PublicSuffixDatabase::class.java.simpleName}.gz".toPath()
-
     private val WILDCARD_LABEL = byteArrayOf('*'.code.toByte())
     private val PREVAILING_RULE = listOf("*")
 
     private const val EXCEPTION_MARKER = '!'
 
-    private val instance = PublicSuffixDatabase()
+    private val instance = PublicSuffixDatabase(EmbeddedPublicSuffixList)
 
     fun get(): PublicSuffixDatabase {
       return instance
