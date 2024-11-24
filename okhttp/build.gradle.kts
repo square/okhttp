@@ -25,23 +25,14 @@ val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
 
   // TODO replace with KotlinPoet?
   val databaseGz = project.file("src/test/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
-  val (listBytes, exceptionBytes) = DataInputStream(GZIPInputStream(FileInputStream(databaseGz))).use {
-    val totalBytes = it.readInt()
-    val publicSuffixListBytes = it.readNBytes(totalBytes)
-
-    val totalExceptionBytes = it.readInt()
-    val publicSuffixExceptionListBytes = it.readNBytes(totalExceptionBytes)
-
-    Pair(publicSuffixListBytes.toByteStringExpression(), publicSuffixExceptionListBytes.toByteStringExpression())
-  }
+  val listBytes = databaseGz.readBytes().toByteStringExpression()
 
   expand(
     // Build & use okhttp3/internal/-InternalVersion.kt
     "projectVersion" to project.version,
 
     // Build okhttp3/internal/publicsuffix/EmbeddedPublicSuffixList.kt
-    "publicSuffixListBytes" to listBytes,
-    "publicSuffixListExceptionBytes" to exceptionBytes
+    "publicSuffixListBytes" to listBytes
   )
 }
 

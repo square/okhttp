@@ -21,8 +21,11 @@ package okhttp3.internal.publicsuffix
 //It is subject to the terms of the Mozilla Public License, v. 2.0:
 //https://mozilla.org/MPL/2.0/
 
+import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
+import okio.GzipSource
+import okio.buffer
 
 /**
  * A implementation of I/O for PublicSuffixDatabase.gz by directly encoding
@@ -32,7 +35,22 @@ internal object EmbeddedPublicSuffixList: PublicSuffixList {
   override fun ensureLoaded() {
   }
 
-  override val bytes: ByteString = $publicSuffixListBytes
+  val compressedBytes: ByteString = $publicSuffixListBytes
 
-  override val exceptionBytes: ByteString = $publicSuffixListExceptionBytes
+  override val bytes: ByteString
+
+  override val exceptionBytes: ByteString
+
+  init {
+    Buffer().use { buffer ->
+      buffer.write(compressedBytes)
+      GzipSource(buffer).buffer().use { source ->
+        val totalBytes = source.readInt()
+        bytes = source.readByteString(totalBytes.toLong())
+
+        val totalExceptionBytes = source.readInt()
+        exceptionBytes = source.readByteString(totalExceptionBytes.toLong())
+      }
+    }
+  }
 }
