@@ -167,7 +167,7 @@ class PublicSuffixDatabaseTest {
       PublicSuffixDatabase(
         ResourcePublicSuffixList(
           path = "/xxx.gz".toPath(),
-        )
+        ),
       )
     lateinit var firstFailure: Exception
     assertFailsWith<Exception> {

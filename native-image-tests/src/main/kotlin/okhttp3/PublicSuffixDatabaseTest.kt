@@ -17,10 +17,8 @@ package okhttp3
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import assertk.assertions.isGreaterThan
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.testing.PlatformRule
-import okio.FileSystem
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
