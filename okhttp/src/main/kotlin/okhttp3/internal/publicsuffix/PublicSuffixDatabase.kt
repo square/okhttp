@@ -18,6 +18,7 @@ package okhttp3.internal.publicsuffix
 import java.net.IDN
 import okhttp3.internal.and
 import okio.ByteString
+import okio.ByteString.Companion.encodeUtf8
 
 /**
  * A database of public suffixes provided by [publicsuffix.org][publicsuffix_org].
@@ -82,7 +83,7 @@ class PublicSuffixDatabase internal constructor(
     publicSuffixList.ensureLoaded()
 
     // Break apart the domain into UTF-8 labels, i.e. foo.bar.com turns into [foo, bar, com].
-    val domainLabelsUtf8Bytes = Array(domainLabels.size) { i -> domainLabels[i].toByteArray() }
+    val domainLabelsUtf8Bytes = Array(domainLabels.size) { i -> domainLabels[i].encodeUtf8() }
 
     // Start by looking for exact matches. We start at the leftmost label. For example, foo.bar.com
     // will look like: [foo, bar, com], [bar, com], [com]. The longest matching rule wins.
@@ -148,7 +149,7 @@ class PublicSuffixDatabase internal constructor(
   }
 
   companion object {
-    private val WILDCARD_LABEL = byteArrayOf('*'.code.toByte())
+    private val WILDCARD_LABEL = ByteString.of('*'.code.toByte())
     private val PREVAILING_RULE = listOf("*")
 
     private const val EXCEPTION_MARKER = '!'
@@ -160,7 +161,7 @@ class PublicSuffixDatabase internal constructor(
     }
 
     private fun ByteString.binarySearch(
-      labels: Array<ByteArray>,
+      labels: Array<ByteString>,
       labelIndex: Int,
     ): String? {
       var low = 0
@@ -239,7 +240,7 @@ class PublicSuffixDatabase internal constructor(
             low = mid + end + 1
           } else {
             // Found a match.
-            match = this.substring(mid, publicSuffixLength).string(Charsets.UTF_8)
+            match = this.substring(mid, mid + publicSuffixLength).string(Charsets.UTF_8)
             break
           }
         }
