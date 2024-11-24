@@ -21,6 +21,9 @@ package okhttp3.internal.publicsuffix
 //It is subject to the terms of the Mozilla Public License, v. 2.0:
 //https://mozilla.org/MPL/2.0/
 
+import okio.ByteString
+import okio.ByteString.Companion.decodeBase64
+
 /**
  * A implementation of I/O for PublicSuffixDatabase.gz by directly encoding
  * the relevant byte arrays in a class file.
@@ -29,7 +32,7 @@ internal object EmbeddedPublicSuffixList: PublicSuffixList {
   override fun ensureLoaded() {
   }
 
-  override val bytes: ByteArray = $publicSuffixListBytes
+  override val bytes: ByteString = $publicSuffixListBytes
 
-  override val exceptionBytes: ByteArray = $publicSuffixListExceptionBytes
+  override val exceptionBytes: ByteString = $publicSuffixListExceptionBytes
 }

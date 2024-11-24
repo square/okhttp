@@ -2,6 +2,7 @@ import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
 import java.io.DataInputStream
 import java.io.FileInputStream
+import java.util.Base64
 import java.util.zip.GZIPInputStream
 
 plugins {
@@ -12,15 +13,8 @@ plugins {
   id("binary-compatibility-validator")
 }
 
-fun ByteArray.toByteArrayExpression(): String {
-  return buildString {
-    append("byteArrayOf(")
-      this@toByteArrayExpression.forEach {
-        append(it)
-        append(", ")
-      }
-    append(")")
-  }
+fun ByteArray.toByteStringExpression(): String {
+  return "\"${Base64.getEncoder().encodeToString(this@toByteStringExpression)}\".decodeBase64()!!"
 }
 
 val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
@@ -32,7 +26,7 @@ val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
   // TODO replace with KotlinPoet?
   val databaseGz = project.file("src/test/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
   println("loading $databaseGz")
-  val (publicSuffixListBytes, publicSuffixListExceptionBytes) = DataInputStream(GZIPInputStream(FileInputStream(databaseGz))).use {
+  val (listBytes, exceptionBytes) = DataInputStream(GZIPInputStream(FileInputStream(databaseGz))).use {
     val totalBytes = it.readInt()
     val publicSuffixListBytes = it.readNBytes(totalBytes)
     println("read $totalBytes")
@@ -41,18 +35,16 @@ val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
     val publicSuffixExceptionListBytes = it.readNBytes(totalExceptionBytes)
     println("read $totalExceptionBytes")
 
-    Pair(publicSuffixListBytes.toByteArrayExpression(), publicSuffixExceptionListBytes.toByteArrayExpression())
+    Pair(publicSuffixListBytes.toByteStringExpression(), publicSuffixExceptionListBytes.toByteStringExpression())
   }
-
-  println(publicSuffixListBytes.substring(0, 10))
 
   expand(
     // Build & use okhttp3/internal/-InternalVersion.kt
     "projectVersion" to project.version,
 
     // Build okhttp3/internal/publicsuffix/EmbeddedPublicSuffixList.kt
-    "publicSuffixListBytes" to publicSuffixListBytes,
-    "publicSuffixListExceptionBytes" to publicSuffixListExceptionBytes
+    "publicSuffixListBytes" to listBytes,
+    "publicSuffixListExceptionBytes" to exceptionBytes
   )
 }
 

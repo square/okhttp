@@ -23,6 +23,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import okhttp3.internal.toCanonicalHost
 import okio.Buffer
+import okio.ByteString
 import okio.FileSystem
 import okio.GzipSource
 import okio.Path.Companion.toPath
@@ -40,7 +41,7 @@ class PublicSuffixDatabaseTest {
         .writeUtf8("com\n")
         .writeUtf8("my.square.com\n")
         .writeUtf8("square.com\n")
-    list.setListBytes(buffer.readByteArray(), byteArrayOf())
+    list.setListBytes(buffer.readByteString(), ByteString.of())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("example.com"))
       .isEqualTo("example.com")
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.example.com"))
@@ -57,7 +58,7 @@ class PublicSuffixDatabaseTest {
         .writeUtf8("*.square.com\n")
         .writeUtf8("com\n")
         .writeUtf8("example.com\n")
-    list.setListBytes(buffer.readByteArray(), byteArrayOf())
+    list.setListBytes(buffer.readByteString(), ByteString.of())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("my.square.com")).isNull()
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.my.square.com"))
       .isEqualTo("foo.my.square.com")
@@ -71,7 +72,7 @@ class PublicSuffixDatabaseTest {
         .writeUtf8("bbb\n")
         .writeUtf8("ddd\n")
         .writeUtf8("fff\n")
-    list.setListBytes(buffer.readByteArray(), byteArrayOf())
+    list.setListBytes(buffer.readByteString(), ByteString.of())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("aaa")).isNull()
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("ggg")).isNull()
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("ccc")).isNull()
@@ -88,7 +89,7 @@ class PublicSuffixDatabaseTest {
         .writeUtf8("*.square.jp\n")
         .writeUtf8("example.com\n")
         .writeUtf8("square.com\n")
-    list.setListBytes(buffer.readByteArray(), exception.readByteArray())
+    list.setListBytes(buffer.readByteString(), exception.readByteString())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("my.square.jp"))
       .isEqualTo("my.square.jp")
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.my.square.jp"))
@@ -106,7 +107,7 @@ class PublicSuffixDatabaseTest {
         .writeUtf8("*.square.jp\n")
         .writeUtf8("example.com\n")
         .writeUtf8("square.com\n")
-    list.setListBytes(buffer.readByteArray(), exception.readByteArray())
+    list.setListBytes(buffer.readByteString(), exception.readByteString())
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("example.com")).isNull()
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.square.jp")).isNull()
   }
@@ -282,6 +283,8 @@ class PublicSuffixDatabaseTest {
   }
 
   @Test fun contentsMatch() {
+    list.ensureLoaded()
+
     assertEquals(list.bytes, EmbeddedPublicSuffixList.bytes)
     assertEquals(list.exceptionBytes, EmbeddedPublicSuffixList.exceptionBytes)
   }

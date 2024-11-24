@@ -5,6 +5,7 @@ import java.io.InterruptedIOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.internal.platform.Platform
+import okio.ByteString
 import okio.FileSystem
 import okio.GzipSource
 import okio.Path
@@ -25,21 +26,21 @@ internal class ResourcePublicSuffixList(
   // that will likely never be used. Each rule is separated by '\n'. Please see the
   // PublicSuffixListGenerator class for how these lists are generated.
   // Guarded by this.
-  override lateinit var bytes: ByteArray
-  override lateinit var exceptionBytes: ByteArray
+  override lateinit var bytes: ByteString
+  override lateinit var exceptionBytes: ByteString
 
   @Throws(IOException::class)
   private fun readTheList() {
-    var publicSuffixListBytes: ByteArray?
-    var publicSuffixExceptionListBytes: ByteArray?
+    var publicSuffixListBytes: ByteString?
+    var publicSuffixExceptionListBytes: ByteString?
 
     try {
       GzipSource(fileSystem.source(path)).buffer().use { bufferedSource ->
         val totalBytes = bufferedSource.readInt()
-        publicSuffixListBytes = bufferedSource.readByteArray(totalBytes.toLong())
+        publicSuffixListBytes = bufferedSource.readByteString(totalBytes.toLong())
 
         val totalExceptionBytes = bufferedSource.readInt()
-        publicSuffixExceptionListBytes = bufferedSource.readByteArray(totalExceptionBytes.toLong())
+        publicSuffixExceptionListBytes = bufferedSource.readByteString(totalExceptionBytes.toLong())
       }
 
       synchronized(this) {
@@ -97,8 +98,8 @@ internal class ResourcePublicSuffixList(
 
   /** Visible for testing. */
   fun setListBytes(
-    publicSuffixListBytes: ByteArray,
-    publicSuffixExceptionListBytes: ByteArray,
+    publicSuffixListBytes: ByteString,
+    publicSuffixExceptionListBytes: ByteString,
   ) {
     this.bytes = publicSuffixListBytes
     this.exceptionBytes = publicSuffixExceptionListBytes

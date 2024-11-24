@@ -17,6 +17,7 @@ package okhttp3.internal.publicsuffix
 
 import java.net.IDN
 import okhttp3.internal.and
+import okio.ByteString
 
 /**
  * A database of public suffixes provided by [publicsuffix.org][publicsuffix_org].
@@ -158,7 +159,7 @@ class PublicSuffixDatabase internal constructor(
       return instance
     }
 
-    private fun ByteArray.binarySearch(
+    private fun ByteString.binarySearch(
       labels: Array<ByteArray>,
       labelIndex: Int,
     ): String? {
@@ -238,7 +239,7 @@ class PublicSuffixDatabase internal constructor(
             low = mid + end + 1
           } else {
             // Found a match.
-            match = String(this, mid, publicSuffixLength)
+            match = this.substring(mid, publicSuffixLength).string(Charsets.UTF_8)
             break
           }
         }
