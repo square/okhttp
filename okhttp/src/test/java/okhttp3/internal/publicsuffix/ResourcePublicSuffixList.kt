@@ -110,6 +110,6 @@ internal class ResourcePublicSuffixList(
   companion object {
     @JvmField
     val PUBLIC_SUFFIX_RESOURCE =
-      "/okhttp3/internal/publicsuffix/${PublicSuffixDatabase::class.java.simpleName}.gz".toPath()
+      "okhttp3/internal/publicsuffix/${PublicSuffixDatabase::class.java.simpleName}.gz".toPath()
   }
 }

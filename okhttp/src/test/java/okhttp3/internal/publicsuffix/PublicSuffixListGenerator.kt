@@ -52,8 +52,8 @@ class PublicSuffixListGenerator(
   val fileSystem: FileSystem = FileSystem.SYSTEM,
   val client: OkHttpClient = OkHttpClient(),
 ) {
-  private val testResources = projectRoot / "okhttp/src/test/resources/okhttp3/internal/publicsuffix"
-  private val publicSuffixListDotDat = testResources / "public_suffix_list.dat"
+  private val testResources = projectRoot / "okhttp/src/test/resources"
+  private val publicSuffixListDotDat = testResources / "okhttp3/internal/publicsuffix/public_suffix_list.dat"
   private val outputFile = testResources / PUBLIC_SUFFIX_RESOURCE
 
   val request = Request("https://publicsuffix.org/list/public_suffix_list.dat".toHttpUrl())
@@ -168,5 +168,14 @@ A wildcard rule was added that wildcards the first level! We'll need to change t
 }
 
 suspend fun main() {
-  PublicSuffixListGenerator().import()
+  val publicSuffixListGenerator = PublicSuffixListGenerator()
+
+  try {
+    publicSuffixListGenerator.import()
+  } finally {
+    publicSuffixListGenerator.client.run {
+      connectionPool.evictAll()
+      dispatcher.executorService.shutdownNow()
+    }
+  }
 }
