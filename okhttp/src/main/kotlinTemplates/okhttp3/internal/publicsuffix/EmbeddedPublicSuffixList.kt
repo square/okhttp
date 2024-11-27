@@ -35,15 +35,13 @@ internal object EmbeddedPublicSuffixList: PublicSuffixList {
   override fun ensureLoaded() {
   }
 
-  val compressedBytes: ByteString = $publicSuffixListBytes
-
   override val bytes: ByteString
 
   override val exceptionBytes: ByteString
 
   init {
     Buffer().use { buffer ->
-      buffer.write(compressedBytes)
+      buffer.write($publicSuffixListBytes)
       GzipSource(buffer).buffer().use { source ->
         val totalBytes = source.readInt()
         bytes = source.readByteString(totalBytes.toLong())
