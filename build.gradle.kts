@@ -42,6 +42,7 @@ apply(plugin = "com.diffplug.spotless")
 configure<SpotlessExtension> {
   kotlin {
     target("**/*.kt")
+    targetExclude("**/kotlinTemplates/**/*.kt")
     ktlint()
   }
 }

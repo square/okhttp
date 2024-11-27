@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Square, Inc.
+ * Copyright (C) 2024 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3
+package okhttp3.internal.publicsuffix
 
-import assertk.assertThat
-import assertk.assertions.isEqualTo
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.testing.PlatformRule
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
+import okio.ByteString
 
-class PublicSuffixDatabaseTest {
-  @RegisterExtension
-  @JvmField
-  val platform = PlatformRule()
+/**
+ * Basic I/O for the PublicSuffixDatabase.gz.
+ */
+internal interface PublicSuffixList {
+  fun ensureLoaded()
 
-  @Test
-  fun testResourcesLoaded() {
-    val url = "https://api.twitter.com".toHttpUrl()
-
-    assertThat(url.topPrivateDomain()).isEqualTo("twitter.com")
-  }
+  val bytes: ByteString
+  val exceptionBytes: ByteString
 }
