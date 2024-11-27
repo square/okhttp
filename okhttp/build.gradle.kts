@@ -21,9 +21,11 @@ val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
   from("src/main/kotlinTemplates")
   into("$buildDir/generated/sources/kotlinTemplates")
 
+  // Tag as an input to regenerate after an update
+  inputs.file("src/test/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
+
   filteringCharset = Charsets.UTF_8.toString()
 
-  // TODO replace with KotlinPoet?
   val databaseGz = project.file("src/test/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
   val listBytes = databaseGz.readBytes().toByteStringExpression()
 
