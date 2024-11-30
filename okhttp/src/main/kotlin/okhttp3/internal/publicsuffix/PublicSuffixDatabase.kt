@@ -17,6 +17,7 @@ package okhttp3.internal.publicsuffix
 
 import java.net.IDN
 import okhttp3.internal.and
+import okhttp3.internal.platform.Platform
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 
@@ -153,7 +154,7 @@ class PublicSuffixDatabase internal constructor(
 
     private const val EXCEPTION_MARKER = '!'
 
-    private val instance = PublicSuffixDatabase(EmbeddedPublicSuffixList)
+    private val instance = PublicSuffixDatabase(Platform.get().publicSuffixList())
 
     fun get(): PublicSuffixDatabase {
       return instance

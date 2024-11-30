@@ -22,11 +22,11 @@ val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
   into("$buildDir/generated/sources/kotlinTemplates")
 
   // Tag as an input to regenerate after an update
-  inputs.file("src/test/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
+  inputs.file("src/main/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
 
   filteringCharset = Charsets.UTF_8.toString()
 
-  val databaseGz = project.file("src/test/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
+  val databaseGz = project.file("src/main/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
   val listBytes = databaseGz.readBytes().toByteStringExpression()
 
   expand(

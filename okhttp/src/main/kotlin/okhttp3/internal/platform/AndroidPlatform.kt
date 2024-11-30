@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.platform
 
+import android.content.Context
 import android.os.Build
 import android.security.NetworkSecurityPolicy
 import java.io.IOException
@@ -30,18 +31,34 @@ import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
+import okhttp3.internal.platform.android.AndroidContextPlatform
 import okhttp3.internal.platform.android.AndroidSocketAdapter
 import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.platform.android.StandardAndroidSocketAdapter
+import okhttp3.internal.publicsuffix.PublicSuffixList
+import okhttp3.internal.publicsuffix.ResourcePublicSuffixList
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
+import okio.source
 
 /** Android 5 to 9 (API 21 to 28). */
 @SuppressSignatureCheck
-class AndroidPlatform : Platform() {
+class AndroidPlatform : AndroidContextPlatform() {
+
+  override fun publicSuffixList(): PublicSuffixList {
+    val context = this.context
+    return if (context == null) {
+      super.publicSuffixList()
+    } else {
+      return ResourcePublicSuffixList {
+        context.assets.open("okhttp3/internal/publicsuffix/PublicSuffixDatabase").source()
+      }
+    }
+  }
+
   private val socketAdapters =
     listOfNotNull(
       StandardAndroidSocketAdapter.buildIfSupported(),

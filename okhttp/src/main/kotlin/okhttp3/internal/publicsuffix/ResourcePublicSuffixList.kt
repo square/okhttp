@@ -5,16 +5,17 @@ import java.io.InterruptedIOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.platform.android.AndroidContextPlatform
 import okio.ByteString
 import okio.FileSystem
 import okio.GzipSource
 import okio.Path
 import okio.Path.Companion.toPath
+import okio.Source
 import okio.buffer
 
-internal class ResourcePublicSuffixList(
-  val path: Path = PUBLIC_SUFFIX_RESOURCE,
-  val fileSystem: FileSystem = FileSystem.RESOURCES,
+class ResourcePublicSuffixList(
+  val sourceProvider: () -> Source,
 ) : PublicSuffixList {
   /** True after we've attempted to read the list for the first time. */
   private val listRead = AtomicBoolean(false)
@@ -29,13 +30,24 @@ internal class ResourcePublicSuffixList(
   override lateinit var bytes: ByteString
   override lateinit var exceptionBytes: ByteString
 
+  constructor(
+    path: Path = PUBLIC_SUFFIX_RESOURCE,
+    fileSystem: FileSystem = FileSystem.RESOURCES,
+  ) : this({
+    val platform = Platform.get()
+    check(!Platform.isAndroid || (platform as? AndroidContextPlatform)?.context == null) {
+      "PublicSuffixDatabase.gz loaded from resources on Android"
+    }
+    GzipSource(fileSystem.source(path))
+  })
+
   @Throws(IOException::class)
   private fun readTheList() {
     var publicSuffixListBytes: ByteString?
     var publicSuffixExceptionListBytes: ByteString?
 
     try {
-      GzipSource(fileSystem.source(path)).buffer().use { bufferedSource ->
+      sourceProvider().buffer().use { bufferedSource ->
         val totalBytes = bufferedSource.readInt()
         publicSuffixListBytes = bufferedSource.readByteString(totalBytes.toLong())
 

@@ -43,6 +43,19 @@ android {
   kotlinOptions {
     jvmTarget = JavaVersion.VERSION_11.toString()
   }
+
+  sourceSets {
+    getByName("main") {
+      assets {
+        srcDir("$buildDir/generated/sources/assets")
+      }
+    }
+  }
+}
+
+val copyPublicSuffixDatabase = tasks.register<Copy>("copyPublicSuffixDatabase") {
+  from(project(":okhttp").file("src/main/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz"))
+  into("$buildDir/generated/sources/assets/okhttp3/internal/publicsuffix")
 }
 
 dependencies {
@@ -55,6 +68,7 @@ dependencies {
   debugImplementation(libs.findbugs.jsr305)
   compileOnly(libs.animalsniffer.annotations)
   compileOnly(libs.robolectric.android)
+  implementation("androidx.startup:startup-runtime:1.2.0")
 
   testImplementation(libs.junit)
   testImplementation(libs.junit.ktx)
@@ -69,6 +83,8 @@ dependencies {
   androidTestImplementation(libs.assertk)
   androidTestImplementation(projects.mockwebserver3Junit4)
   androidTestImplementation(libs.androidx.test.runner)
+  androidTestImplementation("androidx.test.ext:junit-ktx:1.2.1")
+  androidTestImplementation("androidx.test:core:1.6.1")
 }
 
 mavenPublishing {
