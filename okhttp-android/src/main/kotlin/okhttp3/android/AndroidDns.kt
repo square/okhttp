@@ -24,8 +24,13 @@ import androidx.annotation.RequiresApi
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.Executors
-import okhttp3.AsyncDns
+import okhttp3.Call
+import okhttp3.Dns
 import okhttp3.ExperimentalOkHttpApi
+import okhttp3.android.AndroidDns.DnsClass
+import okhttp3.android.internal.AsyncDns
+import okhttp3.android.internal.BlockingAsyncDns.Companion.asBlocking
+import okhttp3.android.internal.CombinedAsyncDns.Companion.union
 
 /**
  * DNS implementation based on android.net.DnsResolver, which submits a request for
@@ -37,8 +42,8 @@ import okhttp3.ExperimentalOkHttpApi
  */
 @RequiresApi(Build.VERSION_CODES.Q)
 @ExperimentalOkHttpApi
-class AndroidAsyncDns(
-  private val dnsClass: AsyncDns.DnsClass,
+internal class AndroidDns internal constructor(
+  private val dnsClass: DnsClass,
   private val network: Network? = null,
 ) : AsyncDns {
   @RequiresApi(Build.VERSION_CODES.Q)
@@ -47,6 +52,7 @@ class AndroidAsyncDns(
 
   override fun query(
     hostname: String,
+    originatingCall: Call?,
     callback: AsyncDns.Callback,
   ) {
     try {
@@ -62,15 +68,17 @@ class AndroidAsyncDns(
             addresses: List<InetAddress>,
             rCode: Int,
           ) {
-            callback.onResponse(hostname, addresses)
+            callback.onAddresses(hasMore = false, hostname = hostname, addresses = addresses)
           }
 
           override fun onError(e: DnsResolver.DnsException) {
             callback.onFailure(
-              hostname,
-              UnknownHostException(e.message).apply {
-                initCause(e)
-              },
+              hasMore = false,
+              hostname = hostname,
+              e =
+                UnknownHostException(e.message).apply {
+                  initCause(e)
+                },
             )
           }
         },
@@ -79,6 +87,7 @@ class AndroidAsyncDns(
       // Handle any errors that might leak out
       // https://issuetracker.google.com/issues/319957694
       callback.onFailure(
+        hasMore = false,
         hostname,
         UnknownHostException(e.message).apply {
           initCause(e)
@@ -89,10 +98,31 @@ class AndroidAsyncDns(
 
   @ExperimentalOkHttpApi
   companion object {
-    @RequiresApi(Build.VERSION_CODES.Q)
-    val IPv4 = AndroidAsyncDns(dnsClass = AsyncDns.DnsClass.IPV4)
+    internal fun forNetwork(network: Network): AsyncDns {
+      return union(
+        AndroidDns(dnsClass = DnsClass.IPV4, network = network),
+        AndroidDns(dnsClass = DnsClass.IPV6, network = network),
+      )
+    }
 
-    @RequiresApi(Build.VERSION_CODES.Q)
-    val IPv6 = AndroidAsyncDns(dnsClass = AsyncDns.DnsClass.IPV6)
+    internal const val TYPE_A = 1
+    internal const val TYPE_AAAA = 28
+  }
+
+  /**
+   * Class of DNS addresses, such that clients that treat these differently, such
+   * as attempting IPv6 first, can make such decisions.
+   */
+  @ExperimentalOkHttpApi
+  internal enum class DnsClass(val type: Int) {
+    IPV4(TYPE_A),
+    IPV6(TYPE_AAAA),
   }
 }
+
+val Dns.Companion.ANDROID: Dns
+  @RequiresApi(Build.VERSION_CODES.Q)
+  get() = union(AndroidDns(dnsClass = DnsClass.IPV4), AndroidDns(dnsClass = DnsClass.IPV6)).asBlocking()
+
+@RequiresApi(Build.VERSION_CODES.Q)
+fun Dns.Companion.forNetwork(network: Network): Dns = AndroidDns.forNetwork(network).asBlocking()
