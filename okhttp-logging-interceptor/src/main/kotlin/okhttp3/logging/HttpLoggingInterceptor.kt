@@ -29,7 +29,7 @@ import okhttp3.Response
 import okhttp3.internal.charsetOrUtf8
 import okhttp3.internal.http.promisesBody
 import okhttp3.internal.platform.Platform
-import okhttp3.logging.internal.isProbablyUtf8
+import okhttp3.logging.internal.readProbablyUtf8String
 import okio.Buffer
 import okio.GzipSource
 
@@ -227,17 +227,23 @@ class HttpLoggingInterceptor
             }
           }
 
+          val totalSize = buffer.size
+
           val charset: Charset = requestBody.contentType().charsetOrUtf8()
 
           logger.log("")
-          if (!buffer.isProbablyUtf8()) {
-            logger.log(
-              "--> END ${request.method} (binary ${requestBody.contentLength()}-byte body omitted)",
-            )
-          } else if (gzippedLength != null) {
+          if (gzippedLength != null) {
             logger.log("--> END ${request.method} (${buffer.size}-byte, $gzippedLength-gzipped-byte body)")
           } else {
-            logger.log(buffer.readString(charset))
+            val builder = StringBuilder()
+            val utf8Count = buffer.clone().readProbablyUtf8String(builder, charset)
+            if (utf8Count < totalSize) {
+                if (builder.isNotEmpty()) {
+                    builder.append(" ")
+                }
+                builder.append("(binary ${totalSize - utf8Count}-byte body omitted)")
+            }
+            logger.log(builder.toString())
             logger.log("--> END ${request.method} (${requestBody.contentLength()}-byte body)")
           }
         }
@@ -296,17 +302,21 @@ class HttpLoggingInterceptor
             }
           }
 
+          val totalSize = buffer.size
+
           val charset: Charset = responseBody.contentType().charsetOrUtf8()
 
-          if (!buffer.isProbablyUtf8()) {
-            logger.log("")
-            logger.log("<-- END HTTP (${totalMs}ms, binary ${buffer.size}-byte body omitted)")
-            return response
-          }
-
           if (contentLength != 0L) {
+            val builder = StringBuilder()
+            val utf8Count = buffer.clone().readProbablyUtf8String(builder, charset)
+            if (utf8Count < totalSize) {
+                if (builder.isNotEmpty()) {
+                    builder.append(" ")
+                }
+                builder.append("(binary ${totalSize - utf8Count}-byte body omitted)")
+            }
             logger.log("")
-            logger.log(buffer.clone().readString(charset))
+            logger.log(builder.toString())
           }
 
           logger.log(

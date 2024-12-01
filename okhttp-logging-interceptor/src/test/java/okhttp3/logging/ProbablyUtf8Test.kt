@@ -22,14 +22,20 @@ import okhttp3.logging.internal.isProbablyUtf8
 import okio.Buffer
 import org.junit.jupiter.api.Test
 
-class IsProbablyUtf8Test {
-  @Test fun isProbablyUtf8() {
-    assertThat(Buffer().isProbablyUtf8()).isTrue()
-    assertThat(Buffer().writeUtf8("abc").isProbablyUtf8()).isTrue()
-    assertThat(Buffer().writeUtf8("new\r\nlines").isProbablyUtf8()).isTrue()
-    assertThat(Buffer().writeUtf8("white\t space").isProbablyUtf8()).isTrue()
-    assertThat(Buffer().writeByte(0x80).isProbablyUtf8()).isTrue()
-    assertThat(Buffer().writeByte(0x00).isProbablyUtf8()).isFalse()
-    assertThat(Buffer().writeByte(0xc0).isProbablyUtf8()).isFalse()
+class ProbablyUtf8Test {
+  @Test fun readProbablyUtf8String() {
+    assertRead(Buffer(), "")
+    assertRead(Buffer().writeUtf8("abc"), "abc")
+    assertRead(Buffer().writeUtf8("new\r\nlines"), "new\r\nlines")
+    assertRead(Buffer().writeUtf8("white\t space"), "white\t space")
+    assertRead(Buffer().writeByte(0x80), String(byteArrayOf(0x80.toByte())))
+    assertRead(Buffer().writeByte(0xc0), String(byteArrayOf(0xc0.toByte())))
+    assertRead(Buffer().writeUtf8("a").writeByte(0x00).writeUtf8("bc"), "a")
+  }
+
+  private fun assertRead(expected: Buffer, actual: String) {
+    val builder = StringBuilder()
+    expected.readProbablyUtf8String(builder, Charsets.UTF_8)
+    assertEquals(builder.toString(), actual)
   }
 }
