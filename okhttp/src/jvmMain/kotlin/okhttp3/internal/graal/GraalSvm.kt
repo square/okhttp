@@ -18,22 +18,12 @@ package okhttp3.internal.graal
 import com.oracle.svm.core.annotate.Delete
 import com.oracle.svm.core.annotate.Substitute
 import com.oracle.svm.core.annotate.TargetClass
-import okhttp3.internal.platform.Android10Platform
-import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.BouncyCastlePlatform
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
 import okhttp3.internal.platform.Jdk9Platform
 import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.internal.platform.Platform
-
-@TargetClass(AndroidPlatform::class)
-@Delete
-class TargetAndroidPlatform
-
-@TargetClass(Android10Platform::class)
-@Delete
-class TargetAndroid10Platform
 
 @TargetClass(BouncyCastlePlatform::class)
 @Delete

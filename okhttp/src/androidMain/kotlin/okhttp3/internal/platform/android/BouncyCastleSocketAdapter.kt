@@ -17,7 +17,6 @@ package okhttp3.internal.platform.android
 
 import javax.net.ssl.SSLSocket
 import okhttp3.Protocol
-import okhttp3.internal.platform.BouncyCastlePlatform
 import okhttp3.internal.platform.Platform
 import org.bouncycastle.jsse.BCSSLSocket
 
@@ -27,7 +26,7 @@ import org.bouncycastle.jsse.BCSSLSocket
 class BouncyCastleSocketAdapter : SocketAdapter {
   override fun matchesSocket(sslSocket: SSLSocket): Boolean = sslSocket is BCSSLSocket
 
-  override fun isSupported(): Boolean = BouncyCastlePlatform.isSupported
+  override fun isSupported(): Boolean = isSupported
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
     val s = sslSocket as BCSSLSocket
@@ -60,10 +59,20 @@ class BouncyCastleSocketAdapter : SocketAdapter {
     val factory =
       object : DeferredSocketAdapter.Factory {
         override fun matchesSocket(sslSocket: SSLSocket): Boolean {
-          return BouncyCastlePlatform.isSupported && sslSocket is BCSSLSocket
+          return isSupported && sslSocket is BCSSLSocket
         }
 
         override fun create(sslSocket: SSLSocket): SocketAdapter = BouncyCastleSocketAdapter()
+      }
+
+    val isSupported: Boolean =
+      try {
+        // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
+        Class.forName("org.bouncycastle.jsse.provider.BouncyCastleJsseProvider", false, javaClass.classLoader)
+
+        true
+      } catch (_: ClassNotFoundException) {
+        false
       }
   }
 }

@@ -1,5 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
+import com.android.build.gradle.internal.scope.ProjectInfo.Companion.getBaseName
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
@@ -8,7 +9,11 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMultiplatformPlugin
+import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import org.jetbrains.kotlin.gradle.tasks.UsesKotlinJavaToolchain
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 import java.net.URI
 
@@ -37,16 +42,16 @@ buildscript {
   }
 }
 
-apply(plugin = "org.jetbrains.dokka")
-apply(plugin = "com.diffplug.spotless")
+//apply(plugin = "org.jetbrains.dokka")
+//apply(plugin = "com.diffplug.spotless")
 
-configure<SpotlessExtension> {
-  kotlin {
-    target("**/*.kt")
-    targetExclude("**/kotlinTemplates/**/*.kt")
-    ktlint()
-  }
-}
+//configure<SpotlessExtension> {
+//  kotlin {
+//    target("**/*.kt")
+//    targetExclude("**/kotlinTemplates/**/*.kt")
+//    ktlint()
+//  }
+//}
 
 allprojects {
   group = "com.squareup.okhttp3"
@@ -90,17 +95,27 @@ subprojects {
 
   apply(plugin = "checkstyle")
   apply(plugin = "ru.vyarus.animalsniffer")
-  apply(plugin = "biz.aQute.bnd.builder")
-  apply(plugin = "io.github.usefulness.maven-sympathy")
+
+  // The 'java' plugin has been applied, but it is not compatible with the Android plugins.
+//  apply(plugin = "biz.aQute.bnd.builder")
+//  apply(plugin = "io.github.usefulness.maven-sympathy")
 
   tasks.withType<JavaCompile> {
     options.encoding = Charsets.UTF_8.toString()
   }
 
-  configure<JavaPluginExtension> {
-    toolchain {
-      languageVersion.set(JavaLanguageVersion.of(17))
+  if (plugins.hasPlugin(JavaBasePlugin::class.java)) {
+    extensions.configure<JavaPluginExtension> {
+      toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+      }
     }
+//  if (plugins.hasPlugin(JavaBasePlugin::class.java)) {
+//    configure<JavaPluginExtension> {
+//      toolchain {
+//        languageVersion.set(JavaLanguageVersion.of(17))
+//      }
+//    }
   }
 
   tasks.withType<Checkstyle>().configureEach {
@@ -114,33 +129,33 @@ subprojects {
     }
   }
 
-  configure<CheckstyleExtension> {
-    config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
-    toolVersion = rootProject.libs.versions.checkStyle.get()
-    sourceSets = listOf(project.sourceSets["main"])
-  }
+//  configure<CheckstyleExtension> {
+//    config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
+//    toolVersion = rootProject.libs.versions.checkStyle.get()
+//    sourceSets = listOf(project.sourceSets["main"])
+//  }
 
   // Animal Sniffer confirms we generally don't use APIs not on Java 8.
-  configure<AnimalSnifferExtension> {
-    annotation = "okhttp3.internal.SuppressSignatureCheck"
-    sourceSets = listOf(project.sourceSets["main"])
-  }
+//  configure<AnimalSnifferExtension> {
+//    annotation = "okhttp3.internal.SuppressSignatureCheck"
+//    sourceSets = listOf(project.sourceSets["main"])
+//  }
 
-  val signature: Configuration by configurations.getting
+//  val signature: Configuration by configurations.getting
   dependencies {
     // No dependency requirements for testing-support.
     if (project.name == "okhttp-testing-support") return@dependencies
 
     if (project.name == "mockwebserver3-junit5") {
       // JUnit 5's APIs need java.util.function.Function and java.util.Optional from API 24.
-      signature(rootProject.libs.signature.android.apilevel24) { artifact { type = "signature" } }
+//      signature(rootProject.libs.signature.android.apilevel24) { artifact { type = "signature" } }
     } else {
       // Everything else requires Android API 21+.
-      signature(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
+//      signature(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
     }
 
     // OkHttp requires Java 8+.
-    signature(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
+//    signature(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
   }
 
   val javaVersionSetting = when (project.name) {
@@ -161,12 +176,6 @@ subprojects {
 
   val platform = System.getProperty("okhttp.platform", "jdk9")
   val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
-
-  val testRuntimeOnly: Configuration by configurations.getting
-  dependencies {
-    testRuntimeOnly(rootProject.libs.junit.jupiter.engine)
-    testRuntimeOnly(rootProject.libs.junit.vintage.engine)
-  }
 
   tasks.withType<Test> {
     useJUnitPlatform()
@@ -196,6 +205,9 @@ subprojects {
 
   // https://publicobject.com/2023/04/16/read-a-project-file-in-a-kotlin-multiplatform-test/
   tasks.withType<Test>().configureEach {
+    environment("OKHTTP_ROOT", rootDir)
+  }
+  tasks.withType<KotlinJvmTest>().configureEach {
     environment("OKHTTP_ROOT", rootDir)
   }
 
@@ -229,6 +241,11 @@ subprojects {
 // Opt-in to @ExperimentalOkHttpApi everywhere.
 subprojects {
   plugins.withId("org.jetbrains.kotlin.jvm") {
+    kotlinExtension.sourceSets.configureEach {
+      languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
+    }
+  }
+  plugins.withId("org.jetbrains.kotlin.multiplatform") {
     kotlinExtension.sourceSets.configureEach {
       languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
     }
@@ -301,6 +318,13 @@ subprojects {
       ignoredPackages += "okhttp3.sse.internal"
       ignoredPackages += "okhttp3.tls.internal"
     }
+  }
+}
+
+plugins.withId("org.jetbrains.kotlin.jvm") {
+  val jvmTest by tasks.creating {
+    description = "Get 'gradlew jvmTest' to run the tests of JVM-only modules"
+    dependsOn("test")
   }
 }
 

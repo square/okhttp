@@ -16,7 +16,6 @@
  */
 package okhttp3.internal.platform
 
-import android.annotation.SuppressLint
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -35,7 +34,6 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import okhttp3.internal.platform.android.AndroidLog
 import okhttp3.internal.readFieldOrNull
 import okhttp3.internal.tls.BasicCertificateChainCleaner
 import okhttp3.internal.tls.BasicTrustRootIndex
@@ -129,7 +127,6 @@ open class Platform {
   open fun getSelectedProtocol(sslSocket: SSLSocket): String? = null
 
   /** For MockWebServer. This returns the inbound SNI names. */
-  @SuppressLint("NewApi")
   @IgnoreJRERequirement // This function is overridden to require API >= 24.
   open fun getHandshakeServerNames(sslSocket: SSLSocket): List<String> {
     val session = sslSocket.session as? ExtendedSSLSession ?: return listOf()
@@ -219,78 +216,8 @@ open class Platform {
     val isAndroid: Boolean
       get() = "Dalvik" == System.getProperty("java.vm.name")
 
-    private val isConscryptPreferred: Boolean
-      get() {
-        val preferredProvider = Security.getProviders()[0].name
-        return "Conscrypt" == preferredProvider
-      }
-
-    private val isOpenJSSEPreferred: Boolean
-      get() {
-        val preferredProvider = Security.getProviders()[0].name
-        return "OpenJSSE" == preferredProvider
-      }
-
-    private val isBouncyCastlePreferred: Boolean
-      get() {
-        val preferredProvider = Security.getProviders()[0].name
-        return "BC" == preferredProvider
-      }
-
     /** Attempt to match the host runtime to a capable Platform implementation. */
-    private fun findPlatform(): Platform =
-      if (isAndroid) {
-        findAndroidPlatform()
-      } else {
-        findJvmPlatform()
-      }
-
-    private fun findAndroidPlatform(): Platform {
-      AndroidLog.enable()
-      return Android10Platform.buildIfSupported() ?: AndroidPlatform.buildIfSupported()!!
-    }
-
-    private fun findJvmPlatform(): Platform {
-      if (isConscryptPreferred) {
-        val conscrypt = ConscryptPlatform.buildIfSupported()
-
-        if (conscrypt != null) {
-          return conscrypt
-        }
-      }
-
-      if (isBouncyCastlePreferred) {
-        val bc = BouncyCastlePlatform.buildIfSupported()
-
-        if (bc != null) {
-          return bc
-        }
-      }
-
-      if (isOpenJSSEPreferred) {
-        val openJSSE = OpenJSSEPlatform.buildIfSupported()
-
-        if (openJSSE != null) {
-          return openJSSE
-        }
-      }
-
-      // An Oracle JDK 9 like OpenJDK, or JDK 8 251+.
-      val jdk9 = Jdk9Platform.buildIfSupported()
-
-      if (jdk9 != null) {
-        return jdk9
-      }
-
-      // An Oracle JDK 8 like OpenJDK, pre 251.
-      val jdkWithJettyBoot = Jdk8WithJettyBootPlatform.buildIfSupported()
-
-      if (jdkWithJettyBoot != null) {
-        return jdkWithJettyBoot
-      }
-
-      return Platform()
-    }
+    private fun findPlatform(): Platform = PlatformRegistry.findPlatform()
 
     /**
      * Returns the concatenation of 8-bit, length prefixed protocol names.

@@ -38,9 +38,9 @@ dependencies {
   testImplementation(kotlin("test"))
 }
 
-animalsniffer {
-  isIgnoreFailures = true
-}
+//animalsniffer {
+//  isIgnoreFailures = true
+//}
 
 tasks.jar {
   manifest {

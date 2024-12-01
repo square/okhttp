@@ -15,7 +15,6 @@
  */
 package okhttp3
 
-import android.annotation.SuppressLint
 import java.net.Proxy
 import java.net.ProxySelector
 import java.net.Socket
@@ -1113,7 +1112,6 @@ open class OkHttpClient internal constructor(
      *
      * The default value is 0 which imposes no timeout.
      */
-    @SuppressLint("NewApi")
     @IgnoreJRERequirement
     fun callTimeout(duration: Duration) =
       apply {
@@ -1156,7 +1154,6 @@ open class OkHttpClient internal constructor(
      * The connect timeout is applied when connecting a TCP socket to the target host. The default
      * value is 10 seconds.
      */
-    @SuppressLint("NewApi")
     @IgnoreJRERequirement
     fun connectTimeout(duration: Duration) =
       apply {
@@ -1202,7 +1199,6 @@ open class OkHttpClient internal constructor(
      * @see Socket.setSoTimeout
      * @see Source.timeout
      */
-    @SuppressLint("NewApi")
     @IgnoreJRERequirement
     fun readTimeout(duration: Duration) =
       apply {
@@ -1249,7 +1245,6 @@ open class OkHttpClient internal constructor(
      *
      * @see Sink.timeout
      */
-    @SuppressLint("NewApi")
     @IgnoreJRERequirement
     fun writeTimeout(duration: Duration) =
       apply {
@@ -1303,7 +1298,6 @@ open class OkHttpClient internal constructor(
      *
      * The default value of 0 disables client-initiated pings.
      */
-    @SuppressLint("NewApi")
     @IgnoreJRERequirement
     fun pingInterval(duration: Duration) =
       apply {
@@ -1351,7 +1345,6 @@ open class OkHttpClient internal constructor(
      * wait for a graceful shutdown. If the server doesn't respond the web socket will be canceled.
      * The default value is 60 seconds.
      */
-    @SuppressLint("NewApi")
     @IgnoreJRERequirement
     fun webSocketCloseTimeout(duration: Duration) =
       apply {

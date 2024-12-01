@@ -1,15 +1,16 @@
 import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinJvm
 import java.io.DataInputStream
 import java.io.FileInputStream
 import java.util.Base64
 import java.util.zip.GZIPInputStream
+import com.vanniktech.maven.publish.KotlinMultiplatform
 
 plugins {
-  kotlin("jvm")
+  kotlin("multiplatform")
+  id("com.android.library")
   kotlin("plugin.serialization")
   id("org.jetbrains.dokka")
-  id("com.vanniktech.maven.publish.base")
+//  id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
 }
 
@@ -18,15 +19,15 @@ fun ByteArray.toByteStringExpression(): String {
 }
 
 val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
-  from("src/main/kotlinTemplates")
+  from("src/commonJvmAndroid/kotlinTemplates")
   into(layout.buildDirectory.dir("generated/sources/kotlinTemplates"))
 
   // Tag as an input to regenerate after an update
-  inputs.file("src/test/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
+  inputs.file("src/jvmTest/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
 
   filteringCharset = Charsets.UTF_8.toString()
 
-  val databaseGz = project.file("src/test/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
+  val databaseGz = project.file("src/jvmTest/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
   val listBytes = databaseGz.readBytes().toByteStringExpression()
 
   expand(
@@ -51,11 +52,108 @@ val generateIdnaMappingTable by tasks.creating(JavaExec::class.java) {
 }
 
 kotlin {
+  jvmToolchain(17)
+
+  jvm {
+  }
+
+  androidTarget {
+  }
+
   sourceSets {
-    getByName("main") {
+    val commonJvmAndroid = create("commonJvmAndroid") {
+      dependsOn(commonMain.get())
+
       kotlin.srcDir(copyKotlinTemplates.get().outputs)
       kotlin.srcDir(generateIdnaMappingTable.outputs)
+
+      dependencies {
+        api(libs.squareup.okio)
+        api(libs.kotlin.stdlib)
+
+        compileOnly(libs.findbugs.jsr305)
+        compileOnly(libs.animalsniffer.annotations)
+      }
     }
+
+    androidMain {
+      dependsOn(commonJvmAndroid)
+      dependencies {
+        compileOnly(libs.bouncycastle.bcprov)
+        compileOnly(libs.bouncycastle.bctls)
+        compileOnly(libs.conscrypt.openjdk)
+      }
+    }
+
+    val androidUnitTest by getting {
+      dependencies {
+      }
+    }
+
+    jvmMain {
+      dependsOn(commonJvmAndroid)
+      dependencies {
+
+        // These compileOnly dependencies must also be listed in the OSGi configuration above.
+        compileOnly(libs.conscrypt.openjdk)
+        compileOnly(libs.bouncycastle.bcprov)
+        compileOnly(libs.bouncycastle.bctls)
+
+        // graal build support
+        compileOnly(libs.nativeImageSvm)
+        compileOnly(libs.openjsse)
+      }
+    }
+
+    val jvmTest by getting {
+      dependencies {
+        implementation(projects.okhttpTestingSupport)
+        implementation(libs.assertk)
+        implementation(libs.kotlin.test.annotations)
+        implementation(libs.kotlin.test.common)
+        implementation(libs.kotlinx.serialization.core)
+        implementation(libs.kotlinx.serialization.json)
+        implementation(projects.okhttpJavaNetCookiejar)
+        implementation(projects.okhttpTls)
+        implementation(projects.okhttpUrlconnection)
+        implementation(projects.mockwebserver3)
+        implementation(projects.mockwebserver3Junit4)
+        implementation(projects.mockwebserver3Junit5)
+        implementation(projects.mockwebserver)
+        implementation(projects.loggingInterceptor)
+        implementation(projects.okhttpBrotli)
+        implementation(projects.okhttpDnsoverhttps)
+        implementation(projects.okhttpIdnaMappingTable)
+        implementation(projects.okhttpSse)
+        implementation(projects.okhttpCoroutines)
+        implementation(libs.kotlinx.coroutines.core)
+        implementation(libs.squareup.moshi)
+        implementation(libs.squareup.moshi.kotlin)
+        implementation(libs.squareup.okio.fakefilesystem)
+        implementation(libs.conscrypt.openjdk)
+        implementation(libs.junit)
+        implementation(libs.junit.jupiter.api)
+        implementation(libs.junit.jupiter.params)
+        implementation(libs.kotlin.test.junit)
+        implementation(libs.openjsse)
+        implementation(libs.aqute.resolve)
+        compileOnly(libs.findbugs.jsr305)
+
+        implementation(libs.junit.jupiter.engine)
+        implementation(libs.junit.vintage.engine)
+      }
+    }
+  }
+}
+
+android {
+  compileSdk = 34
+
+  namespace = "okhttp.okhttp3"
+
+  defaultConfig {
+    minSdk = 21
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 }
 
@@ -109,65 +207,17 @@ val osgiTestDeploy: Configuration by configurations.creating
 
 val copyOsgiTestDeployment by tasks.creating(Copy::class.java) {
   from(osgiTestDeploy)
-  into(layout.buildDirectory.dir("resources/test/okhttp3/osgi/deployments"))
+  into(layout.buildDirectory.dir("resources/jvmTest/okhttp3/osgi/deployments"))
 }
-tasks.getByName("test") {
+tasks.getByName("jvmTest") {
   dependsOn(copyOsgiTestDeployment)
 }
 
 dependencies {
-  api(libs.squareup.okio)
-  api(libs.kotlin.stdlib)
-
-  // These compileOnly dependencies must also be listed in the OSGi configuration above.
-  compileOnly(libs.robolectric.android)
-  compileOnly(libs.bouncycastle.bcprov)
-  compileOnly(libs.bouncycastle.bctls)
-  compileOnly(libs.conscrypt.openjdk)
-  compileOnly(libs.openjsse)
-  compileOnly(libs.findbugs.jsr305)
-  compileOnly(libs.animalsniffer.annotations)
-
-  // graal build support
-  compileOnly(libs.nativeImageSvm)
-
-  testCompileOnly(libs.bouncycastle.bctls)
-  testImplementation(projects.okhttpTestingSupport)
-  testImplementation(libs.assertk)
-  testImplementation(libs.kotlin.test.annotations)
-  testImplementation(libs.kotlin.test.common)
-  testImplementation(libs.kotlinx.serialization.core)
-  testImplementation(libs.kotlinx.serialization.json)
-  testImplementation(projects.okhttpJavaNetCookiejar)
-  testImplementation(projects.okhttpTls)
-  testImplementation(projects.okhttpUrlconnection)
-  testImplementation(projects.mockwebserver3)
-  testImplementation(projects.mockwebserver3Junit4)
-  testImplementation(projects.mockwebserver3Junit5)
-  testImplementation(projects.mockwebserver)
-  testImplementation(projects.loggingInterceptor)
-  testImplementation(projects.okhttpBrotli)
-  testImplementation(projects.okhttpDnsoverhttps)
-  testImplementation(projects.okhttpIdnaMappingTable)
-  testImplementation(projects.okhttpSse)
-  testImplementation(projects.okhttpCoroutines)
-  testImplementation(libs.kotlinx.coroutines.core)
-  testImplementation(libs.squareup.moshi)
-  testImplementation(libs.squareup.moshi.kotlin)
-  testImplementation(libs.squareup.okio.fakefilesystem)
-  testImplementation(libs.conscrypt.openjdk)
-  testImplementation(libs.junit)
-  testImplementation(libs.junit.jupiter.api)
-  testImplementation(libs.junit.jupiter.params)
-  testImplementation(libs.kotlin.test.junit)
-  testImplementation(libs.openjsse)
-  testImplementation(libs.aqute.resolve)
-  testCompileOnly(libs.findbugs.jsr305)
-
   osgiTestDeploy(libs.eclipseOsgi)
   osgiTestDeploy(libs.kotlin.stdlib.osgi)
 }
 
-mavenPublishing {
-  configure(KotlinJvm(javadocJar = JavadocJar.Empty()))
-}
+//mavenPublishing {
+//  configure(KotlinMultiplatform(javadocJar = JavadocJar.Empty()))
+//}
