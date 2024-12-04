@@ -33,6 +33,7 @@ import okhttp3.internal.commonMethod
 import okhttp3.internal.commonPatch
 import okhttp3.internal.commonPost
 import okhttp3.internal.commonPut
+import okhttp3.internal.commonQuery
 import okhttp3.internal.commonRemoveHeader
 import okhttp3.internal.commonTag
 import okhttp3.internal.commonToString
@@ -275,6 +276,8 @@ class Request internal constructor(builder: Builder) {
     open fun put(body: RequestBody): Builder = commonPut(body)
 
     open fun patch(body: RequestBody): Builder = commonPatch(body)
+
+    open fun query(body: RequestBody): Builder = commonQuery(body)
 
     open fun method(
       method: String,
