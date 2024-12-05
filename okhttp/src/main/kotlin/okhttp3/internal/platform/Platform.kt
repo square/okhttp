@@ -36,6 +36,8 @@ import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.internal.platform.android.AndroidLog
+import okhttp3.internal.publicsuffix.EmbeddedPublicSuffixList
+import okhttp3.internal.publicsuffix.PublicSuffixList
 import okhttp3.internal.readFieldOrNull
 import okhttp3.internal.tls.BasicCertificateChainCleaner
 import okhttp3.internal.tls.BasicTrustRootIndex
@@ -72,8 +74,11 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
  * Supported on Android 6.0+ via `NetworkSecurityPolicy`.
  */
 open class Platform {
+
   /** Prefix used on custom headers. */
   fun getPrefix() = "OkHttp"
+
+  internal open fun publicSuffixList(): PublicSuffixList = EmbeddedPublicSuffixList
 
   open fun newSSLContext(): SSLContext = SSLContext.getInstance("TLS")
 
