@@ -28,6 +28,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.concurrent.TaskRunner.RealBackend
 import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.http2.Http2
 import okhttp3.internal.http2.Http2Connection
@@ -184,24 +185,29 @@ class ConnectionPoolTest {
   }
 
   @Test fun interruptStopsThread() {
-    val realTaskRunner = TaskRunner.INSTANCE
+    val taskRunnerThreads = mutableListOf<Thread>()
+    val taskRunner =
+      TaskRunner(
+        RealBackend { runnable ->
+          Thread(runnable, "interruptStopsThread TaskRunner")
+            .also { taskRunnerThreads += it }
+        },
+      )
+
     val pool =
       factory.newConnectionPool(
-        taskRunner = TaskRunner.INSTANCE,
+        taskRunner = taskRunner,
         maxIdleConnections = 2,
       )
     factory.newConnection(pool, routeA1)
-    assertThat(realTaskRunner.activeQueues()).isNotEmpty()
+    assertThat(taskRunner.activeQueues()).isNotEmpty()
+    assertThat(taskRunnerThreads).isNotEmpty()
     Thread.sleep(100)
-    val threads = arrayOfNulls<Thread>(Thread.activeCount() * 2)
-    Thread.enumerate(threads)
-    for (t in threads) {
-      if (t != null && t.name == "OkHttp TaskRunner") {
-        t.interrupt()
-      }
+    for (t in taskRunnerThreads) {
+      t.interrupt()
     }
     Thread.sleep(100)
-    assertThat(realTaskRunner.activeQueues()).isEmpty()
+    assertThat(taskRunner.activeQueues()).isEmpty()
   }
 
   @Test fun connectionPreWarmingHttp1() {
