@@ -73,7 +73,8 @@ class TaskRunner(
   private val runnable: Runnable =
     object : Runnable {
       override fun run() {
-        var task: Task = withLock {
+        var task: Task =
+          withLock {
             runCallCount++
             awaitTaskToRun()
           } ?: return
