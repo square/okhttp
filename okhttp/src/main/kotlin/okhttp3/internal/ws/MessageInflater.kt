@@ -55,6 +55,11 @@ class MessageInflater(
     do {
       inflaterSource.readOrInflate(buffer, Long.MAX_VALUE)
     } while (inflater.bytesRead < totalBytesToRead && !inflater.finished())
+
+    if (noContextTakeover && inflater.bytesRead < totalBytesToRead) {
+      val left = totalBytesToRead - inflater.bytesRead
+      throw IOException("additional bytes ($left) after inflation")
+    }
   }
 
   @Throws(IOException::class)
