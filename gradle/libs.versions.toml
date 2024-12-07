@@ -1,5 +1,6 @@
 [versions]
-biz-aQute-bnd = "7.1.0"
+# 7.0.0 is JDK 17+ https://github.com/bndtools/bnd/wiki/Changes-in-7.0.0
+biz-aQute-bnd = "6.4.0"
 checkStyle = "10.20.2"
 com-squareup-moshi = "1.15.1"
 com-squareup-okio = "3.9.1"
