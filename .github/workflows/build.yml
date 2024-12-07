@@ -114,7 +114,7 @@ jobs:
         run: ./gradlew test -Dtest.java.version=11
 
       - name: Publish Test Report
-#        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
         uses: mikepenz/action-junit-report@v4
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
@@ -122,7 +122,7 @@ jobs:
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
-#        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
         with:
           files: |
             **/build/test-results/*/TEST-*.xml
