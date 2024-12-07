@@ -1,17 +1,17 @@
 [versions]
-biz-aQute-bnd = "6.4.0"
+biz-aQute-bnd = "7.1.0"
 checkStyle = "10.20.2"
 com-squareup-moshi = "1.15.1"
 com-squareup-okio = "3.9.1"
 de-mannodermaus-junit5 = "1.6.0"
 graalvm = "22.3.2"
-kotlinx-serialization = "1.6.3"
-ksp = "1.9.24-1.0.20"
+kotlinx-serialization = "1.7.3"
+ksp = "2.1.0-1.0.29"
 mockserverClient = "5.15.0"
 org-bouncycastle = "1.76"
 org-conscrypt = "2.5.2"
-org-jetbrains-coroutines = "1.8.1"
-org-jetbrains-kotlin = "1.9.25"
+org-jetbrains-coroutines = "1.9.0"
+org-jetbrains-kotlin = "2.1.0"
 org-junit-jupiter = "5.11.3"
 retrofit = "2.11.0"
 testcontainers = "1.20.4"
@@ -38,7 +38,7 @@ conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.r
 converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "retrofit" }
 eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.21.0"
 findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
-gradlePlugin-android = "com.android.tools.build:gradle:8.2.0"
+gradlePlugin-android = "com.android.tools.build:gradle:8.7.3"
 gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.11.2.0"
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.7.2"
 gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.16.3"
@@ -87,14 +87,14 @@ openjsse = "org.openjsse:openjsse:1.1.14"
 playservices-safetynet = "com.google.android.gms:play-services-safetynet:18.1.0"
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 robolectric-android = "org.robolectric:android-all:14-robolectric-10818077"
-robolectric = "org.robolectric:robolectric:4.12.2"
+robolectric = "org.robolectric:robolectric:4.14.1"
 signature-android-apilevel21 = "net.sf.androidscents.signature:android-api-level-21:5.0.1_r2"
 signature-android-apilevel24 = "net.sf.androidscents.signature:android-api-level-24:7.0_r2"
 squareup-moshi = { module = "com.squareup.moshi:moshi", version.ref = "com-squareup-moshi" }
 squareup-moshi-compiler = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "com-squareup-moshi" }
 squareup-moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "com-squareup-moshi" }
 squareup-okhttp-icu = "com.squareup.okhttpicu:okhttp-icu:0.2.0"
-squareup-kotlinPoet = "com.squareup:kotlinpoet:1.17.0"
+squareup-kotlinPoet = "com.squareup:kotlinpoet:1.18.1"
 squareup-okio = { module = "com.squareup.okio:okio", version.ref = "com-squareup-okio" }
 squareup-okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "com-squareup-okio" }
 squareup-okio-nodefilesystem = { module = "com.squareup.okio:okio-nodefilesystem", version.ref = "com-squareup-okio" }

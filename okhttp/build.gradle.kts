@@ -19,7 +19,7 @@ fun ByteArray.toByteStringExpression(): String {
 
 val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
   from("src/main/kotlinTemplates")
-  into("$buildDir/generated/sources/kotlinTemplates")
+  into("${layout.buildDirectory}/generated/sources/kotlinTemplates")
 
   // Tag as an input to regenerate after an update
   inputs.file("src/test/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
@@ -44,9 +44,9 @@ dependencies {
   generateIdnaMappingTableConfiguration(projects.okhttpIdnaMappingTable)
 }
 val generateIdnaMappingTable by tasks.creating(JavaExec::class.java) {
-  outputs.dir("$buildDir/generated/sources/idnaMappingTable")
+  outputs.dir("${layout.buildDirectory}/generated/sources/idnaMappingTable")
   mainClass.set("okhttp3.internal.idn.GenerateIdnaMappingTableCode")
-  args("$buildDir/generated/sources/idnaMappingTable")
+  args("${layout.buildDirectory}/generated/sources/idnaMappingTable")
   classpath = generateIdnaMappingTableConfiguration
 }
 
@@ -109,7 +109,7 @@ val osgiTestDeploy: Configuration by configurations.creating
 
 val copyOsgiTestDeployment by tasks.creating(Copy::class.java) {
   from(osgiTestDeploy)
-  into("$buildDir/resources/test/okhttp3/osgi/deployments")
+  into("${layout.buildDirectory}/resources/test/okhttp3/osgi/deployments")
 }
 tasks.getByName("test") {
   dependsOn(copyOsgiTestDeployment)

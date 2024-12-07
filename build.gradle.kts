@@ -7,6 +7,7 @@ import java.net.URI
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
@@ -143,8 +144,8 @@ subprojects {
   }
 
   tasks.withType<KotlinCompile> {
-    kotlinOptions {
-      jvmTarget = JavaVersion.VERSION_1_8.toString()
+    compilerOptions {
+      jvmTarget.set(JvmTarget.JVM_1_8)
       freeCompilerArgs = listOf(
         "-Xjvm-default=all",
       )
@@ -254,7 +255,6 @@ subprojects {
   }
 
   plugins.withId("com.vanniktech.maven.publish.base") {
-    val publishingExtension = extensions.getByType(PublishingExtension::class.java)
     configure<MavenPublishBaseExtension> {
       publishToMavenCentral(SonatypeHost.S01, automaticRelease = true)
       signAllPublications()
