@@ -14,6 +14,8 @@
  * limitations under the License.
  *
  */
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package okhttp3.coroutines
 
 import assertk.assertThat
@@ -25,6 +27,7 @@ import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.job
