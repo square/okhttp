@@ -12,7 +12,7 @@ plugins {
 
 val copyResourcesTemplates = tasks.register<Copy>("copyResourcesTemplates") {
   from("src/main/resources-templates")
-  into("${layout.buildDirectory}/generated/resources-templates")
+  into(layout.buildDirectory.dir("generated/resources-templates"))
   expand("projectVersion" to "${project.version}")
   filteringCharset = Charsets.UTF_8.toString()
 }
