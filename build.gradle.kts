@@ -183,6 +183,7 @@ subprojects {
     testLogging {
       if (System.getenv("CI") != null) {
           events = setOf(TestLogEvent.FAILED)
+          info.events = setOf(TestLogEvent.FAILED)
       }
       exceptionFormat = TestExceptionFormat.FULL
     }
