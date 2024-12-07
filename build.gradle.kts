@@ -6,6 +6,7 @@ import com.vanniktech.maven.publish.SonatypeHost
 import java.net.URI
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
@@ -180,6 +181,9 @@ subprojects {
 
     maxParallelForks = Runtime.getRuntime().availableProcessors() * 2
     testLogging {
+      if (System.getenv("CI") != null) {
+          events = setOf(TestLogEvent.FAILED)
+      }
       exceptionFormat = TestExceptionFormat.FULL
     }
 
