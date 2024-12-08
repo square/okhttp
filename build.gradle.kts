@@ -27,6 +27,7 @@ buildscript {
     classpath(libs.gradlePlugin.mavenPublish)
     classpath(libs.gradlePlugin.binaryCompatibilityValidator)
     classpath(libs.gradlePlugin.mavenSympathy)
+    classpath(libs.gradlePlugin.graalvmBuildTools)
   }
 
   repositories {
@@ -34,10 +35,6 @@ buildscript {
     gradlePluginPortal()
     google()
   }
-}
-
-plugins {
-  id("org.graalvm.buildtools.native") version("0.10.4") apply(false)
 }
 
 apply(plugin = "org.jetbrains.dokka")

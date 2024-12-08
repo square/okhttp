@@ -473,7 +473,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build ConsoleLauncher
+      - name: Run native-image tests
         run: ./gradlew -PgraalBuild=true native-image-tests:nativeTest
 
   testandroid:
