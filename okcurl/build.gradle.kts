@@ -6,7 +6,7 @@ plugins {
   kotlin("jvm")
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
-  id("com.palantir.graal")
+  id("org.graalvm.buildtools.native")
   id("com.github.johnrengelman.shadow")
 }
 
@@ -53,19 +53,12 @@ tasks.shadowJar {
   mergeServiceFiles()
 }
 
-graal {
-  mainClass("okhttp3.curl.MainCommandLineKt")
-  outputName("okcurl")
-  graalVersion(libs.versions.graalvm.get())
-  javaVersion("11")
-
-  option("--no-fallback")
-
-  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-    // May be possible without, but autodetection is problematic on Windows 10
-    // see https://github.com/palantir/gradle-graal
-    // see https://www.graalvm.org/docs/reference-manual/native-image/#prerequisites
-    windowsVsVarsPath("C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat")
+graalvmNative {
+  binaries {
+    named("main") {
+      imageName = "okcurl"
+      mainClass = "okhttp3.curl.MainCommandLineKt"
+    }
   }
 }
 

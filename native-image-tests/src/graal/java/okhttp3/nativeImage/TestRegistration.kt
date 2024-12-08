@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3
+package okhttp3.nativeImage
 
-import com.oracle.svm.core.annotate.AutomaticFeature
 import java.io.File
-import java.lang.IllegalStateException
 import org.graalvm.nativeimage.hosted.Feature
 import org.graalvm.nativeimage.hosted.RuntimeClassInitialization
 import org.graalvm.nativeimage.hosted.RuntimeReflection
 
-@AutomaticFeature
 class TestRegistration : Feature {
   override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess) {
     // Presumably needed for parsing the testlist.txt file.

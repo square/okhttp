@@ -18,7 +18,6 @@ package okhttp3.internal.graal
 
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import org.graalvm.nativeimage.hosted.Feature
-import org.graalvm.nativeimage.hosted.RuntimeResourceAccess
 
 /**
  * Automatic configuration of OkHttp for native images.
@@ -27,10 +26,5 @@ import org.graalvm.nativeimage.hosted.RuntimeResourceAccess
  */
 class OkHttpFeature : Feature {
   @IgnoreJRERequirement
-  override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess?) {
-    RuntimeResourceAccess.addResource(
-      ClassLoader.getSystemClassLoader().getUnnamedModule(),
-      "okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz",
-    )
-  }
+  override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess?) = Unit
 }

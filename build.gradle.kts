@@ -19,7 +19,6 @@ buildscript {
     classpath(libs.gradlePlugin.kotlinSerialization)
     classpath(libs.gradlePlugin.androidJunit5)
     classpath(libs.gradlePlugin.android)
-    classpath(libs.gradlePlugin.graal)
     classpath(libs.gradlePlugin.bnd)
     classpath(libs.gradlePlugin.shadow)
     classpath(libs.gradlePlugin.animalsniffer)
@@ -35,6 +34,10 @@ buildscript {
     gradlePluginPortal()
     google()
   }
+}
+
+plugins {
+  id("org.graalvm.buildtools.native") version("0.10.4") apply(false)
 }
 
 apply(plugin = "org.jetbrains.dokka")
@@ -145,7 +148,7 @@ subprojects {
 
   tasks.withType<KotlinCompile> {
     compilerOptions {
-      jvmTarget.set(JvmTarget.JVM_1_8)
+      jvmTarget.set(JvmTarget.JVM_11)
       freeCompilerArgs = listOf(
         "-Xjvm-default=all",
       )
@@ -214,8 +217,8 @@ subprojects {
   }
 
   tasks.withType<JavaCompile> {
-    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-    targetCompatibility = JavaVersion.VERSION_1_8.toString()
+    sourceCompatibility = JavaVersion.VERSION_11.toString()
+    targetCompatibility = JavaVersion.VERSION_11.toString()
   }
 }
 

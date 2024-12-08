@@ -16,6 +16,7 @@
 package okhttp3.curl
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.Context
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
@@ -39,21 +40,30 @@ import okhttp3.internal.platform.Platform
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.LoggingEventListener
 
-class Main : CliktCommand(name = NAME, help = "A curl for the next-generation web.") {
+class Main : CliktCommand(name = NAME) {
+  override fun help(context: Context): String {
+    return "A curl for the next-generation web."
+  }
+
   val method: String? by option("-X", "--request", help = "Specify request command to use")
 
   val data: String? by option("-d", "--data", help = "HTTP POST data")
 
   val headers: List<String>? by option("-H", "--header", help = "Custom header to pass to server").multiple()
 
-  val userAgent: String by option("-A", "--user-agent", help = "User-Agent to send to server").default(NAME + "/" + versionString())
+  val userAgent: String by option(
+    "-A",
+    "--user-agent",
+    help = "User-Agent to send to server"
+  ).default(NAME + "/" + versionString())
 
   val connectTimeout: Int by option(
     "--connect-timeout",
     help = "Maximum time allowed for connection (seconds)",
   ).int().default(DEFAULT_TIMEOUT)
 
-  val readTimeout: Int by option("--read-timeout", help = "Maximum time allowed for reading data (seconds)").int().default(DEFAULT_TIMEOUT)
+  val readTimeout: Int by option("--read-timeout", help = "Maximum time allowed for reading data (seconds)").int()
+    .default(DEFAULT_TIMEOUT)
 
   val callTimeout: Int by option(
     "--call-timeout",
@@ -134,12 +144,14 @@ class Main : CliktCommand(name = NAME, help = "A curl for the next-generation we
         override fun checkClientTrusted(
           chain: Array<X509Certificate>,
           authType: String,
-        ) {}
+        ) {
+        }
 
         override fun checkServerTrusted(
           chain: Array<X509Certificate>,
           authType: String,
-        ) {}
+        ) {
+        }
 
         override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
       }

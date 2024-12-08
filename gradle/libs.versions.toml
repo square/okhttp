@@ -5,7 +5,8 @@ checkStyle = "10.20.2"
 com-squareup-moshi = "1.15.1"
 com-squareup-okio = "3.9.1"
 de-mannodermaus-junit5 = "1.6.0"
-graalvm = "22.3.2"
+graalSdk = "24.0.2"
+graalvm = "24.1.1"
 kotlinx-serialization = "1.7.3"
 ksp = "2.1.0-1.0.29"
 mockserverClient = "5.15.0"
@@ -32,13 +33,14 @@ bouncycastle-bcprov = { module = "org.bouncycastle:bcprov-jdk15to18", version.re
 bouncycastle-bctls = { module = "org.bouncycastle:bctls-jdk15to18", version.ref = "org-bouncycastle" }
 brotli-dec = "org.brotli:dec:0.1.2"
 checkStyle = { module = "com.puppycrawl.tools:checkstyle", version.ref = "checkStyle" }
-clikt = "com.github.ajalt.clikt:clikt:4.4.0"
+clikt = "com.github.ajalt.clikt:clikt:5.0.2"
 codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
 converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "retrofit" }
 eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.21.0"
 findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
+graal-sdk = { module = "org.graalvm.sdk:graal-sdk", version.ref = "graalSdk" }
 gradlePlugin-android = "com.android.tools.build:gradle:8.7.3"
 gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.11.2.0"
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.7.2"
@@ -46,7 +48,6 @@ gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compat
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
 gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.9.20"
 gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:4.1.0"
-gradlePlugin-graal = "com.palantir.graal:gradle-graal:0.12.0"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.30.0"
