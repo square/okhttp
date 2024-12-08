@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.utils.extendsFrom
-
 plugins {
   id("org.graalvm.buildtools.native")
   kotlin("jvm")
@@ -39,7 +37,6 @@ dependencies {
   implementation(projects.mockwebserver3)
   implementation(projects.mockwebserver)
   implementation(projects.okhttpJavaNetCookiejar)
-  implementation(projects.mockwebserver3Junit4)
   implementation(projects.mockwebserver3Junit5)
   implementation(libs.aqute.resolve)
   implementation(libs.junit.jupiter.api)
@@ -50,22 +47,19 @@ dependencies {
 
   compileOnly(libs.findbugs.jsr305)
 
-  println(sourceSets.names)
-
-//  "graalTestCompileOnly"(libs.nativeImageSvm)
-//  "graalTestCompileOnly"(libs.graal.sdk)
-//  nativeImageTestCompileOnly(graal.output.classesDirs)
-}
-
-configurations {
-//  getByName("nativeImageTestImplementation").extendsFrom(getByName("graalImplementation"))
+  "graalCompileOnly"(libs.nativeImageSvm)
+  "graalCompileOnly"(libs.graal.sdk)
+  nativeImageTestCompileOnly(graal.output.classesDirs)
 }
 
 graalvmNative {
+  testSupport = true
+
   binaries {
     named("test") {
       buildArgs.add("--features=okhttp3.nativeImage.TestRegistration")
       buildArgs.add("--initialize-at-build-time=org.junit.platform.engine.TestTag")
+
       // speed up development testing
       buildArgs.add("-Ob")
     }

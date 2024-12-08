@@ -17,6 +17,7 @@ package okhttp3.sse.internal
 
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
 import okhttp3.sse.EventSources.processResponse
@@ -25,9 +26,11 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @Tag("Slowish")
+@ExtendWith(MockWebServerExtension::class)
 class EventSourcesHttpTest {
   @RegisterExtension
   val platform = PlatformRule()
