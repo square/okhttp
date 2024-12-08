@@ -1,5 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
+import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
 import kotlinx.validation.ApiValidationExtension
@@ -37,15 +38,15 @@ buildscript {
 }
 
 apply(plugin = "org.jetbrains.dokka")
-//apply(plugin = "com.diffplug.spotless")
+apply(plugin = "com.diffplug.spotless")
 
-//configure<SpotlessExtension> {
-//  kotlin {
-//    target("**/*.kt")
-//    targetExclude("**/kotlinTemplates/**/*.kt")
-//    ktlint()
-//  }
-//}
+configure<SpotlessExtension> {
+  kotlin {
+    target("**/*.kt")
+    targetExclude("**/kotlinTemplates/**/*.kt")
+    ktlint()
+  }
+}
 
 allprojects {
   group = "com.squareup.okhttp3"
