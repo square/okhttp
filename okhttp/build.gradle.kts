@@ -1,9 +1,6 @@
 import com.vanniktech.maven.publish.JavadocJar
-import java.io.DataInputStream
-import java.io.FileInputStream
-import java.util.Base64
-import java.util.zip.GZIPInputStream
 import com.vanniktech.maven.publish.KotlinMultiplatform
+import java.util.Base64
 
 plugins {
   kotlin("multiplatform")
@@ -52,7 +49,7 @@ val generateIdnaMappingTable by tasks.creating(JavaExec::class.java) {
 }
 
 kotlin {
-  jvmToolchain(17)
+  jvmToolchain(8)
 
   jvm {
   }

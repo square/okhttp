@@ -36,7 +36,7 @@ buildscript {
   }
 }
 
-//apply(plugin = "org.jetbrains.dokka")
+apply(plugin = "org.jetbrains.dokka")
 //apply(plugin = "com.diffplug.spotless")
 
 //configure<SpotlessExtension> {
