@@ -10,7 +10,7 @@ plugins {
   id("com.android.library")
   kotlin("plugin.serialization")
   id("org.jetbrains.dokka")
-//  id("com.vanniktech.maven.publish.base")
+  id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
 }
 
@@ -218,6 +218,6 @@ dependencies {
   osgiTestDeploy(libs.kotlin.stdlib.osgi)
 }
 
-//mavenPublishing {
-//  configure(KotlinMultiplatform(javadocJar = JavadocJar.Empty()))
-//}
+mavenPublishing {
+  configure(KotlinMultiplatform(javadocJar = JavadocJar.Empty()))
+}
