@@ -59,6 +59,7 @@ graalvmNative {
     named("test") {
       buildArgs.add("--features=okhttp3.nativeImage.TestRegistration")
       buildArgs.add("--initialize-at-build-time=org.junit.platform.engine.TestTag")
+      buildArgs.add("--strict-image-heap")
 
       // speed up development testing
       buildArgs.add("-Ob")
