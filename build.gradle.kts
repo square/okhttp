@@ -147,7 +147,7 @@ subprojects {
   }
 
   val javaVersionSetting = when (project.name) {
-    "okcurl", "native-image-tests" -> "21"
+    "okcurl", "native-image-tests" -> "11"
     else -> "1.8"
   }
   val projectJvmTarget = JvmTarget.fromTarget(javaVersionSetting)
