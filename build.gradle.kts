@@ -3,15 +3,14 @@
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
-import java.net.URI
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
+import java.net.URI
 
 buildscript {
   dependencies {
@@ -181,10 +180,6 @@ subprojects {
 
     maxParallelForks = Runtime.getRuntime().availableProcessors() * 2
     testLogging {
-      if (System.getenv("CI") != null) {
-          events = setOf(TestLogEvent.FAILED)
-          info.events = setOf(TestLogEvent.FAILED)
-      }
       exceptionFormat = TestExceptionFormat.FULL
     }
 
@@ -260,6 +255,7 @@ subprojects {
   }
 
   plugins.withId("com.vanniktech.maven.publish.base") {
+    val publishingExtension = extensions.getByType(PublishingExtension::class.java)
     configure<MavenPublishBaseExtension> {
       publishToMavenCentral(SonatypeHost.S01, automaticRelease = true)
       signAllPublications()
