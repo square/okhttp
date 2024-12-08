@@ -15,10 +15,7 @@
  */
 package okhttp3.nativeImage
 
-import java.io.File
 import org.graalvm.nativeimage.hosted.Feature
-import org.graalvm.nativeimage.hosted.RuntimeClassInitialization
-import org.graalvm.nativeimage.hosted.RuntimeReflection
 
 class TestRegistration : Feature {
   override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess) {

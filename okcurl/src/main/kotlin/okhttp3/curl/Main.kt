@@ -54,7 +54,7 @@ class Main : CliktCommand(name = NAME) {
   val userAgent: String by option(
     "-A",
     "--user-agent",
-    help = "User-Agent to send to server"
+    help = "User-Agent to send to server",
   ).default(NAME + "/" + versionString())
 
   val connectTimeout: Int by option(
