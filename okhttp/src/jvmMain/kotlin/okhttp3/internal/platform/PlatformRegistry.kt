@@ -3,7 +3,6 @@ package okhttp3.internal.platform
 import java.security.Security
 
 actual object PlatformRegistry {
-
   private val isConscryptPreferred: Boolean
     get() {
       val preferredProvider = Security.getProviders()[0].name

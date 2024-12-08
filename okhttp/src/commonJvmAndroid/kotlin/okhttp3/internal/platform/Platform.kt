@@ -21,7 +21,6 @@ import java.net.InetSocketAddress
 import java.net.Socket
 import java.security.GeneralSecurityException
 import java.security.KeyStore
-import java.security.Security
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.net.ssl.ExtendedSSLSession
