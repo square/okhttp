@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 import java.net.URI
 
 buildscript {
@@ -92,8 +93,11 @@ subprojects {
   apply(plugin = "ru.vyarus.animalsniffer")
 
   // The 'java' plugin has been applied, but it is not compatible with the Android plugins.
-//  apply(plugin = "biz.aQute.bnd.builder")
-//  apply(plugin = "io.github.usefulness.maven-sympathy")
+  // TODO fix this
+  if (project.name != "okhttp") {
+    apply(plugin = "biz.aQute.bnd.builder")
+    apply(plugin = "io.github.usefulness.maven-sympathy")
+  }
 
   tasks.withType<JavaCompile> {
     options.encoding = Charsets.UTF_8.toString()
@@ -105,12 +109,6 @@ subprojects {
         languageVersion.set(JavaLanguageVersion.of(17))
       }
     }
-//  if (plugins.hasPlugin(JavaBasePlugin::class.java)) {
-//    configure<JavaPluginExtension> {
-//      toolchain {
-//        languageVersion.set(JavaLanguageVersion.of(17))
-//      }
-//    }
   }
 
   tasks.withType<Checkstyle>().configureEach {
@@ -124,17 +122,20 @@ subprojects {
     }
   }
 
-//  configure<CheckstyleExtension> {
-//    config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
-//    toolVersion = rootProject.libs.versions.checkStyle.get()
-//    sourceSets = listOf(project.sourceSets["main"])
-//  }
+  // TODO fix this
+  if (project.name != "okhttp") {
+    configure<CheckstyleExtension> {
+      config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
+      toolVersion = rootProject.libs.versions.checkStyle.get()
+      sourceSets = listOf(project.sourceSets["main"])
+    }
 
-  // Animal Sniffer confirms we generally don't use APIs not on Java 8.
-//  configure<AnimalSnifferExtension> {
-//    annotation = "okhttp3.internal.SuppressSignatureCheck"
-//    sourceSets = listOf(project.sourceSets["main"])
-//  }
+    // Animal Sniffer confirms we generally don't use APIs not on Java 8.
+    configure<AnimalSnifferExtension> {
+      annotation = "okhttp3.internal.SuppressSignatureCheck"
+      sourceSets = listOf(project.sourceSets["main"])
+    }
+  }
 
 //  val signature: Configuration by configurations.getting
   dependencies {
