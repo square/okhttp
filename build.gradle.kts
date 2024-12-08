@@ -146,9 +146,16 @@ subprojects {
     signature(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
   }
 
+  val javaVersionSetting = when (project.name) {
+    "okcurl", "native-image-tests" -> "21"
+    else -> "1.8"
+  }
+  val projectJvmTarget = JvmTarget.fromTarget(javaVersionSetting)
+  val projectJavaVersion = JavaVersion.toVersion(javaVersionSetting)
+
   tasks.withType<KotlinCompile> {
     compilerOptions {
-      jvmTarget.set(JvmTarget.JVM_11)
+      jvmTarget.set(projectJvmTarget)
       freeCompilerArgs = listOf(
         "-Xjvm-default=all",
       )
@@ -217,8 +224,8 @@ subprojects {
   }
 
   tasks.withType<JavaCompile> {
-    sourceCompatibility = JavaVersion.VERSION_11.toString()
-    targetCompatibility = JavaVersion.VERSION_11.toString()
+    sourceCompatibility = projectJavaVersion.toString()
+    targetCompatibility = projectJavaVersion.toString()
   }
 }
 
