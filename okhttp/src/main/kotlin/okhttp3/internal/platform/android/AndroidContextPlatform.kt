@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.publicsuffix
+package okhttp3.internal.platform.android
 
-import okio.ByteString
+import android.content.Context
+import okhttp3.internal.platform.Platform
 
 /**
- * Basic I/O for the PublicSuffixDatabase.gz.
+ * Platform interface for accessing the Android Context.
+ *
+ * This interface provides a way to access the Android Context from Platform implementations.
  */
-interface PublicSuffixList {
-  fun ensureLoaded()
+abstract class AndroidContextPlatform: Platform() {
+  var context: Context? = null
 
-  val bytes: ByteString
-  val exceptionBytes: ByteString
+  fun setAndroidContext(context: Context) {
+    this.context = context
+  }
+
 }
