@@ -15,6 +15,7 @@
  */
 package okhttp3.curl
 
+import com.github.ajalt.clikt.core.main
 import kotlin.test.Test
 
 class OkcurlTest {
