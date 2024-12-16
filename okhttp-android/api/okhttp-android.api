@@ -1,13 +1,6 @@
-public final class okhttp3/android/AndroidAsyncDns : okhttp3/AsyncDns {
-	public static final field Companion Lokhttp3/android/AndroidAsyncDns$Companion;
-	public fun <init> (Lokhttp3/AsyncDns$DnsClass;Landroid/net/Network;)V
-	public synthetic fun <init> (Lokhttp3/AsyncDns$DnsClass;Landroid/net/Network;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun query (Ljava/lang/String;Lokhttp3/AsyncDns$Callback;)V
-}
-
-public final class okhttp3/android/AndroidAsyncDns$Companion {
-	public final fun getIPv4 ()Lokhttp3/android/AndroidAsyncDns;
-	public final fun getIPv6 ()Lokhttp3/android/AndroidAsyncDns;
+public final class okhttp3/android/AndroidDnsKt {
+	public static final fun forNetwork (Lokhttp3/Dns$Companion;Landroid/net/Network;)Lokhttp3/Dns;
+	public static final fun getANDROID (Lokhttp3/Dns$Companion;)Lokhttp3/Dns;
 }
 
 public final class okhttp3/android/AndroidLoggingKt {
@@ -15,5 +8,23 @@ public final class okhttp3/android/AndroidLoggingKt {
 	public static final fun androidLogging (Lokhttp3/logging/LoggingEventListener$Companion;ILjava/lang/String;)Lokhttp3/logging/LoggingEventListener$Factory;
 	public static synthetic fun androidLogging$default (Lokhttp3/logging/HttpLoggingInterceptor$Companion;ILjava/lang/String;ILjava/lang/Object;)Lokhttp3/logging/HttpLoggingInterceptor;
 	public static synthetic fun androidLogging$default (Lokhttp3/logging/LoggingEventListener$Companion;ILjava/lang/String;ILjava/lang/Object;)Lokhttp3/logging/LoggingEventListener$Factory;
+}
+
+public final class okhttp3/android/AndroidSocketFactory : javax/net/SocketFactory {
+	public fun <init> (Landroid/net/Network;)V
+	public fun createSocket ()Ljava/net/Socket;
+	public fun createSocket (Ljava/lang/String;I)Ljava/net/Socket;
+	public fun createSocket (Ljava/lang/String;ILjava/net/InetAddress;I)Ljava/net/Socket;
+	public fun createSocket (Ljava/net/InetAddress;I)Ljava/net/Socket;
+	public fun createSocket (Ljava/net/InetAddress;ILjava/net/InetAddress;I)Ljava/net/Socket;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getNetwork ()Landroid/net/Network;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class okhttp3/android/NetworkSelection {
+	public static final field INSTANCE Lokhttp3/android/NetworkSelection;
+	public final fun withNetwork (Lokhttp3/OkHttpClient$Builder;Landroid/net/Network;)Lokhttp3/OkHttpClient$Builder;
 }
 
