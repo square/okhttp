@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package okhttp3.nativeImage
 
-package okhttp3.internal.graal
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.testing.PlatformRule
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
-import org.graalvm.nativeimage.hosted.Feature
+class PublicSuffixDatabaseTest {
+  @RegisterExtension
+  @JvmField
+  val platform = PlatformRule()
 
-/**
- * Automatic configuration of OkHttp for native images.
- *
- * Currently, includes all necessary resources.
- */
-class OkHttpFeature : Feature {
-  @IgnoreJRERequirement
-  override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess?) = Unit
+  @Test
+  fun testResourcesLoaded() {
+    val url = "https://api.twitter.com".toHttpUrl()
+
+    assertThat(url.topPrivateDomain()).isEqualTo("twitter.com")
+  }
 }

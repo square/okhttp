@@ -19,7 +19,6 @@ buildscript {
     classpath(libs.gradlePlugin.kotlinSerialization)
     classpath(libs.gradlePlugin.androidJunit5)
     classpath(libs.gradlePlugin.android)
-    classpath(libs.gradlePlugin.graal)
     classpath(libs.gradlePlugin.bnd)
     classpath(libs.gradlePlugin.shadow)
     classpath(libs.gradlePlugin.animalsniffer)
@@ -28,6 +27,7 @@ buildscript {
     classpath(libs.gradlePlugin.mavenPublish)
     classpath(libs.gradlePlugin.binaryCompatibilityValidator)
     classpath(libs.gradlePlugin.mavenSympathy)
+    classpath(libs.gradlePlugin.graalvmBuildTools)
   }
 
   repositories {
@@ -143,9 +143,16 @@ subprojects {
     signature(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
   }
 
+  val javaVersionSetting = when (project.name) {
+    "okcurl", "native-image-tests" -> "11"
+    else -> "1.8"
+  }
+  val projectJvmTarget = JvmTarget.fromTarget(javaVersionSetting)
+  val projectJavaVersion = JavaVersion.toVersion(javaVersionSetting)
+
   tasks.withType<KotlinCompile> {
     compilerOptions {
-      jvmTarget.set(JvmTarget.JVM_1_8)
+      jvmTarget.set(projectJvmTarget)
       freeCompilerArgs = listOf(
         "-Xjvm-default=all",
       )
@@ -214,8 +221,8 @@ subprojects {
   }
 
   tasks.withType<JavaCompile> {
-    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-    targetCompatibility = JavaVersion.VERSION_1_8.toString()
+    sourceCompatibility = projectJavaVersion.toString()
+    targetCompatibility = projectJavaVersion.toString()
   }
 }
 

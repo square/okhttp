@@ -1,8 +1,24 @@
-import org.apache.tools.ant.taskdefs.condition.Os
-
 plugins {
-  id("com.palantir.graal")
+  id("org.graalvm.buildtools.native")
   kotlin("jvm")
+}
+
+animalsniffer {
+  isIgnoreFailures = true
+}
+
+val graal by sourceSets.creating
+
+sourceSets {
+  named("graal") {}
+  test {
+    java.srcDirs(
+      "../okhttp-brotli/src/test/java",
+      "../okhttp-dnsoverhttps/src/test/java",
+      "../okhttp-logging-interceptor/src/test/java",
+      "../okhttp-sse/src/test/java",
+    )
+  }
 }
 
 dependencies {
@@ -21,7 +37,6 @@ dependencies {
   implementation(projects.mockwebserver3)
   implementation(projects.mockwebserver)
   implementation(projects.okhttpJavaNetCookiejar)
-  implementation(projects.mockwebserver3Junit4)
   implementation(projects.mockwebserver3Junit5)
   implementation(libs.aqute.resolve)
   implementation(libs.junit.jupiter.api)
@@ -30,33 +45,24 @@ dependencies {
   implementation(libs.kotlin.test.common)
   implementation(libs.kotlin.test.junit)
 
-  implementation(libs.nativeImageSvm)
-
   compileOnly(libs.findbugs.jsr305)
+
+  "graalCompileOnly"(libs.nativeImageSvm)
+  "graalCompileOnly"(libs.graal.sdk)
+  nativeImageTestCompileOnly(graal.output.classesDirs)
 }
 
-animalsniffer {
-  isIgnoreFailures = true
-}
+graalvmNative {
+  testSupport = true
 
-sourceSets {
-  main {
-    java.srcDirs(
-      "../okhttp-brotli/src/test/java",
-      "../okhttp-dnsoverhttps/src/test/java",
-      "../okhttp-logging-interceptor/src/test/java",
-      "../okhttp-sse/src/test/java",
-    )
+  binaries {
+    named("test") {
+      buildArgs.add("--features=okhttp3.nativeImage.TestRegistration")
+      buildArgs.add("--initialize-at-build-time=org.junit.platform.engine.TestTag")
+      buildArgs.add("--strict-image-heap")
+
+      // speed up development testing
+      buildArgs.add("-Ob")
+    }
   }
-}
-
-graal {
-  mainClass("okhttp3.RunTestsKt")
-  outputName("ConsoleLauncher")
-  graalVersion(libs.versions.graalvm.get())
-  javaVersion("11")
-
-  option("--no-fallback")
-  option("--report-unsupported-elements-at-runtime")
-  option("-H:+ReportExceptionStackTraces")
 }
