@@ -55,18 +55,24 @@ class Main : CliktCommand(name = NAME) {
 
   val userAgent: String by option(
     "-A",
-    "--user-agent").help("User-Agent to send to server",
+    "--user-agent",
+  ).help(
+    "User-Agent to send to server",
   ).default(NAME + "/" + versionString())
 
   val connectTimeout: Int by option(
-    "--connect-timeout").help("Maximum time allowed for connection (seconds)",
+    "--connect-timeout",
+  ).help(
+    "Maximum time allowed for connection (seconds)",
   ).int().default(DEFAULT_TIMEOUT)
 
   val readTimeout: Int by option("--read-timeout").help("Maximum time allowed for reading data (seconds)").int()
     .default(DEFAULT_TIMEOUT)
 
   val callTimeout: Int by option(
-    "--call-timeout").help("Maximum time allowed for the entire call (seconds)",
+    "--call-timeout",
+  ).help(
+    "Maximum time allowed for the entire call (seconds)",
   ).int().default(DEFAULT_TIMEOUT)
 
   val followRedirects: Boolean by option("-L", "--location").help("Follow redirects").flag()
