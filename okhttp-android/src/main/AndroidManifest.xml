@@ -1,6 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="okhttp.android">
+  xmlns:tools="http://schemas.android.com/tools"
+  package="okhttp.android">
 
   <uses-permission android:name="android.permission.INTERNET" />
 
+  <application>
+    <provider
+      android:name="androidx.startup.InitializationProvider"
+      android:authorities="${applicationId}.androidx-startup"
+      android:exported="false"
+      tools:node="merge">
+      <meta-data
+        android:name="okhttp3.android.OkHttpStartupInitializer"
+        android:value="androidx.startup" />
+    </provider>
+  </application>
 </manifest>
