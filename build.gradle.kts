@@ -144,6 +144,7 @@ subprojects {
   }
 
   val javaVersionSetting = when (project.name) {
+    // Depends on native-image-tools which is 11+
     "okcurl", "native-image-tests" -> "11"
     else -> "1.8"
   }
