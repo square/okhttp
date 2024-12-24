@@ -26,6 +26,7 @@ import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.android.Android10SocketAdapter
 import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
+import okhttp3.internal.platform.android.AndroidContextPlatform
 import okhttp3.internal.platform.android.AndroidSocketAdapter
 import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
@@ -34,7 +35,7 @@ import okhttp3.internal.tls.CertificateChainCleaner
 
 /** Android 10+ (API 29+). */
 @SuppressSignatureCheck
-class Android10Platform : Platform() {
+class Android10Platform : AndroidContextPlatform() {
   private val socketAdapters =
     listOfNotNull(
       Android10SocketAdapter.buildIfSupported(),
