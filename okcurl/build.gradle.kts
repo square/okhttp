@@ -1,14 +1,15 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
-import org.apache.tools.ant.taskdefs.condition.Os
+import org.graalvm.buildtools.gradle.dsl.GraalVMExtension
 
 plugins {
   kotlin("jvm")
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
-  id("org.graalvm.buildtools.native")
   id("com.github.johnrengelman.shadow")
 }
+
+val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
 
 val copyResourcesTemplates = tasks.register<Copy>("copyResourcesTemplates") {
   from("src/main/resources-templates")
@@ -53,11 +54,16 @@ tasks.shadowJar {
   mergeServiceFiles()
 }
 
-graalvmNative {
-  binaries {
-    named("main") {
-      imageName = "okcurl"
-      mainClass = "okhttp3.curl.MainCommandLineKt"
+
+if (testJavaVersion >= 11) {
+  apply(plugin = "org.graalvm.buildtools.native")
+
+  configure<GraalVMExtension> {
+    binaries {
+      named("main") {
+        imageName = "okcurl"
+        mainClass = "okhttp3.curl.MainCommandLineKt"
+      }
     }
   }
 }

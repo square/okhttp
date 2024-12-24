@@ -78,6 +78,9 @@ allprojects {
   }
 }
 
+val platform = System.getProperty("okhttp.platform", "jdk9")
+val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
+
 /** Configure building for Java+Kotlin projects. */
 subprojects {
   val project = this@subprojects
@@ -161,6 +164,17 @@ subprojects {
   val projectJvmTarget = JvmTarget.fromTarget(javaVersionSetting)
   val projectJavaVersion = JavaVersion.toVersion(javaVersionSetting)
 
+  val javaVersionSetting =
+    if (testJavaVersion > 8 && (project.name == "okcurl" || project.name == "native-image-tests")) {
+      // Depends on native-image-tools which is 11+, but avoids on Java 8 tests
+      "11"
+    } else {
+      "1.8"
+    }
+
+  val projectJvmTarget = JvmTarget.fromTarget(javaVersionSetting)
+  val projectJavaVersion = JavaVersion.toVersion(javaVersionSetting)
+
   tasks.withType<KotlinCompile> {
     compilerOptions {
       jvmTarget.set(projectJvmTarget)
@@ -172,6 +186,12 @@ subprojects {
 
   val platform = System.getProperty("okhttp.platform", "jdk9")
   val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
+
+  val testRuntimeOnly: Configuration by configurations.getting
+  dependencies {
+    testRuntimeOnly(rootProject.libs.junit.jupiter.engine)
+    testRuntimeOnly(rootProject.libs.junit.vintage.engine)
+  }
 
   tasks.withType<Test> {
     useJUnitPlatform()
