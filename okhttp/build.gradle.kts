@@ -109,11 +109,13 @@ normalization {
 val osgiTestDeploy: Configuration by configurations.creating
 
 val test by tasks.existing(Test::class)
-tasks.register<Copy>("copyOsgiTestDeployment") {
+val copyOsgiTestDeployment = tasks.register<Copy>("copyOsgiTestDeployment") {
   from(osgiTestDeploy)
   into(layout.buildDirectory.dir("resources/test/okhttp3/osgi/deployments"))
+}
 
-  test.get().dependsOn(this)
+test.configure {
+  dependsOn(copyOsgiTestDeployment)
 }
 
 dependencies {
