@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import java.util.Base64
@@ -206,13 +207,13 @@ normalization {
 // Expose OSGi jars to the test environment.
 val osgiTestDeploy: Configuration by configurations.creating
 
-val test by tasks.existing(Test::class)
-tasks.register<Copy>("copyOsgiTestDeployment") {
+val jvmTest = tasks.named("jvmTest")
+val copyOsgiTestDeployment = tasks.register<Copy>("copyOsgiTestDeployment") {
   from(osgiTestDeploy)
   into(layout.buildDirectory.dir("resources/jvmTest/okhttp3/osgi/deployments"))
 
-  test.get().dependsOn(this)
 }
+jvmTest.dependsOn(copyOsgiTestDeployment)
 
 dependencies {
   osgiTestDeploy(libs.eclipseOsgi)

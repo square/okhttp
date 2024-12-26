@@ -103,7 +103,7 @@ subprojects {
   }
 
   // Skip samples parent
-  if (project.buildFile.exists()) {
+  if (project.buildFile.exists() && project.name != "okhttp") {
     apply(plugin = "com.android.lint")
 
     dependencies {
@@ -339,9 +339,10 @@ subprojects {
 }
 
 plugins.withId("org.jetbrains.kotlin.jvm") {
-  val jvmTest by tasks.creating {
+  val test = tasks.named("test")
+  tasks.register("jvmTest") {
     description = "Get 'gradlew jvmTest' to run the tests of JVM-only modules"
-    dependsOn("test")
+    dependsOn(test)
   }
 }
 
