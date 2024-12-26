@@ -57,7 +57,7 @@ allprojects {
     google()
   }
 
-  tasks.create("downloadDependencies") {
+  tasks.register("downloadDependencies") {
     description = "Download all dependencies to the Gradle cache"
     doLast {
       for (configuration in configurations) {
@@ -95,6 +95,15 @@ subprojects {
   apply(plugin = "ru.vyarus.animalsniffer")
   apply(plugin = "biz.aQute.bnd.builder")
   apply(plugin = "io.github.usefulness.maven-sympathy")
+
+  // Skip samples parent
+  if (project.buildFile.exists()) {
+    apply(plugin = "com.android.lint")
+
+    dependencies {
+      "lintChecks"(rootProject.libs.androidx.lint.gradle)
+    }
+  }
 
   tasks.withType<JavaCompile> {
     options.encoding = Charsets.UTF_8.toString()
@@ -266,7 +275,6 @@ subprojects {
   }
 
   plugins.withId("com.vanniktech.maven.publish.base") {
-    val publishingExtension = extensions.getByType(PublishingExtension::class.java)
     configure<MavenPublishBaseExtension> {
       publishToMavenCentral(SonatypeHost.S01, automaticRelease = true)
       signAllPublications()

@@ -1,9 +1,6 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
-import java.io.DataInputStream
-import java.io.FileInputStream
 import java.util.Base64
-import java.util.zip.GZIPInputStream
 
 plugins {
   kotlin("jvm")
@@ -18,8 +15,10 @@ fun ByteArray.toByteStringExpression(): String {
 }
 
 val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
+  val kotlinTemplatesOutput = layout.buildDirectory.dir("generated/sources/kotlinTemplates")
+
   from("src/main/kotlinTemplates")
-  into(layout.buildDirectory.dir("generated/sources/kotlinTemplates"))
+  into(kotlinTemplatesOutput)
 
   // Tag as an input to regenerate after an update
   inputs.file("src/test/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
@@ -43,18 +42,20 @@ val generateIdnaMappingTableConfiguration: Configuration by configurations.creat
 dependencies {
   generateIdnaMappingTableConfiguration(projects.okhttpIdnaMappingTable)
 }
-val generateIdnaMappingTable by tasks.creating(JavaExec::class.java) {
-  outputs.dir(layout.buildDirectory.dir("generated/sources/idnaMappingTable"))
+val generateIdnaMappingTable = tasks.register<JavaExec>("generateIdnaMappingTable") {
+  val idnaOutput = layout.buildDirectory.dir("generated/sources/idnaMappingTable")
+
+  outputs.dir(idnaOutput)
   mainClass.set("okhttp3.internal.idn.GenerateIdnaMappingTableCode")
-  args(layout.buildDirectory.dir("generated/sources/idnaMappingTable").get())
+  args(idnaOutput.get())
   classpath = generateIdnaMappingTableConfiguration
 }
 
 kotlin {
   sourceSets {
     getByName("main") {
-      kotlin.srcDir(copyKotlinTemplates.get().outputs)
-      kotlin.srcDir(generateIdnaMappingTable.outputs)
+      kotlin.srcDir(copyKotlinTemplates.map { it.outputs })
+      kotlin.srcDir(generateIdnaMappingTable.map { it.outputs })
     }
   }
 }
@@ -107,11 +108,13 @@ normalization {
 // Expose OSGi jars to the test environment.
 val osgiTestDeploy: Configuration by configurations.creating
 
-val copyOsgiTestDeployment by tasks.creating(Copy::class.java) {
+val test by tasks.existing(Test::class)
+val copyOsgiTestDeployment = tasks.register<Copy>("copyOsgiTestDeployment") {
   from(osgiTestDeploy)
   into(layout.buildDirectory.dir("resources/test/okhttp3/osgi/deployments"))
 }
-tasks.getByName("test") {
+
+test.configure {
   dependsOn(copyOsgiTestDeployment)
 }
 
