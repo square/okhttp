@@ -55,7 +55,6 @@ tasks.shadowJar {
   mergeServiceFiles()
 }
 
-
 if (testJavaVersion >= 11) {
   apply(plugin = "org.graalvm.buildtools.native")
 
