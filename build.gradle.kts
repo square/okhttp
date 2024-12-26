@@ -111,15 +111,6 @@ subprojects {
     }
   }
 
-  // Skip samples parent
-  if (project.buildFile.exists()) {
-    apply(plugin = "com.android.lint")
-
-    dependencies {
-      "lintChecks"(rootProject.libs.androidx.lint.gradle)
-    }
-  }
-
   tasks.withType<JavaCompile> {
     options.encoding = Charsets.UTF_8.toString()
   }
