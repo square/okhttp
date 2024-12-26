@@ -96,11 +96,12 @@ subprojects {
   apply(plugin = "biz.aQute.bnd.builder")
   apply(plugin = "io.github.usefulness.maven-sympathy")
 
-  if (project.name != "samples") {
+  // Skip samples parent
+  if (project.buildFile.exists()) {
     apply(plugin = "com.android.lint")
 
     dependencies {
-      "lintChecks"("androidx.lint:lint-gradle:1.0.0-alpha03")
+      "lintChecks"(rootProject.libs.androidx.lint.gradle)
     }
   }
 
