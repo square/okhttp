@@ -22,7 +22,6 @@ import okhttp3.DelegatingSSLSocket
 import okhttp3.DelegatingSSLSocketFactory
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
-import okhttp3.testing.PlatformRule
 import org.conscrypt.Conscrypt
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -30,20 +29,13 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.MethodSource
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
+import org.robolectric.ParameterizedRobolectricTestRunner.Parameters
 
-class AndroidSocketAdapterTest {
-  @RegisterExtension @JvmField
-  val platform = PlatformRule()
-
-  @BeforeEach
-  fun setUp() {
-    platform.assumeConscrypt()
-  }
-
+@RunWith(ParameterizedRobolectricTestRunner::class)
+class AndroidSocketAdapterTest(val adapter: SocketAdapter) {
   val context: SSLContext by lazy {
     val provider: Provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
 
@@ -52,9 +44,8 @@ class AndroidSocketAdapterTest {
     }
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
-  fun testMatchesSupportedSocket(adapter: SocketAdapter) {
+  @Test
+  fun testMatchesSupportedSocket() {
     val socketFactory = context.socketFactory
 
     val sslSocket = socketFactory.createSocket() as SSLSocket
@@ -65,27 +56,24 @@ class AndroidSocketAdapterTest {
     assertNull(adapter.getSelectedProtocol(sslSocket))
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
-  fun testMatchesSupportedAndroidSocketFactory(adapter: SocketAdapter) {
+  @Test
+  fun testMatchesSupportedAndroidSocketFactory() {
     assumeTrue(adapter is StandardAndroidSocketAdapter)
 
     assertTrue(adapter.matchesSocketFactory(context.socketFactory))
     assertNotNull(adapter.trustManager(context.socketFactory))
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
-  fun testDoesntMatchSupportedCustomSocketFactory(adapter: SocketAdapter) {
+  @Test
+  fun testDoesntMatchSupportedCustomSocketFactory() {
     assumeFalse(adapter is StandardAndroidSocketAdapter)
 
     assertFalse(adapter.matchesSocketFactory(context.socketFactory))
     assertNull(adapter.trustManager(context.socketFactory))
   }
 
-  @ParameterizedTest
-  @MethodSource("data")
-  fun testCustomSocket(adapter: SocketAdapter) {
+  @Test
+  fun testCustomSocket() {
     val socketFactory = DelegatingSSLSocketFactory(context.socketFactory)
 
     assertFalse(adapter.matchesSocketFactory(socketFactory))
@@ -101,6 +89,7 @@ class AndroidSocketAdapterTest {
 
   companion object {
     @JvmStatic
+    @Parameters(name = "{0}")
     fun data(): Collection<SocketAdapter> {
       return listOfNotNull(
         DeferredSocketAdapter(ConscryptSocketAdapter.factory),

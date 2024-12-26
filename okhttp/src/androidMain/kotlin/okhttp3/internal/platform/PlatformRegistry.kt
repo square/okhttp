@@ -7,4 +7,7 @@ actual object PlatformRegistry {
     AndroidLog.enable()
     return Android10Platform.buildIfSupported() ?: AndroidPlatform.buildIfSupported()!!
   }
+
+  actual val isAndroid: Boolean
+    get() = true
 }

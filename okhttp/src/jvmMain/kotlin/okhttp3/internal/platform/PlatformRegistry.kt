@@ -62,4 +62,7 @@ actual object PlatformRegistry {
 
     return Platform()
   }
+
+  actual val isAndroid: Boolean
+    get() = false
 }

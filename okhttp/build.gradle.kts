@@ -89,6 +89,16 @@ kotlin {
 
     val androidUnitTest by getting {
       dependencies {
+        implementation(projects.okhttpTestingSupport)
+        implementation(libs.assertk)
+        implementation(libs.kotlin.test.annotations)
+        implementation(libs.kotlin.test.common)
+
+        implementation(libs.robolectric)
+        implementation(libs.junit)
+
+        implementation(libs.junit.jupiter.engine)
+        implementation(libs.junit.vintage.engine)
       }
     }
 

@@ -210,10 +210,8 @@ open class Platform {
 
     fun alpnProtocolNames(protocols: List<Protocol>) = protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
 
-    // This explicit check avoids activating in Android Studio with Android specific classes
-    // available when running plugins inside the IDE.
     val isAndroid: Boolean
-      get() = "Dalvik" == System.getProperty("java.vm.name")
+      get() = PlatformRegistry.isAndroid
 
     /** Attempt to match the host runtime to a capable Platform implementation. */
     private fun findPlatform(): Platform = PlatformRegistry.findPlatform()
