@@ -1,4 +1,3 @@
-import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import java.util.Base64
@@ -223,7 +222,10 @@ val copyOsgiTestDeployment = tasks.register<Copy>("copyOsgiTestDeployment") {
   into(layout.buildDirectory.dir("resources/jvmTest/okhttp3/osgi/deployments"))
 
 }
-jvmTest.dependsOn(copyOsgiTestDeployment)
+
+jvmTest.configure {
+  dependsOn(copyOsgiTestDeployment)
+}
 
 dependencies {
   osgiTestDeploy(libs.eclipseOsgi)
