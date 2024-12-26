@@ -1,6 +1,8 @@
+import aQute.bnd.gradle.BundleTaskExtension
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import java.util.Base64
+
 
 plugins {
   kotlin("multiplatform")
@@ -55,11 +57,9 @@ val generateIdnaMappingTable = tasks.register<JavaExec>("generateIdnaMappingTabl
 kotlin {
   jvmToolchain(8)
 
-  jvm {
-  }
+  jvm {}
 
-  androidTarget {
-  }
+  androidTarget {}
 
   sourceSets {
     val commonJvmAndroid = create("commonJvmAndroid") {
@@ -103,8 +103,8 @@ kotlin {
 
     jvmMain {
       dependsOn(commonJvmAndroid)
-      dependencies {
 
+      dependencies {
         // These compileOnly dependencies must also be listed in the OSGi configuration above.
         compileOnly(libs.conscrypt.openjdk)
         compileOnly(libs.bouncycastle.bcprov)
@@ -168,22 +168,42 @@ android {
   }
 }
 
-project.applyOsgi(
-  "Export-Package: okhttp3,okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal",
-  "Import-Package: " +
-    "android.*;resolution:=optional," +
-    "com.oracle.svm.core.annotate;resolution:=optional," +
-    "com.oracle.svm.core.configure;resolution:=optional," +
-    "dalvik.system;resolution:=optional," +
-    "org.conscrypt;resolution:=optional," +
-    "org.bouncycastle.*;resolution:=optional," +
-    "org.openjsse.*;resolution:=optional," +
-    "org.graalvm.nativeimage;resolution:=optional," +
-    "org.graalvm.nativeimage.hosted;resolution:=optional," +
-    "sun.security.ssl;resolution:=optional,*",
-  "Automatic-Module-Name: okhttp3",
-  "Bundle-SymbolicName: com.squareup.okhttp3"
+val jarTask = tasks.getByName<Jar>("jvmJar")
+val compileTask = tasks.named("jvmMainClasses")
+
+// Hack to make BundleTaskExtension pass briefly
+project.extensions
+  .getByType(JavaPluginExtension::class.java)
+  .sourceSets.create("main")
+
+val bundleExtension = jarTask.extensions.create(
+  BundleTaskExtension.NAME,
+  BundleTaskExtension::class.java,
+  jarTask,
 )
+
+bundleExtension.run {
+  classpath(libs.kotlin.stdlib.osgi.map { it.artifacts }, compileTask.map { it.outputs })
+  bnd(
+    "Export-Package: okhttp3,okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal",
+    "Import-Package: " +
+      "com.oracle.svm.core.annotate;resolution:=optional," +
+      "com.oracle.svm.core.configure;resolution:=optional," +
+      "dalvik.system;resolution:=optional," +
+      "org.conscrypt;resolution:=optional," +
+      "org.bouncycastle.*;resolution:=optional," +
+      "org.openjsse.*;resolution:=optional," +
+      "org.graalvm.nativeimage;resolution:=optional," +
+      "org.graalvm.nativeimage.hosted;resolution:=optional," +
+      "sun.security.ssl;resolution:=optional,*",
+    "Automatic-Module-Name: okhttp3",
+    "Bundle-SymbolicName: com.squareup.okhttp3"
+  )
+}
+// Call the convention when the task has finished, to modify the jar to contain OSGi metadata.
+jarTask.doLast {
+  bundleExtension.buildAction().execute(this)
+}
 
 normalization {
   runtimeClasspath {
@@ -220,7 +240,6 @@ val jvmTest = tasks.named("jvmTest")
 val copyOsgiTestDeployment = tasks.register<Copy>("copyOsgiTestDeployment") {
   from(osgiTestDeploy)
   into(layout.buildDirectory.dir("resources/jvmTest/okhttp3/osgi/deployments"))
-
 }
 
 jvmTest.configure {
@@ -231,6 +250,8 @@ dependencies {
   osgiTestDeploy(libs.eclipseOsgi)
   osgiTestDeploy(libs.kotlin.stdlib.osgi)
 }
+
+apply(plugin = "io.github.usefulness.maven-sympathy")
 
 mavenPublishing {
   configure(KotlinMultiplatform(javadocJar = JavadocJar.Empty()))
