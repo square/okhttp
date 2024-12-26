@@ -1,6 +1,7 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
 import org.graalvm.buildtools.gradle.dsl.GraalVMExtension
+import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 plugins {
   kotlin("jvm")
@@ -39,9 +40,9 @@ dependencies {
   testImplementation(kotlin("test"))
 }
 
-//animalsniffer {
-//  isIgnoreFailures = true
-//}
+configure<AnimalSnifferExtension> {
+  isIgnoreFailures = true
+}
 
 tasks.jar {
   manifest {

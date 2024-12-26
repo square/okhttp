@@ -16,8 +16,10 @@ fun ByteArray.toByteStringExpression(): String {
 }
 
 val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
+  val kotlinTemplatesOutput = layout.buildDirectory.dir("generated/sources/kotlinTemplates")
+
   from("src/commonJvmAndroid/kotlinTemplates")
-  into(layout.buildDirectory.dir("generated/sources/kotlinTemplates"))
+  into(kotlinTemplatesOutput)
 
   // Tag as an input to regenerate after an update
   inputs.file("src/jvmTest/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
@@ -41,10 +43,12 @@ val generateIdnaMappingTableConfiguration: Configuration by configurations.creat
 dependencies {
   generateIdnaMappingTableConfiguration(projects.okhttpIdnaMappingTable)
 }
-val generateIdnaMappingTable by tasks.creating(JavaExec::class.java) {
-  outputs.dir(layout.buildDirectory.dir("generated/sources/idnaMappingTable"))
+val generateIdnaMappingTable = tasks.register<JavaExec>("generateIdnaMappingTable") {
+  val idnaOutput = layout.buildDirectory.dir("generated/sources/idnaMappingTable")
+
+  outputs.dir(idnaOutput)
   mainClass.set("okhttp3.internal.idn.GenerateIdnaMappingTableCode")
-  args(layout.buildDirectory.dir("generated/sources/idnaMappingTable").get())
+  args(idnaOutput.get())
   classpath = generateIdnaMappingTableConfiguration
 }
 
@@ -61,8 +65,8 @@ kotlin {
     val commonJvmAndroid = create("commonJvmAndroid") {
       dependsOn(commonMain.get())
 
-      kotlin.srcDir(copyKotlinTemplates.get().outputs)
-      kotlin.srcDir(generateIdnaMappingTable.outputs)
+      kotlin.srcDir(copyKotlinTemplates.map { it.outputs })
+      kotlin.srcDir(generateIdnaMappingTable.map { it.outputs })
 
       dependencies {
         api(libs.squareup.okio)
@@ -202,12 +206,12 @@ normalization {
 // Expose OSGi jars to the test environment.
 val osgiTestDeploy: Configuration by configurations.creating
 
-val copyOsgiTestDeployment by tasks.creating(Copy::class.java) {
+val test by tasks.existing(Test::class)
+tasks.register<Copy>("copyOsgiTestDeployment") {
   from(osgiTestDeploy)
   into(layout.buildDirectory.dir("resources/jvmTest/okhttp3/osgi/deployments"))
-}
-tasks.getByName("jvmTest") {
-  dependsOn(copyOsgiTestDeployment)
+
+  test.get().dependsOn(this)
 }
 
 dependencies {
