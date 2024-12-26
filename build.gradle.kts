@@ -274,7 +274,6 @@ subprojects {
   }
 
   plugins.withId("com.vanniktech.maven.publish.base") {
-//    val publishingExtension = extensions.getByType(PublishingExtension::class.java)
     configure<MavenPublishBaseExtension> {
       publishToMavenCentral(SonatypeHost.S01, automaticRelease = true)
       signAllPublications()
