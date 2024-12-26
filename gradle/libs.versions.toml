@@ -13,7 +13,7 @@ org-bouncycastle = "1.76"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.9.0"
 org-jetbrains-kotlin = "2.1.0"
-org-junit-jupiter = "5.11.3"
+org-junit-jupiter = "5.11.4"
 retrofit = "2.11.0"
 testcontainers = "1.20.4"
 
@@ -43,7 +43,7 @@ graal-sdk = { module = "org.graalvm.sdk:graal-sdk", version.ref = "graalvm" }
 gradlePlugin-android = "com.android.tools.build:gradle:8.7.3"
 gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.11.2.0"
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.7.2"
-gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.16.3"
+gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.17.0"
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
 gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.9.20"
 gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:4.1.0"
@@ -54,7 +54,7 @@ gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.30.0"
 gradlePlugin-mavenSympathy = "io.github.usefulness.maven-sympathy:io.github.usefulness.maven-sympathy.gradle.plugin:0.3.0"
 gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:8.0.0"
 gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.25.0"
-guava-jre = "com.google.guava:guava:33.3.1-jre"
+guava-jre = "com.google.guava:guava:33.4.0-jre"
 hamcrestLibrary = "org.hamcrest:hamcrest-library:3.0"
 httpClient5 = "org.apache.httpcomponents.client5:httpclient5:5.3.1"
 jettyClient = "org.eclipse.jetty:jetty-client:9.4.56.v20240826"
@@ -65,8 +65,8 @@ junit-ktx = "androidx.test.ext:junit-ktx:1.2.1"
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "org-junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "org-junit-jupiter" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "org-junit-jupiter" }
-junit-platform-console = "org.junit.platform:junit-platform-console:1.11.3"
-junit-vintage-engine = "org.junit.vintage:junit-vintage-engine:5.11.3"
+junit-platform-console = "org.junit.platform:junit-platform-console:1.11.4"
+junit-vintage-engine = "org.junit.vintage:junit-vintage-engine:5.11.4"
 junit-pioneer = "org.junit-pioneer:junit-pioneer:1.9.1"
 junit5android-core = { module = "de.mannodermaus.junit5:android-test-core", version.ref = "de-mannodermaus-junit5" }
 junit5android-runner = { module = "de.mannodermaus.junit5:android-test-runner", version.ref = "de-mannodermaus-junit5" }
@@ -95,7 +95,7 @@ squareup-moshi = { module = "com.squareup.moshi:moshi", version.ref = "com-squar
 squareup-moshi-compiler = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "com-squareup-moshi" }
 squareup-moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "com-squareup-moshi" }
 squareup-okhttp-icu = "com.squareup.okhttpicu:okhttp-icu:0.2.0"
-squareup-kotlinPoet = "com.squareup:kotlinpoet:1.18.1"
+squareup-kotlinPoet = "com.squareup:kotlinpoet:2.0.0"
 squareup-okio = { module = "com.squareup.okio:okio", version.ref = "com-squareup-okio" }
 squareup-okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "com-squareup-okio" }
 squareup-okio-nodefilesystem = { module = "com.squareup.okio:okio-nodefilesystem", version.ref = "com-squareup-okio" }
