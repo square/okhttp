@@ -15,4 +15,4 @@
  */
 package okhttp3.test
 
-actual open class BaseJavaTest actual constructor()
+actual abstract class BaseJavaTest actual constructor()

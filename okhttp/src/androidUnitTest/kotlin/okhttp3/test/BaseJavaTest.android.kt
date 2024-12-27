@@ -23,7 +23,7 @@ import org.junit.Before
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-actual open class BaseJavaTest actual constructor() {
+actual abstract class BaseJavaTest actual constructor() {
   @Before
   fun init() {
     PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext<Context>()

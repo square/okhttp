@@ -15,4 +15,4 @@
  */
 package okhttp3.test
 
-expect open class BaseJavaTest()
+expect abstract class BaseJavaTest()
