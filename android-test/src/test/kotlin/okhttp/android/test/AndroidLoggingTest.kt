@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package okhttp3.android
+package okhttp.android.test
 
 import android.util.Log
 import assertk.assertThat
@@ -26,6 +26,7 @@ import okhttp3.ConnectionSpec
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.LoggingEventListener
 import org.junit.Test
@@ -35,21 +36,17 @@ import org.robolectric.shadows.ShadowLog
 
 @RunWith(RobolectricTestRunner::class)
 class AndroidLoggingTest {
-  val clientBuilder =
-    OkHttpClient.Builder()
-      .connectionSpecs(listOf(ConnectionSpec.CLEARTEXT))
-      .dns {
-        throw UnknownHostException("shortcircuit")
-      }
+  val clientBuilder = OkHttpClient.Builder().connectionSpecs(listOf(ConnectionSpec.CLEARTEXT)).dns {
+      throw UnknownHostException("shortcircuit")
+    }
 
   val request = Request("http://google.com/robots.txt".toHttpUrl())
 
   @Test
   fun testHttpLoggingInterceptor() {
-    val interceptor =
-      HttpLoggingInterceptor.androidLogging(tag = "testHttpLoggingInterceptor").apply {
-        level = HttpLoggingInterceptor.Level.BASIC
-      }
+    val interceptor = HttpLoggingInterceptor().apply {
+      level = HttpLoggingInterceptor.Level.BASIC
+    }
 
     val client = clientBuilder.addInterceptor(interceptor).build()
 
@@ -59,7 +56,7 @@ class AndroidLoggingTest {
       // expected
     }
 
-    val logs = ShadowLog.getLogsForTag("testHttpLoggingInterceptor")
+    val logs = ShadowLog.getLogsForTag(AndroidPlatform.Tag)
     assertThat(logs.map { it.type }).containsOnly(Log.INFO)
     assertThat(logs.map { it.msg }).containsExactly(
       "--> GET http://google.com/robots.txt",
@@ -71,8 +68,7 @@ class AndroidLoggingTest {
 
   @Test
   fun testLoggingEventListener() {
-    val client =
-      clientBuilder.eventListenerFactory(LoggingEventListener.androidLogging(tag = "testLoggingEventListener")).build()
+    val client = clientBuilder.eventListenerFactory(LoggingEventListener.Factory()).build()
 
     try {
       client.newCall(request).execute()
@@ -80,7 +76,7 @@ class AndroidLoggingTest {
       // expected
     }
 
-    val logs = ShadowLog.getLogsForTag("testLoggingEventListener")
+    val logs = ShadowLog.getLogsForTag(AndroidPlatform.Tag)
     assertThat(logs.map { it.type }).containsOnly(Log.INFO)
     assertThat(
       logs.map {

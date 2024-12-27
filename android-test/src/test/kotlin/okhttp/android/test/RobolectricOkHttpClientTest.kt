@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package okhttp3.android
+package okhttp.android.test
 
 import android.app.Application
 import android.content.Context

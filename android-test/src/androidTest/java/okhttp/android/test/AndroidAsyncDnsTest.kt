@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package okhttp3.android
+package okhttp.android.test
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -36,6 +36,7 @@ import okhttp3.AsyncDns
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.android.AndroidAsyncDns
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okio.IOException

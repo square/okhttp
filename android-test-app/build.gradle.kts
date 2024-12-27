@@ -41,7 +41,6 @@ android {
 dependencies {
   implementation(libs.playservices.safetynet)
   implementation(projects.okhttp)
-  implementation(projects.okhttpAndroid)
   implementation(libs.androidx.activity)
 
   androidTestImplementation(libs.androidx.junit)

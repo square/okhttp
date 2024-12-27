@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="okhttp.okhttp3">
 
+  <uses-permission android:name="android.permission.INTERNET" />
+
 </manifest>
