@@ -32,10 +32,11 @@ import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
 import mockwebserver3.MockResponse
 import mockwebserver3.junit4.MockWebServerRule
-import okhttp3.AsyncDns
+import okhttp3.Dns
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.android.internal.AsyncDns
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okio.IOException
@@ -49,7 +50,7 @@ import org.junit.Test
 /**
  * Run with "./gradlew :android-test:connectedCheck -PandroidBuild=true" and make sure ANDROID_SDK_ROOT is set.
  */
-class AndroidAsyncDnsTest {
+class AndroidDnsTest {
   @JvmField @Rule
   val serverRule = MockWebServerRule()
   private lateinit var client: OkHttpClient
@@ -73,7 +74,7 @@ class AndroidAsyncDnsTest {
 
     client =
       OkHttpClient.Builder()
-        .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
+        .dns(Dns.ANDROID)
         .sslSocketFactory(localhost.sslSocketFactory(), localhost.trustManager)
         .build()
 
@@ -130,25 +131,33 @@ class AndroidAsyncDnsTest {
     val latch = CountDownLatch(1)
 
     // assumes an IPv4 address
-    AndroidAsyncDns.IPv4.query(
-      hostname,
-      object : AsyncDns.Callback {
-        override fun onResponse(
-          hostname: String,
-          addresses: List<InetAddress>,
-        ) {
-          allAddresses.addAll(addresses)
-          latch.countDown()
-        }
+    AndroidDns(AndroidDns.DnsClass.IPV4).query(
+      hostname = hostname,
+      originatingCall = null,
+      callback =
+        object : AsyncDns.Callback {
+          override fun onAddresses(
+            hasMore: Boolean,
+            hostname: String,
+            addresses: List<InetAddress>,
+          ) {
+            allAddresses.addAll(addresses)
+            if (!hasMore) {
+              latch.countDown()
+            }
+          }
 
-        override fun onFailure(
-          hostname: String,
-          e: IOException,
-        ) {
-          exception = e
-          latch.countDown()
-        }
-      },
+          override fun onFailure(
+            hasMore: Boolean,
+            hostname: String,
+            e: IOException,
+          ) {
+            exception = e
+            if (!hasMore) {
+              latch.countDown()
+            }
+          }
+        },
     )
 
     latch.await()
@@ -187,7 +196,7 @@ class AndroidAsyncDnsTest {
 
     val client =
       OkHttpClient.Builder()
-        .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
+        .dns(Dns.ANDROID)
         .socketFactory(network.socketFactory)
         .build()
 
@@ -199,11 +208,13 @@ class AndroidAsyncDnsTest {
     }
   }
 
-  private fun assumeNetwork() {
-    try {
-      InetAddress.getByName("www.google.com")
-    } catch (uhe: UnknownHostException) {
-      throw AssumptionViolatedException(uhe.message, uhe)
+  companion object {
+    fun assumeNetwork() {
+      try {
+        InetAddress.getByName("www.google.com")
+      } catch (uhe: UnknownHostException) {
+        throw AssumptionViolatedException(uhe.message, uhe)
+      }
     }
   }
 }
