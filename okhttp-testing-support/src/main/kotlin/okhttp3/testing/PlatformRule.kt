@@ -26,6 +26,7 @@ import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
 import okhttp3.internal.platform.Jdk9Platform
 import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.platform.PlatformRegistry
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
@@ -435,8 +436,13 @@ open class PlatformRule
       }
 
       @JvmStatic
-      fun getPlatformSystemProperty(): String {
+      fun getPlatformSystemProperty(): String? {
         var property: String? = System.getProperty(PROPERTY_NAME)
+
+        if (PlatformRegistry.isAndroid) {
+          // Platforms below are unavailable on Android
+          return null
+        }
 
         if (property == null) {
           property =
