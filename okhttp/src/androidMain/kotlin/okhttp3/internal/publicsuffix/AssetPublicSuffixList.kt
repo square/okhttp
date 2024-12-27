@@ -31,6 +31,6 @@ internal class AssetPublicSuffixList(
   }
 
   companion object {
-    val PUBLIC_SUFFIX_RESOURCE = "/PublicSuffixDatabase.list"
+    val PUBLIC_SUFFIX_RESOURCE = "PublicSuffixDatabase.list"
   }
 }

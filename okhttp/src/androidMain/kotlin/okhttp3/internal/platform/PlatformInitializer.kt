@@ -16,7 +16,17 @@
 package okhttp3.internal.platform
 
 import android.content.Context
+import androidx.startup.Initializer
 
-interface ContextAwarePlatform {
-  var applicationContext: Context?
+/**
+ * Androidx Startup initializer to ensure that the AndroidPlatform has access to the application context.
+ */
+class PlatformInitializer: Initializer<Platform> {
+  override fun create(context: Context): Platform {
+    PlatformRegistry.applicationContext = context
+
+    return Platform.get()
+  }
+
+  override fun dependencies(): List<Class<Initializer<*>>> = listOf()
 }

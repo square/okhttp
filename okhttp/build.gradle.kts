@@ -95,6 +95,7 @@ kotlin {
         compileOnly(libs.bouncycastle.bctls)
         compileOnly(libs.conscrypt.openjdk)
         implementation(libs.androidx.annotation)
+        implementation(libs.androidx.startup.runtime)
       }
     }
 
