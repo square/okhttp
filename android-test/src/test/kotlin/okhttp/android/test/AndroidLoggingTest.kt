@@ -36,7 +36,8 @@ import org.robolectric.shadows.ShadowLog
 
 @RunWith(RobolectricTestRunner::class)
 class AndroidLoggingTest {
-  val clientBuilder = OkHttpClient.Builder().connectionSpecs(listOf(ConnectionSpec.CLEARTEXT)).dns {
+  val clientBuilder =
+    OkHttpClient.Builder().connectionSpecs(listOf(ConnectionSpec.CLEARTEXT)).dns {
       throw UnknownHostException("shortcircuit")
     }
 
@@ -44,9 +45,10 @@ class AndroidLoggingTest {
 
   @Test
   fun testHttpLoggingInterceptor() {
-    val interceptor = HttpLoggingInterceptor().apply {
-      level = HttpLoggingInterceptor.Level.BASIC
-    }
+    val interceptor =
+      HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BASIC
+      }
 
     val client = clientBuilder.addInterceptor(interceptor).build()
 
