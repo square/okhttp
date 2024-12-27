@@ -21,7 +21,7 @@ import androidx.startup.Initializer
 /**
  * Androidx Startup initializer to ensure that the AndroidPlatform has access to the application context.
  */
-class PlatformInitializer: Initializer<Platform> {
+class PlatformInitializer : Initializer<Platform> {
   override fun create(context: Context): Platform {
     PlatformRegistry.applicationContext = context
 
