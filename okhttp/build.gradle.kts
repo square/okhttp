@@ -1,8 +1,11 @@
+@file:Suppress("UnstableApiUsage")
+
 import aQute.bnd.gradle.BundleTaskExtension
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 import java.util.Base64
-
 
 plugins {
   kotlin("multiplatform")
@@ -12,6 +15,9 @@ plugins {
   id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
 }
+
+val platform = System.getProperty("okhttp.platform", "jdk9")
+val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
 
 fun ByteArray.toByteStringExpression(): String {
   return "\"${Base64.getEncoder().encodeToString(this@toByteStringExpression)}\".decodeBase64()!!"
@@ -57,9 +63,15 @@ val generateIdnaMappingTable = tasks.register<JavaExec>("generateIdnaMappingTabl
 kotlin {
   jvmToolchain(8)
 
-  jvm {}
+  jvm {
+//    withJava() /* <- cannot be used when the Android Plugin is present */
+  }
 
-  androidTarget {}
+  androidTarget {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.JVM_17)
+    }
+  }
 
   sourceSets {
     val commonJvmAndroid = create("commonJvmAndroid") {
@@ -136,7 +148,26 @@ kotlin {
 
         implementation(libs.junit.jupiter.engine)
         implementation(libs.junit.vintage.engine)
+
+        if (platform == "conscrypt") {
+          implementation(rootProject.libs.conscrypt.openjdk)
+        } else if (platform == "openjsse") {
+          implementation(rootProject.libs.openjsse)
+        }
       }
+    }
+  }
+}
+
+if (platform == "jdk8alpn") {
+  // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
+  val alpnBootVersion = alpnBootVersion()
+  if (alpnBootVersion != null) {
+    val alpnBootJar = configurations.detachedConfiguration(
+      dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")
+    ).singleFile
+    tasks.withType<Test> {
+      jvmArgs("-Xbootclasspath/p:${alpnBootJar}")
     }
   }
 }
@@ -182,6 +213,32 @@ tasks.named<Jar>("jvmJar").configure {
   }
 
   bundleExtension.buildAction().execute(this)
+}
+
+val checkstyleConfig: Configuration by configurations.named("checkstyleConfig")
+dependencies {
+  // Everything else requires Android API 21+.
+  "signature"(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
+
+  // OkHttp requires Java 8+.
+  "signature"(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
+
+  checkstyleConfig(rootProject.libs.checkStyle) {
+    isTransitive = false
+  }
+}
+
+// Animal Sniffer confirms we generally don't use APIs not on Java 8.
+configure<AnimalSnifferExtension> {
+  annotation = "okhttp3.internal.SuppressSignatureCheck"
+  sourceSets = listOf(project.sourceSets["main"])
+}
+
+configure<CheckstyleExtension> {
+  config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
+  toolVersion = rootProject.libs.versions.checkStyle.get()
+  // TODO switch out checkstyle to use something supporting KMP
+  sourceSets = listOf(project.sourceSets["main"])
 }
 
 apply(plugin = "io.github.usefulness.maven-sympathy")

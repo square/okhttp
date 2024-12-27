@@ -96,7 +96,7 @@ subprojects {
   apply(plugin = "ru.vyarus.animalsniffer")
 
   // The 'java' plugin has been applied, but it is not compatible with the Android plugins.
-  // TODO fix this
+  // These are applied inside the okhttp module for that case specifically
   if (project.name != "okhttp") {
     apply(plugin = "biz.aQute.bnd.builder")
     apply(plugin = "io.github.usefulness.maven-sympathy")
@@ -134,7 +134,7 @@ subprojects {
     }
   }
 
-  // TODO fix this
+  // Handled in :okhttp directly
   if (project.name != "okhttp") {
     configure<CheckstyleExtension> {
       config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
@@ -149,21 +149,23 @@ subprojects {
     }
   }
 
-//  val signature: Configuration by configurations.getting
   dependencies {
     // No dependency requirements for testing-support.
     if (project.name == "okhttp-testing-support") return@dependencies
 
+    // okhttp configured specifically.
+    if (project.name == "okhttp") return@dependencies
+
     if (project.name == "mockwebserver3-junit5") {
       // JUnit 5's APIs need java.util.function.Function and java.util.Optional from API 24.
-//      signature(rootProject.libs.signature.android.apilevel24) { artifact { type = "signature" } }
+      "signature"(rootProject.libs.signature.android.apilevel24) { artifact { type = "signature" } }
     } else {
       // Everything else requires Android API 21+.
-//      signature(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
+      "signature"(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
     }
 
     // OkHttp requires Java 8+.
-//    signature(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
+    "signature"(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
   }
 
   val javaVersionSetting =
@@ -189,11 +191,13 @@ subprojects {
   val platform = System.getProperty("okhttp.platform", "jdk9")
   val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
 
-//  val testRuntimeOnly: Configuration by configurations.getting
-//  dependencies {
-//    testRuntimeOnly(rootProject.libs.junit.jupiter.engine)
-//    testRuntimeOnly(rootProject.libs.junit.vintage.engine)
-//  }
+  if (project.name != "okhttp") {
+    val testRuntimeOnly: Configuration by configurations.getting
+    dependencies {
+      testRuntimeOnly(rootProject.libs.junit.jupiter.engine)
+      testRuntimeOnly(rootProject.libs.junit.vintage.engine)
+    }
+  }
 
   tasks.withType<Test> {
     useJUnitPlatform()
@@ -229,24 +233,26 @@ subprojects {
     environment("OKHTTP_ROOT", rootDir)
   }
 
-  if (platform == "jdk8alpn") {
-    // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
-    val alpnBootVersion = alpnBootVersion()
-    if (alpnBootVersion != null) {
-      val alpnBootJar = configurations.detachedConfiguration(
-        dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")
-      ).singleFile
-      tasks.withType<Test> {
-        jvmArgs("-Xbootclasspath/p:${alpnBootJar}")
+  if (project.name != "okhttp") {
+    if (platform == "jdk8alpn") {
+      // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
+      val alpnBootVersion = alpnBootVersion()
+      if (alpnBootVersion != null) {
+        val alpnBootJar = configurations.detachedConfiguration(
+          dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")
+        ).singleFile
+        tasks.withType<Test> {
+          jvmArgs("-Xbootclasspath/p:${alpnBootJar}")
+        }
       }
-    }
-  } else if (platform == "conscrypt") {
-    dependencies {
+    } else if (platform == "conscrypt") {
+      dependencies {
 //      testRuntimeOnly(rootProject.libs.conscrypt.openjdk)
-    }
-  } else if (platform == "openjsse") {
-    dependencies {
+      }
+    } else if (platform == "openjsse") {
+      dependencies {
 //      testRuntimeOnly(rootProject.libs.openjsse)
+      }
     }
   }
 
