@@ -86,21 +86,6 @@ kotlin {
       }
     }
 
-    val androidUnitTest by getting {
-      dependencies {
-        implementation(projects.okhttpTestingSupport)
-        implementation(libs.assertk)
-        implementation(libs.kotlin.test.annotations)
-        implementation(libs.kotlin.test.common)
-
-        implementation(libs.robolectric)
-        implementation(libs.junit)
-
-        implementation(libs.junit.jupiter.engine)
-        implementation(libs.junit.vintage.engine)
-      }
-    }
-
     jvmMain {
       dependsOn(commonJvmAndroid)
 
@@ -147,7 +132,6 @@ kotlin {
         implementation(libs.junit.jupiter.params)
         implementation(libs.kotlin.test.junit)
         implementation(libs.openjsse)
-        implementation(libs.aqute.resolve)
         compileOnly(libs.findbugs.jsr305)
 
         implementation(libs.junit.jupiter.engine)
@@ -164,91 +148,40 @@ android {
 
   defaultConfig {
     minSdk = 21
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 }
-
-val jarTask = tasks.getByName<Jar>("jvmJar")
-val compileTask = tasks.named("jvmMainClasses")
 
 // Hack to make BundleTaskExtension pass briefly
 project.extensions
   .getByType(JavaPluginExtension::class.java)
   .sourceSets.create("main")
 
-val bundleExtension = jarTask.extensions.create(
-  BundleTaskExtension.NAME,
-  BundleTaskExtension::class.java,
-  jarTask,
-)
-
-bundleExtension.run {
-  classpath(libs.kotlin.stdlib.osgi.map { it.artifacts }, compileTask.map { it.outputs })
-  bnd(
-    "Export-Package: okhttp3,okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal",
-    "Import-Package: " +
-      "com.oracle.svm.core.annotate;resolution:=optional," +
-      "com.oracle.svm.core.configure;resolution:=optional," +
-      "dalvik.system;resolution:=optional," +
-      "org.conscrypt;resolution:=optional," +
-      "org.bouncycastle.*;resolution:=optional," +
-      "org.openjsse.*;resolution:=optional," +
-      "org.graalvm.nativeimage;resolution:=optional," +
-      "org.graalvm.nativeimage.hosted;resolution:=optional," +
-      "sun.security.ssl;resolution:=optional,*",
-    "Automatic-Module-Name: okhttp3",
-    "Bundle-SymbolicName: com.squareup.okhttp3"
-  )
-}
 // Call the convention when the task has finished, to modify the jar to contain OSGi metadata.
-jarTask.doLast {
-  bundleExtension.buildAction().execute(this)
-}
-
-normalization {
-  runtimeClasspath {
-    /*
-       - The below two ignored files are generated during test execution
-       by the test: okhttp/src/test/java/okhttp3/osgi/OsgiTest.java
-
-       - The compressed index.xml file contains a timestamp property which
-       changes with every test execution, such that running the test
-       actually changes the test classpath itself. This means that it
-       can"t benefit from incremental build acceleration, because on every
-       execution it sees that the classpath has changed, and so to be
-       safe, it needs to re-run.
-
-       - This is unfortunate, because actually it would be safe to declare
-       the task as up-to-date, because these two files, which are based on
-       the generated index.xml, are outputs, not inputs. We can be sure of
-       this because they are deleted in the @BeforeEach method of the
-       OsgiTest test class.
-
-       - To enable the benefit of incremental builds, we can ask Gradle
-       to ignore these two files when considering whether the classpath
-       has changed. That is the purpose of this normalization block.
-   */
-    ignore("okhttp3/osgi/workspace/cnf/repo/index.xml.gz")
-    ignore("okhttp3/osgi/workspace/cnf/repo/index.xml.gz.sha")
+tasks.named<Jar>("jvmJar").configure {
+  val bundleExtension = extensions.create(
+    BundleTaskExtension.NAME,
+    BundleTaskExtension::class.java,
+    this,
+  ).apply {
+    classpath(libs.kotlin.stdlib.osgi.map { it.artifacts }, tasks.named("jvmMainClasses").map { it.outputs })
+    bnd(
+      "Export-Package: okhttp3,okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal",
+      "Import-Package: " +
+        "com.oracle.svm.core.annotate;resolution:=optional," +
+        "com.oracle.svm.core.configure;resolution:=optional," +
+        "dalvik.system;resolution:=optional," +
+        "org.conscrypt;resolution:=optional," +
+        "org.bouncycastle.*;resolution:=optional," +
+        "org.openjsse.*;resolution:=optional," +
+        "org.graalvm.nativeimage;resolution:=optional," +
+        "org.graalvm.nativeimage.hosted;resolution:=optional," +
+        "sun.security.ssl;resolution:=optional,*",
+      "Automatic-Module-Name: okhttp3",
+      "Bundle-SymbolicName: com.squareup.okhttp3"
+    )
   }
-}
 
-// Expose OSGi jars to the test environment.
-val osgiTestDeploy: Configuration by configurations.creating
-
-val jvmTest = tasks.named("jvmTest")
-val copyOsgiTestDeployment = tasks.register<Copy>("copyOsgiTestDeployment") {
-  from(osgiTestDeploy)
-  into(layout.buildDirectory.dir("resources/jvmTest/okhttp3/osgi/deployments"))
-}
-
-jvmTest.configure {
-  dependsOn(copyOsgiTestDeployment)
-}
-
-dependencies {
-  osgiTestDeploy(libs.eclipseOsgi)
-  osgiTestDeploy(libs.kotlin.stdlib.osgi)
+  bundleExtension.buildAction().execute(this)
 }
 
 apply(plugin = "io.github.usefulness.maven-sympathy")

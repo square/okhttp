@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.platform.android
+package okhttp3.android
 
 import java.security.Provider
 import javax.net.ssl.SSLContext
@@ -22,6 +22,11 @@ import okhttp3.DelegatingSSLSocket
 import okhttp3.DelegatingSSLSocketFactory
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
+import okhttp3.internal.platform.android.AndroidSocketAdapter
+import okhttp3.internal.platform.android.ConscryptSocketAdapter
+import okhttp3.internal.platform.android.DeferredSocketAdapter
+import okhttp3.internal.platform.android.SocketAdapter
+import okhttp3.internal.platform.android.StandardAndroidSocketAdapter
 import org.conscrypt.Conscrypt
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
