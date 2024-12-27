@@ -179,6 +179,8 @@ android {
 
   defaultConfig {
     minSdk = 21
+
+    consumerProguardFiles("okhttp3.pro")
   }
 }
 

@@ -62,31 +62,10 @@ val localProperties = Properties().apply {
   }
 }
 val sdkDir = localProperties.getProperty("sdk.dir")
-if ((androidHome != null || sdkDir != null) && !isKnownBrokenIntelliJ()) {
+if (androidHome != null || sdkDir != null) {
   include(":okhttp-android")
   include(":android-test")
   include(":android-test-app")
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-
-/**
- * Avoid a crash in IntelliJ triggered by Android submodules.
- *
- * ```
- * java.lang.AssertionError: Can't find built-in class kotlin.Cloneable
- *   at org.jetbrains.kotlin.builtins.KotlinBuiltIns.getBuiltInClassByFqName(KotlinBuiltIns.java:217)
- *   at org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMapper.mapJavaToKotlin(JavaToKotlinClassMapper.kt:41)
- * 	...
- * ```
- */
-fun isKnownBrokenIntelliJ(): Boolean {
-  val ideaVersionString = System.getProperty("idea.version") ?: return false
-
-  return try {
-    val (major, minor, _) = ideaVersionString.split(".", limit = 3)
-    KotlinVersion(major.toInt(), minor.toInt()) < KotlinVersion(2023, 2)
-  } catch (e: Exception) {
-    false // Unknown version, presumably compatible.
-  }
-}
