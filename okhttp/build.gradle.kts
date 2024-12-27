@@ -212,7 +212,9 @@ tasks.named<Jar>("jvmJar").configure {
     )
   }
 
-  bundleExtension.buildAction().execute(this)
+  doLast {
+    bundleExtension.buildAction().execute(this)
+  }
 }
 
 val checkstyleConfig: Configuration by configurations.named("checkstyleConfig")
