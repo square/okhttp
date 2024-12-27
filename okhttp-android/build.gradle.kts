@@ -64,6 +64,8 @@ dependencies {
   testImplementation(libs.robolectric)
   testImplementation(libs.androidx.espresso.core)
   testImplementation(libs.squareup.okio.fakefilesystem)
+  testImplementation(projects.okhttpTestingSupport)
+  testImplementation(rootProject.libs.conscrypt.openjdk)
 
   androidTestImplementation(projects.okhttpTls)
   androidTestImplementation(libs.assertk)
