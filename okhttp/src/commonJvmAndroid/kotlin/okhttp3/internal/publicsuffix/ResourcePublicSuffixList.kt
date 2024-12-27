@@ -15,16 +15,21 @@
  */
 package okhttp3.internal.publicsuffix
 
-import okio.ByteString
+import okio.FileSystem
+import okio.GzipSource
+import okio.Path
+import okio.Path.Companion.toPath
+import okio.Source
 
-/**
- * Basic I/O for the PublicSuffixDatabase.gz.
- */
-internal interface PublicSuffixList {
-  fun ensureLoaded()
+internal class ResourcePublicSuffixList(
+  override val path: Path = PUBLIC_SUFFIX_RESOURCE,
+  val fileSystem: FileSystem = FileSystem.Companion.RESOURCES,
+) : BasePublicSuffixList() {
+  override fun listSource(): Source = GzipSource(fileSystem.source(path))
 
-  val bytes: ByteString
-  val exceptionBytes: ByteString
+  companion object {
+    @JvmField
+    val PUBLIC_SUFFIX_RESOURCE =
+      "okhttp3/internal/publicsuffix/${PublicSuffixDatabase::class.java.simpleName}.gz".toPath()
+  }
 }
-
-internal expect val Default: PublicSuffixList

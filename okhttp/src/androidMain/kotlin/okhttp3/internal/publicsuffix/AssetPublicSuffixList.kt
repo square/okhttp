@@ -15,16 +15,22 @@
  */
 package okhttp3.internal.publicsuffix
 
-import okio.ByteString
+import java.io.IOException
+import okhttp3.internal.platform.PlatformRegistry
+import okio.Source
+import okio.source
 
-/**
- * Basic I/O for the PublicSuffixDatabase.gz.
- */
-internal interface PublicSuffixList {
-  fun ensureLoaded()
+internal class AssetPublicSuffixList(
+  override val path: String = PUBLIC_SUFFIX_RESOURCE,
+) : BasePublicSuffixList() {
+  override fun listSource(): Source {
+    val assets =
+      PlatformRegistry.applicationContext?.assets ?: throw IOException("Platform applicationContext not initialized")
 
-  val bytes: ByteString
-  val exceptionBytes: ByteString
+    return assets.open(path).source()
+  }
+
+  companion object {
+    val PUBLIC_SUFFIX_RESOURCE = "/PublicSuffixDatabase.list"
+  }
 }
-
-internal expect val Default: PublicSuffixList

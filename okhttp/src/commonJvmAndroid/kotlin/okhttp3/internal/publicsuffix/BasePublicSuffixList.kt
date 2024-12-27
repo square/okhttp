@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2024 Block, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package okhttp3.internal.publicsuffix
 
 import java.io.IOException
@@ -6,16 +21,10 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.internal.platform.Platform
 import okio.ByteString
-import okio.FileSystem
-import okio.GzipSource
-import okio.Path
-import okio.Path.Companion.toPath
+import okio.Source
 import okio.buffer
 
-internal class ResourcePublicSuffixList(
-  val path: Path = PUBLIC_SUFFIX_RESOURCE,
-  val fileSystem: FileSystem = FileSystem.RESOURCES,
-) : PublicSuffixList {
+internal abstract class BasePublicSuffixList : PublicSuffixList {
   /** True after we've attempted to read the list for the first time. */
   private val listRead = AtomicBoolean(false)
 
@@ -35,7 +44,7 @@ internal class ResourcePublicSuffixList(
     var publicSuffixExceptionListBytes: ByteString?
 
     try {
-      GzipSource(fileSystem.source(path)).buffer().use { bufferedSource ->
+      listSource().buffer().use { bufferedSource ->
         val totalBytes = bufferedSource.readInt()
         publicSuffixListBytes = bufferedSource.readByteString(totalBytes.toLong())
 
@@ -52,6 +61,8 @@ internal class ResourcePublicSuffixList(
     }
   }
 
+  abstract fun listSource(): Source
+
   override fun ensureLoaded() {
     if (!listRead.get() && listRead.compareAndSet(false, true)) {
       readTheListUninterruptibly()
@@ -65,9 +76,11 @@ internal class ResourcePublicSuffixList(
 
     check(::bytes.isInitialized) {
       // May have failed with an IOException
-      "Unable to load $PUBLIC_SUFFIX_RESOURCE resource from the classpath."
+      "Unable to load $path resource in ${this.javaClass.simpleName}."
     }
   }
+
+  abstract val path: Any
 
   /**
    * Reads the public suffix list treating the operation as uninterruptible. We always want to read
@@ -85,7 +98,7 @@ internal class ResourcePublicSuffixList(
           Thread.interrupted() // Temporarily clear the interrupted state.
           interrupted = true
         } catch (e: IOException) {
-          Platform.get().log("Failed to read public suffix list", Platform.WARN, e)
+          Platform.Companion.get().log("Failed to read public suffix list", Platform.Companion.WARN, e)
           return
         }
       }
@@ -94,22 +107,5 @@ internal class ResourcePublicSuffixList(
         Thread.currentThread().interrupt() // Retain interrupted status.
       }
     }
-  }
-
-  /** Visible for testing. */
-  fun setListBytes(
-    publicSuffixListBytes: ByteString,
-    publicSuffixExceptionListBytes: ByteString,
-  ) {
-    this.bytes = publicSuffixListBytes
-    this.exceptionBytes = publicSuffixExceptionListBytes
-    listRead.set(true)
-    readCompleteLatch.countDown()
-  }
-
-  companion object {
-    @JvmField
-    val PUBLIC_SUFFIX_RESOURCE =
-      "okhttp3/internal/publicsuffix/${PublicSuffixDatabase::class.java.simpleName}.gz".toPath()
   }
 }

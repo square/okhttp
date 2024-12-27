@@ -16,6 +16,7 @@
 package okhttp3.internal.platform
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Build
 import android.security.NetworkSecurityPolicy
 import android.util.CloseGuard
@@ -34,7 +35,9 @@ import okhttp3.internal.tls.CertificateChainCleaner
 
 /** Android 10+ (API 29+). */
 @SuppressSignatureCheck
-class Android10Platform : Platform() {
+class Android10Platform : Platform(), ContextAwarePlatform {
+  override var applicationContext: Context? = null
+
   private val socketAdapters =
     listOfNotNull(
       Android10SocketAdapter.buildIfSupported(),

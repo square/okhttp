@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.publicsuffix
+package okhttp3.test
 
-import okio.ByteString
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import okhttp3.internal.platform.PlatformRegistry
+import org.junit.Before
+import org.junit.runner.RunWith
 
-/**
- * Basic I/O for the PublicSuffixDatabase.gz.
- */
-internal interface PublicSuffixList {
-  fun ensureLoaded()
-
-  val bytes: ByteString
-  val exceptionBytes: ByteString
+@RunWith(AndroidJUnit4::class)
+actual open class BaseJavaTest actual constructor() {
+  @Before
+  fun init() {
+    PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext<Context>()
+  }
 }
-
-internal expect val Default: PublicSuffixList

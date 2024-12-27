@@ -15,16 +15,4 @@
  */
 package okhttp3.internal.publicsuffix
 
-import okio.ByteString
-
-/**
- * Basic I/O for the PublicSuffixDatabase.gz.
- */
-internal interface PublicSuffixList {
-  fun ensureLoaded()
-
-  val bytes: ByteString
-  val exceptionBytes: ByteString
-}
-
-internal expect val Default: PublicSuffixList
+internal actual val Default: PublicSuffixList = AssetPublicSuffixList()

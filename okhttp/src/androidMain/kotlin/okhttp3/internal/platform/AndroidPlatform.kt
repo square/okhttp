@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.platform
 
+import android.content.Context
 import android.os.Build
 import android.security.NetworkSecurityPolicy
 import android.util.Log
@@ -42,7 +43,9 @@ import okhttp3.internal.tls.TrustRootIndex
 
 /** Android 5 to 9 (API 21 to 28). */
 @SuppressSignatureCheck
-class AndroidPlatform : Platform() {
+class AndroidPlatform : Platform(), ContextAwarePlatform {
+  override var applicationContext: Context? = null
+
   private val socketAdapters =
     listOfNotNull(
       StandardAndroidSocketAdapter.buildIfSupported(),

@@ -18,13 +18,13 @@ package okhttp3.internal.publicsuffix
 import okio.ByteString
 
 /**
- * Basic I/O for the PublicSuffixDatabase.gz.
+ * An implementation of I/O for PublicSuffixDatabase.gz by directly passing in ByteStrings.
  */
-internal interface PublicSuffixList {
-  fun ensureLoaded()
+internal class ConfiguredPublicSuffixList : PublicSuffixList {
+  override fun ensureLoaded() {
+  }
 
-  val bytes: ByteString
-  val exceptionBytes: ByteString
+  override var bytes: ByteString = ByteString.EMPTY
+
+  override var exceptionBytes: ByteString = ByteString.EMPTY
 }
-
-internal expect val Default: PublicSuffixList

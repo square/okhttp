@@ -26,7 +26,7 @@ import okio.ByteString.Companion.encodeUtf8
  * [publicsuffix_org]: https://publicsuffix.org/
  */
 class PublicSuffixDatabase internal constructor(
-  private val publicSuffixList: PublicSuffixList,
+  private val publicSuffixList: PublicSuffixList = Default,
 ) {
   /**
    * Returns the effective top-level domain plus one (eTLD+1) by referencing the public suffix list.
@@ -153,7 +153,7 @@ class PublicSuffixDatabase internal constructor(
 
     private const val EXCEPTION_MARKER = '!'
 
-    private val instance = PublicSuffixDatabase(EmbeddedPublicSuffixList)
+    private val instance = PublicSuffixDatabase(Default)
 
     fun get(): PublicSuffixDatabase {
       return instance
