@@ -73,7 +73,10 @@ dependencies {
   androidTestImplementation(libs.androidx.test.runner)
 }
 
-mavenPublishing {
-  // AGP 7.2 embeds Dokka 4, which breaks publishing. Android modules are hardcoded to generate Javadoc instead of Gfm.
-  configure(com.vanniktech.maven.publish.AndroidSingleVariantLibrary(publishJavadocJar=false))
-}
+// TODO remove this whole module after merging with okhttp
+// Conflicts with KMP :okhttp outputs
+
+//mavenPublishing {
+//  // AGP 7.2 embeds Dokka 4, which breaks publishing. Android modules are hardcoded to generate Javadoc instead of Gfm.
+//  configure(com.vanniktech.maven.publish.AndroidSingleVariantLibrary(publishJavadocJar=false))
+//}

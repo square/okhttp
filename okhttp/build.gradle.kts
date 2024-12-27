@@ -248,5 +248,5 @@ configure<CheckstyleExtension> {
 apply(plugin = "io.github.usefulness.maven-sympathy")
 
 mavenPublishing {
-  configure(KotlinMultiplatform(javadocJar = JavadocJar.Empty()))
+  configure(KotlinMultiplatform(javadocJar = JavadocJar.Empty(), androidVariantsToPublish = listOf("release")))
 }
