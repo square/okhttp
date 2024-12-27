@@ -40,7 +40,7 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(
-  sdk = [30],
+  sdk = [21, 26, 30, 33, 35],
 )
 class RobolectricOkHttpClientTest {
   private lateinit var context: Context
