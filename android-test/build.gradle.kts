@@ -86,6 +86,7 @@ dependencies {
   androidTestImplementation(libs.bouncycastle.bctls)
   androidTestImplementation(libs.conscrypt.android)
   androidTestImplementation(projects.mockwebserver3Junit4)
+  androidTestImplementation(projects.mockwebserver3Junit5)
   androidTestImplementation(projects.okhttpBrotli)
   androidTestImplementation(projects.okhttpDnsoverhttps)
   androidTestImplementation(projects.loggingInterceptor)
