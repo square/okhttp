@@ -25,6 +25,8 @@ internal interface PublicSuffixList {
 
   val bytes: ByteString
   val exceptionBytes: ByteString
+
+  companion object
 }
 
-internal expect val Default: PublicSuffixList
+internal expect val PublicSuffixList.Companion.Default: PublicSuffixList

@@ -15,4 +15,5 @@
  */
 package okhttp3.internal.publicsuffix
 
-internal actual val Default: PublicSuffixList = AssetPublicSuffixList()
+internal actual val PublicSuffixList.Companion.Default: PublicSuffixList
+  get() = AssetPublicSuffixList()

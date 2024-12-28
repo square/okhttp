@@ -34,7 +34,7 @@ import okio.use
 import org.junit.Test
 
 class PublicSuffixDatabaseTest : BaseJavaTest() {
-  private val publicSuffixDatabase = PublicSuffixDatabase()
+  private val publicSuffixDatabase = PublicSuffixDatabase.get()
 
   val pathForTests = okHttpRoot / "okhttp/src/jvmMain/resources" / PUBLIC_SUFFIX_RESOURCE
 

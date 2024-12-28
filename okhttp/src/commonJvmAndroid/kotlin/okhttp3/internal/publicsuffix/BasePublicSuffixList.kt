@@ -76,7 +76,7 @@ internal abstract class BasePublicSuffixList : PublicSuffixList {
 
     check(::bytes.isInitialized) {
       // May have failed with an IOException
-      "Unable to load $path resource in ${this.javaClass.simpleName}."
+      "Unable to load $path resource."
     }
   }
 
@@ -98,7 +98,7 @@ internal abstract class BasePublicSuffixList : PublicSuffixList {
           Thread.interrupted() // Temporarily clear the interrupted state.
           interrupted = true
         } catch (e: IOException) {
-          Platform.Companion.get().log("Failed to read public suffix list", Platform.Companion.WARN, e)
+          Platform.get().log("Failed to read public suffix list", Platform.Companion.WARN, e)
           return
         }
       }
