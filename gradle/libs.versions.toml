@@ -8,8 +8,9 @@ de-mannodermaus-junit5 = "1.6.0"
 graalvm = "24.1.1"
 kotlinx-serialization = "1.7.3"
 ksp = "2.1.0-1.0.29"
+lintGradle = "1.0.0-alpha03"
 mockserverClient = "5.15.0"
-org-bouncycastle = "1.76"
+org-bouncycastle = "1.79"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.9.0"
 org-jetbrains-kotlin = "2.1.0"
@@ -23,6 +24,7 @@ androidx-activity = "androidx.activity:activity-ktx:1.9.3"
 androidx-annotation = "androidx.annotation:annotation:1.9.1"
 androidx-espresso-core = "androidx.test.espresso:espresso-core:3.6.1"
 androidx-junit = "androidx.test.ext:junit:1.2.1"
+androidx-lint-gradle = { module = "androidx.lint:lint-gradle", version.ref = "lintGradle" }
 androidx-test-runner = "androidx.test:runner:1.6.2"
 animalsniffer-annotations = "org.codehaus.mojo:animal-sniffer-annotations:1.24"
 aqute-resolve = { module = "biz.aQute.bnd:biz.aQute.resolve", version.ref = "biz-aQute-bnd" }
@@ -45,7 +47,7 @@ gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.11
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.7.2"
 gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.17.0"
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
-gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.9.20"
+gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:2.0.0"
 gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:4.1.0"
 gradlePlugin-graalvmBuildTools = "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin:0.10.4"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
@@ -76,7 +78,6 @@ kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "
 kotlin-stdlib-osgi = { module = "org.jetbrains.kotlin:kotlin-osgi-bundle", version.ref = "org-jetbrains-kotlin" }
 kotlin-test-annotations = { module = "org.jetbrains.kotlin:kotlin-test-annotations-common", version.ref = "org-jetbrains-kotlin" }
 kotlin-test-common = { module = "org.jetbrains.kotlin:kotlin-test-common", version.ref = "org-jetbrains-kotlin" }
-kotlin-test-js = { module = "org.jetbrains.kotlin:kotlin-test-js", version.ref = "org-jetbrains-kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "org-jetbrains-kotlin" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "org-jetbrains-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "org-jetbrains-coroutines" }
@@ -96,7 +97,7 @@ squareup-moshi = { module = "com.squareup.moshi:moshi", version.ref = "com-squar
 squareup-moshi-compiler = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "com-squareup-moshi" }
 squareup-moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "com-squareup-moshi" }
 squareup-okhttp-icu = "com.squareup.okhttpicu:okhttp-icu:0.2.0"
-squareup-kotlinPoet = "com.squareup:kotlinpoet:1.18.1"
+squareup-kotlinPoet = "com.squareup:kotlinpoet:2.0.0"
 squareup-okio = { module = "com.squareup.okio:okio", version.ref = "com-squareup-okio" }
 squareup-okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "com-squareup-okio" }
 squareup-okio-nodefilesystem = { module = "com.squareup.okio:okio-nodefilesystem", version.ref = "com-squareup-okio" }

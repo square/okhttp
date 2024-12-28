@@ -1,0 +1,1294 @@
+public final class okhttp3/Address {
+	public final fun -deprecated_certificatePinner ()Lokhttp3/CertificatePinner;
+	public final fun -deprecated_connectionSpecs ()Ljava/util/List;
+	public final fun -deprecated_dns ()Lokhttp3/Dns;
+	public final fun -deprecated_hostnameVerifier ()Ljavax/net/ssl/HostnameVerifier;
+	public final fun -deprecated_protocols ()Ljava/util/List;
+	public final fun -deprecated_proxy ()Ljava/net/Proxy;
+	public final fun -deprecated_proxyAuthenticator ()Lokhttp3/Authenticator;
+	public final fun -deprecated_proxySelector ()Ljava/net/ProxySelector;
+	public final fun -deprecated_socketFactory ()Ljavax/net/SocketFactory;
+	public final fun -deprecated_sslSocketFactory ()Ljavax/net/ssl/SSLSocketFactory;
+	public final fun -deprecated_url ()Lokhttp3/HttpUrl;
+	public fun <init> (Ljava/lang/String;ILokhttp3/Dns;Ljavax/net/SocketFactory;Ljavax/net/ssl/SSLSocketFactory;Ljavax/net/ssl/HostnameVerifier;Lokhttp3/CertificatePinner;Lokhttp3/Authenticator;Ljava/net/Proxy;Ljava/util/List;Ljava/util/List;Ljava/net/ProxySelector;)V
+	public final fun certificatePinner ()Lokhttp3/CertificatePinner;
+	public final fun connectionSpecs ()Ljava/util/List;
+	public final fun dns ()Lokhttp3/Dns;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun hostnameVerifier ()Ljavax/net/ssl/HostnameVerifier;
+	public final fun protocols ()Ljava/util/List;
+	public final fun proxy ()Ljava/net/Proxy;
+	public final fun proxyAuthenticator ()Lokhttp3/Authenticator;
+	public final fun proxySelector ()Ljava/net/ProxySelector;
+	public final fun socketFactory ()Ljavax/net/SocketFactory;
+	public final fun sslSocketFactory ()Ljavax/net/ssl/SSLSocketFactory;
+	public fun toString ()Ljava/lang/String;
+	public final fun url ()Lokhttp3/HttpUrl;
+}
+
+public abstract interface class okhttp3/AsyncDns {
+	public static final field Companion Lokhttp3/AsyncDns$Companion;
+	public static final field TYPE_A I
+	public static final field TYPE_AAAA I
+	public abstract fun query (Ljava/lang/String;Lokhttp3/AsyncDns$Callback;)V
+}
+
+public abstract interface class okhttp3/AsyncDns$Callback {
+	public abstract fun onFailure (Ljava/lang/String;Ljava/io/IOException;)V
+	public abstract fun onResponse (Ljava/lang/String;Ljava/util/List;)V
+}
+
+public final class okhttp3/AsyncDns$Companion {
+	public static final field TYPE_A I
+	public static final field TYPE_AAAA I
+	public final fun toDns ([Lokhttp3/AsyncDns;)Lokhttp3/Dns;
+}
+
+public final class okhttp3/AsyncDns$DnsClass : java/lang/Enum {
+	public static final field IPV4 Lokhttp3/AsyncDns$DnsClass;
+	public static final field IPV6 Lokhttp3/AsyncDns$DnsClass;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getType ()I
+	public static fun valueOf (Ljava/lang/String;)Lokhttp3/AsyncDns$DnsClass;
+	public static fun values ()[Lokhttp3/AsyncDns$DnsClass;
+}
+
+public abstract interface class okhttp3/Authenticator {
+	public static final field Companion Lokhttp3/Authenticator$Companion;
+	public static final field JAVA_NET_AUTHENTICATOR Lokhttp3/Authenticator;
+	public static final field NONE Lokhttp3/Authenticator;
+	public abstract fun authenticate (Lokhttp3/Route;Lokhttp3/Response;)Lokhttp3/Request;
+}
+
+public final class okhttp3/Authenticator$Companion {
+}
+
+public final class okhttp3/Cache : java/io/Closeable, java/io/Flushable {
+	public static final field Companion Lokhttp3/Cache$Companion;
+	public final fun -deprecated_directory ()Ljava/io/File;
+	public fun <init> (Ljava/io/File;J)V
+	public fun <init> (Lokio/FileSystem;Lokio/Path;J)V
+	public fun close ()V
+	public final fun delete ()V
+	public final fun directory ()Ljava/io/File;
+	public final fun directoryPath ()Lokio/Path;
+	public final fun evictAll ()V
+	public fun flush ()V
+	public final fun hitCount ()I
+	public final fun initialize ()V
+	public final fun isClosed ()Z
+	public static final fun key (Lokhttp3/HttpUrl;)Ljava/lang/String;
+	public final fun maxSize ()J
+	public final fun networkCount ()I
+	public final fun requestCount ()I
+	public final fun size ()J
+	public final fun urls ()Ljava/util/Iterator;
+	public final fun writeAbortCount ()I
+	public final fun writeSuccessCount ()I
+}
+
+public final class okhttp3/Cache$Companion {
+	public final fun hasVaryAll (Lokhttp3/Response;)Z
+	public final fun key (Lokhttp3/HttpUrl;)Ljava/lang/String;
+	public final fun varyHeaders (Lokhttp3/Response;)Lokhttp3/Headers;
+	public final fun varyMatches (Lokhttp3/Response;Lokhttp3/Headers;Lokhttp3/Request;)Z
+}
+
+public final class okhttp3/CacheControl {
+	public static final field Companion Lokhttp3/CacheControl$Companion;
+	public static final field FORCE_CACHE Lokhttp3/CacheControl;
+	public static final field FORCE_NETWORK Lokhttp3/CacheControl;
+	public final fun -deprecated_immutable ()Z
+	public final fun -deprecated_maxAgeSeconds ()I
+	public final fun -deprecated_maxStaleSeconds ()I
+	public final fun -deprecated_minFreshSeconds ()I
+	public final fun -deprecated_mustRevalidate ()Z
+	public final fun -deprecated_noCache ()Z
+	public final fun -deprecated_noStore ()Z
+	public final fun -deprecated_noTransform ()Z
+	public final fun -deprecated_onlyIfCached ()Z
+	public final fun -deprecated_sMaxAgeSeconds ()I
+	public final fun immutable ()Z
+	public final fun isPrivate ()Z
+	public final fun isPublic ()Z
+	public final fun maxAgeSeconds ()I
+	public final fun maxStaleSeconds ()I
+	public final fun minFreshSeconds ()I
+	public final fun mustRevalidate ()Z
+	public final fun noCache ()Z
+	public final fun noStore ()Z
+	public final fun noTransform ()Z
+	public final fun onlyIfCached ()Z
+	public static final fun parse (Lokhttp3/Headers;)Lokhttp3/CacheControl;
+	public final fun sMaxAgeSeconds ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class okhttp3/CacheControl$Builder {
+	public fun <init> ()V
+	public final fun build ()Lokhttp3/CacheControl;
+	public final fun immutable ()Lokhttp3/CacheControl$Builder;
+	public final fun maxAge (ILjava/util/concurrent/TimeUnit;)Lokhttp3/CacheControl$Builder;
+	public final fun maxAge-LRDsOJo (J)Lokhttp3/CacheControl$Builder;
+	public final fun maxStale (ILjava/util/concurrent/TimeUnit;)Lokhttp3/CacheControl$Builder;
+	public final fun maxStale-LRDsOJo (J)Lokhttp3/CacheControl$Builder;
+	public final fun minFresh (ILjava/util/concurrent/TimeUnit;)Lokhttp3/CacheControl$Builder;
+	public final fun minFresh-LRDsOJo (J)Lokhttp3/CacheControl$Builder;
+	public final fun noCache ()Lokhttp3/CacheControl$Builder;
+	public final fun noStore ()Lokhttp3/CacheControl$Builder;
+	public final fun noTransform ()Lokhttp3/CacheControl$Builder;
+	public final fun onlyIfCached ()Lokhttp3/CacheControl$Builder;
+}
+
+public final class okhttp3/CacheControl$Companion {
+	public final fun parse (Lokhttp3/Headers;)Lokhttp3/CacheControl;
+}
+
+public abstract interface class okhttp3/Call : java/lang/Cloneable {
+	public abstract fun cancel ()V
+	public abstract fun clone ()Lokhttp3/Call;
+	public abstract fun enqueue (Lokhttp3/Callback;)V
+	public abstract fun execute ()Lokhttp3/Response;
+	public abstract fun isCanceled ()Z
+	public abstract fun isExecuted ()Z
+	public abstract fun request ()Lokhttp3/Request;
+	public abstract fun timeout ()Lokio/Timeout;
+}
+
+public abstract interface class okhttp3/Call$Factory {
+	public abstract fun newCall (Lokhttp3/Request;)Lokhttp3/Call;
+}
+
+public abstract interface class okhttp3/Callback {
+	public abstract fun onFailure (Lokhttp3/Call;Ljava/io/IOException;)V
+	public abstract fun onResponse (Lokhttp3/Call;Lokhttp3/Response;)V
+}
+
+public final class okhttp3/CertificatePinner {
+	public static final field Companion Lokhttp3/CertificatePinner$Companion;
+	public static final field DEFAULT Lokhttp3/CertificatePinner;
+	public final fun check (Ljava/lang/String;Ljava/util/List;)V
+	public final fun check (Ljava/lang/String;[Ljava/security/cert/Certificate;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun findMatchingPins (Ljava/lang/String;)Ljava/util/List;
+	public final fun getPins ()Ljava/util/Set;
+	public fun hashCode ()I
+	public static final fun pin (Ljava/security/cert/Certificate;)Ljava/lang/String;
+	public static final fun sha1Hash (Ljava/security/cert/X509Certificate;)Lokio/ByteString;
+	public static final fun sha256Hash (Ljava/security/cert/X509Certificate;)Lokio/ByteString;
+}
+
+public final class okhttp3/CertificatePinner$Builder {
+	public fun <init> ()V
+	public final fun add (Ljava/lang/String;[Ljava/lang/String;)Lokhttp3/CertificatePinner$Builder;
+	public final fun build ()Lokhttp3/CertificatePinner;
+	public final fun getPins ()Ljava/util/List;
+}
+
+public final class okhttp3/CertificatePinner$Companion {
+	public final fun pin (Ljava/security/cert/Certificate;)Ljava/lang/String;
+	public final fun sha1Hash (Ljava/security/cert/X509Certificate;)Lokio/ByteString;
+	public final fun sha256Hash (Ljava/security/cert/X509Certificate;)Lokio/ByteString;
+}
+
+public final class okhttp3/CertificatePinner$Pin {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHash ()Lokio/ByteString;
+	public final fun getHashAlgorithm ()Ljava/lang/String;
+	public final fun getPattern ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun matchesCertificate (Ljava/security/cert/X509Certificate;)Z
+	public final fun matchesHostname (Ljava/lang/String;)Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class okhttp3/Challenge {
+	public final fun -deprecated_authParams ()Ljava/util/Map;
+	public final fun -deprecated_charset ()Ljava/nio/charset/Charset;
+	public final fun -deprecated_realm ()Ljava/lang/String;
+	public final fun -deprecated_scheme ()Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/util/Map;)V
+	public final fun authParams ()Ljava/util/Map;
+	public final fun charset ()Ljava/nio/charset/Charset;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun realm ()Ljava/lang/String;
+	public final fun scheme ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+	public final fun withCharset (Ljava/nio/charset/Charset;)Lokhttp3/Challenge;
+}
+
+public final class okhttp3/CipherSuite {
+	public static final field Companion Lokhttp3/CipherSuite$Companion;
+	public static final field TLS_AES_128_CCM_8_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_AES_128_CCM_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_AES_128_GCM_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_AES_256_GCM_SHA384 Lokhttp3/CipherSuite;
+	public static final field TLS_CHACHA20_POLY1305_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_DSS_WITH_AES_128_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_DSS_WITH_AES_128_CBC_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_DSS_WITH_AES_128_GCM_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_DSS_WITH_AES_256_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_DSS_WITH_AES_256_CBC_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_DSS_WITH_AES_256_GCM_SHA384 Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_DSS_WITH_DES_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_RSA_WITH_AES_128_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_RSA_WITH_AES_128_CBC_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_RSA_WITH_AES_128_GCM_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_RSA_WITH_AES_256_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_RSA_WITH_AES_256_CBC_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_RSA_WITH_AES_256_GCM_SHA384 Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_DHE_RSA_WITH_DES_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DH_anon_EXPORT_WITH_RC4_40_MD5 Lokhttp3/CipherSuite;
+	public static final field TLS_DH_anon_WITH_3DES_EDE_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DH_anon_WITH_AES_128_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DH_anon_WITH_AES_128_CBC_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_DH_anon_WITH_AES_128_GCM_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_DH_anon_WITH_AES_256_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DH_anon_WITH_AES_256_CBC_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_DH_anon_WITH_AES_256_GCM_SHA384 Lokhttp3/CipherSuite;
+	public static final field TLS_DH_anon_WITH_DES_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_DH_anon_WITH_RC4_128_MD5 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_ECDSA_WITH_NULL_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_ECDSA_WITH_RC4_128_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_RSA_WITH_NULL_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDHE_RSA_WITH_RC4_128_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_ECDSA_WITH_NULL_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_ECDSA_WITH_RC4_128_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_RSA_WITH_AES_128_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_RSA_WITH_AES_256_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384 Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_RSA_WITH_NULL_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_RSA_WITH_RC4_128_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_anon_WITH_AES_128_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_anon_WITH_AES_256_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_anon_WITH_NULL_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_ECDH_anon_WITH_RC4_128_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_EMPTY_RENEGOTIATION_INFO_SCSV Lokhttp3/CipherSuite;
+	public static final field TLS_FALLBACK_SCSV Lokhttp3/CipherSuite;
+	public static final field TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5 Lokhttp3/CipherSuite;
+	public static final field TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_KRB5_EXPORT_WITH_RC4_40_MD5 Lokhttp3/CipherSuite;
+	public static final field TLS_KRB5_EXPORT_WITH_RC4_40_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_KRB5_WITH_3DES_EDE_CBC_MD5 Lokhttp3/CipherSuite;
+	public static final field TLS_KRB5_WITH_3DES_EDE_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_KRB5_WITH_DES_CBC_MD5 Lokhttp3/CipherSuite;
+	public static final field TLS_KRB5_WITH_DES_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_KRB5_WITH_RC4_128_MD5 Lokhttp3/CipherSuite;
+	public static final field TLS_KRB5_WITH_RC4_128_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_PSK_WITH_3DES_EDE_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_PSK_WITH_AES_128_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_PSK_WITH_AES_256_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_PSK_WITH_RC4_128_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_EXPORT_WITH_DES40_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_EXPORT_WITH_RC4_40_MD5 Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_3DES_EDE_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_AES_128_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_AES_128_CBC_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_AES_128_GCM_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_AES_256_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_AES_256_CBC_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_AES_256_GCM_SHA384 Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_CAMELLIA_128_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_CAMELLIA_256_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_DES_CBC_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_NULL_MD5 Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_NULL_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_NULL_SHA256 Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_RC4_128_MD5 Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_RC4_128_SHA Lokhttp3/CipherSuite;
+	public static final field TLS_RSA_WITH_SEED_CBC_SHA Lokhttp3/CipherSuite;
+	public final fun -deprecated_javaName ()Ljava/lang/String;
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun forJavaName (Ljava/lang/String;)Lokhttp3/CipherSuite;
+	public final fun javaName ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class okhttp3/CipherSuite$Companion {
+	public final fun forJavaName (Ljava/lang/String;)Lokhttp3/CipherSuite;
+}
+
+public abstract interface class okhttp3/Connection {
+	public abstract fun handshake ()Lokhttp3/Handshake;
+	public abstract fun protocol ()Lokhttp3/Protocol;
+	public abstract fun route ()Lokhttp3/Route;
+	public abstract fun socket ()Ljava/net/Socket;
+}
+
+public abstract class okhttp3/ConnectionListener {
+	public static final field Companion Lokhttp3/ConnectionListener$Companion;
+	public fun <init> ()V
+	public fun connectEnd (Lokhttp3/Connection;Lokhttp3/Route;Lokhttp3/Call;)V
+	public fun connectFailed (Lokhttp3/Route;Lokhttp3/Call;Ljava/io/IOException;)V
+	public fun connectStart (Lokhttp3/Route;Lokhttp3/Call;)V
+	public fun connectionAcquired (Lokhttp3/Connection;Lokhttp3/Call;)V
+	public fun connectionClosed (Lokhttp3/Connection;)V
+	public fun connectionReleased (Lokhttp3/Connection;Lokhttp3/Call;)V
+	public fun noNewExchanges (Lokhttp3/Connection;)V
+}
+
+public final class okhttp3/ConnectionListener$Companion {
+	public final fun getNONE ()Lokhttp3/ConnectionListener;
+}
+
+public final class okhttp3/ConnectionPool {
+	public fun <init> ()V
+	public fun <init> (IJLjava/util/concurrent/TimeUnit;)V
+	public fun <init> (IJLjava/util/concurrent/TimeUnit;Lokhttp3/ConnectionListener;)V
+	public synthetic fun <init> (IJLjava/util/concurrent/TimeUnit;Lokhttp3/ConnectionListener;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun connectionCount ()I
+	public final fun evictAll ()V
+	public final fun idleConnectionCount ()I
+	public final fun setPolicy (Lokhttp3/Address;Lokhttp3/ConnectionPool$AddressPolicy;)V
+}
+
+public final class okhttp3/ConnectionPool$AddressPolicy {
+	public final field backoffDelayMillis J
+	public final field backoffJitterMillis I
+	public final field minimumConcurrentCalls I
+	public fun <init> ()V
+	public fun <init> (IJI)V
+	public synthetic fun <init> (IJIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class okhttp3/ConnectionSpec {
+	public static final field CLEARTEXT Lokhttp3/ConnectionSpec;
+	public static final field COMPATIBLE_TLS Lokhttp3/ConnectionSpec;
+	public static final field Companion Lokhttp3/ConnectionSpec$Companion;
+	public static final field MODERN_TLS Lokhttp3/ConnectionSpec;
+	public static final field RESTRICTED_TLS Lokhttp3/ConnectionSpec;
+	public final fun -deprecated_cipherSuites ()Ljava/util/List;
+	public final fun -deprecated_supportsTlsExtensions ()Z
+	public final fun -deprecated_tlsVersions ()Ljava/util/List;
+	public final fun cipherSuites ()Ljava/util/List;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun isCompatible (Ljavax/net/ssl/SSLSocket;)Z
+	public final fun isTls ()Z
+	public final fun supportsTlsExtensions ()Z
+	public final fun tlsVersions ()Ljava/util/List;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class okhttp3/ConnectionSpec$Builder {
+	public fun <init> (Lokhttp3/ConnectionSpec;)V
+	public final fun allEnabledCipherSuites ()Lokhttp3/ConnectionSpec$Builder;
+	public final fun allEnabledTlsVersions ()Lokhttp3/ConnectionSpec$Builder;
+	public final fun build ()Lokhttp3/ConnectionSpec;
+	public final fun cipherSuites ([Ljava/lang/String;)Lokhttp3/ConnectionSpec$Builder;
+	public final fun cipherSuites ([Lokhttp3/CipherSuite;)Lokhttp3/ConnectionSpec$Builder;
+	public final fun supportsTlsExtensions (Z)Lokhttp3/ConnectionSpec$Builder;
+	public final fun tlsVersions ([Ljava/lang/String;)Lokhttp3/ConnectionSpec$Builder;
+	public final fun tlsVersions ([Lokhttp3/TlsVersion;)Lokhttp3/ConnectionSpec$Builder;
+}
+
+public final class okhttp3/ConnectionSpec$Companion {
+}
+
+public final class okhttp3/Cookie {
+	public static final field Companion Lokhttp3/Cookie$Companion;
+	public final fun -deprecated_domain ()Ljava/lang/String;
+	public final fun -deprecated_expiresAt ()J
+	public final fun -deprecated_hostOnly ()Z
+	public final fun -deprecated_httpOnly ()Z
+	public final fun -deprecated_name ()Ljava/lang/String;
+	public final fun -deprecated_path ()Ljava/lang/String;
+	public final fun -deprecated_persistent ()Z
+	public final fun -deprecated_secure ()Z
+	public final fun -deprecated_value ()Ljava/lang/String;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;ZZZZLjava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun domain ()Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun expiresAt ()J
+	public fun hashCode ()I
+	public final fun hostOnly ()Z
+	public final fun httpOnly ()Z
+	public final fun matches (Lokhttp3/HttpUrl;)Z
+	public final fun name ()Ljava/lang/String;
+	public final fun newBuilder ()Lokhttp3/Cookie$Builder;
+	public static final fun parse (Lokhttp3/HttpUrl;Ljava/lang/String;)Lokhttp3/Cookie;
+	public static final fun parseAll (Lokhttp3/HttpUrl;Lokhttp3/Headers;)Ljava/util/List;
+	public final fun path ()Ljava/lang/String;
+	public final fun persistent ()Z
+	public final fun sameSite ()Ljava/lang/String;
+	public final fun secure ()Z
+	public fun toString ()Ljava/lang/String;
+	public final fun value ()Ljava/lang/String;
+}
+
+public final class okhttp3/Cookie$Builder {
+	public fun <init> ()V
+	public final fun build ()Lokhttp3/Cookie;
+	public final fun domain (Ljava/lang/String;)Lokhttp3/Cookie$Builder;
+	public final fun expiresAt (J)Lokhttp3/Cookie$Builder;
+	public final fun hostOnlyDomain (Ljava/lang/String;)Lokhttp3/Cookie$Builder;
+	public final fun httpOnly ()Lokhttp3/Cookie$Builder;
+	public final fun name (Ljava/lang/String;)Lokhttp3/Cookie$Builder;
+	public final fun path (Ljava/lang/String;)Lokhttp3/Cookie$Builder;
+	public final fun sameSite (Ljava/lang/String;)Lokhttp3/Cookie$Builder;
+	public final fun secure ()Lokhttp3/Cookie$Builder;
+	public final fun value (Ljava/lang/String;)Lokhttp3/Cookie$Builder;
+}
+
+public final class okhttp3/Cookie$Companion {
+	public final fun parse (Lokhttp3/HttpUrl;Ljava/lang/String;)Lokhttp3/Cookie;
+	public final fun parseAll (Lokhttp3/HttpUrl;Lokhttp3/Headers;)Ljava/util/List;
+}
+
+public abstract interface class okhttp3/CookieJar {
+	public static final field Companion Lokhttp3/CookieJar$Companion;
+	public static final field NO_COOKIES Lokhttp3/CookieJar;
+	public abstract fun loadForRequest (Lokhttp3/HttpUrl;)Ljava/util/List;
+	public abstract fun saveFromResponse (Lokhttp3/HttpUrl;Ljava/util/List;)V
+}
+
+public final class okhttp3/CookieJar$Companion {
+}
+
+public final class okhttp3/Credentials {
+	public static final field INSTANCE Lokhttp3/Credentials;
+	public static final fun basic (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static final fun basic (Ljava/lang/String;Ljava/lang/String;Ljava/nio/charset/Charset;)Ljava/lang/String;
+	public static synthetic fun basic$default (Ljava/lang/String;Ljava/lang/String;Ljava/nio/charset/Charset;ILjava/lang/Object;)Ljava/lang/String;
+}
+
+public final class okhttp3/Dispatcher {
+	public final fun -deprecated_executorService ()Ljava/util/concurrent/ExecutorService;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/concurrent/ExecutorService;)V
+	public final fun cancelAll ()V
+	public final fun executorService ()Ljava/util/concurrent/ExecutorService;
+	public final fun getIdleCallback ()Ljava/lang/Runnable;
+	public final fun getMaxRequests ()I
+	public final fun getMaxRequestsPerHost ()I
+	public final fun queuedCalls ()Ljava/util/List;
+	public final fun queuedCallsCount ()I
+	public final fun runningCalls ()Ljava/util/List;
+	public final fun runningCallsCount ()I
+	public final fun setIdleCallback (Ljava/lang/Runnable;)V
+	public final fun setMaxRequests (I)V
+	public final fun setMaxRequestsPerHost (I)V
+}
+
+public abstract interface class okhttp3/Dns {
+	public static final field Companion Lokhttp3/Dns$Companion;
+	public static final field SYSTEM Lokhttp3/Dns;
+	public abstract fun lookup (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final class okhttp3/Dns$Companion {
+}
+
+public abstract class okhttp3/EventListener {
+	public static final field Companion Lokhttp3/EventListener$Companion;
+	public static final field NONE Lokhttp3/EventListener;
+	public fun <init> ()V
+	public fun cacheConditionalHit (Lokhttp3/Call;Lokhttp3/Response;)V
+	public fun cacheHit (Lokhttp3/Call;Lokhttp3/Response;)V
+	public fun cacheMiss (Lokhttp3/Call;)V
+	public fun callEnd (Lokhttp3/Call;)V
+	public fun callFailed (Lokhttp3/Call;Ljava/io/IOException;)V
+	public fun callStart (Lokhttp3/Call;)V
+	public fun canceled (Lokhttp3/Call;)V
+	public fun connectEnd (Lokhttp3/Call;Ljava/net/InetSocketAddress;Ljava/net/Proxy;Lokhttp3/Protocol;)V
+	public fun connectFailed (Lokhttp3/Call;Ljava/net/InetSocketAddress;Ljava/net/Proxy;Lokhttp3/Protocol;Ljava/io/IOException;)V
+	public fun connectStart (Lokhttp3/Call;Ljava/net/InetSocketAddress;Ljava/net/Proxy;)V
+	public fun connectionAcquired (Lokhttp3/Call;Lokhttp3/Connection;)V
+	public fun connectionReleased (Lokhttp3/Call;Lokhttp3/Connection;)V
+	public fun dnsEnd (Lokhttp3/Call;Ljava/lang/String;Ljava/util/List;)V
+	public fun dnsStart (Lokhttp3/Call;Ljava/lang/String;)V
+	public fun proxySelectEnd (Lokhttp3/Call;Lokhttp3/HttpUrl;Ljava/util/List;)V
+	public fun proxySelectStart (Lokhttp3/Call;Lokhttp3/HttpUrl;)V
+	public fun requestBodyEnd (Lokhttp3/Call;J)V
+	public fun requestBodyStart (Lokhttp3/Call;)V
+	public fun requestFailed (Lokhttp3/Call;Ljava/io/IOException;)V
+	public fun requestHeadersEnd (Lokhttp3/Call;Lokhttp3/Request;)V
+	public fun requestHeadersStart (Lokhttp3/Call;)V
+	public fun responseBodyEnd (Lokhttp3/Call;J)V
+	public fun responseBodyStart (Lokhttp3/Call;)V
+	public fun responseFailed (Lokhttp3/Call;Ljava/io/IOException;)V
+	public fun responseHeadersEnd (Lokhttp3/Call;Lokhttp3/Response;)V
+	public fun responseHeadersStart (Lokhttp3/Call;)V
+	public fun satisfactionFailure (Lokhttp3/Call;Lokhttp3/Response;)V
+	public fun secureConnectEnd (Lokhttp3/Call;Lokhttp3/Handshake;)V
+	public fun secureConnectStart (Lokhttp3/Call;)V
+}
+
+public final class okhttp3/EventListener$Companion {
+}
+
+public abstract interface class okhttp3/EventListener$Factory {
+	public abstract fun create (Lokhttp3/Call;)Lokhttp3/EventListener;
+}
+
+public abstract interface annotation class okhttp3/ExperimentalOkHttpApi : java/lang/annotation/Annotation {
+}
+
+public final class okhttp3/FormBody : okhttp3/RequestBody {
+	public static final field Companion Lokhttp3/FormBody$Companion;
+	public final fun -deprecated_size ()I
+	public fun contentLength ()J
+	public fun contentType ()Lokhttp3/MediaType;
+	public final fun encodedName (I)Ljava/lang/String;
+	public final fun encodedValue (I)Ljava/lang/String;
+	public final fun name (I)Ljava/lang/String;
+	public final fun size ()I
+	public final fun value (I)Ljava/lang/String;
+	public fun writeTo (Lokio/BufferedSink;)V
+}
+
+public final class okhttp3/FormBody$Builder {
+	public fun <init> ()V
+	public fun <init> (Ljava/nio/charset/Charset;)V
+	public synthetic fun <init> (Ljava/nio/charset/Charset;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun add (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/FormBody$Builder;
+	public final fun addEncoded (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/FormBody$Builder;
+	public final fun build ()Lokhttp3/FormBody;
+}
+
+public final class okhttp3/FormBody$Companion {
+}
+
+public final class okhttp3/Handshake {
+	public static final field Companion Lokhttp3/Handshake$Companion;
+	public final fun -deprecated_cipherSuite ()Lokhttp3/CipherSuite;
+	public final fun -deprecated_localCertificates ()Ljava/util/List;
+	public final fun -deprecated_localPrincipal ()Ljava/security/Principal;
+	public final fun -deprecated_peerCertificates ()Ljava/util/List;
+	public final fun -deprecated_peerPrincipal ()Ljava/security/Principal;
+	public final fun -deprecated_tlsVersion ()Lokhttp3/TlsVersion;
+	public final fun cipherSuite ()Lokhttp3/CipherSuite;
+	public fun equals (Ljava/lang/Object;)Z
+	public static final fun get (Ljavax/net/ssl/SSLSession;)Lokhttp3/Handshake;
+	public static final fun get (Lokhttp3/TlsVersion;Lokhttp3/CipherSuite;Ljava/util/List;Ljava/util/List;)Lokhttp3/Handshake;
+	public fun hashCode ()I
+	public final fun localCertificates ()Ljava/util/List;
+	public final fun localPrincipal ()Ljava/security/Principal;
+	public final fun peerCertificates ()Ljava/util/List;
+	public final fun peerPrincipal ()Ljava/security/Principal;
+	public final fun tlsVersion ()Lokhttp3/TlsVersion;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class okhttp3/Handshake$Companion {
+	public final fun -deprecated_get (Ljavax/net/ssl/SSLSession;)Lokhttp3/Handshake;
+	public final fun get (Ljavax/net/ssl/SSLSession;)Lokhttp3/Handshake;
+	public final fun get (Lokhttp3/TlsVersion;Lokhttp3/CipherSuite;Ljava/util/List;Ljava/util/List;)Lokhttp3/Handshake;
+}
+
+public final class okhttp3/Headers : java/lang/Iterable, kotlin/jvm/internal/markers/KMappedMarker {
+	public static final field Companion Lokhttp3/Headers$Companion;
+	public final fun -deprecated_size ()I
+	public final fun byteCount ()J
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun get (Ljava/lang/String;)Ljava/lang/String;
+	public final fun getDate (Ljava/lang/String;)Ljava/util/Date;
+	public final fun getInstant (Ljava/lang/String;)Ljava/time/Instant;
+	public fun hashCode ()I
+	public fun iterator ()Ljava/util/Iterator;
+	public final fun name (I)Ljava/lang/String;
+	public final fun names ()Ljava/util/Set;
+	public final fun newBuilder ()Lokhttp3/Headers$Builder;
+	public static final fun of (Ljava/util/Map;)Lokhttp3/Headers;
+	public static final fun of ([Ljava/lang/String;)Lokhttp3/Headers;
+	public final fun size ()I
+	public final fun toMultimap ()Ljava/util/Map;
+	public fun toString ()Ljava/lang/String;
+	public final fun value (I)Ljava/lang/String;
+	public final fun values (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final class okhttp3/Headers$Builder {
+	public fun <init> ()V
+	public final fun add (Ljava/lang/String;)Lokhttp3/Headers$Builder;
+	public final fun add (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/Headers$Builder;
+	public final fun add (Ljava/lang/String;Ljava/time/Instant;)Lokhttp3/Headers$Builder;
+	public final fun add (Ljava/lang/String;Ljava/util/Date;)Lokhttp3/Headers$Builder;
+	public final fun addAll (Lokhttp3/Headers;)Lokhttp3/Headers$Builder;
+	public final fun addUnsafeNonAscii (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/Headers$Builder;
+	public final fun build ()Lokhttp3/Headers;
+	public final fun get (Ljava/lang/String;)Ljava/lang/String;
+	public final fun removeAll (Ljava/lang/String;)Lokhttp3/Headers$Builder;
+	public final fun set (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/Headers$Builder;
+	public final fun set (Ljava/lang/String;Ljava/time/Instant;)Lokhttp3/Headers$Builder;
+	public final fun set (Ljava/lang/String;Ljava/util/Date;)Lokhttp3/Headers$Builder;
+}
+
+public final class okhttp3/Headers$Companion {
+	public final fun -deprecated_of (Ljava/util/Map;)Lokhttp3/Headers;
+	public final fun -deprecated_of ([Ljava/lang/String;)Lokhttp3/Headers;
+	public final fun of (Ljava/util/Map;)Lokhttp3/Headers;
+	public final fun of ([Ljava/lang/String;)Lokhttp3/Headers;
+}
+
+public final class okhttp3/HttpUrl {
+	public static final field Companion Lokhttp3/HttpUrl$Companion;
+	public final fun -deprecated_encodedFragment ()Ljava/lang/String;
+	public final fun -deprecated_encodedPassword ()Ljava/lang/String;
+	public final fun -deprecated_encodedPath ()Ljava/lang/String;
+	public final fun -deprecated_encodedPathSegments ()Ljava/util/List;
+	public final fun -deprecated_encodedQuery ()Ljava/lang/String;
+	public final fun -deprecated_encodedUsername ()Ljava/lang/String;
+	public final fun -deprecated_fragment ()Ljava/lang/String;
+	public final fun -deprecated_host ()Ljava/lang/String;
+	public final fun -deprecated_password ()Ljava/lang/String;
+	public final fun -deprecated_pathSegments ()Ljava/util/List;
+	public final fun -deprecated_pathSize ()I
+	public final fun -deprecated_port ()I
+	public final fun -deprecated_query ()Ljava/lang/String;
+	public final fun -deprecated_queryParameterNames ()Ljava/util/Set;
+	public final fun -deprecated_querySize ()I
+	public final fun -deprecated_scheme ()Ljava/lang/String;
+	public final fun -deprecated_uri ()Ljava/net/URI;
+	public final fun -deprecated_url ()Ljava/net/URL;
+	public final fun -deprecated_username ()Ljava/lang/String;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun defaultPort (Ljava/lang/String;)I
+	public final fun encodedFragment ()Ljava/lang/String;
+	public final fun encodedPassword ()Ljava/lang/String;
+	public final fun encodedPath ()Ljava/lang/String;
+	public final fun encodedPathSegments ()Ljava/util/List;
+	public final fun encodedQuery ()Ljava/lang/String;
+	public final fun encodedUsername ()Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun fragment ()Ljava/lang/String;
+	public static final fun get (Ljava/lang/String;)Lokhttp3/HttpUrl;
+	public static final fun get (Ljava/net/URI;)Lokhttp3/HttpUrl;
+	public static final fun get (Ljava/net/URL;)Lokhttp3/HttpUrl;
+	public fun hashCode ()I
+	public final fun host ()Ljava/lang/String;
+	public final fun isHttps ()Z
+	public final fun newBuilder ()Lokhttp3/HttpUrl$Builder;
+	public final fun newBuilder (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public static final fun parse (Ljava/lang/String;)Lokhttp3/HttpUrl;
+	public final fun password ()Ljava/lang/String;
+	public final fun pathSegments ()Ljava/util/List;
+	public final fun pathSize ()I
+	public final fun port ()I
+	public final fun query ()Ljava/lang/String;
+	public final fun queryParameter (Ljava/lang/String;)Ljava/lang/String;
+	public final fun queryParameterName (I)Ljava/lang/String;
+	public final fun queryParameterNames ()Ljava/util/Set;
+	public final fun queryParameterValue (I)Ljava/lang/String;
+	public final fun queryParameterValues (Ljava/lang/String;)Ljava/util/List;
+	public final fun querySize ()I
+	public final fun redact ()Ljava/lang/String;
+	public final fun resolve (Ljava/lang/String;)Lokhttp3/HttpUrl;
+	public final fun scheme ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+	public final fun topPrivateDomain ()Ljava/lang/String;
+	public final fun uri ()Ljava/net/URI;
+	public final fun url ()Ljava/net/URL;
+	public final fun username ()Ljava/lang/String;
+}
+
+public final class okhttp3/HttpUrl$Builder {
+	public fun <init> ()V
+	public final fun addEncodedPathSegment (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun addEncodedPathSegments (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun addEncodedQueryParameter (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun addPathSegment (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun addPathSegments (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun addQueryParameter (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun build ()Lokhttp3/HttpUrl;
+	public final fun encodedFragment (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun encodedPassword (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun encodedPath (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun encodedQuery (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun encodedUsername (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun fragment (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun host (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun password (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun port (I)Lokhttp3/HttpUrl$Builder;
+	public final fun query (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun removeAllEncodedQueryParameters (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun removeAllQueryParameters (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun removePathSegment (I)Lokhttp3/HttpUrl$Builder;
+	public final fun scheme (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun setEncodedPathSegment (ILjava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun setEncodedQueryParameter (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun setPathSegment (ILjava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public final fun setQueryParameter (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+	public fun toString ()Ljava/lang/String;
+	public final fun username (Ljava/lang/String;)Lokhttp3/HttpUrl$Builder;
+}
+
+public final class okhttp3/HttpUrl$Companion {
+	public final fun -deprecated_get (Ljava/lang/String;)Lokhttp3/HttpUrl;
+	public final fun -deprecated_get (Ljava/net/URI;)Lokhttp3/HttpUrl;
+	public final fun -deprecated_get (Ljava/net/URL;)Lokhttp3/HttpUrl;
+	public final fun -deprecated_parse (Ljava/lang/String;)Lokhttp3/HttpUrl;
+	public final fun defaultPort (Ljava/lang/String;)I
+	public final fun get (Ljava/lang/String;)Lokhttp3/HttpUrl;
+	public final fun get (Ljava/net/URI;)Lokhttp3/HttpUrl;
+	public final fun get (Ljava/net/URL;)Lokhttp3/HttpUrl;
+	public final fun parse (Ljava/lang/String;)Lokhttp3/HttpUrl;
+}
+
+public abstract interface class okhttp3/Interceptor {
+	public static final field Companion Lokhttp3/Interceptor$Companion;
+	public abstract fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
+}
+
+public abstract interface class okhttp3/Interceptor$Chain {
+	public abstract fun call ()Lokhttp3/Call;
+	public abstract fun connectTimeoutMillis ()I
+	public abstract fun connection ()Lokhttp3/Connection;
+	public abstract fun proceed (Lokhttp3/Request;)Lokhttp3/Response;
+	public abstract fun readTimeoutMillis ()I
+	public abstract fun request ()Lokhttp3/Request;
+	public abstract fun withConnectTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withReadTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withWriteTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
+	public abstract fun writeTimeoutMillis ()I
+}
+
+public final class okhttp3/Interceptor$Companion {
+	public final fun invoke (Lkotlin/jvm/functions/Function1;)Lokhttp3/Interceptor;
+}
+
+public final class okhttp3/MediaType {
+	public static final field Companion Lokhttp3/MediaType$Companion;
+	public final fun -deprecated_subtype ()Ljava/lang/String;
+	public final fun -deprecated_type ()Ljava/lang/String;
+	public final fun charset ()Ljava/nio/charset/Charset;
+	public final fun charset (Ljava/nio/charset/Charset;)Ljava/nio/charset/Charset;
+	public static synthetic fun charset$default (Lokhttp3/MediaType;Ljava/nio/charset/Charset;ILjava/lang/Object;)Ljava/nio/charset/Charset;
+	public fun equals (Ljava/lang/Object;)Z
+	public static final fun get (Ljava/lang/String;)Lokhttp3/MediaType;
+	public fun hashCode ()I
+	public final fun parameter (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun parse (Ljava/lang/String;)Lokhttp3/MediaType;
+	public final fun subtype ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+	public final fun type ()Ljava/lang/String;
+}
+
+public final class okhttp3/MediaType$Companion {
+	public final fun -deprecated_get (Ljava/lang/String;)Lokhttp3/MediaType;
+	public final fun -deprecated_parse (Ljava/lang/String;)Lokhttp3/MediaType;
+	public final fun get (Ljava/lang/String;)Lokhttp3/MediaType;
+	public final fun parse (Ljava/lang/String;)Lokhttp3/MediaType;
+}
+
+public final class okhttp3/MultipartBody : okhttp3/RequestBody {
+	public static final field ALTERNATIVE Lokhttp3/MediaType;
+	public static final field Companion Lokhttp3/MultipartBody$Companion;
+	public static final field DIGEST Lokhttp3/MediaType;
+	public static final field FORM Lokhttp3/MediaType;
+	public static final field MIXED Lokhttp3/MediaType;
+	public static final field PARALLEL Lokhttp3/MediaType;
+	public final fun -deprecated_boundary ()Ljava/lang/String;
+	public final fun -deprecated_parts ()Ljava/util/List;
+	public final fun -deprecated_size ()I
+	public final fun -deprecated_type ()Lokhttp3/MediaType;
+	public final fun boundary ()Ljava/lang/String;
+	public fun contentLength ()J
+	public fun contentType ()Lokhttp3/MediaType;
+	public fun isOneShot ()Z
+	public final fun part (I)Lokhttp3/MultipartBody$Part;
+	public final fun parts ()Ljava/util/List;
+	public final fun size ()I
+	public final fun type ()Lokhttp3/MediaType;
+	public fun writeTo (Lokio/BufferedSink;)V
+}
+
+public final class okhttp3/MultipartBody$Builder {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun addFormDataPart (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/MultipartBody$Builder;
+	public final fun addFormDataPart (Ljava/lang/String;Ljava/lang/String;Lokhttp3/RequestBody;)Lokhttp3/MultipartBody$Builder;
+	public final fun addPart (Lokhttp3/Headers;Lokhttp3/RequestBody;)Lokhttp3/MultipartBody$Builder;
+	public final fun addPart (Lokhttp3/MultipartBody$Part;)Lokhttp3/MultipartBody$Builder;
+	public final fun addPart (Lokhttp3/RequestBody;)Lokhttp3/MultipartBody$Builder;
+	public final fun build ()Lokhttp3/MultipartBody;
+	public final fun setType (Lokhttp3/MediaType;)Lokhttp3/MultipartBody$Builder;
+}
+
+public final class okhttp3/MultipartBody$Companion {
+}
+
+public final class okhttp3/MultipartBody$Part {
+	public static final field Companion Lokhttp3/MultipartBody$Part$Companion;
+	public final fun -deprecated_body ()Lokhttp3/RequestBody;
+	public final fun -deprecated_headers ()Lokhttp3/Headers;
+	public synthetic fun <init> (Lokhttp3/Headers;Lokhttp3/RequestBody;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun body ()Lokhttp3/RequestBody;
+	public static final fun create (Lokhttp3/Headers;Lokhttp3/RequestBody;)Lokhttp3/MultipartBody$Part;
+	public static final fun create (Lokhttp3/RequestBody;)Lokhttp3/MultipartBody$Part;
+	public static final fun createFormData (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/MultipartBody$Part;
+	public static final fun createFormData (Ljava/lang/String;Ljava/lang/String;Lokhttp3/RequestBody;)Lokhttp3/MultipartBody$Part;
+	public final fun headers ()Lokhttp3/Headers;
+}
+
+public final class okhttp3/MultipartBody$Part$Companion {
+	public final fun create (Lokhttp3/Headers;Lokhttp3/RequestBody;)Lokhttp3/MultipartBody$Part;
+	public final fun create (Lokhttp3/RequestBody;)Lokhttp3/MultipartBody$Part;
+	public final fun createFormData (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/MultipartBody$Part;
+	public final fun createFormData (Ljava/lang/String;Ljava/lang/String;Lokhttp3/RequestBody;)Lokhttp3/MultipartBody$Part;
+}
+
+public final class okhttp3/MultipartReader : java/io/Closeable {
+	public fun <init> (Lokhttp3/ResponseBody;)V
+	public fun <init> (Lokio/BufferedSource;Ljava/lang/String;)V
+	public final fun boundary ()Ljava/lang/String;
+	public fun close ()V
+	public final fun nextPart ()Lokhttp3/MultipartReader$Part;
+}
+
+public final class okhttp3/MultipartReader$Part : java/io/Closeable {
+	public fun <init> (Lokhttp3/Headers;Lokio/BufferedSource;)V
+	public final fun body ()Lokio/BufferedSource;
+	public fun close ()V
+	public final fun headers ()Lokhttp3/Headers;
+}
+
+public final class okhttp3/OkHttp {
+	public static final field INSTANCE Lokhttp3/OkHttp;
+	public static final field VERSION Ljava/lang/String;
+}
+
+public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Factory {
+	public static final field Companion Lokhttp3/OkHttpClient$Companion;
+	public final fun -deprecated_authenticator ()Lokhttp3/Authenticator;
+	public final fun -deprecated_cache ()Lokhttp3/Cache;
+	public final fun -deprecated_callTimeoutMillis ()I
+	public final fun -deprecated_certificatePinner ()Lokhttp3/CertificatePinner;
+	public final fun -deprecated_connectTimeoutMillis ()I
+	public final fun -deprecated_connectionPool ()Lokhttp3/ConnectionPool;
+	public final fun -deprecated_connectionSpecs ()Ljava/util/List;
+	public final fun -deprecated_cookieJar ()Lokhttp3/CookieJar;
+	public final fun -deprecated_dispatcher ()Lokhttp3/Dispatcher;
+	public final fun -deprecated_dns ()Lokhttp3/Dns;
+	public final fun -deprecated_eventListenerFactory ()Lokhttp3/EventListener$Factory;
+	public final fun -deprecated_followRedirects ()Z
+	public final fun -deprecated_followSslRedirects ()Z
+	public final fun -deprecated_hostnameVerifier ()Ljavax/net/ssl/HostnameVerifier;
+	public final fun -deprecated_interceptors ()Ljava/util/List;
+	public final fun -deprecated_networkInterceptors ()Ljava/util/List;
+	public final fun -deprecated_pingIntervalMillis ()I
+	public final fun -deprecated_protocols ()Ljava/util/List;
+	public final fun -deprecated_proxy ()Ljava/net/Proxy;
+	public final fun -deprecated_proxyAuthenticator ()Lokhttp3/Authenticator;
+	public final fun -deprecated_proxySelector ()Ljava/net/ProxySelector;
+	public final fun -deprecated_readTimeoutMillis ()I
+	public final fun -deprecated_retryOnConnectionFailure ()Z
+	public final fun -deprecated_socketFactory ()Ljavax/net/SocketFactory;
+	public final fun -deprecated_sslSocketFactory ()Ljavax/net/ssl/SSLSocketFactory;
+	public final fun -deprecated_writeTimeoutMillis ()I
+	public fun <init> ()V
+	public final fun address (Lokhttp3/HttpUrl;)Lokhttp3/Address;
+	public final fun authenticator ()Lokhttp3/Authenticator;
+	public final fun cache ()Lokhttp3/Cache;
+	public final fun callTimeoutMillis ()I
+	public final fun certificateChainCleaner ()Lokhttp3/internal/tls/CertificateChainCleaner;
+	public final fun certificatePinner ()Lokhttp3/CertificatePinner;
+	public final fun connectTimeoutMillis ()I
+	public final fun connectionPool ()Lokhttp3/ConnectionPool;
+	public final fun connectionSpecs ()Ljava/util/List;
+	public final fun cookieJar ()Lokhttp3/CookieJar;
+	public final fun dispatcher ()Lokhttp3/Dispatcher;
+	public final fun dns ()Lokhttp3/Dns;
+	public final fun eventListenerFactory ()Lokhttp3/EventListener$Factory;
+	public final fun fastFallback ()Z
+	public final fun followRedirects ()Z
+	public final fun followSslRedirects ()Z
+	public final fun hostnameVerifier ()Ljavax/net/ssl/HostnameVerifier;
+	public final fun interceptors ()Ljava/util/List;
+	public final fun minWebSocketMessageToCompress ()J
+	public final fun networkInterceptors ()Ljava/util/List;
+	public fun newBuilder ()Lokhttp3/OkHttpClient$Builder;
+	public fun newCall (Lokhttp3/Request;)Lokhttp3/Call;
+	public fun newWebSocket (Lokhttp3/Request;Lokhttp3/WebSocketListener;)Lokhttp3/WebSocket;
+	public final fun pingIntervalMillis ()I
+	public final fun protocols ()Ljava/util/List;
+	public final fun proxy ()Ljava/net/Proxy;
+	public final fun proxyAuthenticator ()Lokhttp3/Authenticator;
+	public final fun proxySelector ()Ljava/net/ProxySelector;
+	public final fun readTimeoutMillis ()I
+	public final fun retryOnConnectionFailure ()Z
+	public final fun socketFactory ()Ljavax/net/SocketFactory;
+	public final fun sslSocketFactory ()Ljavax/net/ssl/SSLSocketFactory;
+	public final fun webSocketCloseTimeout ()I
+	public final fun writeTimeoutMillis ()I
+	public final fun x509TrustManager ()Ljavax/net/ssl/X509TrustManager;
+}
+
+public final class okhttp3/OkHttpClient$Builder {
+	public final fun -addInterceptor (Lkotlin/jvm/functions/Function1;)Lokhttp3/OkHttpClient$Builder;
+	public final fun -addNetworkInterceptor (Lkotlin/jvm/functions/Function1;)Lokhttp3/OkHttpClient$Builder;
+	public fun <init> ()V
+	public final fun addInterceptor (Lokhttp3/Interceptor;)Lokhttp3/OkHttpClient$Builder;
+	public final fun addNetworkInterceptor (Lokhttp3/Interceptor;)Lokhttp3/OkHttpClient$Builder;
+	public final fun authenticator (Lokhttp3/Authenticator;)Lokhttp3/OkHttpClient$Builder;
+	public final fun build ()Lokhttp3/OkHttpClient;
+	public final fun cache (Lokhttp3/Cache;)Lokhttp3/OkHttpClient$Builder;
+	public final fun callTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
+	public final fun callTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun callTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
+	public final fun certificatePinner (Lokhttp3/CertificatePinner;)Lokhttp3/OkHttpClient$Builder;
+	public final fun connectTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
+	public final fun connectTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun connectTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
+	public final fun connectionPool (Lokhttp3/ConnectionPool;)Lokhttp3/OkHttpClient$Builder;
+	public final fun connectionSpecs (Ljava/util/List;)Lokhttp3/OkHttpClient$Builder;
+	public final fun cookieJar (Lokhttp3/CookieJar;)Lokhttp3/OkHttpClient$Builder;
+	public final fun dispatcher (Lokhttp3/Dispatcher;)Lokhttp3/OkHttpClient$Builder;
+	public final fun dns (Lokhttp3/Dns;)Lokhttp3/OkHttpClient$Builder;
+	public final fun eventListener (Lokhttp3/EventListener;)Lokhttp3/OkHttpClient$Builder;
+	public final fun eventListenerFactory (Lokhttp3/EventListener$Factory;)Lokhttp3/OkHttpClient$Builder;
+	public final fun fastFallback (Z)Lokhttp3/OkHttpClient$Builder;
+	public final fun followRedirects (Z)Lokhttp3/OkHttpClient$Builder;
+	public final fun followSslRedirects (Z)Lokhttp3/OkHttpClient$Builder;
+	public final fun hostnameVerifier (Ljavax/net/ssl/HostnameVerifier;)Lokhttp3/OkHttpClient$Builder;
+	public final fun interceptors ()Ljava/util/List;
+	public final fun minWebSocketMessageToCompress (J)Lokhttp3/OkHttpClient$Builder;
+	public final fun networkInterceptors ()Ljava/util/List;
+	public final fun pingInterval (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
+	public final fun pingInterval (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun pingInterval-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
+	public final fun protocols (Ljava/util/List;)Lokhttp3/OkHttpClient$Builder;
+	public final fun proxy (Ljava/net/Proxy;)Lokhttp3/OkHttpClient$Builder;
+	public final fun proxyAuthenticator (Lokhttp3/Authenticator;)Lokhttp3/OkHttpClient$Builder;
+	public final fun proxySelector (Ljava/net/ProxySelector;)Lokhttp3/OkHttpClient$Builder;
+	public final fun readTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
+	public final fun readTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun readTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
+	public final fun retryOnConnectionFailure (Z)Lokhttp3/OkHttpClient$Builder;
+	public final fun socketFactory (Ljavax/net/SocketFactory;)Lokhttp3/OkHttpClient$Builder;
+	public final fun sslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;)Lokhttp3/OkHttpClient$Builder;
+	public final fun sslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;Ljavax/net/ssl/X509TrustManager;)Lokhttp3/OkHttpClient$Builder;
+	public final fun webSocketCloseTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
+	public final fun webSocketCloseTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun webSocketCloseTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
+	public final fun writeTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
+	public final fun writeTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun writeTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
+}
+
+public final class okhttp3/OkHttpClient$Companion {
+}
+
+public final class okhttp3/Protocol : java/lang/Enum {
+	public static final field Companion Lokhttp3/Protocol$Companion;
+	public static final field H2_PRIOR_KNOWLEDGE Lokhttp3/Protocol;
+	public static final field HTTP_1_0 Lokhttp3/Protocol;
+	public static final field HTTP_1_1 Lokhttp3/Protocol;
+	public static final field HTTP_2 Lokhttp3/Protocol;
+	public static final field HTTP_3 Lokhttp3/Protocol;
+	public static final field QUIC Lokhttp3/Protocol;
+	public static final field SPDY_3 Lokhttp3/Protocol;
+	public static final fun get (Ljava/lang/String;)Lokhttp3/Protocol;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public fun toString ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lokhttp3/Protocol;
+	public static fun values ()[Lokhttp3/Protocol;
+}
+
+public final class okhttp3/Protocol$Companion {
+	public final fun get (Ljava/lang/String;)Lokhttp3/Protocol;
+}
+
+public final class okhttp3/Request {
+	public final fun -deprecated_body ()Lokhttp3/RequestBody;
+	public final fun -deprecated_cacheControl ()Lokhttp3/CacheControl;
+	public final fun -deprecated_headers ()Lokhttp3/Headers;
+	public final fun -deprecated_method ()Ljava/lang/String;
+	public final fun -deprecated_url ()Lokhttp3/HttpUrl;
+	public fun <init> (Lokhttp3/HttpUrl;Lokhttp3/Headers;Ljava/lang/String;Lokhttp3/RequestBody;)V
+	public synthetic fun <init> (Lokhttp3/HttpUrl;Lokhttp3/Headers;Ljava/lang/String;Lokhttp3/RequestBody;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun body ()Lokhttp3/RequestBody;
+	public final fun cacheControl ()Lokhttp3/CacheControl;
+	public final fun cacheUrlOverride ()Lokhttp3/HttpUrl;
+	public final fun header (Ljava/lang/String;)Ljava/lang/String;
+	public final fun headers ()Lokhttp3/Headers;
+	public final fun headers (Ljava/lang/String;)Ljava/util/List;
+	public final fun isHttps ()Z
+	public final fun method ()Ljava/lang/String;
+	public final fun newBuilder ()Lokhttp3/Request$Builder;
+	public final fun tag ()Ljava/lang/Object;
+	public final fun tag (Ljava/lang/Class;)Ljava/lang/Object;
+	public final fun tag (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
+	public final fun url ()Lokhttp3/HttpUrl;
+}
+
+public class okhttp3/Request$Builder {
+	public fun <init> ()V
+	public fun addHeader (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/Request$Builder;
+	public fun build ()Lokhttp3/Request;
+	public fun cacheControl (Lokhttp3/CacheControl;)Lokhttp3/Request$Builder;
+	public final fun cacheUrlOverride (Lokhttp3/HttpUrl;)Lokhttp3/Request$Builder;
+	public final fun delete ()Lokhttp3/Request$Builder;
+	public fun delete (Lokhttp3/RequestBody;)Lokhttp3/Request$Builder;
+	public static synthetic fun delete$default (Lokhttp3/Request$Builder;Lokhttp3/RequestBody;ILjava/lang/Object;)Lokhttp3/Request$Builder;
+	public fun get ()Lokhttp3/Request$Builder;
+	public fun head ()Lokhttp3/Request$Builder;
+	public fun header (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/Request$Builder;
+	public fun headers (Lokhttp3/Headers;)Lokhttp3/Request$Builder;
+	public fun method (Ljava/lang/String;Lokhttp3/RequestBody;)Lokhttp3/Request$Builder;
+	public fun patch (Lokhttp3/RequestBody;)Lokhttp3/Request$Builder;
+	public fun post (Lokhttp3/RequestBody;)Lokhttp3/Request$Builder;
+	public fun put (Lokhttp3/RequestBody;)Lokhttp3/Request$Builder;
+	public fun removeHeader (Ljava/lang/String;)Lokhttp3/Request$Builder;
+	public fun tag (Ljava/lang/Class;Ljava/lang/Object;)Lokhttp3/Request$Builder;
+	public fun tag (Ljava/lang/Object;)Lokhttp3/Request$Builder;
+	public final fun tag (Lkotlin/reflect/KClass;Ljava/lang/Object;)Lokhttp3/Request$Builder;
+	public fun url (Ljava/lang/String;)Lokhttp3/Request$Builder;
+	public fun url (Ljava/net/URL;)Lokhttp3/Request$Builder;
+	public fun url (Lokhttp3/HttpUrl;)Lokhttp3/Request$Builder;
+}
+
+public abstract class okhttp3/RequestBody {
+	public static final field Companion Lokhttp3/RequestBody$Companion;
+	public fun <init> ()V
+	public fun contentLength ()J
+	public abstract fun contentType ()Lokhttp3/MediaType;
+	public static final fun create (Ljava/io/File;Lokhttp3/MediaType;)Lokhttp3/RequestBody;
+	public static final fun create (Ljava/io/FileDescriptor;Lokhttp3/MediaType;)Lokhttp3/RequestBody;
+	public static final fun create (Ljava/lang/String;Lokhttp3/MediaType;)Lokhttp3/RequestBody;
+	public static final fun create (Lokhttp3/MediaType;Ljava/io/File;)Lokhttp3/RequestBody;
+	public static final fun create (Lokhttp3/MediaType;Ljava/lang/String;)Lokhttp3/RequestBody;
+	public static final fun create (Lokhttp3/MediaType;Lokio/ByteString;)Lokhttp3/RequestBody;
+	public static final fun create (Lokhttp3/MediaType;[B)Lokhttp3/RequestBody;
+	public static final fun create (Lokhttp3/MediaType;[BI)Lokhttp3/RequestBody;
+	public static final fun create (Lokhttp3/MediaType;[BII)Lokhttp3/RequestBody;
+	public static final fun create (Lokio/ByteString;Lokhttp3/MediaType;)Lokhttp3/RequestBody;
+	public static final fun create (Lokio/Path;Lokio/FileSystem;Lokhttp3/MediaType;)Lokhttp3/RequestBody;
+	public static final fun create ([B)Lokhttp3/RequestBody;
+	public static final fun create ([BLokhttp3/MediaType;)Lokhttp3/RequestBody;
+	public static final fun create ([BLokhttp3/MediaType;I)Lokhttp3/RequestBody;
+	public static final fun create ([BLokhttp3/MediaType;II)Lokhttp3/RequestBody;
+	public static final fun gzip (Lokhttp3/RequestBody;)Lokhttp3/RequestBody;
+	public fun isDuplex ()Z
+	public fun isOneShot ()Z
+	public abstract fun writeTo (Lokio/BufferedSink;)V
+}
+
+public final class okhttp3/RequestBody$Companion {
+	public final fun create (Ljava/io/File;Lokhttp3/MediaType;)Lokhttp3/RequestBody;
+	public final fun create (Ljava/io/FileDescriptor;Lokhttp3/MediaType;)Lokhttp3/RequestBody;
+	public final fun create (Ljava/lang/String;Lokhttp3/MediaType;)Lokhttp3/RequestBody;
+	public final fun create (Lokhttp3/MediaType;Ljava/io/File;)Lokhttp3/RequestBody;
+	public final fun create (Lokhttp3/MediaType;Ljava/lang/String;)Lokhttp3/RequestBody;
+	public final fun create (Lokhttp3/MediaType;Lokio/ByteString;)Lokhttp3/RequestBody;
+	public final fun create (Lokhttp3/MediaType;[B)Lokhttp3/RequestBody;
+	public final fun create (Lokhttp3/MediaType;[BI)Lokhttp3/RequestBody;
+	public final fun create (Lokhttp3/MediaType;[BII)Lokhttp3/RequestBody;
+	public final fun create (Lokio/ByteString;Lokhttp3/MediaType;)Lokhttp3/RequestBody;
+	public final fun create (Lokio/Path;Lokio/FileSystem;Lokhttp3/MediaType;)Lokhttp3/RequestBody;
+	public final fun create ([B)Lokhttp3/RequestBody;
+	public final fun create ([BLokhttp3/MediaType;)Lokhttp3/RequestBody;
+	public final fun create ([BLokhttp3/MediaType;I)Lokhttp3/RequestBody;
+	public final fun create ([BLokhttp3/MediaType;II)Lokhttp3/RequestBody;
+	public static synthetic fun create$default (Lokhttp3/RequestBody$Companion;Ljava/io/File;Lokhttp3/MediaType;ILjava/lang/Object;)Lokhttp3/RequestBody;
+	public static synthetic fun create$default (Lokhttp3/RequestBody$Companion;Ljava/io/FileDescriptor;Lokhttp3/MediaType;ILjava/lang/Object;)Lokhttp3/RequestBody;
+	public static synthetic fun create$default (Lokhttp3/RequestBody$Companion;Ljava/lang/String;Lokhttp3/MediaType;ILjava/lang/Object;)Lokhttp3/RequestBody;
+	public static synthetic fun create$default (Lokhttp3/RequestBody$Companion;Lokhttp3/MediaType;[BIIILjava/lang/Object;)Lokhttp3/RequestBody;
+	public static synthetic fun create$default (Lokhttp3/RequestBody$Companion;Lokio/ByteString;Lokhttp3/MediaType;ILjava/lang/Object;)Lokhttp3/RequestBody;
+	public static synthetic fun create$default (Lokhttp3/RequestBody$Companion;Lokio/Path;Lokio/FileSystem;Lokhttp3/MediaType;ILjava/lang/Object;)Lokhttp3/RequestBody;
+	public static synthetic fun create$default (Lokhttp3/RequestBody$Companion;[BLokhttp3/MediaType;IIILjava/lang/Object;)Lokhttp3/RequestBody;
+	public final fun gzip (Lokhttp3/RequestBody;)Lokhttp3/RequestBody;
+}
+
+public final class okhttp3/Response : java/io/Closeable {
+	public final fun -deprecated_body ()Lokhttp3/ResponseBody;
+	public final fun -deprecated_cacheControl ()Lokhttp3/CacheControl;
+	public final fun -deprecated_cacheResponse ()Lokhttp3/Response;
+	public final fun -deprecated_code ()I
+	public final fun -deprecated_handshake ()Lokhttp3/Handshake;
+	public final fun -deprecated_headers ()Lokhttp3/Headers;
+	public final fun -deprecated_message ()Ljava/lang/String;
+	public final fun -deprecated_networkResponse ()Lokhttp3/Response;
+	public final fun -deprecated_priorResponse ()Lokhttp3/Response;
+	public final fun -deprecated_protocol ()Lokhttp3/Protocol;
+	public final fun -deprecated_receivedResponseAtMillis ()J
+	public final fun -deprecated_request ()Lokhttp3/Request;
+	public final fun -deprecated_sentRequestAtMillis ()J
+	public final fun body ()Lokhttp3/ResponseBody;
+	public final fun cacheControl ()Lokhttp3/CacheControl;
+	public final fun cacheResponse ()Lokhttp3/Response;
+	public final fun challenges ()Ljava/util/List;
+	public fun close ()V
+	public final fun code ()I
+	public final fun handshake ()Lokhttp3/Handshake;
+	public final fun header (Ljava/lang/String;)Ljava/lang/String;
+	public final fun header (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static synthetic fun header$default (Lokhttp3/Response;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public final fun headers ()Lokhttp3/Headers;
+	public final fun headers (Ljava/lang/String;)Ljava/util/List;
+	public final fun isRedirect ()Z
+	public final fun isSuccessful ()Z
+	public final fun message ()Ljava/lang/String;
+	public final fun networkResponse ()Lokhttp3/Response;
+	public final fun newBuilder ()Lokhttp3/Response$Builder;
+	public final fun peekBody (J)Lokhttp3/ResponseBody;
+	public final fun priorResponse ()Lokhttp3/Response;
+	public final fun protocol ()Lokhttp3/Protocol;
+	public final fun receivedResponseAtMillis ()J
+	public final fun request ()Lokhttp3/Request;
+	public final fun sentRequestAtMillis ()J
+	public fun toString ()Ljava/lang/String;
+	public final fun trailers ()Lokhttp3/Headers;
+}
+
+public class okhttp3/Response$Builder {
+	public fun <init> ()V
+	public fun addHeader (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/Response$Builder;
+	public fun body (Lokhttp3/ResponseBody;)Lokhttp3/Response$Builder;
+	public fun build ()Lokhttp3/Response;
+	public fun cacheResponse (Lokhttp3/Response;)Lokhttp3/Response$Builder;
+	public fun code (I)Lokhttp3/Response$Builder;
+	public fun handshake (Lokhttp3/Handshake;)Lokhttp3/Response$Builder;
+	public fun header (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/Response$Builder;
+	public fun headers (Lokhttp3/Headers;)Lokhttp3/Response$Builder;
+	public fun message (Ljava/lang/String;)Lokhttp3/Response$Builder;
+	public fun networkResponse (Lokhttp3/Response;)Lokhttp3/Response$Builder;
+	public fun priorResponse (Lokhttp3/Response;)Lokhttp3/Response$Builder;
+	public fun protocol (Lokhttp3/Protocol;)Lokhttp3/Response$Builder;
+	public fun receivedResponseAtMillis (J)Lokhttp3/Response$Builder;
+	public fun removeHeader (Ljava/lang/String;)Lokhttp3/Response$Builder;
+	public fun request (Lokhttp3/Request;)Lokhttp3/Response$Builder;
+	public fun sentRequestAtMillis (J)Lokhttp3/Response$Builder;
+	public fun trailers (Lkotlin/jvm/functions/Function0;)Lokhttp3/Response$Builder;
+}
+
+public abstract class okhttp3/ResponseBody : java/io/Closeable {
+	public static final field Companion Lokhttp3/ResponseBody$Companion;
+	public fun <init> ()V
+	public final fun byteStream ()Ljava/io/InputStream;
+	public final fun byteString ()Lokio/ByteString;
+	public final fun bytes ()[B
+	public final fun charStream ()Ljava/io/Reader;
+	public fun close ()V
+	public abstract fun contentLength ()J
+	public abstract fun contentType ()Lokhttp3/MediaType;
+	public static final fun create (Ljava/lang/String;Lokhttp3/MediaType;)Lokhttp3/ResponseBody;
+	public static final fun create (Lokhttp3/MediaType;JLokio/BufferedSource;)Lokhttp3/ResponseBody;
+	public static final fun create (Lokhttp3/MediaType;Ljava/lang/String;)Lokhttp3/ResponseBody;
+	public static final fun create (Lokhttp3/MediaType;Lokio/ByteString;)Lokhttp3/ResponseBody;
+	public static final fun create (Lokhttp3/MediaType;[B)Lokhttp3/ResponseBody;
+	public static final fun create (Lokio/BufferedSource;Lokhttp3/MediaType;J)Lokhttp3/ResponseBody;
+	public static final fun create (Lokio/ByteString;Lokhttp3/MediaType;)Lokhttp3/ResponseBody;
+	public static final fun create ([BLokhttp3/MediaType;)Lokhttp3/ResponseBody;
+	public abstract fun source ()Lokio/BufferedSource;
+	public final fun string ()Ljava/lang/String;
+}
+
+public final class okhttp3/ResponseBody$Companion {
+	public final fun create (Ljava/lang/String;Lokhttp3/MediaType;)Lokhttp3/ResponseBody;
+	public final fun create (Lokhttp3/MediaType;JLokio/BufferedSource;)Lokhttp3/ResponseBody;
+	public final fun create (Lokhttp3/MediaType;Ljava/lang/String;)Lokhttp3/ResponseBody;
+	public final fun create (Lokhttp3/MediaType;Lokio/ByteString;)Lokhttp3/ResponseBody;
+	public final fun create (Lokhttp3/MediaType;[B)Lokhttp3/ResponseBody;
+	public final fun create (Lokio/BufferedSource;Lokhttp3/MediaType;J)Lokhttp3/ResponseBody;
+	public final fun create (Lokio/ByteString;Lokhttp3/MediaType;)Lokhttp3/ResponseBody;
+	public final fun create ([BLokhttp3/MediaType;)Lokhttp3/ResponseBody;
+	public static synthetic fun create$default (Lokhttp3/ResponseBody$Companion;Ljava/lang/String;Lokhttp3/MediaType;ILjava/lang/Object;)Lokhttp3/ResponseBody;
+	public static synthetic fun create$default (Lokhttp3/ResponseBody$Companion;Lokio/BufferedSource;Lokhttp3/MediaType;JILjava/lang/Object;)Lokhttp3/ResponseBody;
+	public static synthetic fun create$default (Lokhttp3/ResponseBody$Companion;Lokio/ByteString;Lokhttp3/MediaType;ILjava/lang/Object;)Lokhttp3/ResponseBody;
+	public static synthetic fun create$default (Lokhttp3/ResponseBody$Companion;[BLokhttp3/MediaType;ILjava/lang/Object;)Lokhttp3/ResponseBody;
+}
+
+public final class okhttp3/Route {
+	public final fun -deprecated_address ()Lokhttp3/Address;
+	public final fun -deprecated_proxy ()Ljava/net/Proxy;
+	public final fun -deprecated_socketAddress ()Ljava/net/InetSocketAddress;
+	public fun <init> (Lokhttp3/Address;Ljava/net/Proxy;Ljava/net/InetSocketAddress;)V
+	public final fun address ()Lokhttp3/Address;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun proxy ()Ljava/net/Proxy;
+	public final fun requiresTunnel ()Z
+	public final fun socketAddress ()Ljava/net/InetSocketAddress;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class okhttp3/TlsVersion : java/lang/Enum {
+	public static final field Companion Lokhttp3/TlsVersion$Companion;
+	public static final field SSL_3_0 Lokhttp3/TlsVersion;
+	public static final field TLS_1_0 Lokhttp3/TlsVersion;
+	public static final field TLS_1_1 Lokhttp3/TlsVersion;
+	public static final field TLS_1_2 Lokhttp3/TlsVersion;
+	public static final field TLS_1_3 Lokhttp3/TlsVersion;
+	public final fun -deprecated_javaName ()Ljava/lang/String;
+	public static final fun forJavaName (Ljava/lang/String;)Lokhttp3/TlsVersion;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun javaName ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lokhttp3/TlsVersion;
+	public static fun values ()[Lokhttp3/TlsVersion;
+}
+
+public final class okhttp3/TlsVersion$Companion {
+	public final fun forJavaName (Ljava/lang/String;)Lokhttp3/TlsVersion;
+}
+
+public abstract interface class okhttp3/WebSocket {
+	public abstract fun cancel ()V
+	public abstract fun close (ILjava/lang/String;)Z
+	public abstract fun queueSize ()J
+	public abstract fun request ()Lokhttp3/Request;
+	public abstract fun send (Ljava/lang/String;)Z
+	public abstract fun send (Lokio/ByteString;)Z
+}
+
+public abstract interface class okhttp3/WebSocket$Factory {
+	public abstract fun newWebSocket (Lokhttp3/Request;Lokhttp3/WebSocketListener;)Lokhttp3/WebSocket;
+}
+
+public abstract class okhttp3/WebSocketListener {
+	public fun <init> ()V
+	public fun onClosed (Lokhttp3/WebSocket;ILjava/lang/String;)V
+	public fun onClosing (Lokhttp3/WebSocket;ILjava/lang/String;)V
+	public fun onFailure (Lokhttp3/WebSocket;Ljava/lang/Throwable;Lokhttp3/Response;)V
+	public fun onMessage (Lokhttp3/WebSocket;Ljava/lang/String;)V
+	public fun onMessage (Lokhttp3/WebSocket;Lokio/ByteString;)V
+	public fun onOpen (Lokhttp3/WebSocket;Lokhttp3/Response;)V
+}
+

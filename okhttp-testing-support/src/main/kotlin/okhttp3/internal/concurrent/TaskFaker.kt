@@ -360,12 +360,12 @@ class TaskFaker : Closeable {
       timeout: Long,
       unit: TimeUnit,
     ): T? {
-      taskRunner.withLock {
+      return taskRunner.withLock {
         val waitUntil = nanoTime + unit.toNanos(timeout)
         while (true) {
           val result = poll()
-          if (result != null) return result
-          if (nanoTime >= waitUntil) return null
+          if (result != null) return@withLock result
+          if (nanoTime >= waitUntil) return@withLock null
           val editCountBefore = editCount
           yieldUntil { nanoTime >= waitUntil || editCount > editCountBefore }
         }
