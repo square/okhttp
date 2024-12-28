@@ -96,7 +96,11 @@ object TlsUtil {
       keyStore.setKeyEntry("private", heldCertificate.keyPair.private, password, chain)
     }
 
-    val factory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
+    // https://github.com/bcgit/bc-java/issues/1160
+    val isBouncyCastle = keyStore.provider.name == "BC"
+    val algorithm = if (isBouncyCastle) "PKIX" else KeyManagerFactory.getDefaultAlgorithm()
+
+    val factory = KeyManagerFactory.getInstance(algorithm)
     factory.init(keyStore, password)
     val result = factory.keyManagers!!
     check(result.size == 1 && result[0] is X509KeyManager) {

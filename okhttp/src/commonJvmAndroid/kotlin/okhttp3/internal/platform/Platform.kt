@@ -129,7 +129,13 @@ open class Platform {
   @IgnoreJRERequirement // This function is overridden to require API >= 24.
   open fun getHandshakeServerNames(sslSocket: SSLSocket): List<String> {
     val session = sslSocket.session as? ExtendedSSLSession ?: return listOf()
-    return session.requestedServerNames.mapNotNull { (it as? SNIHostName)?.asciiName }
+    return try {
+      session.requestedServerNames.mapNotNull { (it as? SNIHostName)?.asciiName }
+    } catch (uoe: UnsupportedOperationException) {
+      // UnsupportedOperationException – if the underlying provider does not implement the operation
+      // https://github.com/bcgit/bc-java/issues/1773
+      listOf()
+    }
   }
 
   @Throws(IOException::class)
