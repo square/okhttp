@@ -1,11 +1,13 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
+    "config:recommended",
     ":dependencyDashboard",
     "schedule:weekly"
   ],
-  "labels": ["renovate"],
+  "labels": [
+    "renovate"
+  ],
   "ignoreDeps": [
     "com.squareup.okhttp3:okhttp",
     "com.squareup.okhttp3:okhttp-tls",
@@ -13,28 +15,34 @@
   ],
   "packageRules": [
     {
-      "matchPackagePatterns": [
-        "biz.*"
-      ],
-      "groupName": "bnd"
+      "groupName": "bnd",
+      "matchPackageNames": [
+        "/biz.*/"
+      ]
     },
     {
-      "matchPackagePatterns": [
-        "org.graalvm.*"
-      ],
-      "groupName": "graalvm"
+      "groupName": "graalvm",
+      "matchPackageNames": [
+        "/org.graalvm.*/"
+      ]
     },
     {
-      "matchPackageNames": ["org.objenesis:objenesis"],
+      "matchPackageNames": [
+        "org.objenesis:objenesis"
+      ],
       "allowedVersions": "<=2.6"
     },
     {
-      "matchPackageNames": ["org.eclipse.jetty:jetty-client"],
+      "matchPackageNames": [
+        "org.eclipse.jetty:jetty-client"
+      ],
       "allowedVersions": "<10.0",
       "description": "JDK 11 requirement"
     },
     {
-      "matchPackageNames": ["org.junit-pioneer:junit-pioneer"],
+      "matchPackageNames": [
+        "org.junit-pioneer:junit-pioneer"
+      ],
       "allowedVersions": "<2.0.0",
       "description": "JDK 11 requirement"
     }
