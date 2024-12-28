@@ -3,6 +3,7 @@
 import aQute.bnd.gradle.BundleTaskExtension
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
+import org.gradle.internal.fingerprint.classpath.impl.ClasspathFingerprintingStrategy.compileClasspath
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
@@ -54,6 +55,7 @@ kotlin {
   }
 
   androidTarget {
+    this.
     compilerOptions {
       jvmTarget.set(JvmTarget.JVM_17)
     }
@@ -95,7 +97,6 @@ kotlin {
         compileOnly(libs.bouncycastle.bctls)
         compileOnly(libs.conscrypt.openjdk)
         implementation(libs.androidx.annotation)
-        implementation(libs.androidx.startup.runtime)
       }
     }
 
@@ -211,6 +212,28 @@ android {
     }
   }
 }
+
+//afterEvaluate {
+//  configurations.all {
+////    "compileClasspath" {
+//      resolutionStrategy {
+//        force("androidx.startup:startup-runtime:1.2.0")
+////        eachDependency {
+////          println(requested)
+////          if (requested.group == "androidx.startup" && requested.name == "startup-runtime") {
+////            println("Here")
+////            force("androidx.startup:startup-runtime:1.2.0")
+//////            useTarget("androidx.startup:startup-runtime:1.2.0")
+////            because("Our license only allows use of version 1")
+////          }
+////        }
+//      }
+////      attributes {
+////        attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 11)
+////      }
+//    }
+////  }
+//}
 
 // Hack to make BundleTaskExtension pass briefly
 project.extensions
