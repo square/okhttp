@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.android
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+
+package okhttp.android.test
 
 import assertk.assertFailure
 import assertk.assertions.hasMessage
 import assertk.assertions.isInstanceOf
 import java.net.UnknownHostException
 import okhttp3.AsyncDns
+import okhttp3.android.AndroidAsyncDns
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner

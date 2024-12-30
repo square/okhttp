@@ -3,6 +3,7 @@
 import aQute.bnd.gradle.BundleTaskExtension
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
+import org.gradle.kotlin.dsl.compileOnly
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 import java.util.Base64
@@ -95,6 +96,7 @@ kotlin {
         compileOnly(libs.bouncycastle.bcprov)
         compileOnly(libs.bouncycastle.bctls)
         compileOnly(libs.conscrypt.openjdk)
+        implementation(libs.androidx.annotation)
       }
     }
 

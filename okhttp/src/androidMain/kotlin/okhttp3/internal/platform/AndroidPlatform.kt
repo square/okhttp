@@ -17,6 +17,7 @@ package okhttp3.internal.platform
 
 import android.os.Build
 import android.security.NetworkSecurityPolicy
+import android.util.Log
 import java.io.IOException
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -119,6 +120,18 @@ class AndroidPlatform : Platform() {
     return super.getHandshakeServerNames(sslSocket)
   }
 
+  override fun log(
+    message: String,
+    level: Int,
+    t: Throwable?,
+  ) {
+    if (level == WARN) {
+      Log.w(Tag, message, t)
+    } else {
+      Log.i(Tag, message, t)
+    }
+  }
+
   /**
    * A trust manager for Android applications that customize the trust manager.
    *
@@ -147,6 +160,8 @@ class AndroidPlatform : Platform() {
   }
 
   companion object {
+    val Tag = "OkHttp"
+
     val isSupported: Boolean =
       when {
         !isAndroid -> false

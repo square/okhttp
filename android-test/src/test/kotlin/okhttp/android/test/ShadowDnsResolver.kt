@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.android
+package okhttp.android.test
 
 import android.net.DnsResolver
 import android.net.Network

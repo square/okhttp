@@ -518,7 +518,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Gradle cache
-        run: ./gradlew -PandroidBuild=true :okhttp-android:test
+        run: ./gradlew -PandroidBuild=true :android-test:test
 
       - name: AVD cache
         uses: actions/cache@v4
@@ -545,7 +545,7 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
-          script: ./gradlew -PandroidBuild=true :okhttp-android:connectedCheck :android-test:connectedCheck
+          script: ./gradlew -PandroidBuild=true :android-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
 
