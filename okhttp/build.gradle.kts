@@ -273,6 +273,18 @@ configure<CheckstyleExtension> {
   sourceSets = listOf(project.sourceSets["main"])
 }
 
+afterEvaluate {
+  if (testJavaVersion < 9) {
+    // Work around robolectric requirements and limitations
+    tasks.named<Test>("testDebugUnitTest") {
+      allJvmArgs = allJvmArgs.filter { !it.startsWith("--add-opens") }
+      filter {
+        excludeTest("okhttp3.internal.publicsuffix.PublicSuffixDatabaseTest", null)
+      }
+    }
+  }
+}
+
 apply(plugin = "io.github.usefulness.maven-sympathy")
 
 mavenPublishing {
