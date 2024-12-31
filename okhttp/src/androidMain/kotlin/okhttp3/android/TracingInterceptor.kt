@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package okhttp3.android;
+package okhttp3.android
 
 import androidx.tracing.trace
 import okhttp3.Interceptor

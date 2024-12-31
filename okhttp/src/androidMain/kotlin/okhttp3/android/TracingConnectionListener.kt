@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.android;
+package okhttp3.android
 
 import androidx.tracing.Trace
 import java.util.concurrent.atomic.AtomicInteger
@@ -30,15 +30,24 @@ import okio.IOException
 class TracingConnectionListener : ConnectionListener() {
   private val idGenerator = AtomicInteger(0)
 
-  override fun connectStart(route: Route, call: Call) {
+  override fun connectStart(
+    route: Route,
+    call: Call,
+  ) {
     Trace.beginAsyncSection(route.tracingTag, idGenerator.incrementAndGet())
   }
 
-  override fun connectFailed(route: Route, call: Call, failure: IOException) {
+  override fun connectFailed(
+    route: Route,
+    call: Call,
+    failure: IOException,
+  ) {
+    // TODO same id
     Trace.endAsyncSection(route.tracingTag, idGenerator.incrementAndGet())
   }
 
   override fun connectionClosed(connection: Connection) {
+    // TODO same id
     Trace.endAsyncSection(connection.route().tracingTag, idGenerator.incrementAndGet())
   }
 
