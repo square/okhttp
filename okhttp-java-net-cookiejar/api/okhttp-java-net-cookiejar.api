@@ -1,0 +1,6 @@
+public final class okhttp3/java/net/cookiejar/JavaNetCookieJar : okhttp3/CookieJar {
+	public fun <init> (Ljava/net/CookieHandler;)V
+	public fun loadForRequest (Lokhttp3/HttpUrl;)Ljava/util/List;
+	public fun saveFromResponse (Lokhttp3/HttpUrl;Ljava/util/List;)V
+}
+

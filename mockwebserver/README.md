@@ -114,7 +114,7 @@ assertEquals("{}", request.getBody().readUtf8());
 #### Dispatcher
 
 By default MockWebServer uses a queue to specify a series of responses. Use a
-Dispatcher to handle requests using another policy. One natural policy is to
+Dispatcher (`import okhttp3.mockwebserver.Dispatcher`) to handle requests using another policy. One natural policy is to
 dispatch on the request path.
 You can, for example, filter the request instead of using `server.enqueue()`.
 
@@ -142,7 +142,7 @@ server.setDispatcher(dispatcher);
 ### Download
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:4.11.0")
+testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 ```
 
 ### License

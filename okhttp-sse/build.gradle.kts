@@ -22,10 +22,9 @@ dependencies {
   testImplementation(projects.mockwebserver3)
   testImplementation(projects.mockwebserver3Junit5)
   testImplementation(libs.junit)
-  testImplementation(libs.assertj.core)
   testCompileOnly(libs.findbugs.jsr305)
 }
 
 mavenPublishing {
-  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+  configure(KotlinJvm(javadocJar = JavadocJar.Empty()))
 }

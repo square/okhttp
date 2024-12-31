@@ -28,18 +28,22 @@ class Jdk8WithJettyBootPlatform(
   private val getMethod: Method,
   private val removeMethod: Method,
   private val clientProviderClass: Class<*>,
-  private val serverProviderClass: Class<*>
+  private val serverProviderClass: Class<*>,
 ) : Platform() {
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
-    protocols: List<Protocol>
+    protocols: List<Protocol>,
   ) {
     val names = alpnProtocolNames(protocols)
 
     try {
-      val alpnProvider = Proxy.newProxyInstance(Platform::class.java.classLoader,
-          arrayOf(clientProviderClass, serverProviderClass), AlpnProvider(names))
+      val alpnProvider =
+        Proxy.newProxyInstance(
+          Platform::class.java.classLoader,
+          arrayOf(clientProviderClass, serverProviderClass),
+          AlpnProvider(names),
+        )
       putMethod.invoke(null, sslSocket, alpnProvider)
     } catch (e: InvocationTargetException) {
       throw AssertionError("failed to set ALPN", e)
@@ -79,15 +83,20 @@ class Jdk8WithJettyBootPlatform(
    */
   private class AlpnProvider(
     /** This peer's supported protocols. */
-    private val protocols: List<String>
+    private val protocols: List<String>,
   ) : InvocationHandler {
     /** Set when remote peer notifies ALPN is unsupported. */
     var unsupported: Boolean = false
+
     /** The protocol the server selected. */
     var selected: String? = null
 
     @Throws(Throwable::class)
-    override fun invoke(proxy: Any, method: Method, args: Array<Any>?): Any? {
+    override fun invoke(
+      proxy: Any,
+      method: Method,
+      args: Array<Any>?,
+    ): Any? {
       val callArgs = args ?: arrayOf<Any?>()
       val methodName = method.name
       val returnType = method.returnType
@@ -99,7 +108,8 @@ class Jdk8WithJettyBootPlatform(
       } else if (methodName == "protocols" && callArgs.isEmpty()) {
         return protocols // Client advertises these protocols.
       } else if ((methodName == "selectProtocol" || methodName == "select") &&
-          String::class.java == returnType && callArgs.size == 1 && callArgs[0] is List<*>) {
+        String::class.java == returnType && callArgs.size == 1 && callArgs[0] is List<*>
+      ) {
         val peerProtocols = callArgs[0] as List<*>
         // Pick the first known protocol the peer advertises.
         for (i in 0..peerProtocols.size) {
@@ -142,7 +152,12 @@ class Jdk8WithJettyBootPlatform(
         val getMethod = alpnClass.getMethod("get", SSLSocket::class.java)
         val removeMethod = alpnClass.getMethod("remove", SSLSocket::class.java)
         return Jdk8WithJettyBootPlatform(
-            putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass)
+          putMethod,
+          getMethod,
+          removeMethod,
+          clientProviderClass,
+          serverProviderClass,
+        )
       } catch (_: ClassNotFoundException) {
       } catch (_: NoSuchMethodException) {
       }

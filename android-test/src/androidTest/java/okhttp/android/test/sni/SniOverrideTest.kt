@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp.android.test.sni;
+package okhttp.android.test.sni
 
 import android.os.Build
 import android.util.Log
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.isEqualTo
 import java.security.cert.X509Certificate
 import javax.net.ssl.SNIHostName
 import javax.net.ssl.SNIServerName
@@ -28,7 +31,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import org.junit.jupiter.api.Assumptions.assumeTrue
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
@@ -37,15 +39,16 @@ import org.junit.jupiter.api.Test
  */
 @Tag("Remote")
 class SniOverrideTest {
-  var client = OkHttpClient.Builder()
-    .build()
+  var client =
+    OkHttpClient.Builder()
+      .build()
 
   @Test
   fun getWithCustomSocketFactory() {
     assumeTrue(Build.VERSION.SDK_INT >= 24)
 
     class CustomSSLSocketFactory(
-      delegate: SSLSocketFactory
+      delegate: SSLSocketFactory,
     ) : DelegatingSSLSocketFactory(delegate) {
       override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -60,33 +63,34 @@ class SniOverrideTest {
       }
     }
 
-    client = client.newBuilder()
-      .sslSocketFactory(CustomSSLSocketFactory(client.sslSocketFactory), client.x509TrustManager!!)
-      .hostnameVerifier { hostname, session ->
-        val s = "hostname: $hostname peerHost:${session.peerHost}"
-        Log.d("SniOverrideTest", s)
-        try {
-          val cert = session.peerCertificates[0] as X509Certificate
-          for (name in cert.subjectAlternativeNames) {
-            if (name[0] as Int == 2) {
-              Log.d("SniOverrideTest", "cert: " + name[1])
+    client =
+      client.newBuilder()
+        .sslSocketFactory(CustomSSLSocketFactory(client.sslSocketFactory), client.x509TrustManager!!)
+        .hostnameVerifier { hostname, session ->
+          val s = "hostname: $hostname peerHost:${session.peerHost}"
+          Log.d("SniOverrideTest", s)
+          try {
+            val cert = session.peerCertificates[0] as X509Certificate
+            for (name in cert.subjectAlternativeNames) {
+              if (name[0] as Int == 2) {
+                Log.d("SniOverrideTest", "cert: " + name[1])
+              }
             }
+            true
+          } catch (e: Exception) {
+            false
           }
-          true
-        } catch (e: Exception) {
-          false
         }
-      }
-      .build()
+        .build()
 
-    val request = Request.Builder()
-      .url("https://sni.cloudflaressl.com/cdn-cgi/trace")
-      .header("Host", "cloudflare-dns.com")
-      .build()
+    val request =
+      Request.Builder()
+        .url("https://sni.cloudflaressl.com/cdn-cgi/trace")
+        .header("Host", "cloudflare-dns.com")
+        .build()
     client.newCall(request).execute().use { response ->
       assertThat(response.code).isEqualTo(200)
       assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
-
 
       assertThat(response.body.string()).contains("h=cloudflare-dns.com")
     }
@@ -94,15 +98,17 @@ class SniOverrideTest {
 
   @Test
   fun getWithDns() {
-    client = client.newBuilder()
-      .dns {
-        Dns.SYSTEM.lookup("sni.cloudflaressl.com")
-      }
-      .build()
+    client =
+      client.newBuilder()
+        .dns {
+          Dns.SYSTEM.lookup("sni.cloudflaressl.com")
+        }
+        .build()
 
-    val request = Request.Builder()
-      .url("https://cloudflare-dns.com/cdn-cgi/trace")
-      .build()
+    val request =
+      Request.Builder()
+        .url("https://cloudflare-dns.com/cdn-cgi/trace")
+        .build()
     client.newCall(request).execute().use { response ->
       assertThat(response.code).isEqualTo(200)
       assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)

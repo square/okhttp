@@ -16,7 +16,6 @@
 package okhttp3.tls.internal
 
 import java.io.InputStream
-import java.net.InetAddress
 import java.security.KeyStore
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
@@ -35,15 +34,16 @@ object TlsUtil {
 
   private val localhost: HandshakeCertificates by lazy {
     // Generate a self-signed cert for the server to serve and the client to trust.
-    val heldCertificate = HeldCertificate.Builder()
+    val heldCertificate =
+      HeldCertificate.Builder()
         .commonName("localhost")
         .addSubjectAlternativeName("localhost")
         .addSubjectAlternativeName("localhost.localdomain")
         .build()
     return@lazy HandshakeCertificates.Builder()
-        .heldCertificate(heldCertificate)
-        .addTrustedCertificate(heldCertificate.certificate)
-        .build()
+      .heldCertificate(heldCertificate)
+      .addTrustedCertificate(heldCertificate.certificate)
+      .build()
   }
 
   /** Returns an SSL client for this host's localhost address. */
@@ -55,7 +55,7 @@ object TlsUtil {
   fun newTrustManager(
     keyStoreType: String?,
     trustedCertificates: List<X509Certificate>,
-    insecureHosts: List<String>
+    insecureHosts: List<String>,
   ): X509TrustManager {
     val trustStore = newEmptyKeyStore(keyStoreType)
     for (i in trustedCertificates.indices) {
@@ -86,7 +86,7 @@ object TlsUtil {
   fun newKeyManager(
     keyStoreType: String?,
     heldCertificate: HeldCertificate?,
-    vararg intermediates: X509Certificate
+    vararg intermediates: X509Certificate,
   ): X509KeyManager {
     val keyStore = newEmptyKeyStore(keyStoreType)
     if (heldCertificate != null) {
@@ -96,7 +96,11 @@ object TlsUtil {
       keyStore.setKeyEntry("private", heldCertificate.keyPair.private, password, chain)
     }
 
-    val factory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
+    // https://github.com/bcgit/bc-java/issues/1160
+    val isBouncyCastle = keyStore.provider.name == "BC"
+    val algorithm = if (isBouncyCastle) "PKIX" else KeyManagerFactory.getDefaultAlgorithm()
+
+    val factory = KeyManagerFactory.getInstance(algorithm)
     factory.init(keyStore, password)
     val result = factory.keyManagers!!
     check(result.size == 1 && result[0] is X509KeyManager) {

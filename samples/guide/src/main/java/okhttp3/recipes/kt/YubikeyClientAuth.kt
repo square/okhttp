@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "Since15")
+
 package okhttp3.recipes.kt
 
 import java.io.IOException
@@ -61,12 +62,12 @@ class YubikeyClientAuth {
 
     val callbackHandler = ConsoleCallbackHandler
 
-    val builderList: List<KeyStore.Builder> = listOf(
-      KeyStore.Builder.newInstance("PKCS11", null, KeyStore.CallbackHandlerProtection(callbackHandler))
-
-      // Example if you want to combine multiple keystore types
-      // KeyStore.Builder.newInstance("PKCS12", null, File("keystore.p12"), PasswordProtection("rosebud".toCharArray()))
-    )
+    val builderList: List<KeyStore.Builder> =
+      listOf(
+        KeyStore.Builder.newInstance("PKCS11", null, KeyStore.CallbackHandlerProtection(callbackHandler)),
+        // Example if you want to combine multiple keystore types
+        // KeyStore.Builder.newInstance("PKCS12", null, File("keystore.p12"), PasswordProtection("rosebud".toCharArray()))
+      )
 
     val keyManagerFactory = KeyManagerFactory.getInstance("NewSunX509")
     keyManagerFactory.init(KeyStoreBuilderParameters(builderList))
@@ -77,12 +78,14 @@ class YubikeyClientAuth {
     val sslContext = SSLContext.getInstance("TLS")
     sslContext.init(arrayOf(keyManager), arrayOf(trustManager), SecureRandom())
 
-    val client = OkHttpClient.Builder()
+    val client =
+      OkHttpClient.Builder()
         .sslSocketFactory(sslContext.socketFactory, trustManager)
         .build()
 
     // An example test URL that returns client certificate details.
-    val request = Request.Builder()
+    val request =
+      Request.Builder()
         .url("https://prod.idrix.eu/secure/")
         .build()
 

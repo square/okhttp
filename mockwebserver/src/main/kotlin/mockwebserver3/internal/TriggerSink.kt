@@ -30,7 +30,10 @@ internal class TriggerSink(
 ) : Sink by delegate {
   private var bytesWritten = 0L
 
-  override fun write(source: Buffer, byteCount: Long) {
+  override fun write(
+    source: Buffer,
+    byteCount: Long,
+  ) {
     if (byteCount == 0L) return // Avoid double-triggering.
 
     if (bytesWritten == triggerByteCount) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Square, Inc.
+ * Copyright (C) 2022 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,8 @@ import okhttp3.survey.types.SuiteId
 class CipherSuiteSurvey(
   val clients: List<Client>,
   val ianaSuites: IanaSuites,
-  val orderBy: List<SuiteId>
+  val orderBy: List<SuiteId>,
 ) {
-
   fun printGoogleSheet() {
     print("name")
     for (client in clients) {
@@ -35,10 +34,11 @@ class CipherSuiteSurvey(
       print(client.nameAndVersion)
     }
     println()
-    val sortedSuites = ianaSuites.suites.sortedBy { ianaSuite ->
-      val index = orderBy.indexOfFirst { it.matches(ianaSuite) }
-      if (index == -1) Integer.MAX_VALUE else index
-    }
+    val sortedSuites =
+      ianaSuites.suites.sortedBy { ianaSuite ->
+        val index = orderBy.indexOfFirst { it.matches(ianaSuite) }
+        if (index == -1) Integer.MAX_VALUE else index
+      }
     for (suiteId in sortedSuites) {
       print(suiteId.name)
       for (client in clients) {
@@ -46,13 +46,6 @@ class CipherSuiteSurvey(
         val index = client.enabled.indexOfFirst { it.matches(suiteId) }
         if (index != -1) {
           print(index + 1)
-        } else if (client.supported.find { it.matches(suiteId) } != null) {
-          // Not currently supported, as since 3.9.x we filter to a list
-          // that is a subset of the platforms.
-          // The correct answer for developers who override ConnectionSpec,
-          // it would be the platform defaults, so look at Java and Android
-          // for the answers.
-          print("□")
         }
       }
       println()

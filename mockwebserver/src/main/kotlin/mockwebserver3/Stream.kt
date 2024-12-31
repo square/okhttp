@@ -15,12 +15,14 @@
  */
 package mockwebserver3
 
+import okhttp3.ExperimentalOkHttpApi
 import okio.BufferedSink
 import okio.BufferedSource
 
 /**
  * A bidirectional sequence of data frames exchanged between client and server.
  */
+@ExperimentalOkHttpApi
 interface Stream {
   val requestBody: BufferedSource
   val responseBody: BufferedSink

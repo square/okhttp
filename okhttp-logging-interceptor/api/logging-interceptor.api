@@ -1,4 +1,5 @@
 public final class okhttp3/logging/HttpLoggingInterceptor : okhttp3/Interceptor {
+	public static final field Companion Lokhttp3/logging/HttpLoggingInterceptor$Companion;
 	public final fun -deprecated_level ()Lokhttp3/logging/HttpLoggingInterceptor$Level;
 	public fun <init> ()V
 	public fun <init> (Lokhttp3/logging/HttpLoggingInterceptor$Logger;)V
@@ -7,7 +8,11 @@ public final class okhttp3/logging/HttpLoggingInterceptor : okhttp3/Interceptor 
 	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
 	public final fun level (Lokhttp3/logging/HttpLoggingInterceptor$Level;)V
 	public final fun redactHeader (Ljava/lang/String;)V
+	public final fun redactQueryParams ([Ljava/lang/String;)V
 	public final fun setLevel (Lokhttp3/logging/HttpLoggingInterceptor$Level;)Lokhttp3/logging/HttpLoggingInterceptor;
+}
+
+public final class okhttp3/logging/HttpLoggingInterceptor$Companion {
 }
 
 public final class okhttp3/logging/HttpLoggingInterceptor$Level : java/lang/Enum {
@@ -15,6 +20,7 @@ public final class okhttp3/logging/HttpLoggingInterceptor$Level : java/lang/Enum
 	public static final field BODY Lokhttp3/logging/HttpLoggingInterceptor$Level;
 	public static final field HEADERS Lokhttp3/logging/HttpLoggingInterceptor$Level;
 	public static final field NONE Lokhttp3/logging/HttpLoggingInterceptor$Level;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lokhttp3/logging/HttpLoggingInterceptor$Level;
 	public static fun values ()[Lokhttp3/logging/HttpLoggingInterceptor$Level;
 }
@@ -29,6 +35,7 @@ public final class okhttp3/logging/HttpLoggingInterceptor$Logger$Companion {
 }
 
 public final class okhttp3/logging/LoggingEventListener : okhttp3/EventListener {
+	public static final field Companion Lokhttp3/logging/LoggingEventListener$Companion;
 	public synthetic fun <init> (Lokhttp3/logging/HttpLoggingInterceptor$Logger;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun cacheConditionalHit (Lokhttp3/Call;Lokhttp3/Response;)V
 	public fun cacheHit (Lokhttp3/Call;Lokhttp3/Response;)V
@@ -59,6 +66,9 @@ public final class okhttp3/logging/LoggingEventListener : okhttp3/EventListener 
 	public fun satisfactionFailure (Lokhttp3/Call;Lokhttp3/Response;)V
 	public fun secureConnectEnd (Lokhttp3/Call;Lokhttp3/Handshake;)V
 	public fun secureConnectStart (Lokhttp3/Call;)V
+}
+
+public final class okhttp3/logging/LoggingEventListener$Companion {
 }
 
 public class okhttp3/logging/LoggingEventListener$Factory : okhttp3/EventListener$Factory {

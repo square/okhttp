@@ -5,6 +5,177 @@ Change Log
 
 See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
 
+## Version 5.0.0-alpha.14
+
+_2024-04-17_
+
+ *  Breaking: Move coroutines extensions to okhttp3.coroutines. Previously this artifact shared the
+    `okhttp3` package name with our core module, which is incompatible with the Java Platform Module
+    System.
+
+ *  Fix in okhttp-coroutines: Publish a valid artifact. The coroutines JAR file in 5.0.0-alpha.13
+    was corrupt and should not be used.
+
+
+## Version 5.0.0-alpha.13
+
+_2024-04-16_
+
+ *  Breaking: Tag unstable new APIs as `@ExperimentalOkHttpApi`. We intend to release OkHttp 5.0
+    without stabilizing these new APIs first.
+
+    Do not use these experimental APIs in modules that may be executed using a version of OkHttp
+    different from the version that the module was compiled with. Do not use them in published
+    libraries. Do not use them if you aren't willing to track changes to them.
+
+ *  Breaking: Drop support for Kotlin Multiplatform.
+
+    We planned to support multiplatform in OkHttp 5.0, but after building it, we weren't happy with
+    the implementation trade-offs. We can't use our HTTP client engine on Kotlin/JS, and we weren't
+    prepared to build a TLS API for Kotlin/Native.
+
+    We'd prefer a multiplatform HTTP client API that's backed by OkHttp on Android and JVM, and
+    other engines on other platforms. [Ktor] does this pretty well today!
+
+ *  Breaking: Use `kotlin.time.Duration` in APIs like `OkHttpClient.Builder.callTimeout()`. This
+    update also drops support for the `DurationUnit` functions introduced in earlier alpha releases
+    of OkHttp 5.
+
+ *  Breaking: Reorder the parameters in the Cache constructor that was introduced in 5.0.0-alpha.3.
+
+ *  New: `Request.Builder.cacheUrlOverride()` customizes the cache key used for a request. This can
+    be used to make canonical URLs for the cache that omit insignificant query parameters or other
+    irrelevant data.
+
+    This feature may be used with `POST` requests to cache their responses. In such cases the
+    request body is not used to determine the cache key, so you must manually add cache-relevant
+    data to the override URL. For example, you could add a `request-body-sha256` query parameter so
+    requests with the same POST data get the same cache entry.
+
+ *  New: `HttpLoggingInterceptor.redactQueryParams()` configures the query parameters to redact
+    in logs. For best security, don't put sensitive information in query parameters.
+
+ *  New: `ConnectionPool.setPolicy()` configures a minimum connection pool size for a target
+    address. Use this to proactively open HTTP connections.
+
+    Connections opened to fulfill this policy are subject to the connection pool's
+    `keepAliveDuration` but do not count against the pool-wide `maxIdleConnections` limit.
+
+    This feature increases the client's traffic and the load on the server. Talking to your server's
+    operators before adopting it.
+
+ *  New in okhttp-android: `HttpLoggingInterceptor.androidLogging()` and
+    `LoggingEventListener.androidLogging()` write HTTP calls or events to Logcat.
+
+ *  New: `OkHttpClient.webSocketCloseTimeout` configures how long a web socket connection will wait
+    for a graceful shutdown before it performs an abrupt shutdown.
+
+ *  Fix: Honor `RequestBody.isOneShot()` in `MultipartBody`
+
+ *  Fix in `okhttp-coroutines`: Don't leak response bodies in `executeAsync()`. We had a bug where
+    we didn't call `Response.close()` if the coroutine was canceled before its response was
+    returned.
+
+ *  Upgrade: [Okio 3.9.0][okio_3_9_0].
+
+ *  Upgrade: [Kotlin 1.9.23][kotlin_1_9_23].
+
+ *  Upgrade: [Unicode® IDNA 15.1.0][idna_15_1_0]
+
+
+## Version 5.0.0-alpha.12
+
+_2023-12-17_
+
+We took too long to cut this release and there's a lot of changes in it. We've been busy.
+
+Although this release is labeled _alpha_, the only unstable thing in it is our new APIs. This
+release has many critical bug fixes and is safe to run in production. We're eager to stabilize our
+new APIs so we can get out of alpha.
+
+ *  New: Support Java 21's virtual threads (‘OpenJDK Project Loom’). We changed OkHttp's internals
+    to use `Lock` and `Condition` instead of `synchronized` for best resource utilization.
+
+ *  New: Switch our Internationalized Domain Name (IDN) implementation to [UTS #46 Nontransitional
+    Processing][uts46]. With this fix, the `ß` code point no longer maps to `ss`. OkHttp now embeds
+    its own IDN mapping table in the library.
+
+ *  New: Prefer the client's configured precedence order for TLS cipher suites. (OkHttp used to
+    prefer the JDK’s precedence order.) This change may cause your HTTP calls to negotiate a
+    different cipher suite than before! OkHttp's defaults cipher suites are selected for good
+    security and performance.
+
+ *  New: `ConnectionListener` publishes events for connects, disconnects, and use of pooled
+    connections.
+
+ *  Fix: Immediately update the connection's flow control window instead of waiting for the
+    receiving stream to process it.
+
+    This change may increase OkHttp's memory use for applications that make many concurrent HTTP
+    calls and that can receive data faster than they can process it. Previously, OkHttp limited
+    HTTP/2 to 16 MiB of unacknowledged data per connection. With this fix there is a limit of 16 MiB
+    of unacknowledged data per stream and no per-connection limit.
+
+ *  Fix: Don't close a `Deflater` while we're still using it to compress a web socket message. We
+    had a severe bug where web sockets were closed on the wrong thread, which caused
+    `NullPointerException` crashes in `Deflater`.
+
+ *  Fix: Don't crash after a web socket fails its connection upgrade. We incorrectly released
+    the web socket's connections back to the pool before their resources were cleaned up.
+
+ *  Fix: Don't infinite loop when a received web socket message has self-terminating compressed
+    data.
+
+ *  Fix: Don't fail the call when the response code is ‘HTTP 102 Processing’ or ‘HTTP 103 Early
+    Hints’.
+
+ *  Fix: Honor interceptors' changes to connect and read timeouts.
+
+ *  Fix: Recover gracefully when a cached response is corrupted on disk.
+
+ *  Fix: Don't leak file handles when a cache disk write fails.
+
+ *  Fix: Don't hang when the public suffix database cannot be loaded. We had a bug where a failure
+    reading the public suffix database would cause subsequent reads to hang when they should have
+    crashed.
+
+ *  Fix: Avoid `InetAddress.getCanonicalHostName()` in MockWebServer. This avoids problems if the
+    host machine's IP address has additional DNS registrations.
+
+ *  New: Create a JPMS-compatible artifact for `JavaNetCookieJar`. Previously, multiple OkHttp
+    artifacts defined classes in the `okhttp3` package, but this is forbidden by the Java module
+    system. We've fixed this with a new package (`okhttp3.java.net.cookiejar`) and a new artifact,
+    `com.squareup.okhttp3:okhttp-java-net-cookiehandler`. (The original artifact now delegates to
+    this new one.)
+
+    ```kotlin
+    implementation("com.squareup.okhttp3:okhttp-java-net-cookiehandler:5.0.0-alpha.12")
+    ```
+
+ *  New: `Cookie.sameSite` determines whether cookies should be sent on cross-site requests. This
+    is used by servers to defend against Cross-Site Request Forgery (CSRF) attacks.
+
+ *  New: Log the total time of the HTTP call in `HttpLoggingInterceptor`.
+
+ *  New: `OkHttpClient.Builder` now has APIs that use `kotlin.time.Duration`.
+
+ *  New: `mockwebserver3.SocketPolicy` is now a sealed interface. This is one of several
+    backwards-incompatible API changes that may impact early adopters of this alpha API.
+
+ *  New: `mockwebserver3.Stream` for duplex streams.
+
+ *  New: `mockwebserver3.MockResponseBody` for streamed response bodies.
+
+ *  New: `mockwebserver3.MockResponse` is now immutable, with a `Builder`.
+
+ *  New: `mockwebserver3.RecordedRequest.handshakeServerNames` returns the SNI (Server Name
+    Indication) attribute from the TLS handshake.
+
+ *  Upgrade: [Kotlin 1.9.21][kotlin_1_9_21].
+
+ *  Upgrade: [Okio 3.7.0][okio_3_7_0].
+
+
 ## Version 5.0.0-alpha.11
 
 _2022-12-24_
@@ -264,17 +435,25 @@ Note that this was originally released on 2020-10-06 as 4.10.0-RC1. The only cha
 release is the version name.
 
 
+[Ktor]: https://ktor.io/
 [assertk]: https://github.com/willowtreeapps/assertk
 [graalvm]: https://www.graalvm.org/
 [graalvm_21]: https://www.graalvm.org/release-notes/21_0/
 [graalvm_22]: https://www.graalvm.org/release-notes/22_2/
+[idna_15_1_0]: https://www.unicode.org/reports/tr46/#Modifications
 [kotlin_1_4_20]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.20
 [kotlin_1_5_31]: https://github.com/JetBrains/kotlin/releases/tag/v1.5.31
 [kotlin_1_6_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.6.10
 [kotlin_1_6_21]: https://github.com/JetBrains/kotlin/releases/tag/v1.6.21
 [kotlin_1_7_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.7.10
+[kotlin_1_9_21]: https://github.com/JetBrains/kotlin/releases/tag/v1.9.21
+[kotlin_1_9_23]: https://github.com/JetBrains/kotlin/releases/tag/v1.9.23
+[loom]: https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html
 [okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
 [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
 [okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
 [okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
+[okio_3_7_0]: https://square.github.io/okio/changelog/#version-370
+[okio_3_9_0]: https://square.github.io/okio/changelog/#version-390
 [rfc_8305]: https://tools.ietf.org/html/rfc8305
+[uts46]: https://www.unicode.org/reports/tr46

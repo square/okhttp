@@ -22,6 +22,27 @@ configured to fall back for broad connectivity.
 Using OkHttp is easy. Its request/response API is designed with fluent builders and immutability. It
 supports both synchronous blocking calls and async calls with callbacks.
 
+A well behaved user agent
+-------------------------
+
+OkHttp follows modern HTTP specifications such as
+
+* HTTP/1.1 - [RFC 7231](https://datatracker.ietf.org/doc/html/rfc7231)
+* HTTP/2 - [RFC 9113](https://datatracker.ietf.org/doc/html/rfc9113)
+* Websockets - [RFC 6455](https://datatracker.ietf.org/doc/html/rfc6455)
+* SSE - [Server-sent events](https://html.spec.whatwg.org/multipage/server-sent-events.html#server-sent-events)
+
+Where the spec is ambiguous, OkHttp follows modern user agents such as popular Browsers or common HTTP Libraries.
+
+OkHttp is principled and avoids being overly configurable, especially when such configuration is
+to workaround a buggy server, test invalid scenarios or that contradict the relevant RFC. 
+Other HTTP libraries exist that fill that gap allowing extensive customisation including potentially
+invalid requests.
+
+Example Limitations
+
+* Does not allow GET with a body.
+* Cache is not an interface with alternative implementations.
 
 Get a URL
 ---------
@@ -97,10 +118,10 @@ Releases
 
 Our [change log][changelog] has release history.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/4.11.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/4.12.0/jar).
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp:4.11.0")
+implementation("com.squareup.okhttp3:okhttp:4.12.0")
 ```
 
 Snapshot builds are [available][snap]. [R8 and ProGuard][r8_proguard] rules are available.
@@ -110,7 +131,7 @@ Also, we have a [bill of materials (BOM)][bom] available to help you keep OkHttp
 ```kotlin
     dependencies {
        // define a BOM and its version
-       implementation(platform("com.squareup.okhttp3:okhttp-bom:4.11.0"))
+       implementation(platform("com.squareup.okhttp3:okhttp-bom:4.12.0"))
 
        // define any required OkHttp artifacts without version
        implementation("com.squareup.okhttp3:okhttp")
@@ -123,11 +144,16 @@ MockWebServer
 
 OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/4.11.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/4.12.0/jar).
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:4.11.0")
+testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 ```
+
+MockWebServer is used for firstly for internal testing, and for basic testing of apps using OkHttp client. 
+It is not a full featured HTTP testing library that is developed standalone. It is not being actively developed
+for new features. As such you might find your needs outgrow MockWebServer and you may which to use a 
+more full featured testing library such as [MockServer](https://www.mock-server.com/).
 
 GraalVM Native Image
 --------------------
@@ -167,7 +193,7 @@ limitations under the License.
  [conscrypt]: https://github.com/google/conscrypt/
  [get_example]: https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/GetExample.java
  [kotlin]: https://kotlinlang.org/
- [okhttp3_pro]: https://raw.githubusercontent.com/square/okhttp/master/okhttp/src/jvmMain/resources/META-INF/proguard/okhttp3.pro
+ [okhttp3_pro]: https://raw.githubusercontent.com/square/okhttp/master/okhttp/src/main/resources/META-INF/proguard/okhttp3.pro
  [okhttp_312x]: https://github.com/square/okhttp/tree/okhttp_3.12.x
  [okhttp]: https://square.github.io/okhttp/
  [okio]: https://github.com/square/okio

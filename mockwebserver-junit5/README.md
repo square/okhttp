@@ -6,7 +6,7 @@ This module integrates mockwebserver3.MockWebServer with JUnit 5.
 To use, first add this library as a test dependency:
 
 ```
-testRuntimeOnly("com.squareup.okhttp3:mockwebserver3-junit5:4.11.0")
+testRuntimeOnly("com.squareup.okhttp3:mockwebserver3-junit5:4.12.0")
 ```
 
 Then in tests annotated `@org.junit.jupiter.api.Test`, you may add a [MockWebServer] as a test
@@ -43,6 +43,21 @@ Constructor injection is particularly concise in Kotlin:
 ```
 class MyTest(
   private val server: MockWebServer
+) {
+  @Test
+  fun test() {
+    ...
+  }
+}
+```
+
+Multiple instances can be obtained by naming additional ones:
+
+```
+class MyTest(
+  private val server: MockWebServer,
+  @MockWebServerInstance("server2") private val server2: MockWebServer,
+  @MockWebServerInstance("server3") private val server3: MockWebServer
 ) {
   @Test
   fun test() {

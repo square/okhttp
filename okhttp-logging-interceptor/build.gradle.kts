@@ -24,9 +24,9 @@ dependencies {
   testImplementation(projects.mockwebserver3Junit5)
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.okhttpTls)
-  testImplementation(libs.assertj.core)
+  testImplementation(libs.assertk)
 }
 
 mavenPublishing {
-  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+  configure(KotlinJvm(javadocJar = JavadocJar.Empty()))
 }

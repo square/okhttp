@@ -168,6 +168,7 @@ public final class okhttp3/mockwebserver/SocketPolicy : java/lang/Enum {
 	public static final field SHUTDOWN_SERVER_AFTER_RESPONSE Lokhttp3/mockwebserver/SocketPolicy;
 	public static final field STALL_SOCKET_AT_START Lokhttp3/mockwebserver/SocketPolicy;
 	public static final field UPGRADE_TO_SSL_AT_END Lokhttp3/mockwebserver/SocketPolicy;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lokhttp3/mockwebserver/SocketPolicy;
 	public static fun values ()[Lokhttp3/mockwebserver/SocketPolicy;
 }

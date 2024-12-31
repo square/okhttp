@@ -8,6 +8,9 @@
 
 set -ex
 
+# Test generating the javadoc jars
+./gradlew publishToMavenLocal -DRELEASE_SIGNING_ENABLED=false
+
 # Generate the API docs
 ./gradlew dokkaHtmlMultiModule
 

@@ -4,11 +4,13 @@ plugins {
 }
 
 android {
-  compileSdk = 31
+  compileSdk = 34
+
+  namespace = "okhttp.android.regression"
 
   defaultConfig {
     minSdk = 21
-    targetSdk = 31
+    targetSdk = 34
 
     // Make sure to use the AndroidJUnitRunner (or a sub-class) in order to hook in the JUnit 5 Test Builder
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

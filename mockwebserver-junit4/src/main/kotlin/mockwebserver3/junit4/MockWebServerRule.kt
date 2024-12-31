@@ -15,11 +15,12 @@
  */
 package mockwebserver3.junit4
 
-import mockwebserver3.MockWebServer
-import org.junit.rules.ExternalResource
 import java.io.IOException
 import java.util.logging.Level
 import java.util.logging.Logger
+import mockwebserver3.MockWebServer
+import okhttp3.ExperimentalOkHttpApi
+import org.junit.rules.ExternalResource
 
 /**
  * Runs MockWebServer for the duration of a single test method.
@@ -37,6 +38,7 @@ import java.util.logging.Logger
  * @JvmField @Rule val serverRule = MockWebServerRule()
  * ```
  */
+@ExperimentalOkHttpApi
 class MockWebServerRule : ExternalResource() {
   val server: MockWebServer = MockWebServer()
 
@@ -56,6 +58,7 @@ class MockWebServerRule : ExternalResource() {
     }
   }
 
+  @ExperimentalOkHttpApi
   companion object {
     private val logger = Logger.getLogger(MockWebServerRule::class.java.name)
   }
