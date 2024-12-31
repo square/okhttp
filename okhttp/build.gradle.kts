@@ -273,6 +273,19 @@ configure<CheckstyleExtension> {
   sourceSets = listOf(project.sourceSets["main"])
 }
 
+afterEvaluate {
+  tasks.withType<Test> {
+    if (javaLauncher.get().metadata.languageVersion.asInt() < 9) {
+      // Work around robolectric requirements and limitations
+      // https://cs.android.com/android-studio/platform/tools/base/+/mirror-goog-studio-main:build-system/gradle-core/src/main/java/com/android/build/gradle/tasks/factory/AndroidUnitTest.java;l=339
+      allJvmArgs = allJvmArgs.filter { !it.startsWith("--add-opens") }
+      filter {
+        excludeTest("okhttp3.internal.publicsuffix.PublicSuffixDatabaseTest", null)
+      }
+    }
+  }
+}
+
 apply(plugin = "io.github.usefulness.maven-sympathy")
 
 mavenPublishing {
