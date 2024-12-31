@@ -13,6 +13,7 @@ plugins {
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
+  id("io.github.gmazzo.aar2jar") version "1.0.1"
 }
 
 val platform = System.getProperty("okhttp.platform", "jdk9")
@@ -263,7 +264,6 @@ dependencies {
 // Animal Sniffer confirms we generally don't use APIs not on Java 8.
 configure<AnimalSnifferExtension> {
   annotation = "okhttp3.internal.SuppressSignatureCheck"
-  sourceSets = listOf(project.sourceSets["main"])
 }
 
 configure<CheckstyleExtension> {
