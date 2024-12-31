@@ -276,7 +276,7 @@ configure<CheckstyleExtension> {
 afterEvaluate {
   if (testJavaVersion < 9) {
     // Work around robolectric requirements and limitations
-    tasks.named<Test>("testDebugUnitTest") {
+    tasks.withType<Test> {
       allJvmArgs = allJvmArgs.filter { !it.startsWith("--add-opens") }
       filter {
         excludeTest("okhttp3.internal.publicsuffix.PublicSuffixDatabaseTest", null)
