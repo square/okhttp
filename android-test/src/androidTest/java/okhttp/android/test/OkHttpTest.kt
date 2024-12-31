@@ -15,7 +15,9 @@
  */
 package okhttp.android.test
 
+import android.content.Context
 import android.os.Build
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.google.android.gms.security.ProviderInstaller
@@ -63,6 +65,7 @@ import okhttp3.internal.http2.Http2
 import okhttp3.internal.platform.Android10Platform
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.platform.PlatformRegistry
 import okhttp3.logging.LoggingEventListener
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
@@ -117,6 +120,9 @@ class OkHttpTest {
 
   @BeforeEach
   fun setup(server: MockWebServer) {
+    // Needed because of Platform.resetForTests
+    PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext<Context>()
+
     this.server = server
   }
 

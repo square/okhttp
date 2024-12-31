@@ -153,7 +153,7 @@ class PublicSuffixDatabase internal constructor(
 
     private const val EXCEPTION_MARKER = '!'
 
-    private val instance = PublicSuffixDatabase(EmbeddedPublicSuffixList)
+    private val instance = PublicSuffixDatabase(PublicSuffixList.Default)
 
     fun get(): PublicSuffixDatabase {
       return instance

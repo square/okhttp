@@ -3,10 +3,8 @@
 import aQute.bnd.gradle.BundleTaskExtension
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
-import org.gradle.kotlin.dsl.compileOnly
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
-import java.util.Base64
 
 plugins {
   kotlin("multiplatform")
@@ -15,14 +13,11 @@ plugins {
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
+  id("io.github.gmazzo.aar2jar") version "1.0.1"
 }
 
 val platform = System.getProperty("okhttp.platform", "jdk9")
 val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
-
-fun ByteArray.toByteStringExpression(): String {
-  return "\"${Base64.getEncoder().encodeToString(this@toByteStringExpression)}\".decodeBase64()!!"
-}
 
 val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
   val kotlinTemplatesOutput = layout.buildDirectory.dir("generated/sources/kotlinTemplates")
@@ -30,20 +25,11 @@ val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
   from("src/commonJvmAndroid/kotlinTemplates")
   into(kotlinTemplatesOutput)
 
-  // Tag as an input to regenerate after an update
-  inputs.file("src/jvmTest/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
-
   filteringCharset = Charsets.UTF_8.toString()
-
-  val databaseGz = project.file("src/jvmTest/resources/okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz")
-  val listBytes = databaseGz.readBytes().toByteStringExpression()
 
   expand(
     // Build & use okhttp3/internal/-InternalVersion.kt
     "projectVersion" to project.version,
-
-    // Build okhttp3/internal/publicsuffix/EmbeddedPublicSuffixList.kt
-    "publicSuffixListBytes" to listBytes
   )
 }
 
@@ -90,6 +76,19 @@ kotlin {
       }
     }
 
+    commonTest {
+      dependencies {
+        implementation(projects.okhttpTestingSupport)
+        implementation(libs.assertk)
+        implementation(libs.kotlin.test.annotations)
+        implementation(libs.kotlin.test.common)
+        implementation(libs.kotlin.test.junit)
+        implementation(libs.junit)
+        implementation(libs.junit.jupiter.api)
+        implementation(libs.junit.jupiter.params)
+      }
+    }
+
     androidMain {
       dependsOn(commonJvmAndroid)
       dependencies {
@@ -97,6 +96,7 @@ kotlin {
         compileOnly(libs.bouncycastle.bctls)
         compileOnly(libs.conscrypt.openjdk)
         implementation(libs.androidx.annotation)
+        implementation(libs.androidx.startup.runtime)
       }
     }
 
@@ -158,6 +158,20 @@ kotlin {
         }
       }
     }
+
+    val androidUnitTest by getting {
+      dependencies {
+        implementation(libs.assertk)
+        implementation(libs.kotlin.test.annotations)
+        implementation(libs.kotlin.test.common)
+        implementation(libs.androidx.junit)
+
+        implementation(libs.junit.jupiter.engine)
+        implementation(libs.junit.vintage.engine)
+
+        implementation(libs.robolectric)
+      }
+    }
   }
 }
 
@@ -183,6 +197,19 @@ android {
     minSdk = 21
 
     consumerProguardFiles("okhttp3.pro")
+  }
+
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+    }
+  }
+
+  sourceSets {
+    named("main") {
+      manifest.srcFile("src/androidMain/AndroidManifest.xml")
+      assets.srcDir("src/androidMain/assets")
+    }
   }
 }
 
@@ -237,7 +264,6 @@ dependencies {
 // Animal Sniffer confirms we generally don't use APIs not on Java 8.
 configure<AnimalSnifferExtension> {
   annotation = "okhttp3.internal.SuppressSignatureCheck"
-  sourceSets = listOf(project.sourceSets["main"])
 }
 
 configure<CheckstyleExtension> {

@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.platform
+package okhttp3.internal.publicsuffix
 
-import android.content.Context
-import okhttp3.internal.platform.android.AndroidLog
+import okio.FileSystem
+import okio.GzipSource
+import okio.Path
+import okio.Path.Companion.toPath
+import okio.Source
 
-actual object PlatformRegistry {
-  actual fun findPlatform(): Platform {
-    AndroidLog.enable()
-    return Android10Platform.buildIfSupported() ?: AndroidPlatform.buildIfSupported()!!
+internal class ResourcePublicSuffixList(
+  override val path: Path = PUBLIC_SUFFIX_RESOURCE,
+  val fileSystem: FileSystem = FileSystem.Companion.RESOURCES,
+) : BasePublicSuffixList() {
+  override fun listSource(): Source = GzipSource(fileSystem.source(path))
+
+  companion object {
+    @JvmField
+    val PUBLIC_SUFFIX_RESOURCE =
+      "okhttp3/internal/publicsuffix/${PublicSuffixDatabase::class.java.simpleName}.gz".toPath()
   }
-
-  actual val isAndroid: Boolean
-    get() = true
-
-  var applicationContext: Context?
-    get() = (Platform.get() as? ContextAwarePlatform)?.applicationContext
-    set(value) {
-      (Platform.get() as? ContextAwarePlatform)?.applicationContext = value
-    }
 }

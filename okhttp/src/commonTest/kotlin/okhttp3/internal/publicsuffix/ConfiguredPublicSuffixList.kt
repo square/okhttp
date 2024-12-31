@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.platform
+package okhttp3.internal.publicsuffix
 
-import android.content.Context
-import okhttp3.internal.platform.android.AndroidLog
+import okio.ByteString
 
-actual object PlatformRegistry {
-  actual fun findPlatform(): Platform {
-    AndroidLog.enable()
-    return Android10Platform.buildIfSupported() ?: AndroidPlatform.buildIfSupported()!!
+/**
+ * An implementation of I/O for PublicSuffixDatabase.gz by directly passing in ByteStrings.
+ */
+internal class ConfiguredPublicSuffixList : PublicSuffixList {
+  override fun ensureLoaded() {
   }
 
-  actual val isAndroid: Boolean
-    get() = true
+  override var bytes: ByteString = ByteString.EMPTY
 
-  var applicationContext: Context?
-    get() = (Platform.get() as? ContextAwarePlatform)?.applicationContext
-    set(value) {
-      (Platform.get() as? ContextAwarePlatform)?.applicationContext = value
-    }
+  override var exceptionBytes: ByteString = ByteString.EMPTY
 }

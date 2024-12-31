@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.platform
+package okhttp3.test
 
 import android.content.Context
-import okhttp3.internal.platform.android.AndroidLog
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import okhttp3.internal.platform.PlatformRegistry
+import org.junit.Before
+import org.junit.runner.RunWith
 
-actual object PlatformRegistry {
-  actual fun findPlatform(): Platform {
-    AndroidLog.enable()
-    return Android10Platform.buildIfSupported() ?: AndroidPlatform.buildIfSupported()!!
+@RunWith(AndroidJUnit4::class)
+actual abstract class BaseJavaTest actual constructor() {
+  @Before
+  fun init() {
+    PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext<Context>()
   }
-
-  actual val isAndroid: Boolean
-    get() = true
-
-  var applicationContext: Context?
-    get() = (Platform.get() as? ContextAwarePlatform)?.applicationContext
-    set(value) {
-      (Platform.get() as? ContextAwarePlatform)?.applicationContext = value
-    }
 }

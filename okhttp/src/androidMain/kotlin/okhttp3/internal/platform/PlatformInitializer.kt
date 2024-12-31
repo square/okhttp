@@ -16,20 +16,17 @@
 package okhttp3.internal.platform
 
 import android.content.Context
-import okhttp3.internal.platform.android.AndroidLog
+import androidx.startup.Initializer
 
-actual object PlatformRegistry {
-  actual fun findPlatform(): Platform {
-    AndroidLog.enable()
-    return Android10Platform.buildIfSupported() ?: AndroidPlatform.buildIfSupported()!!
+/**
+ * Androidx Startup initializer to ensure that the AndroidPlatform has access to the application context.
+ */
+class PlatformInitializer : Initializer<Platform> {
+  override fun create(context: Context): Platform {
+    PlatformRegistry.applicationContext = context
+
+    return Platform.get()
   }
 
-  actual val isAndroid: Boolean
-    get() = true
-
-  var applicationContext: Context?
-    get() = (Platform.get() as? ContextAwarePlatform)?.applicationContext
-    set(value) {
-      (Platform.get() as? ContextAwarePlatform)?.applicationContext = value
-    }
+  override fun dependencies(): List<Class<Initializer<*>>> = listOf()
 }
