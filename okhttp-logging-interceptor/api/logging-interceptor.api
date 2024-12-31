@@ -8,6 +8,7 @@ public final class okhttp3/logging/HttpLoggingInterceptor : okhttp3/Interceptor 
 	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
 	public final fun level (Lokhttp3/logging/HttpLoggingInterceptor$Level;)V
 	public final fun redactHeader (Ljava/lang/String;)V
+	public final fun redactQueryParams ([Ljava/lang/String;)V
 	public final fun setLevel (Lokhttp3/logging/HttpLoggingInterceptor$Level;)Lokhttp3/logging/HttpLoggingInterceptor;
 }
 

@@ -1,0 +1,19 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/java:21-bookworm",
+  "features": {
+      "ghcr.io/devcontainers/features/java:1": {
+          "version": "17"
+      }
+  },
+  "customizations": {
+      "vscode": {
+          "settings": {
+              "java.server.launchMode": "Standard"
+          },
+          "extensions": [
+              "vscjava.vscode-java-pack",
+              "vscjava.vscode-gradle"
+          ]
+      }
+  }
+}

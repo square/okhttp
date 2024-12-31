@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
- * Sanity test for checking which environment and IDE is picking up.
+ * Validates which environment is used by the IDE.
  */
 class PlatformRuleTest {
   @RegisterExtension @JvmField

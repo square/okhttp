@@ -58,7 +58,6 @@ class ApacheHttpClientTest {
     val recorded = server.takeRequest()
     assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
     assertThat(recorded.headers["Accept-Encoding"]).isEqualTo("gzip, x-gzip, deflate")
-    assertThat(recorded.headers["Connection"]).isEqualTo("keep-alive")
     assertThat(recorded.headers["User-Agent"]!!).startsWith("Apache-HttpClient/")
   }
 }

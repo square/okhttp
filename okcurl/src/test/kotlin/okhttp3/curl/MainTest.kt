@@ -19,6 +19,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import assertk.assertions.startsWith
+import com.github.ajalt.clikt.core.parse
 import java.io.IOException
 import kotlin.test.Test
 import okhttp3.RequestBody

@@ -19,6 +19,7 @@ dependencies {
   api(libs.junit)
 
   testImplementation(libs.assertk)
+  testImplementation(libs.junit.vintage.engine)
 }
 
 mavenPublishing {

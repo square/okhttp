@@ -77,7 +77,10 @@ class MockResponseSniTest {
     assertThat(response.isSuccessful).isTrue()
 
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.handshakeServerNames).containsExactly(url.host)
+    // https://github.com/bcgit/bc-java/issues/1773
+    if (!platform.isBouncyCastle()) {
+      assertThat(recordedRequest.handshakeServerNames).containsExactly(url.host)
+    }
   }
 
   /**
@@ -126,7 +129,11 @@ class MockResponseSniTest {
 
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.requestUrl!!.host).isEqualTo("header-host")
-    assertThat(recordedRequest.handshakeServerNames).containsExactly("url-host.com")
+
+    // https://github.com/bcgit/bc-java/issues/1773
+    if (!platform.isBouncyCastle()) {
+      assertThat(recordedRequest.handshakeServerNames).containsExactly("url-host.com")
+    }
   }
 
   /** No SNI for literal IPv6 addresses. */
@@ -149,7 +156,10 @@ class MockResponseSniTest {
   fun regularHostname() {
     val recordedRequest = requestToHostnameViaProxy("cash.app")
     assertThat(recordedRequest.requestUrl!!.host).isEqualTo("cash.app")
-    assertThat(recordedRequest.handshakeServerNames).containsExactly("cash.app")
+    // https://github.com/bcgit/bc-java/issues/1773
+    if (!platform.isBouncyCastle()) {
+      assertThat(recordedRequest.handshakeServerNames).containsExactly("cash.app")
+    }
   }
 
   /**

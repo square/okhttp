@@ -28,14 +28,14 @@ import okhttp3.Response;
 public final class CheckHandshake {
   /** Rejects otherwise-trusted certificates. */
   private static final Interceptor CHECK_HANDSHAKE_INTERCEPTOR = new Interceptor() {
-    final Set<String> blacklist = Collections.singleton(
+    final Set<String> denylist = Collections.singleton(
         "sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=");
 
     @Override public Response intercept(Chain chain) throws IOException {
       for (Certificate certificate : chain.connection().handshake().peerCertificates()) {
         String pin = CertificatePinner.pin(certificate);
-        if (blacklist.contains(pin)) {
-          throw new IOException("Blacklisted peer certificate: " + pin);
+        if (denylist.contains(pin)) {
+          throw new IOException("Denylisted peer certificate: " + pin);
         }
       }
       return chain.proceed(chain.request());
