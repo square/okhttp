@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Square, Inc.
+ * Copyright (C) 2022 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@ package okhttp3.survey
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.executeAsync
+import okhttp3.coroutines.executeAsync
 import okhttp3.survey.types.SuiteId
-import okio.ByteString
 import okio.ByteString.Companion.decodeHex
 import okio.IOException
 
@@ -30,7 +29,7 @@ val IANA_CSV_PATTERN = "\"0x(\\w\\w),0x(\\w\\w)\",(\\w+).*".toRegex()
 fun parseIanaCsvRow(s: String): SuiteId? {
   if (s.contains("Reserved") || s.contains("Unassigned")) return null
   val matcher = IANA_CSV_PATTERN.matchEntire(s) ?: return null
-  val id: ByteString = (matcher.groupValues[1] + matcher.groupValues[2]).decodeHex()
+  val id = (matcher.groupValues[1] + matcher.groupValues[2]).decodeHex()
   return SuiteId(id, matcher.groupValues[3])
 }
 
@@ -39,13 +38,9 @@ class IanaSuites(
   val suites: List<SuiteId>,
 ) {
   fun fromJavaName(javaName: String): SuiteId {
-    for (suiteId in suites) {
-      val alternateName = "TLS_" + javaName.substring(4)
-      if (suiteId.name == javaName || suiteId.name == alternateName) {
-        return suiteId
-      }
-    }
-    throw IllegalArgumentException("No such suite: $javaName")
+    return suites.firstOrNull {
+      it.name == javaName || it.name == "TLS_${javaName.drop(4)}"
+    } ?: throw IllegalArgumentException("No such suite: $javaName")
   }
 }
 
@@ -60,7 +55,8 @@ suspend fun fetchIanaSuites(okHttpClient: OkHttpClient): IanaSuites {
         throw IOException("Failed ${it.code} ${it.message}")
       }
       it.body.string().lines()
-    }.mapNotNull { parseIanaCsvRow(it) }
+        .mapNotNull { parseIanaCsvRow(it) }
+    }
 
   return IanaSuites("current", suites)
 }

@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress(
+  "CANNOT_OVERRIDE_INVISIBLE_MEMBER",
+  "INVISIBLE_MEMBER",
+  "INVISIBLE_REFERENCE",
+)
+
 package okhttp3
 
 import java.io.Closeable
@@ -28,10 +34,15 @@ import javax.net.ssl.SSLSocketFactory
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.CallConnectionUser
+import okhttp3.internal.connection.FastFallbackExchangeFinder
+import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RealConnectionPool
 import okhttp3.internal.connection.RealRoutePlanner
+import okhttp3.internal.connection.RouteDatabase
+import okhttp3.internal.connection.RoutePlanner
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.tls.HandshakeCertificates
@@ -83,13 +94,14 @@ class TestValueFactory : Closeable {
         socket = Socket(),
         idleAtNs = idleAtNanos,
       )
-    synchronized(result) { pool.put(result) }
+    result.withLock { pool.put(result) }
     return result
   }
 
   fun newConnectionPool(
     taskRunner: TaskRunner = this.taskRunner,
     maxIdleConnections: Int = Int.MAX_VALUE,
+    routePlanner: RoutePlanner? = null,
   ): RealConnectionPool {
     return RealConnectionPool(
       taskRunner = taskRunner,
@@ -97,6 +109,25 @@ class TestValueFactory : Closeable {
       keepAliveDuration = 100L,
       timeUnit = TimeUnit.NANOSECONDS,
       connectionListener = ConnectionListener.NONE,
+      exchangeFinderFactory = { pool, address, user ->
+        FastFallbackExchangeFinder(
+          routePlanner ?: RealRoutePlanner(
+            taskRunner = taskRunner,
+            connectionPool = pool,
+            readTimeoutMillis = 10_000,
+            writeTimeoutMillis = 10_000,
+            socketConnectTimeoutMillis = 10_000,
+            socketReadTimeoutMillis = 10_000,
+            pingIntervalMillis = 10_000,
+            retryOnConnectionFailure = false,
+            fastFallback = true,
+            address = address,
+            routeDatabase = RouteDatabase(),
+            connectionUser = user,
+          ),
+          taskRunner,
+        )
+      },
     )
   }
 
@@ -177,7 +208,26 @@ class TestValueFactory : Closeable {
     address: Address = newAddress(),
   ): RealRoutePlanner {
     val call = RealCall(client, Request(address.url), forWebSocket = false)
-    return RealRoutePlanner(client, address, call, newChain(call), ConnectionListener.NONE)
+    val chain = newChain(call)
+    return RealRoutePlanner(
+      taskRunner = client.taskRunner,
+      connectionPool = client.connectionPool.delegate,
+      readTimeoutMillis = client.readTimeoutMillis,
+      writeTimeoutMillis = client.writeTimeoutMillis,
+      socketConnectTimeoutMillis = chain.connectTimeoutMillis,
+      socketReadTimeoutMillis = chain.readTimeoutMillis,
+      pingIntervalMillis = client.pingIntervalMillis,
+      retryOnConnectionFailure = client.retryOnConnectionFailure,
+      fastFallback = client.fastFallback,
+      address = address,
+      routeDatabase = client.routeDatabase,
+      connectionUser =
+        CallConnectionUser(
+          call,
+          client.connectionPool.delegate.connectionListener,
+          chain,
+        ),
+    )
   }
 
   override fun close() {

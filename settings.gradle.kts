@@ -1,7 +1,9 @@
+import java.util.Properties
+
 rootProject.name = "okhttp-parent"
 
 plugins {
-  id("org.gradle.toolchains.foojay-resolver-convention") version("0.8.0")
+  id("org.gradle.toolchains.foojay-resolver-convention") version("0.9.0")
 }
 
 include(":mockwebserver")
@@ -35,6 +37,7 @@ include(":okhttp-hpacktests")
 include(":okhttp-idna-mapping-table")
 include(":okhttp-java-net-cookiejar")
 include(":okhttp-logging-interceptor")
+include(":okhttp-osgi-tests")
 include(":okhttp-sse")
 include(":okhttp-testing-support")
 include(":okhttp-tls")
@@ -51,31 +54,17 @@ include(":container-tests")
 
 project(":okhttp-logging-interceptor").name = "logging-interceptor"
 
-if (!isKnownBrokenIntelliJ()) {
-  include(":okhttp-android")
+val androidHome = System.getenv("ANDROID_HOME")
+val localProperties = Properties().apply {
+  val file = File("local.properties")
+  if (file.exists()) {
+    load(file.inputStream())
+  }
+}
+val sdkDir = localProperties.getProperty("sdk.dir")
+if (androidHome != null || sdkDir != null) {
   include(":android-test")
   include(":android-test-app")
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-
-/**
- * Avoid a crash in IntelliJ triggered by Android submodules.
- *
- * ```
- * java.lang.AssertionError: Can't find built-in class kotlin.Cloneable
- *   at org.jetbrains.kotlin.builtins.KotlinBuiltIns.getBuiltInClassByFqName(KotlinBuiltIns.java:217)
- *   at org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMapper.mapJavaToKotlin(JavaToKotlinClassMapper.kt:41)
- * 	...
- * ```
- */
-fun isKnownBrokenIntelliJ(): Boolean {
-  val ideaVersionString = System.getProperty("idea.version") ?: return false
-
-  return try {
-    val (major, minor, _) = ideaVersionString.split(".", limit = 3)
-    KotlinVersion(major.toInt(), minor.toInt()) < KotlinVersion(2023, 2)
-  } catch (e: Exception) {
-    false // Unknown version, presumably compatible.
-  }
-}

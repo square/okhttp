@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2024 Square, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package okhttp3.containers
 
 import assertk.assertThat
@@ -15,7 +30,6 @@ import okhttp3.containers.BasicMockServerTest.Companion.MOCKSERVER_IMAGE
 import okhttp3.containers.BasicMockServerTest.Companion.trustMockServer
 import okio.buffer
 import okio.source
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockserver.client.MockServerClient
 import org.mockserver.configuration.Configuration
@@ -104,27 +118,6 @@ class BasicProxyTest {
 
       assertThat(response.body.string()).contains("Peter the person")
       assertThat(response.protocol).isEqualTo(Protocol.HTTP_1_1)
-    }
-  }
-
-  @Test
-  @Disabled("https://github.com/square/okhttp/issues/8233")
-  fun testOkHttpSecureProxiedHttp2() {
-    testRequest {
-      val client =
-        OkHttpClient.Builder()
-          .trustMockServer()
-          .proxy(Proxy(Proxy.Type.HTTP, it.remoteAddress()))
-          .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-          .build()
-
-      val response =
-        client.newCall(
-          Request((mockServer.secureEndpoint + "/person?name=peter").toHttpUrl()),
-        ).execute()
-
-      assertThat(response.body.string()).contains("Peter the person")
-      assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
     }
   }
 

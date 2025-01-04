@@ -16,11 +16,9 @@
 package okhttp3.dnsoverhttps
 
 import java.io.IOException
-import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
-import okhttp3.CacheControl
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Dns
@@ -72,36 +70,22 @@ class DnsOverHttps internal constructor(
 
   @Throws(UnknownHostException::class)
   private fun lookupHttps(hostname: String): List<InetAddress> {
-    val networkRequests = ArrayList<Call>(2)
+    val networkRequests =
+      buildList {
+        add(client.newCall(buildRequest(hostname, DnsRecordCodec.TYPE_A)))
+
+        if (includeIPv6) {
+          add(client.newCall(buildRequest(hostname, DnsRecordCodec.TYPE_AAAA)))
+        }
+      }
+
     val failures = ArrayList<Exception>(2)
     val results = ArrayList<InetAddress>(5)
-
-    buildRequest(hostname, networkRequests, results, failures, DnsRecordCodec.TYPE_A)
-
-    if (includeIPv6) {
-      buildRequest(hostname, networkRequests, results, failures, DnsRecordCodec.TYPE_AAAA)
-    }
-
     executeRequests(hostname, networkRequests, results, failures)
 
     return results.ifEmpty {
       throwBestFailure(hostname, failures)
     }
-  }
-
-  private fun buildRequest(
-    hostname: String,
-    networkRequests: MutableList<Call>,
-    results: MutableList<InetAddress>,
-    failures: MutableList<Exception>,
-    type: Int,
-  ) {
-    val request = buildRequest(hostname, type)
-    val response = getCacheOnlyResponse(request)
-
-    response?.let { processResponse(it, hostname, results, failures) } ?: networkRequests.add(
-      client.newCall(request),
-    )
   }
 
   private fun executeRequests(
@@ -186,37 +170,12 @@ class DnsOverHttps internal constructor(
     throw unknownHostException
   }
 
-  private fun getCacheOnlyResponse(request: Request): Response? {
-    if (!post && client.cache != null) {
-      try {
-        // Use the cache without hitting the network first
-        // 504 code indicates that the Cache is stale
-        val preferCache =
-          CacheControl.Builder()
-            .onlyIfCached()
-            .build()
-        val cacheRequest = request.newBuilder().cacheControl(preferCache).build()
-
-        val cacheResponse = client.newCall(cacheRequest).execute()
-
-        if (cacheResponse.code != HttpURLConnection.HTTP_GATEWAY_TIMEOUT) {
-          return cacheResponse
-        }
-      } catch (ioe: IOException) {
-        // Failures are ignored as we can fallback to the network
-        // and hopefully repopulate the cache.
-      }
-    }
-
-    return null
-  }
-
   @Throws(Exception::class)
   private fun readResponse(
     hostname: String,
     response: Response,
   ): List<InetAddress> {
-    if (response.cacheResponse == null && response.protocol !== Protocol.HTTP_2) {
+    if (response.cacheResponse == null && response.protocol !== Protocol.HTTP_2 && response.protocol !== Protocol.QUIC) {
       Platform.get().log("Incorrect protocol: ${response.protocol}", Platform.WARN)
     }
 
@@ -247,7 +206,12 @@ class DnsOverHttps internal constructor(
       val query = DnsRecordCodec.encodeQuery(hostname, type)
 
       if (post) {
-        url(url).post(query.toRequestBody(DNS_MESSAGE))
+        url(url)
+          .cacheUrlOverride(
+            url.newBuilder()
+              .addQueryParameter("hostname", hostname).build(),
+          )
+          .post(query.toRequestBody(DNS_MESSAGE))
       } else {
         val encoded = query.base64Url().replace("=", "")
         val requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build()

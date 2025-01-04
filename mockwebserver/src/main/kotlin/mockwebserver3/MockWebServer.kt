@@ -813,6 +813,7 @@ class MockWebServer : Closeable {
         extensions = WebSocketExtensions.parse(webSocketResponse.headers),
         // Compress all messages if compression is enabled.
         minimumDeflateSize = 0L,
+        webSocketCloseTimeout = RealWebSocket.CANCEL_AFTER_CLOSE_MILLIS,
       )
     val name = "MockWebServer WebSocket ${request.path!!}"
     webSocket.initReaderAndWriter(name, streams)
