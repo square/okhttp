@@ -10,7 +10,7 @@ android {
 
   namespace = "okhttp.android.testapp"
 
-//  testBuildType = "release"
+  testBuildType = "release"
 
   defaultConfig {
     minSdk = 21
