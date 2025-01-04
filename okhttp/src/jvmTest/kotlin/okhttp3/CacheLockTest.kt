@@ -99,12 +99,12 @@ class CacheLockTest {
       lockFile.toFile().createNewFile()
 
       val javaExe =
-        if (PlatformVersion.majorVersion >= 9) {
-          @Suppress("Since15")
-          ProcessHandle.current().info().command().get().toPath()
-        } else {
+//        if (PlatformVersion.majorVersion >= 9) {
+//          @Suppress("Since15")
+//          ProcessHandle.current().info().command().get().toPath()
+//        } else {
           System.getenv("JAVA_HOME").toPath() / "bin/java"
-        }
+//        }
 
       val process =
         ProcessBuilder().command(
