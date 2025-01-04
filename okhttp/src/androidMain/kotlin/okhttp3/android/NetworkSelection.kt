@@ -22,6 +22,7 @@ import javax.net.SocketFactory
 import okhttp3.Dns
 import okhttp3.ExperimentalOkHttpApi
 import okhttp3.OkHttpClient
+import okhttp3.android.internal.AndroidSocketFactory
 
 @ExperimentalOkHttpApi
 object NetworkSelection {

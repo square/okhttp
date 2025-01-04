@@ -126,9 +126,15 @@ internal class AndroidDns internal constructor(
   }
 }
 
-internal val Dns.Companion.ANDROID: Dns
+/**
+ * Dns implementation based on [android.net.DnsResolver] instead of [InetAddress.getAllByName].
+ */
+val Dns.Companion.ANDROID: Dns
   @RequiresApi(Build.VERSION_CODES.Q)
   get() = union(AndroidDns(dnsClass = DnsClass.IPV4), AndroidDns(dnsClass = DnsClass.IPV6)).asBlocking()
 
+/**
+ * Returns a Dns implementation for a specific Android network, using [android.net.DnsResolver].
+ */
 @RequiresApi(Build.VERSION_CODES.Q)
 fun Dns.Companion.forNetwork(network: Network): Dns = AndroidDns.forNetwork(network).asBlocking()
