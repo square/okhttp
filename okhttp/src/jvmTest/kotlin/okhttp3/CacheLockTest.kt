@@ -29,7 +29,6 @@ import okio.Closeable
 import okio.FileSystem
 import okio.Path.Companion.toOkioPath
 import okio.Path.Companion.toPath
-import okio.SYSTEM
 import okio.fakefilesystem.FakeFileSystem
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -162,7 +161,7 @@ class CacheLockTest {
     directory: okio.Path,
     fileSystem: FileSystem = FileSystem.SYSTEM,
   ): Cache {
-    return Cache(directory, 10_000, fileSystem).apply {
+    return Cache(fileSystem, directory, 10_000).apply {
       // force early LRU initialisation
       initialize()
       toClose.add(this)
