@@ -20,9 +20,10 @@ import androidx.activity.ComponentActivity
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.android.OkHttpClientContext
+import okhttp3.android.OkHttpClientContext.okHttpClient
 import okhttp3.internal.platform.AndroidPlatform
 import okio.IOException
 
@@ -30,15 +31,18 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    val client = OkHttpClient()
-
     // Ensure we are compiling against the right variant
     println(AndroidPlatform.isSupported)
 
     val url = "https://github.com/square/okhttp".toHttpUrl()
     println(url.topPrivateDomain())
 
-    client.newCall(Request(url)).enqueue(
+    // avoid these being stripped by r8, when we want them for tests
+    println(OkHttpClientContext)
+    println(okHttpClient.cache?.maxSize())
+    println(okHttpClient.cache?.directory)
+
+    okHttpClient.newCall(Request(url)).enqueue(
       object : Callback {
         override fun onFailure(
           call: Call,

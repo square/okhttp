@@ -37,7 +37,7 @@ object OkHttpClientContext {
   }
 
   /**
-   * Acccesor for the app singleton instance of OkHttp. The context here is not actually used, rather the app instance
+   * Accessor for the app singleton instance of OkHttp. The context here is not actually used, rather the app instance
    * configured via [okhttp3.internal.platform.PlatformInitializer] is used instead.
    */
   val Context.okHttpClient: OkHttpClient
