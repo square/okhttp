@@ -33,31 +33,38 @@ internal object DnsRecordCodec {
   private const val TYPE_PTR = 0x000c
   private val ASCII = Charsets.US_ASCII
 
-  fun encodeQuery(host: String, type: Int): ByteString = Buffer().apply {
-    writeShort(0) // query id
-    writeShort(256) // flags with recursion
-    writeShort(1) // question count
-    writeShort(0) // answerCount
-    writeShort(0) // authorityResourceCount
-    writeShort(0) // additional
+  fun encodeQuery(
+    host: String,
+    type: Int,
+  ): ByteString =
+    Buffer().apply {
+      writeShort(0) // query id
+      writeShort(256) // flags with recursion
+      writeShort(1) // question count
+      writeShort(0) // answerCount
+      writeShort(0) // authorityResourceCount
+      writeShort(0) // additional
 
-    val nameBuf = Buffer()
-    val labels = host.split('.').dropLastWhile { it.isEmpty() }
-    for (label in labels) {
-      val utf8ByteCount = label.utf8Size()
-      require(utf8ByteCount == label.length.toLong()) { "non-ascii hostname: $host" }
-      nameBuf.writeByte(utf8ByteCount.toInt())
-      nameBuf.writeUtf8(label)
-    }
-    nameBuf.writeByte(0) // end
+      val nameBuf = Buffer()
+      val labels = host.split('.').dropLastWhile { it.isEmpty() }
+      for (label in labels) {
+        val utf8ByteCount = label.utf8Size()
+        require(utf8ByteCount == label.length.toLong()) { "non-ascii hostname: $host" }
+        nameBuf.writeByte(utf8ByteCount.toInt())
+        nameBuf.writeUtf8(label)
+      }
+      nameBuf.writeByte(0) // end
 
-    nameBuf.copyTo(this, 0, nameBuf.size)
-    writeShort(type)
-    writeShort(1) // CLASS_IN
-  }.readByteString()
+      nameBuf.copyTo(this, 0, nameBuf.size)
+      writeShort(type)
+      writeShort(1) // CLASS_IN
+    }.readByteString()
 
   @Throws(Exception::class)
-  fun decodeAnswers(hostname: String, byteString: ByteString): List<InetAddress> {
+  fun decodeAnswers(
+    hostname: String,
+    byteString: ByteString,
+  ): List<InetAddress> {
     val result = mutableListOf<InetAddress>()
 
     val buf = Buffer()
@@ -91,7 +98,8 @@ internal object DnsRecordCodec {
 
       val type = buf.readShort().toInt() and 0xffff
       buf.readShort() // class
-      @Suppress("UNUSED_VARIABLE") val ttl = buf.readInt().toLong() and 0xffffffffL // ttl
+      @Suppress("UNUSED_VARIABLE")
+      val ttl = buf.readInt().toLong() and 0xffffffffL // ttl
       val length = buf.readShort().toInt() and 0xffff
 
       if (type == TYPE_A || type == TYPE_AAAA) {

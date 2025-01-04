@@ -1,4 +1,10 @@
+import java.util.Properties
+
 rootProject.name = "okhttp-parent"
+
+plugins {
+  id("org.gradle.toolchains.foojay-resolver-convention") version("0.9.0")
+}
 
 include(":mockwebserver")
 project(":mockwebserver").name = "mockwebserver3"
@@ -14,7 +20,6 @@ val graalBuild: String by settings
 val loomBuild: String by settings
 
 if (androidBuild.toBoolean()) {
-  include(":android-test")
   include(":regression-test")
 }
 
@@ -24,18 +29,18 @@ if (graalBuild.toBoolean()) {
 
 include(":okcurl")
 include(":okhttp")
-include(":okhttp-android")
 include(":okhttp-bom")
 include(":okhttp-brotli")
+include(":okhttp-coroutines")
 include(":okhttp-dnsoverhttps")
 include(":okhttp-hpacktests")
 include(":okhttp-idna-mapping-table")
+include(":okhttp-java-net-cookiejar")
 include(":okhttp-logging-interceptor")
-project(":okhttp-logging-interceptor").name = "logging-interceptor"
+include(":okhttp-osgi-tests")
 include(":okhttp-sse")
 include(":okhttp-testing-support")
 include(":okhttp-tls")
-include(":okhttp-coroutines")
 include(":okhttp-urlconnection")
 include(":samples:compare")
 include(":samples:crawler")
@@ -45,5 +50,21 @@ include(":samples:slack")
 include(":samples:static-server")
 include(":samples:tlssurvey")
 include(":samples:unixdomainsockets")
+include(":container-tests")
+
+project(":okhttp-logging-interceptor").name = "logging-interceptor"
+
+val androidHome = System.getenv("ANDROID_HOME")
+val localProperties = Properties().apply {
+  val file = File("local.properties")
+  if (file.exists()) {
+    load(file.inputStream())
+  }
+}
+val sdkDir = localProperties.getProperty("sdk.dir")
+if (androidHome != null || sdkDir != null) {
+  include(":android-test")
+  include(":android-test-app")
+}
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

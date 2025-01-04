@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Square, Inc.
+ * Copyright (C) 2022 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package okhttp3.survey
 
-import java.io.IOException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import okhttp3.ConnectionSpec
@@ -27,55 +26,63 @@ import okio.Path.Companion.toPath
 import org.conscrypt.Conscrypt
 
 fun currentOkHttp(ianaSuites: IanaSuites): Client {
-  val supportedSuites = buildList {
-    for (suite in ConnectionSpec.COMPATIBLE_TLS.cipherSuites!!) {
-      add(ianaSuites.fromJavaName(suite.javaName))
-    }
-  }
-  val enabledSuites = buildList {
-    for (suite in ConnectionSpec.MODERN_TLS.cipherSuites!!) {
-      add(ianaSuites.fromJavaName(suite.javaName))
-    }
-  }
-
-  return Client("OkHttp", OkHttp.VERSION, null, enabledSuites, supportedSuites)
+  return Client(
+    userAgent = "OkHttp",
+    version = OkHttp.VERSION,
+    enabled =
+      ConnectionSpec.MODERN_TLS.cipherSuites!!.map {
+        ianaSuites.fromJavaName(it.javaName)
+      },
+    supported =
+      ConnectionSpec.COMPATIBLE_TLS.cipherSuites!!.map {
+        ianaSuites.fromJavaName(it.javaName)
+      },
+  )
 }
 
 fun historicOkHttp(version: String): Client {
-  val enabled = FileSystem.RESOURCES.read("okhttp_${version.replace(".", "_")}.txt".toPath()) {
-    this.readUtf8().lines().filter { it.isNotBlank() }.map {
-      SuiteId(null, it.trim())
+  val enabled =
+    FileSystem.RESOURCES.read("okhttp_$version.txt".toPath()) {
+      this.readUtf8().lines().filter { it.isNotBlank() }.map {
+        SuiteId(id = null, name = it.trim())
+      }
     }
-  }
-  return Client("OkHttp", version, null, enabled = enabled)
+  return Client(
+    userAgent = "OkHttp",
+    version = version,
+    enabled = enabled,
+  )
 }
 
 fun currentVm(ianaSuites: IanaSuites): Client {
-  return systemDefault(System.getProperty("java.vm.name"), System.getProperty("java.version"), ianaSuites)
+  return systemDefault(
+    name = System.getProperty("java.vm.name"),
+    version = System.getProperty("java.version"),
+    ianaSuites = ianaSuites,
+  )
 }
 
 fun conscrypt(ianaSuites: IanaSuites): Client {
   val version = Conscrypt.version()
-  return systemDefault("Conscrypt", "" + version.major() + "." + version.minor(), ianaSuites)
+  return systemDefault(
+    name = "Conscrypt",
+    version = "${version.major()}.${version.minor()}",
+    ianaSuites = ianaSuites,
+  )
 }
 
-fun systemDefault(name: String, version: String, ianaSuites: IanaSuites): Client {
-  return try {
-    val socketFactory = SSLSocketFactory.getDefault() as SSLSocketFactory
-    val sslSocket = socketFactory.createSocket() as SSLSocket
-    val supportedSuites = buildList {
-      for (suite in sslSocket.supportedCipherSuites) {
-        add(ianaSuites.fromJavaName(suite))
-      }
-    }
-    val enabledSuites = buildList {
-      for (suite in sslSocket.enabledCipherSuites) {
-        add(ianaSuites.fromJavaName(suite))
-      }
-    }
+fun systemDefault(
+  name: String,
+  version: String,
+  ianaSuites: IanaSuites,
+): Client {
+  val socketFactory = SSLSocketFactory.getDefault() as SSLSocketFactory
+  val sslSocket = socketFactory.createSocket() as SSLSocket
 
-    Client(name, version, null, enabledSuites, supportedSuites)
-  } catch (e: IOException) {
-    throw RuntimeException(e)
-  }
+  return Client(
+    userAgent = name,
+    version = version,
+    enabled = sslSocket.enabledCipherSuites.map { ianaSuites.fromJavaName(it) },
+    supported = sslSocket.supportedCipherSuites.map { ianaSuites.fromJavaName(it) },
+  )
 }

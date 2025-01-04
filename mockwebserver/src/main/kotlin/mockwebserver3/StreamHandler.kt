@@ -15,12 +15,15 @@
  */
 package mockwebserver3
 
+import okhttp3.ExperimentalOkHttpApi
+
 /**
  * Handles a call's stream directly. Use this instead of [MockResponseBody] to begin sending
  * response data before all request data has been received.
  *
  * See [okhttp3.RequestBody.isDuplex].
  */
+@ExperimentalOkHttpApi
 interface StreamHandler {
   fun handle(stream: Stream)
 }

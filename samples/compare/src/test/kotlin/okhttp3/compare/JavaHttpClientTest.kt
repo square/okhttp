@@ -15,15 +15,19 @@
  */
 package okhttp3.compare
 
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.matches
 import java.net.http.HttpClient
 import java.net.http.HttpClient.Redirect.NORMAL
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -35,21 +39,26 @@ import org.junit.jupiter.api.extension.RegisterExtension
  * Baseline test if we ned to validate OkHttp behaviour against other popular clients.
  */
 class JavaHttpClientTest {
-  @JvmField @RegisterExtension val platform = PlatformRule()
+  @JvmField @RegisterExtension
+  val platform = PlatformRule()
 
   @Test fun get(server: MockWebServer) {
     // Not available
     platform.expectFailureOnJdkVersion(8)
 
-    val httpClient = HttpClient.newBuilder()
-      .followRedirects(NORMAL)
-      .build()
+    val httpClient =
+      HttpClient.newBuilder()
+        .followRedirects(NORMAL)
+        .build()
 
-    server.enqueue(MockResponse.Builder()
+    server.enqueue(
+      MockResponse.Builder()
         .body("hello, Java HTTP Client")
-        .build())
+        .build(),
+    )
 
-    val request = HttpRequest.newBuilder(server.url("/").toUri())
+    val request =
+      HttpRequest.newBuilder(server.url("/").toUri())
         .header("Accept", "text/plain")
         .build()
 
@@ -58,14 +67,14 @@ class JavaHttpClientTest {
     assertThat(response.body()).isEqualTo("hello, Java HTTP Client")
 
     val recorded = server.takeRequest()
-      assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
-      assertThat(recorded.headers["Accept-Encoding"]).isNull() // No built-in gzip.
-      assertThat(recorded.headers["Connection"]).isEqualTo("Upgrade, HTTP2-Settings")
-      if (PlatformVersion.majorVersion < 19) {
-        assertThat(recorded.headers["Content-Length"]).isEqualTo("0")
-      }
-      assertThat(recorded.headers["HTTP2-Settings"]).isNotNull()
-      assertThat(recorded.headers["Upgrade"]).isEqualTo("h2c") // HTTP/2 over plaintext!
-      assertThat(recorded.headers["User-Agent"]).matches("Java-http-client/.*")
+    assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
+    assertThat(recorded.headers["Accept-Encoding"]).isNull() // No built-in gzip.
+    assertThat(recorded.headers["Connection"]).isEqualTo("Upgrade, HTTP2-Settings")
+    if (PlatformVersion.majorVersion < 19) {
+      assertThat(recorded.headers["Content-Length"]).isEqualTo("0")
+    }
+    assertThat(recorded.headers["HTTP2-Settings"]).isNotNull()
+    assertThat(recorded.headers["Upgrade"]).isEqualTo("h2c") // HTTP/2 over plaintext!
+    assertThat(recorded.headers["User-Agent"]!!).matches(Regex("Java-http-client/.*"))
   }
 }

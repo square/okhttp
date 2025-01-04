@@ -29,10 +29,11 @@ class PostFile {
   fun run() {
     val file = File("README.md")
 
-    val request = Request(
-      url = "https://api.github.com/markdown/raw".toHttpUrl(),
-      body = file.asRequestBody(MEDIA_TYPE_MARKDOWN),
-    )
+    val request =
+      Request(
+        url = "https://api.github.com/markdown/raw".toHttpUrl(),
+        body = file.asRequestBody(MEDIA_TYPE_MARKDOWN),
+      )
 
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")

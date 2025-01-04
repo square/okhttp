@@ -26,19 +26,22 @@ class PostString {
   private val client = OkHttpClient()
 
   fun run() {
-    val postBody = """
-        |Releases
-        |--------
-        |
-        | * _1.0_ May 6, 2013
-        | * _1.1_ June 15, 2013
-        | * _1.2_ August 11, 2013
-        |""".trimMargin()
+    val postBody =
+      """
+      |Releases
+      |--------
+      |
+      | * _1.0_ May 6, 2013
+      | * _1.1_ June 15, 2013
+      | * _1.2_ August 11, 2013
+      |
+      """.trimMargin()
 
-    val request = Request(
-      url = "https://api.github.com/markdown/raw".toHttpUrl(),
-      body = postBody.toRequestBody(MEDIA_TYPE_MARKDOWN),
-    )
+    val request =
+      Request(
+        url = "https://api.github.com/markdown/raw".toHttpUrl(),
+        body = postBody.toRequestBody(MEDIA_TYPE_MARKDOWN),
+      )
 
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")

@@ -25,25 +25,31 @@ import javax.net.ssl.X509TrustManager
 /** This extends [X509TrustManager] for Android to disable verification for a set of hosts. */
 internal class InsecureAndroidTrustManager(
   private val delegate: X509TrustManager,
-  private val insecureHosts: List<String>
+  private val insecureHosts: List<String>,
 ) : X509TrustManager {
-  private val checkServerTrustedMethod: Method? = try {
-    delegate::class.java.getMethod("checkServerTrusted",
-        Array<X509Certificate>::class.java, String::class.java, String::class.java)
-  } catch (_: NoSuchMethodException) {
-    null
-  }
+  private val checkServerTrustedMethod: Method? =
+    try {
+      delegate::class.java.getMethod(
+        "checkServerTrusted",
+        Array<X509Certificate>::class.java,
+        String::class.java,
+        String::class.java,
+      )
+    } catch (_: NoSuchMethodException) {
+      null
+    }
 
   /** Android method to clean and sort certificates, called via reflection. */
   @Suppress("unused", "UNCHECKED_CAST")
   fun checkServerTrusted(
     chain: Array<out X509Certificate>,
     authType: String,
-    host: String
+    host: String,
   ): List<Certificate> {
     if (host in insecureHosts) return listOf()
     try {
-      val method = checkServerTrustedMethod
+      val method =
+        checkServerTrustedMethod
           ?: throw CertificateException("Failed to call checkServerTrusted")
       return method.invoke(delegate, chain, authType, host) as List<Certificate>
     } catch (e: InvocationTargetException) {
@@ -53,9 +59,13 @@ internal class InsecureAndroidTrustManager(
 
   override fun getAcceptedIssuers(): Array<X509Certificate> = delegate.acceptedIssuers
 
-  override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String?) =
-    throw CertificateException("Unsupported operation")
+  override fun checkClientTrusted(
+    chain: Array<out X509Certificate>,
+    authType: String?,
+  ) = throw CertificateException("Unsupported operation")
 
-  override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) =
-    throw CertificateException("Unsupported operation")
+  override fun checkServerTrusted(
+    chain: Array<out X509Certificate>,
+    authType: String,
+  ) = throw CertificateException("Unsupported operation")
 }

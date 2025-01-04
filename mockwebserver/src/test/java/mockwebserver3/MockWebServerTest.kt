@@ -15,6 +15,17 @@
  */
 package mockwebserver3
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.containsExactly
+import assertk.assertions.isBetween
+import assertk.assertions.isCloseTo
+import assertk.assertions.isEqualTo
+import assertk.assertions.isGreaterThan
+import assertk.assertions.isGreaterThanOrEqualTo
+import assertk.assertions.isNotEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import java.io.BufferedReader
 import java.io.Closeable
 import java.io.IOException
@@ -27,6 +38,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.HttpsURLConnection
+import kotlin.test.assertFailsWith
 import mockwebserver3.SocketPolicy.DisconnectAtStart
 import mockwebserver3.SocketPolicy.DisconnectDuringRequestBody
 import mockwebserver3.SocketPolicy.DisconnectDuringResponseBody
@@ -42,8 +54,6 @@ import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okio.Buffer
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
@@ -82,15 +92,16 @@ class MockWebServerTest {
 
   @Test
   fun setResponseMockReason() {
-    val reasons = arrayOf<String?>(
-      "Mock Response",
-      "Informational",
-      "OK",
-      "Redirection",
-      "Client Error",
-      "Server Error",
-      "Mock Response"
-    )
+    val reasons =
+      arrayOf<String?>(
+        "Mock Response",
+        "Informational",
+        "OK",
+        "Redirection",
+        "Client Error",
+        "Server Error",
+        "Mock Response",
+      )
     for (i in 0..599) {
       val builder = MockResponse.Builder().code(i)
       val expectedReason = reasons[i / 100]
@@ -118,30 +129,33 @@ class MockWebServerTest {
 
   @Test
   fun mockResponseAddHeader() {
-    val builder = MockResponse.Builder()
-      .clearHeaders()
-      .addHeader("Cookie: s=square")
-      .addHeader("Cookie", "a=android")
+    val builder =
+      MockResponse.Builder()
+        .clearHeaders()
+        .addHeader("Cookie: s=square")
+        .addHeader("Cookie", "a=android")
     assertThat(headersToList(builder)).containsExactly("Cookie: s=square", "Cookie: a=android")
   }
 
   @Test
   fun mockResponseSetHeader() {
-    val builder = MockResponse.Builder()
-      .clearHeaders()
-      .addHeader("Cookie: s=square")
-      .addHeader("Cookie: a=android")
-      .addHeader("Cookies: delicious")
+    val builder =
+      MockResponse.Builder()
+        .clearHeaders()
+        .addHeader("Cookie: s=square")
+        .addHeader("Cookie: a=android")
+        .addHeader("Cookies: delicious")
     builder.setHeader("cookie", "r=robot")
     assertThat(headersToList(builder)).containsExactly("Cookies: delicious", "cookie: r=robot")
   }
 
   @Test
   fun mockResponseSetHeaders() {
-    val builder = MockResponse.Builder()
-      .clearHeaders()
-      .addHeader("Cookie: s=square")
-      .addHeader("Cookies: delicious")
+    val builder =
+      MockResponse.Builder()
+        .clearHeaders()
+        .addHeader("Cookie: s=square")
+        .addHeader("Cookies: delicious")
     builder.headers(Headers.Builder().add("Cookie", "a=android").build())
     assertThat(headersToList(builder)).containsExactly("Cookie: a=android")
   }
@@ -165,14 +179,18 @@ class MockWebServerTest {
 
   @Test
   fun redirect() {
-    server.enqueue(MockResponse.Builder()
-      .code(HttpURLConnection.HTTP_MOVED_TEMP)
-      .addHeader("Location: " + server.url("/new-path"))
-      .body("This page has moved!")
-      .build())
-    server.enqueue(MockResponse.Builder()
-      .body("This is the new location!")
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
+        .addHeader("Location: " + server.url("/new-path"))
+        .body("This page has moved!")
+        .build(),
+    )
+    server.enqueue(
+      MockResponse.Builder()
+        .body("This is the new location!")
+        .build(),
+    )
     val connection = server.url("/").toUrl().openConnection()
     val reader = BufferedReader(InputStreamReader(connection!!.getInputStream(), UTF_8))
     assertThat(reader.readLine()).isEqualTo("This is the new location!")
@@ -193,9 +211,11 @@ class MockWebServerTest {
         Thread.sleep(1000)
       } catch (ignored: InterruptedException) {
       }
-      server.enqueue(MockResponse.Builder()
-        .body("enqueued in the background")
-        .build())
+      server.enqueue(
+        MockResponse.Builder()
+          .body("enqueued in the background")
+          .build(),
+      )
     }.start()
     val connection = server.url("/").toUrl().openConnection()
     val reader = BufferedReader(InputStreamReader(connection!!.getInputStream(), UTF_8))
@@ -204,11 +224,13 @@ class MockWebServerTest {
 
   @Test
   fun nonHexadecimalChunkSize() {
-    server.enqueue(MockResponse.Builder()
-      .body("G\r\nxxxxxxxxxxxxxxxx\r\n0\r\n\r\n")
-      .clearHeaders()
-      .addHeader("Transfer-encoding: chunked")
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .body("G\r\nxxxxxxxxxxxxxxxx\r\n0\r\n\r\n")
+        .clearHeaders()
+        .addHeader("Transfer-encoding: chunked")
+        .build(),
+    )
     val connection = server.url("/").toUrl().openConnection()
     try {
       connection.getInputStream().read()
@@ -220,14 +242,18 @@ class MockWebServerTest {
 
   @Test
   fun responseTimeout() {
-    server.enqueue(MockResponse.Builder()
-      .body("ABC")
-      .clearHeaders()
-      .addHeader("Content-Length: 4")
-      .build())
-    server.enqueue(MockResponse.Builder()
-      .body("DEF")
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .body("ABC")
+        .clearHeaders()
+        .addHeader("Content-Length: 4")
+        .build(),
+    )
+    server.enqueue(
+      MockResponse.Builder()
+        .body("DEF")
+        .build(),
+    )
     val urlConnection = server.url("/").toUrl().openConnection()
     urlConnection!!.readTimeout = 1000
     val inputStream = urlConnection.getInputStream()
@@ -253,9 +279,11 @@ class MockWebServerTest {
   @Disabled("Not actually failing where expected")
   @Test
   fun disconnectAtStart() {
-    server.enqueue(MockResponse.Builder()
-      .socketPolicy(DisconnectAtStart)
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .socketPolicy(DisconnectAtStart)
+        .build(),
+    )
     server.enqueue(MockResponse()) // The jdk's HttpUrlConnection is a bastard.
     server.enqueue(MockResponse())
     try {
@@ -283,9 +311,11 @@ class MockWebServerTest {
   @Test
   fun throttleRequest() {
     assumeNotWindows()
-    server.enqueue(MockResponse.Builder()
-      .throttleBody(3, 500, TimeUnit.MILLISECONDS)
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .throttleBody(3, 500, TimeUnit.MILLISECONDS)
+        .build(),
+    )
     val startNanos = System.nanoTime()
     val connection = server.url("/").toUrl().openConnection()
     connection.doOutput = true
@@ -304,10 +334,12 @@ class MockWebServerTest {
   @Test
   fun throttleResponse() {
     assumeNotWindows()
-    server.enqueue(MockResponse.Builder()
-      .body("ABCDEF")
-      .throttleBody(3, 500, TimeUnit.MILLISECONDS)
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .body("ABCDEF")
+        .throttleBody(3, 500, TimeUnit.MILLISECONDS)
+        .build(),
+    )
     val startNanos = System.nanoTime()
     val connection = server.url("/").toUrl().openConnection()
     val inputStream = connection!!.getInputStream()
@@ -327,10 +359,12 @@ class MockWebServerTest {
   @Test
   fun delayResponse() {
     assumeNotWindows()
-    server.enqueue(MockResponse.Builder()
-      .body("ABCDEF")
-      .bodyDelay(1, TimeUnit.SECONDS)
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .body("ABCDEF")
+        .bodyDelay(1, TimeUnit.SECONDS)
+        .build(),
+    )
     val startNanos = System.nanoTime()
     val connection = server.url("/").toUrl().openConnection()
     val inputStream = connection!!.getInputStream()
@@ -343,9 +377,11 @@ class MockWebServerTest {
 
   @Test
   fun disconnectRequestHalfway() {
-    server.enqueue(MockResponse.Builder()
-      .socketPolicy(DisconnectDuringRequestBody)
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .socketPolicy(DisconnectDuringRequestBody)
+        .build(),
+    )
     // Limit the size of the request body that the server holds in memory to an arbitrary
     // 3.5 MBytes so this test can pass on devices with little memory.
     server.bodyLimit = 7 * 512 * 1024
@@ -371,15 +407,17 @@ class MockWebServerTest {
       i++
     }
     // Halfway +/- 0.5%
-    assertThat(i.toFloat()).isCloseTo(512f, Offset.offset(5f))
+    assertThat(i.toFloat()).isCloseTo(512f, 5f)
   }
 
   @Test
   fun disconnectResponseHalfway() {
-    server.enqueue(MockResponse.Builder()
-      .body("ab")
-      .socketPolicy(DisconnectDuringResponseBody)
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .body("ab")
+        .socketPolicy(DisconnectDuringResponseBody)
+        .build(),
+    )
     val connection = server.url("/").toUrl().openConnection()
     assertThat(connection!!.contentLength).isEqualTo(2)
     val inputStream = connection.getInputStream()
@@ -425,12 +463,12 @@ class MockWebServerTest {
 
   @Test
   fun hostnameImplicitlyStarts() {
-    assertThat(server.hostName).isNotNull
+    assertThat(server.hostName).isNotNull()
   }
 
   @Test
   fun toProxyAddressImplicitlyStarts() {
-    assertThat(server.toProxyAddress()).isNotNull
+    assertThat(server.toProxyAddress()).isNotNull()
   }
 
   @Test
@@ -458,9 +496,11 @@ class MockWebServerTest {
 
   @Test
   fun requestUrlReconstructed() {
-    server.enqueue(MockResponse.Builder()
-      .body("hello world")
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .body("hello world")
+        .build(),
+    )
     val url = server.url("/a/deep/path?key=foo%20bar").toUrl()
     val connection = url.openConnection() as HttpURLConnection
     val inputStream = connection.inputStream
@@ -469,7 +509,8 @@ class MockWebServerTest {
     assertThat(reader.readLine()).isEqualTo("hello world")
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo(
-      "GET /a/deep/path?key=foo%20bar HTTP/1.1")
+      "GET /a/deep/path?key=foo%20bar HTTP/1.1",
+    )
     val requestUrl = request.requestUrl
     assertThat(requestUrl!!.scheme).isEqualTo("http")
     assertThat(requestUrl.host).isEqualTo(server.hostName)
@@ -480,26 +521,29 @@ class MockWebServerTest {
 
   @Test
   fun shutdownServerAfterRequest() {
-    server.enqueue(MockResponse.Builder()
-      .socketPolicy(ShutdownServerAfterResponse)
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .socketPolicy(ShutdownServerAfterResponse)
+        .build(),
+    )
     val url = server.url("/").toUrl()
     val connection = url.openConnection() as HttpURLConnection
     assertThat(connection.responseCode).isEqualTo(HttpURLConnection.HTTP_OK)
     val refusedConnection = url.openConnection() as HttpURLConnection
-    try {
+    assertFailsWith<ConnectException> {
       refusedConnection.responseCode
-      fail<Any?>("Second connection should be refused")
-    } catch (e: ConnectException) {
-      assertThat(e.message).contains("refused")
+    }.also { expected ->
+      assertThat(expected.message!!).contains("refused")
     }
   }
 
   @Test
   fun http100Continue() {
-    server.enqueue(MockResponse.Builder()
-      .body("response")
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .body("response")
+        .build(),
+    )
     val url = server.url("/").toUrl()
     val connection = url.openConnection() as HttpURLConnection
     connection.doOutput = true
@@ -514,11 +558,13 @@ class MockWebServerTest {
 
   @Test
   fun multiple1xxResponses() {
-    server.enqueue(MockResponse.Builder()
-      .add100Continue()
-      .add100Continue()
-      .body("response")
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .add100Continue()
+        .add100Continue()
+        .body("response")
+        .build(),
+    )
     val url = server.url("/").toUrl()
     val connection = url.openConnection() as HttpURLConnection
     connection.doOutput = true
@@ -537,8 +583,9 @@ class MockWebServerTest {
       fail<Unit>()
     } catch (expected: IllegalArgumentException) {
       assertThat(expected.message).isEqualTo(
-        "protocols containing h2_prior_knowledge cannot use other protocols: "
-          + "[h2_prior_knowledge, http/1.1]")
+        "protocols containing h2_prior_knowledge cannot use other protocols: " +
+          "[h2_prior_knowledge, http/1.1]",
+      )
     }
   }
 
@@ -550,8 +597,9 @@ class MockWebServerTest {
       fail<Unit>()
     } catch (expected: IllegalArgumentException) {
       assertThat(expected.message).isEqualTo(
-        "protocols containing h2_prior_knowledge cannot use other protocols: "
-          + "[h2_prior_knowledge, h2_prior_knowledge]")
+        "protocols containing h2_prior_knowledge cannot use other protocols: " +
+          "[h2_prior_knowledge, h2_prior_knowledge]",
+      )
     }
   }
 
@@ -566,9 +614,11 @@ class MockWebServerTest {
   fun https() {
     val handshakeCertificates = platform.localhostHandshakeCertificates()
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse.Builder()
-      .body("abc")
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .body("abc")
+        .build(),
+    )
     val url = server.url("/")
     val connection = url.toUrl().openConnection() as HttpsURLConnection
     connection.sslSocketFactory = handshakeCertificates.sslSocketFactory()
@@ -579,9 +629,9 @@ class MockWebServerTest {
     val request = server.takeRequest()
     assertThat(request.requestUrl!!.scheme).isEqualTo("https")
     val handshake = request.handshake
-    assertThat(handshake!!.tlsVersion).isNotNull
-    assertThat(handshake.cipherSuite).isNotNull
-    assertThat(handshake.localPrincipal).isNotNull
+    assertThat(handshake!!.tlsVersion).isNotNull()
+    assertThat(handshake.cipherSuite).isNotNull()
+    assertThat(handshake.localPrincipal).isNotNull()
     assertThat(handshake.localCertificates.size).isEqualTo(1)
     assertThat(handshake.peerPrincipal).isNull()
     assertThat(handshake.peerCertificates.size).isEqualTo(0)
@@ -592,32 +642,40 @@ class MockWebServerTest {
     platform.assumeNotBouncyCastle()
     platform.assumeNotConscrypt()
 
-    val clientCa = HeldCertificate.Builder()
-      .certificateAuthority(0)
-      .build()
-    val serverCa = HeldCertificate.Builder()
-      .certificateAuthority(0)
-      .build()
-    val serverCertificate = HeldCertificate.Builder()
-      .signedBy(serverCa)
-      .addSubjectAlternativeName(server.hostName)
-      .build()
-    val serverHandshakeCertificates = HandshakeCertificates.Builder()
-      .addTrustedCertificate(clientCa.certificate)
-      .heldCertificate(serverCertificate)
-      .build()
+    val clientCa =
+      HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .build()
+    val serverCa =
+      HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .build()
+    val serverCertificate =
+      HeldCertificate.Builder()
+        .signedBy(serverCa)
+        .addSubjectAlternativeName(server.hostName)
+        .build()
+    val serverHandshakeCertificates =
+      HandshakeCertificates.Builder()
+        .addTrustedCertificate(clientCa.certificate)
+        .heldCertificate(serverCertificate)
+        .build()
     server.useHttps(serverHandshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse.Builder()
-      .body("abc")
-      .build())
+    server.enqueue(
+      MockResponse.Builder()
+        .body("abc")
+        .build(),
+    )
     server.requestClientAuth()
-    val clientCertificate = HeldCertificate.Builder()
-      .signedBy(clientCa)
-      .build()
-    val clientHandshakeCertificates = HandshakeCertificates.Builder()
-      .addTrustedCertificate(serverCa.certificate)
-      .heldCertificate(clientCertificate)
-      .build()
+    val clientCertificate =
+      HeldCertificate.Builder()
+        .signedBy(clientCa)
+        .build()
+    val clientHandshakeCertificates =
+      HandshakeCertificates.Builder()
+        .addTrustedCertificate(serverCa.certificate)
+        .heldCertificate(clientCertificate)
+        .build()
     val url = server.url("/")
     val connection = url.toUrl().openConnection() as HttpsURLConnection
     connection.sslSocketFactory = clientHandshakeCertificates.sslSocketFactory()
@@ -628,23 +686,26 @@ class MockWebServerTest {
     val request = server.takeRequest()
     assertThat(request.requestUrl!!.scheme).isEqualTo("https")
     val handshake = request.handshake
-    assertThat(handshake!!.tlsVersion).isNotNull
-    assertThat(handshake.cipherSuite).isNotNull
-    assertThat(handshake.localPrincipal).isNotNull
+    assertThat(handshake!!.tlsVersion).isNotNull()
+    assertThat(handshake.cipherSuite).isNotNull()
+    assertThat(handshake.localPrincipal).isNotNull()
     assertThat(handshake.localCertificates.size).isEqualTo(1)
-    assertThat(handshake.peerPrincipal).isNotNull
+    assertThat(handshake.peerPrincipal).isNotNull()
     assertThat(handshake.peerCertificates.size).isEqualTo(1)
   }
 
   @Test
   fun proxiedRequestGetsCorrectRequestUrl() {
-    server.enqueue(MockResponse.Builder()
-      .body("Result")
-      .build())
-    val proxiedClient = OkHttpClient.Builder()
-      .proxy(server.toProxyAddress())
-      .readTimeout(Duration.ofMillis(100))
-      .build()
+    server.enqueue(
+      MockResponse.Builder()
+        .body("Result")
+        .build(),
+    )
+    val proxiedClient =
+      OkHttpClient.Builder()
+        .proxy(server.toProxyAddress())
+        .readTimeout(Duration.ofMillis(100))
+        .build()
     val request = Request.Builder().url("http://android.com/").build()
     proxiedClient.newCall(request).execute().use { response ->
       assertThat(response.body.string()).isEqualTo("Result")

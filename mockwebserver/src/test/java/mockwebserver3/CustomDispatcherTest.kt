@@ -15,11 +15,12 @@
  */
 package mockwebserver3
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -36,12 +37,13 @@ class CustomDispatcherTest {
   @Test
   fun simpleDispatch() {
     val requestsMade = mutableListOf<RecordedRequest>()
-    val dispatcher: Dispatcher = object : Dispatcher() {
-      override fun dispatch(request: RecordedRequest): MockResponse {
-        requestsMade.add(request)
-        return MockResponse()
+    val dispatcher: Dispatcher =
+      object : Dispatcher() {
+        override fun dispatch(request: RecordedRequest): MockResponse {
+          requestsMade.add(request)
+          return MockResponse()
+        }
       }
-    }
     assertThat(requestsMade.size).isEqualTo(0)
     mockWebServer.dispatcher = dispatcher
     val url = mockWebServer.url("/").toUrl()
@@ -58,14 +60,15 @@ class CustomDispatcherTest {
     val secondRequest = "/bar"
     val firstRequest = "/foo"
     val latch = CountDownLatch(1)
-    val dispatcher: Dispatcher = object : Dispatcher() {
-      override fun dispatch(request: RecordedRequest): MockResponse {
-        if (request.path == firstRequest) {
-          latch.await()
+    val dispatcher: Dispatcher =
+      object : Dispatcher() {
+        override fun dispatch(request: RecordedRequest): MockResponse {
+          if (request.path == firstRequest) {
+            latch.await()
+          }
+          return MockResponse()
         }
-        return MockResponse()
       }
-    }
     mockWebServer.dispatcher = dispatcher
     val startsFirst = buildRequestThread(firstRequest, firstResponseCode)
     startsFirst.start()
@@ -84,7 +87,10 @@ class CustomDispatcherTest {
     assertThat(secondResponseCode.get()).isEqualTo(200)
   }
 
-  private fun buildRequestThread(path: String, responseCode: AtomicInteger): Thread {
+  private fun buildRequestThread(
+    path: String,
+    responseCode: AtomicInteger,
+  ): Thread {
     return Thread {
       val url = mockWebServer.url(path).toUrl()
       val conn: HttpURLConnection

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Square, Inc.
+ * Copyright (C) 2022 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package okhttp3.survey.types
 data class Client(
   val userAgent: String,
   val version: String,
-  val platform: String?,
+  val platform: String? = null,
   val enabled: List<SuiteId> = listOf(),
-  val supported: List<SuiteId> = listOf()
+  val supported: List<SuiteId> = listOf(),
 ) {
   val nameAndVersion: String
     get() = "$userAgent/$version"
