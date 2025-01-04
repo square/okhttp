@@ -354,6 +354,7 @@ public final class okhttp3/CipherSuite$Companion {
 }
 
 public abstract interface class okhttp3/Connection {
+	public abstract fun getId ()J
 	public abstract fun handshake ()Lokhttp3/Handshake;
 	public abstract fun protocol ()Lokhttp3/Protocol;
 	public abstract fun route ()Lokhttp3/Route;
@@ -364,8 +365,8 @@ public abstract class okhttp3/ConnectionListener {
 	public static final field Companion Lokhttp3/ConnectionListener$Companion;
 	public fun <init> ()V
 	public fun connectEnd (Lokhttp3/Connection;Lokhttp3/Route;Lokhttp3/Call;)V
-	public fun connectFailed (Lokhttp3/Route;Lokhttp3/Call;Ljava/io/IOException;)V
-	public fun connectStart (Lokhttp3/Route;Lokhttp3/Call;)V
+	public fun connectFailed (JLokhttp3/Route;Lokhttp3/Call;Ljava/io/IOException;)V
+	public fun connectStart (JLokhttp3/Route;Lokhttp3/Call;)V
 	public fun connectionAcquired (Lokhttp3/Connection;Lokhttp3/Call;)V
 	public fun connectionClosed (Lokhttp3/Connection;)V
 	public fun connectionReleased (Lokhttp3/Connection;Lokhttp3/Call;)V

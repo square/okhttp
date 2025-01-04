@@ -22,16 +22,22 @@ import okhttp3.Request
 import okhttp3.Response
 
 /**
- * Tracing implementation of Interceptor that marks each Call in a perfetto
- * trace.
+ * Tracing implementation of Interceptor that marks each Call in a Perfetto
+ * trace. Typically used as a network interceptor.
  */
-class TracingInterceptor : Interceptor {
+class AndroidxTracingInterceptor(val traceLabel: (Request) -> String = { it.defaultTracingLabel }) : Interceptor {
   override fun intercept(chain: Interceptor.Chain): Response {
-    return trace(chain.request().tracingTag) {
+    return trace(traceLabel(chain.request()).take(MAX_TRACE_LABEL_LENGTH)) {
       chain.proceed(chain.request())
     }
   }
 
-  val Request.tracingTag: String
-    get() = url.encodedPath.take(127)
+  companion object {
+    internal const val MAX_TRACE_LABEL_LENGTH = 127
+
+    val Request.defaultTracingLabel: String
+      get() {
+        return url.encodedPath
+      }
+  }
 }

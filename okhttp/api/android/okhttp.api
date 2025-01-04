@@ -354,6 +354,7 @@ public final class okhttp3/CipherSuite$Companion {
 }
 
 public abstract interface class okhttp3/Connection {
+	public abstract fun getId ()J
 	public abstract fun handshake ()Lokhttp3/Handshake;
 	public abstract fun protocol ()Lokhttp3/Protocol;
 	public abstract fun route ()Lokhttp3/Route;
@@ -364,8 +365,8 @@ public abstract class okhttp3/ConnectionListener {
 	public static final field Companion Lokhttp3/ConnectionListener$Companion;
 	public fun <init> ()V
 	public fun connectEnd (Lokhttp3/Connection;Lokhttp3/Route;Lokhttp3/Call;)V
-	public fun connectFailed (Lokhttp3/Route;Lokhttp3/Call;Ljava/io/IOException;)V
-	public fun connectStart (Lokhttp3/Route;Lokhttp3/Call;)V
+	public fun connectFailed (JLokhttp3/Route;Lokhttp3/Call;Ljava/io/IOException;)V
+	public fun connectStart (JLokhttp3/Route;Lokhttp3/Call;)V
 	public fun connectionAcquired (Lokhttp3/Connection;Lokhttp3/Call;)V
 	public fun connectionClosed (Lokhttp3/Connection;)V
 	public fun connectionReleased (Lokhttp3/Connection;Lokhttp3/Call;)V
@@ -1302,5 +1303,37 @@ public final class okhttp3/android/AndroidAsyncDns : okhttp3/AsyncDns {
 public final class okhttp3/android/AndroidAsyncDns$Companion {
 	public final fun getIPv4 ()Lokhttp3/android/AndroidAsyncDns;
 	public final fun getIPv6 ()Lokhttp3/android/AndroidAsyncDns;
+}
+
+public final class okhttp3/android/AndroidxTracingConnectionListener : okhttp3/ConnectionListener {
+	public static final field Companion Lokhttp3/android/AndroidxTracingConnectionListener$Companion;
+	public fun <init> ()V
+	public fun <init> (Lokhttp3/ConnectionListener;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lokhttp3/ConnectionListener;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun connectEnd (Lokhttp3/Connection;Lokhttp3/Route;Lokhttp3/Call;)V
+	public fun connectFailed (JLokhttp3/Route;Lokhttp3/Call;Ljava/io/IOException;)V
+	public fun connectStart (JLokhttp3/Route;Lokhttp3/Call;)V
+	public fun connectionAcquired (Lokhttp3/Connection;Lokhttp3/Call;)V
+	public fun connectionClosed (Lokhttp3/Connection;)V
+	public fun connectionReleased (Lokhttp3/Connection;Lokhttp3/Call;)V
+	public final fun getTraceLabel ()Lkotlin/jvm/functions/Function1;
+	public fun noNewExchanges (Lokhttp3/Connection;)V
+}
+
+public final class okhttp3/android/AndroidxTracingConnectionListener$Companion {
+	public final fun getDefaultTracingLabel (Lokhttp3/Route;)Ljava/lang/String;
+}
+
+public final class okhttp3/android/AndroidxTracingInterceptor : okhttp3/Interceptor {
+	public static final field Companion Lokhttp3/android/AndroidxTracingInterceptor$Companion;
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getTraceLabel ()Lkotlin/jvm/functions/Function1;
+	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
+}
+
+public final class okhttp3/android/AndroidxTracingInterceptor$Companion {
+	public final fun getDefaultTracingLabel (Lokhttp3/Request;)Ljava/lang/String;
 }
 
