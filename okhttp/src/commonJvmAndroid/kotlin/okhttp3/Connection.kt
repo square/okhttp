@@ -69,6 +69,7 @@ import java.net.Socket
 interface Connection {
   /** Unique id of this connection, assigned at the time of the attempt. */
   val id: Long
+    get() = 0L
 
   /** Returns the route used by this connection. */
   fun route(): Route
