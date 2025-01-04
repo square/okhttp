@@ -18,6 +18,7 @@ package okhttp3.android
 
 import android.content.Context
 import okhttp3.OkHttpClient
+import okhttp3.android.AndroidOkHttpClientBuilder.androidBuilder
 import okhttp3.internal.platform.ContextAwarePlatform
 import okhttp3.internal.platform.Platform
 
@@ -43,6 +44,10 @@ object OkHttpClientContext {
     get() = _okHttpClient
 
   private fun newOkHttpClient(context: Context): OkHttpClient {
-    return (context.applicationContext as? OkHttpClientFactory)?.newOkHttpClient() ?: OkHttpClient()
+    val okHttpClientFactory = context.applicationContext as? OkHttpClientFactory
+    return okHttpClientFactory?.newOkHttpClient() ?: OkHttpClient.androidBuilder(
+      context = context,
+      cacheDir = null,
+    ).build()
   }
 }

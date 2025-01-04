@@ -15,17 +15,22 @@
  */
 package okhttp.android.testapp
 
+import androidx.test.core.app.ApplicationProvider
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.android.OkHttpClientContext.okHttpClient
 import org.junit.Test
 
 /**
  * Run with "./gradlew :android-test-app:connectedCheck -PandroidBuild=true" and make sure ANDROID_SDK_ROOT is set.
  */
-class PublicSuffixDatabaseTest {
+class OkHttpClientFactoryTest {
   @Test
-  fun testTopLevelDomain() {
-    assertThat("https://www.google.com/robots.txt".toHttpUrl().topPrivateDomain()).isEqualTo("google.com")
+  fun testUsesCorrectFactory() {
+    val application = ApplicationProvider.getApplicationContext<TestApplication>()
+
+    val client = application.okHttpClient
+    assertThat(client.cache?.maxSize()).isEqualTo(5_000_000)
+    assertThat(client.cache?.directory?.name).isEqualTo("test-app-cache")
   }
 }
