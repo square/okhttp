@@ -103,7 +103,7 @@ class CacheLockTest {
 //          @Suppress("Since15")
 //          ProcessHandle.current().info().command().get().toPath()
 //        } else {
-          System.getenv("JAVA_HOME").toPath() / "bin/java"
+        System.getenv("JAVA_HOME").toPath() / "bin/java"
 //        }
 
       val process =
