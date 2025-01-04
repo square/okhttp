@@ -354,7 +354,7 @@ public final class okhttp3/CipherSuite$Companion {
 }
 
 public abstract interface class okhttp3/Connection {
-	public abstract fun getId ()J
+	public fun getId ()J
 	public abstract fun handshake ()Lokhttp3/Handshake;
 	public abstract fun protocol ()Lokhttp3/Protocol;
 	public abstract fun route ()Lokhttp3/Route;
