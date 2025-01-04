@@ -36,7 +36,10 @@ internal class CallConnectionUser(
     call.client.routeDatabase.connected(route)
   }
 
-  override fun connectStart(connectionId: Long, route: Route) {
+  override fun connectStart(
+    connectionId: Long,
+    route: Route,
+  ) {
     eventListener.connectStart(call, route.socketAddress, route.proxy)
     poolConnectionListener.connectStart(connectionId, route, call)
   }

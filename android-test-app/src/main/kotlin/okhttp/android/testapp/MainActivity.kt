@@ -33,10 +33,11 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    val client = OkHttpClient.Builder()
-      .connectionPool(ConnectionPool(connectionListener = AndroidxTracingConnectionListener()))
-      .addNetworkInterceptor(AndroidxTracingInterceptor())
-      .build()
+    val client =
+      OkHttpClient.Builder()
+        .connectionPool(ConnectionPool(connectionListener = AndroidxTracingConnectionListener()))
+        .addNetworkInterceptor(AndroidxTracingInterceptor())
+        .build()
 
     // Ensure we are compiling against the right variant
     println(AndroidPlatform.isSupported)
