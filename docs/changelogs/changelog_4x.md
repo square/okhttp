@@ -6,9 +6,12 @@ OkHttp 4.x Change Log
 _2023-10-16_
 
  *  Fix: Don't hang taking headers for HTTP 103 responses.
+
  *  Fix: Recover gracefully when a cache entry's certificate is corrupted.
+
  *  Fix: Fail permanently when there's a failure loading the bundled public suffix database.
     This is the dataset that powers `HttpUrl.topPrivateDomain()`.
+
  *  Fix: Immediately update the connection's flow control window instead of waiting for the
     receiving stream to process it.
 
@@ -16,9 +19,12 @@ _2023-10-16_
     calls and that can receive data faster than they can process it. Previously, OkHttp limited
     HTTP/2 to 16 MiB of unacknowledged data per connection. With this fix there is a limit of 16 MiB
     of unacknowledged data per stream and no per-connection limit.
+
  *  Fix: Don't operate on a connection after it's been returned to the pool. This race occurred
     on failed web socket connection attempts.
+
  *  Upgrade: [Okio 3.6.0][okio_3_6_0].
+
  *  Upgrade: [Kotlin 1.8.21][kotlin_1_8_21].
 
 

@@ -14,6 +14,8 @@ dependencies {
   api(libs.conscrypt.openjdk)
   api(libs.openjsse)
 
+  api(rootProject.libs.junit.jupiter.engine)
+
   api(variantOf(libs.amazonCorretto) {
     classifier("linux-x86_64")
   })

@@ -23,6 +23,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.internal.platform.AndroidPlatform
 import okio.IOException
 
 class MainActivity : ComponentActivity() {
@@ -30,6 +31,9 @@ class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
 
     val client = OkHttpClient()
+
+    // Ensure we are compiling against the right variant
+    println(AndroidPlatform.isSupported)
 
     val url = "https://github.com/square/okhttp".toHttpUrl()
     println(url.topPrivateDomain())

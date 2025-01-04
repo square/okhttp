@@ -15,6 +15,7 @@
  */
 package okhttp3.curl
 
+import com.github.ajalt.clikt.core.main
 import kotlin.test.Test
 import okhttp3.TestUtil
 import org.junit.jupiter.api.BeforeAll

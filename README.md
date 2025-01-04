@@ -22,6 +22,27 @@ configured to fall back for broad connectivity.
 Using OkHttp is easy. Its request/response API is designed with fluent builders and immutability. It
 supports both synchronous blocking calls and async calls with callbacks.
 
+A well behaved user agent
+-------------------------
+
+OkHttp follows modern HTTP specifications such as
+
+* HTTP/1.1 - [RFC 7231](https://datatracker.ietf.org/doc/html/rfc7231)
+* HTTP/2 - [RFC 9113](https://datatracker.ietf.org/doc/html/rfc9113)
+* Websockets - [RFC 6455](https://datatracker.ietf.org/doc/html/rfc6455)
+* SSE - [Server-sent events](https://html.spec.whatwg.org/multipage/server-sent-events.html#server-sent-events)
+
+Where the spec is ambiguous, OkHttp follows modern user agents such as popular Browsers or common HTTP Libraries.
+
+OkHttp is principled and avoids being overly configurable, especially when such configuration is
+to workaround a buggy server, test invalid scenarios or that contradict the relevant RFC. 
+Other HTTP libraries exist that fill that gap allowing extensive customisation including potentially
+invalid requests.
+
+Example Limitations
+
+* Does not allow GET with a body.
+* Cache is not an interface with alternative implementations.
 
 Get a URL
 ---------
@@ -128,6 +149,11 @@ The latest release is available on [Maven Central](https://search.maven.org/arti
 ```kotlin
 testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 ```
+
+MockWebServer is used for firstly for internal testing, and for basic testing of apps using OkHttp client. 
+It is not a full featured HTTP testing library that is developed standalone. It is not being actively developed
+for new features. As such you might find your needs outgrow MockWebServer and you may which to use a 
+more full featured testing library such as [MockServer](https://www.mock-server.com/).
 
 GraalVM Native Image
 --------------------
