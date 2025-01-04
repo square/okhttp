@@ -104,6 +104,7 @@ class CacheTest {
   @AfterEach
   fun tearDown() {
     ResponseCache.setDefault(null)
+    cache.close()
     cache.delete()
   }
 
@@ -3498,9 +3499,9 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
           return path
         }
       }
-    val c = Cache(loggingFileSystem, cachePath, 100000L)
-    assertThat(c.directoryPath).isEqualTo(cachePath)
-    c.size()
+    cache = Cache(loggingFileSystem, cachePath, 100000L)
+    assertThat(cache.directoryPath).isEqualTo(cachePath)
+    cache.size()
     assertThat(events).containsExactly(
       "metadataOrNull:$cachePath/journal.bkp",
       "metadataOrNull:$cachePath",
