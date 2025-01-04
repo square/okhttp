@@ -17,14 +17,14 @@ package okhttp3.android.internal
 
 import android.net.Network
 import android.os.Build
-import okhttp3.ExperimentalOkHttpApi
 import java.net.InetAddress
 import java.net.Socket
 import javax.net.SocketFactory
+import okhttp3.ExperimentalOkHttpApi
 
 @ExperimentalOkHttpApi
 internal class AndroidSocketFactory(
-    val network: Network,
+  val network: Network,
 ) : SocketFactory() {
   private val socketFactory: SocketFactory = network.socketFactory
 
@@ -40,26 +40,26 @@ internal class AndroidSocketFactory(
   }
 
   override fun createSocket(
-      host: String?,
-      port: Int,
-      localHost: InetAddress?,
-      localPort: Int,
+    host: String?,
+    port: Int,
+    localHost: InetAddress?,
+    localPort: Int,
   ): Socket {
     return socketFactory.createSocket(host, port, localHost, localPort)
   }
 
   override fun createSocket(
-      host: InetAddress?,
-      port: Int,
+    host: InetAddress?,
+    port: Int,
   ): Socket {
     return socketFactory.createSocket(host, port)
   }
 
   override fun createSocket(
-      address: InetAddress?,
-      port: Int,
-      localAddress: InetAddress?,
-      localPort: Int,
+    address: InetAddress?,
+    port: Int,
+    localAddress: InetAddress?,
+    localPort: Int,
   ): Socket {
     return socketFactory.createSocket(address, port, localAddress, localPort)
   }
