@@ -3,6 +3,7 @@ package okhttp.android.test
 import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
 import android.os.strictmode.Violation
+import androidx.test.filters.SdkSuppress
 import assertk.assertThat
 import assertk.assertions.hasSize
 import assertk.assertions.isEmpty
@@ -11,15 +12,16 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.internal.platform.Platform
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Test
+import org.junit.After
+import org.junit.Test
 import org.junit.jupiter.api.parallel.Isolated
 
 @Isolated
+@SdkSuppress(minSdkVersion = 28)
 class StrictModeTest {
   private val violations = mutableListOf<Violation>()
 
-  @AfterEach
+  @After
   fun cleanup() {
     StrictMode.setThreadPolicy(
       ThreadPolicy.Builder()
