@@ -48,12 +48,11 @@ internal class RealEventSource(
   }
 
   fun processResponse(response: Response) {
+    if (!response.isSuccessful) {
+      listener.onFailure(this, null, response)
+      return
+    }
     response.use {
-      if (!response.isSuccessful) {
-        listener.onFailure(this, null, response)
-        return
-      }
-
       val body = response.body
 
       if (!body.isEventStream()) {
