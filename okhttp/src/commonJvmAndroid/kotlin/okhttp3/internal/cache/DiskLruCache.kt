@@ -95,6 +95,7 @@ class DiskLruCache(
   maxSize: Long,
   /** Used for asynchronous journal rebuilds. */
   taskRunner: TaskRunner,
+  private val useCacheLock: Boolean,
 ) : Closeable, Flushable {
   lateinit var cacheLock: Closeable
 
@@ -245,7 +246,7 @@ class DiskLruCache(
 
     civilizedFileSystem = fileSystem.isCivilized(journalFileBackup)
 
-    cacheLock = openLock(fileSystem, directory)
+    cacheLock = if (useCacheLock) openLock(fileSystem, directory) else Closeable {}
 
     try {
       // Prefer to pick up where we left off.
