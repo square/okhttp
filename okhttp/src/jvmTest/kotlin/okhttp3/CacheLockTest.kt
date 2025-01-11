@@ -18,6 +18,7 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import java.nio.file.Path
+import java.util.Optional
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -37,7 +38,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
-import java.util.Optional
 
 @org.junit.jupiter.api.parallel.Isolated
 class CacheLockTest {
@@ -101,14 +101,15 @@ class CacheLockTest {
 
       val javaExe =
         if (PlatformVersion.majorVersion >= 9) {
-          val info = Class.forName("java.lang.ProcessHandle").run {
-            val handle = getMethod("current").invoke(null)
-            getMethod("info").invoke(handle)
-          }
+          val info =
+            Class.forName("java.lang.ProcessHandle").run {
+              val handle = getMethod("current").invoke(null)
+              getMethod("info").invoke(handle)
+            }
           val command = Class.forName("java.lang.ProcessHandle\$Info").getMethod("command").invoke(info) as Optional<*>
           (command.get() as String).toPath()
         } else {
-        System.getenv("JAVA_HOME").toPath() / "bin/java"
+          System.getenv("JAVA_HOME").toPath() / "bin/java"
         }
 
       val process =
