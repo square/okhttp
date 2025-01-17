@@ -205,16 +205,17 @@ class DnsOverHttps internal constructor(
     Request.Builder().header("Accept", DNS_MESSAGE.toString()).apply {
       val query = DnsRecordCodec.encodeQuery(hostname, type)
 
+      val requestUrl: HttpUrl = url!!
       if (post) {
-        url(url)
+        url(requestUrl)
           .cacheUrlOverride(
-            url.newBuilder()
+            requestUrl.newBuilder()
               .addQueryParameter("hostname", hostname).build(),
           )
           .post(query.toRequestBody(DNS_MESSAGE))
       } else {
         val encoded = query.base64Url().replace("=", "")
-        val requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build()
+        val requestUrl = requestUrl.newBuilder().addQueryParameter("dns", encoded).build()
 
         url(requestUrl)
       }
