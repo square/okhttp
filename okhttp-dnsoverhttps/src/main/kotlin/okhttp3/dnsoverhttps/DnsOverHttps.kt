@@ -205,7 +205,7 @@ class DnsOverHttps internal constructor(
     Request.Builder().header("Accept", DNS_MESSAGE.toString()).apply {
       val query = DnsRecordCodec.encodeQuery(hostname, type)
 
-      val requestUrl: HttpUrl = url!!
+      val requestUrl: HttpUrl = this@DnsOverHttps.url
       if (post) {
         url(requestUrl)
           .cacheUrlOverride(
