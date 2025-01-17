@@ -60,7 +60,7 @@ android {
 dependencies {
   implementation(libs.kotlin.reflect)
   implementation(libs.playservices.safetynet)
-  implementation(projects.okhttp)
+  "friends"(projects.okhttp)
 
   testImplementation(libs.junit)
   testImplementation(libs.junit.ktx)

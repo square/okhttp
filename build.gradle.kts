@@ -287,7 +287,7 @@ subprojects {
   val friends = configurations.create("friends") {
     isCanBeResolved = true
     isCanBeConsumed = false
-    isTransitive = false
+    isTransitive = true
   }
 
   // Make sure friends libraries are on the classpath
