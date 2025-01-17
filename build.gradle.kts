@@ -294,11 +294,8 @@ subprojects {
   configurations.findByName("implementation")?.extendsFrom(friends)
 
   // Make these libraries friends :)
-  tasks.withType<KotlinJvmCompile>().configureEach {
-    val friendCollection = friends.incoming.artifactView { }.files
-    compilerOptions.freeCompilerArgs.add(
-      provider { "-Xfriend-paths=${friendCollection.joinToString(",")}"}
-    )
+  tasks.withType<KotlinCompile>().configureEach {
+    friendPaths.from(friends.incoming.artifactView { }.files)
   }
 }
 
