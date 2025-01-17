@@ -368,6 +368,8 @@ class TaskFaker : Closeable {
           val editCountBefore = editCount
           yieldUntil { nanoTime >= waitUntil || editCount > editCountBefore }
         }
+        // TODO report compiler bug
+        TODO("Can't get here")
       }
     }
 
