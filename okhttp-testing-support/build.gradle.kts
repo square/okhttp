@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
   api(libs.squareup.okio)
-  api(projects.okhttp)
+  "friends"(projects.okhttp)
   api(projects.okhttpTls)
   api(libs.assertk)
   api(libs.bouncycastle.bcprov)

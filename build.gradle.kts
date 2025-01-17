@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 import java.net.URI
 
@@ -278,6 +279,26 @@ subprojects {
     kotlinExtension.sourceSets.configureEach {
       languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
     }
+  }
+
+  // From https://www.liutikas.net/2025/01/12/Kotlin-Library-Friends.html
+
+  // Create a configuration we can use to track friend libraries
+  val friends = configurations.create("friends") {
+    isCanBeResolved = true
+    isCanBeConsumed = false
+    isTransitive = false
+  }
+
+  // Make sure friends libraries are on the classpath
+  configurations.findByName("implementation")?.extendsFrom(friends)
+
+  // Make these libraries friends :)
+  tasks.withType<KotlinJvmCompile>().configureEach {
+    val friendCollection = friends.incoming.artifactView { }.files
+    compilerOptions.freeCompilerArgs.add(
+      provider { "-Xfriend-paths=${friendCollection.joinToString(",")}"}
+    )
   }
 }
 
