@@ -454,7 +454,7 @@ jobs:
       - name: Configure JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: 24-ea
 
       - name: Configure JDK
