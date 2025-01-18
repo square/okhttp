@@ -61,6 +61,7 @@ dependencies {
   implementation(libs.kotlin.reflect)
   implementation(libs.playservices.safetynet)
   implementation(projects.okhttp)
+  "friends"(projects.okhttpDnsoverhttps)
 
   testImplementation(libs.junit)
   testImplementation(libs.junit.ktx)
