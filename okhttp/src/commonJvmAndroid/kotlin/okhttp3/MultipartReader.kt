@@ -167,7 +167,10 @@ class MultipartReader
         source.timeout().intersectWith(timeout) {
           return when (val limit = currentPartBytesRemaining(maxResult = byteCount)) {
             0L -> -1L // No more bytes in this part.
-            else -> source.read(sink, limit)
+            else -> {
+              println("inner $limit")
+              source.read(sink, limit)
+            }
           }
         }
 
@@ -185,6 +188,7 @@ class MultipartReader
     private fun currentPartBytesRemaining(maxResult: Long): Long {
       source.require(crlfDashDashBoundary.size.toLong())
 
+      println("indexOf over ${source.buffer.size} with maxResult $maxResult")
       return when (val delimiterIndex = source.buffer.indexOf(crlfDashDashBoundary)) {
         -1L -> minOf(maxResult, source.buffer.size - crlfDashDashBoundary.size + 1)
         else -> minOf(maxResult, delimiterIndex)
