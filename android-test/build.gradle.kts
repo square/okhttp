@@ -63,6 +63,7 @@ dependencies {
   "friendsImplementation"(projects.okhttp)
   "friendsImplementation"(projects.okhttpDnsoverhttps)
 
+  testImplementation(projects.okhttp)
   testImplementation(libs.junit)
   testImplementation(libs.junit.ktx)
   testImplementation(libs.assertk)
