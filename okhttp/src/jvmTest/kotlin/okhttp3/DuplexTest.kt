@@ -15,12 +15,14 @@
  */
 package okhttp3
 
+import assertk.all
 import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import assertk.assertions.prop
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.ProtocolException
@@ -33,6 +35,7 @@ import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.internal.duplex.MockStreamHandler
+import okhttp3.CallEvent.RetryDecision
 import okhttp3.Credentials.basic
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -404,7 +407,10 @@ class DuplexTest {
       "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
       "ResponseBodyEnd", "ConnectionReleased", "CallEnd", "RequestFailed",
     )
-    assertThat(listener.findEvent<CallEvent.RetryDecision>().reason).isEqualTo("redirect (301)")
+    assertThat(listener.findEvent<RetryDecision>()).all {
+      prop(RetryDecision::reason).isEqualTo("redirect (301)")
+      prop(RetryDecision::shouldRetry).isTrue()
+    }
   }
 
   /**

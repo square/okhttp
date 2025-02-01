@@ -15,16 +15,20 @@
  */
 package okhttp3
 
+import assertk.all
 import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.containsExactly
 import assertk.assertions.doesNotContain
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isIn
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isSameAs
+import assertk.assertions.isTrue
+import assertk.assertions.prop
 import java.io.File
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -59,6 +63,7 @@ import okhttp3.CallEvent.ResponseBodyStart
 import okhttp3.CallEvent.ResponseFailed
 import okhttp3.CallEvent.ResponseHeadersEnd
 import okhttp3.CallEvent.ResponseHeadersStart
+import okhttp3.CallEvent.RetryDecision
 import okhttp3.CallEvent.SecureConnectEnd
 import okhttp3.CallEvent.SecureConnectStart
 import okhttp3.MediaType.Companion.toMediaType
@@ -245,7 +250,10 @@ class EventListenerTest {
       "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
       "RequestHeadersEnd", "ResponseFailed", "RetryDecision", "ConnectionReleased", "CallFailed",
     )
-    assertThat(listener.findEvent<CallEvent.RetryDecision>().reason).isEqualTo("request was at least partially sent")
+    assertThat(listener.findEvent<RetryDecision>()).all {
+      prop(RetryDecision::reason).isEqualTo("request was at least partially sent")
+      prop(RetryDecision::shouldRetry).isFalse()
+    }
   }
 
   @Test
@@ -1650,7 +1658,10 @@ class EventListenerTest {
       "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
       "CallEnd",
     )
-    assertThat(listener.findEvent<CallEvent.RetryDecision>().reason).isEqualTo("redirect (302)")
+    assertThat(listener.findEvent<RetryDecision>()).all {
+      prop(RetryDecision::reason).isEqualTo("redirect (302)")
+      prop(RetryDecision::shouldRetry).isTrue()
+    }
   }
 
   @Test
@@ -1698,7 +1709,10 @@ class EventListenerTest {
       "ConnectionReleased",
       "CallEnd",
     )
-    assertThat(listener.findEvent<CallEvent.RetryDecision>().reason).isEqualTo("redirect (302)")
+    assertThat(listener.findEvent<RetryDecision>()).all {
+      prop(RetryDecision::reason).isEqualTo("redirect (302)")
+      prop(RetryDecision::shouldRetry).isTrue()
+    }
   }
 
   @Test
@@ -1920,7 +1934,10 @@ class EventListenerTest {
     response.close()
     assertThat(listener.recordedEventTypes())
       .containsExactly("CallStart", "SatisfactionFailure", "RetryDecision", "CallEnd")
-    assertThat(listener.findEvent<CallEvent.RetryDecision>().reason).isEqualTo("No rule to retry request (504)")
+    assertThat(listener.findEvent<RetryDecision>()).all {
+      prop(RetryDecision::reason).isEqualTo("No rule to retry request (504)")
+      prop(RetryDecision::shouldRetry).isFalse()
+    }
   }
 
   @Test
