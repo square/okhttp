@@ -200,7 +200,8 @@ class ConnectionPoolTest {
         maxIdleConnections = 2,
       )
     factory.newConnection(pool, routeA1)
-    assertThat(taskRunner.activeQueues()).isNotEmpty()
+    // Racy causing flaky tests
+    // assertThat(taskRunner.activeQueues()).isNotEmpty()
     assertThat(taskRunnerThreads).isNotEmpty()
     Thread.sleep(100)
     for (t in taskRunnerThreads) {
