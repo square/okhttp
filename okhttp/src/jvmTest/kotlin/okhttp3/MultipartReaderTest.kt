@@ -588,29 +588,34 @@ class MultipartReaderTest {
 
     assertThat(reader.nextPart()).isNull()
   }
+
   @Test
   fun testReadingPartWithLargeBuffer() {
-    val multipartBody: RequestBody = MultipartBody.Builder("foo").addPart(
-      headersOf("header-name", "header-value"), object : RequestBody() {
-        override fun contentType(): MediaType? {
-          return "application/octet-stream".toMediaTypeOrNull()
-        }
-
-        override fun contentLength(): Long {
-          return (1024 * 1024 * 100).toLong()
-        }
-
-        override fun writeTo(sink: okio.BufferedSink) {
-          repeat(100) {
-            sink.writeUtf8(
-              "a".repeat(1024 * 1024)
-            )
+    val multipartBody: RequestBody =
+      MultipartBody.Builder("foo").addPart(
+        headersOf("header-name", "header-value"),
+        object : RequestBody() {
+          override fun contentType(): MediaType? {
+            return "application/octet-stream".toMediaTypeOrNull()
           }
-        }
-      }).build()
-    val buffer = Buffer().apply {
-      multipartBody.writeTo(this)
-    }
+
+          override fun contentLength(): Long {
+            return (1024 * 1024 * 100).toLong()
+          }
+
+          override fun writeTo(sink: okio.BufferedSink) {
+            repeat(100) {
+              sink.writeUtf8(
+                "a".repeat(1024 * 1024),
+              )
+            }
+          }
+        },
+      ).build()
+    val buffer =
+      Buffer().apply {
+        multipartBody.writeTo(this)
+      }
 
     val multipartReader = MultipartReader(buffer, "foo")
     while (true) {
@@ -628,7 +633,7 @@ class MultipartReaderTest {
           break
         } else {
           assertThat(readBuff.readUtf8()).isEqualTo(
-            "a".repeat(read.toInt())
+            "a".repeat(read.toInt()),
           )
         }
       }
