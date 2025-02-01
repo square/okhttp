@@ -400,10 +400,11 @@ class DuplexTest {
       "CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd", "ConnectStart",
       "SecureConnectStart", "SecureConnectEnd", "ConnectEnd", "ConnectionAcquired",
       "RequestHeadersStart", "RequestHeadersEnd", "RequestBodyStart", "ResponseHeadersStart",
-      "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "RequestHeadersStart",
+      "ResponseHeadersEnd", "RetryDecision", "ResponseBodyStart", "ResponseBodyEnd", "RequestHeadersStart",
       "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
       "ResponseBodyEnd", "ConnectionReleased", "CallEnd", "RequestFailed",
     )
+    assertThat(listener.findEvent<CallEvent.RetryDecision>().reason).isEqualTo("redirect (301)")
   }
 
   /**

@@ -1663,8 +1663,9 @@ open class CallTest {
 
     assertThat(listener.recordedEventTypes()).containsExactly(
       "CallStart", "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
-      "RequestBodyStart", "RequestBodyEnd", "ResponseFailed", "ConnectionReleased", "CallFailed",
+      "RequestBodyStart", "RequestBodyEnd", "ResponseFailed", "RetryDecision", "ConnectionReleased", "CallFailed",
     )
+    assertThat(listener.findEvent<CallEvent.RetryDecision>().reason).isEqualTo("retryOnConnectionFailure is false")
     listener.clearAllEvents()
 
     val response3 = client.newCall(request1).execute()
