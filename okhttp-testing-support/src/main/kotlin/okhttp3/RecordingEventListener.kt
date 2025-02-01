@@ -97,6 +97,10 @@ open class RecordingEventListener(
 
   inline fun <reified T : CallEvent> removeUpToEvent(): T = removeUpToEvent(T::class.java)
 
+  inline fun <reified T : CallEvent> findEvent(): T {
+    return eventSequence.first { it is T } as T
+  }
+
   /**
    * Remove and return the next event from the recorded sequence.
    *
@@ -288,4 +292,12 @@ open class RecordingEventListener(
     call: Call,
     cachedResponse: Response,
   ) = logEvent(CacheConditionalHit(System.nanoTime(), call))
+
+  override fun retryDecision(
+    call: Call,
+    shouldRetry: Boolean,
+    reason: String,
+  ) = logEvent(
+    CallEvent.RetryDecision(System.nanoTime(), call, shouldRetry, reason),
+  )
 }

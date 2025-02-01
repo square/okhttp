@@ -243,8 +243,9 @@ class EventListenerTest {
       "CallStart",
       "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
       "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseFailed", "ConnectionReleased", "CallFailed",
+      "RequestHeadersEnd", "ResponseFailed", "RetryDecision", "ConnectionReleased", "CallFailed",
     )
+    assertThat(listener.findEvent<CallEvent.RetryDecision>().reason).isEqualTo("request was at least partially sent")
   }
 
   @Test
@@ -1645,10 +1646,11 @@ class EventListenerTest {
       "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
       "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
       "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-      "ResponseBodyEnd", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
+      "ResponseBodyEnd", "RetryDecision", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
       "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
       "CallEnd",
     )
+    assertThat(listener.findEvent<CallEvent.RetryDecision>().reason).isEqualTo("redirect (302)")
   }
 
   @Test
@@ -1678,6 +1680,7 @@ class EventListenerTest {
       "ResponseHeadersEnd",
       "ResponseBodyStart",
       "ResponseBodyEnd",
+      "RetryDecision",
       "ConnectionReleased",
       "ProxySelectStart",
       "ProxySelectEnd",
@@ -1695,6 +1698,7 @@ class EventListenerTest {
       "ConnectionReleased",
       "CallEnd",
     )
+    assertThat(listener.findEvent<CallEvent.RetryDecision>().reason).isEqualTo("redirect (302)")
   }
 
   @Test
@@ -1915,7 +1919,8 @@ class EventListenerTest {
     assertThat(response.code).isEqualTo(504)
     response.close()
     assertThat(listener.recordedEventTypes())
-      .containsExactly("CallStart", "SatisfactionFailure", "CallEnd")
+      .containsExactly("CallStart", "SatisfactionFailure", "RetryDecision", "CallEnd")
+    assertThat(listener.findEvent<CallEvent.RetryDecision>().reason).isEqualTo("No rule to retry request (504)")
   }
 
   @Test
