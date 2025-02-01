@@ -17,7 +17,7 @@ project.applyOsgi(
 
 dependencies {
   api(libs.squareup.okio)
-  "friends"(projects.okhttp)
+  "friendsImplementation"(projects.okhttp)
   compileOnly(libs.findbugs.jsr305)
   compileOnly(libs.animalsniffer.annotations)
 

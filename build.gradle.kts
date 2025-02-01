@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 import java.net.URI
 
@@ -283,19 +282,26 @@ subprojects {
 
   // From https://www.liutikas.net/2025/01/12/Kotlin-Library-Friends.html
 
-  // Create a configuration we can use to track friend libraries
-  val friends = configurations.create("friends") {
+  // Create configurations we can use to track friend libraries
+  val friendsApi = configurations.create("friendsApi") {
     isCanBeResolved = true
     isCanBeConsumed = false
     isTransitive = true
   }
+  val friendsImplementation = configurations.create("friendsImplementation") {
+    isCanBeResolved = true
+    isCanBeConsumed = false
+    isTransitive = false
+  }
 
   // Make sure friends libraries are on the classpath
-  configurations.findByName("implementation")?.extendsFrom(friends)
+  configurations.findByName("implementation")?.extendsFrom(friendsApi)
+  configurations.findByName("implementation")?.extendsFrom(friendsImplementation)
 
   // Make these libraries friends :)
   tasks.withType<KotlinCompile>().configureEach {
-    friendPaths.from(friends.incoming.artifactView { }.files)
+    friendPaths.from(friendsApi.incoming.artifactView { }.files)
+    friendPaths.from(friendsImplementation.incoming.artifactView { }.files)
   }
 }
 

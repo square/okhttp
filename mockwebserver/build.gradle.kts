@@ -15,7 +15,7 @@ tasks.jar {
 }
 
 dependencies {
-  "friends"(projects.okhttp)
+  "friendsApi"(projects.okhttp)
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.okhttpTls)
