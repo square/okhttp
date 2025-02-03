@@ -232,4 +232,11 @@ sealed class CallEvent {
     override val timestampNs: Long,
     override val call: Call,
   ) : CallEvent()
+
+  data class RetryDecision(
+    override val timestampNs: Long,
+    override val call: Call,
+    val shouldRetry: Boolean,
+    val reason: String,
+  ) : CallEvent()
 }
