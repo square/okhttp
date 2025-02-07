@@ -16,5 +16,17 @@
 package okhttp.android.testapp
 
 import android.app.Application
+import okhttp3.OkHttpClient
+import okhttp3.android.AndroidOkHttpClientBuilder.androidBuilder
+import okhttp3.android.OkHttpClientFactory
 
-class TestApplication : Application()
+class TestApplication : Application(), OkHttpClientFactory {
+  override fun newOkHttpClient(): OkHttpClient {
+    return OkHttpClient.androidBuilder(
+      context = this,
+      cacheDir = { cacheDir.resolve("test-app-cache") },
+      cacheSize = 5_000_000,
+    )
+      .build()
+  }
+}
