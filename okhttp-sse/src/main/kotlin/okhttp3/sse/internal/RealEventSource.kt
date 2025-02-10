@@ -16,6 +16,8 @@
 package okhttp3.sse.internal
 
 import java.io.IOException
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Request
@@ -24,6 +26,8 @@ import okhttp3.ResponseBody
 import okhttp3.internal.stripBody
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
+import okio.AsyncTimeout
+import okio.Timeout.Companion.timeout
 
 internal class RealEventSource(
   private val request: Request,
@@ -38,6 +42,18 @@ internal class RealEventSource(
       callFactory.newCall(request).apply {
         enqueue(this@RealEventSource)
       }
+  }
+
+  private fun updateTimeout(call: Call?, duration: Duration) {
+    if (call?.timeout() is AsyncTimeout) {
+      (call.timeout() as AsyncTimeout).apply {
+        if (this.timeoutNanos() > 0L) {
+          exit()
+        }
+        timeout(duration)
+        enter()
+      }
+    }
   }
 
   override fun onResponse(
@@ -65,8 +81,11 @@ internal class RealEventSource(
         return
       }
 
-      // This is a long-lived response. Cancel full-call timeouts.
-      call?.timeout()?.cancel()
+      // This is a long-lived response. Cancel full-call timeouts if no timeout has been set
+      listener.timeout?.let {
+        // We spend at most timeout seconds if set
+        updateTimeout(call, it.seconds)
+      } ?: call?.timeout()?.cancel()
 
       // Replace the body with a stripped one so the callbacks can't see real data.
       val response = response.stripBody()
@@ -76,6 +95,10 @@ internal class RealEventSource(
         if (!canceled) {
           listener.onOpen(this, response)
           while (!canceled && reader.processNextEvent()) {
+            listener.timeout?.let {
+              // We spend at most timeout seconds if set
+              updateTimeout(call, it.seconds)
+            }
           }
         }
       } catch (e: Exception) {
