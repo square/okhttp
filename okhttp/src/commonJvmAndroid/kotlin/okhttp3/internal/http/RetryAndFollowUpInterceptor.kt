@@ -90,7 +90,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
             .build()
 
         val exchange = call.interceptorScopedExchange
-        val followUp = followUpRequest(response, exchange)
+        val followUp = followUpRequest(response, exchange, call)
 
         if (followUp == null) {
           if (exchange != null && exchange.isDuplex) {
@@ -103,12 +103,14 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         val followUpBody = followUp.body
         if (followUpBody != null && followUpBody.isOneShot()) {
           closeActiveExchange = false
+          call.eventListener.retryDecision(call, false, "request.body isOneShot is true")
           return response
         }
 
         response.body.closeQuietly()
 
         if (++followUpCount > MAX_FOLLOW_UPS) {
+          call.eventListener.retryDecision(call, false, "Too many follow-up requests: $followUpCount")
           throw ProtocolException("Too many follow-up requests: $followUpCount")
         }
 
@@ -133,13 +135,19 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     requestSendStarted: Boolean,
   ): Boolean {
     // The application layer has forbidden retries.
-    if (!client.retryOnConnectionFailure) return false
+    if (!client.retryOnConnectionFailure) {
+      call.eventListener.retryDecision(call, false, "retryOnConnectionFailure is false")
+      return false
+    }
 
     // We can't send the request body again.
-    if (requestSendStarted && requestIsOneShot(e, userRequest)) return false
+    if (requestSendStarted && requestIsOneShot(e, userRequest)) {
+      call.eventListener.retryDecision(call, false, "request.body isOneShot is true")
+      return false
+    }
 
     // This exception is fatal.
-    if (!isRecoverable(e, requestSendStarted)) return false
+    if (!isRecoverable(e, requestSendStarted, call)) return false
 
     // No more routes to attempt.
     if (!call.retryAfterFailure()) return false
@@ -160,16 +168,28 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
   private fun isRecoverable(
     e: IOException,
     requestSendStarted: Boolean,
+    call: RealCall,
   ): Boolean {
     // If there was a protocol problem, don't recover.
     if (e is ProtocolException) {
+      call.eventListener.retryDecision(call, false, "failure was ProtocolException")
       return false
     }
 
     // If there was an interruption don't recover, but if there was a timeout connecting to a route
     // we should try the next route (if there is one).
     if (e is InterruptedIOException) {
-      return e is SocketTimeoutException && !requestSendStarted
+      if (e is SocketTimeoutException) {
+        if (requestSendStarted) {
+          call.eventListener.retryDecision(call, false, "request was at least partially sent")
+          return false
+        }
+      } else {
+        call.eventListener.retryDecision(call, false, "failure was InterruptedIOException")
+        return false
+      }
+
+      return true
     }
 
     // Look for known client-side or negotiation errors that are unlikely to be fixed by trying
@@ -178,13 +198,17 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
       // If the problem was a CertificateException from the X509TrustManager,
       // do not retry.
       if (e.cause is CertificateException) {
+        call.eventListener.retryDecision(call, false, "failure was CertificateException")
         return false
       }
     }
+
     if (e is SSLPeerUnverifiedException) {
       // e.g. a certificate pinning error.
+      call.eventListener.retryDecision(call, false, "certificate pinning failure")
       return false
     }
+
     // An example of one we might want to retry with a different route is a problem connecting to a
     // proxy and would manifest as a standard IOException. Unless it is one we know we should not
     // retry, we return true and try a new route.
@@ -200,6 +224,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
   private fun followUpRequest(
     userResponse: Response,
     exchange: Exchange?,
+    call: RealCall,
   ): Request? {
     val route = exchange?.connection?.route()
     val responseCode = userResponse.code
@@ -209,15 +234,23 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
       HTTP_PROXY_AUTH -> {
         val selectedProxy = route!!.proxy
         if (selectedProxy.type() != Proxy.Type.HTTP) {
+          call.eventListener.retryDecision(call, false, "Received HTTP_PROXY_AUTH (407) code while not using proxy")
           throw ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy")
         }
+        call.eventListener.retryDecision(call, true, "Received HTTP_PROXY_AUTH (407) code")
         return client.proxyAuthenticator.authenticate(route, userResponse)
       }
 
-      HTTP_UNAUTHORIZED -> return client.authenticator.authenticate(route, userResponse)
+      HTTP_UNAUTHORIZED -> return client.authenticator.authenticate(route, userResponse).also {
+        if (it != null) {
+          call.eventListener.retryDecision(call, true, "Received HTTP_UNAUTHORIZED (401) and authenticate request")
+        } else {
+          call.eventListener.retryDecision(call, false, "Received HTTP_UNAUTHORIZED (401) without authenticate request")
+        }
+      }
 
       HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> {
-        return buildRedirectRequest(userResponse, method)
+        return buildRedirectRequest(userResponse, method, call)
       }
 
       HTTP_CLIENT_TIMEOUT -> {
@@ -226,23 +259,28 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         // repeat the request (even non-idempotent ones.)
         if (!client.retryOnConnectionFailure) {
           // The application layer has directed us not to retry the request.
+          call.eventListener.retryDecision(call, false, "HTTP_CLIENT_TIMEOUT (408) and retryOnConnectionFailure is false")
           return null
         }
 
         val requestBody = userResponse.request.body
         if (requestBody != null && requestBody.isOneShot()) {
+          call.eventListener.retryDecision(call, false, "HTTP_CLIENT_TIMEOUT (408) and request.body isOneShot is true")
           return null
         }
         val priorResponse = userResponse.priorResponse
         if (priorResponse != null && priorResponse.code == HTTP_CLIENT_TIMEOUT) {
+          call.eventListener.retryDecision(call, false, "HTTP_CLIENT_TIMEOUT (408) received on retry")
           // We attempted to retry and got another timeout. Give up.
           return null
         }
 
         if (retryAfter(userResponse, 0) > 0) {
+          call.eventListener.retryDecision(call, false, "HTTP_CLIENT_TIMEOUT (408) with Retry-After")
           return null
         }
 
+        call.eventListener.retryDecision(call, true, "HTTP_CLIENT_TIMEOUT (408)")
         return userResponse.request
       }
 
@@ -250,14 +288,17 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         val priorResponse = userResponse.priorResponse
         if (priorResponse != null && priorResponse.code == HTTP_UNAVAILABLE) {
           // We attempted to retry and got another timeout. Give up.
+          call.eventListener.retryDecision(call, false, "HTTP_UNAVAILABLE (503) received on retry")
           return null
         }
 
         if (retryAfter(userResponse, Integer.MAX_VALUE) == 0) {
           // specifically received an instruction to retry without delay
+          call.eventListener.retryDecision(call, true, "HTTP_UNAVAILABLE (503) with Retry-After = 0")
           return userResponse.request
         }
 
+        call.eventListener.retryDecision(call, false, "HTTP_UNAVAILABLE (503)")
         return null
       }
 
@@ -267,35 +308,56 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         // we can retry on a different connection.
         val requestBody = userResponse.request.body
         if (requestBody != null && requestBody.isOneShot()) {
+          call.eventListener.retryDecision(call, false, "HTTP_MISDIRECTED_REQUEST (421) and request.body isOneShot is true")
           return null
         }
 
         if (exchange == null || !exchange.isCoalescedConnection) {
+          call.eventListener.retryDecision(call, false, "HTTP_MISDIRECTED_REQUEST (421) on non coalesced connection")
           return null
         }
 
         exchange.connection.noCoalescedConnections()
+        call.eventListener.retryDecision(call, true, "HTTP_MISDIRECTED_REQUEST (421), retrying without coalesced connection")
         return userResponse.request
       }
 
-      else -> return null
+      else -> return null.also {
+        if (!userResponse.isSuccessful) {
+          call.eventListener.retryDecision(call, false, "No rule to retry request ($responseCode)")
+        }
+      }
     }
   }
 
   private fun buildRedirectRequest(
     userResponse: Response,
     method: String,
+    call: RealCall,
   ): Request? {
     // Does the client allow redirects?
-    if (!client.followRedirects) return null
+    if (!client.followRedirects) {
+      call.eventListener.retryDecision(call, false, "followRedirects is false after redirect (${userResponse.code})")
+      return null
+    }
 
-    val location = userResponse.header("Location") ?: return null
+    val location =
+      userResponse.header("Location") ?: return null.also {
+        call.eventListener.retryDecision(call, false, "redirect (${userResponse.code}) without Location")
+      }
     // Don't follow redirects to unsupported protocols.
-    val url = userResponse.request.url.resolve(location) ?: return null
+    val url =
+      userResponse.request.url.resolve(location) ?: return null.also {
+        call.eventListener.retryDecision(call, false, "redirect (${userResponse.code}) to unsupported protocol")
+      }
 
     // If configured, don't follow redirects between SSL and non-SSL.
     val sameScheme = url.scheme == userResponse.request.url.scheme
-    if (!sameScheme && !client.followSslRedirects) return null
+    if (!sameScheme && !client.followSslRedirects) {
+      return null.also {
+        call.eventListener.retryDecision(call, false, "redirect (${userResponse.code}) switching scheme and followSslRedirects is false")
+      }
+    }
 
     // Most redirects don't include a request body.
     val requestBuilder = userResponse.request.newBuilder()
@@ -324,6 +386,8 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     if (!userResponse.request.url.canReuseConnectionFor(url)) {
       requestBuilder.removeHeader("Authorization")
     }
+
+    call.eventListener.retryDecision(call, true, "redirect (${userResponse.code})")
 
     return requestBuilder.url(url).build()
   }
