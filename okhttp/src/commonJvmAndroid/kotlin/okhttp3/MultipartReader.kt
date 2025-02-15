@@ -168,9 +168,7 @@ class MultipartReader
         source.timeout().intersectWith(timeout) {
           return when (val limit = currentPartBytesRemaining(maxResult = byteCount)) {
             0L -> -1L // No more bytes in this part.
-            else -> {
-              source.read(sink, limit)
-            }
+            else -> source.read(sink, limit)
           }
         }
 
