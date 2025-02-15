@@ -34,6 +34,7 @@ import assertk.assertions.isNotSameAs
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.assertions.matches
+import assertk.assertions.prop
 import assertk.assertions.startsWith
 import assertk.fail
 import java.io.FileNotFoundException
@@ -83,6 +84,7 @@ import okhttp3.CallEvent.ConnectStart
 import okhttp3.CallEvent.ConnectionAcquired
 import okhttp3.CallEvent.ConnectionReleased
 import okhttp3.CallEvent.ResponseFailed
+import okhttp3.CallEvent.RetryDecision
 import okhttp3.CertificatePinner.Companion.pin
 import okhttp3.Credentials.basic
 import okhttp3.Headers.Companion.headersOf
@@ -1663,8 +1665,12 @@ open class CallTest {
 
     assertThat(listener.recordedEventTypes()).containsExactly(
       "CallStart", "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
-      "RequestBodyStart", "RequestBodyEnd", "ResponseFailed", "ConnectionReleased", "CallFailed",
+      "RequestBodyStart", "RequestBodyEnd", "ResponseFailed", "RetryDecision", "ConnectionReleased", "CallFailed",
     )
+    assertThat(listener.findEvent<RetryDecision>()).all {
+      prop(RetryDecision::reason).isEqualTo("retryOnConnectionFailure is false")
+      prop(RetryDecision::shouldRetry).isFalse()
+    }
     listener.clearAllEvents()
 
     val response3 = client.newCall(request1).execute()
