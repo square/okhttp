@@ -590,7 +590,7 @@ class MultipartReaderTest {
   }
 
   @Test
-  fun testReadingPartWithLargeBuffer() {
+  fun `reading a large part with small byteCount`() {
     val multipartBody: RequestBody =
       MultipartBody.Builder("foo").addPart(
         headersOf("header-name", "header-value"),
@@ -626,56 +626,7 @@ class MultipartReaderTest {
       assertThat(part.headers["header-name"]).isEqualTo("header-value")
       while (true) {
         val readBuff = Buffer()
-        val read = part.body.read(readBuff, (1024 * 1024).toLong())
-        if (read == -1L) {
-          break
-        } else {
-          assertThat(readBuff.readUtf8()).isEqualTo(
-            "a".repeat(read.toInt()),
-          )
-        }
-      }
-    }
-  }
-
-  @Test
-  fun testReadingPartWithMediumBuffer() {
-    val multipartBody: RequestBody =
-      MultipartBody.Builder("foo").addPart(
-        headersOf("header-name", "header-value"),
-        object : RequestBody() {
-          override fun contentType(): MediaType? {
-            return "application/octet-stream".toMediaTypeOrNull()
-          }
-
-          override fun contentLength(): Long {
-            return (1024 * 100).toLong()
-          }
-
-          override fun writeTo(sink: okio.BufferedSink) {
-            repeat(100) {
-              sink.writeUtf8(
-                "a".repeat(1024),
-              )
-            }
-          }
-        },
-      ).build()
-    val buffer =
-      Buffer().apply {
-        multipartBody.writeTo(this)
-      }
-
-    val multipartReader = MultipartReader(buffer, "foo")
-    while (true) {
-      val part = multipartReader.nextPart()
-
-      if (part == null) break
-
-      assertThat(part.headers["header-name"]).isEqualTo("header-value")
-      while (true) {
-        val readBuff = Buffer()
-        val read = part.body.read(readBuff, (1024 * 1024).toLong())
+        val read = part.body.read(readBuff, (1024).toLong())
         if (read == -1L) {
           break
         } else {
