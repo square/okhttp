@@ -19,6 +19,7 @@ import java.io.Closeable
 import java.io.IOException
 import java.net.ProtocolException
 import okhttp3.internal.http1.HeadersReader
+import okhttp3.temp.limit
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString.Companion.encodeUtf8
@@ -168,7 +169,6 @@ class MultipartReader
           return when (val limit = currentPartBytesRemaining(maxResult = byteCount)) {
             0L -> -1L // No more bytes in this part.
             else -> {
-              println("inner $limit")
               source.read(sink, limit)
             }
           }
@@ -186,13 +186,15 @@ class MultipartReader
      * one byte left to read.
      */
     private fun currentPartBytesRemaining(maxResult: Long): Long {
-      source.require(crlfDashDashBoundary.size.toLong())
-
-      println("indexOf over ${source.buffer.size} with maxResult $maxResult")
-      return when (val delimiterIndex = source.buffer.indexOf(crlfDashDashBoundary)) {
-        -1L -> minOf(maxResult, source.buffer.size - crlfDashDashBoundary.size + 1)
-        else -> minOf(maxResult, delimiterIndex)
-      }
+      val limitSource = source.peek().limit(maxResult + crlfDashDashBoundary.size).buffer()
+      limitSource.require(crlfDashDashBoundary.size.toLong())
+      val delimiterIndex = limitSource.buffer.indexOf(crlfDashDashBoundary)
+      val toRead =
+        when (delimiterIndex) {
+          -1L -> minOf(maxResult, limitSource.buffer.size - crlfDashDashBoundary.size + 1)
+          else -> minOf(maxResult, delimiterIndex)
+        }
+      return toRead
     }
 
     @Throws(IOException::class)
