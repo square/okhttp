@@ -19,7 +19,7 @@ import java.io.Closeable
 import java.io.IOException
 import java.net.ProtocolException
 import okhttp3.internal.http1.HeadersReader
-import okhttp3.temp.limit
+import okhttp3.internal.limit
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString.Companion.encodeUtf8

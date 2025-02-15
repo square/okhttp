@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package okhttp3.temp
+package okhttp3.internal
 
 import kotlin.jvm.JvmOverloads
 import okio.Buffer
@@ -22,7 +22,7 @@ import okio.ForwardingSource
 import okio.Source
 
 /**
- * Return a new [okio.Source] whose [read function][okio.Source.read] returns -1 after [byteCount]
+ * Return a new [Source] whose [read function][Source.read] returns -1 after [byteCount]
  * bytes have been read.
  *
  * @param onReadExhausted Callback invoked once when the end of bytes has been reached. It receives
@@ -30,7 +30,7 @@ import okio.Source
  * `false` if [byteCount] bytes were successfully read.
  */
 @JvmOverloads
-public fun Source.limit(
+internal fun Source.limit(
   byteCount: Long,
   onReadExhausted: (eof: Boolean) -> Unit = {},
 ): Source {
