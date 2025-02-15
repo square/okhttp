@@ -186,15 +186,16 @@ class MultipartReader
      * one byte left to read.
      */
     private fun currentPartBytesRemaining(maxResult: Long): Long {
+      // Avoid indexOf scanning repeatedly over the entire source by using limit
+      // Since maxResult could be midway through the boundary, read further to be safe.
       val limitSource = source.peek().limit(maxResult + crlfDashDashBoundary.size).buffer()
       limitSource.require(crlfDashDashBoundary.size.toLong())
+
       val delimiterIndex = limitSource.buffer.indexOf(crlfDashDashBoundary)
-      val toRead =
-        when (delimiterIndex) {
-          -1L -> minOf(maxResult, limitSource.buffer.size - crlfDashDashBoundary.size + 1)
-          else -> minOf(maxResult, delimiterIndex)
-        }
-      return toRead
+      return when (delimiterIndex) {
+        -1L -> minOf(maxResult, limitSource.buffer.size - crlfDashDashBoundary.size + 1)
+        else -> minOf(maxResult, delimiterIndex)
+      }
     }
 
     @Throws(IOException::class)
