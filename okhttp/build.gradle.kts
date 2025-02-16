@@ -147,6 +147,7 @@ kotlin {
         implementation(libs.kotlin.test.junit)
         implementation(libs.openjsse)
         compileOnly(libs.findbugs.jsr305)
+        implementation(libs.kotlinx.coroutines.test)
 
         implementation(libs.junit.jupiter.engine)
         implementation(libs.junit.vintage.engine)
