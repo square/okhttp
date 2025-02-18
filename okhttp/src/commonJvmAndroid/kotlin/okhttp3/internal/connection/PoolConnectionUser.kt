@@ -39,7 +39,10 @@ object PoolConnectionUser : ConnectionUser {
   override fun updateRouteDatabaseAfterSuccess(route: Route) {
   }
 
-  override fun connectStart(route: Route) {
+  override fun connectStart(
+    connectionId: Long,
+    route: Route,
+  ) {
   }
 
   override fun secureConnectStart() {
@@ -61,6 +64,7 @@ object PoolConnectionUser : ConnectionUser {
   }
 
   override fun connectFailed(
+    connectionId: Long,
     route: Route,
     protocol: Protocol?,
     e: IOException,
