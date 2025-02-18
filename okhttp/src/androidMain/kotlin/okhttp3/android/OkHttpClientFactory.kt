@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Block, Inc.
+ * Copyright (c) 2024 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,20 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
-package okhttp.android.testapp
+package okhttp3.android
 
-import assertk.assertThat
-import assertk.assertions.isEqualTo
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.junit.Test
+import okhttp3.OkHttpClient
 
 /**
- * Run with "./gradlew :android-test-app:connectedCheck -PandroidBuild=true" and make sure ANDROID_SDK_ROOT is set.
+ * Factory of OkHttpClient instances. When implemented in the android Application,
+ * it will be initialised early and available as an app singleton.
  */
-class PublicSuffixDatabaseTest {
-  @Test
-  fun testTopLevelDomain() {
-    assertThat("https://www.google.com/robots.txt".toHttpUrl().topPrivateDomain()).isEqualTo("google.com")
-  }
+interface OkHttpClientFactory {
+  fun newOkHttpClient(): OkHttpClient
 }
