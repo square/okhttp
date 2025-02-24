@@ -279,6 +279,30 @@ subprojects {
       languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
     }
   }
+
+  // From https://www.liutikas.net/2025/01/12/Kotlin-Library-Friends.html
+
+  // Create configurations we can use to track friend libraries
+  val friendsApi = configurations.create("friendsApi") {
+    isCanBeResolved = true
+    isCanBeConsumed = false
+    isTransitive = true
+  }
+  val friendsImplementation = configurations.create("friendsImplementation") {
+    isCanBeResolved = true
+    isCanBeConsumed = false
+    isTransitive = false
+  }
+
+  // Make sure friends libraries are on the classpath
+  configurations.findByName("implementation")?.extendsFrom(friendsApi)
+  configurations.findByName("implementation")?.extendsFrom(friendsImplementation)
+
+  // Make these libraries friends :)
+  tasks.withType<KotlinCompile>().configureEach {
+    friendPaths.from(friendsApi.incoming.artifactView { }.files)
+    friendPaths.from(friendsImplementation.incoming.artifactView { }.files)
+  }
 }
 
 /** Configure publishing and signing for published Java and JavaPlatform subprojects. */
