@@ -1,7 +1,7 @@
 [versions]
 # 7.0.0 is JDK 17+ https://github.com/bndtools/bnd/wiki/Changes-in-7.0.0
 biz-aQute-bnd = "6.4.0"
-checkStyle = "10.21.2"
+checkStyle = "10.21.3"
 com-squareup-moshi = "1.15.2"
 com-squareup-okio = "3.10.2"
 de-mannodermaus-junit5 = "1.6.0"
