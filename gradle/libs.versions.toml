@@ -5,7 +5,7 @@ checkStyle = "10.21.2"
 com-squareup-moshi = "1.15.2"
 com-squareup-okio = "3.10.2"
 de-mannodermaus-junit5 = "1.6.0"
-graalvm = "24.1.1"
+graalvm = "24.1.2"
 kotlinx-serialization = "1.8.0"
 ksp = "2.1.0-1.0.29"
 lintGradle = "1.0.0-alpha03"
@@ -51,7 +51,7 @@ gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compat
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
 gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:2.0.0"
 gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:4.1.0"
-gradlePlugin-graalvmBuildTools = "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin:0.10.4"
+gradlePlugin-graalvmBuildTools = "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin:0.10.5"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.30.0"
