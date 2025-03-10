@@ -15,14 +15,14 @@
  */
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
-package okhttp.android.test
+package okhttp3.android
 
 import assertk.assertFailure
 import assertk.assertions.hasMessage
 import assertk.assertions.isInstanceOf
 import java.net.UnknownHostException
-import okhttp3.AsyncDns
-import okhttp3.android.AndroidAsyncDns
+import okhttp3.android.AndroidDns.DnsClass
+import okhttp3.android.internal.BlockingAsyncDns.Companion.asBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -31,17 +31,17 @@ import org.robolectric.shadow.api.Shadow
 
 @Config(shadows = [ShadowDnsResolver::class], sdk = [34])
 @RunWith(RobolectricTestRunner::class)
-class AndroidAsyncDnsTest {
+class AndroidDnsTest {
   @Test
   fun testDnsRequestInvalid() {
-    val asyncDns = AndroidAsyncDns.IPv4
+    val asyncDns = AndroidDns(DnsClass.IPV4)
     val shadowDns: ShadowDnsResolver = Shadow.extract(asyncDns.resolver)
 
     shadowDns.responder = {
       throw IllegalArgumentException("Network.fromNetworkHandle refusing to instantiate NETID_UNSET Network.")
     }
 
-    val dns = AsyncDns.toDns(asyncDns)
+    val dns = asyncDns.asBlocking()
 
     assertFailure {
       dns.lookup("google.invalid")
