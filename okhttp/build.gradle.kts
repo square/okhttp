@@ -189,7 +189,7 @@ if (platform == "jdk8alpn") {
 }
 
 android {
-  compileSdk = 34
+  compileSdk = 35
 
   namespace = "okhttp.okhttp3"
 
