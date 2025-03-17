@@ -41,7 +41,7 @@ codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
 converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "retrofit" }
-eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.22.0"
+eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.23.0"
 findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
 graal-sdk = { module = "org.graalvm.sdk:graal-sdk", version.ref = "graalvm" }
 gradlePlugin-android = "com.android.tools.build:gradle:8.9.0"
