@@ -363,6 +363,15 @@ class OkHttpClientTest {
         .routeDatabase,
     )
 
+    // identical CertificatePinner
+    assertSame(
+      client.routeDatabase,
+      client.newBuilder()
+        .certificatePinner(CertificatePinner.Builder().build())
+        .build()
+        .routeDatabase,
+    )
+
     // logically different scope of client for route db
     assertNotSame(
       client.routeDatabase,
@@ -423,7 +432,11 @@ class OkHttpClientTest {
     assertNotSame(
       client.routeDatabase,
       client.newBuilder()
-        .certificatePinner(CertificatePinner.Builder().build())
+        .certificatePinner(
+          CertificatePinner.Builder()
+            .add("san.com", "sha1/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
+            .build(),
+        )
         .build()
         .routeDatabase,
     )
