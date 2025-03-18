@@ -60,8 +60,10 @@ android {
 dependencies {
   implementation(libs.kotlin.reflect)
   implementation(libs.playservices.safetynet)
-  implementation(projects.okhttp)
+  "friendsImplementation"(projects.okhttp)
+  "friendsImplementation"(projects.okhttpDnsoverhttps)
 
+  testImplementation(projects.okhttp)
   testImplementation(libs.junit)
   testImplementation(libs.junit.ktx)
   testImplementation(libs.assertk)
