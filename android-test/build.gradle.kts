@@ -35,16 +35,16 @@ android {
   }
 
   compileOptions {
-    targetCompatibility(JavaVersion.VERSION_11)
-    sourceCompatibility(JavaVersion.VERSION_11)
+    targetCompatibility(JavaVersion.VERSION_17)
+    sourceCompatibility(JavaVersion.VERSION_17)
   }
 
   testOptions {
-    targetSdk = 34
+    targetSdk = 35
   }
 
   kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_11.toString()
+    jvmTarget = JavaVersion.VERSION_17.toString()
   }
 
   // issue merging due to conflict with httpclient and something else
