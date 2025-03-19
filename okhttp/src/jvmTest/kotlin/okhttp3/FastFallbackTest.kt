@@ -93,14 +93,16 @@ class FastFallbackTest {
       )
 
     client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .eventListenerFactory(clientTestRule.wrap(listener))
         .connectTimeout(60, TimeUnit.SECONDS) // Deliberately exacerbate slow fallbacks.
         .dns { dnsResults }
         .fastFallback(true)
         .build()
     url =
-      serverIpv4.url("/")
+      serverIpv4
+        .url("/")
         .newBuilder()
         .host("localhost")
         .build()
@@ -243,7 +245,8 @@ class FastFallbackTest {
     )
 
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .fastFallback(false)
         .callTimeout(1_000, TimeUnit.MILLISECONDS)
         .build()
@@ -290,7 +293,8 @@ class FastFallbackTest {
       }
 
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE))
         .socketFactory(socketFactory)
         .addNetworkInterceptor(
@@ -301,8 +305,7 @@ class FastFallbackTest {
               firstConnectLatch.countDown()
             }
           },
-        )
-        .build()
+        ).build()
 
     // Set up a same-connection retry.
     serverIpv4.enqueue(

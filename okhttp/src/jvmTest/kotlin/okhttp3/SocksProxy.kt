@@ -76,12 +76,11 @@ class SocksProxy {
     }
   }
 
-  fun proxy(): Proxy {
-    return Proxy(
+  fun proxy(): Proxy =
+    Proxy(
       Proxy.Type.SOCKS,
       InetSocketAddress.createUnresolved("localhost", serverSocket!!.localPort),
     )
-  }
 
   fun connectionCount(): Int = connectionCount.get()
 

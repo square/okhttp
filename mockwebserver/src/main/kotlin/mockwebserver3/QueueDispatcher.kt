@@ -53,9 +53,7 @@ open class QueueDispatcher : Dispatcher() {
     return result
   }
 
-  override fun peek(): MockResponse {
-    return responseQueue.peek() ?: failFastResponse ?: super.peek()
-  }
+  override fun peek(): MockResponse = responseQueue.peek() ?: failFastResponse ?: super.peek()
 
   open fun enqueueResponse(response: MockResponse) {
     responseQueue.add(response)

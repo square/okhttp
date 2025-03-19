@@ -55,7 +55,9 @@ import okio.source
  * an [IOException] that was triggered by a certain caller can be caught and handled by that caller.
  */
 @Suppress("NAME_SHADOWING")
-class Http2Connection internal constructor(builder: Builder) : Closeable {
+class Http2Connection internal constructor(
+  builder: Builder,
+) : Closeable {
   internal val lock: ReentrantLock = ReentrantLock()
   internal val condition: Condition = lock.newLockCondition()
 
@@ -230,9 +232,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   fun newStream(
     requestHeaders: List<Header>,
     out: Boolean,
-  ): Http2Stream {
-    return newStream(0, requestHeaders, out)
-  }
+  ): Http2Stream = newStream(0, requestHeaders, out)
 
   @Throws(IOException::class)
   private fun newStream(
@@ -623,9 +623,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         this.flowControlListener = flowControlListener
       }
 
-    fun build(): Http2Connection {
-      return Http2Connection(this)
-    }
+    fun build(): Http2Connection = Http2Connection(this)
   }
 
   /**
@@ -634,7 +632,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
    */
   inner class ReaderRunnable internal constructor(
     internal val reader: Http2Reader,
-  ) : Http2Reader.Handler, () -> Unit {
+  ) : Http2Reader.Handler,
+    () -> Unit {
     override fun invoke() {
       var connectionErrorCode = ErrorCode.INTERNAL_ERROR
       var streamErrorCode = ErrorCode.INTERNAL_ERROR

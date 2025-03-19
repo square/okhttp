@@ -209,15 +209,14 @@ class RelayTest {
   }
 
   /** Returns a callable that reads all of source, closes it, and returns the bytes.  */
-  private fun sourceReader(source: Source?): Callable<ByteString> {
-    return Callable {
+  private fun sourceReader(source: Source?): Callable<ByteString> =
+    Callable {
       val buffer = Buffer()
       while (source!!.read(buffer, 16384) != -1L) {
       }
       source.close()
       buffer.readByteString()
     }
-  }
 
   private fun assertFile(
     prefix: ByteString,

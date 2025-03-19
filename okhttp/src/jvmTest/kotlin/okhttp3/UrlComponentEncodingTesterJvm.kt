@@ -20,8 +20,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.UrlComponentEncodingTester.Component
 
-fun urlComponentEncodingTesterJvmPlatform(component: Component): UrlComponentEncodingTester.Platform {
-  return when (component) {
+fun urlComponentEncodingTesterJvmPlatform(component: Component): UrlComponentEncodingTester.Platform =
+  when (component) {
     Component.USER ->
       UrlComponentEncodingTesterJvmPlatform()
         .escapeForUri('%'.code)
@@ -92,7 +92,6 @@ fun urlComponentEncodingTesterJvmPlatform(component: Component): UrlComponentEnc
           '}'.code,
         )
   }
-}
 
 private class UrlComponentEncodingTesterJvmPlatform : UrlComponentEncodingTester.Platform() {
   private val uriEscapedCodePoints = StringBuilder()

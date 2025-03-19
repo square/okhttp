@@ -64,16 +64,20 @@ class Main : CliktCommand(name = NAME) {
     "--connect-timeout",
   ).help(
     "Maximum time allowed for connection (seconds)",
-  ).int().default(DEFAULT_TIMEOUT)
+  ).int()
+    .default(DEFAULT_TIMEOUT)
 
-  val readTimeout: Int by option("--read-timeout").help("Maximum time allowed for reading data (seconds)").int()
+  val readTimeout: Int by option("--read-timeout")
+    .help("Maximum time allowed for reading data (seconds)")
+    .int()
     .default(DEFAULT_TIMEOUT)
 
   val callTimeout: Int by option(
     "--call-timeout",
   ).help(
     "Maximum time allowed for the entire call (seconds)",
-  ).int().default(DEFAULT_TIMEOUT)
+  ).int()
+    .default(DEFAULT_TIMEOUT)
 
   val followRedirects: Boolean by option("-L", "--location").help("Follow redirects").flag()
 
@@ -163,9 +167,12 @@ class Main : CliktCommand(name = NAME) {
       }
 
     private fun createInsecureSslSocketFactory(trustManager: TrustManager): SSLSocketFactory =
-      Platform.get().newSSLContext().apply {
-        init(null, arrayOf(trustManager), null)
-      }.socketFactory
+      Platform
+        .get()
+        .newSSLContext()
+        .apply {
+          init(null, arrayOf(trustManager), null)
+        }.socketFactory
 
     private fun createInsecureHostnameVerifier(): HostnameVerifier = HostnameVerifier { _, _ -> true }
   }

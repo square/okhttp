@@ -45,13 +45,9 @@ class ResponseBodyTest {
 
     val body: ResponseBody =
       object : ResponseBody() {
-        override fun contentType(): MediaType? {
-          return null
-        }
+        override fun contentType(): MediaType? = null
 
-        override fun contentLength(): Long {
-          return 5
-        }
+        override fun contentLength(): Long = 5
 
         override fun source(): BufferedSource {
           val source = Buffer().writeUtf8("hello")
@@ -71,21 +67,15 @@ class ResponseBodyTest {
   fun throwingUnderlyingSourceClosesQuietly() {
     val body: ResponseBody =
       object : ResponseBody() {
-        override fun contentType(): MediaType? {
-          return null
-        }
+        override fun contentType(): MediaType? = null
 
-        override fun contentLength(): Long {
-          return 5
-        }
+        override fun contentLength(): Long = 5
 
         override fun source(): BufferedSource {
           val source = Buffer().writeUtf8("hello")
           return object : ForwardingSource(source) {
             @Throws(IOException::class)
-            override fun close() {
-              throw IOException("Broken!")
-            }
+            override fun close(): Unit = throw IOException("Broken!")
           }.buffer()
         }
       }

@@ -93,7 +93,8 @@ class ConnectionPoolTest {
     val poolApi = ConnectionPool(pool)
     val c1 = factory.newConnection(pool, routeA1, 50L)
     val client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .connectionPool(poolApi)
         .build()
     val call = client.newCall(Request(addressA.url)) as RealCall
@@ -313,7 +314,8 @@ class ConnectionPoolTest {
 
     // Play it back.
     val connection =
-      Http2Connection.Builder(true, TaskRunner.INSTANCE)
+      Http2Connection
+        .Builder(true, TaskRunner.INSTANCE)
         .socket(peer.openSocket())
         .pushObserver(Http2ConnectionTest.IGNORE)
         .listener(realConnection)
@@ -348,7 +350,8 @@ class ConnectionPoolTest {
     connection: RealConnection,
   ) {
     val client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .connectionPool(pool)
         .build()
     val call = client.newCall(Request(connection.route().address.url)) as RealCall

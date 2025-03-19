@@ -66,7 +66,8 @@ class BasicLoomTest {
     assertThat(System.getProperty("jdk.tracePinnedThreads")).isNotEmpty()
 
     client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .trustMockServer()
         .dispatcher(Dispatcher(newVirtualThreadPerTaskExecutor()))
         .build()
@@ -83,19 +84,18 @@ class BasicLoomTest {
     assertThat(capturedOut.toString()).isEmpty()
   }
 
-  private fun newVirtualThreadPerTaskExecutor(): ExecutorService {
-    return Executors::class.java.getMethod("newVirtualThreadPerTaskExecutor").invoke(null) as ExecutorService
-  }
+  private fun newVirtualThreadPerTaskExecutor(): ExecutorService =
+    Executors::class.java.getMethod("newVirtualThreadPerTaskExecutor").invoke(null) as ExecutorService
 
   @Test
   fun testHttpsRequest() {
     MockServerClient(mockServer.host, mockServer.serverPort).use { mockServerClient ->
       mockServerClient
         .`when`(
-          request().withPath("/person")
+          request()
+            .withPath("/person")
             .withQueryStringParameter("name", "peter"),
-        )
-        .respond(response().withBody("Peter the person!"))
+        ).respond(response().withBody("Peter the person!"))
 
       val results =
         (1..20).map {

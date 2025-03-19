@@ -35,12 +35,14 @@ object TlsUtil {
   private val localhost: HandshakeCertificates by lazy {
     // Generate a self-signed cert for the server to serve and the client to trust.
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .commonName("localhost")
         .addSubjectAlternativeName("localhost")
         .addSubjectAlternativeName("localhost.localdomain")
         .build()
-    return@lazy HandshakeCertificates.Builder()
+    return@lazy HandshakeCertificates
+      .Builder()
       .heldCertificate(heldCertificate)
       .addTrustedCertificate(heldCertificate.certificate)
       .build()
@@ -110,10 +112,9 @@ object TlsUtil {
     return result[0] as X509KeyManager
   }
 
-  private fun newEmptyKeyStore(keyStoreType: String?): KeyStore {
-    return KeyStore.getInstance(keyStoreType ?: KeyStore.getDefaultType()).apply {
+  private fun newEmptyKeyStore(keyStoreType: String?): KeyStore =
+    KeyStore.getInstance(keyStoreType ?: KeyStore.getDefaultType()).apply {
       val inputStream: InputStream? = null // By convention, 'null' creates an empty key store.
       load(inputStream, password)
     }
-  }
 }

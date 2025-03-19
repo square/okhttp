@@ -39,8 +39,8 @@ enum class TlsVersion(
 
   companion object {
     @JvmStatic
-    fun forJavaName(javaName: String): TlsVersion {
-      return when (javaName) {
+    fun forJavaName(javaName: String): TlsVersion =
+      when (javaName) {
         "TLSv1.3" -> TLS_1_3
         "TLSv1.2" -> TLS_1_2
         "TLSv1.1" -> TLS_1_1
@@ -48,6 +48,5 @@ enum class TlsVersion(
         "SSLv3" -> SSL_3_0
         else -> throw IllegalArgumentException("Unexpected TLS version: $javaName")
       }
-    }
   }
 }

@@ -443,7 +443,8 @@ class Http2ConnectionTest {
     // Write the mocking script.
     peer.sendFrame().settings(Settings())
     peer.acceptFrame() // ACK
-    peer.sendFrame()
+    peer
+      .sendFrame()
       .pushPromise(
         streamId = 3,
         promisedStreamId = 2,
@@ -455,7 +456,8 @@ class Http2ConnectionTest {
             Header(Header.TARGET_PATH, "/cached"),
           ),
       )
-    peer.sendFrame()
+    peer
+      .sendFrame()
       .headers(
         outFinished = true,
         streamId = 2,
@@ -491,7 +493,8 @@ class Http2ConnectionTest {
     val longString = repeat('a', Http2.INITIAL_MAX_FRAME_SIZE + 1)
     val socket = peer.openSocket()
     val connection =
-      Http2Connection.Builder(true, TaskRunner.INSTANCE)
+      Http2Connection
+        .Builder(true, TaskRunner.INSTANCE)
         .socket(socket)
         .pushObserver(IGNORE)
         .build()
@@ -956,9 +959,7 @@ class Http2ConnectionTest {
     val maxConcurrentStreams = AtomicInteger()
     val listener: Http2Connection.Listener =
       object : Http2Connection.Listener() {
-        override fun onStream(stream: Http2Stream) {
-          throw AssertionError()
-        }
+        override fun onStream(stream: Http2Stream): Unit = throw AssertionError()
 
         override fun onSettings(
           connection: Http2Connection,
@@ -1657,9 +1658,11 @@ class Http2ConnectionTest {
     peer.acceptFrame() // ACK
     peer.acceptFrame() // SYN_STREAM
     peer.acceptFrame() // PING
-    peer.sendFrame()
+    peer
+      .sendFrame()
       .headers(false, 3, headerEntries(Header.RESPONSE_STATUS_UTF8, "HTTP/1.1 100"))
-    peer.sendFrame()
+    peer
+      .sendFrame()
       .headers(false, 3, headerEntries(Header.RESPONSE_STATUS_UTF8, "HTTP/1.1 200"))
     peer.sendFrame().ping(true, Http2Connection.AWAIT_PING, 0)
     peer.play()
@@ -1885,7 +1888,8 @@ class Http2ConnectionTest {
     peer.acceptFrame() // GOAWAY
     peer.play()
     val connection =
-      Http2Connection.Builder(true, TaskRunner.INSTANCE)
+      Http2Connection
+        .Builder(true, TaskRunner.INSTANCE)
         .socket(peer.openSocket())
         .build()
     connection.start(sendConnectionPreface = false)
@@ -1910,7 +1914,8 @@ class Http2ConnectionTest {
     val taskRunner = taskFaker.taskRunner
     val socket = peer.openSocket()
     val connection =
-      Http2Connection.Builder(true, taskRunner)
+      Http2Connection
+        .Builder(true, taskRunner)
         .socket(socket)
         .pushObserver(IGNORE)
         .build()
@@ -1965,7 +1970,8 @@ class Http2ConnectionTest {
     listener: Http2Connection.Listener = Http2Connection.Listener.REFUSE_INCOMING_STREAMS,
   ): Http2Connection {
     val connection =
-      Http2Connection.Builder(true, TaskRunner.INSTANCE)
+      Http2Connection
+        .Builder(true, TaskRunner.INSTANCE)
         .socket(peer.openSocket())
         .pushObserver(pushObserver)
         .listener(listener)

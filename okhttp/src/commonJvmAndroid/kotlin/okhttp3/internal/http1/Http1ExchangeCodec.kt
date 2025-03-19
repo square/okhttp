@@ -89,8 +89,8 @@ class Http1ExchangeCodec(
   override fun createRequestBody(
     request: Request,
     contentLength: Long,
-  ): Sink {
-    return when {
+  ): Sink =
+    when {
       request.body?.isDuplex() == true -> throw ProtocolException(
         "Duplex connections are not supported for HTTP/1",
       )
@@ -101,7 +101,6 @@ class Http1ExchangeCodec(
           "Cannot stream a request body without chunked encoding or a known content length!",
         )
     }
-  }
 
   override fun cancel() {
     carrier.cancel()
@@ -122,16 +121,15 @@ class Http1ExchangeCodec(
     writeRequest(request.headers, requestLine)
   }
 
-  override fun reportedContentLength(response: Response): Long {
-    return when {
+  override fun reportedContentLength(response: Response): Long =
+    when {
       !response.promisesBody() -> 0L
       response.isChunked -> -1L
       else -> response.headersContentLength()
     }
-  }
 
-  override fun openResponseBodySource(response: Response): Source {
-    return when {
+  override fun openResponseBodySource(response: Response): Source =
+    when {
       !response.promisesBody() -> newFixedLengthSource(0)
       response.isChunked -> newChunkedSource(response.request.url)
       else -> {
@@ -143,7 +141,6 @@ class Http1ExchangeCodec(
         }
       }
     }
-  }
 
   override fun trailers(): Headers {
     check(state == STATE_CLOSED) { "too early; can't read the trailers yet" }
@@ -166,7 +163,8 @@ class Http1ExchangeCodec(
     check(state == STATE_IDLE) { "state: $state" }
     sink.writeUtf8(requestLine).writeUtf8("\r\n")
     for (i in 0 until headers.size) {
-      sink.writeUtf8(headers.name(i))
+      sink
+        .writeUtf8(headers.name(i))
         .writeUtf8(": ")
         .writeUtf8(headers.value(i))
         .writeUtf8("\r\n")
@@ -188,7 +186,8 @@ class Http1ExchangeCodec(
       val statusLine = StatusLine.parse(headersReader.readLine())
 
       val responseBuilder =
-        Response.Builder()
+        Response
+          .Builder()
           .protocol(statusLine.protocol)
           .code(statusLine.code)
           .message(statusLine.message)
@@ -216,7 +215,9 @@ class Http1ExchangeCodec(
       }
     } catch (e: EOFException) {
       // Provide more context if the server ends the stream before sending a response.
-      val address = carrier.route.address.url.redact()
+      val address =
+        carrier.route.address.url
+          .redact()
       throw IOException("unexpected end of stream on $address", e)
     }
   }
@@ -353,15 +354,14 @@ class Http1ExchangeCodec(
     override fun read(
       sink: Buffer,
       byteCount: Long,
-    ): Long {
-      return try {
+    ): Long =
+      try {
         source.read(sink, byteCount)
       } catch (e: IOException) {
         carrier.noNewExchanges()
         responseBodyComplete()
         throw e
       }
-    }
 
     /**
      * Closes the cache entry and makes the socket available for reuse. This should be invoked when
@@ -378,8 +378,9 @@ class Http1ExchangeCodec(
   }
 
   /** An HTTP body with a fixed length specified in advance. */
-  private inner class FixedLengthSource(private var bytesRemaining: Long) :
-    AbstractSource() {
+  private inner class FixedLengthSource(
+    private var bytesRemaining: Long,
+  ) : AbstractSource() {
     init {
       if (bytesRemaining == 0L) {
         responseBodyComplete()
@@ -424,8 +425,9 @@ class Http1ExchangeCodec(
   }
 
   /** An HTTP body with alternating chunk sizes and chunk bodies. */
-  private inner class ChunkedSource(private val url: HttpUrl) :
-    AbstractSource() {
+  private inner class ChunkedSource(
+    private val url: HttpUrl,
+  ) : AbstractSource() {
     private var bytesRemainingInChunk = NO_CHUNK_YET
     private var hasMoreChunks = true
 

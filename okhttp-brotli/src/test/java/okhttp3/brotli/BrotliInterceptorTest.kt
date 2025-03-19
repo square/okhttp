@@ -121,8 +121,9 @@ class BrotliInterceptorTest {
     url: String,
     bodyHex: ByteString,
     fn: Response.Builder.() -> Unit = {},
-  ): Response {
-    return Response.Builder()
+  ): Response =
+    Response
+      .Builder()
       .body(bodyHex.toResponseBody("text/plain".toMediaType()))
       .code(200)
       .message("OK")
@@ -130,5 +131,4 @@ class BrotliInterceptorTest {
       .protocol(Protocol.HTTP_2)
       .apply(fn)
       .build()
-  }
 }

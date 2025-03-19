@@ -708,13 +708,12 @@ class HttpUrl private constructor(
    * stripped, and its path replaced with `/...`. For example, redacting
    * `http://username:password@example.com/path` returns `http://example.com/...`.
    */
-  fun redact(): String {
-    return newBuilder("/...")!!
+  fun redact(): String =
+    newBuilder("/...")!!
       .username("")
       .password("")
       .build()
       .toString()
-  }
 
   /**
    * Returns the URL that would be retrieved by following `link` from this URL, or null if the
@@ -744,17 +743,14 @@ class HttpUrl private constructor(
    * Returns a builder for the URL that would be retrieved by following `link` from this URL,
    * or null if the resulting URL is not well-formed.
    */
-  fun newBuilder(link: String): Builder? {
-    return try {
+  fun newBuilder(link: String): Builder? =
+    try {
       Builder().parse(this, link)
     } catch (_: IllegalArgumentException) {
       null
     }
-  }
 
-  override fun equals(other: Any?): Boolean {
-    return other is HttpUrl && other.url == url
-  }
+  override fun equals(other: Any?): Boolean = other is HttpUrl && other.url == url
 
   override fun hashCode(): Int = url.hashCode()
 
@@ -777,13 +773,12 @@ class HttpUrl private constructor(
    * | `http://localhost`            | null                 |
    * | `http://127.0.0.1`            | null                 |
    */
-  fun topPrivateDomain(): String? {
-    return if (host.canParseAsIpAddress()) {
+  fun topPrivateDomain(): String? =
+    if (host.canParseAsIpAddress()) {
       null
     } else {
       PublicSuffixDatabase.get().getEffectiveTldPlusOne(host)
     }
-  }
 
   @JvmName("-deprecated_url")
   @Deprecated(
@@ -1089,20 +1084,22 @@ class HttpUrl private constructor(
     fun query(query: String?) =
       apply {
         this.encodedQueryNamesAndValues =
-          query?.canonicalize(
-            encodeSet = QUERY_ENCODE_SET,
-            plusIsSpace = true,
-          )?.toQueryNamesAndValues()
+          query
+            ?.canonicalize(
+              encodeSet = QUERY_ENCODE_SET,
+              plusIsSpace = true,
+            )?.toQueryNamesAndValues()
       }
 
     fun encodedQuery(encodedQuery: String?) =
       apply {
         this.encodedQueryNamesAndValues =
-          encodedQuery?.canonicalize(
-            encodeSet = QUERY_ENCODE_SET,
-            alreadyEncoded = true,
-            plusIsSpace = true,
-          )?.toQueryNamesAndValues()
+          encodedQuery
+            ?.canonicalize(
+              encodeSet = QUERY_ENCODE_SET,
+              alreadyEncoded = true,
+              plusIsSpace = true,
+            )?.toQueryNamesAndValues()
       }
 
     /** Encodes the query parameter using UTF-8 and adds it to this URL's query string. */
@@ -1272,12 +1269,10 @@ class HttpUrl private constructor(
       )
     }
 
-    private fun effectivePort(): Int {
-      return if (port != -1) port else defaultPort(scheme!!)
-    }
+    private fun effectivePort(): Int = if (port != -1) port else defaultPort(scheme!!)
 
-    override fun toString(): String {
-      return buildString {
+    override fun toString(): String =
+      buildString {
         if (scheme != null) {
           append(scheme)
           append("://")
@@ -1325,7 +1320,6 @@ class HttpUrl private constructor(
           append(encodedFragment)
         }
       }
-    }
 
     /** Returns a path string for this list of path segments. */
     private fun List<String>.toPathString(out: StringBuilder) {
@@ -1478,13 +1472,14 @@ class HttpUrl private constructor(
       if (pos < limit && input[pos] == '?') {
         val queryDelimiterOffset = input.delimiterOffset('#', pos, limit)
         this.encodedQueryNamesAndValues =
-          input.canonicalize(
-            pos = pos + 1,
-            limit = queryDelimiterOffset,
-            encodeSet = QUERY_ENCODE_SET,
-            alreadyEncoded = true,
-            plusIsSpace = true,
-          ).toQueryNamesAndValues()
+          input
+            .canonicalize(
+              pos = pos + 1,
+              limit = queryDelimiterOffset,
+              encodeSet = QUERY_ENCODE_SET,
+              alreadyEncoded = true,
+              plusIsSpace = true,
+            ).toQueryNamesAndValues()
         pos = queryDelimiterOffset
       }
 
@@ -1589,16 +1584,13 @@ class HttpUrl private constructor(
       }
     }
 
-    private fun isDot(input: String): Boolean {
-      return input == "." || input.equals("%2e", ignoreCase = true)
-    }
+    private fun isDot(input: String): Boolean = input == "." || input.equals("%2e", ignoreCase = true)
 
-    private fun isDotDot(input: String): Boolean {
-      return input == ".." ||
+    private fun isDotDot(input: String): Boolean =
+      input == ".." ||
         input.equals("%2e.", ignoreCase = true) ||
         input.equals(".%2e", ignoreCase = true) ||
         input.equals("%2e%2e", ignoreCase = true)
-    }
 
     /**
      * Cuts this string up into alternating parameter names and values. This divides a query string
@@ -1697,8 +1689,8 @@ class HttpUrl private constructor(
       input: String,
       pos: Int,
       limit: Int,
-    ): Int {
-      return try {
+    ): Int =
+      try {
         // Canonicalize the port string to skip '\n' etc.
         val portString = input.canonicalize(pos = pos, limit = limit, encodeSet = "")
         val i = portString.toInt()
@@ -1706,19 +1698,17 @@ class HttpUrl private constructor(
       } catch (_: NumberFormatException) {
         -1 // Invalid port.
       }
-    }
   }
 
   companion object {
     /** Returns 80 if `scheme.equals("http")`, 443 if `scheme.equals("https")` and -1 otherwise. */
     @JvmStatic
-    fun defaultPort(scheme: String): Int {
-      return when (scheme) {
+    fun defaultPort(scheme: String): Int =
+      when (scheme) {
         "http" -> 80
         "https" -> 443
         else -> -1
       }
-    }
 
     /** Returns a string for this list of query names and values. */
     private fun List<String?>.toQueryString(out: StringBuilder) {
@@ -1749,13 +1739,12 @@ class HttpUrl private constructor(
      */
     @JvmStatic
     @JvmName("parse")
-    fun String.toHttpUrlOrNull(): HttpUrl? {
-      return try {
+    fun String.toHttpUrlOrNull(): HttpUrl? =
+      try {
         toHttpUrl()
       } catch (_: IllegalArgumentException) {
         null
       }
-    }
 
     /**
      * Returns an [HttpUrl] for this if its protocol is `http` or `https`, or null if it has any

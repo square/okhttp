@@ -24,7 +24,8 @@ class StrictModeTest {
   @After
   fun cleanup() {
     StrictMode.setThreadPolicy(
-      ThreadPolicy.Builder()
+      ThreadPolicy
+        .Builder()
         .permitAll()
         .build(),
     )
@@ -60,12 +61,12 @@ class StrictModeTest {
 
   private fun applyStrictMode() {
     StrictMode.setThreadPolicy(
-      ThreadPolicy.Builder()
+      ThreadPolicy
+        .Builder()
         .detectCustomSlowCalls()
         .penaltyListener({ it.run() }) {
           violations.add(it)
-        }
-        .build(),
+        }.build(),
     )
   }
 }

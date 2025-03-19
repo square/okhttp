@@ -266,11 +266,19 @@ class MockWebServerTest {
     server.enqueue(MockResponse()) // The jdk's HttpUrlConnection is a bastard.
     server.enqueue(MockResponse())
     try {
-      server.url("/a").toUrl().openConnection().getInputStream()
+      server
+        .url("/a")
+        .toUrl()
+        .openConnection()
+        .getInputStream()
       fail<Any>()
     } catch (expected: IOException) {
     }
-    server.url("/b").toUrl().openConnection().getInputStream() // Should succeed.
+    server
+      .url("/b")
+      .toUrl()
+      .openConnection()
+      .getInputStream() // Should succeed.
   }
 
   /**
@@ -452,7 +460,11 @@ class MockWebServerTest {
         object : Statement() {
           override fun evaluate() {
             called.set(true)
-            server.url("/").toUrl().openConnection().connect()
+            server
+              .url("/")
+              .toUrl()
+              .openConnection()
+              .connect()
           }
         },
         Description.EMPTY,
@@ -460,7 +472,11 @@ class MockWebServerTest {
     statement.evaluate()
     assertThat(called.get()).isTrue()
     try {
-      server.url("/").toUrl().openConnection().connect()
+      server
+        .url("/")
+        .toUrl()
+        .openConnection()
+        .connect()
       fail<Any>()
     } catch (expected: ConnectException) {
     }
@@ -593,20 +609,24 @@ class MockWebServerTest {
     platform.assumeNotBouncyCastle()
     platform.assumeNotConscrypt()
     val clientCa =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .build()
     val serverCa =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .build()
     val serverCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(serverCa)
         .addSubjectAlternativeName(server.hostName)
         .build()
     val serverHandshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addTrustedCertificate(clientCa.certificate)
         .heldCertificate(serverCertificate)
         .build()
@@ -614,11 +634,13 @@ class MockWebServerTest {
     server.enqueue(MockResponse().setBody("abc"))
     server.requestClientAuth()
     val clientCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(clientCa)
         .build()
     val clientHandshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addTrustedCertificate(serverCa.certificate)
         .heldCertificate(clientCertificate)
         .build()

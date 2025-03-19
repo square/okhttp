@@ -75,13 +75,12 @@ data class WebSocketExtensions(
    */
   @JvmField val unknownValues: Boolean = false,
 ) {
-  fun noContextTakeover(clientOriginated: Boolean): Boolean {
-    return if (clientOriginated) {
+  fun noContextTakeover(clientOriginated: Boolean): Boolean =
+    if (clientOriginated) {
       clientNoContextTakeover // Client is deflating.
     } else {
       serverNoContextTakeover // Server is deflating.
     }
-  }
 
   companion object {
     private const val HEADER_WEB_SOCKET_EXTENSION = "Sec-WebSocket-Extensions"

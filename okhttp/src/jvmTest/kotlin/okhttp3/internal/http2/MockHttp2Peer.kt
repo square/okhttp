@@ -172,7 +172,10 @@ class MockHttp2Peer : Closeable {
     val truncated: Boolean,
   )
 
-  class InFrame(val sequence: Int, val reader: Http2Reader) : Http2Reader.Handler {
+  class InFrame(
+    val sequence: Int,
+    val reader: Http2Reader,
+  ) : Http2Reader.Handler {
     @JvmField var type = -1
     var clearPrevious = false
 
@@ -292,9 +295,7 @@ class MockHttp2Peer : Closeable {
       streamDependency: Int,
       weight: Int,
       exclusive: Boolean,
-    ) {
-      throw UnsupportedOperationException()
-    }
+    ): Unit = throw UnsupportedOperationException()
 
     override fun pushPromise(
       streamId: Int,
@@ -314,9 +315,7 @@ class MockHttp2Peer : Closeable {
       host: String,
       port: Int,
       maxAge: Long,
-    ) {
-      throw UnsupportedOperationException()
-    }
+    ): Unit = throw UnsupportedOperationException()
   }
 
   companion object {

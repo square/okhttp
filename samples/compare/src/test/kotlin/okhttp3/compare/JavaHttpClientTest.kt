@@ -47,18 +47,21 @@ class JavaHttpClientTest {
     platform.expectFailureOnJdkVersion(8)
 
     val httpClient =
-      HttpClient.newBuilder()
+      HttpClient
+        .newBuilder()
         .followRedirects(NORMAL)
         .build()
 
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("hello, Java HTTP Client")
         .build(),
     )
 
     val request =
-      HttpRequest.newBuilder(server.url("/").toUri())
+      HttpRequest
+        .newBuilder(server.url("/").toUri())
         .header("Accept", "text/plain")
         .build()
 

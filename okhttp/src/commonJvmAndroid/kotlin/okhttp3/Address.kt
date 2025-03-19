@@ -65,7 +65,8 @@ class Address(
    */
   @get:JvmName("url")
   val url: HttpUrl =
-    HttpUrl.Builder()
+    HttpUrl
+      .Builder()
       .scheme(if (sslSocketFactory != null) "https" else "http")
       .host(uriHost)
       .port(uriPort)
@@ -170,11 +171,10 @@ class Address(
   )
   fun certificatePinner(): CertificatePinner? = certificatePinner
 
-  override fun equals(other: Any?): Boolean {
-    return other is Address &&
+  override fun equals(other: Any?): Boolean =
+    other is Address &&
       url == other.url &&
       equalsNonHost(other)
-  }
 
   override fun hashCode(): Int {
     var result = 17
@@ -191,8 +191,8 @@ class Address(
     return result
   }
 
-  internal fun equalsNonHost(that: Address): Boolean {
-    return this.dns == that.dns &&
+  internal fun equalsNonHost(that: Address): Boolean =
+    this.dns == that.dns &&
       this.proxyAuthenticator == that.proxyAuthenticator &&
       this.protocols == that.protocols &&
       this.connectionSpecs == that.connectionSpecs &&
@@ -202,12 +202,10 @@ class Address(
       this.hostnameVerifier == that.hostnameVerifier &&
       this.certificatePinner == that.certificatePinner &&
       this.url.port == that.url.port
-  }
 
-  override fun toString(): String {
-    return "Address{" +
+  override fun toString(): String =
+    "Address{" +
       "${url.host}:${url.port}, " +
       (if (proxy != null) "proxy=$proxy" else "proxySelector=$proxySelector") +
       "}"
-  }
 }

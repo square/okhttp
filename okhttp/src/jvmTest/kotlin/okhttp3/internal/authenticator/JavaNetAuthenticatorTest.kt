@@ -58,11 +58,13 @@ class JavaNetAuthenticatorTest {
     val route = factory.newRoute()
 
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://server/robots.txt")
         .build()
     val response =
-      Response.Builder()
+      Response
+        .Builder()
         .request(request)
         .code(401)
         .header("WWW-Authenticate", "Basic realm=\"User Visible Realm\"")
@@ -80,12 +82,14 @@ class JavaNetAuthenticatorTest {
   @Test
   fun noSupportForNonBasicAuth() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://server/robots.txt")
         .build()
 
     val response =
-      Response.Builder()
+      Response
+        .Builder()
         .request(request)
         .code(401)
         .header("WWW-Authenticate", "UnsupportedScheme realm=\"User Visible Realm\"")

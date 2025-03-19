@@ -21,15 +21,21 @@ object HttpMethod {
   @JvmStatic // Despite being 'internal', this method is called by popular 3rd party SDKs.
   fun invalidatesCache(method: String): Boolean =
     (
-      method == "POST" || method == "PATCH" || method == "PUT" ||
-        method == "DELETE" || method == "MOVE"
+      method == "POST" ||
+        method == "PATCH" ||
+        method == "PUT" ||
+        method == "DELETE" ||
+        method == "MOVE"
     )
 
   @JvmStatic // Despite being 'internal', this method is called by popular 3rd party SDKs.
   fun requiresRequestBody(method: String): Boolean =
     (
-      method == "POST" || method == "PUT" ||
-        method == "PATCH" || method == "PROPPATCH" || // WebDAV
+      method == "POST" ||
+        method == "PUT" ||
+        method == "PATCH" ||
+        method == "PROPPATCH" ||
+        // WebDAV
         method == "REPORT"
     )
 

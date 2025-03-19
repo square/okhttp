@@ -40,7 +40,9 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.ParameterizedRobolectricTestRunner.Parameters
 
 @RunWith(ParameterizedRobolectricTestRunner::class)
-class AndroidSocketAdapterTest(val adapter: SocketAdapter) {
+class AndroidSocketAdapterTest(
+  val adapter: SocketAdapter,
+) {
   val context: SSLContext by lazy {
     val provider: Provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
 
@@ -95,12 +97,11 @@ class AndroidSocketAdapterTest(val adapter: SocketAdapter) {
   companion object {
     @JvmStatic
     @Parameters(name = "{0}")
-    fun data(): Collection<SocketAdapter> {
-      return listOfNotNull(
+    fun data(): Collection<SocketAdapter> =
+      listOfNotNull(
         DeferredSocketAdapter(ConscryptSocketAdapter.factory),
         DeferredSocketAdapter(AndroidSocketAdapter.factory("org.conscrypt")),
         StandardAndroidSocketAdapter.buildIfSupported("org.conscrypt"),
       )
-    }
   }
 }

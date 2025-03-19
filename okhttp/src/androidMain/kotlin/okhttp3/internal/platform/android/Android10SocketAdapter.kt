@@ -39,8 +39,8 @@ class Android10SocketAdapter : SocketAdapter {
   override fun isSupported(): Boolean = Companion.isSupported()
 
   @SuppressLint("NewApi")
-  override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
-    return try {
+  override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
+    try {
       // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
       // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
       when (val protocol = sslSocket.applicationProtocol) {
@@ -51,7 +51,6 @@ class Android10SocketAdapter : SocketAdapter {
       // https://docs.oracle.com/javase/9/docs/api/javax/net/ssl/SSLSocket.html#getApplicationProtocol--
       null
     }
-  }
 
   @SuppressLint("NewApi")
   override fun configureTlsExtensions(

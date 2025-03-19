@@ -48,7 +48,8 @@ class EventSourceHttpTest {
   private val eventListener = RecordingEventListener()
   private val listener = EventSourceRecorder()
   private var client =
-    clientTestRule.newClientBuilder()
+    clientTestRule
+      .newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(eventListener))
       .build()
 
@@ -65,7 +66,8 @@ class EventSourceHttpTest {
   @Test
   fun event() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
@@ -85,7 +87,8 @@ class EventSourceHttpTest {
   @RetryingTest(5)
   fun cancelInEventShortCircuits() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
@@ -104,7 +107,8 @@ class EventSourceHttpTest {
   @Test
   fun badContentType() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
@@ -121,15 +125,15 @@ class EventSourceHttpTest {
   @Test
   fun badResponseCode() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
           |
           |
           """.trimMargin(),
-        )
-        .setHeader("content-type", "text/event-stream")
+        ).setHeader("content-type", "text/event-stream")
         .code(401)
         .build(),
     )
@@ -140,11 +144,13 @@ class EventSourceHttpTest {
   @Test
   fun fullCallTimeoutDoesNotApplyOnceConnected() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .callTimeout(250, TimeUnit.MILLISECONDS)
         .build()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .bodyDelay(500, TimeUnit.MILLISECONDS)
         .setHeader("content-type", "text/event-stream")
         .body("data: hey\n\n")
@@ -160,11 +166,13 @@ class EventSourceHttpTest {
   @Test
   fun fullCallTimeoutAppliesToSetup() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .callTimeout(250, TimeUnit.MILLISECONDS)
         .build()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .headersDelay(500, TimeUnit.MILLISECONDS)
         .setHeader("content-type", "text/event-stream")
         .body("data: hey\n\n")
@@ -177,15 +185,15 @@ class EventSourceHttpTest {
   @Test
   fun retainsAccept() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
           |
           |
           """.trimMargin(),
-        )
-        .setHeader("content-type", "text/event-stream")
+        ).setHeader("content-type", "text/event-stream")
         .build(),
     )
     newEventSource("text/plain")
@@ -198,7 +206,8 @@ class EventSourceHttpTest {
   @Test
   fun setsMissingAccept() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
@@ -219,7 +228,8 @@ class EventSourceHttpTest {
   @Test
   fun eventListenerEvents() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
@@ -256,7 +266,8 @@ class EventSourceHttpTest {
 
   private fun newEventSource(accept: String? = null): EventSource {
     val builder =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
     if (accept != null) {
       builder.header("Accept", accept)

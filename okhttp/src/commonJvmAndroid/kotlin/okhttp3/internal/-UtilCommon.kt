@@ -203,12 +203,11 @@ internal fun String.indexOfControlOrNonAscii(): Int {
 }
 
 /** Returns true if we should void putting this this header in an exception or toString(). */
-internal fun isSensitiveHeader(name: String): Boolean {
-  return name.equals("Authorization", ignoreCase = true) ||
+internal fun isSensitiveHeader(name: String): Boolean =
+  name.equals("Authorization", ignoreCase = true) ||
     name.equals("Cookie", ignoreCase = true) ||
     name.equals("Proxy-Authorization", ignoreCase = true) ||
     name.equals("Set-Cookie", ignoreCase = true)
-}
 
 internal fun Char.parseHexDigit(): Int =
   when (this) {
@@ -232,13 +231,12 @@ internal fun BufferedSink.writeMedium(medium: Int) {
 }
 
 @Throws(IOException::class)
-internal fun BufferedSource.readMedium(): Int {
-  return (
+internal fun BufferedSource.readMedium(): Int =
+  (
     readByte() and 0xff shl 16
       or (readByte() and 0xff shl 8)
       or (readByte() and 0xff)
   )
-}
 
 /** Run [block] until it either throws an [IOException] or completes. */
 internal inline fun ignoreIoExceptions(block: () -> Unit) {
@@ -271,13 +269,12 @@ internal fun String.indexOfNonWhitespace(startIndex: Int = 0): Int {
   return length
 }
 
-fun String.toLongOrDefault(defaultValue: Long): Long {
-  return try {
+fun String.toLongOrDefault(defaultValue: Long): Long =
+  try {
     toLong()
   } catch (_: NumberFormatException) {
     defaultValue
   }
-}
 
 /**
  * Returns this as a non-negative integer, or 0 if it is negative, or [Int.MAX_VALUE] if it is too

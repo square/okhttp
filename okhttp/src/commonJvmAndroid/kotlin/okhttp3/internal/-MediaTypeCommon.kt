@@ -88,10 +88,9 @@ internal fun String.commonToMediaType(): MediaType {
 }
 
 /** Returns a media type for this, or null if this is not a well-formed media type. */
-fun String.commonToMediaTypeOrNull(): MediaType? {
-  return try {
+fun String.commonToMediaTypeOrNull(): MediaType? =
+  try {
     commonToMediaType()
   } catch (_: IllegalArgumentException) {
     null
   }
-}

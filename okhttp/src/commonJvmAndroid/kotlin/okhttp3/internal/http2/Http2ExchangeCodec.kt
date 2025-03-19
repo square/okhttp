@@ -67,9 +67,7 @@ class Http2ExchangeCodec(
   override fun createRequestBody(
     request: Request,
     contentLength: Long,
-  ): Sink {
-    return stream!!.getSink()
-  }
+  ): Sink = stream!!.getSink()
 
   override fun writeRequestHeaders(request: Request) {
     if (stream != null) return
@@ -106,20 +104,15 @@ class Http2ExchangeCodec(
     }
   }
 
-  override fun reportedContentLength(response: Response): Long {
-    return when {
+  override fun reportedContentLength(response: Response): Long =
+    when {
       !response.promisesBody() -> 0L
       else -> response.headersContentLength()
     }
-  }
 
-  override fun openResponseBodySource(response: Response): Source {
-    return stream!!.source
-  }
+  override fun openResponseBodySource(response: Response): Source = stream!!.source
 
-  override fun trailers(): Headers {
-    return stream!!.trailers()
-  }
+  override fun trailers(): Headers = stream!!.trailers()
 
   override fun cancel() {
     canceled = true
@@ -179,7 +172,8 @@ class Http2ExchangeCodec(
         // header names must be lowercase.
         val name = headers.name(i).lowercase(Locale.US)
         if (name !in HTTP_2_SKIPPED_REQUEST_HEADERS ||
-          name == TE && headers.value(i) == "trailers"
+          name == TE &&
+          headers.value(i) == "trailers"
         ) {
           result.add(Header(name, headers.value(i)))
         }
@@ -205,7 +199,8 @@ class Http2ExchangeCodec(
       }
       if (statusLine == null) throw ProtocolException("Expected ':status' header not present")
 
-      return Response.Builder()
+      return Response
+        .Builder()
         .protocol(protocol)
         .code(statusLine.code)
         .message(statusLine.message)

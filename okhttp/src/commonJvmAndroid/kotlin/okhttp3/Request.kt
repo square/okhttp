@@ -41,7 +41,9 @@ import okhttp3.internal.commonToString
  * An HTTP request. Instances of this class are immutable if their [body] is null or itself
  * immutable.
  */
-class Request internal constructor(builder: Builder) {
+class Request internal constructor(
+  builder: Builder,
+) {
   @get:JvmName("url")
   val url: HttpUrl = checkNotNull(builder.url) { "url == null" }
 
@@ -218,9 +220,7 @@ class Request internal constructor(builder: Builder) {
      * @throws IllegalArgumentException if [url] is not a valid HTTP or HTTPS URL. Avoid this
      *     exception by calling [HttpUrl.parse]; it returns null for invalid URLs.
      */
-    open fun url(url: String): Builder {
-      return url(canonicalUrl(url).toHttpUrl())
-    }
+    open fun url(url: String): Builder = url(canonicalUrl(url).toHttpUrl())
 
     /**
      * Sets the URL target of this request.

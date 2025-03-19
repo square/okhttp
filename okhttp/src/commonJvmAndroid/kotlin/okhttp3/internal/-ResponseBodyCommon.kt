@@ -49,17 +49,15 @@ internal inline fun <T : Any> ResponseBody.commonConsumeSource(
 
 internal fun ResponseBody.commonClose() = source().closeQuietly()
 
-internal fun ByteArray.commonToResponseBody(contentType: MediaType?): ResponseBody {
-  return Buffer()
+internal fun ByteArray.commonToResponseBody(contentType: MediaType?): ResponseBody =
+  Buffer()
     .write(this)
     .asResponseBody(contentType, size.toLong())
-}
 
-internal fun ByteString.commonToResponseBody(contentType: MediaType?): ResponseBody {
-  return Buffer()
+internal fun ByteString.commonToResponseBody(contentType: MediaType?): ResponseBody =
+  Buffer()
     .write(this)
     .asResponseBody(contentType, size.toLong())
-}
 
 internal fun BufferedSource.commonAsResponseBody(
   contentType: MediaType?,

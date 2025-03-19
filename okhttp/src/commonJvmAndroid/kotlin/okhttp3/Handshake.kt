@@ -112,13 +112,12 @@ class Handshake internal constructor(
   )
   fun localPrincipal(): Principal? = localPrincipal
 
-  override fun equals(other: Any?): Boolean {
-    return other is Handshake &&
+  override fun equals(other: Any?): Boolean =
+    other is Handshake &&
       other.tlsVersion == tlsVersion &&
       other.cipherSuite == cipherSuite &&
       other.peerCertificates == peerCertificates &&
       other.localCertificates == localCertificates
-  }
 
   override fun hashCode(): Int {
     var result = 17
@@ -176,13 +175,12 @@ class Handshake internal constructor(
       ) { peerCertificatesCopy }
     }
 
-    private fun Array<out Certificate>?.toImmutableList(): List<Certificate> {
-      return if (this != null) {
+    private fun Array<out Certificate>?.toImmutableList(): List<Certificate> =
+      if (this != null) {
         immutableListOf(*this)
       } else {
         emptyList()
       }
-    }
 
     @Throws(IOException::class)
     @JvmName("-deprecated_get")

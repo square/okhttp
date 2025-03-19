@@ -50,7 +50,8 @@ class RobolectricOkHttpClientTest {
   fun setUp() {
     context = ApplicationProvider.getApplicationContext<Application>()
     client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .cache(Cache(FakeFileSystem(), "/cache".toPath(), 10_000_000))
         .build()
   }
@@ -62,7 +63,8 @@ class RobolectricOkHttpClientTest {
     val request = Request("https://www.google.com/robots.txt".toHttpUrl())
 
     val networkRequest =
-      request.newBuilder()
+      request
+        .newBuilder()
         .build()
 
     val call = client.newCall(networkRequest)

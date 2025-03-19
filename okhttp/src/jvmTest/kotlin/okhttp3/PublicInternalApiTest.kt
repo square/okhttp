@@ -40,7 +40,9 @@ class PublicInternalApiTest {
   fun hasBody() {
     val request = Request.Builder().url("http://example.com").build()
     val response =
-      Response.Builder().code(200)
+      Response
+        .Builder()
+        .code(200)
         .message("OK")
         .request(request)
         .protocol(Protocol.HTTP_2)

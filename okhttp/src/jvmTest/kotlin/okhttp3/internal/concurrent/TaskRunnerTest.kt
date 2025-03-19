@@ -641,9 +641,7 @@ class TaskRunnerTest {
     assertFailsWith<RejectedExecutionException> {
       redQueue.schedule(
         object : Task("task", cancelable = false) {
-          override fun runOnce(): Long {
-            return -1L
-          }
+          override fun runOnce(): Long = -1L
         },
         100.µs,
       )

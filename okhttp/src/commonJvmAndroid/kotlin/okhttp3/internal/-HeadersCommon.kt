@@ -36,9 +36,7 @@ internal fun Headers.commonValues(name: String): List<String> {
   return result?.toList().orEmpty()
 }
 
-internal fun Headers.commonIterator(): Iterator<Pair<String, String>> {
-  return Array(size) { name(it) to value(it) }.iterator()
-}
+internal fun Headers.commonIterator(): Iterator<Pair<String, String>> = Array(size) { name(it) to value(it) }.iterator()
 
 internal fun Headers.commonNewBuilder(): Headers.Builder {
   val result = Headers.Builder()
@@ -46,14 +44,12 @@ internal fun Headers.commonNewBuilder(): Headers.Builder {
   return result
 }
 
-internal fun Headers.commonEquals(other: Any?): Boolean {
-  return other is Headers && namesAndValues.contentEquals(other.namesAndValues)
-}
+internal fun Headers.commonEquals(other: Any?): Boolean = other is Headers && namesAndValues.contentEquals(other.namesAndValues)
 
 internal fun Headers.commonHashCode(): Int = namesAndValues.contentHashCode()
 
-internal fun Headers.commonToString(): String {
-  return buildString {
+internal fun Headers.commonToString(): String =
+  buildString {
     for (i in 0 until size) {
       val name = name(i)
       val value = value(i)
@@ -63,7 +59,6 @@ internal fun Headers.commonToString(): String {
       append("\n")
     }
   }
-}
 
 internal fun commonHeadersGet(
   namesAndValues: Array<String>,

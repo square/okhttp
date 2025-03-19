@@ -40,7 +40,8 @@ import okio.buffer
 internal class UnreadableResponseBody(
   private val mediaType: MediaType?,
   private val contentLength: Long,
-) : ResponseBody(), Source {
+) : ResponseBody(),
+  Source {
   override fun contentType() = mediaType
 
   override fun contentLength() = contentLength
@@ -50,7 +51,7 @@ internal class UnreadableResponseBody(
   override fun read(
     sink: Buffer,
     byteCount: Long,
-  ): Long {
+  ): Long =
     throw IllegalStateException(
       """
       |Unreadable ResponseBody! These Response objects have bodies that are stripped:
@@ -62,7 +63,6 @@ internal class UnreadableResponseBody(
       |(It is safe to call contentType() and contentLength() on these response bodies.)
       """.trimMargin(),
     )
-  }
 
   override fun timeout() = Timeout.NONE
 
@@ -70,11 +70,10 @@ internal class UnreadableResponseBody(
   }
 }
 
-fun Response.stripBody(): Response {
-  return newBuilder()
+fun Response.stripBody(): Response =
+  newBuilder()
     .body(UnreadableResponseBody(body.contentType(), body.contentLength()))
     .build()
-}
 
 val Response.commonIsSuccessful: Boolean
   get() = code in 200..299

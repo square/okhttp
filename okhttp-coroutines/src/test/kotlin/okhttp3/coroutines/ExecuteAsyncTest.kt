@@ -88,7 +88,8 @@ class ExecuteAsyncTest {
   fun timeoutCall() {
     runTest {
       server.enqueue(
-        MockResponse.Builder()
+        MockResponse
+          .Builder()
           .bodyDelay(5, TimeUnit.SECONDS)
           .body("abc")
           .build(),
@@ -117,7 +118,8 @@ class ExecuteAsyncTest {
   fun cancelledCall() {
     runTest {
       server.enqueue(
-        MockResponse.Builder()
+        MockResponse
+          .Builder()
           .bodyDelay(5, TimeUnit.SECONDS)
           .body("abc")
           .build(),
@@ -187,7 +189,8 @@ class ExecuteAsyncTest {
   /** A call that keeps track of whether its response body is closed. */
   private class ClosableCall : FailingCall() {
     private val response =
-      Response.Builder()
+      Response
+        .Builder()
         .request(Request("https://example.com/".toHttpUrl()))
         .protocol(Protocol.HTTP_1_1)
         .message("OK")
@@ -205,8 +208,7 @@ class ExecuteAsyncTest {
                 }
               }.buffer()
           },
-        )
-        .build()
+        ).build()
 
     var responseClosed = false
     var canceled = false

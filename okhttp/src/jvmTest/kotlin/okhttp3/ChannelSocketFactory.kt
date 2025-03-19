@@ -21,9 +21,7 @@ import java.nio.channels.SocketChannel
 import javax.net.SocketFactory
 
 class ChannelSocketFactory : SocketFactory() {
-  override fun createSocket(): Socket {
-    return SocketChannel.open().socket()
-  }
+  override fun createSocket(): Socket = SocketChannel.open().socket()
 
   override fun createSocket(
     host: String,
