@@ -63,9 +63,7 @@ interface CookieJar {
       ) {
       }
 
-      override fun loadForRequest(url: HttpUrl): List<Cookie> {
-        return emptyList()
-      }
+      override fun loadForRequest(url: HttpUrl): List<Cookie> = emptyList()
     }
   }
 }

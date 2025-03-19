@@ -62,7 +62,8 @@ class RealCall(
   /** The application's original request unadulterated by redirects or auth headers. */
   val originalRequest: Request,
   val forWebSocket: Boolean,
-) : Call, Cloneable {
+) : Call,
+  Cloneable {
   internal val lock: ReentrantLock = ReentrantLock()
 
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
@@ -459,22 +460,20 @@ class RealCall(
     interceptorScopedExchange = null
   }
 
-  fun retryAfterFailure(): Boolean {
-    return exchange?.hasFailure == true &&
+  fun retryAfterFailure(): Boolean =
+    exchange?.hasFailure == true &&
       exchangeFinder!!.routePlanner.hasNext(exchange?.connection)
-  }
 
   /**
    * Returns a string that describes this call. Doesn't include a full URL as that might contain
    * sensitive information.
    */
-  private fun toLoggableString(): String {
-    return (
+  private fun toLoggableString(): String =
+    (
       (if (isCanceled()) "canceled " else "") +
         (if (forWebSocket) "web socket" else "call") +
         " to " + redactedUrl()
     )
-  }
 
   internal fun redactedUrl(): String = originalRequest.url.redact()
 

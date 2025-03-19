@@ -31,7 +31,9 @@ import okhttp3.Protocol
  * Requires org.openjsse:openjsse >= 1.1.0 on the classpath.
  */
 class OpenJSSEPlatform private constructor() : Platform() {
-  private val provider: Provider = org.openjsse.net.ssl.OpenJSSE()
+  private val provider: Provider =
+    org.openjsse.net.ssl
+      .OpenJSSE()
 
   // Selects TLSv1.3 so we are specific about our intended version ranges (not just 1.3)
   // and because it's a common pattern for VMs to have differences between supported and

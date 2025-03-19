@@ -24,8 +24,8 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import okio.IOException
 
 /** Returns true if a TLS connection should be retried after [e]. */
-fun retryTlsHandshake(e: IOException): Boolean {
-  return when {
+fun retryTlsHandshake(e: IOException): Boolean =
+  when {
     // If there was a protocol problem, don't recover.
     e is ProtocolException -> false
 
@@ -45,4 +45,3 @@ fun retryTlsHandshake(e: IOException): Boolean {
 
     else -> false
   }
-}

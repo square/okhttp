@@ -28,7 +28,9 @@ import okio.IOException
  *
  * [ietf_alpn]: http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg
  */
-enum class Protocol(private val protocol: String) {
+enum class Protocol(
+  private val protocol: String,
+) {
   /**
    * An obsolete plaintext framing that does not use persistent sockets by default.
    */

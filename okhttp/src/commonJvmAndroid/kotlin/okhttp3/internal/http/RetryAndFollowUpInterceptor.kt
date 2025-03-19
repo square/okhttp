@@ -48,7 +48,9 @@ import okhttp3.internal.withSuppressed
  * This interceptor recovers from failures and follows redirects as necessary. It may throw an
  * [IOException] if the call was canceled.
  */
-class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Interceptor {
+class RetryAndFollowUpInterceptor(
+  private val client: OkHttpClient,
+) : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
     val realChain = chain as RealInterceptorChain
@@ -84,7 +86,8 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
         // Clear out downstream interceptor's additional request headers, cookies, etc.
         response =
-          response.newBuilder()
+          response
+            .newBuilder()
             .request(request)
             .priorResponse(priorResponse?.stripBody())
             .build()

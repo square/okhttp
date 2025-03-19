@@ -45,7 +45,8 @@ class CacheControlTest {
   @Throws(Exception::class)
   fun completeBuilder() {
     val cacheControl =
-      CacheControl.Builder()
+      CacheControl
+        .Builder()
         .noCache()
         .noStore()
         .maxAge(1.seconds)

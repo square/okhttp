@@ -47,14 +47,14 @@ class LoomTest {
     this.server = server
 
     client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .dispatcher(Dispatcher(newVirtualThreadPerTaskExecutor()))
         .build()
   }
 
-  private fun newVirtualThreadPerTaskExecutor(): ExecutorService {
-    return Executors::class.java.getMethod("newVirtualThreadPerTaskExecutor").invoke(null) as ExecutorService
-  }
+  private fun newVirtualThreadPerTaskExecutor(): ExecutorService =
+    Executors::class.java.getMethod("newVirtualThreadPerTaskExecutor").invoke(null) as ExecutorService
 
   @Test
   fun testRequest() {

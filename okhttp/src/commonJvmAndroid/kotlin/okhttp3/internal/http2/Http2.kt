@@ -48,8 +48,16 @@ object Http2 {
   /** Lookup table for valid frame types. */
   private val FRAME_NAMES =
     arrayOf(
-      "DATA", "HEADERS", "PRIORITY", "RST_STREAM", "SETTINGS", "PUSH_PROMISE", "PING", "GOAWAY",
-      "WINDOW_UPDATE", "CONTINUATION",
+      "DATA",
+      "HEADERS",
+      "PRIORITY",
+      "RST_STREAM",
+      "SETTINGS",
+      "PUSH_PROMISE",
+      "PING",
+      "GOAWAY",
+      "WINDOW_UPDATE",
+      "CONTINUATION",
     )
 
   /**

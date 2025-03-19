@@ -77,7 +77,8 @@ class LetsEncryptClientTest {
         """.trimIndent().decodeCertificatePem()
 
       val handshakeCertificates =
-        HandshakeCertificates.Builder()
+        HandshakeCertificates
+          .Builder()
           // TODO reenable in official answers
 //      .addPlatformTrustedCertificates()
           .addTrustedCertificate(cert)
@@ -93,7 +94,8 @@ class LetsEncryptClientTest {
     val client = clientBuilder.build()
 
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://valid-isrgrootx1.letsencrypt.org/robots.txt")
         .build()
     client.newCall(request).execute().use { response ->

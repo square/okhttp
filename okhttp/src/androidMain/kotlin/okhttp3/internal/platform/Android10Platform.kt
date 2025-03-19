@@ -38,7 +38,9 @@ import okhttp3.internal.tls.TrustRootIndex
 
 /** Android 10+ (API 29+). */
 @SuppressSignatureCheck
-class Android10Platform : Platform(), ContextAwarePlatform {
+class Android10Platform :
+  Platform(),
+  ContextAwarePlatform {
   override var applicationContext: Context? = null
 
   private val socketAdapters =
@@ -51,7 +53,8 @@ class Android10Platform : Platform(), ContextAwarePlatform {
     ).filter { it.isSupported() }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
-    socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
+    socketAdapters
+      .find { it.matchesSocketFactory(sslSocketFactory) }
       ?.trustManager(sslSocketFactory)
 
   override fun newSSLContext(): SSLContext {
@@ -72,7 +75,8 @@ class Android10Platform : Platform(), ContextAwarePlatform {
     protocols: List<Protocol>,
   ) {
     // No TLS extensions if the socket class is custom.
-    socketAdapters.find { it.matchesSocket(sslSocket) }
+    socketAdapters
+      .find { it.matchesSocket(sslSocket) }
       ?.configureTlsExtensions(sslSocket, hostname, protocols)
   }
 
@@ -80,13 +84,12 @@ class Android10Platform : Platform(), ContextAwarePlatform {
     // No TLS extensions if the socket class is custom.
     socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
 
-  override fun getStackTraceForCloseable(closer: String): Any? {
-    return if (Build.VERSION.SDK_INT >= 30) {
+  override fun getStackTraceForCloseable(closer: String): Any? =
+    if (Build.VERSION.SDK_INT >= 30) {
       CloseGuard().apply { open(closer) }
     } else {
       super.getStackTraceForCloseable(closer)
     }
-  }
 
   override fun logCloseableLeak(
     message: String,

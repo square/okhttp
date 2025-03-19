@@ -149,11 +149,9 @@ class CertificatePinner internal constructor(
   fun check(
     hostname: String,
     peerCertificates: List<Certificate>,
-  ) {
-    return check(hostname) {
-      (certificateChainCleaner?.clean(peerCertificates, hostname) ?: peerCertificates)
-        .map { it as X509Certificate }
-    }
+  ) = check(hostname) {
+    (certificateChainCleaner?.clean(peerCertificates, hostname) ?: peerCertificates)
+      .map { it as X509Certificate }
   }
 
   internal fun check(
@@ -226,19 +224,17 @@ class CertificatePinner internal constructor(
   fun findMatchingPins(hostname: String): List<Pin> = pins.filterList { matchesHostname(hostname) }
 
   /** Returns a certificate pinner that uses `certificateChainCleaner`. */
-  internal fun withCertificateChainCleaner(certificateChainCleaner: CertificateChainCleaner): CertificatePinner {
-    return if (this.certificateChainCleaner == certificateChainCleaner) {
+  internal fun withCertificateChainCleaner(certificateChainCleaner: CertificateChainCleaner): CertificatePinner =
+    if (this.certificateChainCleaner == certificateChainCleaner) {
       this
     } else {
       CertificatePinner(pins, certificateChainCleaner)
     }
-  }
 
-  override fun equals(other: Any?): Boolean {
-    return other is CertificatePinner &&
+  override fun equals(other: Any?): Boolean =
+    other is CertificatePinner &&
       other.pins == pins &&
       other.certificateChainCleaner == certificateChainCleaner
-  }
 
   override fun hashCode(): Int {
     var result = 37
@@ -248,7 +244,10 @@ class CertificatePinner internal constructor(
   }
 
   /** A hostname pattern and certificate hash for Certificate Pinning. */
-  class Pin(pattern: String, pin: String) {
+  class Pin(
+    pattern: String,
+    pin: String,
+  ) {
     /** A hostname like `example.com` or a pattern like `*.example.com` (canonical form). */
     val pattern: String
 
@@ -283,8 +282,8 @@ class CertificatePinner internal constructor(
       }
     }
 
-    fun matchesHostname(hostname: String): Boolean {
-      return when {
+    fun matchesHostname(hostname: String): Boolean =
+      when {
         pattern.startsWith("**.") -> {
           // With ** empty prefixes match so exclude the dot from regionMatches().
           val suffixLength = pattern.length - 3
@@ -301,15 +300,13 @@ class CertificatePinner internal constructor(
         }
         else -> hostname == pattern
       }
-    }
 
-    fun matchesCertificate(certificate: X509Certificate): Boolean {
-      return when (hashAlgorithm) {
+    fun matchesCertificate(certificate: X509Certificate): Boolean =
+      when (hashAlgorithm) {
         "sha256" -> hash == certificate.sha256Hash()
         "sha1" -> hash == certificate.sha1Hash()
         else -> false
       }
-    }
 
     override fun toString(): String = "$hashAlgorithm/${hash.base64()}"
 

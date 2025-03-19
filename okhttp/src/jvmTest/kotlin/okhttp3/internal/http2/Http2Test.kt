@@ -780,8 +780,8 @@ class Http2Test {
     return out
   }
 
-  private fun assertHeaderBlock(): Http2Reader.Handler {
-    return object : BaseTestHandler() {
+  private fun assertHeaderBlock(): Http2Reader.Handler =
+    object : BaseTestHandler() {
       override fun headers(
         inFinished: Boolean,
         streamId: Int,
@@ -794,10 +794,9 @@ class Http2Test {
         assertThat(headerBlock).isEqualTo(headerEntries("foo", "barrr", "baz", "qux"))
       }
     }
-  }
 
-  private fun assertData(): Http2Reader.Handler {
-    return object : BaseTestHandler() {
+  private fun assertData(): Http2Reader.Handler =
+    object : BaseTestHandler() {
       override fun data(
         inFinished: Boolean,
         streamId: Int,
@@ -813,7 +812,6 @@ class Http2Test {
         }
       }
     }
-  }
 
   private fun gzip(data: ByteArray): Buffer {
     val buffer = Buffer()

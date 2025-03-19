@@ -179,16 +179,15 @@ class UrlComponentEncodingTester private constructor() {
 
   enum class Encoding {
     IDENTITY {
-      override fun encode(codePoint: Int): String {
-        return String(codePoint)
-      }
+      override fun encode(codePoint: Int): String = String(codePoint)
     },
     PERCENT {
       override fun encode(codePoint: Int): String {
         val utf8 = IDENTITY.encode(codePoint).encodeUtf8()
         val percentEncoded = Buffer()
         for (i in 0 until utf8.size) {
-          percentEncoded.writeUtf8("%")
+          percentEncoded
+            .writeUtf8("%")
             .writeUtf8(ByteString.of(utf8[i]).hex().uppercase())
         }
         return percentEncoded.readUtf8()
@@ -206,9 +205,7 @@ class UrlComponentEncodingTester private constructor() {
 
     ;
 
-    open fun encode(codePoint: Int): String {
-      throw UnsupportedOperationException()
-    }
+    open fun encode(codePoint: Int): String = throw UnsupportedOperationException()
   }
 
   enum class Component {
@@ -392,8 +389,8 @@ class UrlComponentEncodingTester private constructor() {
      *
      * See https://url.spec.whatwg.org/#percent-encoded-bytes
      */
-    fun newInstance(): UrlComponentEncodingTester {
-      return UrlComponentEncodingTester()
+    fun newInstance(): UrlComponentEncodingTester =
+      UrlComponentEncodingTester()
         .allAscii(Encoding.IDENTITY)
         .nonPrintableAscii(Encoding.PERCENT)
         .override(
@@ -402,8 +399,7 @@ class UrlComponentEncodingTester private constructor() {
           '\n'.code,
           '\u000c'.code,
           '\r'.code,
-        )
-        .override(
+        ).override(
           Encoding.PERCENT,
           ' '.code,
           '"'.code,
@@ -412,13 +408,11 @@ class UrlComponentEncodingTester private constructor() {
           '>'.code,
           '?'.code,
           '`'.code,
-        )
-        .override(
+        ).override(
           Encoding.PERCENT,
           UNICODE_2,
           UNICODE_3,
           UNICODE_4,
         )
-    }
   }
 }

@@ -257,9 +257,7 @@ object Hpack {
       }
 
       // referencedHeaders is relative to nextHeaderIndex + 1.
-      private fun dynamicTableIndex(index: Int): Int {
-        return nextHeaderIndex + 1 + index
-      }
+      private fun dynamicTableIndex(index: Int): Int = nextHeaderIndex + 1 + index
 
       @Throws(IOException::class)
       private fun readLiteralHeaderWithoutIndexingIndexedName(index: Int) {
@@ -290,8 +288,8 @@ object Hpack {
       }
 
       @Throws(IOException::class)
-      private fun getName(index: Int): ByteString {
-        return if (isStaticHeader(index)) {
+      private fun getName(index: Int): ByteString =
+        if (isStaticHeader(index)) {
           STATIC_HEADER_TABLE[index].name
         } else {
           val dynamicTableIndex = dynamicTableIndex(index - STATIC_HEADER_TABLE.size)
@@ -301,11 +299,8 @@ object Hpack {
 
           dynamicTable[dynamicTableIndex]!!.name
         }
-      }
 
-      private fun isStaticHeader(index: Int): Boolean {
-        return index >= 0 && index <= STATIC_HEADER_TABLE.size - 1
-      }
+      private fun isStaticHeader(index: Int): Boolean = index >= 0 && index <= STATIC_HEADER_TABLE.size - 1
 
       /** index == -1 when new. */
       private fun insertIntoDynamicTable(
@@ -348,9 +343,7 @@ object Hpack {
       }
 
       @Throws(IOException::class)
-      private fun readByte(): Int {
-        return source.readByte() and 0xff
-      }
+      private fun readByte(): Int = source.readByte() and 0xff
 
       @Throws(IOException::class)
       fun readInt(

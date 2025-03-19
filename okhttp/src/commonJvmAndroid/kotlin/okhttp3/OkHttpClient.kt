@@ -131,7 +131,8 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
  */
 open class OkHttpClient internal constructor(
   builder: Builder,
-) : Call.Factory, WebSocket.Factory {
+) : Call.Factory,
+  WebSocket.Factory {
   @get:JvmName("dispatcher")
   val dispatcher: Dispatcher = builder.dispatcher
 

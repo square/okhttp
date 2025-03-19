@@ -31,7 +31,8 @@ class CacheControlJvmTest {
   @Throws(Exception::class)
   fun completeBuilder() {
     val cacheControl =
-      CacheControl.Builder()
+      CacheControl
+        .Builder()
         .noCache()
         .noStore()
         .maxAge(1, TimeUnit.SECONDS)
@@ -90,7 +91,8 @@ class CacheControlJvmTest {
     )
     val cacheControl =
       parse(
-        Headers.Builder()
+        Headers
+          .Builder()
           .set("Cache-Control", header)
           .build(),
       )
@@ -115,7 +117,8 @@ class CacheControlJvmTest {
     val header = "private, community=\"UCI\""
     val cacheControl =
       parse(
-        Headers.Builder()
+        Headers
+          .Builder()
           .set("Cache-Control", header)
           .build(),
       )
@@ -185,7 +188,8 @@ class CacheControlJvmTest {
   @Test
   fun computedHeaderValueIsCached() {
     val cacheControl =
-      CacheControl.Builder()
+      CacheControl
+        .Builder()
         .maxAge(2, TimeUnit.DAYS)
         .build()
     assertThat(cacheControl.toString()).isEqualTo("max-age=172800")
@@ -196,7 +200,8 @@ class CacheControlJvmTest {
   @Throws(Exception::class)
   fun timeDurationTruncatedToMaxValue() {
     val cacheControl =
-      CacheControl.Builder()
+      CacheControl
+        .Builder()
         .maxAge(365 * 100, TimeUnit.DAYS) // Longer than Integer.MAX_VALUE seconds.
         .build()
     assertThat(cacheControl.maxAgeSeconds).isEqualTo(Int.MAX_VALUE)
@@ -215,7 +220,8 @@ class CacheControlJvmTest {
   @Throws(Exception::class)
   fun timePrecisionIsTruncatedToSeconds() {
     val cacheControl =
-      CacheControl.Builder()
+      CacheControl
+        .Builder()
         .maxAge(4999, TimeUnit.MILLISECONDS)
         .build()
     assertThat(cacheControl.maxAgeSeconds).isEqualTo(4)

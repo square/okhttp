@@ -55,9 +55,10 @@ class BasicProxyTest {
       val client = OkHttpClient()
 
       val response =
-        client.newCall(
-          Request((mockServer.endpoint + "/person?name=peter").toHttpUrl()),
-        ).execute()
+        client
+          .newCall(
+            Request((mockServer.endpoint + "/person?name=peter").toHttpUrl()),
+          ).execute()
 
       assertThat(response.body.string()).contains("Peter the person")
       assertThat(response.protocol).isEqualTo(Protocol.HTTP_1_1)
@@ -70,14 +71,16 @@ class BasicProxyTest {
       it.withProxyConfiguration(ProxyConfiguration.proxyConfiguration(ProxyConfiguration.Type.HTTP, it.remoteAddress()))
 
       val client =
-        OkHttpClient.Builder()
+        OkHttpClient
+          .Builder()
           .proxy(Proxy(Proxy.Type.HTTP, it.remoteAddress()))
           .build()
 
       val response =
-        client.newCall(
-          Request((mockServer.endpoint + "/person?name=peter").toHttpUrl()),
-        ).execute()
+        client
+          .newCall(
+            Request((mockServer.endpoint + "/person?name=peter").toHttpUrl()),
+          ).execute()
 
       assertThat(response.body.string()).contains("Peter the person")
     }
@@ -87,14 +90,16 @@ class BasicProxyTest {
   fun testOkHttpSecureDirect() {
     testRequest {
       val client =
-        OkHttpClient.Builder()
+        OkHttpClient
+          .Builder()
           .trustMockServer()
           .build()
 
       val response =
-        client.newCall(
-          Request((mockServer.secureEndpoint + "/person?name=peter").toHttpUrl()),
-        ).execute()
+        client
+          .newCall(
+            Request((mockServer.secureEndpoint + "/person?name=peter").toHttpUrl()),
+          ).execute()
 
       assertThat(response.body.string()).contains("Peter the person")
       assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
@@ -105,16 +110,18 @@ class BasicProxyTest {
   fun testOkHttpSecureProxiedHttp1() {
     testRequest {
       val client =
-        OkHttpClient.Builder()
+        OkHttpClient
+          .Builder()
           .trustMockServer()
           .proxy(Proxy(Proxy.Type.HTTP, it.remoteAddress()))
           .protocols(listOf(Protocol.HTTP_1_1))
           .build()
 
       val response =
-        client.newCall(
-          Request((mockServer.secureEndpoint + "/person?name=peter").toHttpUrl()),
-        ).execute()
+        client
+          .newCall(
+            Request((mockServer.secureEndpoint + "/person?name=peter").toHttpUrl()),
+          ).execute()
 
       assertThat(response.body.string()).contains("Peter the person")
       assertThat(response.protocol).isEqualTo(Protocol.HTTP_1_1)
@@ -128,7 +135,12 @@ class BasicProxyTest {
 
       val connection = url.openConnection() as HttpURLConnection
 
-      assertThat(connection.inputStream.source().buffer().readUtf8()).contains("Peter the person")
+      assertThat(
+        connection.inputStream
+          .source()
+          .buffer()
+          .readUtf8(),
+      ).contains("Peter the person")
     }
   }
 
@@ -145,7 +157,12 @@ class BasicProxyTest {
 
       val connection = url.openConnection(proxy) as HttpURLConnection
 
-      assertThat(connection.inputStream.source().buffer().readUtf8()).contains("Peter the person")
+      assertThat(
+        connection.inputStream
+          .source()
+          .buffer()
+          .readUtf8(),
+      ).contains("Peter the person")
     }
   }
 
@@ -159,7 +176,12 @@ class BasicProxyTest {
 
       val connection = url.openConnection() as HttpURLConnection
 
-      assertThat(connection.inputStream.source().buffer().readUtf8()).contains("Peter the person")
+      assertThat(
+        connection.inputStream
+          .source()
+          .buffer()
+          .readUtf8(),
+      ).contains("Peter the person")
     }
   }
 
@@ -179,21 +201,26 @@ class BasicProxyTest {
 
       val connection = url.openConnection(proxy) as HttpURLConnection
 
-      assertThat(connection.inputStream.source().buffer().readUtf8()).contains("Peter the person")
+      assertThat(
+        connection.inputStream
+          .source()
+          .buffer()
+          .readUtf8(),
+      ).contains("Peter the person")
     }
   }
 
   private fun testRequest(function: (MockServerClient) -> Unit) {
     MockServerClient(mockServer.host, mockServer.serverPort).use { mockServerClient ->
       val request =
-        request().withPath("/person")
+        request()
+          .withPath("/person")
           .withQueryStringParameter("name", "peter")
 
       mockServerClient
         .`when`(
           request,
-        )
-        .respond(response().withBody("Peter the person!"))
+        ).respond(response().withBody("Peter the person!"))
 
       function(mockServerClient)
     }

@@ -64,13 +64,15 @@ class ConnectionCoalescingTest {
     platform.assumeHttp2Support()
     platform.assumeNotBouncyCastle()
     rootCa =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(1L)
         .certificateAuthority(0)
         .commonName("root")
         .build()
     certificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(rootCa)
         .serialNumber(2L)
         .commonName(server.hostName)
@@ -86,20 +88,22 @@ class ConnectionCoalescingTest {
     dns["www.wildcard.com"] = serverIps
     dns["differentdns.com"] = listOf()
     val handshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addTrustedCertificate(rootCa.certificate)
         .build()
     client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .fastFallback(false) // Avoid data races.
         .dns(dns)
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .build()
+        ).build()
     val serverHandshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .heldCertificate(certificate)
         .build()
     server.useHttps(serverHandshakeCertificates.sslSocketFactory())
@@ -141,14 +145,14 @@ class ConnectionCoalescingTest {
     server.enqueue(MockResponse())
     val connection = AtomicReference<Connection?>()
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(
           Interceptor { chain: Interceptor.Chain? ->
             connection.set(chain!!.connection())
             chain.proceed(chain.request())
           },
-        )
-        .build()
+        ).build()
     dns["san.com"] = Dns.SYSTEM.lookup(server.hostName).subList(0, 1)
     assert200Http2Response(execute(url), server.hostName)
 
@@ -236,14 +240,14 @@ class ConnectionCoalescingTest {
     // Get a reference to the connection so we can violently destroy it.
     val connection = AtomicReference<Connection?>()
     val client1 =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(
           Interceptor { chain: Interceptor.Chain? ->
             connection.set(chain!!.connection())
             chain.proceed(chain.request())
           },
-        )
-        .eventListenerFactory(clientTestRule.wrap(listener1))
+        ).eventListenerFactory(clientTestRule.wrap(listener1))
         .build()
     val request = Request.Builder().url(sanUrl).build()
     val call1 = client1.newCall(request)
@@ -274,7 +278,8 @@ class ConnectionCoalescingTest {
       },
     )
     val client2 =
-      client.newBuilder()
+      client
+        .newBuilder()
         .eventListenerFactory(clientTestRule.wrap(request2Listener))
         .build()
     val call2 = client2.newCall(request)
@@ -296,13 +301,15 @@ class ConnectionCoalescingTest {
   @Test
   fun skipsOnRedirectWhenDnsDontMatch() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(301)
         .addHeader("Location", url.newBuilder().host("differentdns.com").build())
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("unexpected call")
         .build(),
     )
@@ -327,7 +334,8 @@ class ConnectionCoalescingTest {
   @Test
   fun skipsOnRedirectWhenNotSubjectAltName() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(301)
         .addHeader("Location", url.newBuilder().host("nonsan.com").build())
         .build(),
@@ -343,7 +351,8 @@ class ConnectionCoalescingTest {
   @Test
   fun coalescesWhenCertificatePinsMatch() {
     val pinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("san.com", pin(certificate.certificate))
         .build()
     client = client.newBuilder().certificatePinner(pinner).build()
@@ -359,7 +368,8 @@ class ConnectionCoalescingTest {
   @Test
   fun skipsWhenCertificatePinningFails() {
     val pinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("san.com", "sha1/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
         .build()
     client = client.newBuilder().certificatePinner(pinner).build()
@@ -374,12 +384,14 @@ class ConnectionCoalescingTest {
   @Test
   fun skipsOnRedirectWhenCertificatePinningFails() {
     val pinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("san.com", "sha1/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
         .build()
     client = client.newBuilder().certificatePinner(pinner).build()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(301)
         .addHeader("Location", url.newBuilder().host("san.com").build())
         .build(),
@@ -411,7 +423,8 @@ class ConnectionCoalescingTest {
     val verifier = HostnameVerifier { name: String?, session: SSLSession? -> true }
     client = client.newBuilder().hostnameVerifier(verifier).build()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(301)
         .addHeader("Location", url.newBuilder().host("san.com").build())
         .build(),
@@ -445,7 +458,8 @@ class ConnectionCoalescingTest {
         }
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .eventListenerFactory(clientTestRule.wrap(listener))
         .build()
     assert200Http2Response(execute(url), server.hostName)
@@ -475,15 +489,15 @@ class ConnectionCoalescingTest {
   @Test
   fun worksWithNetworkInterceptors() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(
           Interceptor { chain: Interceptor.Chain? ->
             chain!!.proceed(
               chain.request(),
             )
           },
-        )
-        .build()
+        ).build()
     server.enqueue(MockResponse())
     server.enqueue(MockResponse())
     assert200Http2Response(execute(url), server.hostName)
@@ -495,18 +509,21 @@ class ConnectionCoalescingTest {
   @Test
   fun misdirectedRequestResponseCode() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("seed connection")
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(421)
         .body("misdirected!")
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("after misdirect")
         .build(),
     )
@@ -516,7 +533,8 @@ class ConnectionCoalescingTest {
 
     // Use the coalesced connection which should retry on a fresh connection.
     val sanUrl =
-      url.newBuilder()
+      url
+        .newBuilder()
         .host("san.com")
         .build()
     execute(sanUrl).use { response ->
@@ -550,12 +568,11 @@ class ConnectionCoalescingTest {
         ) {
         }
 
-        override fun getAcceptedIssuers(): Array<X509Certificate> {
-          return arrayOf()
-        }
+        override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(client.sslSocketFactory, trustManager)
         .build()
     server.enqueue(MockResponse())

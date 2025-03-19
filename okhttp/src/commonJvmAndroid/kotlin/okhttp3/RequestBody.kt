@@ -121,8 +121,8 @@ abstract class RequestBody {
     @JvmStatic
     @JvmName("create")
     @ExperimentalOkHttpApi
-    fun FileDescriptor.toRequestBody(contentType: MediaType? = null): RequestBody {
-      return object : RequestBody() {
+    fun FileDescriptor.toRequestBody(contentType: MediaType? = null): RequestBody =
+      object : RequestBody() {
         override fun contentType() = contentType
 
         override fun isOneShot(): Boolean = true
@@ -133,7 +133,6 @@ abstract class RequestBody {
           }
         }
       }
-    }
 
     /** Returns a new request body that transmits this. */
     @JvmOverloads
@@ -148,8 +147,8 @@ abstract class RequestBody {
     /** Returns a new request body that transmits the content of this. */
     @JvmStatic
     @JvmName("create")
-    fun File.asRequestBody(contentType: MediaType? = null): RequestBody {
-      return object : RequestBody() {
+    fun File.asRequestBody(contentType: MediaType? = null): RequestBody =
+      object : RequestBody() {
         override fun contentType() = contentType
 
         override fun contentLength() = length()
@@ -158,7 +157,6 @@ abstract class RequestBody {
           source().use { source -> sink.writeAll(source) }
         }
       }
-    }
 
     /** Returns a new request body that transmits the content of this. */
     @JvmStatic
@@ -167,8 +165,8 @@ abstract class RequestBody {
     fun Path.asRequestBody(
       fileSystem: FileSystem,
       contentType: MediaType? = null,
-    ): RequestBody {
-      return object : RequestBody() {
+    ): RequestBody =
+      object : RequestBody() {
         override fun contentType() = contentType
 
         override fun contentLength() = fileSystem.metadata(this@asRequestBody).size ?: -1
@@ -177,7 +175,6 @@ abstract class RequestBody {
           fileSystem.source(this@asRequestBody).use { source -> sink.writeAll(source) }
         }
       }
-    }
 
     @JvmStatic
     @Deprecated(
@@ -257,9 +254,7 @@ abstract class RequestBody {
     @ExperimentalOkHttpApi
     fun RequestBody.gzip(): RequestBody {
       return object : RequestBody() {
-        override fun contentType(): MediaType? {
-          return this@gzip.contentType()
-        }
+        override fun contentType(): MediaType? = this@gzip.contentType()
 
         override fun contentLength(): Long {
           return -1 // We don't know the compressed length in advance!
@@ -270,9 +265,7 @@ abstract class RequestBody {
           GzipSink(sink).buffer().use(this@gzip::writeTo)
         }
 
-        override fun isOneShot(): Boolean {
-          return this@gzip.isOneShot()
-        }
+        override fun isOneShot(): Boolean = this@gzip.isOneShot()
       }
     }
   }

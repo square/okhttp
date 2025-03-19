@@ -547,7 +547,8 @@ class MultipartReaderTest {
   /** Confirm that [MultipartBody] and [MultipartReader] can work together. */
   @Test fun `multipart round trip`() {
     val body =
-      MultipartBody.Builder("boundary")
+      MultipartBody
+        .Builder("boundary")
         .setType(MultipartBody.PARALLEL)
         .addPart("Quick".toRequestBody("text/plain".toMediaType()))
         .addFormDataPart("color", "Brown")
@@ -592,26 +593,24 @@ class MultipartReaderTest {
   @Test
   fun `reading a large part with small byteCount`() {
     val multipartBody: RequestBody =
-      MultipartBody.Builder("foo").addPart(
-        headersOf("header-name", "header-value"),
-        object : RequestBody() {
-          override fun contentType(): MediaType? {
-            return "application/octet-stream".toMediaTypeOrNull()
-          }
+      MultipartBody
+        .Builder("foo")
+        .addPart(
+          headersOf("header-name", "header-value"),
+          object : RequestBody() {
+            override fun contentType(): MediaType? = "application/octet-stream".toMediaTypeOrNull()
 
-          override fun contentLength(): Long {
-            return (1024 * 1024 * 100).toLong()
-          }
+            override fun contentLength(): Long = (1024 * 1024 * 100).toLong()
 
-          override fun writeTo(sink: okio.BufferedSink) {
-            repeat(100) {
-              sink.writeUtf8(
-                "a".repeat(1024 * 1024),
-              )
+            override fun writeTo(sink: okio.BufferedSink) {
+              repeat(100) {
+                sink.writeUtf8(
+                  "a".repeat(1024 * 1024),
+                )
+              }
             }
-          }
-        },
-      ).build()
+          },
+        ).build()
     val buffer =
       Buffer().apply {
         multipartBody.writeTo(this)

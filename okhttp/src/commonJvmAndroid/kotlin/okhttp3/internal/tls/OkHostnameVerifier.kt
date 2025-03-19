@@ -39,8 +39,8 @@ object OkHostnameVerifier : HostnameVerifier {
   override fun verify(
     host: String,
     session: SSLSession,
-  ): Boolean {
-    return if (!host.isAscii()) {
+  ): Boolean =
+    if (!host.isAscii()) {
       false
     } else {
       try {
@@ -49,17 +49,15 @@ object OkHostnameVerifier : HostnameVerifier {
         false
       }
     }
-  }
 
   fun verify(
     host: String,
     certificate: X509Certificate,
-  ): Boolean {
-    return when {
+  ): Boolean =
+    when {
       host.canParseAsIpAddress() -> verifyIpAddress(host, certificate)
       else -> verifyHostname(host, certificate)
     }
-  }
 
   /** Returns true if [certificate] matches [ipAddress]. */
   private fun verifyIpAddress(
@@ -89,12 +87,11 @@ object OkHostnameVerifier : HostnameVerifier {
    * characters. We want to avoid lower casing special chars like U+212A (Kelvin symbol) because
    * they can return ASCII characters that match real hostnames.
    */
-  private fun String.asciiToLowercase(): String {
-    return when {
+  private fun String.asciiToLowercase(): String =
+    when {
       isAscii() -> lowercase(Locale.US) // This is an ASCII string.
       else -> this
     }
-  }
 
   /** Returns true if the [String] is ASCII encoded (0-127). */
   private fun String.isAscii() = length == utf8Size().toInt()

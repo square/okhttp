@@ -741,13 +741,12 @@ class Http2Stream internal constructor(
       connection.sendDegradedPingLater()
     }
 
-    override fun newTimeoutException(cause: IOException?): IOException {
-      return SocketTimeoutException("timeout").apply {
+    override fun newTimeoutException(cause: IOException?): IOException =
+      SocketTimeoutException("timeout").apply {
         if (cause != null) {
           initCause(cause)
         }
       }
-    }
 
     @Throws(IOException::class)
     fun exitAndThrowIfTimedOut() {

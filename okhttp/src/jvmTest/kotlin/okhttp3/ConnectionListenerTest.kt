@@ -60,7 +60,8 @@ open class ConnectionListenerTest {
   open val fastFallback: Boolean get() = true
 
   private var client: OkHttpClient =
-    clientTestRule.newClientBuilder()
+    clientTestRule
+      .newClientBuilder()
       .connectionPool(ConnectionPool(connectionListener = listener))
       .fastFallback(fastFallback)
       .build()
@@ -80,7 +81,8 @@ open class ConnectionListenerTest {
     server!!.enqueue(MockResponse(body = "abc"))
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server!!.url("/"))
           .build(),
       )
@@ -99,17 +101,20 @@ open class ConnectionListenerTest {
   @Test
   fun failedCallEventSequence() {
     server!!.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .headersDelay(2, TimeUnit.SECONDS)
         .build(),
     )
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .readTimeout(Duration.ofMillis(250))
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server!!.url("/"))
           .build(),
       )
@@ -132,7 +137,8 @@ open class ConnectionListenerTest {
   private fun assertSuccessfulEventOrder() {
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server!!.url("/"))
           .build(),
       )
@@ -156,11 +162,15 @@ open class ConnectionListenerTest {
     server!!.enqueue(MockResponse())
     server!!.enqueue(MockResponse())
 
-    client.newCall(Request(server!!.url("/")))
-      .execute().close()
+    client
+      .newCall(Request(server!!.url("/")))
+      .execute()
+      .close()
 
-    client.newCall(Request(server!!.url("/")))
-      .execute().close()
+    client
+      .newCall(Request(server!!.url("/")))
+      .execute()
+      .close()
 
     assertThat(listener.recordedEventTypes()).containsExactly(
       "ConnectStart",
@@ -195,12 +205,14 @@ open class ConnectionListenerTest {
     dns["fakeurl"] = client.dns.lookup(server!!.hostName)
     dns["www.fakeurl"] = client.dns.lookup(server!!.hostName)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(dns)
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url("http://fakeurl:" + server!!.port)
           .build(),
       )
@@ -219,7 +231,8 @@ open class ConnectionListenerTest {
     server!!.enqueue(MockResponse())
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server!!.url("/"))
           .build(),
       )
@@ -239,7 +252,8 @@ open class ConnectionListenerTest {
     server!!.enqueue(MockResponse(socketPolicy = FailHandshake))
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server!!.url("/"))
           .build(),
       )
@@ -264,12 +278,14 @@ open class ConnectionListenerTest {
     server!!.enqueue(MockResponse(socketPolicy = FailHandshake))
     server!!.enqueue(MockResponse())
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(DoubleInetAddressDns())
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server!!.url("/"))
           .build(),
       )
@@ -292,12 +308,14 @@ open class ConnectionListenerTest {
     server!!.enqueue(MockResponse())
     val proxy = server!!.toProxyAddress()
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .proxy(proxy)
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url("http://www.fakeurl")
           .build(),
       )
@@ -316,12 +334,12 @@ open class ConnectionListenerTest {
 
   private fun enableTls() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .hostnameVerifier(RecordingHostnameVerifier())
+        ).hostnameVerifier(RecordingHostnameVerifier())
         .build()
     server!!.useHttps(handshakeCertificates.sslSocketFactory())
   }

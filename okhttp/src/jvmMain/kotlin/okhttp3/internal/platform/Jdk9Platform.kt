@@ -41,8 +41,8 @@ open class Jdk9Platform : Platform() {
   }
 
   @SuppressSignatureCheck
-  override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
-    return try {
+  override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
+    try {
       // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
       // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
       when (val protocol = sslSocket.applicationProtocol) {
@@ -53,7 +53,6 @@ open class Jdk9Platform : Platform() {
       // https://docs.oracle.com/javase/9/docs/api/javax/net/ssl/SSLSocket.html#getApplicationProtocol--
       null
     }
-  }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
     // Not supported due to access checks on JDK 9+:
@@ -65,8 +64,8 @@ open class Jdk9Platform : Platform() {
     )
   }
 
-  override fun newSSLContext(): SSLContext {
-    return when {
+  override fun newSSLContext(): SSLContext =
+    when {
       majorVersion != null && majorVersion >= 9 ->
         SSLContext.getInstance("TLS")
       else ->
@@ -79,7 +78,6 @@ open class Jdk9Platform : Platform() {
           SSLContext.getInstance("TLS")
         }
     }
-  }
 
   companion object {
     val isAvailable: Boolean

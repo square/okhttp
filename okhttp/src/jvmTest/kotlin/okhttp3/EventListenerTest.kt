@@ -103,7 +103,8 @@ class EventListenerTest {
   private val listener: RecordingEventListener = RecordingEventListener()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client =
-    clientTestRule.newClientBuilder()
+    clientTestRule
+      .newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build()
   private var socksProxy: SocksProxy? = null
@@ -130,13 +131,15 @@ class EventListenerTest {
   @Test
   fun successfulCallEventSequence() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -146,26 +149,44 @@ class EventListenerTest {
     response.body.close()
     assertThat(listener.recordedEventTypes()).containsExactly(
       "CallStart",
-      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-      "ResponseBodyEnd", "ConnectionReleased", "CallEnd",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd",
     )
   }
 
   @Test
   fun successfulCallEventSequenceForIpAddress() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
     val ipAddress = InetAddress.getLoopbackAddress().hostAddress
     val call =
       client.newCall(
-        Request.Builder()
-          .url(server.url("/").newBuilder().host(ipAddress!!).build())
-          .build(),
+        Request
+          .Builder()
+          .url(
+            server
+              .url("/")
+              .newBuilder()
+              .host(ipAddress!!)
+              .build(),
+          ).build(),
       )
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
@@ -173,23 +194,34 @@ class EventListenerTest {
     response.body.close()
     assertThat(listener.recordedEventTypes()).containsExactly(
       "CallStart",
-      "ProxySelectStart", "ProxySelectEnd",
-      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-      "ResponseBodyEnd", "ConnectionReleased", "CallEnd",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd",
     )
   }
 
   @Test
   fun successfulCallEventSequenceForEnqueue() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -215,27 +247,41 @@ class EventListenerTest {
     completionLatch.await()
     assertThat(listener.recordedEventTypes()).containsExactly(
       "CallStart",
-      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-      "ResponseBodyEnd", "ConnectionReleased", "CallEnd",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd",
     )
   }
 
   @Test
   fun failedCallEventSequence() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .headersDelay(2, TimeUnit.SECONDS)
         .build(),
     )
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .readTimeout(Duration.ofMillis(250))
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -246,9 +292,19 @@ class EventListenerTest {
     }
     assertThat(listener.recordedEventTypes()).containsExactly(
       "CallStart",
-      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseFailed", "RetryDecision", "ConnectionReleased", "CallFailed",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseFailed",
+      "RetryDecision",
+      "ConnectionReleased",
+      "CallFailed",
     )
     assertThat(listener.findEvent<RetryDecision>()).all {
       prop(RetryDecision::reason).isEqualTo("request was at least partially sent")
@@ -259,20 +315,23 @@ class EventListenerTest {
   @Test
   fun failedDribbledCallEventSequence() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("0123456789")
         .throttleBody(2, 100, TimeUnit.MILLISECONDS)
         .socketPolicy(DisconnectDuringResponseBody)
         .build(),
     )
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .protocols(listOf<Protocol>(Protocol.HTTP_1_1))
         .readTimeout(Duration.ofMillis(250))
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -284,10 +343,21 @@ class EventListenerTest {
     }
     assertThat(listener.recordedEventTypes()).containsExactly(
       "CallStart",
-      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-      "ResponseFailed", "ConnectionReleased", "CallFailed",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseFailed",
+      "ConnectionReleased",
+      "CallFailed",
     )
     val responseFailed = listener.removeUpToEvent<ResponseFailed>()
     assertThat(responseFailed.ioe.message).isEqualTo("unexpected end of stream")
@@ -297,7 +367,8 @@ class EventListenerTest {
   fun canceledCallEventSequence() {
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -317,13 +388,15 @@ class EventListenerTest {
   @Test
   fun cancelAsyncCall() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -350,13 +423,15 @@ class EventListenerTest {
   @Test
   fun multipleCancelsEmitsOnlyOneEvent() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -368,7 +443,8 @@ class EventListenerTest {
   private fun assertSuccessfulEventOrder(responseMatcher: Matcher<Response?>?) {
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -405,15 +481,19 @@ class EventListenerTest {
     server.protocols = Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
     server.enqueue(MockResponse())
     server.enqueue(MockResponse())
-    client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .build(),
-    ).execute().close()
+    client
+      .newCall(
+        Request
+          .Builder()
+          .url(server.url("/"))
+          .build(),
+      ).execute()
+      .close()
     listener.removeUpToEvent<CallEnd>()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -485,29 +565,23 @@ class EventListenerTest {
     }
   }
 
-  private fun greaterThan(value: Long): Matcher<Long?> {
-    return object : BaseMatcher<Long?>() {
+  private fun greaterThan(value: Long): Matcher<Long?> =
+    object : BaseMatcher<Long?>() {
       override fun describeTo(description: Description?) {
         description!!.appendText("> $value")
       }
 
-      override fun matches(o: Any?): Boolean {
-        return (o as Long?)!! > value
-      }
+      override fun matches(o: Any?): Boolean = (o as Long?)!! > value
     }
-  }
 
-  private fun matchesProtocol(protocol: Protocol?): Matcher<Response?> {
-    return object : BaseMatcher<Response?>() {
+  private fun matchesProtocol(protocol: Protocol?): Matcher<Response?> =
+    object : BaseMatcher<Response?>() {
       override fun describeTo(description: Description?) {
         description!!.appendText("is HTTP/2")
       }
 
-      override fun matches(o: Any?): Boolean {
-        return (o as Response?)!!.protocol == protocol
-      }
+      override fun matches(o: Any?): Boolean = (o as Response?)!!.protocol == protocol
     }
-  }
 
   @Test
   fun successfulEmptyH2CallEventSequence() {
@@ -529,7 +603,8 @@ class EventListenerTest {
     enableTlsWithTunnel()
     server.protocols = Arrays.asList(Protocol.HTTP_1_1)
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
@@ -548,7 +623,8 @@ class EventListenerTest {
     enableTlsWithTunnel()
     server.protocols = Arrays.asList(Protocol.HTTP_1_1)
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .bodyDelay(100, TimeUnit.MILLISECONDS)
         .chunkedBody("Hello!", 2)
         .build(),
@@ -568,7 +644,8 @@ class EventListenerTest {
     enableTlsWithTunnel()
     server.protocols = Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .bodyDelay(100, TimeUnit.MILLISECONDS)
         .chunkedBody("Hello!", 2)
         .build(),
@@ -588,7 +665,8 @@ class EventListenerTest {
     server.enqueue(MockResponse())
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -612,7 +690,8 @@ class EventListenerTest {
     // Seed the pool.
     val call1 =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -622,7 +701,8 @@ class EventListenerTest {
     listener.clearAllEvents()
     val call2 =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -637,7 +717,8 @@ class EventListenerTest {
   @Test
   fun multipleDnsLookupsForSingleCall() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(301)
         .setHeader("Location", "http://www.fakeurl:" + server.port)
         .build(),
@@ -647,12 +728,14 @@ class EventListenerTest {
     dns["fakeurl"] = client.dns.lookup(server.hostName)
     dns["www.fakeurl"] = client.dns.lookup(server.hostName)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(dns)
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url("http://fakeurl:" + server.port)
           .build(),
       )
@@ -668,12 +751,14 @@ class EventListenerTest {
   @Test
   fun failedDnsLookup() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(FakeDns())
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url("http://fakeurl/")
           .build(),
       )
@@ -690,12 +775,14 @@ class EventListenerTest {
   fun emptyDnsLookup() {
     val emptyDns = Dns { listOf() }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(emptyDns)
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url("http://fakeurl/")
           .build(),
       )
@@ -715,7 +802,8 @@ class EventListenerTest {
     server.enqueue(MockResponse())
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -738,13 +826,15 @@ class EventListenerTest {
   fun failedConnect() {
     enableTlsWithTunnel()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(FailHandshake)
         .build(),
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -768,18 +858,21 @@ class EventListenerTest {
   fun multipleConnectsForSingleCall() {
     enableTlsWithTunnel()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(FailHandshake)
         .build(),
     )
     server.enqueue(MockResponse())
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(DoubleInetAddressDns())
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -796,12 +889,14 @@ class EventListenerTest {
   fun successfulHttpProxyConnect() {
     server.enqueue(MockResponse())
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .proxy(server.toProxyAddress())
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url("http://www.fakeurl")
           .build(),
       )
@@ -830,12 +925,14 @@ class EventListenerTest {
     socksProxy!!.play()
     val proxy = socksProxy!!.proxy()
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .proxy(proxy)
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url("http://" + SocksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS + ":" + server.port)
           .build(),
       )
@@ -861,7 +958,8 @@ class EventListenerTest {
   fun authenticatingTunnelProxyConnect() {
     enableTlsWithTunnel()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .inTunnel()
         .code(407)
         .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
@@ -869,19 +967,22 @@ class EventListenerTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .inTunnel()
         .build(),
     )
     server.enqueue(MockResponse())
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .proxy(server.toProxyAddress())
         .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -901,7 +1002,8 @@ class EventListenerTest {
     server.enqueue(MockResponse())
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -919,13 +1021,15 @@ class EventListenerTest {
   fun failedSecureConnect() {
     enableTlsWithTunnel()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(FailHandshake)
         .build(),
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -943,18 +1047,21 @@ class EventListenerTest {
   fun secureConnectWithTunnel() {
     enableTlsWithTunnel()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .inTunnel()
         .build(),
     )
     server.enqueue(MockResponse())
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .proxy(server.toProxyAddress())
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -972,18 +1079,21 @@ class EventListenerTest {
   fun multipleSecureConnectsForSingleCall() {
     enableTlsWithTunnel()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(FailHandshake)
         .build(),
     )
     server.enqueue(MockResponse())
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(DoubleInetAddressDns())
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1002,14 +1112,16 @@ class EventListenerTest {
     server.enqueue(MockResponse())
     server.enqueue(MockResponse())
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(DoubleInetAddressDns())
         .build()
 
     // Seed the pool.
     val call1 =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1019,7 +1131,8 @@ class EventListenerTest {
     listener.clearAllEvents()
     val call2 =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1036,7 +1149,8 @@ class EventListenerTest {
     server.enqueue(MockResponse())
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1051,19 +1165,22 @@ class EventListenerTest {
   @Test
   fun noConnectionFoundOnFollowUp() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(301)
         .addHeader("Location", "/foo")
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("ABC")
         .build(),
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1082,7 +1199,8 @@ class EventListenerTest {
     // Seed the pool.
     val call1 =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1093,7 +1211,8 @@ class EventListenerTest {
     listener.clearAllEvents()
     val call2 =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1109,20 +1228,23 @@ class EventListenerTest {
   @Test
   fun multipleConnectionsFoundForSingleCall() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(301)
         .addHeader("Location", "/foo")
         .addHeader("Connection", "Close")
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("ABC")
         .build(),
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1156,14 +1278,16 @@ class EventListenerTest {
     // Use a 2 MiB body so the disconnect won't happen until the client has read some data.
     val responseBodySize = 2 * 1024 * 1024 // 2 MiB
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(Buffer().write(ByteArray(responseBodySize)))
         .socketPolicy(DisconnectDuringResponseBody)
         .build(),
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1183,7 +1307,8 @@ class EventListenerTest {
   @Test
   fun emptyResponseBody() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("")
         .bodyDelay(1, TimeUnit.SECONDS)
         .socketPolicy(DisconnectDuringResponseBody)
@@ -1191,7 +1316,8 @@ class EventListenerTest {
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1199,24 +1325,37 @@ class EventListenerTest {
     response.body.close()
     assertThat(listener.recordedEventTypes()).containsExactly(
       "CallStart",
-      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-      "ResponseBodyEnd", "ConnectionReleased", "CallEnd",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd",
     )
   }
 
   @Test
   fun emptyResponseBodyConnectionClose() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .addHeader("Connection", "close")
         .body("")
         .build(),
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1224,17 +1363,29 @@ class EventListenerTest {
     response.body.close()
     assertThat(listener.recordedEventTypes()).containsExactly(
       "CallStart",
-      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-      "ResponseBodyEnd", "ConnectionReleased", "CallEnd",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd",
     )
   }
 
   @Test
   fun responseBodyClosedClosedWithoutReadingAllData() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .bodyDelay(1, TimeUnit.SECONDS)
         .socketPolicy(DisconnectDuringResponseBody)
@@ -1242,7 +1393,8 @@ class EventListenerTest {
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1250,10 +1402,21 @@ class EventListenerTest {
     response.body.close()
     assertThat(listener.recordedEventTypes()).containsExactly(
       "CallStart",
-      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-      "ResponseBodyEnd", "ConnectionReleased", "CallEnd",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd",
     )
   }
 
@@ -1279,14 +1442,16 @@ class EventListenerTest {
 
   private fun requestBodyFail(expectedProtocol: Protocol?) {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(DisconnectDuringRequestBody)
         .build(),
     )
     val request = NonCompletingRequestBody()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .post(request)
           .build(),
@@ -1308,13 +1473,9 @@ class EventListenerTest {
     private val chunk: ByteArray? = ByteArray(1024 * 1024)
     var ioe: IOException? = null
 
-    override fun contentType(): MediaType? {
-      return "text/plain".toMediaType()
-    }
+    override fun contentType(): MediaType? = "text/plain".toMediaType()
 
-    override fun contentLength(): Long {
-      return chunk!!.size * 8L
-    }
+    override fun contentLength(): Long = chunk!!.size * 8L
 
     override fun writeTo(sink: BufferedSink) {
       try {
@@ -1339,9 +1500,7 @@ class EventListenerTest {
       object : RequestBody() {
         override fun contentType() = "text/plain".toMediaType()
 
-        override fun contentLength(): Long {
-          return 1024 * 1024 * 256
-        }
+        override fun contentLength(): Long = 1024 * 1024 * 256
 
         override fun writeTo(sink: BufferedSink) {
           var failureCount = 0
@@ -1357,13 +1516,15 @@ class EventListenerTest {
         }
       }
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(DisconnectDuringRequestBody)
         .build(),
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .post(requestBody)
           .build(),
@@ -1448,20 +1609,22 @@ class EventListenerTest {
   @Test
   fun successfulCallEventSequenceWithListener() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(
           HttpLoggingInterceptor()
             .setLevel(HttpLoggingInterceptor.Level.BODY),
-        )
-        .build()
+        ).build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1471,10 +1634,21 @@ class EventListenerTest {
     response.body.close()
     assertThat(listener.recordedEventTypes()).containsExactly(
       "CallStart",
-      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-      "ResponseBodyEnd", "ConnectionReleased", "CallEnd",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd",
     )
   }
 
@@ -1484,14 +1658,16 @@ class EventListenerTest {
     responseHeaderLength: Matcher<Long?>?,
   ) {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(200)
         .body("World!")
         .build(),
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .post(body!!)
           .build(),
@@ -1542,7 +1718,8 @@ class EventListenerTest {
     server.enqueue(MockResponse())
     val warmUpCall =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1551,7 +1728,8 @@ class EventListenerTest {
 
     // Create a client with artificial delays.
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addInterceptor(
           Interceptor { chain: Interceptor.Chain ->
             try {
@@ -1561,8 +1739,7 @@ class EventListenerTest {
               throw InterruptedIOException()
             }
           },
-        )
-        .addNetworkInterceptor(
+        ).addNetworkInterceptor(
           Interceptor { chain: Interceptor.Chain ->
             try {
               Thread.sleep(networkInterceptorDelay)
@@ -1571,19 +1748,17 @@ class EventListenerTest {
               throw InterruptedIOException()
             }
           },
-        )
-        .build()
+        ).build()
 
     // Create a request body with artificial delays.
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .post(
             object : RequestBody() {
-              override fun contentType(): MediaType? {
-                return null
-              }
+              override fun contentType(): MediaType? = null
 
               override fun writeTo(sink: BufferedSink) {
                 try {
@@ -1594,13 +1769,13 @@ class EventListenerTest {
                 }
               }
             },
-          )
-          .build(),
+          ).build(),
       )
 
     // Create a response with artificial delays.
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .headersDelay(responseHeadersStartDelay, TimeUnit.MILLISECONDS)
         .bodyDelay(responseBodyStartDelay, TimeUnit.MILLISECONDS)
         .throttleBody(5, responseBodyEndDelay, TimeUnit.MILLISECONDS)
@@ -1628,12 +1803,12 @@ class EventListenerTest {
 
   private fun enableTlsWithTunnel() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .hostnameVerifier(RecordingHostnameVerifier())
+        ).hostnameVerifier(RecordingHostnameVerifier())
         .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }
@@ -1641,7 +1816,8 @@ class EventListenerTest {
   @Test
   fun redirectUsingSameConnectionEventSequence() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: /foo")
         .build(),
@@ -1651,11 +1827,27 @@ class EventListenerTest {
     call.execute()
     assertThat(listener.recordedEventTypes()).containsExactly(
       "CallStart",
-      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-      "ResponseBodyEnd", "RetryDecision", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
-      "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "RetryDecision",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
       "CallEnd",
     )
     assertThat(listener.findEvent<RetryDecision>()).all {
@@ -1668,7 +1860,8 @@ class EventListenerTest {
   fun redirectUsingNewConnectionEventSequence() {
     val otherServer = MockWebServer()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: " + otherServer.url("/foo"))
         .build(),
@@ -1720,25 +1913,41 @@ class EventListenerTest {
     server.enqueue(MockResponse.Builder().body("a").build())
     server.enqueue(MockResponse.Builder().body("b").build())
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addInterceptor(
           Interceptor { chain: Interceptor.Chain? ->
-            chain!!.proceed(chain.request())
+            chain!!
+              .proceed(chain.request())
               .use { a -> assertThat(a.body.string()).isEqualTo("a") }
             chain.proceed(chain.request())
           },
-        )
-        .build()
+        ).build()
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("b")
     assertThat(listener.recordedEventTypes()).containsExactly(
       "CallStart",
-      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-      "ResponseBodyEnd", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
-      "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
       "CallEnd",
     )
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
@@ -1748,10 +1957,12 @@ class EventListenerTest {
   @Test
   fun applicationInterceptorShortCircuit() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addInterceptor(
           Interceptor { chain: Interceptor.Chain? ->
-            Response.Builder()
+            Response
+              .Builder()
               .request(chain!!.request())
               .protocol(Protocol.HTTP_1_1)
               .code(200)
@@ -1759,8 +1970,7 @@ class EventListenerTest {
               .body("a".toResponseBody(null))
               .build()
           },
-        )
-        .build()
+        ).build()
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("a")
@@ -1772,12 +1982,14 @@ class EventListenerTest {
   @Test
   fun expectContinueStartsResponseHeadersEarly() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .add100Continue()
         .build(),
     )
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .header("Expect", "100-continue")
         .post("abc".toRequestBody("text/plain".toMediaType()))
@@ -1785,10 +1997,24 @@ class EventListenerTest {
     val call = client.newCall(request)
     call.execute()
     assertThat(listener.recordedEventTypes()).containsExactly(
-      "CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd", "ConnectStart",
-      "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
-      "ResponseHeadersStart", "RequestBodyStart", "RequestBodyEnd", "ResponseHeadersEnd",
-      "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd",
+      "CallStart",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "RequestBodyStart",
+      "RequestBodyEnd",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd",
     )
   }
 
@@ -1796,19 +2022,22 @@ class EventListenerTest {
   fun timeToFirstByteGapBetweenResponseHeaderStartAndEnd() {
     val responseHeadersStartDelay = 250L
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .add100Continue()
         .headersDelay(responseHeadersStartDelay, TimeUnit.MILLISECONDS)
         .build(),
     )
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .header("Expect", "100-continue")
         .post("abc".toRequestBody("text/plain".toMediaType()))
         .build()
     val call = client.newCall(request)
-    call.execute()
+    call
+      .execute()
       .use { response -> assertThat(response.body.string()).isEqualTo("") }
     listener.removeUpToEvent<ResponseHeadersStart>()
     listener.takeEvent(RequestBodyStart::class.java, 0L)
@@ -1820,13 +2049,15 @@ class EventListenerTest {
   fun cacheMiss() {
     enableCache()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1835,11 +2066,23 @@ class EventListenerTest {
     assertThat(response.body.string()).isEqualTo("abc")
     response.close()
     assertThat(listener.recordedEventTypes()).containsExactly(
-      "CallStart", "CacheMiss",
-      "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
-      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
-      "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd",
+      "CallStart",
+      "CacheMiss",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd",
     )
   }
 
@@ -1847,19 +2090,22 @@ class EventListenerTest {
   fun conditionalCache() {
     enableCache()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .addHeader("ETag", "v1")
         .body("abc")
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build(),
     )
     var call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1873,10 +2119,18 @@ class EventListenerTest {
     assertThat(response.body.string()).isEqualTo("abc")
     response.close()
     assertThat(listener.recordedEventTypes()).containsExactly(
-      "CallStart", "CacheConditionalHit",
-      "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
-      "ResponseBodyStart", "ResponseBodyEnd", "CacheHit", "ConnectionReleased", "CallEnd",
+      "CallStart",
+      "CacheConditionalHit",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "CacheHit",
+      "ConnectionReleased",
+      "CallEnd",
     )
   }
 
@@ -1884,13 +2138,15 @@ class EventListenerTest {
   fun conditionalCacheMiss() {
     enableCache()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .addHeader("ETag: v1")
         .body("abc")
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(HttpURLConnection.HTTP_OK)
         .addHeader("ETag: v2")
         .body("abd")
@@ -1898,7 +2154,8 @@ class EventListenerTest {
     )
     var call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )
@@ -1912,10 +2169,18 @@ class EventListenerTest {
     assertThat(response.body.string()).isEqualTo("abd")
     response.close()
     assertThat(listener.recordedEventTypes()).containsExactly(
-      "CallStart", "CacheConditionalHit",
-      "ConnectionAcquired", "RequestHeadersStart",
-      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "CacheMiss",
-      "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd",
+      "CallStart",
+      "CacheConditionalHit",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "CacheMiss",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd",
     )
   }
 
@@ -1924,7 +2189,8 @@ class EventListenerTest {
     enableCache()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .cacheControl(CacheControl.FORCE_CACHE)
           .build(),
@@ -1944,14 +2210,16 @@ class EventListenerTest {
   fun cacheHit() {
     enableCache()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .addHeader("cache-control: public, max-age=300")
         .build(),
     )
     var call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )

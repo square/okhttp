@@ -61,17 +61,22 @@ class MockResponseSniTest {
       }
 
     val client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .dns(dns)
+        ).dns(dns)
         .build()
 
     server.enqueue(MockResponse())
 
-    val url = server.url("/").newBuilder().host("localhost.localdomain").build()
+    val url =
+      server
+        .url("/")
+        .newBuilder()
+        .host("localhost.localdomain")
+        .build()
     val call = client.newCall(Request(url = url))
     val response = call.execute()
     assertThat(response.isSuccessful).isTrue()
@@ -90,12 +95,14 @@ class MockResponseSniTest {
   @Test
   fun domainFronting() {
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .commonName("server name")
         .addSubjectAlternativeName("url-host.com")
         .build()
     val handshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .heldCertificate(heldCertificate)
         .addTrustedCertificate(heldCertificate.certificate)
         .build()
@@ -107,12 +114,12 @@ class MockResponseSniTest {
       }
 
     val client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .dns(dns)
+        ).dns(dns)
         .build()
 
     server.enqueue(MockResponse())
@@ -168,24 +175,26 @@ class MockResponseSniTest {
    */
   private fun requestToHostnameViaProxy(hostnameOrIpAddress: String): RecordedRequest {
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .commonName("server name")
         .addSubjectAlternativeName(hostnameOrIpAddress)
         .build()
     val handshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .heldCertificate(heldCertificate)
         .addTrustedCertificate(heldCertificate.certificate)
         .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
 
     val client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .proxy(server.toProxyAddress())
+        ).proxy(server.toProxyAddress())
         .build()
 
     server.enqueue(MockResponse(inTunnel = true))
@@ -195,7 +204,9 @@ class MockResponseSniTest {
       client.newCall(
         Request(
           url =
-            server.url("/").newBuilder()
+            server
+              .url("/")
+              .newBuilder()
               .host(hostnameOrIpAddress)
               .build(),
         ),

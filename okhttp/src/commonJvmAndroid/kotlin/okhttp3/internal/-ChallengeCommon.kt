@@ -19,11 +19,10 @@ package okhttp3.internal
 
 import okhttp3.Challenge
 
-fun Challenge.commonEquals(other: Any?): Boolean {
-  return other is Challenge &&
+fun Challenge.commonEquals(other: Any?): Boolean =
+  other is Challenge &&
     other.scheme == scheme &&
     other.authParams == authParams
-}
 
 fun Challenge.commonHashCode(): Int {
   var result = 29

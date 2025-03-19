@@ -128,10 +128,9 @@ class WebSocketRecorder(
     }
   }
 
-  private fun nextEvent(): Any {
-    return events.poll(10, TimeUnit.SECONDS)
+  private fun nextEvent(): Any =
+    events.poll(10, TimeUnit.SECONDS)
       ?: throw AssertionError("Timed out waiting for event.")
-  }
 
   fun assertTextMessage(payload: String?) {
     assertThat(nextEvent()).isEqualTo(Message(string = payload))
@@ -251,12 +250,11 @@ class WebSocketRecorder(
         else -> null
       }
 
-    override fun toString(): String {
-      return when (response) {
+    override fun toString(): String =
+      when (response) {
         null -> "Failure[$t]"
         else -> "Failure[$response]"
       }
-    }
   }
 
   internal data class Message(

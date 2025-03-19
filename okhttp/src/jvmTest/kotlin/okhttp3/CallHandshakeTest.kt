@@ -72,12 +72,12 @@ class CallHandshakeTest {
     server.enqueue(MockResponse())
 
     client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .hostnameVerifier(RecordingHostnameVerifier())
+        ).hostnameVerifier(RecordingHostnameVerifier())
         .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
 
@@ -267,21 +267,27 @@ class CallHandshakeTest {
     }
   }
 
-  private fun expectedConnectionCipherSuites(client: OkHttpClient): Set<String> {
-    return client.connectionSpecs.first().cipherSuites!!.map { it.javaName }.intersect(defaultEnabledCipherSuites.toSet())
-  }
+  private fun expectedConnectionCipherSuites(client: OkHttpClient): Set<String> =
+    client.connectionSpecs
+      .first()
+      .cipherSuites!!
+      .map {
+        it.javaName
+      }.intersect(defaultEnabledCipherSuites.toSet())
 
   private fun makeClient(
     connectionSpec: ConnectionSpec? = null,
     tlsVersion: TlsVersion? = null,
     cipherSuites: List<CipherSuite>? = null,
-  ): OkHttpClient {
-    return this.client.newBuilder()
+  ): OkHttpClient =
+    this.client
+      .newBuilder()
       .apply {
         if (connectionSpec != null) {
           connectionSpecs(
             listOf(
-              ConnectionSpec.Builder(connectionSpec)
+              ConnectionSpec
+                .Builder(connectionSpec)
                 .apply {
                   if (tlsVersion != null) {
                     tlsVersions(tlsVersion)
@@ -289,21 +295,17 @@ class CallHandshakeTest {
                   if (cipherSuites != null) {
                     cipherSuites(*cipherSuites.toTypedArray())
                   }
-                }
-                .build(),
+                }.build(),
             ),
           )
         }
-      }
-      .addNetworkInterceptor {
+      }.addNetworkInterceptor {
         val socket = it.connection()!!.socket() as SSLSocket
 
         handshakeEnabledCipherSuites = socket.enabledCipherSuites.toList()
 
         it.proceed(it.request())
-      }
-      .build()
-  }
+      }.build()
 
   private fun makeRequest(client: OkHttpClient): Handshake {
     val call = client.newCall(Request(server.url("/")))

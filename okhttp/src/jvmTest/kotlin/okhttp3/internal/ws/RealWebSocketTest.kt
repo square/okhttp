@@ -476,7 +476,8 @@ class RealWebSocketTest {
     ) {
       val url = "http://example.com/websocket"
       val response =
-        Response.Builder()
+        Response
+          .Builder()
           .code(101)
           .message("OK")
           .request(Request.Builder().url(url).build())
@@ -545,8 +546,6 @@ class RealWebSocketTest {
   }
 
   companion object {
-    private fun ns(millis: Long): Long {
-      return millis * 1000000L
-    }
+    private fun ns(millis: Long): Long = millis * 1000000L
   }
 }

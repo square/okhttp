@@ -35,7 +35,8 @@ class PostPath {
     }
 
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://httpbin.org/anything")
         .put(path.asRequestBody(fileSystem, MEDIA_TYPE_JSON))
         .build()

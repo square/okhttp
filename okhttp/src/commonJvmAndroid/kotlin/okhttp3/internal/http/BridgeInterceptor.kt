@@ -31,7 +31,9 @@ import okio.buffer
  * request. Then it proceeds to call the network. Finally it builds a user response from the network
  * response.
  */
-class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
+class BridgeInterceptor(
+  private val cookieJar: CookieJar,
+) : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
     val userRequest = chain.request()
@@ -85,7 +87,8 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
     cookieJar.receiveHeaders(networkRequest.url, networkResponse.headers)
 
     val responseBuilder =
-      networkResponse.newBuilder()
+      networkResponse
+        .newBuilder()
         .request(networkRequest)
 
     if (transparentGzip &&
@@ -96,7 +99,8 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
       if (responseBody != null) {
         val gzipSource = GzipSource(responseBody.source())
         val strippedHeaders =
-          networkResponse.headers.newBuilder()
+          networkResponse.headers
+            .newBuilder()
             .removeAll("Content-Encoding")
             .removeAll("Content-Length")
             .build()

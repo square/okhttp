@@ -49,8 +49,8 @@ fun RequestBody.commonIsDuplex(): Boolean = false
 fun RequestBody.commonIsOneShot(): Boolean = false
 
 /** Returns a new request body that transmits this. */
-fun ByteString.commonToRequestBody(contentType: MediaType?): RequestBody {
-  return object : RequestBody() {
+fun ByteString.commonToRequestBody(contentType: MediaType?): RequestBody =
+  object : RequestBody() {
     override fun contentType() = contentType
 
     override fun contentLength() = size.toLong()
@@ -59,4 +59,3 @@ fun ByteString.commonToRequestBody(contentType: MediaType?): RequestBody {
       sink.write(this@commonToRequestBody)
     }
   }
-}

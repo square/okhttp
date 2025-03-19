@@ -41,7 +41,8 @@ class ConnectionSpecTest {
   @Test
   fun noTlsVersions() {
     assertFailsWith<IllegalArgumentException> {
-      ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+      ConnectionSpec
+        .Builder(ConnectionSpec.MODERN_TLS)
         .tlsVersions(*arrayOf<String>())
         .build()
     }.also { expected ->
@@ -53,7 +54,8 @@ class ConnectionSpecTest {
   @Test
   fun noCipherSuites() {
     assertFailsWith<IllegalArgumentException> {
-      ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+      ConnectionSpec
+        .Builder(ConnectionSpec.MODERN_TLS)
         .cipherSuites(*arrayOf<CipherSuite>())
         .build()
     }.also { expected ->
@@ -71,7 +73,8 @@ class ConnectionSpecTest {
   @Test
   fun tlsBuilder_explicitCiphers() {
     val tlsSpec =
-      ConnectionSpec.Builder(true)
+      ConnectionSpec
+        .Builder(true)
         .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(true)
@@ -86,7 +89,8 @@ class ConnectionSpecTest {
   @Test
   fun tlsBuilder_defaultCiphers() {
     val tlsSpec =
-      ConnectionSpec.Builder(true)
+      ConnectionSpec
+        .Builder(true)
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(true)
         .build()
@@ -101,7 +105,8 @@ class ConnectionSpecTest {
     platform.assumeNotConscrypt()
     platform.assumeNotBouncyCastle()
     val tlsSpec =
-      ConnectionSpec.Builder(true)
+      ConnectionSpec
+        .Builder(true)
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(false)
         .build()
@@ -133,7 +138,8 @@ class ConnectionSpecTest {
     platform.assumeNotConscrypt()
     platform.assumeNotBouncyCastle()
     val tlsSpec =
-      ConnectionSpec.Builder(true)
+      ConnectionSpec
+        .Builder(true)
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(false)
         .build()
@@ -168,7 +174,8 @@ class ConnectionSpecTest {
     platform.assumeNotConscrypt()
     platform.assumeNotBouncyCastle()
     val tlsSpec =
-      ConnectionSpec.Builder(true)
+      ConnectionSpec
+        .Builder(true)
         .cipherSuites(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(false)
@@ -202,7 +209,8 @@ class ConnectionSpecTest {
   fun tls_stringCiphersAndVersions() {
     // Supporting arbitrary input strings allows users to enable suites and versions that are not
     // yet known to the library, but are supported by the platform.
-    ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+    ConnectionSpec
+      .Builder(ConnectionSpec.MODERN_TLS)
       .cipherSuites("MAGIC-CIPHER")
       .tlsVersions("TLS9k")
       .build()
@@ -213,7 +221,8 @@ class ConnectionSpecTest {
     platform.assumeNotConscrypt()
     platform.assumeNotBouncyCastle()
     val tlsSpec =
-      ConnectionSpec.Builder(true)
+      ConnectionSpec
+        .Builder(true)
         .cipherSuites(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(false)
@@ -242,7 +251,8 @@ class ConnectionSpecTest {
     platform.assumeNotConscrypt()
     platform.assumeNotBouncyCastle()
     val tlsSpec =
-      ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+      ConnectionSpec
+        .Builder(ConnectionSpec.MODERN_TLS)
         .allEnabledCipherSuites()
         .build()
     assertThat(tlsSpec.cipherSuites).isNull()
@@ -285,7 +295,8 @@ class ConnectionSpecTest {
   fun allEnabledTlsVersions() {
     platform.assumeNotConscrypt()
     val tlsSpec =
-      ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+      ConnectionSpec
+        .Builder(ConnectionSpec.MODERN_TLS)
         .allEnabledTlsVersions()
         .build()
     assertThat(tlsSpec.tlsVersions).isNull()
@@ -356,7 +367,8 @@ class ConnectionSpecTest {
     platform.assumeNotConscrypt()
     platform.assumeNotBouncyCastle()
     val tlsSpec =
-      ConnectionSpec.Builder(true)
+      ConnectionSpec
+        .Builder(true)
         .cipherSuites(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(false)
@@ -379,11 +391,13 @@ class ConnectionSpecTest {
   @Test
   fun equalsAndHashCode() {
     val allCipherSuites =
-      ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+      ConnectionSpec
+        .Builder(ConnectionSpec.MODERN_TLS)
         .allEnabledCipherSuites()
         .build()
     val allTlsVersions =
-      ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+      ConnectionSpec
+        .Builder(ConnectionSpec.MODERN_TLS)
         .allEnabledTlsVersions()
         .build()
     val set: MutableSet<Any> = CopyOnWriteArraySet()
@@ -408,7 +422,8 @@ class ConnectionSpecTest {
   @Test
   fun allEnabledToString() {
     val connectionSpec =
-      ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+      ConnectionSpec
+        .Builder(ConnectionSpec.MODERN_TLS)
         .allEnabledTlsVersions()
         .allEnabledCipherSuites()
         .build()
@@ -421,7 +436,8 @@ class ConnectionSpecTest {
   @Test
   fun simpleToString() {
     val connectionSpec =
-      ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+      ConnectionSpec
+        .Builder(ConnectionSpec.MODERN_TLS)
         .tlsVersions(TlsVersion.TLS_1_2)
         .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
         .build()

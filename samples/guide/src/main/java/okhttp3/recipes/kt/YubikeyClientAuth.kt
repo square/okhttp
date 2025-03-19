@@ -79,13 +79,15 @@ class YubikeyClientAuth {
     sslContext.init(arrayOf(keyManager), arrayOf(trustManager), SecureRandom())
 
     val client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .sslSocketFactory(sslContext.socketFactory, trustManager)
         .build()
 
     // An example test URL that returns client certificate details.
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://prod.idrix.eu/secure/")
         .build()
 
@@ -107,7 +109,11 @@ object ConsoleCallbackHandler : CallbackHandler {
           callback.password = console.readPassword(callback.prompt)
         } else {
           System.err.println(callback.prompt)
-          callback.password = System.`in`.bufferedReader().readLine().toCharArray()
+          callback.password =
+            System.`in`
+              .bufferedReader()
+              .readLine()
+              .toCharArray()
         }
       } else {
         throw UnsupportedCallbackException(callback)

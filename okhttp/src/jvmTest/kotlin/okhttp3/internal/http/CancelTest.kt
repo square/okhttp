@@ -124,7 +124,8 @@ class CancelTest {
     server.start()
 
     client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .socketFactory(
           object : DelegatingSocketFactory(SocketFactory.getDefault()) {
             @Throws(IOException::class)
@@ -134,18 +135,15 @@ class CancelTest {
               return socket
             }
           },
-        )
-        .sslSocketFactory(
+        ).sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .eventListener(listener)
+        ).eventListener(listener)
         .apply {
           if (connectionType == HTTPS) {
             protocols(listOf(HTTP_1_1))
           }
-        }
-        .build()
+        }.build()
     threadToCancel = Thread.currentThread()
   }
 
@@ -160,9 +158,7 @@ class CancelTest {
           url = server.url("/"),
           body =
             object : RequestBody() {
-              override fun contentType(): MediaType? {
-                return null
-              }
+              override fun contentType(): MediaType? = null
 
               @Throws(
                 IOException::class,
@@ -192,12 +188,12 @@ class CancelTest {
     setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           Buffer()
             .write(ByteArray(responseBodySize)),
-        )
-        .throttleBody(64 * 1024, 125, MILLISECONDS) // 500 Kbps
+        ).throttleBody(64 * 1024, 125, MILLISECONDS) // 500 Kbps
         .build(),
     )
     val call = client.newCall(Request(server.url("/")))
@@ -221,12 +217,12 @@ class CancelTest {
     setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           Buffer()
             .write(ByteArray(responseBodySize)),
-        )
-        .throttleBody(64 * 1024, 125, MILLISECONDS) // 500 Kbps
+        ).throttleBody(64 * 1024, 125, MILLISECONDS) // 500 Kbps
         .build(),
     )
     server.enqueue(MockResponse(body = "."))

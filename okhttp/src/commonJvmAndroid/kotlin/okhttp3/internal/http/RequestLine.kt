@@ -48,9 +48,7 @@ object RequestLine {
   private fun includeAuthorityInRequestLine(
     request: Request,
     proxyType: Proxy.Type,
-  ): Boolean {
-    return !request.isHttps && proxyType == Proxy.Type.HTTP
-  }
+  ): Boolean = !request.isHttps && proxyType == Proxy.Type.HTTP
 
   /**
    * Returns the path to request, like the '/' in 'GET / HTTP/1.1'. Never empty, even if the request

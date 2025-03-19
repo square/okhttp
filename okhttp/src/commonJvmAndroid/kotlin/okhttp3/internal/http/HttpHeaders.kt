@@ -248,6 +248,4 @@ fun Response.promisesBody(): Boolean {
   level = DeprecationLevel.ERROR,
   replaceWith = ReplaceWith(expression = "response.promisesBody()"),
 )
-fun hasBody(response: Response): Boolean {
-  return response.promisesBody()
-}
+fun hasBody(response: Response): Boolean = response.promisesBody()

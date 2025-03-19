@@ -133,22 +133,19 @@ object WebSocketProtocol {
     } while (cursor.next() != -1)
   }
 
-  fun closeCodeExceptionMessage(code: Int): String? {
-    return if (code < 1000 || code >= 5000) {
+  fun closeCodeExceptionMessage(code: Int): String? =
+    if (code < 1000 || code >= 5000) {
       "Code must be in range [1000,5000): $code"
     } else if (code in 1004..1006 || code in 1015..2999) {
       "Code $code is reserved and may not be used."
     } else {
       null
     }
-  }
 
   fun validateCloseCode(code: Int) {
     val message = closeCodeExceptionMessage(code)
     require(message == null) { message!! }
   }
 
-  fun acceptHeader(key: String): String {
-    return (key + ACCEPT_MAGIC).encodeUtf8().sha1().base64()
-  }
+  fun acceptHeader(key: String): String = (key + ACCEPT_MAGIC).encodeUtf8().sha1().base64()
 }

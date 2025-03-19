@@ -29,13 +29,15 @@ class HeadersJvmTest {
   @Test fun byteCount() {
     assertThat(EMPTY_HEADERS.byteCount()).isEqualTo(0L)
     assertThat(
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("abc", "def")
         .build()
         .byteCount(),
     ).isEqualTo(10L)
     assertThat(
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("abc", "def")
         .add("ghi", "jkl")
         .build()
@@ -46,7 +48,8 @@ class HeadersJvmTest {
   @Test fun addDate() {
     val expected = Date(0L)
     val headers =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("testDate", expected)
         .build()
     assertThat(headers["testDate"]).isEqualTo("Thu, 01 Jan 1970 00:00:00 GMT")
@@ -56,7 +59,8 @@ class HeadersJvmTest {
   @Test fun addInstant() {
     val expected = Instant.ofEpochMilli(0L)
     val headers =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("Test-Instant", expected)
         .build()
     assertThat(headers["Test-Instant"]).isEqualTo("Thu, 01 Jan 1970 00:00:00 GMT")
@@ -66,7 +70,8 @@ class HeadersJvmTest {
   @Test fun setDate() {
     val expected = Date(1000)
     val headers =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("testDate", Date(0L))
         .set("testDate", expected)
         .build()
@@ -77,7 +82,8 @@ class HeadersJvmTest {
   @Test fun setInstant() {
     val expected = Instant.ofEpochMilli(1000L)
     val headers =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("Test-Instant", Instant.ofEpochMilli(0L))
         .set("Test-Instant", expected)
         .build()
@@ -87,7 +93,8 @@ class HeadersJvmTest {
 
   @Test fun addParsing() {
     val headers =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("foo: bar")
         .add(" foo: baz") // Name leading whitespace is trimmed.
         .add("foo : bak") // Name trailing whitespace is trimmed.
@@ -124,7 +131,8 @@ class HeadersJvmTest {
 
   @Test fun addUnsafeNonAsciiRejectsUnicodeName() {
     assertFailsWith<IllegalArgumentException> {
-      Headers.Builder()
+      Headers
+        .Builder()
         .addUnsafeNonAscii("héader1", "value1")
         .build()
     }.also { expected ->
@@ -134,7 +142,8 @@ class HeadersJvmTest {
 
   @Test fun addUnsafeNonAsciiAcceptsUnicodeValue() {
     val headers =
-      Headers.Builder()
+      Headers
+        .Builder()
         .addUnsafeNonAscii("header1", "valué1")
         .build()
     assertThat(headers.toString()).isEqualTo("header1: valué1\n")

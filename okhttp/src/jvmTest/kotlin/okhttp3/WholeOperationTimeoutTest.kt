@@ -57,7 +57,8 @@ class WholeOperationTimeoutTest {
   @Test
   fun defaultConfigIsNoTimeout() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val call = client.newCall(request)
@@ -67,11 +68,13 @@ class WholeOperationTimeoutTest {
   @Test
   fun configureClientDefault() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val timeoutClient =
-      client.newBuilder()
+      client
+        .newBuilder()
         .callTimeout(Duration.ofMillis(456))
         .build()
     val call = timeoutClient.newCall(request)
@@ -83,7 +86,8 @@ class WholeOperationTimeoutTest {
   fun timeoutWritingRequest() {
     server.enqueue(MockResponse())
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .post(sleepingRequestBody(500))
         .build()
@@ -101,7 +105,8 @@ class WholeOperationTimeoutTest {
   fun timeoutWritingRequestWithEnqueue() {
     server.enqueue(MockResponse())
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .post(sleepingRequestBody(500))
         .build()
@@ -137,12 +142,14 @@ class WholeOperationTimeoutTest {
   @Test
   fun timeoutProcessing() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .headersDelay(500, TimeUnit.MILLISECONDS)
         .build(),
     )
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val call = client.newCall(request)
@@ -158,12 +165,14 @@ class WholeOperationTimeoutTest {
   @Test
   fun timeoutProcessingWithEnqueue() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .headersDelay(500, TimeUnit.MILLISECONDS)
         .build(),
     )
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val latch = CountDownLatch(1)
@@ -198,12 +207,14 @@ class WholeOperationTimeoutTest {
   @Test
   fun timeoutReadingResponse() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(BIG_ENOUGH_BODY)
         .build(),
     )
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val call = client.newCall(request)
@@ -221,12 +232,14 @@ class WholeOperationTimeoutTest {
   @Test
   fun timeoutReadingResponseWithEnqueue() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(BIG_ENOUGH_BODY)
         .build(),
     )
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val latch = CountDownLatch(1)
@@ -269,35 +282,40 @@ class WholeOperationTimeoutTest {
   @Test
   fun singleTimeoutForAllFollowUpRequests() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/b")
         .headersDelay(100, TimeUnit.MILLISECONDS)
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/c")
         .headersDelay(100, TimeUnit.MILLISECONDS)
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/d")
         .headersDelay(100, TimeUnit.MILLISECONDS)
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/e")
         .headersDelay(100, TimeUnit.MILLISECONDS)
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/f")
         .headersDelay(100, TimeUnit.MILLISECONDS)
@@ -305,7 +323,8 @@ class WholeOperationTimeoutTest {
     )
     server.enqueue(MockResponse())
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/a"))
         .build()
     val call = client.newCall(request)
@@ -322,13 +341,15 @@ class WholeOperationTimeoutTest {
   fun timeoutFollowingRedirectOnNewConnection() {
     val otherServer = MockWebServer()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", otherServer.url("/"))
         .build(),
     )
     otherServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .headersDelay(500, TimeUnit.MILLISECONDS)
         .build(),
     )
@@ -348,13 +369,15 @@ class WholeOperationTimeoutTest {
   fun noTimeout() {
     // Flaky https://github.com/square/okhttp/issues/5304
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .headersDelay(250, TimeUnit.MILLISECONDS)
         .body(BIG_ENOUGH_BODY)
         .build(),
     )
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .post(sleepingRequestBody(250))
         .build()
@@ -367,11 +390,9 @@ class WholeOperationTimeoutTest {
     assertThat(call.isCanceled()).isFalse()
   }
 
-  private fun sleepingRequestBody(sleepMillis: Int): RequestBody {
-    return object : RequestBody() {
-      override fun contentType(): MediaType? {
-        return "text/plain".toMediaTypeOrNull()
-      }
+  private fun sleepingRequestBody(sleepMillis: Int): RequestBody =
+    object : RequestBody() {
+      override fun contentType(): MediaType? = "text/plain".toMediaTypeOrNull()
 
       @Throws(IOException::class)
       override fun writeTo(sink: BufferedSink) {
@@ -385,7 +406,6 @@ class WholeOperationTimeoutTest {
         }
       }
     }
-  }
 
   companion object {
     /** A large response body. Smaller bodies might successfully read after the socket is closed!  */
