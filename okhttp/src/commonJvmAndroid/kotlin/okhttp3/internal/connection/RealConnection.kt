@@ -324,7 +324,9 @@ class RealConnection(
 
     val nowNs = System.nanoTime()
 
-    if (rawSocket.isClosed || socket.isClosed || socket.isInputShutdown ||
+    if (rawSocket.isClosed ||
+      socket.isClosed ||
+      socket.isInputShutdown ||
       socket.isOutputShutdown
     ) {
       return false
