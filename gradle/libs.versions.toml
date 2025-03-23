@@ -6,6 +6,7 @@ com-squareup-moshi = "1.15.2"
 com-squareup-okio = "3.10.2"
 de-mannodermaus-junit5 = "1.7.0"
 graalvm = "24.1.1"
+junitPlatformLauncher = "1.12.1"
 kotlinx-serialization = "1.8.0"
 ksp = "2.1.0-1.0.29"
 lintGradle = "1.0.0-alpha03"
@@ -70,6 +71,7 @@ junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.re
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "org-junit-jupiter" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "org-junit-jupiter" }
 junit-platform-console = "org.junit.platform:junit-platform-console:1.12.1"
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junitPlatformLauncher" }
 junit-vintage-engine = "org.junit.vintage:junit-vintage-engine:5.12.1"
 junit-pioneer = "org.junit-pioneer:junit-pioneer:1.9.1"
 junit5android-core = { module = "de.mannodermaus.junit5:android-test-core", version.ref = "de-mannodermaus-junit5" }
