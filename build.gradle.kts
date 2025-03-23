@@ -194,8 +194,10 @@ subprojects {
   if (project.name != "okhttp") {
     val testRuntimeOnly: Configuration by configurations.getting
     dependencies {
+      // https://junit.org/junit5/docs/current/user-guide/#running-tests-build-gradle-bom
       testRuntimeOnly(rootProject.libs.junit.jupiter.engine)
       testRuntimeOnly(rootProject.libs.junit.vintage.engine)
+      testRuntimeOnly(rootProject.libs.junit.platform.launcher)
     }
   }
 
