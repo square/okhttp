@@ -14,7 +14,7 @@ org-bouncycastle = "1.80"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.10.1"
 org-jetbrains-kotlin = "2.1.10"
-org-junit-jupiter = "5.11.4"
+org-junit-jupiter = "5.12.1"
 retrofit = "2.11.0"
 startupRuntime = "1.2.0"
 testcontainers = "1.20.6"
@@ -69,8 +69,8 @@ junit-ktx = "androidx.test.ext:junit-ktx:1.2.1"
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "org-junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "org-junit-jupiter" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "org-junit-jupiter" }
-junit-platform-console = "org.junit.platform:junit-platform-console:1.11.4"
-junit-vintage-engine = "org.junit.vintage:junit-vintage-engine:5.11.4"
+junit-platform-console = "org.junit.platform:junit-platform-console:1.12.1"
+junit-vintage-engine = "org.junit.vintage:junit-vintage-engine:5.12.1"
 junit-pioneer = "org.junit-pioneer:junit-pioneer:1.9.1"
 junit5android-core = { module = "de.mannodermaus.junit5:android-test-core", version.ref = "de-mannodermaus-junit5" }
 junit5android-runner = { module = "de.mannodermaus.junit5:android-test-runner", version.ref = "de-mannodermaus-junit5" }
