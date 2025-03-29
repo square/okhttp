@@ -224,11 +224,11 @@ class LoggingEventListenerTest {
       .assertLogMatch(Regex("""secureConnectStart"""))
       .assertLogMatch(
         Regex(
-          """connectFailed: null \S+(?:SSLProtocolException|SSLHandshakeException|TlsFatalAlert): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed|unexpected_message\(10\)).*""",
+          """connectFailed: null \S+(?:SSLProtocolException|SSLHandshakeException|TlsFatalAlert): .*(?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed|unexpected_message\(10\)).*""",
         ),
       ).assertLogMatch(
         Regex(
-          """callFailed: \S+(?:SSLProtocolException|SSLHandshakeException|TlsFatalAlert): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed|unexpected_message\(10\)).*""",
+          """callFailed: \S+(?:SSLProtocolException|SSLHandshakeException|TlsFatalAlert): .*(?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed|unexpected_message\(10\)).*""",
         ),
       ).assertNoMoreLogs()
   }
