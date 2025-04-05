@@ -218,13 +218,11 @@ abstract class ResponseBody : Closeable {
     val Empty: ResponseBody = EmptyResponseBody()
 
     private class EmptyResponseBody : ResponseBody() {
-      private val source = Buffer()
-
       override fun contentType() = null
 
       override fun contentLength() = 0L
 
-      override fun source() = source
+      override fun source() = Buffer()
     }
 
     /**
