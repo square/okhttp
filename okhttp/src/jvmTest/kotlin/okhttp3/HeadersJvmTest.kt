@@ -22,12 +22,11 @@ import java.time.Instant
 import java.util.Date
 import kotlin.test.assertFailsWith
 import okhttp3.Headers.Companion.toHeaders
-import okhttp3.internal.EMPTY_HEADERS
 import org.junit.jupiter.api.Test
 
 class HeadersJvmTest {
   @Test fun byteCount() {
-    assertThat(EMPTY_HEADERS.byteCount()).isEqualTo(0L)
+    assertThat(Headers.Empty.byteCount()).isEqualTo(0L)
     assertThat(
       Headers
         .Builder()

@@ -19,11 +19,8 @@ import java.io.File
 import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.io.IOException
+import okhttp3.internal.*
 import okhttp3.internal.chooseCharset
-import okhttp3.internal.commonContentLength
-import okhttp3.internal.commonIsDuplex
-import okhttp3.internal.commonIsOneShot
-import okhttp3.internal.commonToRequestBody
 import okio.BufferedSink
 import okio.ByteString
 import okio.FileSystem
@@ -101,6 +98,18 @@ abstract class RequestBody {
   open fun isOneShot(): Boolean = commonIsOneShot()
 
   companion object {
+    /** Empty request body. */
+    @JvmField
+    val Empty: RequestBody = EmptyRequestBody()
+
+    private class EmptyRequestBody : RequestBody() {
+      override fun contentType() = null
+
+      override fun contentLength() = 0L
+
+      override fun writeTo(sink: BufferedSink) { /** write nothing */ }
+    }
+
     /**
      * Returns a new request body that transmits this string. If [contentType] is non-null and lacks
      * a charset, this will use UTF-8.

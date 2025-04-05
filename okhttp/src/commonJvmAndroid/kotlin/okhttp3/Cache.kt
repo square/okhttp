@@ -26,7 +26,6 @@ import java.security.cert.CertificateFactory
 import java.util.TreeSet
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.cache.CacheRequest
 import okhttp3.internal.cache.CacheStrategy
 import okhttp3.internal.cache.DiskLruCache
@@ -823,7 +822,7 @@ class Cache internal constructor(
       responseHeaders: Headers,
     ): Headers {
       val varyFields = responseHeaders.varyFields()
-      if (varyFields.isEmpty()) return EMPTY_HEADERS
+      if (varyFields.isEmpty()) return Headers.Empty
 
       val result = Headers.Builder()
       for (i in 0 until requestHeaders.size) {

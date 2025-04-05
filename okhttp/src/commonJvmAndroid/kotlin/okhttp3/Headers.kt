@@ -322,6 +322,10 @@ class Headers internal constructor(
   }
 
   companion object {
+    /** Empty headers. */
+    @JvmField
+    val Empty = Headers(emptyArray())
+
     /**
      * Returns headers for the alternating header names and values. There must be an even number of
      * arguments, and they must alternate between header names and values.

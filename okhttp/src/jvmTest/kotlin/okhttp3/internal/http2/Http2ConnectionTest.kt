@@ -31,11 +31,11 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertFailsWith
+import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.TestUtil.headerEntries
 import okhttp3.TestUtil.repeat
 import okhttp3.internal.EMPTY_BYTE_ARRAY
-import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.Locks.withLock
@@ -557,7 +557,7 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries("a", "artichaut"), false)
     connection.writePingAndAwaitPong()
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("headers", "bam"))
-    assertThat(stream.trailers()).isEqualTo(EMPTY_HEADERS)
+    assertThat(stream.trailers()).isEqualTo(Headers.Empty)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
@@ -808,7 +808,7 @@ class Http2ConnectionTest {
     connection.writePingAndAwaitPong()
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("headers", "bam"))
     assertThat(source.readUtf8(5)).isEqualTo("robot")
-    assertThat(stream.trailers()).isEqualTo(EMPTY_HEADERS)
+    assertThat(stream.trailers()).isEqualTo(Headers.Empty)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
