@@ -251,7 +251,7 @@ internal inline fun <reified T> List<T>.toImmutableList(): List<T> = toTypedArra
 
 /** Returns an immutable list containing [elements]. */
 @SafeVarargs
-internal fun <T> immutableListOf(vararg elements: T): List<T> = elements.copyOf().asList()
+internal fun <T> immutableListOf(vararg elements: T): List<T> = elements.asList()
 
 /** Returns an immutable list from copy of this. */
 internal fun <T> Array<out T>?.toImmutableList(): List<T> = this?.copyOf()?.asList() ?: emptyList()
