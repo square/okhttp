@@ -22,8 +22,8 @@ import java.net.Socket
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
+import okhttp3.Headers
 import okhttp3.internal.EMPTY_BYTE_ARRAY
-import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
@@ -674,7 +674,7 @@ class Http2Connection internal constructor(
       }
       dataStream.receiveData(source, length)
       if (inFinished) {
-        dataStream.receiveHeaders(EMPTY_HEADERS, true)
+        dataStream.receiveHeaders(Headers.Empty, true)
       }
     }
 

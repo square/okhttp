@@ -40,22 +40,11 @@ import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.defaultPort
 import okhttp3.OkHttpClient
-import okhttp3.RequestBody
 import okhttp3.Response
-import okhttp3.ResponseBody
 import okhttp3.internal.http2.Header
 import okio.Buffer
 import okio.BufferedSource
 import okio.Source
-
-@JvmField
-internal val EMPTY_HEADERS: Headers = commonEmptyHeaders
-
-@JvmField
-internal val EMPTY_REQUEST: RequestBody = commonEmptyRequestBody
-
-@JvmField
-internal val EMPTY_RESPONSE: ResponseBody = commonEmptyResponse
 
 /** GMT and UTC are equivalent for our purposes. */
 @JvmField

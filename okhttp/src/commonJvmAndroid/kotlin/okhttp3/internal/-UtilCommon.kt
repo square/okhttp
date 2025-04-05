@@ -17,11 +17,6 @@
 
 package okhttp3.internal
 
-import okhttp3.Headers
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.ResponseBody
-import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.ArrayIndexOutOfBoundsException
 import okio.Buffer
 import okio.BufferedSink
@@ -393,10 +388,6 @@ internal fun checkOffsetAndCount(
     throw ArrayIndexOutOfBoundsException("length=$arrayLength, offset=$offset, count=$offset")
   }
 }
-
-val commonEmptyHeaders: Headers = Headers.headersOf()
-val commonEmptyRequestBody: RequestBody = EMPTY_BYTE_ARRAY.toRequestBody()
-val commonEmptyResponse: ResponseBody = EMPTY_BYTE_ARRAY.toResponseBody()
 
 internal fun <T> interleave(
   a: Iterable<T>,

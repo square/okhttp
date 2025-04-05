@@ -76,7 +76,6 @@ import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.TestUtil.repeat
 import okhttp3.TestUtil.threadFactory
 import okhttp3.internal.DoubleInetAddressDns
-import okhttp3.internal.EMPTY_REQUEST
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.discard
@@ -1623,7 +1622,7 @@ class HttpOverHttp2Test {
         Request
           .Builder()
           .url(server.url("/"))
-          .method("DELETE", EMPTY_REQUEST)
+          .method("DELETE", RequestBody.Empty)
           .build(),
       )
     val response = call.execute()

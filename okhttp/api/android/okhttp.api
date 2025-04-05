@@ -624,6 +624,7 @@ public final class okhttp3/Handshake$Companion {
 
 public final class okhttp3/Headers : java/lang/Iterable, kotlin/jvm/internal/markers/KMappedMarker {
 	public static final field Companion Lokhttp3/Headers$Companion;
+	public static final field Empty Lokhttp3/Headers;
 	public final fun -deprecated_size ()I
 	public final fun byteCount ()J
 	public fun equals (Ljava/lang/Object;)Z
@@ -1088,6 +1089,7 @@ public class okhttp3/Request$Builder {
 
 public abstract class okhttp3/RequestBody {
 	public static final field Companion Lokhttp3/RequestBody$Companion;
+	public static final field Empty Lokhttp3/RequestBody;
 	public fun <init> ()V
 	public fun contentLength ()J
 	public abstract fun contentType ()Lokhttp3/MediaType;
@@ -1202,6 +1204,7 @@ public class okhttp3/Response$Builder {
 
 public abstract class okhttp3/ResponseBody : java/io/Closeable {
 	public static final field Companion Lokhttp3/ResponseBody$Companion;
+	public static final field Empty Lokhttp3/ResponseBody;
 	public fun <init> ()V
 	public final fun byteStream ()Ljava/io/InputStream;
 	public final fun byteString ()Lokio/ByteString;
