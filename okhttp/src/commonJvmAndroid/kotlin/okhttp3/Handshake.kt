@@ -21,7 +21,6 @@ import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSession
-import okhttp3.internal.immutableListOf
 import okhttp3.internal.toImmutableList
 
 /**
@@ -154,6 +153,7 @@ class Handshake internal constructor(
           "TLS_NULL_WITH_NULL_NULL", "SSL_NULL_WITH_NULL_NULL" -> {
             throw IOException("cipherSuite == $cipherSuiteString")
           }
+
           else -> CipherSuite.forJavaName(cipherSuiteString)
         }
 
@@ -174,13 +174,6 @@ class Handshake internal constructor(
         localCertificates.toImmutableList(),
       ) { peerCertificatesCopy }
     }
-
-    private fun Array<out Certificate>?.toImmutableList(): List<Certificate> =
-      if (this != null) {
-        immutableListOf(*this)
-      } else {
-        emptyList()
-      }
 
     @Throws(IOException::class)
     @JvmName("-deprecated_get")
