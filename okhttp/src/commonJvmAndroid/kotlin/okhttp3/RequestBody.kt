@@ -19,8 +19,11 @@ import java.io.File
 import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.io.IOException
-import okhttp3.internal.*
 import okhttp3.internal.chooseCharset
+import okhttp3.internal.commonContentLength
+import okhttp3.internal.commonIsDuplex
+import okhttp3.internal.commonIsOneShot
+import okhttp3.internal.commonToRequestBody
 import okio.BufferedSink
 import okio.ByteString
 import okio.FileSystem
@@ -107,7 +110,7 @@ abstract class RequestBody {
 
       override fun contentLength() = 0L
 
-      override fun writeTo(sink: BufferedSink) { /** write nothing */ }
+      override fun writeTo(sink: BufferedSink) {}
     }
 
     /**
