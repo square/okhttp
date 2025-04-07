@@ -24,6 +24,7 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketTimeoutException
 import java.nio.charset.Charset
+import java.util.Collections
 import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.ThreadFactory
@@ -233,17 +234,17 @@ internal inline fun threadName(
 }
 
 /** Returns the Content-Length as reported by the response headers. */
-internal fun Response.headersContentLength(): Long = headers["Content-Length"]?.toLongOrDefault(-1L) ?: -1L
+internal fun Response.headersContentLength(): Long = headers["Content-Length"]?.toLongOrNull() ?: -1L
 
 /** Returns an immutable copy of this. */
-internal inline fun <reified T> List<T>.toImmutableList(): List<T> = toTypedArray().asList()
+internal inline fun <reified T> List<T>.toImmutableList(): List<T> = Collections.unmodifiableList(toTypedArray().asList())
 
 /** Returns an immutable list containing [elements]. */
 @SafeVarargs
-internal fun <T> immutableListOf(vararg elements: T): List<T> = elements.asList()
+internal fun <T> immutableListOf(vararg elements: T): List<T> = Collections.unmodifiableList(elements.asList())
 
 /** Returns an immutable list from copy of this. */
-internal fun <T> Array<out T>?.toImmutableList(): List<T> = this?.copyOf()?.asList() ?: emptyList()
+internal fun <T> Array<out T>?.toImmutableList(): List<T> = this?.let { Collections.unmodifiableList(it.copyOf().asList()) } ?: emptyList()
 
 /** Closes this, ignoring any checked exceptions. */
 internal fun Socket.closeQuietly() {
