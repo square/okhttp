@@ -33,7 +33,6 @@ dependencies {
   api(projects.loggingInterceptor)
   api(libs.squareup.okio)
   implementation(libs.clikt)
-  api(libs.guava.jre)
 
   testImplementation(projects.okhttpTestingSupport)
   testApi(libs.assertk)
