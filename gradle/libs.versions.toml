@@ -3,7 +3,7 @@
 biz-aQute-bnd = "6.4.0"
 checkStyle = "10.23.0"
 com-squareup-moshi = "1.15.2"
-com-squareup-okio = "3.10.2"
+com-squareup-okio = "3.11.0"
 de-mannodermaus-junit5 = "1.7.0"
 graalvm = "24.1.1"
 junit-platform = "1.12.1"
