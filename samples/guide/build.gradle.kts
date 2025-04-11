@@ -1,6 +1,6 @@
 plugins {
   kotlin("jvm")
-  kotlin("kapt")
+  id("com.google.devtools.ksp").version(libs.versions.ksp)
 }
 
 dependencies {
@@ -11,7 +11,7 @@ dependencies {
   implementation(libs.animalsniffer.annotations)
   implementation(libs.squareup.moshi)
   implementation(libs.squareup.okio.fakefilesystem)
-  kapt(libs.squareup.moshi.compiler)
+  ksp(libs.squareup.moshi.compiler)
 }
 
 java {
