@@ -80,7 +80,7 @@ internal class RealEventSource(
           while (!canceled && reader.processNextEvent()) {
           }
         }
-      } catch (e: Exception) {
+      } catch (e: Throwable) {
         val exception =
           when {
             canceled -> IOException("canceled", e)
