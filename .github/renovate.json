@@ -5,6 +5,7 @@
     ":dependencyDashboard",
     "schedule:daily"
   ],
+  "semanticCommits": "disabled",
   "labels": [
     "renovate"
   ],
