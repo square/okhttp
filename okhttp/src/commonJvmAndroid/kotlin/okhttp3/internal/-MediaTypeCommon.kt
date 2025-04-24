@@ -45,7 +45,8 @@ private val PARAMETER = Regex(";\\s*(?:$TOKEN=(?:$TOKEN|$QUOTED))?")
  * @throws IllegalArgumentException if this is not a well-formed media type.
  */
 internal fun String.commonToMediaType(): MediaType {
-  val typeSubtype = TYPE_SUBTYPE.matchAt(this, 0)
+  val typeSubtype =
+    TYPE_SUBTYPE.matchAt(this, 0)
       ?: throw IllegalArgumentException("No subtype found for: \"$this\"")
   val type = typeSubtype.groupValues[1].lowercase()
   val subtype = typeSubtype.groupValues[2].lowercase()
