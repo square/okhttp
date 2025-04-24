@@ -24,13 +24,13 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.internal.http.HttpMethod
 
-fun Request.commonHeader(name: String): String? = headers[name]
+internal fun Request.commonHeader(name: String): String? = headers[name]
 
-fun Request.commonHeaders(name: String): List<String> = headers.values(name)
+internal fun Request.commonHeaders(name: String): List<String> = headers.values(name)
 
-fun Request.commonNewBuilder(): Request.Builder = Request.Builder(this)
+internal fun Request.commonNewBuilder(): Request.Builder = Request.Builder(this)
 
-fun Request.commonCacheControl(): CacheControl {
+internal fun Request.commonCacheControl(): CacheControl {
   var result = lazyCacheControl
   if (result == null) {
     result = CacheControl.parse(headers)
@@ -52,31 +52,31 @@ internal fun canonicalUrl(url: String): String {
   }
 }
 
-fun Request.Builder.commonHeader(
+internal fun Request.Builder.commonHeader(
   name: String,
   value: String,
 ) = apply {
   headers[name] = value
 }
 
-fun Request.Builder.commonAddHeader(
+internal fun Request.Builder.commonAddHeader(
   name: String,
   value: String,
 ) = apply {
   headers.add(name, value)
 }
 
-fun Request.Builder.commonRemoveHeader(name: String) =
+internal fun Request.Builder.commonRemoveHeader(name: String) =
   apply {
     headers.removeAll(name)
   }
 
-fun Request.Builder.commonHeaders(headers: Headers) =
+internal fun Request.Builder.commonHeaders(headers: Headers) =
   apply {
     this.headers = headers.newBuilder()
   }
 
-fun Request.Builder.commonCacheControl(cacheControl: CacheControl): Request.Builder {
+internal fun Request.Builder.commonCacheControl(cacheControl: CacheControl): Request.Builder {
   val value = cacheControl.toString()
   return when {
     value.isEmpty() -> removeHeader("Cache-Control")
@@ -84,19 +84,19 @@ fun Request.Builder.commonCacheControl(cacheControl: CacheControl): Request.Buil
   }
 }
 
-fun Request.Builder.commonGet(): Request.Builder = method("GET", null)
+internal fun Request.Builder.commonGet(): Request.Builder = method("GET", null)
 
-fun Request.Builder.commonHead(): Request.Builder = method("HEAD", null)
+internal fun Request.Builder.commonHead(): Request.Builder = method("HEAD", null)
 
-fun Request.Builder.commonPost(body: RequestBody): Request.Builder = method("POST", body)
+internal fun Request.Builder.commonPost(body: RequestBody): Request.Builder = method("POST", body)
 
-fun Request.Builder.commonDelete(body: RequestBody?): Request.Builder = method("DELETE", body)
+internal fun Request.Builder.commonDelete(body: RequestBody?): Request.Builder = method("DELETE", body)
 
-fun Request.Builder.commonPut(body: RequestBody): Request.Builder = method("PUT", body)
+internal fun Request.Builder.commonPut(body: RequestBody): Request.Builder = method("PUT", body)
 
-fun Request.Builder.commonPatch(body: RequestBody): Request.Builder = method("PATCH", body)
+internal fun Request.Builder.commonPatch(body: RequestBody): Request.Builder = method("PATCH", body)
 
-fun Request.Builder.commonMethod(
+internal fun Request.Builder.commonMethod(
   method: String,
   body: RequestBody?,
 ): Request.Builder =
@@ -117,7 +117,7 @@ fun Request.Builder.commonMethod(
     this.body = body
   }
 
-fun <T : Any> Request.Builder.commonTag(
+internal fun <T : Any> Request.Builder.commonTag(
   type: KClass<T>,
   tag: T?,
 ) = apply {
@@ -135,8 +135,8 @@ fun <T : Any> Request.Builder.commonTag(
   }
 }
 
-fun Request.commonToString(): String =
-  buildString {
+internal fun Request.commonToString(): String =
+  buildString(32) {
     append("Request{method=")
     append(method)
     append(", url=")
