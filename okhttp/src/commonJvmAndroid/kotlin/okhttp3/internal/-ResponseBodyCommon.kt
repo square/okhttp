@@ -47,6 +47,7 @@ internal inline fun <T : Any> ResponseBody.commonConsumeSource(
   return bytes
 }
 
+@Throws(IOException::class)
 internal fun ResponseBody.commonClose() = source().closeQuietly()
 
 internal fun ByteArray.commonToResponseBody(contentType: MediaType?): ResponseBody =

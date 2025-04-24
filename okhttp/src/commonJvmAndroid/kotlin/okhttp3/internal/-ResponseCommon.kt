@@ -113,6 +113,7 @@ internal val Response.commonCacheControl: CacheControl
     return result
   }
 
+@Throws(IOException::class)
 internal fun Response.commonClose() {
   body.close()
 }

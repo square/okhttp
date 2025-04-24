@@ -308,6 +308,7 @@ class Response internal constructor(
    * Prior to OkHttp 5.0, it was an error to close a response that is not eligible for a body. This
    * includes the responses returned from [cacheResponse], [networkResponse], and [priorResponse].
    */
+  @Throws(IOException::class)
   override fun close() = commonClose()
 
   override fun toString(): String = commonToString()

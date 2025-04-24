@@ -178,6 +178,7 @@ abstract class ResponseBody : Closeable {
 
   private fun charset() = contentType().charsetOrUtf8()
 
+  @Throws(IOException::class)
   override fun close() = commonClose()
 
   internal class BomAwareReader(
