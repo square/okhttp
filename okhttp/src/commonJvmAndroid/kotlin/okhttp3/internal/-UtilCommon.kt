@@ -41,7 +41,7 @@ internal fun Regex.matchAtPolyfill(
 }
 
 @JvmField
-val EMPTY_BYTE_ARRAY: ByteArray = ByteArray(0)
+internal val EMPTY_BYTE_ARRAY: ByteArray = ByteArray(0)
 
 /** Byte order marks. */
 internal val UNICODE_BOMS =
