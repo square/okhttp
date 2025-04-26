@@ -16,7 +16,6 @@
 package okhttp3
 
 import java.util.ArrayDeque
-import java.util.Collections
 import java.util.Deque
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.SynchronousQueue
@@ -29,6 +28,7 @@ import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealCall.AsyncCall
 import okhttp3.internal.okHttpName
 import okhttp3.internal.threadFactory
+import okhttp3.internal.unmodifiable
 
 /**
  * Policy on when async requests are executed.
@@ -259,13 +259,13 @@ class Dispatcher() {
   /** Returns a snapshot of the calls currently awaiting execution. */
   fun queuedCalls(): List<Call> =
     this.withLock {
-      return Collections.unmodifiableList(readyAsyncCalls.map { it.call })
+      return readyAsyncCalls.map { it.call }.unmodifiable()
     }
 
   /** Returns a snapshot of the calls currently being executed. */
   fun runningCalls(): List<Call> =
     this.withLock {
-      return Collections.unmodifiableList(runningSyncCalls + runningAsyncCalls.map { it.call })
+      return (runningSyncCalls + runningAsyncCalls.map { it.call }).unmodifiable()
     }
 
   fun queuedCallsCount(): Int = this.withLock { readyAsyncCalls.size }

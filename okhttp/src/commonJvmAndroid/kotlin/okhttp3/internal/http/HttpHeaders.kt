@@ -101,7 +101,7 @@ private fun Buffer.readChallengeHeader(result: MutableList<Challenge>) {
       result.add(
         Challenge(
           schemeName,
-          Collections.singletonMap<String, String>(null, peek + "=".repeat(eqCount)),
+          Collections.singletonMap<String?, String>(null, peek + "=".repeat(eqCount)),
         ),
       )
       peek = null
