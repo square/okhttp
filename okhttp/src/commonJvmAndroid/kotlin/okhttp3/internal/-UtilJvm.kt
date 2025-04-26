@@ -256,8 +256,7 @@ internal inline fun <reified T> List<T>.toImmutableList(): List<T> = this.toType
 internal fun <T> immutableListOf(vararg elements: T): List<T> = elements.toImmutableList()
 
 /** Returns an immutable list from copy of this. */
-internal fun <T> Array<out T>?.toImmutableList(): List<T> =
-  if (this.isNullOrEmpty()) emptyList() else this.asList().unmodifiable()
+internal fun <T> Array<out T>?.toImmutableList(): List<T> = if (this.isNullOrEmpty()) emptyList() else this.asList().unmodifiable()
 
 /** Closes this, ignoring any checked exceptions. */
 internal fun Socket.closeQuietly() {
