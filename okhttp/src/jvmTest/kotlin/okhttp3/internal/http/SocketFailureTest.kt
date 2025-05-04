@@ -15,10 +15,12 @@
  */
 package okhttp3.internal.http
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import java.net.Socket
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy
 import okhttp3.Call
 import okhttp3.Connection
 import okhttp3.EventListener
@@ -26,6 +28,7 @@ import okhttp3.Headers
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
 import okhttp3.testing.PlatformRule
+import okio.IOException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -72,8 +75,9 @@ class SocketFailureTest {
   @Test
   fun socketFailureOnLargeRequestHeaders() {
     server.enqueue(MockResponse())
-    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DisconnectAtStart))
+    server.enqueue(MockResponse())
     server.start()
+
     val call1 =
       client.newCall(
         Request
@@ -81,9 +85,12 @@ class SocketFailureTest {
           .url(server.url("/"))
           .build(),
       )
-    val response1 = call1.execute().use { response -> response.body.string() }
+    call1.execute().use { response -> response.body.string() }
 
     listener.shouldClose = true
+    // Large headers are a likely reason the servers would cut off the connection before it completes sending
+    // request headers.
+    // 431 "Request Header Fields Too Large"
     val largeHeaders = Headers.Builder()
       .apply {
         repeat(32) {
@@ -99,6 +106,10 @@ class SocketFailureTest {
           .headers(largeHeaders)
           .build(),
       )
-    val response2 = call2.execute().use { response -> response.body.string() }
+
+    val exception = assertFailsWith<IOException> {
+      call2.execute()
+    }
+    assertThat(exception.message).isEqualTo("Socket closed")
   }
 }
