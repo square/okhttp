@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (C) 2025 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,11 +50,14 @@ class SocketFailureTest {
       .eventListener(listener)
       .build()
 
-  class SocketClosingEventListener: EventListener() {
+  class SocketClosingEventListener : EventListener() {
     var shouldClose: Boolean = false
     var lastSocket: Socket? = null
 
-    override fun connectionAcquired(call: Call, connection: Connection) {
+    override fun connectionAcquired(
+      call: Call,
+      connection: Connection,
+    ) {
       lastSocket = connection.socket()
     }
 
@@ -66,9 +69,7 @@ class SocketFailureTest {
   }
 
   @BeforeEach
-  fun setUp(
-    server: MockWebServer,
-  ) {
+  fun setUp(server: MockWebServer) {
     this.server = server
   }
 
@@ -91,13 +92,14 @@ class SocketFailureTest {
     // Large headers are a likely reason the servers would cut off the connection before it completes sending
     // request headers.
     // 431 "Request Header Fields Too Large"
-    val largeHeaders = Headers.Builder()
-      .apply {
-        repeat(32) {
-          add("name-$it", "value-$it-" + "0".repeat(1024))
-        }
-      }
-      .build()
+    val largeHeaders =
+      Headers
+        .Builder()
+        .apply {
+          repeat(32) {
+            add("name-$it", "value-$it-" + "0".repeat(1024))
+          }
+        }.build()
     val call2 =
       client.newCall(
         Request
@@ -107,9 +109,10 @@ class SocketFailureTest {
           .build(),
       )
 
-    val exception = assertFailsWith<IOException> {
-      call2.execute()
-    }
+    val exception =
+      assertFailsWith<IOException> {
+        call2.execute()
+      }
     assertThat(exception.message).isEqualTo("Socket closed")
   }
 }
