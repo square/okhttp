@@ -247,8 +247,8 @@ tasks.named<Jar>("jvmJar").configure {
   }
 }
 
-val androidSignature by configurations.creating
-val jvmSignature by configurations.creating
+val androidSignature by configurations.getting
+val jvmSignature by configurations.getting
 
 val checkstyleConfig: Configuration by configurations.named("checkstyleConfig")
 dependencies {
@@ -269,7 +269,7 @@ configure<AnimalSnifferExtension> {
   defaultTargets("jvmMain", "debug")
 }
 
-tasks.withType<AnimalSniffer> {
+project.tasks.withType<AnimalSniffer> {
   if (targetName == "animalsnifferJvmMain") {
     animalsnifferSignatures = jvmSignature
   } else {
