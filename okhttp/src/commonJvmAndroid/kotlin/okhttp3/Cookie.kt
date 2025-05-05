@@ -16,7 +16,6 @@
 package okhttp3
 
 import java.util.Calendar
-import java.util.Collections
 import java.util.Date
 import java.util.GregorianCalendar
 import java.util.Locale
@@ -30,6 +29,7 @@ import okhttp3.internal.indexOfControlOrNonAscii
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
 import okhttp3.internal.trimSubstring
+import okhttp3.internal.unmodifiable
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 /**
@@ -720,11 +720,7 @@ class Cookie private constructor(
         cookies.add(cookie)
       }
 
-      return if (cookies != null) {
-        Collections.unmodifiableList(cookies)
-      } else {
-        emptyList()
-      }
+      return cookies?.unmodifiable().orEmpty()
     }
   }
 }

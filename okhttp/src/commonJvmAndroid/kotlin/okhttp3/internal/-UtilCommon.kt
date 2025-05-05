@@ -30,18 +30,8 @@ import okio.Options
 import okio.Path
 import okio.use
 
-// TODO: migrate callers to [Regex.matchAt] when that API is not experimental.
-internal fun Regex.matchAtPolyfill(
-  input: CharSequence,
-  index: Int,
-): MatchResult? {
-  val candidate = find(input, index) ?: return null
-  if (candidate.range.first != index) return null // Didn't match where it should have.
-  return candidate
-}
-
 @JvmField
-val EMPTY_BYTE_ARRAY: ByteArray = ByteArray(0)
+internal val EMPTY_BYTE_ARRAY: ByteArray = ByteArray(0)
 
 /** Byte order marks. */
 internal val UNICODE_BOMS =
@@ -407,9 +397,3 @@ internal fun <T> interleave(
     }
   }
 }
-
-// TODO check read only options for creating lists
-public fun <T> List<T>.readOnly() = this.toList()
-
-// TODO check read only options for creating lists
-public fun <T> Set<T>.readOnly() = this.toSet()

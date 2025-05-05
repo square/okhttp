@@ -33,7 +33,7 @@ internal fun Headers.commonValues(name: String): List<String> {
       result.add(value(i))
     }
   }
-  return result?.toList().orEmpty()
+  return result?.unmodifiable().orEmpty()
 }
 
 internal fun Headers.commonIterator(): Iterator<Pair<String, String>> = Array(size) { name(it) to value(it) }.iterator()
