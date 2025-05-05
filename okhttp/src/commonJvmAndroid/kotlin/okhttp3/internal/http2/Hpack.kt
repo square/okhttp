@@ -17,13 +17,13 @@ package okhttp3.internal.http2
 
 import java.io.IOException
 import java.util.Arrays
-import java.util.Collections
 import okhttp3.internal.and
 import okhttp3.internal.http2.Header.Companion.RESPONSE_STATUS
 import okhttp3.internal.http2.Header.Companion.TARGET_AUTHORITY
 import okhttp3.internal.http2.Header.Companion.TARGET_METHOD
 import okhttp3.internal.http2.Header.Companion.TARGET_PATH
 import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME
+import okhttp3.internal.unmodifiable
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
@@ -389,13 +389,13 @@ object Hpack {
     }
 
   private fun nameToFirstIndex(): Map<ByteString, Int> {
-    val result = LinkedHashMap<ByteString, Int>(STATIC_HEADER_TABLE.size)
+    val result = LinkedHashMap<ByteString, Int>(STATIC_HEADER_TABLE.size, 1.0F)
     for (i in STATIC_HEADER_TABLE.indices) {
       if (!result.containsKey(STATIC_HEADER_TABLE[i].name)) {
         result[STATIC_HEADER_TABLE[i].name] = i
       }
     }
-    return Collections.unmodifiableMap(result)
+    return result.unmodifiable()
   }
 
   class Writer

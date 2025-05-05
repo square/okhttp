@@ -19,7 +19,6 @@ import java.net.Proxy
 import java.net.ProxySelector
 import java.net.Socket
 import java.time.Duration
-import java.util.Collections
 import java.util.Random
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
@@ -42,6 +41,7 @@ import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.toImmutableList
+import okhttp3.internal.unmodifiable
 import okhttp3.internal.ws.RealWebSocket
 import okio.Sink
 import okio.Source
@@ -1054,7 +1054,7 @@ open class OkHttpClient internal constructor(
         }
 
         // Assign as an unmodifiable list. This is effectively immutable.
-        this.protocols = Collections.unmodifiableList(protocolsCopy)
+        this.protocols = protocolsCopy.unmodifiable()
       }
 
     /**

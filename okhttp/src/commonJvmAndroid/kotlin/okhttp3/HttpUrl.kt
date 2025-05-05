@@ -26,8 +26,8 @@ import okhttp3.internal.delimiterOffset
 import okhttp3.internal.indexOfFirstNonAsciiWhitespace
 import okhttp3.internal.indexOfLastNonAsciiWhitespace
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
-import okhttp3.internal.readOnly
 import okhttp3.internal.toCanonicalHost
+import okhttp3.internal.unmodifiable
 import okhttp3.internal.url.FRAGMENT_ENCODE_SET
 import okhttp3.internal.url.FRAGMENT_ENCODE_SET_URI
 import okhttp3.internal.url.PASSWORD_ENCODE_SET
@@ -617,11 +617,11 @@ class HttpUrl private constructor(
   val queryParameterNames: Set<String>
     get() {
       if (queryNamesAndValues == null) return emptySet()
-      val result = LinkedHashSet<String>()
+      val result = LinkedHashSet<String>(queryNamesAndValues.size / 2, 1.0F)
       for (i in 0 until queryNamesAndValues.size step 2) {
         result.add(queryNamesAndValues[i]!!)
       }
-      return result.readOnly()
+      return result.unmodifiable()
     }
 
   /**
@@ -639,13 +639,13 @@ class HttpUrl private constructor(
    */
   fun queryParameterValues(name: String): List<String?> {
     if (queryNamesAndValues == null) return emptyList()
-    val result = mutableListOf<String?>()
+    val result = ArrayList<String?>(4)
     for (i in 0 until queryNamesAndValues.size step 2) {
       if (name == queryNamesAndValues[i]) {
         result.add(queryNamesAndValues[i + 1])
       }
     }
-    return result.readOnly()
+    return result.unmodifiable()
   }
 
   /**

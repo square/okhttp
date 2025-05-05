@@ -23,7 +23,6 @@ import java.net.Proxy
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
-import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -50,7 +49,7 @@ class SocksProxy {
   private val executor = Executors.newCachedThreadPool(threadFactory("SocksProxy"))
   private var serverSocket: ServerSocket? = null
   private val connectionCount = AtomicInteger()
-  private val openSockets = Collections.newSetFromMap(ConcurrentHashMap<Socket, Boolean>())
+  private val openSockets: MutableSet<Socket> = ConcurrentHashMap.newKeySet()
 
   fun play() {
     serverSocket = ServerSocket(0)

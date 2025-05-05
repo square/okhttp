@@ -236,15 +236,27 @@ internal inline fun threadName(
 /** Returns the Content-Length as reported by the response headers. */
 internal fun Response.headersContentLength(): Long = headers["Content-Length"]?.toLongOrNull() ?: -1L
 
+/** Returns an immutable wrap of this. */
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun <T> List<T>.unmodifiable(): List<T> = Collections.unmodifiableList(this)
+
+/** Returns an immutable wrap of this. */
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun <T> Set<T>.unmodifiable(): Set<T> = Collections.unmodifiableSet(this)
+
+/** Returns an immutable wrap of this. */
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun <K, V> Map<K, V>.unmodifiable(): Map<K, V> = Collections.unmodifiableMap(this)
+
 /** Returns an immutable copy of this. */
-internal inline fun <reified T> List<T>.toImmutableList(): List<T> = Collections.unmodifiableList(toTypedArray().asList())
+internal inline fun <reified T> List<T>.toImmutableList(): List<T> = this.toTypedArray().toImmutableList()
 
 /** Returns an immutable list containing [elements]. */
 @SafeVarargs
-internal fun <T> immutableListOf(vararg elements: T): List<T> = Collections.unmodifiableList(elements.asList())
+internal fun <T> immutableListOf(vararg elements: T): List<T> = elements.toImmutableList()
 
 /** Returns an immutable list from copy of this. */
-internal fun <T> Array<out T>?.toImmutableList(): List<T> = this?.let { Collections.unmodifiableList(it.copyOf().asList()) } ?: emptyList()
+internal fun <T> Array<out T>?.toImmutableList(): List<T> = if (this.isNullOrEmpty()) emptyList() else this.asList().unmodifiable()
 
 /** Closes this, ignoring any checked exceptions. */
 internal fun Socket.closeQuietly() {
