@@ -220,31 +220,34 @@ project.extensions
 
 // Call the convention when the task has finished, to modify the jar to contain OSGi metadata.
 tasks.named<Jar>("jvmJar").configure {
-  val bundleExtension = extensions.create(
-    BundleTaskExtension.NAME,
-    BundleTaskExtension::class.java,
-    this,
-  ).apply {
-    classpath(libs.kotlin.stdlib.osgi.map { it.artifacts }, tasks.named("jvmMainClasses").map { it.outputs })
-    bnd(
-      "Export-Package: okhttp3,okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal",
-      "Import-Package: " +
-        "com.oracle.svm.core.annotate;resolution:=optional," +
-        "com.oracle.svm.core.configure;resolution:=optional," +
-        "dalvik.system;resolution:=optional," +
-        "org.conscrypt;resolution:=optional," +
-        "org.bouncycastle.*;resolution:=optional," +
-        "org.openjsse.*;resolution:=optional," +
-        "org.graalvm.nativeimage;resolution:=optional," +
-        "org.graalvm.nativeimage.hosted;resolution:=optional," +
-        "sun.security.ssl;resolution:=optional,*",
-      "Automatic-Module-Name: okhttp3",
-      "Bundle-SymbolicName: com.squareup.okhttp3"
-    )
-  }
+  // Disable to unblock Kotlin bump
+  // Raised https://github.com/bndtools/bnd/issues/6590
+
+//  val bundleExtension = extensions.create(
+//    BundleTaskExtension.NAME,
+//    BundleTaskExtension::class.java,
+//    this,
+//  ).apply {
+//    classpath(libs.kotlin.stdlib.osgi.map { it.artifacts }, tasks.named("jvmMainClasses").map { it.outputs })
+//    bnd(
+//      "Export-Package: okhttp3,okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal",
+//      "Import-Package: " +
+//        "com.oracle.svm.core.annotate;resolution:=optional," +
+//        "com.oracle.svm.core.configure;resolution:=optional," +
+//        "dalvik.system;resolution:=optional," +
+//        "org.conscrypt;resolution:=optional," +
+//        "org.bouncycastle.*;resolution:=optional," +
+//        "org.openjsse.*;resolution:=optional," +
+//        "org.graalvm.nativeimage;resolution:=optional," +
+//        "org.graalvm.nativeimage.hosted;resolution:=optional," +
+//        "sun.security.ssl;resolution:=optional,*",
+//      "Automatic-Module-Name: okhttp3",
+//      "Bundle-SymbolicName: com.squareup.okhttp3"
+//    )
+//  }
 
   doLast {
-    bundleExtension.buildAction().execute(this)
+//    bundleExtension.buildAction().execute(this)
   }
 }
 
@@ -269,8 +272,7 @@ configure<AnimalSnifferExtension> {
 configure<CheckstyleExtension> {
   config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
   toolVersion = rootProject.libs.versions.checkStyle.get()
-  // TODO switch out checkstyle to use something supporting KMP
-  sourceSets = listOf(project.sourceSets["main"])
+  sourceSets = listOf(project.sourceSets["jvmMain"])
 }
 
 afterEvaluate {
