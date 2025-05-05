@@ -15,34 +15,32 @@
  */
 package okhttp3.internal.http
 
-import assertk.assertThat
-import assertk.assertions.isEqualTo
-import java.net.Socket
-import kotlin.test.assertFailsWith
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
+import junit.framework.TestCase.fail
 import okhttp3.Call
 import okhttp3.Connection
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
 import okio.IOException
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Tag
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import java.net.Socket
+import org.assertj.core.api.Assertions.assertThat
 
-@Tag("Slowish")
 class SocketFailureTest {
-  @RegisterExtension
+  @get:Rule
   val platform = PlatformRule()
+
+  @get:Rule
+  val clientTestRule = OkHttpClientTestRule()
 
   val listener = SocketClosingEventListener()
 
-  @RegisterExtension
-  val clientTestRule = OkHttpClientTestRule()
   private lateinit var server: MockWebServer
   private var client =
     clientTestRule
@@ -68,9 +66,9 @@ class SocketFailureTest {
     }
   }
 
-  @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
+  @Before
+  fun setUp() {
+    server = MockWebServer()
   }
 
   @Test
@@ -86,7 +84,7 @@ class SocketFailureTest {
           .url(server.url("/"))
           .build(),
       )
-    call1.execute().use { response -> response.body.string() }
+    call1.execute().use { response -> response.body?.string() }
 
     listener.shouldClose = true
     // Large headers are a likely reason the servers would cut off the connection before it completes sending
@@ -109,10 +107,11 @@ class SocketFailureTest {
           .build(),
       )
 
-    val exception =
-      assertFailsWith<IOException> {
-        call2.execute()
-      }
-    assertThat(exception.message).isEqualTo("Socket closed")
+    try {
+      call2.execute()
+      fail()
+    } catch (ioe: IOException) {
+      assertThat(ioe.message).isEqualTo("Socket closed")
+    }
   }
 }
