@@ -213,11 +213,6 @@ android {
   }
 }
 
-// Hack to make BundleTaskExtension pass briefly
-project.extensions
-  .getByType(JavaPluginExtension::class.java)
-  .sourceSets.create("main")
-
 // Call the convention when the task has finished, to modify the jar to contain OSGi metadata.
 tasks.named<Jar>("jvmJar").configure {
   // Disable to unblock Kotlin bump
@@ -267,6 +262,7 @@ dependencies {
 // Animal Sniffer confirms we generally don't use APIs not on Java 8.
 configure<AnimalSnifferExtension> {
   annotation = "okhttp3.internal.SuppressSignatureCheck"
+  defaultTargets("jvmMain", "debug")
 }
 
 configure<CheckstyleExtension> {
