@@ -26,6 +26,7 @@ import java.net.UnknownHostException
 import java.util.concurrent.Executors
 import okhttp3.AsyncDns
 import okhttp3.ExperimentalOkHttpApi
+import okhttp3.internal.SuppressSignatureCheck
 
 /**
  * DNS implementation based on android.net.DnsResolver, which submits a request for
@@ -37,6 +38,7 @@ import okhttp3.ExperimentalOkHttpApi
  */
 @RequiresApi(Build.VERSION_CODES.Q)
 @ExperimentalOkHttpApi
+@SuppressSignatureCheck
 class AndroidAsyncDns(
   private val dnsClass: AsyncDns.DnsClass,
   private val network: Network? = null,

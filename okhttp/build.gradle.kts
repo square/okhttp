@@ -1,10 +1,11 @@
 @file:Suppress("UnstableApiUsage")
 
-import aQute.bnd.gradle.BundleTaskExtension
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
+import ru.vyarus.gradle.plugin.animalsniffer.util.TargetType
 
 plugins {
   kotlin("multiplatform")
@@ -246,13 +247,16 @@ tasks.named<Jar>("jvmJar").configure {
   }
 }
 
+val androidSignature by configurations.creating
+val jvmSignature by configurations.creating
+
 val checkstyleConfig: Configuration by configurations.named("checkstyleConfig")
 dependencies {
   // Everything else requires Android API 21+.
-  "signature"(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
+  androidSignature(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
 
   // OkHttp requires Java 8+.
-  "signature"(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
+  jvmSignature(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
 
   checkstyleConfig(rootProject.libs.checkStyle) {
     isTransitive = false
@@ -263,6 +267,14 @@ dependencies {
 configure<AnimalSnifferExtension> {
   annotation = "okhttp3.internal.SuppressSignatureCheck"
   defaultTargets("jvmMain", "debug")
+}
+
+tasks.withType<AnimalSniffer> {
+  if (targetName == "animalsnifferJvmMain") {
+    animalsnifferSignatures = jvmSignature
+  } else {
+    animalsnifferSignatures = androidSignature
+  }
 }
 
 configure<CheckstyleExtension> {
