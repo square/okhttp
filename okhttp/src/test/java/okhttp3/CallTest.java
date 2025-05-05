@@ -2795,6 +2795,51 @@ public final class CallTest {
     expect100ContinueTimesOutWithoutContinue();
   }
 
+  @Test public void serverRespondsWithProcessingMultiple() throws Exception {
+    MockResponse response = new MockResponse();
+    for (int i = 0; i < 10; i++) {
+      response.addInformationalResponse(new MockResponse().setResponseCode(102));
+    }
+    server.enqueue(response);
+
+    Request request = new Request.Builder()
+            .url(server.url("/"))
+            .post(RequestBody.create("abc", MediaType.get("text/plain")))
+            .build();
+
+    executeSynchronously(request)
+            .assertCode(200)
+            .assertSuccessful();
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertThat(recordedRequest.getBody().readUtf8()).isEqualTo("abc");
+  }
+
+  @Test public void serverReturnsMultiple100ContinuesHttp2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    serverReturnsMultiple100Continues();
+  }
+
+  @Test public void serverReturnsMultiple100Continues() throws Exception {
+    MockResponse response = new MockResponse();
+    for (int i = 0; i < 3; i++) {
+      response.addInformationalResponse(new MockResponse().setResponseCode(100));
+    }
+    server.enqueue(response);
+
+    Request request = new Request.Builder()
+            .url(server.url("/"))
+            .post(RequestBody.create("abc", MediaType.get("text/plain")))
+            .build();
+
+    executeSynchronously(request)
+            .assertCode(200)
+            .assertSuccessful();
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertThat(recordedRequest.getBody().readUtf8()).isEqualTo("abc");
+  }
+
   @Test public void serverRespondsWithUnsolicited100Continue() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.CONTINUE_ALWAYS));
