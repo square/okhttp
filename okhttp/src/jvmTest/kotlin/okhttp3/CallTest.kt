@@ -3362,13 +3362,19 @@ open class CallTest {
   @Test
   fun serverReturnsMultiple100Continues() {
     server.enqueue(
-      MockResponse.Builder().add100Continue().add100Continue().add100Continue().build(),
+      MockResponse
+        .Builder()
+        .add100Continue()
+        .add100Continue()
+        .add100Continue()
+        .build(),
     )
 
-    val request = Request(
-      url = server.url("/"),
-      body = "abc".toRequestBody("text/plain".toMediaType()),
-    )
+    val request =
+      Request(
+        url = server.url("/"),
+        body = "abc".toRequestBody("text/plain".toMediaType()),
+      )
     executeSynchronously(request).assertCode(200).assertSuccessful()
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
