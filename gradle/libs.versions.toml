@@ -3,18 +3,18 @@
 biz-aQute-bnd = "6.4.0"
 checkStyle = "10.23.1"
 com-squareup-moshi = "1.15.2"
-com-squareup-okio = "3.10.2"
+com-squareup-okio = "3.11.0"
 de-mannodermaus-junit5 = "1.7.0"
 graalvm = "24.2.1"
 junit-platform = "1.12.2"
 kotlinx-serialization = "1.8.1"
-ksp = "2.1.0-1.0.29"
+ksp = "2.1.20-1.0.31"
 lintGradle = "1.0.0-alpha04"
 mockserverClient = "5.15.0"
 org-bouncycastle = "1.80"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.10.2"
-org-jetbrains-kotlin = "2.1.10"
+org-jetbrains-kotlin = "2.1.20"
 org-junit-jupiter = "5.12.2"
 retrofit = "2.11.0"
 startupRuntime = "1.2.0"
@@ -45,9 +45,9 @@ converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.r
 eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.23.0"
 findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
 graal-sdk = { module = "org.graalvm.sdk:graal-sdk", version.ref = "graalvm" }
-gradlePlugin-android = "com.android.tools.build:gradle:8.9.2"
+gradlePlugin-android = "com.android.tools.build:gradle:8.10.0-rc04"
 gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.12.0.0"
-gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.7.2"
+gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:2.0.1"
 gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.17.0"
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
 gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:2.0.0"
@@ -100,7 +100,7 @@ squareup-moshi = { module = "com.squareup.moshi:moshi", version.ref = "com-squar
 squareup-moshi-compiler = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "com-squareup-moshi" }
 squareup-moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "com-squareup-moshi" }
 squareup-okhttp-icu = "com.squareup.okhttpicu:okhttp-icu:0.2.0"
-squareup-kotlinPoet = "com.squareup:kotlinpoet:2.0.0"
+squareup-kotlinPoet = "com.squareup:kotlinpoet:2.1.0"
 squareup-okio = { module = "com.squareup.okio:okio", version.ref = "com-squareup-okio" }
 squareup-okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "com-squareup-okio" }
 squareup-okio-nodefilesystem = { module = "com.squareup.okio:okio-nodefilesystem", version.ref = "com-squareup-okio" }
