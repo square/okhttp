@@ -302,12 +302,20 @@ subprojects {
       isCanBeConsumed = false
       isTransitive = false
     }
+    val friendsTestImplementation = register("friendsTestImplementation") {
+      isCanBeResolved = true
+      isCanBeConsumed = false
+      isTransitive = false
+    }
     configurations.configureEach {
       if (name == "implementation") {
         extendsFrom(friendsApi.get(), friendsImplementation.get())
       }
       if (name == "api") {
         extendsFrom(friendsApi.get())
+      }
+      if (name == "testImplementation") {
+        extendsFrom(friendsTestImplementation.get())
       }
     }
   }
@@ -318,6 +326,9 @@ subprojects {
         friendPaths.from(it.incoming.artifactView { }.files)
       }
       configurations.findByName("friendsImplementation")?.let {
+        friendPaths.from(it.incoming.artifactView { }.files)
+      }
+      configurations.findByName("friendsTestImplementation")?.let {
         friendPaths.from(it.incoming.artifactView { }.files)
       }
     }

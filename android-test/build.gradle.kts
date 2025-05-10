@@ -68,7 +68,7 @@ dependencies {
   testImplementation(libs.junit.ktx)
   testImplementation(libs.assertk)
   testImplementation(projects.okhttpTls)
-  testImplementation(projects.loggingInterceptor)
+  "friendsTestImplementation"(projects.loggingInterceptor)
   testImplementation(libs.androidx.test.runner)
   testImplementation(libs.robolectric)
   testImplementation(libs.androidx.espresso.core)
