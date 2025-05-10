@@ -34,7 +34,8 @@ class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
 
     val client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .connectionPool(ConnectionPool(connectionListener = AndroidxTracingConnectionListener()))
         .addNetworkInterceptor(AndroidxTracingInterceptor())
         .build()
