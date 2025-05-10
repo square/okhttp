@@ -84,6 +84,7 @@ class RealConnection(
   private val sink: BufferedSink,
   private val pingIntervalMillis: Int,
   internal val connectionListener: ConnectionListener,
+  override val id: Long,
 ) : Http2Connection.Listener(),
   Connection,
   ExchangeCodec.Carrier {
@@ -499,6 +500,7 @@ class RealConnection(
             }.buffer(),
           pingIntervalMillis = 0,
           ConnectionListener.NONE,
+          0L,
         )
       result.idleAtNs = idleAtNs
       return result

@@ -98,6 +98,7 @@ kotlin {
         compileOnly(libs.conscrypt.openjdk)
         implementation(libs.androidx.annotation)
         implementation(libs.androidx.startup.runtime)
+        implementation(libs.androidx.tracing.ktx)
       }
     }
 
