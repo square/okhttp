@@ -419,7 +419,7 @@ jobs:
           java-version: |
             11
             17
-            23
+            24
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
