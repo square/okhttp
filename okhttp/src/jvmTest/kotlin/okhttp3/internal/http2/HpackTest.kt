@@ -568,11 +568,16 @@ class HpackTest {
     // Decoded header list:
     assertThat(hpackReader!!.getAndResetHeaderList()).isEqualTo(
       headerEntries(
-        ":method", "GET",
-        ":scheme", "http",
-        ":path", "/",
-        ":authority", "www.example.com",
-        "cache-control", "no-cache",
+        ":method",
+        "GET",
+        ":scheme",
+        "http",
+        ":path",
+        "/",
+        ":authority",
+        "www.example.com",
+        "cache-control",
+        "no-cache",
       ),
     )
   }
@@ -614,11 +619,16 @@ class HpackTest {
     // Decoded header list:
     assertThat(hpackReader!!.getAndResetHeaderList()).isEqualTo(
       headerEntries(
-        ":method", "GET",
-        ":scheme", "https",
-        ":path", "/index.html",
-        ":authority", "www.example.com",
-        "custom-key", "custom-value",
+        ":method",
+        "GET",
+        ":scheme",
+        "https",
+        ":path",
+        "/index.html",
+        ":authority",
+        "www.example.com",
+        "custom-key",
+        "custom-value",
       ),
     )
   }
@@ -711,11 +721,16 @@ class HpackTest {
     // Decoded header list:
     assertThat(hpackReader!!.getAndResetHeaderList()).isEqualTo(
       headerEntries(
-        ":method", "GET",
-        ":scheme", "http",
-        ":path", "/",
-        ":authority", "www.example.com",
-        "cache-control", "no-cache",
+        ":method",
+        "GET",
+        ":scheme",
+        "http",
+        ":path",
+        "/",
+        ":authority",
+        "www.example.com",
+        "cache-control",
+        "no-cache",
       ),
     )
   }
@@ -759,11 +774,16 @@ class HpackTest {
     // Decoded header list:
     assertThat(hpackReader!!.getAndResetHeaderList()).isEqualTo(
       headerEntries(
-        ":method", "GET",
-        ":scheme", "https",
-        ":path", "/index.html",
-        ":authority", "www.example.com",
-        "custom-key", "custom-value",
+        ":method",
+        "GET",
+        ":scheme",
+        "https",
+        ":path",
+        "/index.html",
+        ":authority",
+        "www.example.com",
+        "custom-key",
+        "custom-value",
       ),
     )
   }
@@ -867,15 +887,35 @@ class HpackTest {
     hpackWriter!!.writeHeaders(listOf(Header("foo", "bar")))
     assertBytes(
       // Dynamic table size update (size = 2048).
-      0x3F, 0xE1, 0xF,
-      0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code,
+      0x3F,
+      0xE1,
+      0xF,
+      0x40,
+      3,
+      'f'.code,
+      'o'.code,
+      'o'.code,
+      3,
+      'b'.code,
+      'a'.code,
+      'r'.code,
     )
     hpackWriter!!.resizeHeaderTable(8192)
     hpackWriter!!.writeHeaders(listOf(Header("bar", "foo")))
     assertBytes(
       // Dynamic table size update (size = 8192).
-      0x3F, 0xE1, 0x3F,
-      0x40, 3, 'b'.code, 'a'.code, 'r'.code, 3, 'f'.code, 'o'.code, 'o'.code,
+      0x3F,
+      0xE1,
+      0x3F,
+      0x40,
+      3,
+      'b'.code,
+      'a'.code,
+      'r'.code,
+      3,
+      'f'.code,
+      'o'.code,
+      'o'.code,
     )
 
     // No more dynamic table updates should be emitted.
@@ -898,8 +938,18 @@ class HpackTest {
     hpackWriter!!.writeHeaders(listOf(Header("foo", "bar")))
     assertBytes(
       // Dynamic table size update (size = 16384).
-      0x3F, 0xE1, 0x7F,
-      0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code,
+      0x3F,
+      0xE1,
+      0x7F,
+      0x40,
+      3,
+      'f'.code,
+      'o'.code,
+      'o'.code,
+      3,
+      'b'.code,
+      'a'.code,
+      'r'.code,
     )
   }
 
@@ -911,7 +961,15 @@ class HpackTest {
     assertBytes(
       // Dynamic size update (size = 0).
       0x20,
-      0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code,
+      0x40,
+      3,
+      'f'.code,
+      'o'.code,
+      'o'.code,
+      3,
+      'b'.code,
+      'a'.code,
+      'r'.code,
     )
   }
 
@@ -927,8 +985,18 @@ class HpackTest {
       // Dynamic size update (size = 0).
       0x20,
       // Dynamic size update (size = 2048).
-      0x3F, 0xE1, 0xF,
-      0x40, 3, 'f'.code, 'o'.code, 'o'.code, 3, 'b'.code, 'a'.code, 'r'.code,
+      0x3F,
+      0xE1,
+      0xF,
+      0x40,
+      3,
+      'f'.code,
+      'o'.code,
+      'o'.code,
+      3,
+      'b'.code,
+      'a'.code,
+      'r'.code,
     )
   }
 
@@ -1099,13 +1167,9 @@ class HpackTest {
     assertThat(hpackWriter!!.headerCount).isEqualTo(2)
   }
 
-  private fun newReader(source: Buffer): Hpack.Reader {
-    return Hpack.Reader(source, 4096)
-  }
+  private fun newReader(source: Buffer): Hpack.Reader = Hpack.Reader(source, 4096)
 
-  private fun byteStream(vararg bytes: Int): Buffer {
-    return Buffer().write(intArrayToByteArray(bytes))
-  }
+  private fun byteStream(vararg bytes: Int): Buffer = Buffer().write(intArrayToByteArray(bytes))
 
   private fun checkEntry(
     entry: Header,
@@ -1132,7 +1196,5 @@ class HpackTest {
     return ByteString.of(*data)
   }
 
-  private fun readerHeaderTableLength(): Int {
-    return hpackReader!!.dynamicTable.size
-  }
+  private fun readerHeaderTableLength(): Int = hpackReader!!.dynamicTable.size
 }

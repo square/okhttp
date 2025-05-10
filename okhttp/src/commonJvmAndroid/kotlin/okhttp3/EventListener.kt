@@ -453,6 +453,18 @@ abstract class EventListener {
   ) {
   }
 
+  /**
+   * Invoked when a failed call is considered for retry.
+   *
+   * This event won't be emitted when a call isSuccessful.
+   */
+  open fun retryDecision(
+    call: Call,
+    shouldRetry: Boolean,
+    reason: String,
+  ) {
+  }
+
   fun interface Factory {
     /**
      * Creates an instance of the [EventListener] for a particular [Call]. The returned

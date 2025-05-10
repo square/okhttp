@@ -64,13 +64,14 @@ class ResponseCommonTest {
 
   @Test fun defaultResponseBodyIsEmpty() {
     val response =
-      Response.Builder()
+      Response
+        .Builder()
         .request(
-          Request.Builder()
+          Request
+            .Builder()
             .url("https://example.com/")
             .build(),
-        )
-        .protocol(Protocol.HTTP_1_1)
+        ).protocol(Protocol.HTTP_1_1)
         .code(200)
         .message("OK")
         .build()
@@ -101,9 +102,7 @@ class ResponseCommonTest {
           return data.read(sink, byteCount)
         }
 
-        override fun timeout(): Timeout {
-          return Timeout.NONE
-        }
+        override fun timeout(): Timeout = Timeout.NONE
       }
     return source.buffer().asResponseBody(null, -1)
   }
@@ -111,17 +110,17 @@ class ResponseCommonTest {
   private fun newResponse(
     responseBody: ResponseBody,
     code: Int = 200,
-  ): Response {
-    return Response.Builder()
+  ): Response =
+    Response
+      .Builder()
       .request(
-        Request.Builder()
+        Request
+          .Builder()
           .url("https://example.com/")
           .build(),
-      )
-      .protocol(Protocol.HTTP_1_1)
+      ).protocol(Protocol.HTTP_1_1)
       .code(code)
       .message("OK")
       .body(responseBody)
       .build()
-  }
 }

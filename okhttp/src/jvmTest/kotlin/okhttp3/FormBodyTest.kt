@@ -26,7 +26,8 @@ class FormBodyTest {
   @Test
   fun urlEncoding() {
     val body =
-      FormBody.Builder()
+      FormBody
+        .Builder()
         .add("a+=& b", "c+=& d")
         .add("space, the", "final frontier")
         .add("%25", "%25")
@@ -57,7 +58,8 @@ class FormBodyTest {
   @Test
   fun addEncoded() {
     val body =
-      FormBody.Builder()
+      FormBody
+        .Builder()
         .addEncoded("a+=& b", "c+=& d")
         .addEncoded("e+=& f", "g+=& h")
         .addEncoded("%25", "%25")
@@ -71,7 +73,8 @@ class FormBodyTest {
   @Test
   fun encodedPair() {
     val body =
-      FormBody.Builder()
+      FormBody
+        .Builder()
         .add("sim", "ple")
         .build()
     val expected = "sim=ple"
@@ -84,7 +87,8 @@ class FormBodyTest {
   @Test
   fun encodeMultiplePairs() {
     val body =
-      FormBody.Builder()
+      FormBody
+        .Builder()
         .add("sim", "ple")
         .add("hey", "there")
         .add("help", "me")
@@ -192,7 +196,8 @@ class FormBodyTest {
   private fun formEncode(codePoint: Int): String {
     // Wrap the codepoint with regular printable characters to prevent trimming.
     val body =
-      FormBody.Builder()
+      FormBody
+        .Builder()
         .add("a", String(intArrayOf('b'.code, codePoint, 'c'.code), 0, 3))
         .build()
     val buffer = Buffer()
@@ -204,7 +209,8 @@ class FormBodyTest {
   @Test
   fun manualCharset() {
     val body =
-      FormBody.Builder(StandardCharsets.ISO_8859_1)
+      FormBody
+        .Builder(StandardCharsets.ISO_8859_1)
         .add("name", "Nicolás")
         .build()
     val expected = "name=Nicol%E1s"

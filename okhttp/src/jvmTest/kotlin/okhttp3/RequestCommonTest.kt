@@ -109,13 +109,15 @@ class RequestCommonTest {
       "http://localhost/api/foo".toHttpUrl(),
     )
     val requestWithCache =
-      Request.Builder()
+      Request
+        .Builder()
         .url("http://localhost/api")
         .build()
     // cache url object
     requestWithCache.url
     val builtRequestWithCache =
-      requestWithCache.newBuilder()
+      requestWithCache
+        .newBuilder()
         .url("http://localhost/api/foo")
         .build()
     assertThat(builtRequestWithCache.url)
@@ -125,7 +127,8 @@ class RequestCommonTest {
   @Test
   fun cacheControl() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .cacheControl(CacheControl.Builder().noCache().build())
         .url("https://square.com")
         .build()
@@ -136,7 +139,8 @@ class RequestCommonTest {
   @Test
   fun emptyCacheControlClearsAllCacheControlHeaders() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .header("Cache-Control", "foo")
         .cacheControl(CacheControl.Builder().build())
         .url("https://square.com")
@@ -201,7 +205,8 @@ class RequestCommonTest {
   @Test
   fun noTag() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .build()
     assertThat(request.tag<Any>()).isNull()
@@ -217,7 +222,8 @@ class RequestCommonTest {
   fun defaultTag() {
     val tag = "1234"
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag(tag as Any)
         .build()
@@ -233,7 +239,8 @@ class RequestCommonTest {
   @Test
   fun nullRemovesTag() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag("a" as Any)
         .tag(null)
@@ -244,7 +251,8 @@ class RequestCommonTest {
   @Test
   fun removeAbsentTag() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag(null)
         .build()
@@ -255,7 +263,8 @@ class RequestCommonTest {
   fun objectTag() {
     val tag = "1234"
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag(Any::class, tag)
         .build()
@@ -272,7 +281,8 @@ class RequestCommonTest {
   fun kotlinReifiedTag() {
     val uuidTag = "1234"
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag<String>(uuidTag) // Use the type parameter.
         .build()
@@ -287,7 +297,8 @@ class RequestCommonTest {
   fun kotlinClassTag() {
     val uuidTag = "1234"
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag(String::class, uuidTag) // Use the KClass<*> parameter.
         .build()
@@ -304,7 +315,8 @@ class RequestCommonTest {
     val uuidTag1 = "1234"
     val uuidTag2 = "4321"
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag(String::class, uuidTag1)
         .tag(String::class, uuidTag2)
@@ -318,7 +330,8 @@ class RequestCommonTest {
     val longTag = 20170815L as Long?
     val objectTag = Any()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag(Any::class, objectTag)
         .tag(String::class, stringTag)
@@ -336,7 +349,8 @@ class RequestCommonTest {
   @Test
   fun tagsAreImmutable() {
     val builder =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
     val requestA = builder.tag(String::class, "a").build()
     val requestB = builder.tag(String::class, "b").build()
@@ -349,7 +363,8 @@ class RequestCommonTest {
   @Test
   fun requestToStringRedactsSensitiveHeaders() {
     val headers =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("content-length", "99")
         .add("authorization", "peanutbutter")
         .add("proxy-authorization", "chocolate")

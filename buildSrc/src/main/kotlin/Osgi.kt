@@ -39,8 +39,12 @@ private fun Project.applyOsgi(
   val osgi = project.sourceSets.create("osgi")
   val osgiApi = project.configurations.getByName(osgiApiConfigurationName)
   val kotlinOsgi =
-    extensions.getByType(VersionCatalogsExtension::class.java).named("libs")
-      .findLibrary("kotlin.stdlib.osgi").get().get()
+    extensions
+      .getByType(VersionCatalogsExtension::class.java)
+      .named("libs")
+      .findLibrary("kotlin.stdlib.osgi")
+      .get()
+      .get()
 
   project.dependencies {
     osgiApi(kotlinOsgi)

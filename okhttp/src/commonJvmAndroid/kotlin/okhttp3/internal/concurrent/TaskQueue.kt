@@ -94,9 +94,7 @@ class TaskQueue internal constructor(
   ) {
     schedule(
       object : Task(name) {
-        override fun runOnce(): Long {
-          return block()
-        }
+        override fun runOnce(): Long = block()
       },
       delayNanos,
     )

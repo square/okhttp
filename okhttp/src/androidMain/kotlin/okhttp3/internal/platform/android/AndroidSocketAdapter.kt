@@ -30,7 +30,9 @@ import okhttp3.internal.platform.Platform
  * but we can't compile directly against it, or in fact reliably know if it is registered and
  * on classpath.
  */
-open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>) : SocketAdapter {
+open class AndroidSocketAdapter(
+  private val sslSocketClass: Class<in SSLSocket>,
+) : SocketAdapter {
   private val setUseSessionTickets: Method =
     sslSocketClass.getDeclaredMethod("setUseSessionTickets", Boolean::class.javaPrimitiveType)
   private val setHostname = sslSocketClass.getMethod("setHostname", String::class.java)
@@ -118,14 +120,11 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
       return AndroidSocketAdapter(possibleClass!!)
     }
 
-    fun factory(packageName: String): DeferredSocketAdapter.Factory {
-      return object : DeferredSocketAdapter.Factory {
+    fun factory(packageName: String): DeferredSocketAdapter.Factory =
+      object : DeferredSocketAdapter.Factory {
         override fun matchesSocket(sslSocket: SSLSocket): Boolean = sslSocket.javaClass.name.startsWith("$packageName.")
 
-        override fun create(sslSocket: SSLSocket): SocketAdapter {
-          return build(sslSocket.javaClass)
-        }
+        override fun create(sslSocket: SSLSocket): SocketAdapter = build(sslSocket.javaClass)
       }
-    }
   }
 }

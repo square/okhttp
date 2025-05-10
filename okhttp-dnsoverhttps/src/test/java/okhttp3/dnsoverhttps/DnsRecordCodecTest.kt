@@ -39,9 +39,7 @@ class DnsRecordCodecTest {
   private fun encodeQuery(
     host: String,
     type: Int,
-  ): String {
-    return DnsRecordCodec.encodeQuery(host, type).base64Url().replace("=", "")
-  }
+  ): String = DnsRecordCodec.encodeQuery(host, type).base64Url().replace("=", "")
 
   @Test
   fun testGoogleDotComEncodingWithIPv6() {

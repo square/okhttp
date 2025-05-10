@@ -25,7 +25,9 @@ import javax.net.ssl.SSLSocketFactory
  * A [SSLSocketFactory] that delegates calls. Sockets can be configured after creation by
  * overriding [.configureSocket].
  */
-open class DelegatingSSLSocketFactory(private val delegate: SSLSocketFactory) : SSLSocketFactory() {
+open class DelegatingSSLSocketFactory(
+  private val delegate: SSLSocketFactory,
+) : SSLSocketFactory() {
   @Throws(IOException::class)
   override fun createSocket(): SSLSocket {
     val sslSocket = delegate.createSocket() as SSLSocket
@@ -72,13 +74,9 @@ open class DelegatingSSLSocketFactory(private val delegate: SSLSocketFactory) : 
     return configureSocket(sslSocket)
   }
 
-  override fun getDefaultCipherSuites(): Array<String> {
-    return delegate.defaultCipherSuites
-  }
+  override fun getDefaultCipherSuites(): Array<String> = delegate.defaultCipherSuites
 
-  override fun getSupportedCipherSuites(): Array<String> {
-    return delegate.supportedCipherSuites
-  }
+  override fun getSupportedCipherSuites(): Array<String> = delegate.supportedCipherSuites
 
   @Throws(IOException::class)
   override fun createSocket(

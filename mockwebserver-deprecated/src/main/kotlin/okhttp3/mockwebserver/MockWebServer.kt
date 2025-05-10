@@ -29,7 +29,9 @@ import okhttp3.HttpUrl
 import okhttp3.Protocol
 import org.junit.rules.ExternalResource
 
-class MockWebServer : ExternalResource(), Closeable {
+class MockWebServer :
+  ExternalResource(),
+  Closeable {
   @ExperimentalOkHttpApi
   val delegate = mockwebserver3.MockWebServer()
 
@@ -176,17 +178,13 @@ class MockWebServer : ExternalResource(), Closeable {
   }
 
   @Throws(InterruptedException::class)
-  fun takeRequest(): RecordedRequest {
-    return delegate.takeRequest().unwrap()
-  }
+  fun takeRequest(): RecordedRequest = delegate.takeRequest().unwrap()
 
   @Throws(InterruptedException::class)
   fun takeRequest(
     timeout: Long,
     unit: TimeUnit,
-  ): RecordedRequest? {
-    return delegate.takeRequest(timeout, unit)?.unwrap()
-  }
+  ): RecordedRequest? = delegate.takeRequest(timeout, unit)?.unwrap()
 
   @JvmName("-deprecated_requestCount")
   @Deprecated(

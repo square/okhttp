@@ -25,6 +25,7 @@ import java.net.ProtocolException
 import kotlin.test.assertFailsWith
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
@@ -546,7 +547,8 @@ class MultipartReaderTest {
   /** Confirm that [MultipartBody] and [MultipartReader] can work together. */
   @Test fun `multipart round trip`() {
     val body =
-      MultipartBody.Builder("boundary")
+      MultipartBody
+        .Builder("boundary")
         .setType(MultipartBody.PARALLEL)
         .addPart("Quick".toRequestBody("text/plain".toMediaType()))
         .addFormDataPart("color", "Brown")
@@ -586,5 +588,52 @@ class MultipartReaderTest {
     assertThat(foxPart.body.readUtf8()).isEqualTo("Fox")
 
     assertThat(reader.nextPart()).isNull()
+  }
+
+  @Test
+  fun `reading a large part with small byteCount`() {
+    val multipartBody: RequestBody =
+      MultipartBody
+        .Builder("foo")
+        .addPart(
+          headersOf("header-name", "header-value"),
+          object : RequestBody() {
+            override fun contentType(): MediaType? = "application/octet-stream".toMediaTypeOrNull()
+
+            override fun contentLength(): Long = (1024 * 1024 * 100).toLong()
+
+            override fun writeTo(sink: okio.BufferedSink) {
+              repeat(100) {
+                sink.writeUtf8(
+                  "a".repeat(1024 * 1024),
+                )
+              }
+            }
+          },
+        ).build()
+    val buffer =
+      Buffer().apply {
+        multipartBody.writeTo(this)
+      }
+
+    val multipartReader = MultipartReader(buffer, "foo")
+    while (true) {
+      val part = multipartReader.nextPart()
+
+      if (part == null) break
+
+      assertThat(part.headers["header-name"]).isEqualTo("header-value")
+      while (true) {
+        val readBuff = Buffer()
+        val read = part.body.read(readBuff, (1024).toLong())
+        if (read == -1L) {
+          break
+        } else {
+          assertThat(readBuff.readUtf8()).isEqualTo(
+            "a".repeat(read.toInt()),
+          )
+        }
+      }
+    }
   }
 }

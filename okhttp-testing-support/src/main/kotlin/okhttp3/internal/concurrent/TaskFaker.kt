@@ -349,7 +349,8 @@ class TaskFaker : Closeable {
    */
   private inner class TaskFakerBlockingQueue<T>(
     val delegate: BlockingQueue<T>,
-  ) : AbstractQueue<T>(), BlockingQueue<T> {
+  ) : AbstractQueue<T>(),
+    BlockingQueue<T> {
     override val size: Int = delegate.size
 
     private var editCount = 0

@@ -41,7 +41,9 @@ import okio.Timeout
 import okio.buffer
 
 /** Serves requests from the cache and writes responses to the cache. */
-class CacheInterceptor(internal val cache: Cache?) : Interceptor {
+class CacheInterceptor(
+  internal val cache: Cache?,
+) : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
     val call = chain.call()
@@ -63,23 +65,27 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
 
     // If we're forbidden from using the network and the cache is insufficient, fail.
     if (networkRequest == null && cacheResponse == null) {
-      return Response.Builder()
+      return Response
+        .Builder()
         .request(chain.request())
         .protocol(Protocol.HTTP_1_1)
         .code(HTTP_GATEWAY_TIMEOUT)
         .message("Unsatisfiable Request (only-if-cached)")
         .sentRequestAtMillis(-1L)
         .receivedResponseAtMillis(System.currentTimeMillis())
-        .build().also {
+        .build()
+        .also {
           listener.satisfactionFailure(call, it)
         }
     }
 
     // If we don't need the network, we're done.
     if (networkRequest == null) {
-      return cacheResponse!!.newBuilder()
+      return cacheResponse!!
+        .newBuilder()
         .cacheResponse(cacheResponse.stripBody())
-        .build().also {
+        .build()
+        .also {
           listener.cacheHit(call, it)
         }
     }
@@ -104,7 +110,8 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
     if (cacheResponse != null) {
       if (networkResponse?.code == HTTP_NOT_MODIFIED) {
         val response =
-          cacheResponse.newBuilder()
+          cacheResponse
+            .newBuilder()
             .headers(combine(cacheResponse.headers, networkResponse.headers))
             .sentRequestAtMillis(networkResponse.sentRequestAtMillis)
             .receivedResponseAtMillis(networkResponse.receivedResponseAtMillis)
@@ -127,7 +134,8 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
     }
 
     val response =
-      networkResponse!!.newBuilder()
+      networkResponse!!
+        .newBuilder()
         .cacheResponse(cacheResponse?.stripBody())
         .networkResponse(networkResponse.stripBody())
         .build()
@@ -224,7 +232,8 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
 
     val contentType = response.header("Content-Type")
     val contentLength = response.body.contentLength()
-    return response.newBuilder()
+    return response
+      .newBuilder()
       .body(RealResponseBody(contentType, contentLength, cacheWritingSource.buffer()))
       .build()
   }
@@ -266,8 +275,8 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
      * Returns true if [fieldName] is an end-to-end HTTP header, as defined by RFC 2616,
      * 13.5.1.
      */
-    private fun isEndToEnd(fieldName: String): Boolean {
-      return !"Connection".equals(fieldName, ignoreCase = true) &&
+    private fun isEndToEnd(fieldName: String): Boolean =
+      !"Connection".equals(fieldName, ignoreCase = true) &&
         !"Keep-Alive".equals(fieldName, ignoreCase = true) &&
         !"Proxy-Authenticate".equals(fieldName, ignoreCase = true) &&
         !"Proxy-Authorization".equals(fieldName, ignoreCase = true) &&
@@ -275,17 +284,15 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
         !"Trailers".equals(fieldName, ignoreCase = true) &&
         !"Transfer-Encoding".equals(fieldName, ignoreCase = true) &&
         !"Upgrade".equals(fieldName, ignoreCase = true)
-    }
 
     /**
      * Returns true if [fieldName] is content specific and therefore should always be used
      * from cached headers.
      */
-    private fun isContentSpecificHeader(fieldName: String): Boolean {
-      return "Content-Length".equals(fieldName, ignoreCase = true) ||
+    private fun isContentSpecificHeader(fieldName: String): Boolean =
+      "Content-Length".equals(fieldName, ignoreCase = true) ||
         "Content-Encoding".equals(fieldName, ignoreCase = true) ||
         "Content-Type".equals(fieldName, ignoreCase = true)
-    }
   }
 }
 

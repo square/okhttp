@@ -24,7 +24,6 @@ import okhttp3.internal.canonicalUrl
 import okhttp3.internal.commonAddHeader
 import okhttp3.internal.commonCacheControl
 import okhttp3.internal.commonDelete
-import okhttp3.internal.commonEmptyRequestBody
 import okhttp3.internal.commonGet
 import okhttp3.internal.commonHead
 import okhttp3.internal.commonHeader
@@ -41,7 +40,9 @@ import okhttp3.internal.commonToString
  * An HTTP request. Instances of this class are immutable if their [body] is null or itself
  * immutable.
  */
-class Request internal constructor(builder: Builder) {
+class Request internal constructor(
+  builder: Builder,
+) {
   @get:JvmName("url")
   val url: HttpUrl = checkNotNull(builder.url) { "url == null" }
 
@@ -218,9 +219,7 @@ class Request internal constructor(builder: Builder) {
      * @throws IllegalArgumentException if [url] is not a valid HTTP or HTTPS URL. Avoid this
      *     exception by calling [HttpUrl.parse]; it returns null for invalid URLs.
      */
-    open fun url(url: String): Builder {
-      return url(canonicalUrl(url).toHttpUrl())
-    }
+    open fun url(url: String): Builder = url(canonicalUrl(url).toHttpUrl())
 
     /**
      * Sets the URL target of this request.
@@ -270,7 +269,7 @@ class Request internal constructor(builder: Builder) {
     open fun post(body: RequestBody): Builder = commonPost(body)
 
     @JvmOverloads
-    open fun delete(body: RequestBody? = commonEmptyRequestBody): Builder = commonDelete(body)
+    open fun delete(body: RequestBody? = RequestBody.Empty): Builder = commonDelete(body)
 
     open fun put(body: RequestBody): Builder = commonPut(body)
 

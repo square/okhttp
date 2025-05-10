@@ -240,12 +240,11 @@ internal fun inet6AddressToAscii(address: ByteArray): String {
  *
  * https://en.wikipedia.org/wiki/IPv6#IPv4-mapped_IPv6_addresses
  */
-internal fun canonicalizeInetAddress(address: ByteArray): ByteArray {
-  return when {
+internal fun canonicalizeInetAddress(address: ByteArray): ByteArray =
+  when {
     isMappedIpv4Address(address) -> address.sliceArray(12 until 16)
     else -> address
   }
-}
 
 /** Returns true for IPv6 addresses like `0000:0000:0000:0000:0000:ffff:XXXX:XXXX`. */
 private fun isMappedIpv4Address(address: ByteArray): Boolean {

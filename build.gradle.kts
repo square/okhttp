@@ -134,6 +134,9 @@ subprojects {
     }
   }
 
+  val androidSignature by configurations.creating
+  val jvmSignature by configurations.creating
+
   // Handled in :okhttp directly
   if (project.name != "okhttp") {
     configure<CheckstyleExtension> {
@@ -146,6 +149,8 @@ subprojects {
     configure<AnimalSnifferExtension> {
       annotation = "okhttp3.internal.SuppressSignatureCheck"
       sourceSets = listOf(project.sourceSets["main"])
+      signatures = androidSignature + jvmSignature
+      failWithoutSignatures = false
     }
   }
 
@@ -158,14 +163,14 @@ subprojects {
 
     if (project.name == "mockwebserver3-junit5") {
       // JUnit 5's APIs need java.util.function.Function and java.util.Optional from API 24.
-      "signature"(rootProject.libs.signature.android.apilevel24) { artifact { type = "signature" } }
+      androidSignature(rootProject.libs.signature.android.apilevel24) { artifact { type = "signature" } }
     } else {
       // Everything else requires Android API 21+.
-      "signature"(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
+      androidSignature(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
     }
 
     // OkHttp requires Java 8+.
-    "signature"(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
+    jvmSignature(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
   }
 
   val javaVersionSetting =
@@ -194,8 +199,10 @@ subprojects {
   if (project.name != "okhttp") {
     val testRuntimeOnly: Configuration by configurations.getting
     dependencies {
+      // https://junit.org/junit5/docs/current/user-guide/#running-tests-build-gradle-bom
       testRuntimeOnly(rootProject.libs.junit.jupiter.engine)
       testRuntimeOnly(rootProject.libs.junit.vintage.engine)
+      testRuntimeOnly(rootProject.libs.junit.platform.launcher)
     }
   }
 

@@ -26,7 +26,9 @@ package okhttp3.internal.connection
  * Planning failures are not necessarily fatal. For example, even if we can't DNS lookup the first
  * proxy in a list, looking up a subsequent one may succeed.
  */
-internal class FailedPlan(e: Throwable) : RoutePlanner.Plan {
+internal class FailedPlan(
+  e: Throwable,
+) : RoutePlanner.Plan {
   val result = RoutePlanner.ConnectResult(plan = this, throwable = e)
 
   override val isReady = false

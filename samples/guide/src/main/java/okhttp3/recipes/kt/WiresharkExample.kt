@@ -69,9 +69,7 @@ class WireSharkListenerFactory(
   private val tlsVersions: List<TlsVersion>,
   private val launch: Launch? = null,
 ) : EventListener.Factory {
-  override fun create(call: Call): EventListener {
-    return WireSharkKeyLoggerListener(logFile, launch == null)
-  }
+  override fun create(call: Call): EventListener = WireSharkKeyLoggerListener(logFile, launch == null)
 
   fun launchWireShark(): Process? {
     when (launch) {
@@ -90,21 +88,36 @@ class WireSharkListenerFactory(
       }
       CommandLine -> {
         return ProcessBuilder(
-          "tshark", "-l", "-V", "-o", "tls.keylog_file:$logFile", "-Y", "http2", "-O", "http2,tls",
-        )
-          .redirectInput(File("/dev/null"))
+          "tshark",
+          "-l",
+          "-V",
+          "-o",
+          "tls.keylog_file:$logFile",
+          "-Y",
+          "http2",
+          "-O",
+          "http2,tls",
+        ).redirectInput(File("/dev/null"))
           .redirectOutput(Redirect.INHERIT)
           .redirectError(Redirect.INHERIT)
           .start()
       }
       Gui -> {
         return ProcessBuilder(
-          "nohup", "wireshark", "-o", "tls.keylog_file:$logFile", "-S", "-l", "-Y", "http2", "-k",
-        )
-          .redirectInput(File("/dev/null"))
+          "nohup",
+          "wireshark",
+          "-o",
+          "tls.keylog_file:$logFile",
+          "-S",
+          "-l",
+          "-Y",
+          "http2",
+          "-k",
+        ).redirectInput(File("/dev/null"))
           .redirectOutput(File("/dev/null"))
           .redirectError(Redirect.INHERIT)
-          .start().also {
+          .start()
+          .also {
             // Give it time to start collecting
             Thread.sleep(2000)
           }
@@ -210,7 +223,9 @@ class WireSharkListenerFactory(
         val session = sslSocket.session
 
         val masterSecretHex =
-          session.masterSecret?.encoded?.toByteString()
+          session.masterSecret
+            ?.encoded
+            ?.toByteString()
             ?.hex()
 
         if (masterSecretHex != null) {
@@ -237,11 +252,11 @@ class WireSharkListenerFactory(
 
     private val SSLSession.masterSecret: SecretKey?
       get() =
-        javaClass.getDeclaredField("masterSecret")
+        javaClass
+          .getDeclaredField("masterSecret")
           .apply {
             isAccessible = true
-          }
-          .get(this) as? SecretKey
+          }.get(this) as? SecretKey
 
     val randomRegex = "\"random\"\\s+:\\s+\"([^\"]+)\"".toRegex()
 
@@ -249,7 +264,8 @@ class WireSharkListenerFactory(
       // Enable JUL logging for SSL events, must be activated early or via -D option.
       System.setProperty("javax.net.debug", "")
       logger =
-        Logger.getLogger("javax.net.ssl")
+        Logger
+          .getLogger("javax.net.ssl")
           .apply {
             level = Level.FINEST
             useParentHandlers = false
@@ -259,9 +275,13 @@ class WireSharkListenerFactory(
 }
 
 @SuppressSignatureCheck
-class WiresharkExample(tlsVersions: List<TlsVersion>, private val launch: Launch? = null) {
+class WiresharkExample(
+  tlsVersions: List<TlsVersion>,
+  private val launch: Launch? = null,
+) {
   private val connectionSpec =
-    ConnectionSpec.Builder(ConnectionSpec.RESTRICTED_TLS)
+    ConnectionSpec
+      .Builder(ConnectionSpec.RESTRICTED_TLS)
       .tlsVersions(*tlsVersions.toTypedArray())
       .build()
 
@@ -273,7 +293,8 @@ class WiresharkExample(tlsVersions: List<TlsVersion>, private val launch: Launch
     )
 
   val client =
-    OkHttpClient.Builder()
+    OkHttpClient
+      .Builder()
       .connectionSpecs(listOf(connectionSpec))
       .eventListenerFactory(eventListenerFactory)
       .build()
@@ -283,15 +304,18 @@ class WiresharkExample(tlsVersions: List<TlsVersion>, private val launch: Launch
     val process = eventListenerFactory.launchWireShark()
 
     val fbRequest =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://graph.facebook.com/robots.txt?s=fb")
         .build()
     val twitterRequest =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://api.twitter.com/robots.txt?s=tw")
         .build()
     val googleRequest =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://www.google.com/robots.txt?s=g")
         .build()
 
@@ -321,11 +345,13 @@ class WiresharkExample(tlsVersions: List<TlsVersion>, private val launch: Launch
         println(request.url)
       }
 
-      client.newCall(request)
+      client
+        .newCall(request)
         .execute()
         .use {
           val firstLine =
-            it.body.string()
+            it.body
+              .string()
               .lines()
               .first()
           if (this.launch != CommandLine) {

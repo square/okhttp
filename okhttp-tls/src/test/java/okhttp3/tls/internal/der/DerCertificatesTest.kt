@@ -644,8 +644,7 @@ internal class DerCertificatesTest {
                         "92bc50e78097f2e6a9768997e22f0d70000017173d326b3000004030046304402207" +
                         "e112c029b93e0db15d1de40eddb9aa7a55eeb4b48ce8c94ddf8ed71331e931e02207" +
                         "8281e3c39c8e643b901c2bc6c470aa0ed3ad01bf17f0f207dc0f8a5ab541a70"
-                    )
-                      .decodeHex(),
+                    ).decodeHex(),
                 ),
                 Extension(
                   id = keyUsage,
@@ -724,7 +723,8 @@ internal class DerCertificatesTest {
   @Test
   fun `certificate attributes`() {
     val certificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(3)
         .commonName("Jurassic Park")
         .organizationalUnit("Gene Research")
@@ -767,7 +767,8 @@ internal class DerCertificatesTest {
   @Test
   fun `missing subject alternative names`() {
     val certificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(3)
         .commonName("Jurassic Park")
         .organizationalUnit("Gene Research")
@@ -817,7 +818,8 @@ internal class DerCertificatesTest {
     val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes.toByteArray()))
 
     val certificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .keyPair(publicKey, privateKey)
         .build()
 
@@ -930,8 +932,7 @@ internal class DerCertificatesTest {
           "5f5pk8F3wcXzAeVw06z3k1IB41Tu6MX+CyPU+TeudRlz+wV8b0zDvK+EnRKCCbptVFj1Bkt8lQ4JfcnhAkAk2Y3G" +
           "z+HySrkcT7Cg12M/NkdUQnZe3jr88pt/+IGNwomc6Wt/mJ4fcWONTkGMcfOZff1NQeNXDAZ6941XCsIVAkASOg02" +
           "PlVHLidU7mIE65swMM5/RNhS4aFjez/MwxFNOHaxc9VgCwYPXCLOtdf7AVovdyG0XWgbUXH+NyxKwboE"
-      )
-        .decodeBase64()!!
+      ).decodeBase64()!!
 
     val decoded = CertificateAdapters.privateKeyInfo.fromDer(privateKeyInfoByteString)
 
@@ -946,12 +947,14 @@ internal class DerCertificatesTest {
   @Test
   fun `RSA issuer and signature`() {
     val root =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .rsa2048()
         .build()
     val certificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(root)
         .rsa2048()
         .build()
@@ -982,12 +985,14 @@ internal class DerCertificatesTest {
   @Test
   fun `EC issuer and signature`() {
     val root =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .ecdsa256()
         .build()
     val certificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(root)
         .ecdsa256()
         .build()
@@ -1042,8 +1047,7 @@ internal class DerCertificatesTest {
           "LXLJCzNLJEJcgV9TjbVu33eQR23yMuXD+cZsqLMF+L5IIM47W8dlwKJvMy0xs7Jb1S3NOIhcoVu+XPzRsgKv8Yi2" +
           "B6l278RfzegiCx4vYJv0pBjFzizEiFH9bWTYIOlIJJSM57hoICgjCTS8BoEgndwWIyc/nEmlYaUwmCo9QynY+UmW" +
           "1WPWmVITEJPMdMK6AZqvvaWmuHJ6/vURaz+Hoc5D3z0yJDDCkv52bXV04ZoF6cbcWry7JvNA+djvay/4BRR4SZQ=="
-      )
-        .decodeBase64()!!
+      ).decodeBase64()!!
 
     val decoded = CertificateAdapters.certificate.fromDer(certificateByteString)
     assertThat(decoded.subjectAlternativeNames).isEqualTo(
@@ -1079,17 +1083,15 @@ internal class DerCertificatesTest {
   }
 
   /** Returns a byte string that differs from this one by one bit. */
-  private fun ByteString.offByOneBit(): ByteString {
-    return Buffer()
+  private fun ByteString.offByOneBit(): ByteString =
+    Buffer()
       .write(this, 0, size - 1)
       .writeByte(this[size - 1].toInt() xor 1)
       .readByteString()
-  }
 
-  private fun date(s: String): Date {
-    return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").run {
+  private fun date(s: String): Date =
+    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").run {
       timeZone = TimeZone.getTimeZone("GMT")
       parse(s)
     }
-  }
 }

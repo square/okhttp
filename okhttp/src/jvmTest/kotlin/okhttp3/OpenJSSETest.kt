@@ -104,23 +104,25 @@ class OpenJSSETest {
     // Generate a self-signed cert for the server to serve and the client to trust.
     // can't use TlsUtil.localhost with a non OpenJSSE trust manager
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .commonName("localhost")
         .addSubjectAlternativeName("localhost")
         .build()
     val handshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .heldCertificate(heldCertificate)
         .addTrustedCertificate(heldCertificate.certificate)
         .build()
 
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .build()
+        ).build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 }

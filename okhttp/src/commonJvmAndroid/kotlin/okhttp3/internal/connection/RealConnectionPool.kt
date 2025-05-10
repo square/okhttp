@@ -79,15 +79,12 @@ class RealConnectionPool(
     require(keepAliveDuration > 0L) { "keepAliveDuration <= 0: $keepAliveDuration" }
   }
 
-  fun idleConnectionCount(): Int {
-    return connections.count {
+  fun idleConnectionCount(): Int =
+    connections.count {
       it.withLock { it.calls.isEmpty() }
     }
-  }
 
-  fun connectionCount(): Int {
-    return connections.size
-  }
+  fun connectionCount(): Int = connections.size
 
   /**
    * Attempts to acquire a recycled connection to [address] for [connectionUser]. Returns the connection if it
@@ -441,9 +438,7 @@ class RealConnectionPool(
     }
   }
 
-  private fun Long.jitterBy(amount: Int): Long {
-    return this + ThreadLocalRandom.current().nextInt(amount * -1, amount)
-  }
+  private fun Long.jitterBy(amount: Int): Long = this + ThreadLocalRandom.current().nextInt(amount * -1, amount)
 
   class AddressState(
     val address: Address,

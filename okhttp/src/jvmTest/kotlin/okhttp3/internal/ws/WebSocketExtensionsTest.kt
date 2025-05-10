@@ -106,16 +106,15 @@ class WebSocketExtensionsTest {
         "permessage-deflate; client_max_window_bits=15; client_no_context_takeover; " +
           "server_max_window_bits=8; server_no_context_takeover",
       ),
+    ).isEqualTo(
+      WebSocketExtensions(
+        perMessageDeflate = true,
+        clientMaxWindowBits = 15,
+        clientNoContextTakeover = true,
+        serverMaxWindowBits = 8,
+        serverNoContextTakeover = true,
+      ),
     )
-      .isEqualTo(
-        WebSocketExtensions(
-          perMessageDeflate = true,
-          clientMaxWindowBits = 15,
-          clientNoContextTakeover = true,
-          serverMaxWindowBits = 8,
-          serverNoContextTakeover = true,
-        ),
-      )
   }
 
   @Test
