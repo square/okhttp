@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-  implementation(projects.okhttp)
+  "friendsImplementation"(projects.okhttp)
   implementation(projects.mockwebserver)
   implementation(projects.okhttpTestingSupport)
   implementation(projects.okhttpTls)

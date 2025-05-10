@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.utils.addExtendsFromRelation
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 import java.net.URI
 
@@ -286,6 +287,51 @@ subprojects {
       languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
     }
   }
+
+  // From https://www.liutikas.net/2025/01/12/Kotlin-Library-Friends.html
+
+    // Create configurations we can use to track friend libraries
+  configurations {
+    val friendsApi = register("friendsApi") {
+      isCanBeResolved = true
+      isCanBeConsumed = false
+      isTransitive = true
+    }
+    val friendsImplementation = register("friendsImplementation") {
+      isCanBeResolved = true
+      isCanBeConsumed = false
+      isTransitive = false
+    }
+    val friendsTestImplementation = register("friendsTestImplementation") {
+      isCanBeResolved = true
+      isCanBeConsumed = false
+      isTransitive = false
+    }
+    configurations.configureEach {
+      if (name == "implementation") {
+        extendsFrom(friendsApi.get(), friendsImplementation.get())
+      }
+      if (name == "api") {
+        extendsFrom(friendsApi.get())
+      }
+      if (name == "testImplementation") {
+        extendsFrom(friendsTestImplementation.get())
+      }
+    }
+  }
+
+    // Make these libraries friends :)
+    tasks.withType<KotlinCompile>().configureEach {
+      configurations.findByName("friendsApi")?.let {
+        friendPaths.from(it.incoming.artifactView { }.files)
+      }
+      configurations.findByName("friendsImplementation")?.let {
+        friendPaths.from(it.incoming.artifactView { }.files)
+      }
+      configurations.findByName("friendsTestImplementation")?.let {
+        friendPaths.from(it.incoming.artifactView { }.files)
+      }
+    }
 }
 
 /** Configure publishing and signing for published Java and JavaPlatform subprojects. */
