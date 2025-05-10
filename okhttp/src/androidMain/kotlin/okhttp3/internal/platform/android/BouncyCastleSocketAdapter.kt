@@ -58,9 +58,7 @@ class BouncyCastleSocketAdapter : SocketAdapter {
   companion object {
     val factory =
       object : DeferredSocketAdapter.Factory {
-        override fun matchesSocket(sslSocket: SSLSocket): Boolean {
-          return isSupported && sslSocket is BCSSLSocket
-        }
+        override fun matchesSocket(sslSocket: SSLSocket): Boolean = isSupported && sslSocket is BCSSLSocket
 
         override fun create(sslSocket: SSLSocket): SocketAdapter = BouncyCastleSocketAdapter()
       }

@@ -76,7 +76,6 @@ import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.TestUtil.repeat
 import okhttp3.TestUtil.threadFactory
 import okhttp3.internal.DoubleInetAddressDns
-import okhttp3.internal.EMPTY_REQUEST
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.discard
@@ -146,19 +145,20 @@ class HttpOverHttp2Test {
       platform.assumeHttp2Support()
       server.useHttps(handshakeCertificates.sslSocketFactory())
       client =
-        clientTestRule.newClientBuilder()
+        clientTestRule
+          .newClientBuilder()
           .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
           .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(),
             handshakeCertificates.trustManager,
-          )
-          .hostnameVerifier(RecordingHostnameVerifier())
+          ).hostnameVerifier(RecordingHostnameVerifier())
           .build()
       scheme = "https"
     } else {
       server.protocols = listOf(Protocol.H2_PRIOR_KNOWLEDGE)
       client =
-        clientTestRule.newClientBuilder()
+        clientTestRule
+          .newClientBuilder()
           .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE))
           .build()
       scheme = "http"
@@ -201,7 +201,8 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     val responseWithoutBody =
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .status("HTTP/1.1 204")
         .removeHeader("Content-Length")
         .build()
@@ -228,14 +229,16 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     val mockResponse =
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .setHeader("Content-Length", 5)
         .status("HTTP/1.1 200")
         .build()
     server.enqueue(mockResponse)
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .head()
           .url(server.url("/foo"))
           .build(),
@@ -396,7 +399,8 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(Buffer().write(ByteArray(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE + 1)))
         .build(),
     )
@@ -439,7 +443,8 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(Buffer().write(ByteArray(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE + 1)))
         .build(),
     )
@@ -471,7 +476,8 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(Buffer().write(ByteArray(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE)))
         .build(),
     )
@@ -527,7 +533,8 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .addHeader("Content-Encoding: gzip")
         .body(gzip("ABCABCABC"))
         .build(),
@@ -556,7 +563,8 @@ class HttpOverHttp2Test {
     )
     val credential = basic("username", "password")
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .authenticator(RecordingOkAuthenticator(credential, "Basic"))
         .build()
     val call = client.newCall(Request(server.url("/")))
@@ -622,7 +630,8 @@ class HttpOverHttp2Test {
     server.enqueue(MockResponse(socketPolicy = NoResponse))
     server.enqueue(MockResponse(body = "A"))
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .readTimeout(Duration.ofSeconds(1))
         .build()
 
@@ -659,13 +668,15 @@ class HttpOverHttp2Test {
     val body = CharArray(4096) // 4KiB to read.
     Arrays.fill(body, 'y')
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(String(body))
         .throttleBody(1024, 1, TimeUnit.SECONDS) // Slow connection 1KiB/second.
         .build(),
     )
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .readTimeout(Duration.ofSeconds(2))
         .build()
     val call = client.newCall(Request(server.url("/")))
@@ -688,7 +699,8 @@ class HttpOverHttp2Test {
     setUp(protocol, mockWebServer)
     val body = repeat('y', 2048)
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(body)
         .throttleBody(1024, 1, TimeUnit.SECONDS)
         .build(),
@@ -697,7 +709,8 @@ class HttpOverHttp2Test {
       MockResponse(body = body),
     )
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .readTimeout(Duration.ofMillis(500)) // Half a second to read something.
         .build()
 
@@ -728,30 +741,35 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("A")
         .bodyDelay(1, TimeUnit.SECONDS)
         .build(),
     )
     val client1 =
-      client.newBuilder()
+      client
+        .newBuilder()
         .readTimeout(Duration.ofSeconds(2))
         .build()
     val call1 =
       client1
         .newCall(
-          Request.Builder()
+          Request
+            .Builder()
             .url(server.url("/"))
             .build(),
         )
     val client2 =
-      client.newBuilder()
+      client
+        .newBuilder()
         .readTimeout(Duration.ofMillis(200))
         .build()
     val call2 =
       client2
         .newCall(
-          Request.Builder()
+          Request
+            .Builder()
             .url(server.url("/"))
             .build(),
         )
@@ -774,7 +792,8 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .cache(cache)
         .build()
     server.enqueue(
@@ -808,7 +827,8 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .cache(cache)
         .build()
     server.enqueue(
@@ -842,7 +862,8 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .cache(cache)
         .build()
     server.enqueue(
@@ -876,14 +897,16 @@ class HttpOverHttp2Test {
     setUp(protocol, mockWebServer)
     val cookieJar = RecordingCookieJar()
     val requestCookie =
-      Cookie.Builder()
+      Cookie
+        .Builder()
         .name("a")
         .value("b")
         .domain(server.hostName)
         .build()
     cookieJar.enqueueRequestCookies(requestCookie)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .cookieJar(cookieJar)
         .build()
     server.enqueue(MockResponse())
@@ -903,7 +926,8 @@ class HttpOverHttp2Test {
     setUp(protocol, mockWebServer)
     val cookieJar = RecordingCookieJar()
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .cookieJar(cookieJar)
         .build()
     server.enqueue(
@@ -968,7 +992,8 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(DoubleInetAddressDns()) // Two routes!
         .build()
     server.enqueue(
@@ -995,7 +1020,8 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(DoubleInetAddressDns()) // Two routes!
         .build()
     server.enqueue(
@@ -1139,7 +1165,8 @@ class HttpOverHttp2Test {
     )
     server.enqueue(MockResponse(body = "abc"))
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(DoubleInetAddressDns())
         .build()
     val call = client.newCall(Request(server.url("/")))
@@ -1167,7 +1194,8 @@ class HttpOverHttp2Test {
     )
     server.enqueue(MockResponse(body = "abc"))
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(DoubleInetAddressDns())
         .build()
     val call = client.newCall(Request(server.url("/")))
@@ -1202,7 +1230,8 @@ class HttpOverHttp2Test {
       )
     val dispatcher = RespondAfterCancelDispatcher(responseDequeuedLatches, requestCanceledLatches)
     dispatcher.enqueueResponse(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .bodyDelay(10, TimeUnit.SECONDS)
         .body("abc")
         .build(),
@@ -1212,7 +1241,8 @@ class HttpOverHttp2Test {
     )
     server.dispatcher = dispatcher
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(DoubleInetAddressDns())
         .build()
     callAndCancel(0, responseDequeuedLatches[0], requestCanceledLatches[0])
@@ -1246,13 +1276,15 @@ class HttpOverHttp2Test {
       )
     val dispatcher = RespondAfterCancelDispatcher(responseDequeuedLatches, requestCanceledLatches)
     dispatcher.enqueueResponse(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .bodyDelay(10, TimeUnit.SECONDS)
         .body("abc")
         .build(),
     )
     dispatcher.enqueueResponse(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .bodyDelay(10, TimeUnit.SECONDS)
         .body("def")
         .build(),
@@ -1262,7 +1294,8 @@ class HttpOverHttp2Test {
     )
     server.dispatcher = dispatcher
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(DoubleInetAddressDns())
         .build()
     callAndCancel(0, responseDequeuedLatches[0], requestCanceledLatches[0])
@@ -1366,7 +1399,8 @@ class HttpOverHttp2Test {
     )
     server.enqueue(MockResponse(body = "abc"))
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .retryOnConnectionFailure(false)
         .build()
     val call = client.newCall(Request(server.url("/")))
@@ -1409,7 +1443,8 @@ class HttpOverHttp2Test {
         response.request
       }
     val blockingAuthClient =
-      client.newBuilder()
+      client
+        .newBuilder()
         .authenticator(authenticator)
         .build()
     val callback: Callback =
@@ -1461,7 +1496,8 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .addHeaderLenient("Alpha", "α")
         .addHeaderLenient("β", "Beta")
         .build(),
@@ -1488,7 +1524,8 @@ class HttpOverHttp2Test {
         MockResponse(body = "bar"),
       )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("ABCDE")
         .addPush(pushPromise)
         .build(),
@@ -1524,7 +1561,8 @@ class HttpOverHttp2Test {
         MockResponse(code = 204),
       )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("ABCDE")
         .addPush(pushPromise)
         .build(),
@@ -1557,7 +1595,8 @@ class HttpOverHttp2Test {
     server.enqueue(MockResponse(body = "ABC"))
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .method("DELETE", null)
           .build(),
@@ -1580,9 +1619,10 @@ class HttpOverHttp2Test {
     server.enqueue(MockResponse(body = "ABC"))
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
-          .method("DELETE", EMPTY_REQUEST)
+          .method("DELETE", RequestBody.Empty)
           .build(),
       )
     val response = call.execute()
@@ -1609,13 +1649,15 @@ class HttpOverHttp2Test {
     setUp(protocol, mockWebServer)
     // Ping every 500 ms, starting at 500 ms.
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .pingInterval(Duration.ofMillis(500))
         .build()
 
     // Delay the response to give 1 ping enough time to be sent and replied to.
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .bodyDelay(750, TimeUnit.MILLISECONDS)
         .body("ABC")
         .build(),
@@ -1651,7 +1693,8 @@ class HttpOverHttp2Test {
 
     // Ping every 500 ms, starting at 500 ms.
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .readTimeout(Duration.ofSeconds(10)) // Confirm we fail before the read timeout.
         .pingInterval(Duration.ofMillis(500))
         .build()
@@ -1690,7 +1733,8 @@ class HttpOverHttp2Test {
     setUp(protocol, mockWebServer)
     assumeNotWindows()
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .readTimeout(Duration.ofMillis(500))
         .build()
 
@@ -1737,11 +1781,13 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .readTimeout(Duration.ofMillis(500))
         .build()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .bodyDelay(1000, TimeUnit.MILLISECONDS)
         .body("a")
         .build(),
@@ -1821,7 +1867,8 @@ class HttpOverHttp2Test {
 
     // Read & write a full request to confirm settings are accepted.
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .settings(settings)
         .build(),
     )
@@ -1876,16 +1923,18 @@ class HttpOverHttp2Test {
     )
     val connections: MutableList<RealConnection?> = ArrayList()
     val localClient =
-      client.newBuilder().eventListener(
-        object : EventListener() {
-          override fun connectionAcquired(
-            call: Call,
-            connection: Connection,
-          ) {
-            connections.add(connection as RealConnection)
-          }
-        },
-      ).build()
+      client
+        .newBuilder()
+        .eventListener(
+          object : EventListener() {
+            override fun connectionAcquired(
+              call: Call,
+              connection: Connection,
+            ) {
+              connections.add(connection as RealConnection)
+            }
+          },
+        ).build()
     val call1 = localClient.newCall(Request(server.url("/")))
     val response1 = call1.execute()
     assertThat(response1.body.string()).isEqualTo("ABC")
@@ -1931,7 +1980,8 @@ class HttpOverHttp2Test {
     )
     server.enqueue(MockResponse(body = "DEF"))
     val client2 =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(
           object : Interceptor {
             var executedCall = false
@@ -1943,7 +1993,8 @@ class HttpOverHttp2Test {
                 executedCall = true
                 val call =
                   client.newCall(
-                    Request.Builder()
+                    Request
+                      .Builder()
                       .url(server.url("/"))
                       .build(),
                   )
@@ -1956,8 +2007,7 @@ class HttpOverHttp2Test {
               return chain.proceed(chain.request())
             }
           },
-        )
-        .build()
+        ).build()
     val call = client2.newCall(Request(server.url("/")))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("DEF")
@@ -1973,7 +2023,8 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .headersDelay(1, TimeUnit.SECONDS)
         .body("ABC")
         .build(),
@@ -2061,7 +2112,8 @@ class HttpOverHttp2Test {
             try {
               val call2 =
                 client.newCall(
-                  Request.Builder()
+                  Request
+                    .Builder()
                     .url("https://android.com/call2")
                     .build(),
                 )
@@ -2081,7 +2133,8 @@ class HttpOverHttp2Test {
         }
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .proxy(server.toProxyAddress())
         .build()
     val call1 = client.newCall(Request("https://android.com/call1".toHttpUrl()))
@@ -2113,17 +2166,19 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(
           Interceptor { chain: Interceptor.Chain? ->
             val request =
-              chain!!.request().newBuilder()
+              chain!!
+                .request()
+                .newBuilder()
                 .header("Host", "privateobject.com")
                 .build()
             chain.proceed(request)
           },
-        )
-        .build()
+        ).build()
     server.enqueue(MockResponse())
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
@@ -2148,7 +2203,8 @@ class HttpOverHttp2Test {
       try {
         val call =
           client.newCall(
-            Request.Builder()
+            Request
+              .Builder()
               .url(server.url(path))
               .build(),
           )
@@ -2187,26 +2243,28 @@ class HttpOverHttp2Test {
         }
       }
     client =
-      client.newBuilder().eventListenerFactory(
-        clientTestRule.wrap(
-          object : EventListener() {
-            var callCount = 0
+      client
+        .newBuilder()
+        .eventListenerFactory(
+          clientTestRule.wrap(
+            object : EventListener() {
+              var callCount = 0
 
-            override fun connectionAcquired(
-              call: Call,
-              connection: Connection,
-            ) {
-              try {
-                if (callCount++ == 1) {
-                  server.shutdown()
+              override fun connectionAcquired(
+                call: Call,
+                connection: Connection,
+              ) {
+                try {
+                  if (callCount++ == 1) {
+                    server.shutdown()
+                  }
+                } catch (e: IOException) {
+                  fail("")
                 }
-              } catch (e: IOException) {
-                fail("")
               }
-            }
-          },
-        ),
-      ).build()
+            },
+          ),
+        ).build()
     client.newCall(Request.Builder().url(server.url("")).build()).enqueue(
       callback,
     )
@@ -2259,7 +2317,8 @@ class HttpOverHttp2Test {
     server.enqueue(MockResponse(inTunnel = true))
     server.enqueue(MockResponse(body = "ABCDE"))
     val client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .proxy(server.toProxyAddress())
         .build()
 
@@ -2305,7 +2364,8 @@ class HttpOverHttp2Test {
     server.enqueue(MockResponse(inTunnel = true))
     server.enqueue(MockResponse(body = "response body"))
     val client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .proxy(server.toProxyAddress())
         .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
         .build()

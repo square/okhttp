@@ -22,7 +22,7 @@ import okhttp3.RequestBody
 import okio.BufferedSink
 import okio.ByteString
 
-fun ByteArray.commonToRequestBody(
+internal fun ByteArray.commonToRequestBody(
   contentType: MediaType?,
   offset: Int,
   byteCount: Int,
@@ -40,17 +40,17 @@ fun ByteArray.commonToRequestBody(
 }
 
 @Suppress("unused")
-fun RequestBody.commonContentLength(): Long = -1L
+internal fun RequestBody.commonContentLength(): Long = -1L
 
 @Suppress("unused")
-fun RequestBody.commonIsDuplex(): Boolean = false
+internal fun RequestBody.commonIsDuplex(): Boolean = false
 
 @Suppress("unused")
-fun RequestBody.commonIsOneShot(): Boolean = false
+internal fun RequestBody.commonIsOneShot(): Boolean = false
 
 /** Returns a new request body that transmits this. */
-fun ByteString.commonToRequestBody(contentType: MediaType?): RequestBody {
-  return object : RequestBody() {
+internal fun ByteString.commonToRequestBody(contentType: MediaType?): RequestBody =
+  object : RequestBody() {
     override fun contentType() = contentType
 
     override fun contentLength() = size.toLong()
@@ -59,4 +59,3 @@ fun ByteString.commonToRequestBody(contentType: MediaType?): RequestBody {
       sink.write(this@commonToRequestBody)
     }
   }
-}

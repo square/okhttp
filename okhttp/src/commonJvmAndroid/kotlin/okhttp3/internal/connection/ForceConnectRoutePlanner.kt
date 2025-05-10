@@ -18,6 +18,8 @@ package okhttp3.internal.connection
 /**
  * A RoutePlanner that will always establish a new connection, ignoring any connection pooling
  */
-class ForceConnectRoutePlanner(private val delegate: RealRoutePlanner) : RoutePlanner by delegate {
+class ForceConnectRoutePlanner(
+  private val delegate: RealRoutePlanner,
+) : RoutePlanner by delegate {
   override fun plan(): RoutePlanner.Plan = delegate.planConnect() // not delegate.plan()
 }

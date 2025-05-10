@@ -77,7 +77,8 @@ class ConnectPlan(
   private val tunnelRequest: Request?,
   internal val connectionSpecIndex: Int,
   internal val isTlsFallback: Boolean,
-) : RoutePlanner.Plan, ExchangeCodec.Carrier {
+) : RoutePlanner.Plan,
+  ExchangeCodec.Carrier {
   /** True if this connect was canceled; typically because it lost a race. */
   @Volatile private var canceled = false
 
@@ -106,8 +107,8 @@ class ConnectPlan(
     tunnelRequest: Request? = this.tunnelRequest,
     connectionSpecIndex: Int = this.connectionSpecIndex,
     isTlsFallback: Boolean = this.isTlsFallback,
-  ): ConnectPlan {
-    return ConnectPlan(
+  ): ConnectPlan =
+    ConnectPlan(
       taskRunner = taskRunner,
       connectionPool = connectionPool,
       readTimeoutMillis = readTimeoutMillis,
@@ -125,7 +126,6 @@ class ConnectPlan(
       connectionSpecIndex = connectionSpecIndex,
       isTlsFallback = isTlsFallback,
     )
-  }
 
   override fun connectTcp(): ConnectResult {
     check(rawSocket == null) { "TCP already connected" }
@@ -441,7 +441,8 @@ class ConnectPlan(
       tunnelCodec.writeRequest(nextRequest.headers, requestLine)
       tunnelCodec.finishRequest()
       val response =
-        tunnelCodec.readResponseHeaders(false)!!
+        tunnelCodec
+          .readResponseHeaders(false)!!
           .request(nextRequest)
           .build()
       tunnelCodec.skipConnectBody(response)
@@ -537,8 +538,8 @@ class ConnectPlan(
     rawSocket?.closeQuietly()
   }
 
-  override fun retry(): RoutePlanner.Plan {
-    return ConnectPlan(
+  override fun retry(): RoutePlanner.Plan =
+    ConnectPlan(
       taskRunner = taskRunner,
       connectionPool = connectionPool,
       readTimeoutMillis = readTimeoutMillis,
@@ -556,7 +557,6 @@ class ConnectPlan(
       connectionSpecIndex = connectionSpecIndex,
       isTlsFallback = isTlsFallback,
     )
-  }
 
   fun closeQuietly() {
     socket?.closeQuietly()

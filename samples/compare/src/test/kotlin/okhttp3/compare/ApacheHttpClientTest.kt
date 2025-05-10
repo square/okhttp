@@ -42,7 +42,8 @@ class ApacheHttpClientTest {
 
   @Test fun get(server: MockWebServer) {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("hello, Apache HttpClient 5.x")
         .build(),
     )

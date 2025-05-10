@@ -92,7 +92,9 @@ class FormBody internal constructor(
 
   class Builder
     @JvmOverloads
-    constructor(private val charset: Charset? = null) {
+    constructor(
+      private val charset: Charset? = null,
+    ) {
       private val names = mutableListOf<String>()
       private val values = mutableListOf<String>()
 

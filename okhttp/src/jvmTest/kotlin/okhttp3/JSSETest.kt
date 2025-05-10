@@ -83,7 +83,11 @@ class JSSETest {
         assertEquals(Protocol.HTTP_2, response.protocol)
       }
 
-      assertThat(response.connection.socket().javaClass.name).isEqualTo(
+      assertThat(
+        response.connection
+          .socket()
+          .javaClass.name,
+      ).isEqualTo(
         "sun.security.ssl.SSLSocketImpl",
       )
     }
@@ -130,7 +134,8 @@ class JSSETest {
     assumeNetwork()
 
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .eventListenerFactory(
           clientTestRule.wrap(
             object : EventListener() {
@@ -140,12 +145,15 @@ class JSSETest {
               ) {
                 val sslSocket = connection.socket() as SSLSocket
 
-                sessionIds.add(sslSocket.session.id.toByteString().hex())
+                sessionIds.add(
+                  sslSocket.session.id
+                    .toByteString()
+                    .hex(),
+                )
               }
             },
           ),
-        )
-        .build()
+        ).build()
 
     val request = Request.Builder().url("https://facebook.com/robots.txt").build()
 
@@ -169,12 +177,12 @@ class JSSETest {
 
   private fun enableTls() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .build()
+        ).build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 }

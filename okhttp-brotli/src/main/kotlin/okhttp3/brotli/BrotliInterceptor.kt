@@ -26,10 +26,12 @@ import okhttp3.brotli.internal.uncompress
  * responses.  n.b. this replaces the transparent gzip compression in BridgeInterceptor.
  */
 object BrotliInterceptor : Interceptor {
-  override fun intercept(chain: Interceptor.Chain): Response {
-    return if (chain.request().header("Accept-Encoding") == null) {
+  override fun intercept(chain: Interceptor.Chain): Response =
+    if (chain.request().header("Accept-Encoding") == null) {
       val request =
-        chain.request().newBuilder()
+        chain
+          .request()
+          .newBuilder()
           .header("Accept-Encoding", "br,gzip")
           .build()
 
@@ -39,5 +41,4 @@ object BrotliInterceptor : Interceptor {
     } else {
       chain.proceed(chain.request())
     }
-  }
 }

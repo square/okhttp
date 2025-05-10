@@ -218,14 +218,14 @@ class MockWebServer : Closeable {
    *
    * @param path the request path, such as "/".
    */
-  fun url(path: String): HttpUrl {
-    return HttpUrl.Builder()
+  fun url(path: String): HttpUrl =
+    HttpUrl
+      .Builder()
       .scheme(if (sslSocketFactory != null) "https" else "http")
       .host(hostName)
       .port(port)
       .build()
       .resolve(path)!!
-  }
 
   /**
    * Serve requests with HTTPS rather than otherwise.
@@ -425,7 +425,9 @@ class MockWebServer : Closeable {
     }
   }
 
-  internal inner class SocketHandler(private val raw: Socket) {
+  internal inner class SocketHandler(
+    private val raw: Socket,
+  ) {
     private var sequenceNumber = 0
 
     @Throws(Exception::class)
@@ -495,7 +497,8 @@ class MockWebServer : Closeable {
       if (protocol === Protocol.HTTP_2 || protocol === Protocol.H2_PRIOR_KNOWLEDGE) {
         val http2SocketHandler = Http2SocketHandler(socket, protocol)
         val connection =
-          Http2Connection.Builder(false, taskRunner)
+          Http2Connection
+            .Builder(false, taskRunner)
             .socket(socket)
             .listener(http2SocketHandler)
             .build()
@@ -706,12 +709,13 @@ class MockWebServer : Closeable {
       var hasBody = false
       val policy = dispatcher.peek()
       val requestBodySink =
-        requestBody.withThrottlingAndSocketPolicy(
-          policy = policy,
-          disconnectHalfway = policy.socketPolicy == DisconnectDuringRequestBody,
-          expectedByteCount = contentLength,
-          socket = socket,
-        ).buffer()
+        requestBody
+          .withThrottlingAndSocketPolicy(
+            policy = policy,
+            disconnectHalfway = policy.socketPolicy == DisconnectDuringRequestBody,
+            expectedByteCount = contentLength,
+            socket = socket,
+          ).buffer()
       requestBodySink.use {
         when {
           policy.socketPolicy is DoNotReadRequestBody -> {
@@ -771,7 +775,8 @@ class MockWebServer : Closeable {
   ) {
     val key = request.headers["Sec-WebSocket-Key"]
     val webSocketResponse =
-      response.newBuilder()
+      response
+        .newBuilder()
         .setHeader("Sec-WebSocket-Accept", WebSocketProtocol.acceptHeader(key!!))
         .build()
     writeHttpResponse(socket, sink, webSocketResponse)
@@ -780,12 +785,14 @@ class MockWebServer : Closeable {
     val scheme = if (request.handshake != null) "https" else "http"
     val authority = request.headers["Host"] // Has host and port.
     val fancyRequest =
-      Request.Builder()
+      Request
+        .Builder()
         .url("$scheme://$authority/")
         .headers(request.headers)
         .build()
     val fancyResponse =
-      Response.Builder()
+      Response
+        .Builder()
         .code(webSocketResponse.code)
         .message(webSocketResponse.message)
         .headers(webSocketResponse.headers)
@@ -841,12 +848,13 @@ class MockWebServer : Closeable {
     val body = response.body ?: return
     sleepNanos(response.bodyDelayNanos)
     val responseBodySink =
-      sink.withThrottlingAndSocketPolicy(
-        policy = response,
-        disconnectHalfway = response.socketPolicy == DisconnectDuringResponseBody,
-        expectedByteCount = body.contentLength,
-        socket = socket,
-      ).buffer()
+      sink
+        .withThrottlingAndSocketPolicy(
+          policy = response,
+          disconnectHalfway = response.socketPolicy == DisconnectDuringResponseBody,
+          expectedByteCount = body.contentLength,
+          socket = socket,
+        ).buffer()
     body.writeTo(responseBodySink)
     responseBodySink.emit()
 
@@ -1043,12 +1051,13 @@ class MockWebServer : Closeable {
         try {
           val contentLengthString = headers["content-length"]
           val requestBodySink =
-            body.withThrottlingAndSocketPolicy(
-              policy = peek,
-              disconnectHalfway = peek.socketPolicy == DisconnectDuringRequestBody,
-              expectedByteCount = contentLengthString?.toLong() ?: Long.MAX_VALUE,
-              socket = socket,
-            ).buffer()
+            body
+              .withThrottlingAndSocketPolicy(
+                policy = peek,
+                disconnectHalfway = peek.socketPolicy == DisconnectDuringRequestBody,
+                expectedByteCount = contentLengthString?.toLong() ?: Long.MAX_VALUE,
+                socket = socket,
+              ).buffer()
           requestBodySink.use {
             it.writeAll(stream.getSource())
           }
@@ -1115,12 +1124,14 @@ class MockWebServer : Closeable {
       if (body != null) {
         sleepNanos(bodyDelayNanos)
         val responseBodySink =
-          stream.getSink().withThrottlingAndSocketPolicy(
-            policy = response,
-            disconnectHalfway = response.socketPolicy == DisconnectDuringResponseBody,
-            expectedByteCount = body.contentLength,
-            socket = socket,
-          ).buffer()
+          stream
+            .getSink()
+            .withThrottlingAndSocketPolicy(
+              policy = response,
+              disconnectHalfway = response.socketPolicy == DisconnectDuringResponseBody,
+              expectedByteCount = body.contentLength,
+              socket = socket,
+            ).buffer()
         responseBodySink.use {
           body.writeTo(responseBodySink)
         }

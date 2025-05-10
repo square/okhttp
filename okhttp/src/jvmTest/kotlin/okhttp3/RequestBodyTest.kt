@@ -122,13 +122,12 @@ class RequestBodyTest {
   private inline fun <T> assertOnFileDescriptor(
     content: String? = null,
     fn: (FileDescriptor) -> T,
-  ): T {
-    return assertOnPath(content) {
+  ): T =
+    assertOnPath(content) {
       FileInputStream(filePath.toFile()).use { fis ->
         fn(fis.fd)
       }
     }
-  }
 
   private inline fun <T> assertOnPath(
     content: String? = null,

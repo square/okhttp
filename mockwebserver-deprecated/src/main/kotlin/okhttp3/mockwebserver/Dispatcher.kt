@@ -19,9 +19,7 @@ abstract class Dispatcher {
   @Throws(InterruptedException::class)
   abstract fun dispatch(request: RecordedRequest): MockResponse
 
-  open fun peek(): MockResponse {
-    return MockResponse().apply { this.socketPolicy = SocketPolicy.KEEP_OPEN }
-  }
+  open fun peek(): MockResponse = MockResponse().apply { this.socketPolicy = SocketPolicy.KEEP_OPEN }
 
   open fun shutdown() {}
 }

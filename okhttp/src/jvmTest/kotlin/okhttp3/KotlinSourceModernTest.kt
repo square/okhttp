@@ -1301,8 +1301,8 @@ class KotlinSourceModernTest {
       }
   }
 
-  private fun newCookieHandler(): CookieHandler {
-    return object : CookieHandler() {
+  private fun newCookieHandler(): CookieHandler =
+    object : CookieHandler() {
       override fun put(
         uri: URI?,
         responseHeaders: MutableMap<String, MutableList<String>>?,
@@ -1313,10 +1313,9 @@ class KotlinSourceModernTest {
         requestHeaders: MutableMap<String, MutableList<String>>?,
       ): MutableMap<String, MutableList<String>> = TODO()
     }
-  }
 
-  private fun newInterceptorChain(): Interceptor.Chain {
-    return object : Interceptor.Chain {
+  private fun newInterceptorChain(): Interceptor.Chain =
+    object : Interceptor.Chain {
       override fun request(): Request = TODO()
 
       override fun proceed(request: Request): Response = TODO()
@@ -1346,5 +1345,4 @@ class KotlinSourceModernTest {
         unit: TimeUnit,
       ): Interceptor.Chain = TODO()
     }
-  }
 }

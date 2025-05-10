@@ -213,6 +213,18 @@ abstract class ResponseBody : Closeable {
   }
 
   companion object {
+    /** Empty response body. */
+    @JvmField
+    val Empty: ResponseBody = EmptyResponseBody()
+
+    private class EmptyResponseBody : ResponseBody() {
+      override fun contentType() = null
+
+      override fun contentLength() = 0L
+
+      override fun source() = Buffer()
+    }
+
     /**
      * Returns a new response body that transmits this string. If [contentType] is non-null and
      * has a charset other than utf-8 the behaviour differs by platform.

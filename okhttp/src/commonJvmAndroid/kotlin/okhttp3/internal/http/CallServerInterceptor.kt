@@ -25,7 +25,9 @@ import okhttp3.internal.stripBody
 import okio.buffer
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
-class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
+class CallServerInterceptor(
+  private val forWebSocket: Boolean,
+) : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
     val realChain = chain as RealInterceptorChain
@@ -127,7 +129,8 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
           response.stripBody()
         } else {
-          response.newBuilder()
+          response
+            .newBuilder()
             .body(exchange.openResponseBody(response))
             .build()
         }

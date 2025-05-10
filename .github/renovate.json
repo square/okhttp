@@ -3,8 +3,9 @@
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
-    "schedule:weekly"
+    "schedule:daily"
   ],
+  "semanticCommits": "disabled",
   "labels": [
     "renovate"
   ],

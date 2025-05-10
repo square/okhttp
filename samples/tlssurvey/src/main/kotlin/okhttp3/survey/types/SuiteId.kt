@@ -17,8 +17,9 @@ package okhttp3.survey.types
 
 import okio.ByteString
 
-data class SuiteId(val id: ByteString?, val name: String) {
-  fun matches(suiteId: SuiteId): Boolean {
-    return id == suiteId.id || name.substring(4) == suiteId.name.substring(4)
-  }
+data class SuiteId(
+  val id: ByteString?,
+  val name: String,
+) {
+  fun matches(suiteId: SuiteId): Boolean = id == suiteId.id || name.substring(4) == suiteId.name.substring(4)
 }

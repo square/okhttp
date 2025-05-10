@@ -54,13 +54,15 @@ class InsecureForHostTest {
     server.enqueue(MockResponse())
 
     val clientCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addPlatformTrustedCertificates()
         .addInsecureHost(server.hostName)
         .build()
 
     val client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
         .build()
 
@@ -77,24 +79,28 @@ class InsecureForHostTest {
 
   @Test fun `bad certificates host in insecureHosts fails with SSLException`() {
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .addSubjectAlternativeName("example.com")
         .build()
     val serverCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .heldCertificate(heldCertificate)
         .build()
     server.useHttps(serverCertificates.sslSocketFactory())
     server.enqueue(MockResponse())
 
     val clientCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addPlatformTrustedCertificates()
         .addInsecureHost(server.hostName)
         .build()
 
     val client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
         .build()
 
@@ -110,13 +116,15 @@ class InsecureForHostTest {
     server.enqueue(MockResponse())
 
     val clientCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addPlatformTrustedCertificates()
         .addInsecureHost("${server.hostName}2")
         .build()
 
     val client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
         .build()
 

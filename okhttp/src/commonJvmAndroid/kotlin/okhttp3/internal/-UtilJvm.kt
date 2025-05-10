@@ -41,22 +41,11 @@ import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.defaultPort
 import okhttp3.OkHttpClient
-import okhttp3.RequestBody
 import okhttp3.Response
-import okhttp3.ResponseBody
 import okhttp3.internal.http2.Header
 import okio.Buffer
 import okio.BufferedSource
 import okio.Source
-
-@JvmField
-internal val EMPTY_HEADERS: Headers = commonEmptyHeaders
-
-@JvmField
-internal val EMPTY_REQUEST: RequestBody = commonEmptyRequestBody
-
-@JvmField
-internal val EMPTY_RESPONSE: ResponseBody = commonEmptyResponse
 
 /** GMT and UTC are equivalent for our purposes. */
 @JvmField
@@ -90,16 +79,14 @@ internal fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
 internal fun format(
   format: String,
   vararg args: Any,
-): String {
-  return String.format(Locale.US, format, *args)
-}
+): String = String.format(Locale.US, format, *args)
 
 /**
  * will also strip BOM from the source
  */
 @Throws(IOException::class)
-internal fun BufferedSource.readBomAsCharset(default: Charset): Charset {
-  return when (select(UNICODE_BOMS)) {
+internal fun BufferedSource.readBomAsCharset(default: Charset): Charset =
+  when (select(UNICODE_BOMS)) {
     // a mapping from the index of encoding methods in UNICODE_BOMS to its corresponding encoding method
     0 -> UTF_8
     1 -> UTF_16BE
@@ -109,7 +96,6 @@ internal fun BufferedSource.readBomAsCharset(default: Charset): Charset {
     -1 -> default
     else -> throw AssertionError()
   }
-}
 
 internal fun checkDuration(
   name: String,
@@ -218,8 +204,8 @@ internal fun Socket.peerName(): String {
  *
  * @param source the source used to read bytes from the socket.
  */
-internal fun Socket.isHealthy(source: BufferedSource): Boolean {
-  return try {
+internal fun Socket.isHealthy(source: BufferedSource): Boolean =
+  try {
     val readTimeout = soTimeout
     try {
       soTimeout = 1
@@ -232,7 +218,6 @@ internal fun Socket.isHealthy(source: BufferedSource): Boolean {
   } catch (_: IOException) {
     false // Couldn't read; socket is closed.
   }
-}
 
 internal inline fun threadName(
   name: String,
@@ -249,20 +234,29 @@ internal inline fun threadName(
 }
 
 /** Returns the Content-Length as reported by the response headers. */
-internal fun Response.headersContentLength(): Long {
-  return headers["Content-Length"]?.toLongOrDefault(-1L) ?: -1L
-}
+internal fun Response.headersContentLength(): Long = headers["Content-Length"]?.toLongOrNull() ?: -1L
+
+/** Returns an immutable wrap of this. */
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun <T> List<T>.unmodifiable(): List<T> = Collections.unmodifiableList(this)
+
+/** Returns an immutable wrap of this. */
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun <T> Set<T>.unmodifiable(): Set<T> = Collections.unmodifiableSet(this)
+
+/** Returns an immutable wrap of this. */
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun <K, V> Map<K, V>.unmodifiable(): Map<K, V> = Collections.unmodifiableMap(this)
 
 /** Returns an immutable copy of this. */
-internal fun <T> List<T>.toImmutableList(): List<T> {
-  return Collections.unmodifiableList(toMutableList())
-}
+internal inline fun <reified T> List<T>.toImmutableList(): List<T> = this.toTypedArray().toImmutableList()
 
 /** Returns an immutable list containing [elements]. */
 @SafeVarargs
-internal fun <T> immutableListOf(vararg elements: T): List<T> {
-  return Collections.unmodifiableList(listOf(*elements.clone()))
-}
+internal fun <T> immutableListOf(vararg elements: T): List<T> = elements.toImmutableList()
+
+/** Returns an immutable list from copy of this. */
+internal fun <T> Array<out T>?.toImmutableList(): List<T> = if (this.isNullOrEmpty()) emptyList() else this.asList().unmodifiable()
 
 /** Closes this, ignoring any checked exceptions. */
 internal fun Socket.closeQuietly() {
@@ -343,7 +337,9 @@ internal val assertionsEnabled: Boolean = OkHttpClient::class.java.desiredAssert
  */
 @JvmField
 internal val okHttpName: String =
-  OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
+  OkHttpClient::class.java.name
+    .removePrefix("okhttp3.")
+    .removeSuffix("Client")
 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun ReentrantLock.assertHeld() {

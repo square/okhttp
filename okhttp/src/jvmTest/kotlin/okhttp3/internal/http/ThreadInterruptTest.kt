@@ -63,7 +63,8 @@ class ThreadInterruptTest {
         }
       }
     client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .socketFactory(
           object : DelegatingSocketFactory(getDefault()) {
             @Throws(IOException::class)
@@ -73,8 +74,7 @@ class ThreadInterruptTest {
               return socket
             }
           },
-        )
-        .build()
+        ).build()
   }
 
   @AfterEach
@@ -88,7 +88,8 @@ class ThreadInterruptTest {
     server.start()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .post(
             object : RequestBody() {
@@ -103,8 +104,7 @@ class ThreadInterruptTest {
                 fail("Expected connection to be closed")
               }
             },
-          )
-          .build(),
+          ).build(),
       )
     interruptLater(500)
     assertFailsWith<IOException> {
@@ -123,7 +123,8 @@ class ThreadInterruptTest {
     server.start()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(server.url("/"))
           .build(),
       )

@@ -135,11 +135,10 @@ internal interface DerAdapter<T> {
   }
 
   /** Returns an adapter that returns a set of values of this type. */
-  fun asSetOf(): BasicDerAdapter<List<T>> {
-    return asSequenceOf(
+  fun asSetOf(): BasicDerAdapter<List<T>> =
+    asSequenceOf(
       name = "SET OF",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
       tag = 17L,
     )
-  }
 }

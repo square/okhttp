@@ -90,9 +90,7 @@ class CacheStrategy internal constructor(
      * Returns true if computeFreshnessLifetime used a heuristic. If we used a heuristic to serve a
      * cached response older than 24 hours, we are required to attach a warning.
      */
-    private fun isFreshnessLifetimeHeuristic(): Boolean {
-      return cacheResponse!!.cacheControl.maxAgeSeconds == -1 && expires == null
-    }
+    private fun isFreshnessLifetimeHeuristic(): Boolean = cacheResponse!!.cacheControl.maxAgeSeconds == -1 && expires == null
 
     init {
       if (cacheResponse != null) {
@@ -219,7 +217,8 @@ class CacheStrategy internal constructor(
       conditionalRequestHeaders.addLenient(conditionName, conditionValue!!)
 
       val conditionalRequest =
-        request.newBuilder()
+        request
+          .newBuilder()
           .headers(conditionalRequestHeaders.build())
           .build()
       return CacheStrategy(conditionalRequest, cacheResponse)

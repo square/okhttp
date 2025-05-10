@@ -58,20 +58,21 @@ class CookiesTest {
   fun testNetscapeResponse() {
     val cookieManager = CookieManager(null, CookiePolicy.ACCEPT_ORIGINAL_SERVER)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .cookieJar(JavaNetCookieJar(cookieManager))
         .build()
     val urlWithIpAddress = urlWithIpAddress(server, "/path/foo")
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .addHeader(
           "Set-Cookie: a=android; " +
             "expires=Fri, 31-Dec-9999 23:59:59 GMT; " +
             "path=/path; " +
             "domain=${urlWithIpAddress.host}; " +
             "secure",
-        )
-        .build(),
+        ).build(),
     )
     get(urlWithIpAddress)
     val cookies = cookieManager.cookieStore.cookies
@@ -92,12 +93,14 @@ class CookiesTest {
   fun testRfc2109Response() {
     val cookieManager = CookieManager(null, CookiePolicy.ACCEPT_ORIGINAL_SERVER)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .cookieJar(JavaNetCookieJar(cookieManager))
         .build()
     val urlWithIpAddress = urlWithIpAddress(server, "/path/foo")
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .addHeader(
           "Set-Cookie: a=android; " +
             "Comment=this cookie is delicious; " +
@@ -106,8 +109,7 @@ class CookiesTest {
             "Path=/path; " +
             "Secure; " +
             "Version=1",
-        )
-        .build(),
+        ).build(),
     )
     get(urlWithIpAddress)
     val cookies = cookieManager.cookieStore.cookies
@@ -127,12 +129,14 @@ class CookiesTest {
   fun testQuotedAttributeValues() {
     val cookieManager = CookieManager(null, CookiePolicy.ACCEPT_ORIGINAL_SERVER)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .cookieJar(JavaNetCookieJar(cookieManager))
         .build()
     val urlWithIpAddress = urlWithIpAddress(server, "/path/foo")
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .addHeader(
           "Set-Cookie: a=\"android\"; " +
             "Comment=\"this cookie is delicious\"; " +
@@ -144,8 +148,7 @@ class CookiesTest {
             "Port=\"80,443,${server.port}\"; " +
             "Secure; " +
             "Version=\"1\"",
-        )
-        .build(),
+        ).build(),
     )
     get(urlWithIpAddress)
     val cookies = cookieManager.cookieStore.cookies
@@ -173,7 +176,8 @@ class CookiesTest {
     cookieB.path = "/"
     cookieManager.cookieStore.add(serverUrl.toUri(), cookieB)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .cookieJar(JavaNetCookieJar(cookieManager))
         .build()
     get(serverUrl)
@@ -206,7 +210,8 @@ class CookiesTest {
         }
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .cookieJar(JavaNetCookieJar(androidCookieHandler))
         .build()
     get(serverUrl)
@@ -217,7 +222,8 @@ class CookiesTest {
   @Test
   fun receiveAndSendMultipleCookies() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .addHeader("Set-Cookie", "a=android")
         .addHeader("Set-Cookie", "b=banana")
         .build(),
@@ -225,7 +231,8 @@ class CookiesTest {
     server.enqueue(MockResponse())
     val cookieManager = CookieManager(null, CookiePolicy.ACCEPT_ORIGINAL_SERVER)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .cookieJar(JavaNetCookieJar(cookieManager))
         .build()
     get(urlWithIpAddress(server, "/"))
@@ -244,7 +251,8 @@ class CookiesTest {
     val redirectTargetUrl = urlWithIpAddress(redirectTarget, "/")
     val redirectSource = MockWebServer()
     redirectSource.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: $redirectTargetUrl")
         .build(),
@@ -259,7 +267,8 @@ class CookiesTest {
     cookie.portlist = portList
     cookieManager.cookieStore.add(redirectSourceUrl.toUri(), cookie)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .cookieJar(JavaNetCookieJar(cookieManager))
         .build()
     get(redirectSourceUrl)
@@ -275,7 +284,8 @@ class CookiesTest {
   @Test
   fun testCookiesSentIgnoresCase() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .cookieJar(
           JavaNetCookieJar(
             object : CookieManager() {
@@ -288,8 +298,7 @@ class CookiesTest {
               )
             },
           ),
-        )
-        .build()
+        ).build()
     server.enqueue(MockResponse())
     get(server.url("/"))
     val request = server.takeRequest()
@@ -348,7 +357,8 @@ class CookiesTest {
   @Test
   fun testQuoteStripping() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .cookieJar(
           JavaNetCookieJar(
             object : CookieManager() {
@@ -361,8 +371,7 @@ class CookiesTest {
               )
             },
           ),
-        )
-        .build()
+        ).build()
     server.enqueue(MockResponse())
     get(server.url("/"))
     val request = server.takeRequest()
@@ -374,17 +383,18 @@ class CookiesTest {
   private fun urlWithIpAddress(
     server: MockWebServer,
     path: String,
-  ): HttpUrl {
-    return server.url(path)
+  ): HttpUrl =
+    server
+      .url(path)
       .newBuilder()
       .host(InetAddress.getByName(server.hostName).hostAddress)
       .build()
-  }
 
   private operator fun get(url: HttpUrl) {
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url(url)
           .build(),
       )

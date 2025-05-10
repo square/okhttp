@@ -554,6 +554,7 @@ public abstract class okhttp3/EventListener {
 	public fun responseFailed (Lokhttp3/Call;Ljava/io/IOException;)V
 	public fun responseHeadersEnd (Lokhttp3/Call;Lokhttp3/Response;)V
 	public fun responseHeadersStart (Lokhttp3/Call;)V
+	public fun retryDecision (Lokhttp3/Call;ZLjava/lang/String;)V
 	public fun satisfactionFailure (Lokhttp3/Call;Lokhttp3/Response;)V
 	public fun secureConnectEnd (Lokhttp3/Call;Lokhttp3/Handshake;)V
 	public fun secureConnectStart (Lokhttp3/Call;)V
@@ -623,6 +624,7 @@ public final class okhttp3/Handshake$Companion {
 
 public final class okhttp3/Headers : java/lang/Iterable, kotlin/jvm/internal/markers/KMappedMarker {
 	public static final field Companion Lokhttp3/Headers$Companion;
+	public static final field Empty Lokhttp3/Headers;
 	public final fun -deprecated_size ()I
 	public final fun byteCount ()J
 	public fun equals (Ljava/lang/Object;)Z
@@ -1087,6 +1089,7 @@ public class okhttp3/Request$Builder {
 
 public abstract class okhttp3/RequestBody {
 	public static final field Companion Lokhttp3/RequestBody$Companion;
+	public static final field Empty Lokhttp3/RequestBody;
 	public fun <init> ()V
 	public fun contentLength ()J
 	public abstract fun contentType ()Lokhttp3/MediaType;
@@ -1201,6 +1204,7 @@ public class okhttp3/Response$Builder {
 
 public abstract class okhttp3/ResponseBody : java/io/Closeable {
 	public static final field Companion Lokhttp3/ResponseBody$Companion;
+	public static final field Empty Lokhttp3/ResponseBody;
 	public fun <init> ()V
 	public final fun byteStream ()Ljava/io/InputStream;
 	public final fun byteString ()Lokio/ByteString;

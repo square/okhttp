@@ -16,7 +16,9 @@
 package okhttp3.internal.http2
 
 /** http://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-7 */
-enum class ErrorCode constructor(val httpCode: Int) {
+enum class ErrorCode constructor(
+  val httpCode: Int,
+) {
   /** Not an error!  */
   NO_ERROR(0),
 

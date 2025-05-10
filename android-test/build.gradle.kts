@@ -9,7 +9,7 @@ plugins {
 val androidBuild = property("androidBuild").toString().toBoolean()
 
 android {
-  compileSdk = 34
+  compileSdk = 35
 
   namespace = "okhttp.android.test"
 

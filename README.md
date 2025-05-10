@@ -27,7 +27,9 @@ A well behaved user agent
 
 OkHttp follows modern HTTP specifications such as
 
-* HTTP/1.1 - [RFC 7231](https://datatracker.ietf.org/doc/html/rfc7231)
+* HTTP Semantics - [RFC 9110](https://datatracker.ietf.org/doc/html/rfc9110)
+* HTTP Caching- [RFC 9111](https://datatracker.ietf.org/doc/html/rfc9111)
+* HTTP/1.1 - [RFC 9112](https://datatracker.ietf.org/doc/html/rfc9112)
 * HTTP/2 - [RFC 9113](https://datatracker.ietf.org/doc/html/rfc9113)
 * Websockets - [RFC 6455](https://datatracker.ietf.org/doc/html/rfc6455)
 * SSE - [Server-sent events](https://html.spec.whatwg.org/multipage/server-sent-events.html#server-sent-events)

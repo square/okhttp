@@ -71,7 +71,8 @@ class RouteSelectorTest {
   @BeforeEach fun setUp() {
     call =
       clientTestRule.newClient().newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url("https://$uriHost:$uriPort/")
           .build(),
       ) as RealCall
@@ -190,9 +191,7 @@ class RouteSelectorTest {
           uri: URI,
           socketAddress: SocketAddress,
           e: IOException,
-        ) {
-          throw AssertionError()
-        }
+        ): Unit = throw AssertionError()
       }
 
     val address =
@@ -551,17 +550,16 @@ class RouteSelectorTest {
     routeDatabase: RouteDatabase = this.routeDatabase,
     fastFallback: Boolean = false,
     call: RealCall = this.call,
-  ): RouteSelector {
-    return RouteSelector(
+  ): RouteSelector =
+    RouteSelector(
       address = address,
       routeDatabase = routeDatabase,
       fastFallback = fastFallback,
       connectionUser = CallConnectionUser(call, ConnectionListener.NONE, newChain(call)),
     )
-  }
 
-  private fun newChain(call: RealCall): RealInterceptorChain {
-    return RealInterceptorChain(
+  private fun newChain(call: RealCall): RealInterceptorChain =
+    RealInterceptorChain(
       call = call,
       interceptors = listOf(),
       index = 0,
@@ -571,7 +569,6 @@ class RouteSelectorTest {
       readTimeoutMillis = 10_000,
       writeTimeoutMillis = 10_000,
     )
-  }
 
   companion object {
     private const val PROXY_A_PORT = 1001

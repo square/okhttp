@@ -191,7 +191,8 @@ open class HttpUrlJvmTest {
   @Test
   fun toUriFragmentSpecialCharacters() {
     val url =
-      HttpUrl.Builder()
+      HttpUrl
+        .Builder()
         .scheme("http")
         .host("host")
         .fragment("=[]:;\"~|?#@^/$%*")
@@ -211,7 +212,8 @@ open class HttpUrlJvmTest {
   @Test
   fun toUriWithUsernameNoPassword() {
     val httpUrl =
-      HttpUrl.Builder()
+      HttpUrl
+        .Builder()
         .scheme("http")
         .username("user")
         .host("host")
@@ -223,7 +225,8 @@ open class HttpUrlJvmTest {
   @Test
   fun toUriUsernameSpecialCharacters() {
     val url =
-      HttpUrl.Builder()
+      HttpUrl
+        .Builder()
         .scheme("http")
         .host("host")
         .username("=[]:;\"~|?#@^/$%*")
@@ -237,7 +240,8 @@ open class HttpUrlJvmTest {
   @Test
   fun toUriPasswordSpecialCharacters() {
     val url =
-      HttpUrl.Builder()
+      HttpUrl
+        .Builder()
         .scheme("http")
         .host("host")
         .username("user")
@@ -252,7 +256,8 @@ open class HttpUrlJvmTest {
   @Test
   fun toUriPathSpecialCharacters() {
     val url =
-      HttpUrl.Builder()
+      HttpUrl
+        .Builder()
         .scheme("http")
         .host("host")
         .addPathSegment("=[]:;\"~|?#@^/$%*")
@@ -266,7 +271,8 @@ open class HttpUrlJvmTest {
   @Test
   fun toUriQueryParameterNameSpecialCharacters() {
     val url =
-      HttpUrl.Builder()
+      HttpUrl
+        .Builder()
         .scheme("http")
         .host("host")
         .addQueryParameter("=[]:;\"~|?#@^/$%*", "a")
@@ -281,7 +287,8 @@ open class HttpUrlJvmTest {
   @Test
   fun toUriQueryParameterValueSpecialCharacters() {
     val url =
-      HttpUrl.Builder()
+      HttpUrl
+        .Builder()
         .scheme("http")
         .host("host")
         .addQueryParameter("a", "=[]:;\"~|?#@^/$%*")
@@ -296,7 +303,8 @@ open class HttpUrlJvmTest {
   @Test
   fun toUriQueryValueSpecialCharacters() {
     val url =
-      HttpUrl.Builder()
+      HttpUrl
+        .Builder()
         .scheme("http")
         .host("host")
         .query("=[]:;\"~|?#@^/$%*")

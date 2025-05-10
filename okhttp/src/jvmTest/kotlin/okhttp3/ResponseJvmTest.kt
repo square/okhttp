@@ -92,9 +92,7 @@ class ResponseJvmTest {
           return data.read(sink, byteCount)
         }
 
-        override fun timeout(): Timeout {
-          return Timeout.NONE
-        }
+        override fun timeout(): Timeout = Timeout.NONE
       }
     return source.buffer().asResponseBody(null, -1)
   }
@@ -103,18 +101,18 @@ class ResponseJvmTest {
     responseBody: ResponseBody,
     code: Int = 200,
     fn: Response.Builder.() -> Unit = {},
-  ): Response {
-    return Response.Builder()
+  ): Response =
+    Response
+      .Builder()
       .request(
-        Request.Builder()
+        Request
+          .Builder()
           .url("https://example.com/")
           .build(),
-      )
-      .protocol(Protocol.HTTP_1_1)
+      ).protocol(Protocol.HTTP_1_1)
       .code(code)
       .message("OK")
       .body(responseBody)
       .apply { fn() }
       .build()
-  }
 }

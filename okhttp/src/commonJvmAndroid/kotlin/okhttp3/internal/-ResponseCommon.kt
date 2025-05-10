@@ -40,7 +40,8 @@ import okio.buffer
 internal class UnreadableResponseBody(
   private val mediaType: MediaType?,
   private val contentLength: Long,
-) : ResponseBody(), Source {
+) : ResponseBody(),
+  Source {
   override fun contentType() = mediaType
 
   override fun contentLength() = contentLength
@@ -50,7 +51,7 @@ internal class UnreadableResponseBody(
   override fun read(
     sink: Buffer,
     byteCount: Long,
-  ): Long {
+  ): Long =
     throw IllegalStateException(
       """
       |Unreadable ResponseBody! These Response objects have bodies that are stripped:
@@ -62,7 +63,6 @@ internal class UnreadableResponseBody(
       |(It is safe to call contentType() and contentLength() on these response bodies.)
       """.trimMargin(),
     )
-  }
 
   override fun timeout() = Timeout.NONE
 
@@ -70,25 +70,23 @@ internal class UnreadableResponseBody(
   }
 }
 
-fun Response.stripBody(): Response {
-  return newBuilder()
+fun Response.stripBody(): Response =
+  newBuilder()
     .body(UnreadableResponseBody(body.contentType(), body.contentLength()))
     .build()
-}
 
-val Response.commonIsSuccessful: Boolean
+internal val Response.commonIsSuccessful: Boolean
   get() = code in 200..299
 
-fun Response.commonHeaders(name: String): List<String> = headers.values(name)
+internal fun Response.commonHeaders(name: String): List<String> = headers.values(name)
 
-@JvmOverloads
-fun Response.commonHeader(
+internal fun Response.commonHeader(
   name: String,
   defaultValue: String?,
 ): String? = headers[name] ?: defaultValue
 
 @Throws(IOException::class)
-fun Response.commonPeekBody(byteCount: Long): ResponseBody {
+internal fun Response.commonPeekBody(byteCount: Long): ResponseBody {
   val peeked = body.source().peek()
   val buffer = Buffer()
   peeked.request(byteCount)
@@ -96,16 +94,16 @@ fun Response.commonPeekBody(byteCount: Long): ResponseBody {
   return buffer.asResponseBody(body.contentType(), buffer.size)
 }
 
-fun Response.commonNewBuilder(): Response.Builder = Response.Builder(this)
+internal fun Response.commonNewBuilder(): Response.Builder = Response.Builder(this)
 
-val Response.commonIsRedirect: Boolean
+internal val Response.commonIsRedirect: Boolean
   get() =
     when (code) {
       HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> true
       else -> false
     }
 
-val Response.commonCacheControl: CacheControl
+internal val Response.commonCacheControl: CacheControl
   get() {
     var result = lazyCacheControl
     if (result == null) {
@@ -115,73 +113,73 @@ val Response.commonCacheControl: CacheControl
     return result
   }
 
-fun Response.commonClose() {
+internal fun Response.commonClose() {
   body.close()
 }
 
-fun Response.commonToString(): String = "Response{protocol=$protocol, code=$code, message=$message, url=${request.url}}"
+internal fun Response.commonToString(): String = "Response{protocol=$protocol, code=$code, message=$message, url=${request.url}}"
 
-fun Response.Builder.commonRequest(request: Request) =
+internal fun Response.Builder.commonRequest(request: Request) =
   apply {
     this.request = request
   }
 
-fun Response.Builder.commonProtocol(protocol: Protocol) =
+internal fun Response.Builder.commonProtocol(protocol: Protocol) =
   apply {
     this.protocol = protocol
   }
 
-fun Response.Builder.commonCode(code: Int) =
+internal fun Response.Builder.commonCode(code: Int) =
   apply {
     this.code = code
   }
 
-fun Response.Builder.commonMessage(message: String) =
+internal fun Response.Builder.commonMessage(message: String) =
   apply {
     this.message = message
   }
 
-fun Response.Builder.commonHeader(
+internal fun Response.Builder.commonHeader(
   name: String,
   value: String,
 ) = apply {
   headers[name] = value
 }
 
-fun Response.Builder.commonAddHeader(
+internal fun Response.Builder.commonAddHeader(
   name: String,
   value: String,
 ) = apply {
   headers.add(name, value)
 }
 
-fun Response.Builder.commonRemoveHeader(name: String) =
+internal fun Response.Builder.commonRemoveHeader(name: String) =
   apply {
     headers.removeAll(name)
   }
 
-fun Response.Builder.commonHeaders(headers: Headers) =
+internal fun Response.Builder.commonHeaders(headers: Headers) =
   apply {
     this.headers = headers.newBuilder()
   }
 
-fun Response.Builder.commonTrailers(trailersFn: (() -> Headers)) =
+internal fun Response.Builder.commonTrailers(trailersFn: (() -> Headers)) =
   apply {
     this.trailersFn = trailersFn
   }
 
-fun Response.Builder.commonBody(body: ResponseBody) =
+internal fun Response.Builder.commonBody(body: ResponseBody) =
   apply {
     this.body = body
   }
 
-fun Response.Builder.commonNetworkResponse(networkResponse: Response?) =
+internal fun Response.Builder.commonNetworkResponse(networkResponse: Response?) =
   apply {
     checkSupportResponse("networkResponse", networkResponse)
     this.networkResponse = networkResponse
   }
 
-fun Response.Builder.commonCacheResponse(cacheResponse: Response?) =
+internal fun Response.Builder.commonCacheResponse(cacheResponse: Response?) =
   apply {
     checkSupportResponse("cacheResponse", cacheResponse)
     this.cacheResponse = cacheResponse
@@ -198,7 +196,7 @@ private fun checkSupportResponse(
   }
 }
 
-fun Response.Builder.commonPriorResponse(priorResponse: Response?) =
+internal fun Response.Builder.commonPriorResponse(priorResponse: Response?) =
   apply {
     this.priorResponse = priorResponse
   }

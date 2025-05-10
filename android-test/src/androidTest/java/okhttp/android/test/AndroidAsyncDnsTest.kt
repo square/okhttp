@@ -58,10 +58,12 @@ class AndroidAsyncDnsTest {
   private val localhost: HandshakeCertificates by lazy {
     // Generate a self-signed cert for the server to serve and the client to trust.
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .addSubjectAlternativeName("localhost")
         .build()
-    return@lazy HandshakeCertificates.Builder()
+    return@lazy HandshakeCertificates
+      .Builder()
       .addPlatformTrustedCertificates()
       .heldCertificate(heldCertificate)
       .addTrustedCertificate(heldCertificate.certificate)
@@ -73,7 +75,8 @@ class AndroidAsyncDnsTest {
     assumeTrue("Supported on API 29+", Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
 
     client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
         .sslSocketFactory(localhost.sslSocketFactory(), localhost.trustManager)
         .build()
@@ -187,7 +190,8 @@ class AndroidAsyncDnsTest {
       connectivityManager.activeNetwork ?: throw AssumptionViolatedException("No active network")
 
     val client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
         .socketFactory(network.socketFactory)
         .build()

@@ -91,7 +91,8 @@ class ConnectionReuseTest {
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse(body = "b"))
     val requestA =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .header("Connection", "close")
         .build()
@@ -116,7 +117,8 @@ class ConnectionReuseTest {
   @Test
   fun connectionsAreNotReusedWithUnknownLengthResponseBody() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("a")
         .clearHeaders()
         .socketPolicy(DisconnectAtEnd)
@@ -130,7 +132,8 @@ class ConnectionReuseTest {
   @Test
   fun connectionsAreNotReusedIfPoolIsSizeZero() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
         .build()
     server.enqueue(MockResponse(body = "a"))
@@ -142,7 +145,8 @@ class ConnectionReuseTest {
   @Test
   fun connectionsReusedWithRedirectEvenIfPoolIsSizeZero() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
         .build()
     server.enqueue(
@@ -163,11 +167,13 @@ class ConnectionReuseTest {
   @Test
   fun connectionsNotReusedWithRedirectIfDiscardingResponseIsSlow() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
         .build()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(301)
         .addHeader("Location: /b")
         .bodyDelay(1, TimeUnit.SECONDS)
@@ -216,7 +222,8 @@ class ConnectionReuseTest {
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse(body = "b"))
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .connectionPool(ConnectionPool(5, 250, TimeUnit.MILLISECONDS))
         .build()
     val request = Request(server.url("/"))
@@ -243,12 +250,12 @@ class ConnectionReuseTest {
     // This client shares a connection pool but has a different SSL socket factory.
     val handshakeCertificates2 = HandshakeCertificates.Builder().build()
     val anotherClient =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(
           handshakeCertificates2.sslSocketFactory(),
           handshakeCertificates2.trustManager,
-        )
-        .build()
+        ).build()
 
     // This client fails to connect because the new SSL socket factory refuses.
     assertFailsWith<IOException> {
@@ -272,7 +279,8 @@ class ConnectionReuseTest {
 
     // This client shares a connection pool but has a different SSL socket factory.
     val anotherClient =
-      client.newBuilder()
+      client
+        .newBuilder()
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()
     val response2 = anotherClient.newCall(request).execute()
@@ -296,7 +304,8 @@ class ConnectionReuseTest {
   fun connectionsAreNotReusedIfNetworkInterceptorInterferes() {
     val responsesNotClosed: MutableList<Response?> = ArrayList()
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         // Since this test knowingly leaks a connection, avoid using the default shared connection
         // pool, which should remain clean for subsequent tests.
         .connectionPool(ConnectionPool())
@@ -312,8 +321,7 @@ class ConnectionReuseTest {
               .body("unrelated response body!".toResponseBody(null))
               .build()
           },
-        )
-        .build()
+        ).build()
     server.enqueue(
       MockResponse(
         code = 301,
@@ -350,12 +358,12 @@ class ConnectionReuseTest {
 
   private fun enableHttpsAndAlpn(vararg protocols: Protocol) {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .hostnameVerifier(RecordingHostnameVerifier())
+        ).hostnameVerifier(RecordingHostnameVerifier())
         .protocols(protocols.toList())
         .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())

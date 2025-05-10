@@ -2244,21 +2244,19 @@ class DiskLruCacheTest {
     index: Int,
   ) = cacheDir / "$key.$index.tmp"
 
-  private fun readFile(file: Path): String {
-    return filesystem.read(file) {
+  private fun readFile(file: Path): String =
+    filesystem.read(file) {
       readUtf8()
     }
-  }
 
-  private fun readFileOrNull(file: Path): String? {
-    return try {
+  private fun readFileOrNull(file: Path): String? =
+    try {
       filesystem.read(file) {
         readUtf8()
       }
     } catch (_: FileNotFoundException) {
       null
     }
-  }
 
   fun writeFile(
     file: Path,

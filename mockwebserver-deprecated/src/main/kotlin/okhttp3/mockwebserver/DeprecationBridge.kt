@@ -36,13 +36,9 @@ internal fun Dispatcher.wrap(): mockwebserver3.Dispatcher {
 
   val delegate = this
   return object : mockwebserver3.Dispatcher() {
-    override fun dispatch(request: mockwebserver3.RecordedRequest): mockwebserver3.MockResponse {
-      return delegate.dispatch(request.unwrap()).wrap()
-    }
+    override fun dispatch(request: mockwebserver3.RecordedRequest): mockwebserver3.MockResponse = delegate.dispatch(request.unwrap()).wrap()
 
-    override fun peek(): mockwebserver3.MockResponse {
-      return delegate.peek().wrap()
-    }
+    override fun peek(): mockwebserver3.MockResponse = delegate.peek().wrap()
 
     override fun shutdown() {
       delegate.shutdown()
@@ -86,17 +82,16 @@ internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
   return result.build()
 }
 
-private fun PushPromise.wrap(): mockwebserver3.PushPromise {
-  return mockwebserver3.PushPromise(
+private fun PushPromise.wrap(): mockwebserver3.PushPromise =
+  mockwebserver3.PushPromise(
     method = method,
     path = path,
     headers = headers,
     response = response.wrap(),
   )
-}
 
-internal fun mockwebserver3.RecordedRequest.unwrap(): RecordedRequest {
-  return RecordedRequest(
+internal fun mockwebserver3.RecordedRequest.unwrap(): RecordedRequest =
+  RecordedRequest(
     requestLine = requestLine,
     headers = headers,
     chunkSizes = chunkSizes,
@@ -109,10 +104,9 @@ internal fun mockwebserver3.RecordedRequest.unwrap(): RecordedRequest {
     handshake = handshake,
     requestUrl = requestUrl,
   )
-}
 
-private fun MockResponse.wrapSocketPolicy(): mockwebserver3.SocketPolicy {
-  return when (val socketPolicy = socketPolicy) {
+private fun MockResponse.wrapSocketPolicy(): mockwebserver3.SocketPolicy =
+  when (val socketPolicy = socketPolicy) {
     SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE -> ShutdownServerAfterResponse
     SocketPolicy.KEEP_OPEN -> KeepOpen
     SocketPolicy.DISCONNECT_AT_END -> DisconnectAtEnd
@@ -129,4 +123,3 @@ private fun MockResponse.wrapSocketPolicy(): mockwebserver3.SocketPolicy {
     SocketPolicy.RESET_STREAM_AT_START -> ResetStreamAtStart(http2ErrorCode)
     else -> error("Unexpected SocketPolicy: $socketPolicy")
   }
-}

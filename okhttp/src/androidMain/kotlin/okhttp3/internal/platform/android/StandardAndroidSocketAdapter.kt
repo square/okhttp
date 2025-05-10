@@ -57,8 +57,8 @@ class StandardAndroidSocketAdapter(
 
   companion object {
     @Suppress("UNCHECKED_CAST")
-    fun buildIfSupported(packageName: String = "com.android.org.conscrypt"): SocketAdapter? {
-      return try {
+    fun buildIfSupported(packageName: String = "com.android.org.conscrypt"): SocketAdapter? =
+      try {
         val sslSocketClass = Class.forName("$packageName.OpenSSLSocketImpl") as Class<in SSLSocket>
         val sslSocketFactoryClass =
           Class.forName("$packageName.OpenSSLSocketFactoryImpl") as Class<in SSLSocketFactory>
@@ -74,6 +74,5 @@ class StandardAndroidSocketAdapter(
         )
         null
       }
-    }
   }
 }
