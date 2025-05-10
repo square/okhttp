@@ -412,23 +412,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Configure JDK
+      - name: Configure JDKs
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: 11
-
-      - name: Configure JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: 23
-
-      - name: Configure JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: 17
+          java-version: |
+            11
+            17
+            23
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -450,19 +441,10 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: 11
-
-      - name: Configure JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: 24-ea
-
-      - name: Configure JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: 17
+          java-version: |
+            11
+            17
+            24-ea
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
