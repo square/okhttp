@@ -439,6 +439,7 @@ class MockWebServerTest {
 
   @Test
   fun disconnectResponseHalfway() {
+    println(System.getProperty("java.version"))
     server.enqueue(
       MockResponse
         .Builder()
@@ -457,6 +458,9 @@ class MockWebServerTest {
     } catch (e: ProtocolException) {
       // On Android, HttpURLConnection is implemented by OkHttp v2. OkHttp
       // treats an incomplete response body as a ProtocolException.
+    } catch (ioe: IOException) {
+      // Change in https://bugs.openjdk.org/browse/JDK-8335135
+      assertThat(ioe.message).isEqualTo("Premature EOF")
     }
   }
 
