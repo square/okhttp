@@ -112,4 +112,7 @@ internal object CacheLock {
   }
 }
 
-class LockException(message: String, cause: Exception? = null) : Exception(message, cause)
+class LockException(
+  message: String,
+  cause: Exception? = null,
+) : Exception(message, cause)

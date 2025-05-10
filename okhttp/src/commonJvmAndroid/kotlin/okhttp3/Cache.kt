@@ -150,7 +150,8 @@ class Cache internal constructor(
   fileSystem: FileSystem,
   taskRunner: TaskRunner,
   useCacheLock: Boolean,
-) : Closeable, Flushable {
+) : Closeable,
+  Flushable {
   /** Create a cache of at most [maxSize] bytes in [directory]. */
   constructor(
     fileSystem: FileSystem,

@@ -96,7 +96,8 @@ class DiskLruCache(
   /** Used for asynchronous journal rebuilds. */
   taskRunner: TaskRunner,
   private val useCacheLock: Boolean,
-) : Closeable, Flushable {
+) : Closeable,
+  Flushable {
   lateinit var cacheLock: Closeable
 
   internal val fileSystem: FileSystem =

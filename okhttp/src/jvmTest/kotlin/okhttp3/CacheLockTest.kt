@@ -113,12 +113,12 @@ class CacheLockTest {
         }
 
       val process =
-        ProcessBuilder().command(
-          javaExe.toString(),
-          "src/jvmTest/kotlin/okhttp3/LockTestProgram.java",
-          (lockFile.toString()),
-        )
-          .redirectErrorStream(true)
+        ProcessBuilder()
+          .command(
+            javaExe.toString(),
+            "src/jvmTest/kotlin/okhttp3/LockTestProgram.java",
+            (lockFile.toString()),
+          ).redirectErrorStream(true)
           .start()
 
       val output = process.inputStream.bufferedReader()
@@ -166,11 +166,10 @@ class CacheLockTest {
   private fun openCache(
     directory: okio.Path,
     fileSystem: FileSystem = FileSystem.SYSTEM,
-  ): Cache {
-    return Cache(fileSystem, directory, 10_000).apply {
+  ): Cache =
+    Cache(fileSystem, directory, 10_000).apply {
       // force early LRU initialisation
       initialize()
       toClose.add(this)
     }
-  }
 }
