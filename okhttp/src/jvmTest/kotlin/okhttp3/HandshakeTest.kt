@@ -30,16 +30,19 @@ import org.junit.jupiter.api.Test
 
 class HandshakeTest {
   val serverRoot =
-    HeldCertificate.Builder()
+    HeldCertificate
+      .Builder()
       .certificateAuthority(1)
       .build()
   val serverIntermediate =
-    HeldCertificate.Builder()
+    HeldCertificate
+      .Builder()
       .certificateAuthority(0)
       .signedBy(serverRoot)
       .build()
   val serverCertificate =
-    HeldCertificate.Builder()
+    HeldCertificate
+      .Builder()
       .signedBy(serverIntermediate)
       .build()
 

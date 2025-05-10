@@ -55,7 +55,8 @@ class EventSourcesHttpTest {
   @Test
   fun processResponse() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
@@ -66,7 +67,8 @@ class EventSourcesHttpTest {
         .build(),
     )
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val response = client.newCall(request).execute()
@@ -79,7 +81,8 @@ class EventSourcesHttpTest {
   @Test
   fun cancelShortCircuits() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
@@ -91,7 +94,8 @@ class EventSourcesHttpTest {
     )
     listener.enqueueCancel() // Will cancel in onOpen().
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val response = client.newCall(request).execute()

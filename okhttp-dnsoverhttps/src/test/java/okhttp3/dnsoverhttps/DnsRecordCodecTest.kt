@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
 package okhttp3.dnsoverhttps
 
@@ -39,9 +38,7 @@ class DnsRecordCodecTest {
   private fun encodeQuery(
     host: String,
     type: Int,
-  ): String {
-    return DnsRecordCodec.encodeQuery(host, type).base64Url().replace("=", "")
-  }
+  ): String = DnsRecordCodec.encodeQuery(host, type).base64Url().replace("=", "")
 
   @Test
   fun testGoogleDotComEncodingWithIPv6() {

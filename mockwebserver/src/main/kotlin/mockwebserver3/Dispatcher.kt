@@ -34,9 +34,7 @@ abstract class Dispatcher {
    * can return other values to test HTTP edge cases, such as unhappy socket policies or throttled
    * request bodies.
    */
-  open fun peek(): MockResponse {
-    return MockResponse(socketPolicy = KeepOpen)
-  }
+  open fun peek(): MockResponse = MockResponse(socketPolicy = KeepOpen)
 
   /**
    * Release any resources held by this dispatcher. Any requests that are currently being dispatched

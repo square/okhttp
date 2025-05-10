@@ -124,7 +124,8 @@ class OkHttpClientTest {
         chain.proceed(chain.request())
       }
     val original = clientTestRule.newClient()
-    original.newBuilder()
+    original
+      .newBuilder()
       .addInterceptor(interceptor)
       .addNetworkInterceptor(interceptor)
       .build()
@@ -189,7 +190,8 @@ class OkHttpClientTest {
 
   @Test fun testH2PriorKnowledgeOkHttpClientConstructionFallback() {
     assertFailsWith<IllegalArgumentException> {
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1))
     }.also { expected ->
       assertThat(expected.message).isEqualTo(
@@ -201,7 +203,8 @@ class OkHttpClientTest {
 
   @Test fun testH2PriorKnowledgeOkHttpClientConstructionDuplicates() {
     assertFailsWith<IllegalArgumentException> {
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.H2_PRIOR_KNOWLEDGE))
     }.also { expected ->
       assertThat(expected.message).isEqualTo(
@@ -213,7 +216,8 @@ class OkHttpClientTest {
 
   @Test fun testH2PriorKnowledgeOkHttpClientConstructionSuccess() {
     val okHttpClient =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE))
         .build()
     assertThat(okHttpClient.protocols.size).isEqualTo(1)
@@ -238,7 +242,8 @@ class OkHttpClientTest {
 
   @Test fun noSslSocketFactoryConfigured() {
     val client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .connectionSpecs(listOf(ConnectionSpec.CLEARTEXT))
         .build()
     assertFailsWith<IllegalStateException> {
@@ -264,7 +269,8 @@ class OkHttpClientTest {
         }
       } as List<Protocol>
     val client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .protocols(nullHostileProtocols)
         .build()
     assertEquals(
@@ -280,7 +286,8 @@ class OkHttpClientTest {
         null,
       )
     assertFailsWith<IllegalArgumentException> {
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .protocols(protocols as List<Protocol>)
     }.also { expected ->
       assertThat(expected.message).isEqualTo("protocols must not contain null")
@@ -294,7 +301,8 @@ class OkHttpClientTest {
         Protocol.SPDY_3,
       )
     val client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .protocols(protocols)
         .build()
     assertThat(client.protocols).containsExactly(Protocol.HTTP_1_1)
@@ -306,14 +314,16 @@ class OkHttpClientTest {
     assertThat(client.proxySelector)
       .isNotInstanceOf(NullProxySelector::class.java)
     client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .proxy(Proxy.NO_PROXY)
         .build()
     assertThat(client.proxy).isSameAs(Proxy.NO_PROXY)
     assertThat(client.proxySelector)
       .isInstanceOf(NullProxySelector::class.java)
     client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .proxySelector(FakeProxySelector())
         .build()
     assertThat(client.proxy).isNull()
@@ -323,7 +333,8 @@ class OkHttpClientTest {
 
   @Test fun sharesRouteDatabase() {
     val client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .build()
     val proxySelector: ProxySelector =
       object : ProxySelector() {
@@ -343,7 +354,8 @@ class OkHttpClientTest {
     // new client, may share all same fields but likely different connection pool
     assertNotSame(
       client.routeDatabase,
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .build()
         .routeDatabase,
     )
@@ -351,13 +363,15 @@ class OkHttpClientTest {
     // same client with no change affecting route db
     assertSame(
       client.routeDatabase,
-      client.newBuilder()
+      client
+        .newBuilder()
         .build()
         .routeDatabase,
     )
     assertSame(
       client.routeDatabase,
-      client.newBuilder()
+      client
+        .newBuilder()
         .callTimeout(Duration.ofSeconds(5))
         .build()
         .routeDatabase,
@@ -366,63 +380,72 @@ class OkHttpClientTest {
     // logically different scope of client for route db
     assertNotSame(
       client.routeDatabase,
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns { listOf() }
         .build()
         .routeDatabase,
     )
     assertNotSame(
       client.routeDatabase,
-      client.newBuilder()
+      client
+        .newBuilder()
         .proxyAuthenticator { _: Route?, _: Response? -> null }
         .build()
         .routeDatabase,
     )
     assertNotSame(
       client.routeDatabase,
-      client.newBuilder()
+      client
+        .newBuilder()
         .protocols(listOf(Protocol.HTTP_1_1))
         .build()
         .routeDatabase,
     )
     assertNotSame(
       client.routeDatabase,
-      client.newBuilder()
+      client
+        .newBuilder()
         .connectionSpecs(listOf(ConnectionSpec.COMPATIBLE_TLS))
         .build()
         .routeDatabase,
     )
     assertNotSame(
       client.routeDatabase,
-      client.newBuilder()
+      client
+        .newBuilder()
         .proxySelector(proxySelector)
         .build()
         .routeDatabase,
     )
     assertNotSame(
       client.routeDatabase,
-      client.newBuilder()
+      client
+        .newBuilder()
         .proxy(Proxy.NO_PROXY)
         .build()
         .routeDatabase,
     )
     assertNotSame(
       client.routeDatabase,
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(sslContext.socketFactory, trustManager)
         .build()
         .routeDatabase,
     )
     assertNotSame(
       client.routeDatabase,
-      client.newBuilder()
+      client
+        .newBuilder()
         .hostnameVerifier { _: String?, _: SSLSession? -> false }
         .build()
         .routeDatabase,
     )
     assertNotSame(
       client.routeDatabase,
-      client.newBuilder()
+      client
+        .newBuilder()
         .certificatePinner(CertificatePinner.Builder().build())
         .build()
         .routeDatabase,

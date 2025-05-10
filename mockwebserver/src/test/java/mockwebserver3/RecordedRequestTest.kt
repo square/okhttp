@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
 package mockwebserver3
 
@@ -23,14 +22,13 @@ import java.net.InetAddress
 import java.net.Socket
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
-import okhttp3.internal.EMPTY_HEADERS
 import okio.Buffer
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 
 @Timeout(30)
 class RecordedRequestTest {
-  private val headers: Headers = EMPTY_HEADERS
+  private val headers: Headers = Headers.Empty
 
   @Test fun testIPv4() {
     val socket =

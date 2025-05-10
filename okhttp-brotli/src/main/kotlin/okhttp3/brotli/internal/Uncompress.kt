@@ -39,7 +39,8 @@ fun uncompress(response: Response): Response {
       else -> return response
     }
 
-  return response.newBuilder()
+  return response
+    .newBuilder()
     .removeHeader("Content-Encoding")
     .removeHeader("Content-Length")
     .body(decompressedSource.asResponseBody(body.contentType(), -1))

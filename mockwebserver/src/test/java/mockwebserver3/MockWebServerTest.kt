@@ -130,7 +130,8 @@ class MockWebServerTest {
   @Test
   fun mockResponseAddHeader() {
     val builder =
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .clearHeaders()
         .addHeader("Cookie: s=square")
         .addHeader("Cookie", "a=android")
@@ -140,7 +141,8 @@ class MockWebServerTest {
   @Test
   fun mockResponseSetHeader() {
     val builder =
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .clearHeaders()
         .addHeader("Cookie: s=square")
         .addHeader("Cookie: a=android")
@@ -152,7 +154,8 @@ class MockWebServerTest {
   @Test
   fun mockResponseSetHeaders() {
     val builder =
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .clearHeaders()
         .addHeader("Cookie: s=square")
         .addHeader("Cookies: delicious")
@@ -180,14 +183,16 @@ class MockWebServerTest {
   @Test
   fun redirect() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: " + server.url("/new-path"))
         .body("This page has moved!")
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("This is the new location!")
         .build(),
     )
@@ -212,7 +217,8 @@ class MockWebServerTest {
       } catch (ignored: InterruptedException) {
       }
       server.enqueue(
-        MockResponse.Builder()
+        MockResponse
+          .Builder()
           .body("enqueued in the background")
           .build(),
       )
@@ -225,7 +231,8 @@ class MockWebServerTest {
   @Test
   fun nonHexadecimalChunkSize() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("G\r\nxxxxxxxxxxxxxxxx\r\n0\r\n\r\n")
         .clearHeaders()
         .addHeader("Transfer-encoding: chunked")
@@ -243,14 +250,16 @@ class MockWebServerTest {
   @Test
   fun responseTimeout() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("ABC")
         .clearHeaders()
         .addHeader("Content-Length: 4")
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("DEF")
         .build(),
     )
@@ -280,19 +289,28 @@ class MockWebServerTest {
   @Test
   fun disconnectAtStart() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(DisconnectAtStart)
         .build(),
     )
     server.enqueue(MockResponse()) // The jdk's HttpUrlConnection is a bastard.
     server.enqueue(MockResponse())
     try {
-      server.url("/a").toUrl().openConnection().getInputStream()
+      server
+        .url("/a")
+        .toUrl()
+        .openConnection()
+        .getInputStream()
       fail<Unit>()
     } catch (expected: IOException) {
       // Expected.
     }
-    server.url("/b").toUrl().openConnection().getInputStream() // Should succeed.
+    server
+      .url("/b")
+      .toUrl()
+      .openConnection()
+      .getInputStream() // Should succeed.
   }
 
   @Test
@@ -300,7 +318,12 @@ class MockWebServerTest {
     server.enqueue(MockResponse(body = "A"))
     (server.dispatcher as QueueDispatcher).clear()
     server.enqueue(MockResponse(body = "B"))
-    val inputStream = server.url("/a").toUrl().openConnection().getInputStream()
+    val inputStream =
+      server
+        .url("/a")
+        .toUrl()
+        .openConnection()
+        .getInputStream()
     assertThat(inputStream!!.read()).isEqualTo('B'.code)
   }
 
@@ -312,7 +335,8 @@ class MockWebServerTest {
   fun throttleRequest() {
     assumeNotWindows()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .throttleBody(3, 500, TimeUnit.MILLISECONDS)
         .build(),
     )
@@ -335,7 +359,8 @@ class MockWebServerTest {
   fun throttleResponse() {
     assumeNotWindows()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("ABCDEF")
         .throttleBody(3, 500, TimeUnit.MILLISECONDS)
         .build(),
@@ -360,7 +385,8 @@ class MockWebServerTest {
   fun delayResponse() {
     assumeNotWindows()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("ABCDEF")
         .bodyDelay(1, TimeUnit.SECONDS)
         .build(),
@@ -378,7 +404,8 @@ class MockWebServerTest {
   @Test
   fun disconnectRequestHalfway() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(DisconnectDuringRequestBody)
         .build(),
     )
@@ -413,7 +440,8 @@ class MockWebServerTest {
   @Test
   fun disconnectResponseHalfway() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("ab")
         .socketPolicy(DisconnectDuringResponseBody)
         .build(),
@@ -497,7 +525,8 @@ class MockWebServerTest {
   @Test
   fun requestUrlReconstructed() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("hello world")
         .build(),
     )
@@ -522,7 +551,8 @@ class MockWebServerTest {
   @Test
   fun shutdownServerAfterRequest() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(ShutdownServerAfterResponse)
         .build(),
     )
@@ -540,7 +570,8 @@ class MockWebServerTest {
   @Test
   fun http100Continue() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("response")
         .build(),
     )
@@ -559,7 +590,8 @@ class MockWebServerTest {
   @Test
   fun multiple1xxResponses() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .add100Continue()
         .add100Continue()
         .body("response")
@@ -615,7 +647,8 @@ class MockWebServerTest {
     val handshakeCertificates = platform.localhostHandshakeCertificates()
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
@@ -643,36 +676,43 @@ class MockWebServerTest {
     platform.assumeNotConscrypt()
 
     val clientCa =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .build()
     val serverCa =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .build()
     val serverCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(serverCa)
         .addSubjectAlternativeName(server.hostName)
         .build()
     val serverHandshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addTrustedCertificate(clientCa.certificate)
         .heldCertificate(serverCertificate)
         .build()
     server.useHttps(serverHandshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
     server.requestClientAuth()
     val clientCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(clientCa)
         .build()
     val clientHandshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addTrustedCertificate(serverCa.certificate)
         .heldCertificate(clientCertificate)
         .build()
@@ -697,12 +737,14 @@ class MockWebServerTest {
   @Test
   fun proxiedRequestGetsCorrectRequestUrl() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("Result")
         .build(),
     )
     val proxiedClient =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .proxy(server.toProxyAddress())
         .readTimeout(Duration.ofMillis(100))
         .build()

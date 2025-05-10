@@ -26,12 +26,12 @@ import okhttp3.Protocol
  * and we can't rely on classnames after proguard, so are probably best served by falling through
  * to a situation of trying our least likely noisiest options.
  */
-class DeferredSocketAdapter(private val socketAdapterFactory: Factory) : SocketAdapter {
+class DeferredSocketAdapter(
+  private val socketAdapterFactory: Factory,
+) : SocketAdapter {
   private var delegate: SocketAdapter? = null
 
-  override fun isSupported(): Boolean {
-    return true
-  }
+  override fun isSupported(): Boolean = true
 
   override fun matchesSocket(sslSocket: SSLSocket): Boolean = socketAdapterFactory.matchesSocket(sslSocket)
 
@@ -43,9 +43,7 @@ class DeferredSocketAdapter(private val socketAdapterFactory: Factory) : SocketA
     getDelegate(sslSocket)?.configureTlsExtensions(sslSocket, hostname, protocols)
   }
 
-  override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
-    return getDelegate(sslSocket)?.getSelectedProtocol(sslSocket)
-  }
+  override fun getSelectedProtocol(sslSocket: SSLSocket): String? = getDelegate(sslSocket)?.getSelectedProtocol(sslSocket)
 
   @Synchronized private fun getDelegate(sslSocket: SSLSocket): SocketAdapter? {
     if (this.delegate == null && socketAdapterFactory.matchesSocket(sslSocket)) {

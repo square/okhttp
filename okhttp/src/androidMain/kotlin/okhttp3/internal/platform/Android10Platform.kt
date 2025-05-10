@@ -18,8 +18,10 @@ package okhttp3.internal.platform
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import android.os.StrictMode
 import android.security.NetworkSecurityPolicy
 import android.util.CloseGuard
+import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -32,10 +34,13 @@ import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.tls.CertificateChainCleaner
+import okhttp3.internal.tls.TrustRootIndex
 
 /** Android 10+ (API 29+). */
 @SuppressSignatureCheck
-class Android10Platform : Platform(), ContextAwarePlatform {
+class Android10Platform :
+  Platform(),
+  ContextAwarePlatform {
   override var applicationContext: Context? = null
 
   private val socketAdapters =
@@ -48,8 +53,21 @@ class Android10Platform : Platform(), ContextAwarePlatform {
     ).filter { it.isSupported() }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
-    socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
+    socketAdapters
+      .find { it.matchesSocketFactory(sslSocketFactory) }
       ?.trustManager(sslSocketFactory)
+
+  override fun newSSLContext(): SSLContext {
+    StrictMode.noteSlowCall("newSSLContext")
+
+    return super.newSSLContext()
+  }
+
+  override fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex {
+    StrictMode.noteSlowCall("buildTrustRootIndex")
+
+    return super.buildTrustRootIndex(trustManager)
+  }
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
@@ -57,7 +75,8 @@ class Android10Platform : Platform(), ContextAwarePlatform {
     protocols: List<Protocol>,
   ) {
     // No TLS extensions if the socket class is custom.
-    socketAdapters.find { it.matchesSocket(sslSocket) }
+    socketAdapters
+      .find { it.matchesSocket(sslSocket) }
       ?.configureTlsExtensions(sslSocket, hostname, protocols)
   }
 
@@ -65,13 +84,12 @@ class Android10Platform : Platform(), ContextAwarePlatform {
     // No TLS extensions if the socket class is custom.
     socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
 
-  override fun getStackTraceForCloseable(closer: String): Any? {
-    return if (Build.VERSION.SDK_INT >= 30) {
+  override fun getStackTraceForCloseable(closer: String): Any? =
+    if (Build.VERSION.SDK_INT >= 30) {
       CloseGuard().apply { open(closer) }
     } else {
       super.getStackTraceForCloseable(closer)
     }
-  }
 
   override fun logCloseableLeak(
     message: String,

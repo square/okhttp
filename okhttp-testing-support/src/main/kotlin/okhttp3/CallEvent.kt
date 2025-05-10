@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
 package okhttp3
 
@@ -231,5 +230,12 @@ sealed class CallEvent {
   data class CacheConditionalHit(
     override val timestampNs: Long,
     override val call: Call,
+  ) : CallEvent()
+
+  data class RetryDecision(
+    override val timestampNs: Long,
+    override val call: Call,
+    val shouldRetry: Boolean,
+    val reason: String,
   ) : CallEvent()
 }

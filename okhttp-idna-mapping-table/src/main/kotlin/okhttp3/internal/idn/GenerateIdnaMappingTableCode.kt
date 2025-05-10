@@ -55,9 +55,11 @@ fun generateMappingTableFile(data: IdnaMappingTableData): FileSpec {
   val packageName = "okhttp3.internal.idn"
   val idnaMappingTable = ClassName(packageName, "IdnaMappingTable")
 
-  return FileSpec.builder(packageName, "IdnaMappingTableInstance")
+  return FileSpec
+    .builder(packageName, "IdnaMappingTableInstance")
     .addProperty(
-      PropertySpec.builder("IDNA_MAPPING_TABLE", idnaMappingTable)
+      PropertySpec
+        .builder("IDNA_MAPPING_TABLE", idnaMappingTable)
         .addModifiers(KModifier.INTERNAL)
         .initializer(
           """
@@ -71,18 +73,16 @@ fun generateMappingTableFile(data: IdnaMappingTableData): FileSpec {
           data.sections.escapeDataString(),
           data.ranges.escapeDataString(),
           data.mappings.escapeDataString(),
-        )
-        .build(),
-    )
-    .build()
+        ).build(),
+    ).build()
 }
 
 /**
  * KotlinPoet doesn't really know what to do with a string containing NUL, BEL, DEL, etc. We also
  * don't want to perform `trimMargin()` at runtime.
  */
-fun String.escapeDataString(): String {
-  return buildString {
+fun String.escapeDataString(): String =
+  buildString {
     for (codePoint in this@escapeDataString.codePoints()) {
       when (codePoint) {
         in 0..0x20,
@@ -97,4 +97,3 @@ fun String.escapeDataString(): String {
       }
     }
   }
-}

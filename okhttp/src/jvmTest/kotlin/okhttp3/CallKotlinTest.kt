@@ -106,12 +106,12 @@ class CallKotlinTest {
 
   private fun enableTls() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .build()
+        ).build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 
@@ -119,9 +119,7 @@ class CallKotlinTest {
   @Flaky
   fun testHeadAfterPut() {
     class ErringRequestBody : RequestBody() {
-      override fun contentType(): MediaType {
-        return "application/xml".toMediaType()
-      }
+      override fun contentType(): MediaType = "application/xml".toMediaType()
 
       override fun writeTo(sink: BufferedSink) {
         sink.writeUtf8("<el")
@@ -131,9 +129,7 @@ class CallKotlinTest {
     }
 
     class ValidRequestBody : RequestBody() {
-      override fun contentType(): MediaType {
-        return "application/xml".toMediaType()
-      }
+      override fun contentType(): MediaType = "application/xml".toMediaType()
 
       override fun writeTo(sink: BufferedSink) {
         sink.writeUtf8("<element/>")
@@ -148,7 +144,8 @@ class CallKotlinTest {
     val endpointUrl = server.url("/endpoint")
 
     var request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(endpointUrl)
         .header("Content-Type", "application/xml")
         .put(ValidRequestBody())
@@ -158,7 +155,8 @@ class CallKotlinTest {
     }
 
     request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(endpointUrl)
         .head()
         .build()
@@ -167,7 +165,8 @@ class CallKotlinTest {
     }
 
     request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(endpointUrl)
         .header("Content-Type", "application/xml")
         .put(ErringRequestBody())
@@ -177,7 +176,8 @@ class CallKotlinTest {
     }
 
     request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(endpointUrl)
         .head()
         .build()
@@ -192,14 +192,14 @@ class CallKotlinTest {
     // Capture the connection so that we can later make it stale.
     var connection: RealConnection? = null
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(
           Interceptor { chain ->
             connection = chain.connection() as RealConnection
             chain.proceed(chain.request())
           },
-        )
-        .build()
+        ).build()
 
     server.enqueue(
       MockResponse(
@@ -237,7 +237,8 @@ class CallKotlinTest {
     server.shutdown()
 
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .proxySelector(proxySelector)
         .readTimeout(Duration.ofMillis(100))
         .connectTimeout(Duration.ofMillis(100))
@@ -261,7 +262,8 @@ class CallKotlinTest {
     server.enqueue(MockResponse(socketPolicy = DisconnectAtStart))
 
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns(DoubleInetAddressDns()) // Two routes so we get two failures.
         .build()
 

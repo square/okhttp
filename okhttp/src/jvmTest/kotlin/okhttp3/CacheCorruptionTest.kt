@@ -69,7 +69,8 @@ class CacheCorruptionTest {
     val loggingFileSystem = LoggingFilesystem(fileSystem)
     cache = buildCache("/cache/".toPath(), Int.MAX_VALUE.toLong(), loggingFileSystem)
     client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .cache(cache)
         .cookieJar(JavaNetCookieJar(cookieManager))
         .build()
@@ -177,12 +178,12 @@ class CacheCorruptionTest {
       ),
     )
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .hostnameVerifier(nullHostnameVerifier)
+        ).hostnameVerifier(nullHostnameVerifier)
         .build()
     val request = Request(server.url("/"))
     val response1: Response = client.newCall(request).execute()
@@ -201,9 +202,7 @@ class CacheCorruptionTest {
   private fun formatDate(
     delta: Long,
     timeUnit: TimeUnit,
-  ): String? {
-    return formatDate(Date(System.currentTimeMillis() + timeUnit.toMillis(delta)))
-  }
+  ): String? = formatDate(Date(System.currentTimeMillis() + timeUnit.toMillis(delta)))
 
   private fun formatDate(date: Date): String? {
     val rfc1123: DateFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US)

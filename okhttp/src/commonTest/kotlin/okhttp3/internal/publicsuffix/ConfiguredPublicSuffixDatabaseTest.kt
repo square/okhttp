@@ -30,7 +30,8 @@ class ConfiguredPublicSuffixDatabaseTest {
       Buffer()
         .writeUtf8("com\n")
         .writeUtf8("my.square.com\n")
-        .writeUtf8("square.com\n").readByteString()
+        .writeUtf8("square.com\n")
+        .readByteString()
 
     assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("example.com"))
       .isEqualTo("example.com")

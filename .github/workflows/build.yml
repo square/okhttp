@@ -40,9 +40,10 @@ jobs:
       - name: Upload Artifacts
         run: ./gradlew clean publish --stacktrace
         env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.ARTIFACT_SIGNING_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME_COM_SQUAREUP }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD_COM_SQUAREUP }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SECRET_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SECRET_PASSPHRASE }}
 
   validation:
     name: "Validation"
@@ -85,7 +86,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: 'gradle'
           native-image-job-reports: true
-          components: 'native-image'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -372,7 +372,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -402,6 +401,65 @@ jobs:
 
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=21
+
+  testopenjdklatest:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure JDKs
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: |
+            11
+            17
+            24
+
+      - name: Allow incompatible JVM versions
+        run: |
+          echo 'kotlin.jvm.target.validation.mode=ignore' >> ./gradle.properties
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run Checks
+        run: ./gradlew test -Dtest.java.version=24
+
+  testopenjdkearlyaccess:
+    runs-on: ubuntu-latest
+#    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
+    if: false # https://youtrack.jetbrains.com/issue/KTOR-8489
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: |
+            11
+            17
+            25-ea
+
+      - name: Allow incompatible JVM versions
+        run: |
+          echo 'kotlin.jvm.target.validation.mode=ignore' >> ./gradle.properties
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run Checks
+        run: ./gradlew test -Dtest.java.version=25
 
   testwindows:
     runs-on: windows-latest
@@ -462,7 +520,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: 'gradle'
           native-image-job-reports: true
-          components: 'native-image'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4

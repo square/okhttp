@@ -364,7 +364,8 @@ class DiskLruCache(
     when {
       secondSpace != -1 && firstSpace == CLEAN.length && line.startsWith(CLEAN) -> {
         val parts =
-          line.substring(secondSpace + 1)
+          line
+            .substring(secondSpace + 1)
             .split(' ')
         entry.readable = true
         entry.currentEditor = null
@@ -467,7 +468,8 @@ class DiskLruCache(
     val snapshot = entry.snapshot() ?: return null
 
     redundantOpCount++
-    journalWriter!!.writeUtf8(READ)
+    journalWriter!!
+      .writeUtf8(READ)
       .writeByte(' '.code)
       .writeUtf8(key)
       .writeByte('\n'.code)
@@ -517,7 +519,8 @@ class DiskLruCache(
 
     // Flush the journal before creating files to prevent file leaks.
     val journalWriter = this.journalWriter!!
-    journalWriter.writeUtf8(DIRTY)
+    journalWriter
+      .writeUtf8(DIRTY)
       .writeByte(' '.code)
       .writeUtf8(key)
       .writeByte('\n'.code)
@@ -876,7 +879,9 @@ class DiskLruCache(
   }
 
   /** Edits the values for an entry. */
-  inner class Editor internal constructor(internal val entry: Entry) {
+  inner class Editor internal constructor(
+    internal val entry: Entry,
+  ) {
     internal val written: BooleanArray? = if (entry.readable) null else BooleanArray(valueCount)
     private var done: Boolean = false
 
@@ -1041,9 +1046,7 @@ class DiskLruCache(
     }
 
     @Throws(IOException::class)
-    private fun invalidLengths(strings: List<String>): Nothing {
-      throw IOException("unexpected journal line: $strings")
-    }
+    private fun invalidLengths(strings: List<String>): Nothing = throw IOException("unexpected journal line: $strings")
 
     /**
      * Returns a snapshot of this entry. This opens all streams eagerly to guarantee that we see a

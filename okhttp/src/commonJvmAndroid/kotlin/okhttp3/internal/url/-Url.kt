@@ -51,9 +51,12 @@ internal fun Buffer.writeCanonicalized(
   var i = pos
   while (i < limit) {
     codePoint = input.codePointAt(i)
-    if (alreadyEncoded && (
-        codePoint == '\t'.code || codePoint == '\n'.code ||
-          codePoint == '\u000c'.code || codePoint == '\r'.code
+    if (alreadyEncoded &&
+      (
+        codePoint == '\t'.code ||
+          codePoint == '\n'.code ||
+          codePoint == '\u000c'.code ||
+          codePoint == '\r'.code
       )
     ) {
       // Skip this character.
@@ -65,7 +68,8 @@ internal fun Buffer.writeCanonicalized(
       writeUtf8(if (alreadyEncoded) "+" else "%2B")
     } else if (codePoint < 0x20 ||
       codePoint == 0x7f ||
-      codePoint >= 0x80 && !unicodeAllowed ||
+      codePoint >= 0x80 &&
+      !unicodeAllowed ||
       codePoint.toChar() in encodeSet ||
       codePoint == '%'.code &&
       (!alreadyEncoded || strict && !input.isPercentEncoded(i, limit))
@@ -131,11 +135,13 @@ internal fun String.canonicalizeWithCharset(
     codePoint = codePointAt(i)
     if (codePoint < 0x20 ||
       codePoint == 0x7f ||
-      codePoint >= 0x80 && !unicodeAllowed ||
+      codePoint >= 0x80 &&
+      !unicodeAllowed ||
       codePoint.toChar() in encodeSet ||
       codePoint == '%'.code &&
       (!alreadyEncoded || strict && !isPercentEncoded(i, limit)) ||
-      codePoint == '+'.code && plusIsSpace
+      codePoint == '+'.code &&
+      plusIsSpace
     ) {
       // Slow path: the character at i requires encoding!
       val out = Buffer()
@@ -197,8 +203,8 @@ internal fun String.canonicalize(
   strict: Boolean = false,
   plusIsSpace: Boolean = false,
   unicodeAllowed: Boolean = false,
-): String {
-  return canonicalizeWithCharset(
+): String =
+  canonicalizeWithCharset(
     pos = pos,
     limit = limit,
     encodeSet = encodeSet,
@@ -207,7 +213,6 @@ internal fun String.canonicalize(
     plusIsSpace = plusIsSpace,
     unicodeAllowed = unicodeAllowed,
   )
-}
 
 internal fun String.percentDecode(
   pos: Int = 0,
@@ -232,9 +237,8 @@ internal fun String.percentDecode(
 internal fun String.isPercentEncoded(
   pos: Int,
   limit: Int,
-): Boolean {
-  return pos + 2 < limit &&
+): Boolean =
+  pos + 2 < limit &&
     this[pos] == '%' &&
     this[pos + 1].parseHexDigit() != -1 &&
     this[pos + 2].parseHexDigit() != -1
-}

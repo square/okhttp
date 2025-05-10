@@ -59,7 +59,8 @@ class DnsOverHttpsTest {
   private val cacheFs = FakeFileSystem()
   private val eventListener = RecordingEventListener()
   private val bootstrapClient =
-    OkHttpClient.Builder()
+    OkHttpClient
+      .Builder()
       .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
       .eventListener(eventListener)
       .build()
@@ -186,8 +187,7 @@ class DnsOverHttpsTest {
           "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
             "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
             "0003b00049df00112",
-        )
-          .newBuilder()
+        ).newBuilder()
           .setHeader("cache-control", "private, max-age=298")
           .build(),
       )
@@ -229,8 +229,7 @@ class DnsOverHttpsTest {
           "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
             "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
             "0003b00049df00112",
-        )
-          .newBuilder()
+        ).newBuilder()
           .setHeader("cache-control", "private, max-age=298")
           .build(),
       )
@@ -273,8 +272,7 @@ class DnsOverHttpsTest {
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
           "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
           "0003b00049df00112",
-      )
-        .newBuilder()
+      ).newBuilder()
         .setHeader("cache-control", "max-age=1")
         .build(),
     )
@@ -294,8 +292,7 @@ class DnsOverHttpsTest {
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
           "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
           "0003b00049df00112",
-      )
-        .newBuilder()
+      ).newBuilder()
         .setHeader("cache-control", "max-age=1")
         .build(),
     )
@@ -311,19 +308,18 @@ class DnsOverHttpsTest {
     cache.close()
   }
 
-  private fun cacheEvents(): List<String> {
-    return eventListener.recordedEventTypes().filter { it.contains("Cache") }.also {
+  private fun cacheEvents(): List<String> =
+    eventListener.recordedEventTypes().filter { it.contains("Cache") }.also {
       eventListener.clearAllEvents()
     }
-  }
 
-  private fun dnsResponse(s: String): MockResponse {
-    return MockResponse.Builder()
+  private fun dnsResponse(s: String): MockResponse =
+    MockResponse
+      .Builder()
       .body(Buffer().write(s.decodeHex()))
       .addHeader("content-type", "application/dns-message")
       .addHeader("content-length", s.length / 2)
       .build()
-  }
 
   private fun buildLocalhost(
     bootstrapClient: OkHttpClient,
@@ -331,7 +327,9 @@ class DnsOverHttpsTest {
     post: Boolean = false,
   ): DnsOverHttps {
     val url = server.url("/lookup?ct")
-    return DnsOverHttps.Builder().client(bootstrapClient)
+    return DnsOverHttps
+      .Builder()
+      .client(bootstrapClient)
       .includeIPv6(includeIPv6)
       .resolvePrivateAddresses(true)
       .url(url)

@@ -100,8 +100,8 @@ class WebPlatformUrlTestData {
       return list
     }
 
-    private fun unescape(s: String): String {
-      return buildString {
+    private fun unescape(s: String): String =
+      buildString {
         val buffer = Buffer().writeUtf8(s)
         while (!buffer.exhausted()) {
           val c = buffer.readUtf8CodePoint()
@@ -122,6 +122,5 @@ class WebPlatformUrlTestData {
           }
         }
       }
-    }
   }
 }

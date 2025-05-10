@@ -125,14 +125,13 @@ class MainTest {
   }
 
   companion object {
-    fun fromArgs(vararg args: String): Main {
-      return Main().apply {
+    fun fromArgs(vararg args: String): Main =
+      Main().apply {
         parse(args.toList())
       }
-    }
 
-    private fun bodyAsString(body: RequestBody?): String {
-      return try {
+    private fun bodyAsString(body: RequestBody?): String =
+      try {
         val buffer = Buffer()
         body!!.writeTo(buffer)
         buffer.readString(body.contentType()!!.charset()!!)

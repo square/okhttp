@@ -46,7 +46,8 @@ class DispatcherTest {
   val dispatcher = Dispatcher(executor)
   val listener = RecordingEventListener()
   var client =
-    clientTestRule.newClientBuilder()
+    clientTestRule
+      .newClientBuilder()
       .dns { throw UnknownHostException() }
       .dispatcher(dispatcher)
       .eventListenerFactory(clientTestRule.wrap(listener))
@@ -214,7 +215,8 @@ class DispatcherTest {
     val ready = CountDownLatch(2)
     val waiting = CountDownLatch(1)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addInterceptor(
           Interceptor { chain: Interceptor.Chain? ->
             try {
@@ -225,8 +227,7 @@ class DispatcherTest {
             }
             throw IOException()
           },
-        )
-        .build()
+        ).build()
     val a1 = client.newCall(newRequest("http://a/1"))
     val a2 = client.newCall(newRequest("http://a/2"))
     val a3 = client.newCall(newRequest("http://a/3"))
@@ -280,7 +281,8 @@ class DispatcherTest {
     val ready = CountDownLatch(1)
     val proceed = CountDownLatch(1)
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addInterceptor(
           Interceptor { chain: Interceptor.Chain ->
             ready.countDown()
@@ -291,8 +293,7 @@ class DispatcherTest {
             }
             chain.proceed(chain.request())
           },
-        )
-        .build()
+        ).build()
     val t1 = makeSynchronousCall(client.newCall(newRequest("http://a/3")))
     ready.await(5, TimeUnit.SECONDS)
     executor.finishJob("http://a/2")
@@ -367,14 +368,15 @@ class DispatcherTest {
     return thread
   }
 
-  private fun newRequest(url: String): Request {
-    return Request.Builder().url(url).build()
-  }
+  private fun newRequest(url: String): Request = Request.Builder().url(url).build()
 
   private fun newRequest(
     url: String,
     tag: String,
-  ): Request {
-    return Request.Builder().url(url).tag(tag).build()
-  }
+  ): Request =
+    Request
+      .Builder()
+      .url(url)
+      .tag(tag)
+      .build()
 }

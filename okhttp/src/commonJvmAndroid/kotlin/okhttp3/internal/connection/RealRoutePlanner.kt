@@ -260,7 +260,8 @@ class RealRoutePlanner(
   @Throws(IOException::class)
   private fun createTunnelRequest(route: Route): Request {
     val proxyConnectRequest =
-      Request.Builder()
+      Request
+        .Builder()
         .url(route.address.url)
         .method("CONNECT", null)
         .header("Host", route.address.url.toHostHeader(includeDefaultPort = true))
@@ -269,7 +270,8 @@ class RealRoutePlanner(
         .build()
 
     val fakeAuthChallengeResponse =
-      Response.Builder()
+      Response
+        .Builder()
         .request(proxyConnectRequest)
         .protocol(Protocol.HTTP_1_1)
         .code(HttpURLConnection.HTTP_PROXY_AUTH)
@@ -319,20 +321,22 @@ class RealRoutePlanner(
    * unhealthy. The biggest gotcha here is that we shouldn't reuse routes from coalesced
    * connections.
    */
-  private fun retryRoute(connection: RealConnection): Route? {
-    return connection.withLock {
+  private fun retryRoute(connection: RealConnection): Route? =
+    connection.withLock {
       when {
         connection.routeFailureCount != 0 -> null
 
         // This route is still in use.
         !connection.noNewExchanges -> null
 
-        !connection.route().address.url.canReuseConnectionFor(address.url) -> null
+        !connection
+          .route()
+          .address.url
+          .canReuseConnectionFor(address.url) -> null
 
         else -> connection.route()
       }
     }
-  }
 
   override fun sameHostAndPort(url: HttpUrl): Boolean {
     val routeUrl = address.url

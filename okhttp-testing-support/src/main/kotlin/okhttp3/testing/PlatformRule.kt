@@ -62,7 +62,9 @@ open class PlatformRule
   constructor(
     val requiredPlatformName: String? = null,
     val platform: Platform? = null,
-  ) : BeforeEachCallback, AfterEachCallback, InvocationInterceptor {
+  ) : BeforeEachCallback,
+    AfterEachCallback,
+    InvocationInterceptor {
     private val versionChecks = mutableListOf<Pair<Matcher<out Any>, Matcher<out Any>>>()
 
     override fun beforeEach(context: ExtensionContext) {
@@ -157,34 +159,26 @@ open class PlatformRule
           description.appendText(platform)
         }
 
-        override fun matches(item: Any?): Boolean {
-          return getPlatformSystemProperty() == platform
-        }
+        override fun matches(item: Any?): Boolean = getPlatformSystemProperty() == platform
       }
 
-    fun fromMajor(version: Int): Matcher<PlatformVersion> {
-      return object : TypeSafeMatcher<PlatformVersion>() {
+    fun fromMajor(version: Int): Matcher<PlatformVersion> =
+      object : TypeSafeMatcher<PlatformVersion>() {
         override fun describeTo(description: Description) {
           description.appendText("JDK with version from $version")
         }
 
-        override fun matchesSafely(item: PlatformVersion): Boolean {
-          return item.majorVersion >= version
-        }
+        override fun matchesSafely(item: PlatformVersion): Boolean = item.majorVersion >= version
       }
-    }
 
-    fun onMajor(version: Int): Matcher<PlatformVersion> {
-      return object : TypeSafeMatcher<PlatformVersion>() {
+    fun onMajor(version: Int): Matcher<PlatformVersion> =
+      object : TypeSafeMatcher<PlatformVersion>() {
         override fun describeTo(description: Description) {
           description.appendText("JDK with version $version")
         }
 
-        override fun matchesSafely(item: PlatformVersion): Boolean {
-          return item.majorVersion == version
-        }
+        override fun matchesSafely(item: PlatformVersion): Boolean = item.majorVersion == version
       }
-    }
 
     fun rethrowIfNotExpected(e: Throwable) {
       versionChecks.forEach { (versionMatcher, failureMatcher) ->
@@ -336,20 +330,18 @@ open class PlatformRule
       assumeTrue(PlatformVersion.majorVersion == majorVersion)
     }
 
-    fun androidSdkVersion(): Int? {
-      return if (Platform.isAndroid) {
+    fun androidSdkVersion(): Int? =
+      if (Platform.isAndroid) {
         Build.VERSION.SDK_INT
       } else {
         null
       }
-    }
 
-    fun localhostHandshakeCertificates(): HandshakeCertificates {
-      return when {
+    fun localhostHandshakeCertificates(): HandshakeCertificates =
+      when {
         isBouncyCastle() -> localhostHandshakeCertificatesWithRsa2048
         else -> localhost()
       }
-    }
 
     val isAndroid: Boolean
       get() = Platform.Companion.isAndroid
@@ -373,12 +365,14 @@ open class PlatformRule
        */
       private val localhostHandshakeCertificatesWithRsa2048: HandshakeCertificates by lazy {
         val heldCertificate =
-          HeldCertificate.Builder()
+          HeldCertificate
+            .Builder()
             .commonName("localhost")
             .addSubjectAlternativeName("localhost")
             .rsa2048()
             .build()
-        return@lazy HandshakeCertificates.Builder()
+        return@lazy HandshakeCertificates
+          .Builder()
           .heldCertificate(heldCertificate)
           .addTrustedCertificate(heldCertificate.certificate)
           .build()
@@ -398,7 +392,8 @@ open class PlatformRule
             }
 
             val provider =
-              Conscrypt.newProviderBuilder()
+              Conscrypt
+                .newProviderBuilder()
                 .provideTrustManager(true)
                 .build()
             Security.insertProviderAt(provider, 1)
@@ -499,7 +494,10 @@ open class PlatformRule
         }
 
       val isCorrettoInstalled: Boolean =
-        isCorrettoSupported && Security.getProviders()
-          .first().name == AmazonCorrettoCryptoProvider.PROVIDER_NAME
+        isCorrettoSupported &&
+          Security
+            .getProviders()
+            .first()
+            .name == AmazonCorrettoCryptoProvider.PROVIDER_NAME
     }
   }

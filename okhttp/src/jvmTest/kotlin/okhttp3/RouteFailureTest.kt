@@ -76,7 +76,8 @@ class RouteFailureTest {
     socketFactory = SpecificHostSocketFactory(InetSocketAddress(server.hostName, server.port))
 
     client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .dns(dns)
         .socketFactory(socketFactory)
         .eventListenerFactory(clientTestRule.wrap(listener))
@@ -97,12 +98,12 @@ class RouteFailureTest {
     socketFactory[ipv4] = server2.inetSocketAddress
 
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .fastFallback(false)
         .apply {
           retryOnConnectionFailure = false
-        }
-        .build()
+        }.build()
 
     executeSynchronously(request)
       .assertFailureMatches("stream was reset: REFUSED_STREAM")
@@ -134,12 +135,12 @@ class RouteFailureTest {
     socketFactory[ipv4] = server2.inetSocketAddress
 
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .fastFallback(false)
         .apply {
           retryOnConnectionFailure = true
-        }
-        .build()
+        }.build()
 
     executeSynchronously(request)
       .assertBody("body")
@@ -177,12 +178,12 @@ class RouteFailureTest {
     socketFactory[ipv4] = server2.inetSocketAddress
 
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .fastFallback(true)
         .apply {
           retryOnConnectionFailure = false
-        }
-        .build()
+        }.build()
 
     executeSynchronously(request)
       .assertFailureMatches("stream was reset: REFUSED_STREAM")
@@ -214,12 +215,12 @@ class RouteFailureTest {
     socketFactory[ipv4] = server2.inetSocketAddress
 
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .fastFallback(true)
         .apply {
           retryOnConnectionFailure = true
-        }
-        .build()
+        }.build()
 
     executeSynchronously(request)
       .assertBody("body")
@@ -256,12 +257,12 @@ class RouteFailureTest {
     socketFactory[ipv6] = server1.inetSocketAddress
 
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .fastFallback(false)
         .apply {
           retryOnConnectionFailure = true
-        }
-        .build()
+        }.build()
 
     executeSynchronously(request)
       .assertFailureMatches("stream was reset: REFUSED_STREAM")
@@ -290,12 +291,12 @@ class RouteFailureTest {
     socketFactory[ipv6] = server1.inetSocketAddress
 
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .fastFallback(true)
         .apply {
           retryOnConnectionFailure = true
-        }
-        .build()
+        }.build()
 
     executeSynchronously(request)
       .assertFailureMatches("stream was reset: REFUSED_STREAM")
@@ -380,7 +381,8 @@ class RouteFailureTest {
   private fun enableProtocol(protocol: Protocol) {
     enableTls()
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .protocols(listOf(protocol, Protocol.HTTP_1_1))
         .build()
     server1.protocols = client.protocols
@@ -389,12 +391,12 @@ class RouteFailureTest {
 
   private fun enableTls() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .hostnameVerifier(RecordingHostnameVerifier())
+        ).hostnameVerifier(RecordingHostnameVerifier())
         .build()
     server1.useHttps(handshakeCertificates.sslSocketFactory())
     server2.useHttps(handshakeCertificates.sslSocketFactory())

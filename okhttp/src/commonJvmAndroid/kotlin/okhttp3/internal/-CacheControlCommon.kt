@@ -46,26 +46,27 @@ internal fun CacheControl.commonToString(): String {
   return result
 }
 
-internal fun Long.commonClampToInt(): Int {
-  return when {
+internal fun Long.commonClampToInt(): Int =
+  when {
     this > Int.MAX_VALUE -> Int.MAX_VALUE
     else -> toInt()
   }
-}
 
 internal fun CacheControl.Companion.commonForceNetwork() =
-  CacheControl.Builder()
+  CacheControl
+    .Builder()
     .noCache()
     .build()
 
 internal fun CacheControl.Companion.commonForceCache() =
-  CacheControl.Builder()
+  CacheControl
+    .Builder()
     .onlyIfCached()
     .maxStale(Int.MAX_VALUE.seconds)
     .build()
 
-internal fun CacheControl.Builder.commonBuild(): CacheControl {
-  return CacheControl(
+internal fun CacheControl.Builder.commonBuild(): CacheControl =
+  CacheControl(
     noCache = noCache,
     noStore = noStore,
     maxAgeSeconds = maxAgeSeconds,
@@ -80,7 +81,6 @@ internal fun CacheControl.Builder.commonBuild(): CacheControl {
     immutable = immutable,
     headerValue = null,
   )
-}
 
 internal fun CacheControl.Builder.commonNoCache() =
   apply {

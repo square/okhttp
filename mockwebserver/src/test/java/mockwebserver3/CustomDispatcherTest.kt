@@ -90,8 +90,8 @@ class CustomDispatcherTest {
   private fun buildRequestThread(
     path: String,
     responseCode: AtomicInteger,
-  ): Thread {
-    return Thread {
+  ): Thread =
+    Thread {
       val url = mockWebServer.url(path).toUrl()
       val conn: HttpURLConnection
       try {
@@ -100,5 +100,4 @@ class CustomDispatcherTest {
       } catch (ignored: IOException) {
       }
     }
-  }
 }

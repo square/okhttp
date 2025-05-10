@@ -17,11 +17,6 @@
 
 package okhttp3.internal
 
-import okhttp3.Headers
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.ResponseBody
-import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.ArrayIndexOutOfBoundsException
 import okio.Buffer
 import okio.BufferedSink
@@ -35,18 +30,8 @@ import okio.Options
 import okio.Path
 import okio.use
 
-// TODO: migrate callers to [Regex.matchAt] when that API is not experimental.
-internal fun Regex.matchAtPolyfill(
-  input: CharSequence,
-  index: Int,
-): MatchResult? {
-  val candidate = find(input, index) ?: return null
-  if (candidate.range.first != index) return null // Didn't match where it should have.
-  return candidate
-}
-
 @JvmField
-val EMPTY_BYTE_ARRAY: ByteArray = ByteArray(0)
+internal val EMPTY_BYTE_ARRAY: ByteArray = ByteArray(0)
 
 /** Byte order marks. */
 internal val UNICODE_BOMS =
@@ -203,12 +188,11 @@ internal fun String.indexOfControlOrNonAscii(): Int {
 }
 
 /** Returns true if we should void putting this this header in an exception or toString(). */
-internal fun isSensitiveHeader(name: String): Boolean {
-  return name.equals("Authorization", ignoreCase = true) ||
+internal fun isSensitiveHeader(name: String): Boolean =
+  name.equals("Authorization", ignoreCase = true) ||
     name.equals("Cookie", ignoreCase = true) ||
     name.equals("Proxy-Authorization", ignoreCase = true) ||
     name.equals("Set-Cookie", ignoreCase = true)
-}
 
 internal fun Char.parseHexDigit(): Int =
   when (this) {
@@ -232,13 +216,12 @@ internal fun BufferedSink.writeMedium(medium: Int) {
 }
 
 @Throws(IOException::class)
-internal fun BufferedSource.readMedium(): Int {
-  return (
+internal fun BufferedSource.readMedium(): Int =
+  (
     readByte() and 0xff shl 16
       or (readByte() and 0xff shl 8)
       or (readByte() and 0xff)
   )
-}
 
 /** Run [block] until it either throws an [IOException] or completes. */
 internal inline fun ignoreIoExceptions(block: () -> Unit) {
@@ -271,13 +254,12 @@ internal fun String.indexOfNonWhitespace(startIndex: Int = 0): Int {
   return length
 }
 
-fun String.toLongOrDefault(defaultValue: Long): Long {
-  return try {
+fun String.toLongOrDefault(defaultValue: Long): Long =
+  try {
     toLong()
   } catch (_: NumberFormatException) {
     defaultValue
   }
-}
 
 /**
  * Returns this as a non-negative integer, or 0 if it is negative, or [Int.MAX_VALUE] if it is too
@@ -397,10 +379,6 @@ internal fun checkOffsetAndCount(
   }
 }
 
-val commonEmptyHeaders: Headers = Headers.headersOf()
-val commonEmptyRequestBody: RequestBody = EMPTY_BYTE_ARRAY.toRequestBody()
-val commonEmptyResponse: ResponseBody = EMPTY_BYTE_ARRAY.toResponseBody()
-
 internal fun <T> interleave(
   a: Iterable<T>,
   b: Iterable<T>,
@@ -419,9 +397,3 @@ internal fun <T> interleave(
     }
   }
 }
-
-// TODO check read only options for creating lists
-public fun <T> List<T>.readOnly() = this.toList()
-
-// TODO check read only options for creating lists
-public fun <T> Set<T>.readOnly() = this.toSet()

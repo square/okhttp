@@ -50,13 +50,15 @@ class CertificatePinnerTest {
   @Test
   fun sameKeypairSamePin() {
     val heldCertificateA2 =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .keyPair(certA1.keyPair)
         .serialNumber(101L)
         .build()
     val keypairACertificate2Pin = pin(heldCertificateA2.certificate)
     val heldCertificateB2 =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .keyPair(certB1.keyPair)
         .serialNumber(201L)
         .build()
@@ -69,7 +71,8 @@ class CertificatePinnerTest {
   @Test
   fun successfulCheck() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("example.com", certA1Sha256Pin)
         .build()
     certificatePinner.check("example.com", listOf(certA1.certificate))
@@ -78,7 +81,8 @@ class CertificatePinnerTest {
   @Test
   fun successfulMatchAcceptsAnyMatchingCertificateOld() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("example.com", certB1Sha256Pin)
         .build()
     certificatePinner.check("example.com", certA1.certificate, certB1.certificate)
@@ -87,7 +91,8 @@ class CertificatePinnerTest {
   @Test
   fun successfulMatchAcceptsAnyMatchingCertificate() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("example.com", certB1Sha256Pin)
         .build()
     certificatePinner.check(
@@ -99,7 +104,8 @@ class CertificatePinnerTest {
   @Test
   fun unsuccessfulCheck() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("example.com", certA1Sha256Pin)
         .build()
     assertFailsWith<SSLPeerUnverifiedException> {
@@ -110,7 +116,8 @@ class CertificatePinnerTest {
   @Test
   fun multipleCertificatesForOneHostname() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("example.com", certA1Sha256Pin, certB1Sha256Pin)
         .build()
     certificatePinner.check("example.com", listOf(certA1.certificate))
@@ -120,7 +127,8 @@ class CertificatePinnerTest {
   @Test
   fun multipleHostnamesForOneCertificate() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("example.com", certA1Sha256Pin)
         .add("www.example.com", certA1Sha256Pin)
         .build()
@@ -137,7 +145,8 @@ class CertificatePinnerTest {
   @Test
   fun successfulCheckForWildcardHostname() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("*.example.com", certA1Sha256Pin)
         .build()
     certificatePinner.check("a.example.com", listOf(certA1.certificate))
@@ -146,7 +155,8 @@ class CertificatePinnerTest {
   @Test
   fun successfulMatchAcceptsAnyMatchingCertificateForWildcardHostname() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("*.example.com", certB1Sha256Pin)
         .build()
     certificatePinner.check(
@@ -158,7 +168,8 @@ class CertificatePinnerTest {
   @Test
   fun unsuccessfulCheckForWildcardHostname() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("*.example.com", certA1Sha256Pin)
         .build()
     assertFailsWith<SSLPeerUnverifiedException> {
@@ -169,7 +180,8 @@ class CertificatePinnerTest {
   @Test
   fun multipleCertificatesForOneWildcardHostname() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("*.example.com", certA1Sha256Pin, certB1Sha256Pin)
         .build()
     certificatePinner.check("a.example.com", listOf(certA1.certificate))
@@ -179,7 +191,8 @@ class CertificatePinnerTest {
   @Test
   fun successfulCheckForOneHostnameWithWildcardAndDirectCertificate() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("*.example.com", certA1Sha256Pin)
         .add("a.example.com", certB1Sha256Pin)
         .build()
@@ -190,7 +203,8 @@ class CertificatePinnerTest {
   @Test
   fun unsuccessfulCheckForOneHostnameWithWildcardAndDirectCertificate() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("*.example.com", certA1Sha256Pin)
         .add("a.example.com", certB1Sha256Pin)
         .build()
@@ -202,7 +216,8 @@ class CertificatePinnerTest {
   @Test
   fun checkForHostnameWithDoubleAsterisk() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("**.example.co.uk", certA1Sha256Pin)
         .build()
 
@@ -292,7 +307,8 @@ class CertificatePinnerTest {
   @Test
   fun pinList() {
     val builder =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("example.com", certA1Sha256Pin)
         .add("www.example.com", certA1Sha256Pin)
     val certificatePinner = builder.build()
@@ -307,17 +323,20 @@ class CertificatePinnerTest {
 
   companion object {
     val certA1 =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(100L)
         .build()
     val certA1Sha256Pin = pin(certA1.certificate)
     val certB1 =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(200L)
         .build()
     val certB1Sha256Pin = pin(certB1.certificate)
     val certC1 =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(300L)
         .build()
     val certC1Sha1Pin = "sha1/" + certC1.certificate.sha1Hash().base64()

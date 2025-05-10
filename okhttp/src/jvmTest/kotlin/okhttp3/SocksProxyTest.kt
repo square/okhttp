@@ -54,7 +54,8 @@ class SocksProxyTest {
     server.enqueue(MockResponse.Builder().body("abc").build())
     server.enqueue(MockResponse.Builder().body("def").build())
     val client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .proxy(socksProxy.proxy())
         .build()
     val request1 = Request.Builder().url(server.url("/")).build()
@@ -82,7 +83,8 @@ class SocksProxyTest {
         ) = error("unexpected call")
       }
     val client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .proxySelector(proxySelector)
         .build()
     val request = Request.Builder().url(server.url("/")).build()
@@ -96,11 +98,13 @@ class SocksProxyTest {
     // This testcase will fail if the target is resolved locally instead of through the proxy.
     server.enqueue(MockResponse.Builder().body("abc").build())
     val client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .proxy(socksProxy.proxy())
         .build()
     val url =
-      server.url("/")
+      server
+        .url("/")
         .newBuilder()
         .host(SocksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS)
         .build()

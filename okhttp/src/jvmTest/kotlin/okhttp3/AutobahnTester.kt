@@ -34,7 +34,8 @@ class AutobahnTester {
     listener: WebSocketListener,
   ): WebSocket {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(HOST + path)
         .build()
     return client.newWebSocket(request, listener)

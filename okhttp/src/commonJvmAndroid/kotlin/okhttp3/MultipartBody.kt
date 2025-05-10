@@ -49,9 +49,7 @@ class MultipartBody internal constructor(
 
   fun part(index: Int): Part = parts[index]
 
-  override fun isOneShot(): Boolean {
-    return parts.any { it.body.isOneShot() }
-  }
+  override fun isOneShot(): Boolean = parts.any { it.body.isOneShot() }
 
   /** A combination of [type] and [boundaryByteString]. */
   override fun contentType(): MediaType = contentType
@@ -134,7 +132,8 @@ class MultipartBody internal constructor(
 
       if (headers != null) {
         for (h in 0 until headers.size) {
-          sink.writeUtf8(headers.name(h))
+          sink
+            .writeUtf8(headers.name(h))
             .write(COLONSPACE)
             .writeUtf8(headers.value(h))
             .write(CRLF)
@@ -143,7 +142,8 @@ class MultipartBody internal constructor(
 
       val contentType = body.contentType()
       if (contentType != null) {
-        sink.writeUtf8("Content-Type: ")
+        sink
+          .writeUtf8("Content-Type: ")
           .writeUtf8(contentType.toString())
           .write(CRLF)
       }
@@ -237,7 +237,8 @@ class MultipartBody internal constructor(
           }
 
         val headers =
-          Headers.Builder()
+          Headers
+            .Builder()
             .addUnsafeNonAscii("Content-Disposition", disposition)
             .build()
 
@@ -248,7 +249,9 @@ class MultipartBody internal constructor(
 
   class Builder
     @JvmOverloads
-    constructor(boundary: String = UUID.randomUUID().toString()) {
+    constructor(
+      boundary: String = UUID.randomUUID().toString(),
+    ) {
       private val boundary: ByteString = boundary.encodeUtf8()
       private var type = MIXED
       private val parts = mutableListOf<Part>()

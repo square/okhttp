@@ -22,17 +22,19 @@ import okhttp3.Request
 
 class CertificatePinning {
   private val client =
-    OkHttpClient.Builder()
+    OkHttpClient
+      .Builder()
       .certificatePinner(
-        CertificatePinner.Builder()
+        CertificatePinner
+          .Builder()
           .add("publicobject.com", "sha256/Vjs8r4z+80wjNcr1YKepWQboSIRi63WsWXhIMN+eWys=")
           .build(),
-      )
-      .build()
+      ).build()
 
   fun run() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://publicobject.com/robots.txt")
         .build()
 

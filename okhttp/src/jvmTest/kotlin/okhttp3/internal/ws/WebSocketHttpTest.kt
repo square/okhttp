@@ -94,7 +94,8 @@ class WebSocketHttpTest {
   private val serverListener = WebSocketRecorder("server")
   private val random = Random(0)
   private var client =
-    clientTestRule.newClientBuilder()
+    clientTestRule
+      .newClientBuilder()
       .writeTimeout(Duration.ofMillis(500))
       .readTimeout(Duration.ofMillis(500))
       .addInterceptor(
@@ -104,8 +105,7 @@ class WebSocketHttpTest {
           assertThat(response.body).isNotNull()
           response
         },
-      )
-      .build()
+      ).build()
 
   private fun configureClientTestRule(): OkHttpClientTestRule {
     val clientTestRule = OkHttpClientTestRule()
@@ -128,7 +128,8 @@ class WebSocketHttpTest {
   @Test
   fun textMessage() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -143,7 +144,8 @@ class WebSocketHttpTest {
   @Test
   fun binaryMessage() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -158,7 +160,8 @@ class WebSocketHttpTest {
   @Test
   fun serverMessage() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -173,7 +176,8 @@ class WebSocketHttpTest {
   @Test
   fun throwingOnOpenFailsImmediately() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -183,9 +187,7 @@ class WebSocketHttpTest {
         override fun onOpen(
           webSocket: WebSocket,
           response: Response,
-        ) {
-          throw e
-        }
+        ): Unit = throw e
       },
     )
     newWebSocket()
@@ -202,7 +204,8 @@ class WebSocketHttpTest {
   )
   fun throwingOnFailLogs() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(200)
         .body("Body")
         .build(),
@@ -214,9 +217,7 @@ class WebSocketHttpTest {
           webSocket: WebSocket,
           t: Throwable,
           response: Response?,
-        ) {
-          throw e
-        }
+        ): Unit = throw e
       },
     )
     newWebSocket()
@@ -226,7 +227,8 @@ class WebSocketHttpTest {
   @Test
   fun throwingOnMessageClosesImmediatelyAndFails() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -239,9 +241,7 @@ class WebSocketHttpTest {
         override fun onMessage(
           webSocket: WebSocket,
           text: String,
-        ) {
-          throw e
-        }
+        ): Unit = throw e
       },
     )
     server.send("Hello, WebSockets!")
@@ -253,7 +253,8 @@ class WebSocketHttpTest {
   @Test
   fun throwingOnClosingClosesImmediatelyAndFails() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -267,9 +268,7 @@ class WebSocketHttpTest {
           webSocket: WebSocket,
           code: Int,
           reason: String,
-        ) {
-          throw e
-        }
+        ): Unit = throw e
       },
     )
     server.close(1000, "bye")
@@ -281,7 +280,8 @@ class WebSocketHttpTest {
   @Test
   fun unplannedCloseHandledByCloseWithoutFailure() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -310,7 +310,8 @@ class WebSocketHttpTest {
   @Test
   fun unplannedCloseHandledWithoutFailure() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -324,7 +325,8 @@ class WebSocketHttpTest {
   @Throws(IOException::class)
   fun non101RetainsBody() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(200)
         .body("Body")
         .build(),
@@ -342,7 +344,8 @@ class WebSocketHttpTest {
   @Throws(IOException::class)
   fun notFound() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .status("HTTP/1.1 404 Not Found")
         .build(),
     )
@@ -358,12 +361,14 @@ class WebSocketHttpTest {
   @Test
   fun clientTimeoutClosesBody() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(408)
         .build(),
     )
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -381,14 +386,16 @@ class WebSocketHttpTest {
   @Throws(IOException::class)
   fun missingConnectionHeader() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(101)
         .setHeader("Upgrade", "websocket")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk=")
         .build(),
     )
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(SocketPolicy.DisconnectAtStart)
         .build(),
     )
@@ -406,7 +413,8 @@ class WebSocketHttpTest {
   @Throws(IOException::class)
   fun wrongConnectionHeader() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(101)
         .setHeader("Upgrade", "websocket")
         .setHeader("Connection", "Downgrade")
@@ -414,7 +422,8 @@ class WebSocketHttpTest {
         .build(),
     )
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(SocketPolicy.DisconnectAtStart)
         .build(),
     )
@@ -432,14 +441,16 @@ class WebSocketHttpTest {
   @Throws(IOException::class)
   fun missingUpgradeHeader() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk=")
         .build(),
     )
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(SocketPolicy.DisconnectAtStart)
         .build(),
     )
@@ -457,7 +468,8 @@ class WebSocketHttpTest {
   @Throws(IOException::class)
   fun wrongUpgradeHeader() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "Pepsi")
@@ -465,7 +477,8 @@ class WebSocketHttpTest {
         .build(),
     )
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(SocketPolicy.DisconnectAtStart)
         .build(),
     )
@@ -483,14 +496,16 @@ class WebSocketHttpTest {
   @Throws(IOException::class)
   fun missingMagicHeader() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket")
         .build(),
     )
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(SocketPolicy.DisconnectAtStart)
         .build(),
     )
@@ -508,7 +523,8 @@ class WebSocketHttpTest {
   @Throws(IOException::class)
   fun wrongMagicHeader() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket")
@@ -516,7 +532,8 @@ class WebSocketHttpTest {
         .build(),
     )
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(SocketPolicy.DisconnectAtStart)
         .build(),
     )
@@ -534,7 +551,8 @@ class WebSocketHttpTest {
   @Throws(IOException::class)
   fun clientIncludesForbiddenHeader() {
     newWebSocket(
-      Request.Builder()
+      Request
+        .Builder()
         .url(webServer.url("/"))
         .header("Sec-WebSocket-Extensions", "permessage-deflate")
         .build(),
@@ -549,7 +567,8 @@ class WebSocketHttpTest {
   fun webSocketAndApplicationInterceptors() {
     val interceptedCount = AtomicInteger()
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addInterceptor(
           Interceptor { chain: Interceptor.Chain ->
             assertThat(chain.request().body).isNull()
@@ -559,10 +578,10 @@ class WebSocketHttpTest {
             interceptedCount.incrementAndGet()
             response
           },
-        )
-        .build()
+        ).build()
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -575,15 +594,16 @@ class WebSocketHttpTest {
   @Test
   fun webSocketAndNetworkInterceptors() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(
           Interceptor { chain: Interceptor.Chain? ->
             throw AssertionError() // Network interceptors don't execute.
           },
-        )
-        .build()
+        ).build()
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -596,7 +616,8 @@ class WebSocketHttpTest {
   @Test
   fun overflowOutgoingQueue() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -633,7 +654,8 @@ class WebSocketHttpTest {
   @Test
   fun closeReasonMaximumLength() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -653,7 +675,8 @@ class WebSocketHttpTest {
   @Test
   fun closeReasonTooLong() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -689,12 +712,12 @@ class WebSocketHttpTest {
   fun wssScheme() {
     webServer.useHttps(handshakeCertificates.sslSocketFactory())
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .hostnameVerifier(RecordingHostnameVerifier())
+        ).hostnameVerifier(RecordingHostnameVerifier())
         .build()
     websocketScheme("wss")
   }
@@ -703,12 +726,12 @@ class WebSocketHttpTest {
   fun httpsScheme() {
     webServer.useHttps(handshakeCertificates.sslSocketFactory())
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .hostnameVerifier(RecordingHostnameVerifier())
+        ).hostnameVerifier(RecordingHostnameVerifier())
         .build()
     websocketScheme("https")
   }
@@ -716,7 +739,8 @@ class WebSocketHttpTest {
   @Test
   fun readTimeoutAppliesToHttpRequest() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(NoResponse)
         .build(),
     )
@@ -738,13 +762,12 @@ class WebSocketHttpTest {
   fun readTimeoutAppliesWithinFrames() {
     webServer.dispatcher =
       object : Dispatcher() {
-        override fun dispatch(request: RecordedRequest): MockResponse {
-          return upgradeResponse(request)
+        override fun dispatch(request: RecordedRequest): MockResponse =
+          upgradeResponse(request)
             .body(Buffer().write("81".decodeHex())) // Truncated frame.
             .removeHeader("Content-Length")
             .socketPolicy(KeepOpen)
             .build()
-        }
       }
     val webSocket: WebSocket = newWebSocket()
     clientListener.assertOpen()
@@ -760,7 +783,8 @@ class WebSocketHttpTest {
   @Throws(Exception::class)
   fun readTimeoutDoesNotApplyAcrossFrames() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -779,11 +803,13 @@ class WebSocketHttpTest {
   @Throws(Exception::class)
   fun clientPingsServerOnInterval() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .pingInterval(Duration.ofMillis(500))
         .build()
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -813,7 +839,8 @@ class WebSocketHttpTest {
   @Throws(Exception::class)
   fun clientDoesNotPingServerByDefault() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -841,14 +868,16 @@ class WebSocketHttpTest {
   fun unacknowledgedPingFailsConnection() {
     assumeNotWindows()
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .pingInterval(Duration.ofMillis(500))
         .build()
 
     // Stall in onOpen to prevent pongs from being sent.
     val latch = CountDownLatch(1)
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(
           object : WebSocketListener() {
             override fun onOpen(
@@ -862,8 +891,7 @@ class WebSocketHttpTest {
               }
             }
           },
-        )
-        .build(),
+        ).build(),
     )
     val openAtNanos = System.nanoTime()
     newWebSocket()
@@ -882,7 +910,8 @@ class WebSocketHttpTest {
   @Test
   fun clientCancelsIfCloseIsNotAcknowledged() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -910,11 +939,13 @@ class WebSocketHttpTest {
   fun webSocketsDontTriggerEventListener() {
     val listener = RecordingEventListener()
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .eventListenerFactory(clientTestRule.wrap(listener))
         .build()
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -936,12 +967,14 @@ class WebSocketHttpTest {
   @Throws(Exception::class)
   fun callTimeoutAppliesToSetup() {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .headersDelay(500, TimeUnit.MILLISECONDS)
         .build(),
     )
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .readTimeout(Duration.ZERO)
         .writeTimeout(Duration.ZERO)
         .callTimeout(Duration.ofMillis(100))
@@ -954,11 +987,13 @@ class WebSocketHttpTest {
   @Throws(Exception::class)
   fun callTimeoutDoesNotApplyOnceConnected() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .callTimeout(Duration.ofMillis(100))
         .build()
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
@@ -981,11 +1016,13 @@ class WebSocketHttpTest {
   fun webSocketConnectionIsReleased() {
     // This test assumes HTTP/1.1 pooling semantics.
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .protocols(Arrays.asList(Protocol.HTTP_1_1))
         .build()
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(HttpURLConnection.HTTP_NOT_FOUND)
         .body("not found!")
         .build(),
@@ -994,7 +1031,8 @@ class WebSocketHttpTest {
     newWebSocket()
     clientListener.assertFailure()
     val regularRequest =
-      Request.Builder()
+      Request
+        .Builder()
         .url(webServer.url("/"))
         .build()
     val response = client.newCall(regularRequest).execute()
@@ -1007,7 +1045,8 @@ class WebSocketHttpTest {
   @Test
   fun closeWithoutSuccessfulConnect() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(webServer.url("/"))
         .build()
     val webSocket = client.newWebSocket(request, clientListener)
@@ -1021,7 +1060,8 @@ class WebSocketHttpTest {
   fun reconnectingToNonWebSocket() {
     for (i in 0..29) {
       webServer.enqueue(
-        MockResponse.Builder()
+        MockResponse
+          .Builder()
           .bodyDelay(100, TimeUnit.MILLISECONDS)
           .body("Wrong endpoint")
           .code(401)
@@ -1029,7 +1069,8 @@ class WebSocketHttpTest {
       )
     }
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(webServer.url("/"))
         .build()
     val attempts = CountDownLatch(20)
@@ -1109,7 +1150,8 @@ class WebSocketHttpTest {
   @Throws(Exception::class)
   private fun successfulExtensions(extensionsHeader: String) {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .addHeader("Sec-WebSocket-Extensions", extensionsHeader)
         .webSocketUpgrade(serverListener)
         .build(),
@@ -1156,7 +1198,8 @@ class WebSocketHttpTest {
   @Throws(Exception::class)
   private fun extensionNegotiationFailure(extensionsHeader: String) {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .addHeader("Sec-WebSocket-Extensions", extensionsHeader)
         .webSocketUpgrade(serverListener)
         .build(),
@@ -1176,7 +1219,8 @@ class WebSocketHttpTest {
 
   private fun upgradeResponse(request: RecordedRequest): MockResponse.Builder {
     val key = request.headers["Sec-WebSocket-Key"]
-    return MockResponse.Builder()
+    return MockResponse
+      .Builder()
       .status("HTTP/1.1 101 Switching Protocols")
       .setHeader("Connection", "Upgrade")
       .setHeader("Upgrade", "websocket")
@@ -1185,12 +1229,14 @@ class WebSocketHttpTest {
 
   private fun websocketScheme(scheme: String) {
     webServer.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .webSocketUpgrade(serverListener)
         .build(),
     )
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(scheme + "://" + webServer.hostName + ":" + webServer.port + "/")
         .build()
     val webSocket = newWebSocket(request)
@@ -1203,9 +1249,12 @@ class WebSocketHttpTest {
 
   private fun newWebSocket(
     request: Request =
-      Request.Builder().get().url(
-        webServer.url("/"),
-      ).build(),
+      Request
+        .Builder()
+        .get()
+        .url(
+          webServer.url("/"),
+        ).build(),
   ): RealWebSocket {
     val webSocket =
       RealWebSocket(

@@ -23,12 +23,14 @@ object ExternalHttp2Example {
   @JvmStatic
   fun main(args: Array<String>) {
     val client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .build()
     val call =
       client.newCall(
-        Request.Builder()
+        Request
+          .Builder()
           .url("https://www.google.ca/")
           .build(),
       )
@@ -37,7 +39,11 @@ object ExternalHttp2Example {
       println(response.code)
       println("PROTOCOL ${response.protocol}")
       var line: String?
-      while (response.body.source().readUtf8Line().also { line = it } != null) {
+      while (response.body
+          .source()
+          .readUtf8Line()
+          .also { line = it } != null
+      ) {
         println(line)
       }
     } finally {

@@ -67,7 +67,8 @@ class RetryConnectionTest {
 
   @Test fun someFallbacksSupported() {
     val sslV3 =
-      ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+      ConnectionSpec
+        .Builder(ConnectionSpec.MODERN_TLS)
         .tlsVersions(TlsVersion.SSL_3_0)
         .build()
     val routePlanner = factory.newRoutePlanner(client)
@@ -83,7 +84,8 @@ class RetryConnectionTest {
 
     // MODERN_TLS is used here.
     val attempt0 =
-      routePlanner.planConnectToRoute(route)
+      routePlanner
+        .planConnectToRoute(route)
         .planWithCurrentOrInitialConnectionSpec(connectionSpecs, socket)
     assertThat(attempt0.isTlsFallback).isFalse()
     connectionSpecs[attempt0.connectionSpecIndex].apply(socket, attempt0.isTlsFallback)
@@ -104,11 +106,10 @@ class RetryConnectionTest {
     // sslV3 is not used because SSLv3 is not enabled on the socket.
   }
 
-  private fun createSocketWithEnabledProtocols(vararg tlsVersions: TlsVersion): SSLSocket {
-    return (handshakeCertificates.sslSocketFactory().createSocket() as SSLSocket).apply {
+  private fun createSocketWithEnabledProtocols(vararg tlsVersions: TlsVersion): SSLSocket =
+    (handshakeCertificates.sslSocketFactory().createSocket() as SSLSocket).apply {
       enabledProtocols = javaNames(*tlsVersions)
     }
-  }
 
   private fun assertEnabledProtocols(
     socket: SSLSocket,

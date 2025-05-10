@@ -81,9 +81,7 @@ internal object Locks {
    * No function on its own but places a central place that all conditions go through to allow
    * temporary debugging.
    */
-  internal fun ReentrantLock.newLockCondition(): Condition {
-    return this.newCondition()
-  }
+  internal fun ReentrantLock.newLockCondition(): Condition = this.newCondition()
 
   /**
    * A no cost (inlined) alias to [ReentrantLock#withLock] for an OkHttp Lock.

@@ -187,27 +187,57 @@ class RequestTest {
     val contentType = "application/json".toMediaType()
     val body = "{}".toRequestBody(contentType)
 
-    val get = Request.Builder().url("http://localhost/api").get().build()
+    val get =
+      Request
+        .Builder()
+        .url("http://localhost/api")
+        .get()
+        .build()
     assertThat(get.method).isEqualTo("GET")
     assertThat(get.body).isNull()
 
-    val head = Request.Builder().url("http://localhost/api").head().build()
+    val head =
+      Request
+        .Builder()
+        .url("http://localhost/api")
+        .head()
+        .build()
     assertThat(head.method).isEqualTo("HEAD")
     assertThat(head.body).isNull()
 
-    val delete = Request.Builder().url("http://localhost/api").delete().build()
+    val delete =
+      Request
+        .Builder()
+        .url("http://localhost/api")
+        .delete()
+        .build()
     assertThat(delete.method).isEqualTo("DELETE")
     assertThat(delete.body!!.contentLength()).isEqualTo(0L)
 
-    val post = Request.Builder().url("http://localhost/api").post(body).build()
+    val post =
+      Request
+        .Builder()
+        .url("http://localhost/api")
+        .post(body)
+        .build()
     assertThat(post.method).isEqualTo("POST")
     assertThat(post.body).isEqualTo(body)
 
-    val put = Request.Builder().url("http://localhost/api").put(body).build()
+    val put =
+      Request
+        .Builder()
+        .url("http://localhost/api")
+        .put(body)
+        .build()
     assertThat(put.method).isEqualTo("PUT")
     assertThat(put.body).isEqualTo(body)
 
-    val patch = Request.Builder().url("http://localhost/api").patch(body).build()
+    val patch =
+      Request
+        .Builder()
+        .url("http://localhost/api")
+        .patch(body)
+        .build()
     assertThat(patch.method).isEqualTo("PATCH")
     assertThat(patch.body).isEqualTo(body)
   }
@@ -227,13 +257,15 @@ class RequestTest {
       "http://localhost/api/foo".toHttpUrl(),
     )
     val requestWithCache =
-      Request.Builder()
+      Request
+        .Builder()
         .url("http://localhost/api")
         .build()
     // cache url object
     requestWithCache.url
     val builtRequestWithCache =
-      requestWithCache.newBuilder()
+      requestWithCache
+        .newBuilder()
         .url("http://localhost/api/foo")
         .build()
     assertThat(builtRequestWithCache.url)
@@ -243,7 +275,8 @@ class RequestTest {
   @Test
   fun cacheControl() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .cacheControl(CacheControl.Builder().noCache().build())
         .url("https://square.com")
         .build()
@@ -254,7 +287,8 @@ class RequestTest {
   @Test
   fun emptyCacheControlClearsAllCacheControlHeaders() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .header("Cache-Control", "foo")
         .cacheControl(CacheControl.Builder().build())
         .url("https://square.com")
@@ -319,7 +353,8 @@ class RequestTest {
   @Test
   fun noTag() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .build()
     assertThat(request.tag()).isNull()
@@ -336,7 +371,8 @@ class RequestTest {
   fun defaultTag() {
     val tag = UUID.randomUUID()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag(tag)
         .build()
@@ -353,7 +389,8 @@ class RequestTest {
   @Test
   fun nullRemovesTag() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag("a")
         .tag(null)
@@ -364,7 +401,8 @@ class RequestTest {
   @Test
   fun removeAbsentTag() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag(null)
         .build()
@@ -375,7 +413,8 @@ class RequestTest {
   fun objectTag() {
     val tag = UUID.randomUUID()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag(Any::class.java, tag)
         .build()
@@ -393,7 +432,8 @@ class RequestTest {
   fun javaClassTag() {
     val uuidTag = UUID.randomUUID()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag(UUID::class.java, uuidTag) // Use the Class<*> parameter.
         .build()
@@ -411,7 +451,8 @@ class RequestTest {
   fun kotlinReifiedTag() {
     val uuidTag = UUID.randomUUID()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag<UUID>(uuidTag) // Use the type parameter.
         .build()
@@ -429,7 +470,8 @@ class RequestTest {
   fun kotlinClassTag() {
     val uuidTag = UUID.randomUUID()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag(UUID::class, uuidTag) // Use the KClass<*> parameter.
         .build()
@@ -448,7 +490,8 @@ class RequestTest {
     val uuidTag1 = UUID.randomUUID()
     val uuidTag2 = UUID.randomUUID()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag(UUID::class.java, uuidTag1)
         .tag(UUID::class.java, uuidTag2)
@@ -463,7 +506,8 @@ class RequestTest {
     val longTag = 20170815L as Long?
     val objectTag = Any()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
         .tag(Any::class.java, objectTag)
         .tag(UUID::class.java, uuidTag)
@@ -481,7 +525,8 @@ class RequestTest {
   @Test
   fun tagsAreImmutable() {
     val builder =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://square.com")
     val requestA = builder.tag(String::class.java, "a").build()
     val requestB = builder.tag(String::class.java, "b").build()
@@ -494,7 +539,8 @@ class RequestTest {
   @Test
   fun requestToStringRedactsSensitiveHeaders() {
     val headers =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("content-length", "99")
         .add("authorization", "peanutbutter")
         .add("proxy-authorization", "chocolate")
