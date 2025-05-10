@@ -922,7 +922,6 @@ class HttpLoggingInterceptorTest {
       .assertNoMoreLogs()
   }
 
-  @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
   @Test
   fun sensitiveQueryParamsAreRedacted() {
     url = server.url("/api/login?user=test_user&authentication=basic&password=confidential_password")
@@ -968,7 +967,6 @@ class HttpLoggingInterceptorTest {
       .assertNoMoreLogs()
   }
 
-  @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
   @Test
   fun preserveQueryParamsAfterRedacted() {
     url =

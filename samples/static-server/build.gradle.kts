@@ -14,6 +14,7 @@ tasks.jar {
 }
 
 dependencies {
+  implementation(projects.okhttp)
   implementation(projects.mockwebserver)
 }
 
