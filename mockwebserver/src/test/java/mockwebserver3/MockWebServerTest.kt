@@ -439,7 +439,6 @@ class MockWebServerTest {
 
   @Test
   fun disconnectResponseHalfway() {
-    println(System.getProperty("java.version"))
     server.enqueue(
       MockResponse
         .Builder()
