@@ -429,7 +429,8 @@ jobs:
 
   testopenjdkearlyaccess:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
+#    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
+    if: false # https://youtrack.jetbrains.com/issue/KTOR-8489
 
     steps:
       - name: Checkout
@@ -450,7 +451,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=25 --stacktrace
+        run: ./gradlew test -Dtest.java.version=25
 
   testwindows:
     runs-on: windows-latest
