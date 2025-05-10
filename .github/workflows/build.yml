@@ -421,11 +421,15 @@ jobs:
             17
             24
 
+      - name: Allow incompatible JVM versions
+        run: |
+          echo 'kotlin.jvm.target.validation.mode=ignore' >> ./gradle.properties
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=24 -Dkotlin.jvm.target.validation.mode=ignore
+        run: ./gradlew test -Dtest.java.version=24
 
   testopenjdkearlyaccess:
     runs-on: ubuntu-latest
@@ -447,11 +451,15 @@ jobs:
             17
             25-ea
 
+      - name: Allow incompatible JVM versions
+        run: |
+          echo 'kotlin.jvm.target.validation.mode=ignore' >> ./gradle.properties
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=25 -Dkotlin.jvm.target.validation.mode=IGNORE
+        run: ./gradlew test -Dtest.java.version=25
 
   testwindows:
     runs-on: windows-latest
