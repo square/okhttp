@@ -120,7 +120,8 @@ class CipherSuiteTest {
     socket.supportedCipherSuites = arrayOf("SSL_A", "SSL_B", "SSL_C", "SSL_D", "SSL_E")
     socket.enabledCipherSuites = arrayOf("SSL_A", "SSL_B", "SSL_C")
     val connectionSpec =
-      ConnectionSpec.Builder(true)
+      ConnectionSpec
+        .Builder(true)
         .tlsVersions(TlsVersion.TLS_1_0)
         .cipherSuites("TLS_A", "TLS_C", "TLS_E")
         .build()
@@ -136,7 +137,8 @@ class CipherSuiteTest {
       arrayOf("TLS_A", "TLS_B", "TLS_C", "TLS_D", "TLS_E")
     socket.enabledCipherSuites = arrayOf("TLS_A", "TLS_B", "TLS_C")
     val connectionSpec =
-      ConnectionSpec.Builder(true)
+      ConnectionSpec
+        .Builder(true)
         .tlsVersions(TlsVersion.TLS_1_0)
         .cipherSuites("SSL_A", "SSL_C", "SSL_E")
         .build()
@@ -151,7 +153,8 @@ class CipherSuiteTest {
     socket.supportedCipherSuites = arrayOf("SSL_A", "SSL_FALLBACK_SCSV")
     socket.enabledCipherSuites = arrayOf("SSL_A")
     val connectionSpec =
-      ConnectionSpec.Builder(true)
+      ConnectionSpec
+        .Builder(true)
         .tlsVersions(TlsVersion.TLS_1_0)
         .cipherSuites("SSL_A")
         .build()
@@ -169,7 +172,8 @@ class CipherSuiteTest {
     socket.supportedCipherSuites = arrayOf("TLS_A", "TLS_FALLBACK_SCSV")
     socket.enabledCipherSuites = arrayOf("TLS_A")
     val connectionSpec =
-      ConnectionSpec.Builder(true)
+      ConnectionSpec
+        .Builder(true)
         .tlsVersions(TlsVersion.TLS_1_0)
         .cipherSuites("TLS_A")
         .build()
@@ -187,7 +191,8 @@ class CipherSuiteTest {
     socket.supportedCipherSuites = arrayOf("TLS_A")
     socket.enabledCipherSuites = arrayOf("TLS_A")
     val connectionSpec =
-      ConnectionSpec.Builder(true)
+      ConnectionSpec
+        .Builder(true)
         .tlsVersions(TlsVersion.TLS_1_1, TlsVersion.TLS_1_2, TlsVersion.TLS_1_3)
         .cipherSuites("TLS_A")
         .build()
@@ -200,25 +205,19 @@ class CipherSuiteTest {
     private lateinit var supportedCipherSuites: Array<String>
     private lateinit var enabledCipherSuites: Array<String>
 
-    override fun getEnabledProtocols(): Array<String> {
-      return enabledProtocols
-    }
+    override fun getEnabledProtocols(): Array<String> = enabledProtocols
 
     override fun setEnabledProtocols(protocols: Array<String>) {
       this.enabledProtocols = protocols
     }
 
-    override fun getSupportedCipherSuites(): Array<String> {
-      return supportedCipherSuites
-    }
+    override fun getSupportedCipherSuites(): Array<String> = supportedCipherSuites
 
     fun setSupportedCipherSuites(supportedCipherSuites: Array<String>) {
       this.supportedCipherSuites = supportedCipherSuites
     }
 
-    override fun getEnabledCipherSuites(): Array<String> {
-      return enabledCipherSuites
-    }
+    override fun getEnabledCipherSuites(): Array<String> = enabledCipherSuites
 
     override fun setEnabledCipherSuites(suites: Array<String>) {
       this.enabledCipherSuites = suites

@@ -108,7 +108,9 @@ class Jdk8WithJettyBootPlatform(
       } else if (methodName == "protocols" && callArgs.isEmpty()) {
         return protocols // Client advertises these protocols.
       } else if ((methodName == "selectProtocol" || methodName == "select") &&
-        String::class.java == returnType && callArgs.size == 1 && callArgs[0] is List<*>
+        String::class.java == returnType &&
+        callArgs.size == 1 &&
+        callArgs[0] is List<*>
       ) {
         val peerProtocols = callArgs[0] as List<*>
         // Pick the first known protocol the peer advertises.

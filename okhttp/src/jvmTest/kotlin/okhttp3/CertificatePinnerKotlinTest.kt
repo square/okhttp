@@ -32,7 +32,8 @@ class CertificatePinnerKotlinTest {
   @Test
   fun successfulCheckSha1Pin() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("example.com", "sha1/" + certA1.certificate.sha1Hash().base64())
         .build()
 
@@ -41,7 +42,8 @@ class CertificatePinnerKotlinTest {
 
   @Test fun successfulFindMatchingPins() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("first.com", certA1Sha256Pin, certB1Sha256Pin)
         .add("second.com", certC1Sha256Pin)
         .build()
@@ -56,7 +58,8 @@ class CertificatePinnerKotlinTest {
 
   @Test fun successfulFindMatchingPinsForWildcardAndDirectCertificates() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("*.example.com", certA1Sha256Pin)
         .add("a.example.com", certB1Sha256Pin)
         .add("b.example.com", certC1Sha256Pin)
@@ -73,7 +76,8 @@ class CertificatePinnerKotlinTest {
   @Test
   fun wildcardHostnameShouldNotMatchThroughDot() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("*.example.com", certA1Sha256Pin)
         .build()
 
@@ -86,7 +90,8 @@ class CertificatePinnerKotlinTest {
   @Test
   fun doubleWildcardHostnameShouldMatchThroughDot() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("**.example.com", certA1Sha256Pin)
         .build()
 
@@ -101,7 +106,8 @@ class CertificatePinnerKotlinTest {
   @Test
   fun doubleWildcardHostnameShouldNotMatchSuffix() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("**.example.com", certA1Sha256Pin)
         .build()
 
@@ -112,7 +118,8 @@ class CertificatePinnerKotlinTest {
 
   @Test fun successfulFindMatchingPinsIgnoresCase() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("EXAMPLE.com", certA1Sha256Pin)
         .add("*.MyExample.Com", certB1Sha256Pin)
         .build()
@@ -126,7 +133,8 @@ class CertificatePinnerKotlinTest {
 
   @Test fun successfulFindMatchingPinPunycode() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("σkhttp.com", certA1Sha256Pin)
         .build()
 
@@ -138,7 +146,8 @@ class CertificatePinnerKotlinTest {
   @Test
   fun checkSubstringMatch() {
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("*.example.com", certA1Sha256Pin)
         .build()
 
@@ -185,7 +194,8 @@ class CertificatePinnerKotlinTest {
 
   @Test fun pinList() {
     val builder =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("example.com", CertificatePinnerTest.certA1Sha256Pin)
         .add("www.example.com", CertificatePinnerTest.certA1Sha256Pin)
     val certificatePinner = builder.build()
@@ -202,19 +212,22 @@ class CertificatePinnerKotlinTest {
 
   companion object {
     internal var certA1: HeldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(100L)
         .build()
     internal var certA1Sha256Pin = CertificatePinner.pin(certA1.certificate)
 
     private var certB1 =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(200L)
         .build()
     internal var certB1Sha256Pin = CertificatePinner.pin(certB1.certificate)
 
     private var certC1 =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(300L)
         .build()
     internal var certC1Sha256Pin = CertificatePinner.pin(certC1.certificate)

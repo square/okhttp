@@ -194,12 +194,14 @@ class HeadersTest {
 
   @Test fun headersEquals() {
     val headers1 =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("Connection", "close")
         .add("Transfer-Encoding", "chunked")
         .build()
     val headers2 =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("Connection", "close")
         .add("Transfer-Encoding", "chunked")
         .build()
@@ -209,12 +211,14 @@ class HeadersTest {
 
   @Test fun headersNotEquals() {
     val headers1 =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("Connection", "close")
         .add("Transfer-Encoding", "chunked")
         .build()
     val headers2 =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("Connection", "keep-alive")
         .add("Transfer-Encoding", "chunked")
         .build()
@@ -224,7 +228,8 @@ class HeadersTest {
 
   @Test fun headersToString() {
     val headers =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("A", "a")
         .add("B", "bb")
         .build()
@@ -233,7 +238,8 @@ class HeadersTest {
 
   @Test fun headersToStringRedactsSensitiveHeaders() {
     val headers =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("content-length", "99")
         .add("authorization", "peanutbutter")
         .add("proxy-authorization", "chocolate")
@@ -256,13 +262,15 @@ class HeadersTest {
 
   @Test fun headersAddAll() {
     val sourceHeaders =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("A", "aa")
         .add("a", "aa")
         .add("B", "bb")
         .build()
     val headers =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("A", "a")
         .addAll(sourceHeaders)
         .add("C", "c")

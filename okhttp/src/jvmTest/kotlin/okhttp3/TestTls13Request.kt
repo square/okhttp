@@ -21,13 +21,15 @@ private val TLS13_CIPHER_SUITES =
  * available in JDK11 or Conscrypt.
  */
 private val TLS_13 =
-  ConnectionSpec.Builder(true)
+  ConnectionSpec
+    .Builder(true)
     .cipherSuites(*TLS13_CIPHER_SUITES.toTypedArray())
     .tlsVersions(TlsVersion.TLS_1_3)
     .build()
 
 private val TLS_12 =
-  ConnectionSpec.Builder(ConnectionSpec.RESTRICTED_TLS)
+  ConnectionSpec
+    .Builder(ConnectionSpec.RESTRICTED_TLS)
     .tlsVersions(TlsVersion.TLS_1_2)
     .build()
 
@@ -45,11 +47,11 @@ private fun testClient(
   }
 }
 
-private fun buildClient(vararg specs: ConnectionSpec): OkHttpClient {
-  return OkHttpClient.Builder()
+private fun buildClient(vararg specs: ConnectionSpec): OkHttpClient =
+  OkHttpClient
+    .Builder()
     .connectionSpecs(listOf(*specs))
     .build()
-}
 
 private fun sendRequest(
   client: OkHttpClient,
@@ -59,7 +61,8 @@ private fun sendRequest(
   System.out.flush()
   println(Platform.get())
   val request =
-    Request.Builder()
+    Request
+      .Builder()
       .url(url)
       .build()
   try {

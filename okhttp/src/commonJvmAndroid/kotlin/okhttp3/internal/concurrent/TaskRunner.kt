@@ -306,7 +306,9 @@ class TaskRunner(
     )
   }
 
-  class RealBackend(threadFactory: ThreadFactory) : Backend {
+  class RealBackend(
+    threadFactory: ThreadFactory,
+  ) : Backend {
     val executor =
       ThreadPoolExecutor(
         // corePoolSize:

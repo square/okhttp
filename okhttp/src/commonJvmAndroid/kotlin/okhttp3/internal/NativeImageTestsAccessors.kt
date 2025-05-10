@@ -28,9 +28,7 @@ internal fun buildCache(
   file: Path,
   maxSize: Long,
   fileSystem: FileSystem,
-): Cache {
-  return Cache(fileSystem, file, maxSize)
-}
+): Cache = Cache(fileSystem, file, maxSize)
 
 internal var RealConnection.idleAtNsAccessor: Long
   get() = idleAtNs

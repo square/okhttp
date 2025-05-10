@@ -55,7 +55,8 @@ class Http2Server(
           throw ProtocolException("Protocol $protocol unsupported")
         }
         val connection =
-          Http2Connection.Builder(false, TaskRunner.INSTANCE)
+          Http2Connection
+            .Builder(false, TaskRunner.INSTANCE)
             .socket(sslSocket)
             .listener(this)
             .build()
@@ -179,8 +180,8 @@ class Http2Server(
     }
   }
 
-  private fun contentType(file: File): String {
-    return when {
+  private fun contentType(file: File): String =
+    when {
       file.name.endsWith(".css") -> "text/css"
       file.name.endsWith(".gif") -> "image/gif"
       file.name.endsWith(".html") -> "text/html"
@@ -190,7 +191,6 @@ class Http2Server(
       file.name.endsWith(".png") -> "image/png"
       else -> "text/plain"
     }
-  }
 
   companion object {
     val logger: Logger = Logger.getLogger(Http2Server::class.java.name)

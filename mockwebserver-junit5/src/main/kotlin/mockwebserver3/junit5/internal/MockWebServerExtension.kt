@@ -43,7 +43,11 @@ import org.junit.jupiter.api.extension.ParameterResolver
  */
 @ExperimentalOkHttpApi
 class MockWebServerExtension :
-  BeforeEachCallback, AfterEachCallback, ParameterResolver, BeforeAllCallback, AfterAllCallback {
+  BeforeEachCallback,
+  AfterEachCallback,
+  ParameterResolver,
+  BeforeAllCallback,
+  AfterAllCallback {
   private val ExtensionContext.resource: ServersForTest
     get() =
       getStore(namespace).getOrComputeIfAbsent(this.uniqueId) {
@@ -54,13 +58,12 @@ class MockWebServerExtension :
     private val servers = mutableMapOf<String, MockWebServer>()
     private var started = false
 
-    fun server(name: String): MockWebServer {
-      return servers.getOrPut(name) {
+    fun server(name: String): MockWebServer =
+      servers.getOrPut(name) {
         MockWebServer().also {
           if (started) it.start()
         }
       }
-    }
 
     fun startAll() {
       started = true
@@ -87,9 +90,7 @@ class MockWebServerExtension :
   override fun supportsParameter(
     parameterContext: ParameterContext,
     extensionContext: ExtensionContext,
-  ): Boolean {
-    return parameterContext.parameter.type === MockWebServer::class.java
-  }
+  ): Boolean = parameterContext.parameter.type === MockWebServer::class.java
 
   @Suppress("NewApi")
   override fun resolveParameter(

@@ -76,14 +76,16 @@ class ClientAuthTest {
     platform.assumeNotOpenJSSE()
     platform.assumeNotBouncyCastle()
     serverRootCa =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(1L)
         .certificateAuthority(1)
         .commonName("root")
         .addSubjectAlternativeName("root_ca.com")
         .build()
     serverIntermediateCa =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(serverRootCa)
         .certificateAuthority(0)
         .serialNumber(2L)
@@ -91,21 +93,24 @@ class ClientAuthTest {
         .addSubjectAlternativeName("intermediate_ca.com")
         .build()
     serverCert =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(serverIntermediateCa)
         .serialNumber(3L)
         .commonName("Local Host")
         .addSubjectAlternativeName(server.hostName)
         .build()
     clientRootCa =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(1L)
         .certificateAuthority(1)
         .commonName("root")
         .addSubjectAlternativeName("root_ca.com")
         .build()
     clientIntermediateCa =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(serverRootCa)
         .certificateAuthority(0)
         .serialNumber(2L)
@@ -113,7 +118,8 @@ class ClientAuthTest {
         .addSubjectAlternativeName("intermediate_ca.com")
         .build()
     clientCert =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(clientIntermediateCa)
         .serialNumber(4L)
         .commonName("Jethro Willis")
@@ -128,7 +134,8 @@ class ClientAuthTest {
     server.useHttps(socketFactory)
     server.requestClientAuth()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
@@ -148,7 +155,8 @@ class ClientAuthTest {
     server.useHttps(socketFactory)
     server.requireClientAuth()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
@@ -170,7 +178,8 @@ class ClientAuthTest {
     server.useHttps(socketFactory)
     server.noClientAuth()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
@@ -190,7 +199,8 @@ class ClientAuthTest {
     server.useHttps(socketFactory)
     server.requestClientAuth()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
@@ -236,7 +246,8 @@ class ClientAuthTest {
   @Test
   fun commonNameIsNotTrusted() {
     serverCert =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(serverIntermediateCa)
         .serialNumber(3L)
         .commonName(server.hostName)
@@ -257,7 +268,8 @@ class ClientAuthTest {
     // Fails with https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
     val clientCert2 =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(4L)
         .commonName("Jethro Willis")
         .build()
@@ -292,12 +304,14 @@ class ClientAuthTest {
   @Test
   fun invalidClientAuthEvents() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .build(),
     )
     clientCert =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(clientIntermediateCa)
         .serialNumber(4L)
         .commonName("Jethro Willis")
@@ -307,7 +321,8 @@ class ClientAuthTest {
     var client = buildClient(clientCert, clientIntermediateCa.certificate)
     val listener = RecordingEventListener()
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .eventListener(listener)
         .build()
     val socketFactory = buildServerSslSocketFactory()
@@ -347,18 +362,19 @@ class ClientAuthTest {
     vararg intermediates: X509Certificate,
   ): OkHttpClient {
     val builder =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addTrustedCertificate(serverRootCa.certificate)
     if (heldCertificate != null) {
       builder.heldCertificate(heldCertificate, *intermediates)
     }
     val handshakeCertificates = builder.build()
-    return clientTestRule.newClientBuilder()
+    return clientTestRule
+      .newClientBuilder()
       .sslSocketFactory(
         handshakeCertificates.sslSocketFactory(),
         handshakeCertificates.trustManager,
-      )
-      .build()
+      ).build()
   }
 
   private fun buildServerSslSocketFactory(): SSLSocketFactory {

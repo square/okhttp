@@ -21,7 +21,9 @@ import okio.BufferedSource
 /**
  * Parse all headers delimited by "\r\n" until an empty line. This throws if headers exceed 256 KiB.
  */
-class HeadersReader(val source: BufferedSource) {
+class HeadersReader(
+  val source: BufferedSource,
+) {
   private var headerLimit = HEADER_LIMIT.toLong()
 
   /** Read a single line counted against the header size limit. */

@@ -21,7 +21,6 @@ import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSession
-import okhttp3.internal.immutableListOf
 import okhttp3.internal.toImmutableList
 
 /**
@@ -112,13 +111,12 @@ class Handshake internal constructor(
   )
   fun localPrincipal(): Principal? = localPrincipal
 
-  override fun equals(other: Any?): Boolean {
-    return other is Handshake &&
+  override fun equals(other: Any?): Boolean =
+    other is Handshake &&
       other.tlsVersion == tlsVersion &&
       other.cipherSuite == cipherSuite &&
       other.peerCertificates == peerCertificates &&
       other.localCertificates == localCertificates
-  }
 
   override fun hashCode(): Int {
     var result = 17
@@ -155,6 +153,7 @@ class Handshake internal constructor(
           "TLS_NULL_WITH_NULL_NULL", "SSL_NULL_WITH_NULL_NULL" -> {
             throw IOException("cipherSuite == $cipherSuiteString")
           }
+
           else -> CipherSuite.forJavaName(cipherSuiteString)
         }
 
@@ -174,14 +173,6 @@ class Handshake internal constructor(
         cipherSuite,
         localCertificates.toImmutableList(),
       ) { peerCertificatesCopy }
-    }
-
-    private fun Array<out Certificate>?.toImmutableList(): List<Certificate> {
-      return if (this != null) {
-        immutableListOf(*this)
-      } else {
-        emptyList()
-      }
     }
 
     @Throws(IOException::class)

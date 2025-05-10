@@ -41,7 +41,8 @@ class OkHttpClientTest {
     val client = OkHttpClient()
 
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .header("Accept", "text/plain")
         .build()

@@ -560,13 +560,12 @@ class CipherSuite private constructor(
       return result
     }
 
-    private fun secondaryName(javaName: String): String {
-      return when {
+    private fun secondaryName(javaName: String): String =
+      when {
         javaName.startsWith("TLS_") -> "SSL_" + javaName.substring(4)
         javaName.startsWith("SSL_") -> "TLS_" + javaName.substring(4)
         else -> javaName
       }
-    }
 
     /**
      * @param javaName the name used by Java APIs for this cipher suite. Different than the IANA

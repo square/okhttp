@@ -19,7 +19,9 @@ import java.security.cert.X509Certificate
 import javax.security.auth.x500.X500Principal
 
 /** A simple index that of trusted root certificates that have been loaded into memory. */
-class BasicTrustRootIndex(vararg caCerts: X509Certificate) : TrustRootIndex {
+class BasicTrustRootIndex(
+  vararg caCerts: X509Certificate,
+) : TrustRootIndex {
   private val subjectToCaCerts: Map<X500Principal, Set<X509Certificate>>
 
   init {
@@ -44,12 +46,9 @@ class BasicTrustRootIndex(vararg caCerts: X509Certificate) : TrustRootIndex {
     }
   }
 
-  override fun equals(other: Any?): Boolean {
-    return other === this ||
+  override fun equals(other: Any?): Boolean =
+    other === this ||
       (other is BasicTrustRootIndex && other.subjectToCaCerts == subjectToCaCerts)
-  }
 
-  override fun hashCode(): Int {
-    return subjectToCaCerts.hashCode()
-  }
+  override fun hashCode(): Int = subjectToCaCerts.hashCode()
 }

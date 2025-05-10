@@ -54,7 +54,8 @@ class ServerTruncatesRequestTest {
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
   private var client =
-    clientTestRule.newClientBuilder()
+    clientTestRule
+      .newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build()
 
@@ -182,7 +183,8 @@ class ServerTruncatesRequestTest {
 
   private fun serverTruncatesRequestButTrailersCanStillBeRead(http2: Boolean) {
     val mockResponse =
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(DoNotReadRequestBody(ErrorCode.NO_ERROR.httpCode))
         .trailers(headersOf("caboose", "xyz"))
 
@@ -302,7 +304,8 @@ class ServerTruncatesRequestTest {
   private fun enableProtocol(protocol: Protocol) {
     enableTls()
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .protocols(listOf(protocol, Protocol.HTTP_1_1))
         .build()
     server.protocols = client.protocols
@@ -310,12 +313,12 @@ class ServerTruncatesRequestTest {
 
   private fun enableTls() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .hostnameVerifier(RecordingHostnameVerifier())
+        ).hostnameVerifier(RecordingHostnameVerifier())
         .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }

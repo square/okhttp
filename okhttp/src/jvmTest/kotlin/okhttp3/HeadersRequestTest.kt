@@ -44,7 +44,8 @@ class HeadersRequestTest {
 
   @Test fun http2HeadersListDropsForbiddenHeadersHttp2() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("http://square.com/")
         .header("Connection", "upgrade")
         .header("Upgrade", "websocket")
@@ -67,7 +68,8 @@ class HeadersRequestTest {
 
   @Test fun http2HeadersListDontDropTeIfTrailersHttp2() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("http://square.com/")
         .header("TE", "trailers")
         .build()

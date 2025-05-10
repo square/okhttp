@@ -155,9 +155,7 @@ class PublicSuffixDatabase internal constructor(
 
     private val instance = PublicSuffixDatabase(PublicSuffixList.Default)
 
-    fun get(): PublicSuffixDatabase {
-      return instance
-    }
+    fun get(): PublicSuffixDatabase = instance
 
     private fun ByteString.binarySearch(
       labels: Array<ByteString>,

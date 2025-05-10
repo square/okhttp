@@ -37,7 +37,9 @@ import okio.buffer
  * [x690]: https://www.itu.int/rec/T-REC-X.690
  * [asn1_and_der]: https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der/
  */
-internal class DerReader(source: Source) {
+internal class DerReader(
+  source: Source,
+) {
   private val countingSource: CountingSource = CountingSource(source)
   private val source: BufferedSource = countingSource.buffer()
 
@@ -312,9 +314,7 @@ internal class DerReader(source: Source) {
   }
 
   /** Read a value as bytes without interpretation of its contents. */
-  fun readUnknown(): ByteString {
-    return source.readByteString(bytesLeft)
-  }
+  fun readUnknown(): ByteString = source.readByteString(bytesLeft)
 
   override fun toString(): String = path.joinToString(separator = " / ")
 
@@ -334,7 +334,9 @@ internal class DerReader(source: Source) {
   }
 
   /** A source that keeps track of how many bytes it's consumed. */
-  private class CountingSource(source: Source) : ForwardingSource(source) {
+  private class CountingSource(
+    source: Source,
+  ) : ForwardingSource(source) {
     var bytesRead = 0L
 
     override fun read(

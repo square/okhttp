@@ -31,7 +31,9 @@ import okhttp3.internal.platform.Platform.Companion.WARN
 import okhttp3.internal.trimSubstring
 
 /** A cookie jar that delegates to a [java.net.CookieHandler]. */
-class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
+class JavaNetCookieJar(
+  private val cookieHandler: CookieHandler,
+) : CookieJar {
   override fun saveFromResponse(
     url: HttpUrl,
     cookies: List<Cookie>,
@@ -112,7 +114,8 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
       }
 
       result.add(
-        Cookie.Builder()
+        Cookie
+          .Builder()
           .name(name)
           .value(value)
           .domain(url.host)

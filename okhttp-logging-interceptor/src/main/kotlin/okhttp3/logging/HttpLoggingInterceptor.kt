@@ -326,14 +326,17 @@ class HttpLoggingInterceptor
       if (queryParamsNameToRedact.isEmpty() || url.querySize == 0) {
         return url.toString()
       }
-      return url.newBuilder().query(null).apply {
-        for (i in 0 until url.querySize) {
-          val parameterName = url.queryParameterName(i)
-          val newValue = if (parameterName in queryParamsNameToRedact) "██" else url.queryParameterValue(i)
+      return url
+        .newBuilder()
+        .query(null)
+        .apply {
+          for (i in 0 until url.querySize) {
+            val parameterName = url.queryParameterName(i)
+            val newValue = if (parameterName in queryParamsNameToRedact) "██" else url.queryParameterValue(i)
 
-          addEncodedQueryParameter(parameterName, newValue)
-        }
-      }.toString()
+            addEncodedQueryParameter(parameterName, newValue)
+          }
+        }.toString()
     }
 
     private fun logHeader(

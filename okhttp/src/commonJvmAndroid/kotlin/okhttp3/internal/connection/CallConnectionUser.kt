@@ -84,9 +84,7 @@ internal class CallConnectionUser(
     call.acquireConnectionNoEvents(connection)
   }
 
-  override fun releaseConnectionNoEvents(): Socket? {
-    return call.releaseConnectionNoEvents()
-  }
+  override fun releaseConnectionNoEvents(): Socket? = call.releaseConnectionNoEvents()
 
   override fun connectionReleased(connection: Connection) {
     eventListener.connectionReleased(call, connection)
@@ -108,17 +106,11 @@ internal class CallConnectionUser(
     connection.connectionListener.noNewExchanges(connection)
   }
 
-  override fun doExtensiveHealthChecks(): Boolean {
-    return chain.request.method != "GET"
-  }
+  override fun doExtensiveHealthChecks(): Boolean = chain.request.method != "GET"
 
-  override fun isCanceled(): Boolean {
-    return call.isCanceled()
-  }
+  override fun isCanceled(): Boolean = call.isCanceled()
 
-  override fun candidateConnection(): RealConnection? {
-    return call.connection
-  }
+  override fun candidateConnection(): RealConnection? = call.connection
 
   override fun proxySelectStart(url: HttpUrl) {
     eventListener.proxySelectStart(call, url)

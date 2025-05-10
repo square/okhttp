@@ -70,11 +70,13 @@ class SocketChannelTest {
     run {
       // Generate a self-signed cert for the server to serve and the client to trust.
       val heldCertificate =
-        HeldCertificate.Builder()
+        HeldCertificate
+          .Builder()
           .commonName(hostname)
           .addSubjectAlternativeName(hostname)
           .build()
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .heldCertificate(heldCertificate)
         .addTrustedCertificate(heldCertificate.certificate)
         .build()
@@ -108,7 +110,8 @@ class SocketChannelTest {
     }
 
     val client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .dns { listOf(InetAddress.getByName("localhost")) }
         .callTimeout(4, SECONDS)
         .writeTimeout(2, SECONDS)
@@ -121,7 +124,8 @@ class SocketChannelTest {
 
             connectionSpecs(
               listOf(
-                ConnectionSpec.Builder(ConnectionSpec.COMPATIBLE_TLS)
+                ConnectionSpec
+                  .Builder(ConnectionSpec.COMPATIBLE_TLS)
                   .tlsVersions(socketMode.tlsVersion)
                   .supportsTlsExtensions(socketMode.tlsExtensionMode == STANDARD)
                   .build(),
@@ -164,8 +168,7 @@ class SocketChannelTest {
           } else if (socketMode == Channel) {
             socketFactory(ChannelSocketFactory())
           }
-        }
-        .build()
+        }.build()
 
     server.enqueue(MockResponse(body = "abc"))
 
@@ -178,7 +181,8 @@ class SocketChannelTest {
       }
 
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(url)
         .build()
 

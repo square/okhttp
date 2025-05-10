@@ -77,9 +77,7 @@ object PoolConnectionUser : ConnectionUser {
   override fun acquireConnectionNoEvents(connection: RealConnection) {
   }
 
-  override fun releaseConnectionNoEvents(): Socket? {
-    return null
-  }
+  override fun releaseConnectionNoEvents(): Socket? = null
 
   override fun connectionReleased(connection: Connection) {
   }

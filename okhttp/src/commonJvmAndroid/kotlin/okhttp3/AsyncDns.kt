@@ -70,7 +70,9 @@ interface AsyncDns {
    * as attempting IPv6 first, can make such decisions.
    */
   @ExperimentalOkHttpApi
-  enum class DnsClass(val type: Int) {
+  enum class DnsClass(
+    val type: Int,
+  ) {
     IPV4(TYPE_A),
     IPV6(TYPE_AAAA),
   }

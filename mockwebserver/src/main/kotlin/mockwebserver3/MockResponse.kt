@@ -196,7 +196,8 @@ class MockResponse {
       this.streamHandlerVar = null
       this.webSocketListenerVar = null
       this.headers =
-        Headers.Builder()
+        Headers
+          .Builder()
           .add("Content-Length", "0")
       this.trailers = Headers.Builder()
       this.throttleBytesPerPeriod = Long.MAX_VALUE

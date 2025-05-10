@@ -44,7 +44,5 @@ class TargetOpenJSSEPlatform
 @TargetClass(Platform.Companion::class)
 class TargetPlatform {
   @Substitute
-  fun findPlatform(): Platform {
-    return Jdk9Platform.buildIfSupported()!!
-  }
+  fun findPlatform(): Platform = Jdk9Platform.buildIfSupported()!!
 }

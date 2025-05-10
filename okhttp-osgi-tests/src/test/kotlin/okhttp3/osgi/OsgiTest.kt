@@ -116,7 +116,8 @@ class OsgiTest {
   private fun RepositoryPlugin.deployClassPath() {
     val classpath = System.getProperty("java.class.path")
     val entries =
-      classpath.split(File.pathSeparator.toRegex())
+      classpath
+        .split(File.pathSeparator.toRegex())
         .dropLastWhile { it.isEmpty() }
         .toTypedArray()
     for (classPathEntry in entries) {

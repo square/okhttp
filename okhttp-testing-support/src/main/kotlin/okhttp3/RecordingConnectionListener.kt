@@ -87,10 +87,10 @@ open class RecordingConnectionListener(
 
     if (elapsedMs != -1L) {
       assertThat(
-        TimeUnit.NANOSECONDS.toMillis(actualElapsedNs)
+        TimeUnit.NANOSECONDS
+          .toMillis(actualElapsedNs)
           .toDouble(),
-      )
-        .isCloseTo(elapsedMs.toDouble(), 100.0)
+      ).isCloseTo(elapsedMs.toDouble(), 100.0)
     }
 
     return result

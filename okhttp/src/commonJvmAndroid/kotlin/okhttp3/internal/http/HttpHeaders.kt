@@ -101,7 +101,7 @@ private fun Buffer.readChallengeHeader(result: MutableList<Challenge>) {
       result.add(
         Challenge(
           schemeName,
-          Collections.singletonMap<String, String>(null, peek + "=".repeat(eqCount)),
+          Collections.singletonMap<String?, String>(null, peek + "=".repeat(eqCount)),
         ),
       )
       peek = null
@@ -248,6 +248,4 @@ fun Response.promisesBody(): Boolean {
   level = DeprecationLevel.ERROR,
   replaceWith = ReplaceWith(expression = "response.promisesBody()"),
 )
-fun hasBody(response: Response): Boolean {
-  return response.promisesBody()
-}
+fun hasBody(response: Response): Boolean = response.promisesBody()

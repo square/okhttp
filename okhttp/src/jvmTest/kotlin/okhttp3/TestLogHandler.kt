@@ -34,7 +34,9 @@ import org.junit.runners.model.Statement
  */
 class TestLogHandler(
   private val logger: Logger,
-) : TestRule, BeforeEachCallback, AfterEachCallback {
+) : TestRule,
+  BeforeEachCallback,
+  AfterEachCallback {
   constructor(loggerName: Class<*>) : this(Logger.getLogger(loggerName.getName()))
 
   private val logs = LinkedBlockingQueue<String>()
@@ -68,8 +70,8 @@ class TestLogHandler(
   override fun apply(
     base: Statement,
     description: Description,
-  ): Statement {
-    return object : Statement() {
+  ): Statement =
+    object : Statement() {
       override fun evaluate() {
         beforeEach(null)
         try {
@@ -79,7 +81,6 @@ class TestLogHandler(
         }
       }
     }
-  }
 
   fun takeAll(): List<String> {
     val list = mutableListOf<String>()
@@ -87,8 +88,7 @@ class TestLogHandler(
     return list
   }
 
-  fun take(): String {
-    return logs.poll(10, TimeUnit.SECONDS)
+  fun take(): String =
+    logs.poll(10, TimeUnit.SECONDS)
       ?: throw AssertionError("Timed out waiting for log message.")
-  }
 }

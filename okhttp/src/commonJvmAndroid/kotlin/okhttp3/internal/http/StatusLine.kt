@@ -27,8 +27,8 @@ class StatusLine(
   @JvmField val code: Int,
   @JvmField val message: String,
 ) {
-  override fun toString(): String {
-    return buildString {
+  override fun toString(): String =
+    buildString {
       if (protocol == Protocol.HTTP_1_0) {
         append("HTTP/1.0")
       } else {
@@ -37,12 +37,9 @@ class StatusLine(
       append(' ').append(code)
       append(' ').append(message)
     }
-  }
 
   companion object {
-    fun get(response: Response): StatusLine {
-      return StatusLine(response.protocol, response.code, response.message)
-    }
+    fun get(response: Response): StatusLine = StatusLine(response.protocol, response.code, response.message)
 
     @Throws(IOException::class)
     fun parse(statusLine: String): StatusLine {

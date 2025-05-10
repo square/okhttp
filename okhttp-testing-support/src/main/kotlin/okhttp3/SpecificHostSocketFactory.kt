@@ -37,8 +37,8 @@ class SpecificHostSocketFactory(
     hostMapping[requested] = real
   }
 
-  override fun createSocket(): Socket {
-    return object : Socket() {
+  override fun createSocket(): Socket =
+    object : Socket() {
       override fun connect(
         endpoint: SocketAddress?,
         timeout: Int,
@@ -49,5 +49,4 @@ class SpecificHostSocketFactory(
         super.connect(inetSocketAddress, timeout)
       }
     }
-  }
 }

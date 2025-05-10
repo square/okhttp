@@ -26,73 +26,73 @@ import okhttp3.OkHttpClient
  * https://github.com/curl/curl/wiki/DNS-over-HTTPS
  */
 object DohProviders {
-  private fun buildGoogle(bootstrapClient: OkHttpClient): DnsOverHttps {
-    return DnsOverHttps.Builder()
+  private fun buildGoogle(bootstrapClient: OkHttpClient): DnsOverHttps =
+    DnsOverHttps
+      .Builder()
       .client(bootstrapClient)
       .url("https://dns.google/dns-query".toHttpUrl())
       .bootstrapDnsHosts(getByIp("8.8.4.4"), getByIp("8.8.8.8"))
       .build()
-  }
 
-  private fun buildGooglePost(bootstrapClient: OkHttpClient): DnsOverHttps {
-    return DnsOverHttps.Builder()
+  private fun buildGooglePost(bootstrapClient: OkHttpClient): DnsOverHttps =
+    DnsOverHttps
+      .Builder()
       .client(bootstrapClient)
       .url("https://dns.google/dns-query".toHttpUrl())
       .bootstrapDnsHosts(getByIp("8.8.4.4"), getByIp("8.8.8.8"))
       .post(true)
       .build()
-  }
 
-  private fun buildCloudflareIp(bootstrapClient: OkHttpClient): DnsOverHttps {
-    return DnsOverHttps.Builder()
+  private fun buildCloudflareIp(bootstrapClient: OkHttpClient): DnsOverHttps =
+    DnsOverHttps
+      .Builder()
       .client(bootstrapClient)
       .url("https://1.1.1.1/dns-query".toHttpUrl())
       .includeIPv6(false)
       .build()
-  }
 
-  private fun buildCloudflare(bootstrapClient: OkHttpClient): DnsOverHttps {
-    return DnsOverHttps.Builder()
+  private fun buildCloudflare(bootstrapClient: OkHttpClient): DnsOverHttps =
+    DnsOverHttps
+      .Builder()
       .client(bootstrapClient)
       .url("https://1.1.1.1/dns-query".toHttpUrl())
       .bootstrapDnsHosts(getByIp("1.1.1.1"), getByIp("1.0.0.1"))
       .includeIPv6(false)
       .build()
-  }
 
-  private fun buildCloudflarePost(bootstrapClient: OkHttpClient): DnsOverHttps {
-    return DnsOverHttps.Builder()
+  private fun buildCloudflarePost(bootstrapClient: OkHttpClient): DnsOverHttps =
+    DnsOverHttps
+      .Builder()
       .client(bootstrapClient)
       .url("https://cloudflare-dns.com/dns-query".toHttpUrl())
       .bootstrapDnsHosts(getByIp("1.1.1.1"), getByIp("1.0.0.1"))
       .includeIPv6(false)
       .post(true)
       .build()
-  }
 
-  fun buildCleanBrowsing(bootstrapClient: OkHttpClient): DnsOverHttps {
-    return DnsOverHttps.Builder()
+  fun buildCleanBrowsing(bootstrapClient: OkHttpClient): DnsOverHttps =
+    DnsOverHttps
+      .Builder()
       .client(bootstrapClient)
       .url("https://doh.cleanbrowsing.org/doh/family-filter/".toHttpUrl())
       .includeIPv6(false)
       .build()
-  }
 
-  private fun buildChantra(bootstrapClient: OkHttpClient): DnsOverHttps {
-    return DnsOverHttps.Builder()
+  private fun buildChantra(bootstrapClient: OkHttpClient): DnsOverHttps =
+    DnsOverHttps
+      .Builder()
       .client(bootstrapClient)
       .url("https://dns.dnsoverhttps.net/dns-query".toHttpUrl())
       .includeIPv6(false)
       .build()
-  }
 
-  private fun buildCryptoSx(bootstrapClient: OkHttpClient): DnsOverHttps {
-    return DnsOverHttps.Builder()
+  private fun buildCryptoSx(bootstrapClient: OkHttpClient): DnsOverHttps =
+    DnsOverHttps
+      .Builder()
       .client(bootstrapClient)
       .url("https://doh.crypto.sx/dns-query".toHttpUrl())
       .includeIPv6(false)
       .build()
-  }
 
   @JvmStatic
   fun providers(
@@ -100,8 +100,8 @@ object DohProviders {
     http2Only: Boolean,
     workingOnly: Boolean,
     getOnly: Boolean,
-  ): List<DnsOverHttps> {
-    return buildList {
+  ): List<DnsOverHttps> =
+    buildList {
       add(buildGoogle(client))
       if (!getOnly) {
         add(buildGooglePost(client))
@@ -117,14 +117,12 @@ object DohProviders {
       }
       add(buildChantra(client))
     }
-  }
 
-  private fun getByIp(host: String): InetAddress {
-    return try {
+  private fun getByIp(host: String): InetAddress =
+    try {
       InetAddress.getByName(host)
     } catch (e: UnknownHostException) {
       // unlikely
       throw RuntimeException(e)
     }
-  }
 }

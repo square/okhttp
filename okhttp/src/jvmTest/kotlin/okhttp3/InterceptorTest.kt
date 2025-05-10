@@ -71,11 +71,13 @@ class InterceptorTest {
   fun applicationInterceptorsCanShortCircuitResponses() {
     server.shutdown() // Accept no connections.
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://localhost:1/")
         .build()
     val interceptorResponse =
-      Response.Builder()
+      Response
+        .Builder()
         .request(request)
         .protocol(Protocol.HTTP_1_1)
         .code(200)
@@ -83,7 +85,8 @@ class InterceptorTest {
         .body("abc".toResponseBody("text/plain; charset=utf-8".toMediaType()))
         .build()
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addInterceptor(Interceptor { chain: Interceptor.Chain? -> interceptorResponse })
         .build()
     val response = client.newCall(request).execute()
@@ -93,13 +96,15 @@ class InterceptorTest {
   @Test
   fun networkInterceptorsCannotShortCircuitResponses() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(500)
         .build(),
     )
     val interceptor =
       Interceptor { chain: Interceptor.Chain ->
-        Response.Builder()
+        Response
+          .Builder()
           .request(chain.request())
           .protocol(Protocol.HTTP_1_1)
           .code(200)
@@ -108,11 +113,13 @@ class InterceptorTest {
           .build()
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(interceptor)
         .build()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     assertFailsWith<IllegalStateException> {
@@ -134,11 +141,13 @@ class InterceptorTest {
         chain.proceed(chain.request())
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(interceptor)
         .build()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     assertFailsWith<IllegalStateException> {
@@ -153,7 +162,8 @@ class InterceptorTest {
   @Test
   fun networkInterceptorsCannotChangeServerAddress() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .code(500)
         .build(),
     )
@@ -163,17 +173,21 @@ class InterceptorTest {
         val sameHost = address.url.host
         val differentPort = address.url.port + 1
         chain.proceed(
-          chain.request().newBuilder()
+          chain
+            .request()
+            .newBuilder()
             .url("http://$sameHost:$differentPort/")
             .build(),
         )
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(interceptor)
         .build()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     assertFailsWith<IllegalStateException> {
@@ -195,11 +209,13 @@ class InterceptorTest {
         chain.proceed(chain.request())
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(interceptor)
         .build()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     client.newCall(request).execute()
@@ -208,7 +224,8 @@ class InterceptorTest {
   @Test
   fun networkInterceptorsObserveNetworkHeaders() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(gzip("abcabcabc"))
         .addHeader("Content-Encoding: gzip")
         .build(),
@@ -229,11 +246,13 @@ class InterceptorTest {
         networkResponse
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(interceptor)
         .build()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
 
@@ -257,7 +276,8 @@ class InterceptorTest {
         val mediaType = "text/plain".toMediaType()
         val body = "abc".toRequestBody(mediaType)
         chain.proceed(
-          originalRequest.newBuilder()
+          originalRequest
+            .newBuilder()
             .method("POST", body)
             .header("Content-Type", mediaType.toString())
             .header("Content-Length", body.contentLength().toString())
@@ -265,11 +285,13 @@ class InterceptorTest {
         )
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(interceptor)
         .build()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .get()
         .build()
@@ -294,14 +316,16 @@ class InterceptorTest {
     addInterceptor(network) { chain: Interceptor.Chain ->
       val originalRequest = chain.request()
       chain.proceed(
-        originalRequest.newBuilder()
+        originalRequest
+          .newBuilder()
           .method("POST", uppercase(originalRequest.body))
           .addHeader("OkHttp-Intercepted", "yep")
           .build(),
       )
     }
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .addHeader("Original-Header", "foo")
         .method("PUT", "abc".toRequestBody("text/plain".toMediaType()))
@@ -326,20 +350,23 @@ class InterceptorTest {
 
   private fun rewriteResponseFromServer(network: Boolean) {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .addHeader("Original-Header: foo")
         .body("abc")
         .build(),
     )
     addInterceptor(network) { chain: Interceptor.Chain ->
       val originalResponse = chain.proceed(chain.request())
-      originalResponse.newBuilder()
+      originalResponse
+        .newBuilder()
         .body(uppercase(originalResponse.body))
         .addHeader("OkHttp-Intercepted", "yep")
         .build()
     }
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val response = client.newCall(request).execute()
@@ -364,11 +391,13 @@ class InterceptorTest {
       val originalRequest = chain.request()
       val originalResponse =
         chain.proceed(
-          originalRequest.newBuilder()
+          originalRequest
+            .newBuilder()
             .addHeader("Request-Interceptor", "Android") // 1. Added first.
             .build(),
         )
-      originalResponse.newBuilder()
+      originalResponse
+        .newBuilder()
         .addHeader("Response-Interceptor", "Donut") // 4. Added last.
         .build()
     }
@@ -376,16 +405,19 @@ class InterceptorTest {
       val originalRequest = chain.request()
       val originalResponse =
         chain.proceed(
-          originalRequest.newBuilder()
+          originalRequest
+            .newBuilder()
             .addHeader("Request-Interceptor", "Bob") // 2. Added second.
             .build(),
         )
-      originalResponse.newBuilder()
+      originalResponse
+        .newBuilder()
         .addHeader("Response-Interceptor", "Cupcake") // 3. Added third.
         .build()
     }
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val response = client.newCall(request).execute()
@@ -410,16 +442,19 @@ class InterceptorTest {
     server.enqueue(MockResponse())
     addInterceptor(network) { chain: Interceptor.Chain ->
       val originalResponse = chain.proceed(chain.request())
-      originalResponse.newBuilder()
+      originalResponse
+        .newBuilder()
         .addHeader("OkHttp-Intercepted", "yep")
         .build()
     }
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     client.newCall(request).enqueue(callback)
-    callback.await(request.url)
+    callback
+      .await(request.url)
       .assertCode(200)
       .assertHeader("OkHttp-Intercepted", "yep")
   }
@@ -429,17 +464,18 @@ class InterceptorTest {
     server.enqueue(MockResponse.Builder().body("a").build())
     server.enqueue(MockResponse.Builder().body("b").build())
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addInterceptor(
           Interceptor { chain: Interceptor.Chain ->
             val response1 = chain.proceed(chain.request())
             response1.body.close()
             chain.proceed(chain.request())
           },
-        )
-        .build()
+        ).build()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val response = client.newCall(request).execute()
@@ -452,12 +488,14 @@ class InterceptorTest {
     server.enqueue(MockResponse.Builder().body("a").build()) // Fetched by interceptor.
     server.enqueue(MockResponse.Builder().body("b").build()) // Fetched directly.
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addInterceptor(
           Interceptor { chain: Interceptor.Chain ->
             if (chain.request().url.encodedPath == "/b") {
               val requestA =
-                Request.Builder()
+                Request
+                  .Builder()
                   .url(server.url("/a"))
                   .build()
               val responseA = client.newCall(requestA).execute()
@@ -465,10 +503,10 @@ class InterceptorTest {
             }
             chain.proceed(chain.request())
           },
-        )
-        .build()
+        ).build()
     val requestB =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/b"))
         .build()
     val responseB = client.newCall(requestB).execute()
@@ -481,12 +519,14 @@ class InterceptorTest {
     server.enqueue(MockResponse.Builder().body("a").build()) // Fetched by interceptor.
     server.enqueue(MockResponse.Builder().body("b").build()) // Fetched directly.
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addInterceptor(
           Interceptor { chain: Interceptor.Chain ->
             if (chain.request().url.encodedPath == "/b") {
               val requestA =
-                Request.Builder()
+                Request
+                  .Builder()
                   .url(server.url("/a"))
                   .build()
               try {
@@ -499,10 +539,10 @@ class InterceptorTest {
             }
             chain.proceed(chain.request())
           },
-        )
-        .build()
+        ).build()
     val requestB =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/b"))
         .build()
     val callbackB = RecordingCallback()
@@ -527,7 +567,8 @@ class InterceptorTest {
   private fun interceptorThrowsRuntimeExceptionSynchronous(network: Boolean) {
     addInterceptor(network) { chain: Interceptor.Chain? -> throw RuntimeException("boom!") }
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     assertFailsWith<RuntimeException> {
@@ -543,18 +584,21 @@ class InterceptorTest {
     val modifyHeaderInterceptor =
       Interceptor { chain: Interceptor.Chain ->
         val modifiedRequest =
-          chain.request()
+          chain
+            .request()
             .newBuilder()
             .header("User-Agent", "intercepted request")
             .build()
         chain.proceed(modifiedRequest)
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(modifyHeaderInterceptor)
         .build()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .header("User-Agent", "user request")
         .build()
@@ -585,11 +629,13 @@ class InterceptorTest {
     addInterceptor(network) { chain: Interceptor.Chain? -> throw boom }
     val executor = ExceptionCatchingExecutor()
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dispatcher(Dispatcher(executor))
         .build()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val call = client.newCall(request)
@@ -607,7 +653,8 @@ class InterceptorTest {
   @Test
   fun networkInterceptorReturnsConnectionOnEmptyBody() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .socketPolicy(DisconnectAtEnd)
         .addHeader("Connection", "Close")
         .build(),
@@ -619,11 +666,13 @@ class InterceptorTest {
         response
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addNetworkInterceptor(interceptor)
         .build()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val response = client.newCall(request).execute()
@@ -645,13 +694,15 @@ class InterceptorTest {
         chain.proceed(chain.request())
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .connectTimeout(Duration.ofSeconds(5))
         .addInterceptor(interceptor1)
         .addInterceptor(interceptor2)
         .build()
     val request1 =
-      Request.Builder()
+      Request
+        .Builder()
         .url("http://" + TestUtil.UNREACHABLE_ADDRESS_IPV4)
         .build()
     val call = client.newCall(request1)
@@ -681,19 +732,22 @@ class InterceptorTest {
         chain.proceed(chain.request())
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .readTimeout(Duration.ofSeconds(5))
         .addInterceptor(interceptor1)
         .addInterceptor(interceptor2)
         .build()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .throttleBody(1, 1, TimeUnit.SECONDS)
         .build(),
     )
     val request1 =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val call = client.newCall(request1)
@@ -707,10 +761,11 @@ class InterceptorTest {
   @Test
   fun networkInterceptorCannotChangeReadTimeout() {
     addInterceptor(true) { chain: Interceptor.Chain ->
-      chain.withReadTimeout(
-        100,
-        TimeUnit.MILLISECONDS,
-      ).proceed(chain.request())
+      chain
+        .withReadTimeout(
+          100,
+          TimeUnit.MILLISECONDS,
+        ).proceed(chain.request())
     }
     val request1 = Request.Builder().url(server.url("/")).build()
     val call = client.newCall(request1)
@@ -725,10 +780,11 @@ class InterceptorTest {
   @Test
   fun networkInterceptorCannotChangeWriteTimeout() {
     addInterceptor(true) { chain: Interceptor.Chain ->
-      chain.withWriteTimeout(
-        100,
-        TimeUnit.MILLISECONDS,
-      ).proceed(chain.request())
+      chain
+        .withWriteTimeout(
+          100,
+          TimeUnit.MILLISECONDS,
+        ).proceed(chain.request())
     }
     val request1 = Request.Builder().url(server.url("/")).build()
     val call = client.newCall(request1)
@@ -743,10 +799,11 @@ class InterceptorTest {
   @Test
   fun networkInterceptorCannotChangeConnectTimeout() {
     addInterceptor(true) { chain: Interceptor.Chain ->
-      chain.withConnectTimeout(
-        100,
-        TimeUnit.MILLISECONDS,
-      ).proceed(chain.request())
+      chain
+        .withConnectTimeout(
+          100,
+          TimeUnit.MILLISECONDS,
+        ).proceed(chain.request())
     }
     val request1 = Request.Builder().url(server.url("/")).build()
     val call = client.newCall(request1)
@@ -773,20 +830,23 @@ class InterceptorTest {
         chain.proceed(chain.request())
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .writeTimeout(Duration.ofSeconds(5))
         .addInterceptor(interceptor1)
         .addInterceptor(interceptor2)
         .build()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("abc")
         .throttleBody(1, 1, TimeUnit.SECONDS)
         .build(),
     )
     val data = ByteArray(2 * 1024 * 1024) // 2 MiB.
     val request1 =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .post(data.toRequestBody("text/plain".toMediaType()))
         .build()
@@ -809,11 +869,13 @@ class InterceptorTest {
         chain.proceed(chain.request())
       }
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .addInterceptor(interceptor)
         .build()
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val call = client.newCall(request)
@@ -823,15 +885,11 @@ class InterceptorTest {
     assertThat(callRef.get()).isSameInstanceAs(call)
   }
 
-  private fun uppercase(original: RequestBody?): RequestBody {
-    return object : RequestBody() {
-      override fun contentType(): MediaType? {
-        return original!!.contentType()
-      }
+  private fun uppercase(original: RequestBody?): RequestBody =
+    object : RequestBody() {
+      override fun contentType(): MediaType? = original!!.contentType()
 
-      override fun contentLength(): Long {
-        return original!!.contentLength()
-      }
+      override fun contentLength(): Long = original!!.contentLength()
 
       override fun writeTo(sink: BufferedSink) {
         val uppercase = uppercase(sink)
@@ -840,10 +898,9 @@ class InterceptorTest {
         bufferedSink.emit()
       }
     }
-  }
 
-  private fun uppercase(original: BufferedSink): Sink {
-    return object : ForwardingSink(original) {
+  private fun uppercase(original: BufferedSink): Sink =
+    object : ForwardingSink(original) {
       override fun write(
         source: Buffer,
         byteCount: Long,
@@ -851,7 +908,6 @@ class InterceptorTest {
         original.writeUtf8(source.readUtf8(byteCount).uppercase())
       }
     }
-  }
 
   private fun gzip(data: String): Buffer {
     val result = Buffer()
@@ -875,8 +931,7 @@ class InterceptorTest {
   }
 
   /** Catches exceptions that are otherwise headed for the uncaught exception handler.  */
-  private class ExceptionCatchingExecutor :
-    ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, SynchronousQueue()) {
+  private class ExceptionCatchingExecutor : ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, SynchronousQueue()) {
     private val exceptions: BlockingQueue<Exception> = LinkedBlockingQueue()
 
     override fun execute(runnable: Runnable) {
@@ -889,21 +944,18 @@ class InterceptorTest {
       }
     }
 
-    fun takeException(): Exception {
-      return exceptions.take()
-    }
+    fun takeException(): Exception = exceptions.take()
   }
 
   companion object {
-    fun uppercase(original: ResponseBody): ResponseBody {
-      return object : ResponseBody() {
+    fun uppercase(original: ResponseBody): ResponseBody =
+      object : ResponseBody() {
         override fun contentType() = original.contentType()
 
         override fun contentLength() = original.contentLength()
 
         override fun source() = uppercase(original.source()).buffer()
       }
-    }
 
     private fun uppercase(original: Source): Source {
       return object : ForwardingSource(original) {

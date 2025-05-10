@@ -18,7 +18,6 @@
 package okhttp3
 
 import java.time.Instant
-import java.util.Collections
 import java.util.Date
 import java.util.Locale
 import java.util.TreeMap
@@ -44,6 +43,7 @@ import okhttp3.internal.commonValues
 import okhttp3.internal.headersCheckName
 import okhttp3.internal.http.toHttpDateOrNull
 import okhttp3.internal.http.toHttpDateString
+import okhttp3.internal.unmodifiable
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 /**
@@ -80,9 +80,7 @@ class Headers internal constructor(
    * either the field is absent or cannot be parsed as a date.
    */
   @IgnoreJRERequirement // Only programs that already have Instant will use this.
-  fun getInstant(name: String): Instant? {
-    return getDate(name)?.toInstant()
-  }
+  fun getInstant(name: String): Instant? = getDate(name)?.toInstant()
 
   /** Returns the number of field values. */
   @get:JvmName("size")
@@ -109,7 +107,7 @@ class Headers internal constructor(
     for (i in 0 until size) {
       result.add(name(i))
     }
-    return Collections.unmodifiableSet(result)
+    return result.unmodifiable()
   }
 
   /** Returns an immutable list of the header values for `name`. */
@@ -324,6 +322,10 @@ class Headers internal constructor(
   }
 
   companion object {
+    /** Empty headers. */
+    @JvmField
+    val Empty = Headers(emptyArray())
+
     /**
      * Returns headers for the alternating header names and values. There must be an even number of
      * arguments, and they must alternate between header names and values.
@@ -338,9 +340,7 @@ class Headers internal constructor(
       replaceWith = ReplaceWith(expression = "headersOf(*namesAndValues)"),
       level = DeprecationLevel.ERROR,
     )
-    fun of(vararg namesAndValues: String): Headers {
-      return headersOf(*namesAndValues)
-    }
+    fun of(vararg namesAndValues: String): Headers = headersOf(*namesAndValues)
 
     /** Returns headers for the header names and values in the [Map]. */
     @JvmStatic
@@ -353,8 +353,6 @@ class Headers internal constructor(
       replaceWith = ReplaceWith(expression = "headers.toHeaders()"),
       level = DeprecationLevel.ERROR,
     )
-    fun of(headers: Map<String, String>): Headers {
-      return headers.toHeaders()
-    }
+    fun of(headers: Map<String, String>): Headers = headers.toHeaders()
   }
 }

@@ -47,7 +47,9 @@ import org.junit.jupiter.api.extension.ExtensionContext
  * Use [newClient] as a factory for a OkHttpClient instances. These instances are specifically
  * configured for testing.
  */
-class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
+class OkHttpClientTestRule :
+  BeforeEachCallback,
+  AfterEachCallback {
   private val clientEventsList = mutableListOf<String>()
   private var testClient: OkHttpClient? = null
   private var uncaughtException: Throwable? = null
@@ -160,35 +162,33 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
       val backend = TaskRunner.RealBackend(loomThreadFactory())
       val taskRunner = TaskRunner(backend)
 
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .connectionPool(
           buildConnectionPool(
             connectionListener = connectionListener,
             taskRunner = taskRunner,
           ),
-        )
-        .dispatcher(Dispatcher(backend.executor))
+        ).dispatcher(Dispatcher(backend.executor))
         .taskRunnerInternal(taskRunner)
     } else {
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .connectionPool(ConnectionPool(connectionListener = connectionListener))
     }
 
   private fun loomThreadFactory(): ThreadFactory {
     val ofVirtual = Thread::class.java.getMethod("ofVirtual").invoke(null)
 
-    return Class.forName("java.lang.Thread\$Builder")
+    return Class
+      .forName("java.lang.Thread\$Builder")
       .getMethod("factory")
       .invoke(ofVirtual) as ThreadFactory
   }
 
-  private fun isLoom(): Boolean {
-    return getPlatformSystemProperty() == LOOM_PROPERTY
-  }
+  private fun isLoom(): Boolean = getPlatformSystemProperty() == LOOM_PROPERTY
 
-  fun newClientBuilder(): OkHttpClient.Builder {
-    return newClient().newBuilder()
-  }
+  fun newClientBuilder(): OkHttpClient.Builder = newClient().newBuilder()
 
   @Synchronized private fun addEvent(event: String) {
     if (recordEvents) {
@@ -302,10 +302,9 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   }
 
   @SuppressLint("NewApi")
-  private fun ExtensionContext.isFlaky(): Boolean {
-    return (testMethod.orElseGet { null }?.isAnnotationPresent(Flaky::class.java) == true) ||
+  private fun ExtensionContext.isFlaky(): Boolean =
+    (testMethod.orElseGet { null }?.isAnnotationPresent(Flaky::class.java) == true) ||
       (testClass.orElseGet { null }?.isAnnotationPresent(Flaky::class.java) == true)
-  }
 
   @Synchronized private fun logEvents() {
     // Will be ineffective if test overrides the listener
@@ -318,9 +317,7 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
     }
   }
 
-  fun recordedConnectionEventTypes(): List<String> {
-    return connectionListener.recordedEventTypes()
-  }
+  fun recordedConnectionEventTypes(): List<String> = connectionListener.recordedEventTypes()
 
   companion object {
     /**

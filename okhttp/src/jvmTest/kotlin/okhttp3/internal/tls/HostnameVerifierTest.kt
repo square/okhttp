@@ -651,7 +651,8 @@ class HostnameVerifierTest {
 
   @Test fun generatedCertificate() {
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .commonName("Foo Corp")
         .addSubjectAlternativeName("foo.com")
         .build()
@@ -664,7 +665,8 @@ class HostnameVerifierTest {
     // https://github.com/apache/httpcomponents-client/commit/303e435d7949652ea77a6c50df1c548682476b6e
     // https://www.gosecure.net/blog/2020/10/27/weakness-in-java-tls-host-verification/
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .commonName("Foo Corp")
         .addSubjectAlternativeName("k.com")
         .addSubjectAlternativeName("tel.com")
@@ -687,7 +689,8 @@ class HostnameVerifierTest {
     // https://github.com/apache/httpcomponents-client/commit/303e435d7949652ea77a6c50df1c548682476b6e
     // https://www.gosecure.net/blog/2020/10/27/weakness-in-java-tls-host-verification/
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .commonName("Foo Corp")
         .addSubjectAlternativeName("\u2121.com")
         .addSubjectAlternativeName("\u212A.com")
@@ -751,12 +754,11 @@ class HostnameVerifierTest {
     assertThat(verifier.verify("K.com", session)).isFalse()
   }
 
-  private fun certificateSANs(peerCertificate: X509Certificate): List<String> {
-    return when (val subjectAlternativeNames = peerCertificate.subjectAlternativeNames) {
+  private fun certificateSANs(peerCertificate: X509Certificate): List<String> =
+    when (val subjectAlternativeNames = peerCertificate.subjectAlternativeNames) {
       null -> listOf()
       else -> subjectAlternativeNames.map { c: List<*> -> c[1] as String }
     }
-  }
 
   @Test fun replacementCharacter() {
     // $ cat ./cert.cnf
@@ -827,11 +829,11 @@ class HostnameVerifierTest {
     assertThat("www.nintendo.co.jp".canParseAsIpAddress()).isFalse()
   }
 
-  private fun certificate(certificate: String): X509Certificate {
-    return CertificateFactory.getInstance("X.509")
+  private fun certificate(certificate: String): X509Certificate =
+    CertificateFactory
+      .getInstance("X.509")
       .generateCertificate(ByteArrayInputStream(certificate.toByteArray()))
       as X509Certificate
-  }
 
   private fun session(certificate: String): SSLSession = FakeSSLSession(certificate(certificate))
 }

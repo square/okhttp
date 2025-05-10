@@ -39,13 +39,15 @@ class DevServer {
     }
 
   val clientCertificates =
-    HandshakeCertificates.Builder()
+    HandshakeCertificates
+      .Builder()
       .addPlatformTrustedCertificates()
       .addInsecureHost(server.hostName)
       .build()
 
   val client =
-    OkHttpClient.Builder()
+    OkHttpClient
+      .Builder()
       .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
       .build()
 

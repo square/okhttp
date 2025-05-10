@@ -26,7 +26,8 @@ import okhttp3.internal.connection.RoutePlanner.ConnectResult
 class FakeRoutePlanner(
   val factory: TestValueFactory = TestValueFactory(),
   val taskFaker: TaskFaker = factory.taskFaker,
-) : RoutePlanner, Closeable {
+) : RoutePlanner,
+  Closeable {
   val pool = factory.newConnectionPool(routePlanner = this)
   val events = LinkedBlockingDeque<String>()
   var canceled = false
@@ -40,11 +41,10 @@ class FakeRoutePlanner(
 
   override val address = factory.newAddress("example.com")
 
-  fun addPlan(): FakePlan {
-    return FakePlan(nextPlanId++).also {
+  fun addPlan(): FakePlan =
+    FakePlan(nextPlanId++).also {
       plans += it
     }
-  }
 
   override fun isCanceled() = canceled
 
@@ -70,13 +70,10 @@ class FakeRoutePlanner(
     return result
   }
 
-  override fun hasNext(failedConnection: RealConnection?): Boolean {
-    return deferredPlans.isNotEmpty() || nextPlanIndex < plans.size || autoGeneratePlans
-  }
+  override fun hasNext(failedConnection: RealConnection?): Boolean =
+    deferredPlans.isNotEmpty() || nextPlanIndex < plans.size || autoGeneratePlans
 
-  override fun sameHostAndPort(url: HttpUrl): Boolean {
-    return url.host == address.url.host && url.port == address.url.port
-  }
+  override fun sameHostAndPort(url: HttpUrl): Boolean = url.host == address.url.host && url.port == address.url.port
 
   override fun close() {
     factory.close()
