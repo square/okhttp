@@ -450,7 +450,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=25
+        run: ./gradlew test -Dtest.java.version=25 --stacktrace
 
   testwindows:
     runs-on: windows-latest
