@@ -45,9 +45,11 @@ class ConscryptPlatform private constructor() : Platform() {
 
   override fun platformTrustManager(): X509TrustManager {
     val trustManagers =
-      TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
-        init(null as KeyStore?)
-      }.trustManagers!!
+      TrustManagerFactory
+        .getInstance(TrustManagerFactory.getDefaultAlgorithm())
+        .apply {
+          init(null as KeyStore?)
+        }.trustManagers!!
     check(trustManagers.size == 1 && trustManagers[0] is X509TrustManager) {
       "Unexpected default trust managers: ${trustManagers.contentToString()}"
     }
@@ -61,17 +63,13 @@ class ConscryptPlatform private constructor() : Platform() {
     fun verify(
       hostname: String?,
       session: SSLSession?,
-    ): Boolean {
-      return true
-    }
+    ): Boolean = true
 
     override fun verify(
       certs: Array<out X509Certificate>?,
       hostname: String?,
       session: SSLSession?,
-    ): Boolean {
-      return true
-    }
+    ): Boolean = true
   }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
@@ -100,11 +98,11 @@ class ConscryptPlatform private constructor() : Platform() {
       super.getSelectedProtocol(sslSocket)
     }
 
-  override fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
-    return newSSLContext().apply {
-      init(null, arrayOf<TrustManager>(trustManager), null)
-    }.socketFactory
-  }
+  override fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory =
+    newSSLContext()
+      .apply {
+        init(null, arrayOf<TrustManager>(trustManager), null)
+      }.socketFactory
 
   companion object {
     val isSupported: Boolean =

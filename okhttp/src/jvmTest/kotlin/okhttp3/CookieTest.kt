@@ -404,7 +404,8 @@ class CookieTest {
 
   @Test fun parseAll() {
     val headers =
-      Headers.Builder()
+      Headers
+        .Builder()
         .add("Set-Cookie: a=b")
         .add("Set-Cookie: c=d")
         .build()
@@ -416,7 +417,8 @@ class CookieTest {
 
   @Test fun builder() {
     val cookie =
-      Cookie.Builder()
+      Cookie
+        .Builder()
         .name("a")
         .value("b")
         .domain("example.com")
@@ -435,7 +437,8 @@ class CookieTest {
 
   @Test fun newBuilder() {
     val cookie =
-      parseCookie(0L, url, "c=d; Max-Age=1")!!.newBuilder()
+      parseCookie(0L, url, "c=d; Max-Age=1")!!
+        .newBuilder()
         .name("a")
         .value("b")
         .domain("example.com")
@@ -467,7 +470,8 @@ class CookieTest {
 
   @Test fun builderClampsMaxDate() {
     val cookie =
-      Cookie.Builder()
+      Cookie
+        .Builder()
         .name("a")
         .value("b")
         .hostOnlyDomain("example.com")
@@ -478,7 +482,8 @@ class CookieTest {
 
   @Test fun builderExpiresAt() {
     val cookie =
-      Cookie.Builder()
+      Cookie
+        .Builder()
         .name("a")
         .value("b")
         .hostOnlyDomain("example.com")
@@ -489,7 +494,8 @@ class CookieTest {
 
   @Test fun builderClampsMinDate() {
     val cookie =
-      Cookie.Builder()
+      Cookie
+        .Builder()
         .name("a")
         .value("b")
         .hostOnlyDomain("example.com")
@@ -506,7 +512,8 @@ class CookieTest {
 
   @Test fun builderDomain() {
     val cookie =
-      Cookie.Builder()
+      Cookie
+        .Builder()
         .name("a")
         .value("b")
         .hostOnlyDomain("squareup.com")
@@ -517,7 +524,8 @@ class CookieTest {
 
   @Test fun builderPath() {
     val cookie =
-      Cookie.Builder()
+      Cookie
+        .Builder()
         .name("a")
         .value("b")
         .hostOnlyDomain("example.com")
@@ -534,7 +542,8 @@ class CookieTest {
 
   @Test fun builderSecure() {
     val cookie =
-      Cookie.Builder()
+      Cookie
+        .Builder()
         .name("a")
         .value("b")
         .hostOnlyDomain("example.com")
@@ -545,7 +554,8 @@ class CookieTest {
 
   @Test fun builderHttpOnly() {
     val cookie =
-      Cookie.Builder()
+      Cookie
+        .Builder()
         .name("a")
         .value("b")
         .hostOnlyDomain("example.com")
@@ -556,7 +566,8 @@ class CookieTest {
 
   @Test fun builderIpv6() {
     val cookie =
-      Cookie.Builder()
+      Cookie
+        .Builder()
         .name("a")
         .value("b")
         .domain("0:0:0:0:0:0:0:1")
@@ -583,7 +594,8 @@ class CookieTest {
 
   @Test fun builderSameSiteTrimmed() {
     var cookieBuilder =
-      Cookie.Builder()
+      Cookie
+        .Builder()
         .name("a")
         .value("b")
         .domain("example.com")
@@ -605,7 +617,8 @@ class CookieTest {
   @ValueSource(strings = ["Lax", "Strict", "UnrecognizedButValid"])
   fun builderSameSite(sameSite: String) {
     val cookie =
-      Cookie.Builder()
+      Cookie
+        .Builder()
         .name("a")
         .value("b")
         .domain("example.com")
@@ -617,7 +630,8 @@ class CookieTest {
   /** Note that we permit building a cookie that doesn’t follow the rules. */
   @Test fun builderSameSiteNoneDoesNotRequireSecure() {
     val cookieBuilder =
-      Cookie.Builder()
+      Cookie
+        .Builder()
         .name("a")
         .value("b")
         .domain("example.com")

@@ -31,7 +31,8 @@ class SslLabsClient(
   private val moshiConverterFactory = MoshiConverterFactory.create(moshi)
 
   private val retrofit =
-    Retrofit.Builder()
+    Retrofit
+      .Builder()
       .baseUrl(SslLabsApi.BASE_URL)
       .addConverterFactory(moshiConverterFactory)
       .callFactory(callFactory)
@@ -39,8 +40,8 @@ class SslLabsClient(
 
   private val sslLabsApi = retrofit.create(SslLabsApi::class.java)
 
-  suspend fun clients(): List<Client> {
-    return sslLabsApi.clients().map { userAgent ->
+  suspend fun clients(): List<Client> =
+    sslLabsApi.clients().map { userAgent ->
       Client(
         userAgent = userAgent.name,
         version = userAgent.version,
@@ -48,7 +49,6 @@ class SslLabsClient(
         enabled = userAgent.suiteNames.map { SuiteId(null, it) },
       )
     }
-  }
 }
 
 suspend fun main() {

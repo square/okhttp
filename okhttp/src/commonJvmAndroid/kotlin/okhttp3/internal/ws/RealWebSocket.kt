@@ -65,7 +65,8 @@ class RealWebSocket(
   /** If compression is negotiated, outbound messages of this size and larger will be compressed. */
   private var minimumDeflateSize: Long,
   private val webSocketCloseTimeout: Long,
-) : WebSocket, WebSocketReader.FrameCallback {
+) : WebSocket,
+  WebSocketReader.FrameCallback {
   private val key: String
 
   /** Non-null for client web sockets. These can be canceled. */
@@ -147,12 +148,14 @@ class RealWebSocket(
     }
 
     val webSocketClient =
-      client.newBuilder()
+      client
+        .newBuilder()
         .eventListener(EventListener.NONE)
         .protocols(ONLY_HTTP1)
         .build()
     val request =
-      originalRequest.newBuilder()
+      originalRequest
+        .newBuilder()
         .header("Upgrade", "websocket")
         .header("Connection", "Upgrade")
         .header("Sec-WebSocket-Key", key)
@@ -318,15 +321,14 @@ class RealWebSocket(
    * only by the reader thread.
    */
   @Throws(IOException::class)
-  fun processNextFrame(): Boolean {
-    return try {
+  fun processNextFrame(): Boolean =
+    try {
       reader!!.processNextFrame()
       receivedCloseCode == -1
     } catch (e: Exception) {
       failWebSocket(e = e)
       false
     }
-  }
 
   /**
    * Clean up and publish necessary close events when the reader is done. Invoked only by the reader
@@ -429,13 +431,9 @@ class RealWebSocket(
 
   // Writer methods to enqueue frames. They'll be sent asynchronously by the writer thread.
 
-  override fun send(text: String): Boolean {
-    return send(text.encodeUtf8(), OPCODE_TEXT)
-  }
+  override fun send(text: String): Boolean = send(text.encodeUtf8(), OPCODE_TEXT)
 
-  override fun send(bytes: ByteString): Boolean {
-    return send(bytes, OPCODE_BINARY)
-  }
+  override fun send(bytes: ByteString): Boolean = send(bytes, OPCODE_BINARY)
 
   @Synchronized private fun send(
     data: ByteString,
@@ -469,9 +467,7 @@ class RealWebSocket(
   override fun close(
     code: Int,
     reason: String?,
-  ): Boolean {
-    return close(code, reason, webSocketCloseTimeout)
-  }
+  ): Boolean = close(code, reason, webSocketCloseTimeout)
 
   @Synchronized fun close(
     code: Int,

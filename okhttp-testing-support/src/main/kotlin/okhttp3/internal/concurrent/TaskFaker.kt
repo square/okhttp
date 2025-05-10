@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
 package okhttp3.internal.concurrent
 
@@ -349,7 +348,8 @@ class TaskFaker : Closeable {
    */
   private inner class TaskFakerBlockingQueue<T>(
     val delegate: BlockingQueue<T>,
-  ) : AbstractQueue<T>(), BlockingQueue<T> {
+  ) : AbstractQueue<T>(),
+    BlockingQueue<T> {
     override val size: Int = delegate.size
 
     private var editCount = 0
@@ -369,6 +369,8 @@ class TaskFaker : Closeable {
           val editCountBefore = editCount
           yieldUntil { nanoTime >= waitUntil || editCount > editCountBefore }
         }
+        // TODO report compiler bug
+        TODO("Can't get here")
       }
     }
 

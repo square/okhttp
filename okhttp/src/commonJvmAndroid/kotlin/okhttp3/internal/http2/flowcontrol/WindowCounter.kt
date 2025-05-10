@@ -43,7 +43,6 @@ class WindowCounter(
     check(this.acknowledged <= this.total)
   }
 
-  override fun toString(): String {
-    return "WindowCounter(streamId=$streamId, total=$total, acknowledged=$acknowledged, unacknowledged=$unacknowledged)"
-  }
+  override fun toString(): String =
+    "WindowCounter(streamId=$streamId, total=$total, acknowledged=$acknowledged, unacknowledged=$unacknowledged)"
 }

@@ -26,7 +26,6 @@ import java.security.cert.CertificateFactory
 import java.util.TreeSet
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.cache.CacheRequest
 import okhttp3.internal.cache.CacheStrategy
 import okhttp3.internal.cache.DiskLruCache
@@ -150,7 +149,8 @@ class Cache internal constructor(
   maxSize: Long,
   fileSystem: FileSystem,
   taskRunner: TaskRunner,
-) : Closeable, Flushable {
+) : Closeable,
+  Flushable {
   /** Create a cache of at most [maxSize] bytes in [directory]. */
   constructor(
     fileSystem: FileSystem,
@@ -601,7 +601,8 @@ class Cache internal constructor(
         sink.writeUtf8(requestMethod).writeByte('\n'.code)
         sink.writeDecimalLong(varyHeaders.size.toLong()).writeByte('\n'.code)
         for (i in 0 until varyHeaders.size) {
-          sink.writeUtf8(varyHeaders.name(i))
+          sink
+            .writeUtf8(varyHeaders.name(i))
             .writeUtf8(": ")
             .writeUtf8(varyHeaders.value(i))
             .writeByte('\n'.code)
@@ -610,16 +611,19 @@ class Cache internal constructor(
         sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.code)
         sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.code)
         for (i in 0 until responseHeaders.size) {
-          sink.writeUtf8(responseHeaders.name(i))
+          sink
+            .writeUtf8(responseHeaders.name(i))
             .writeUtf8(": ")
             .writeUtf8(responseHeaders.value(i))
             .writeByte('\n'.code)
         }
-        sink.writeUtf8(SENT_MILLIS)
+        sink
+          .writeUtf8(SENT_MILLIS)
           .writeUtf8(": ")
           .writeDecimalLong(sentRequestMillis)
           .writeByte('\n'.code)
-        sink.writeUtf8(RECEIVED_MILLIS)
+        sink
+          .writeUtf8(RECEIVED_MILLIS)
           .writeUtf8(": ")
           .writeDecimalLong(receivedResponseMillis)
           .writeByte('\n'.code)
@@ -675,17 +679,17 @@ class Cache internal constructor(
     fun matches(
       request: Request,
       response: Response,
-    ): Boolean {
-      return url == request.url &&
+    ): Boolean =
+      url == request.url &&
         requestMethod == request.method &&
         varyMatches(response, varyHeaders, request)
-    }
 
     fun response(snapshot: DiskLruCache.Snapshot): Response {
       val contentType = responseHeaders["Content-Type"]
       val contentLength = responseHeaders["Content-Length"]
       val cacheRequest = Request(url, varyHeaders, requestMethod)
-      return Response.Builder()
+      return Response
+        .Builder()
         .request(cacheRequest)
         .protocol(protocol)
         .code(code)
@@ -740,7 +744,12 @@ class Cache internal constructor(
     private const val ENTRY_COUNT = 2
 
     @JvmStatic
-    fun key(url: HttpUrl): String = url.toString().encodeUtf8().md5().hex()
+    fun key(url: HttpUrl): String =
+      url
+        .toString()
+        .encodeUtf8()
+        .md5()
+        .hex()
 
     @Throws(IOException::class)
     internal fun readInt(source: BufferedSource): Int {
@@ -764,11 +773,10 @@ class Cache internal constructor(
       cachedResponse: Response,
       cachedRequest: Headers,
       newRequest: Request,
-    ): Boolean {
-      return cachedResponse.headers.varyFields().none {
+    ): Boolean =
+      cachedResponse.headers.varyFields().none {
         cachedRequest.values(it) != newRequest.headers(it)
       }
-    }
 
     /** Returns true if a Vary header contains an asterisk. Such responses cannot be cached. */
     fun Response.hasVaryAll(): Boolean = "*" in headers.varyFields()
@@ -814,7 +822,7 @@ class Cache internal constructor(
       responseHeaders: Headers,
     ): Headers {
       val varyFields = responseHeaders.varyFields()
-      if (varyFields.isEmpty()) return EMPTY_HEADERS
+      if (varyFields.isEmpty()) return Headers.Empty
 
       val result = Headers.Builder()
       for (i in 0 until requestHeaders.size) {

@@ -73,7 +73,8 @@ class SessionReuseTest {
 
     val tlsVersion = TlsVersion.forJavaName(tlsVersion)
     val spec =
-      ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+      ConnectionSpec
+        .Builder(ConnectionSpec.MODERN_TLS)
         .tlsVersions(tlsVersion)
         .build()
 
@@ -83,17 +84,17 @@ class SessionReuseTest {
     val systemSslSocketFactory = sslContext.socketFactory
     val sslSocketFactory =
       object : DelegatingSSLSocketFactory(systemSslSocketFactory) {
-        override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
-          return sslSocket.apply {
+        override fun configureSocket(sslSocket: SSLSocket): SSLSocket =
+          sslSocket.apply {
             if (reuseSession) {
               this.enableSessionCreation = false
             }
           }
-        }
       }
 
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .connectionSpecs(listOf(spec))
         .eventListenerFactory(
           clientTestRule.wrap(
@@ -104,12 +105,15 @@ class SessionReuseTest {
               ) {
                 val sslSocket = connection.socket() as SSLSocket
 
-                sessionIds.add(sslSocket.session.id.toByteString().hex())
+                sessionIds.add(
+                  sslSocket.session.id
+                    .toByteString()
+                    .hex(),
+                )
               }
             },
           ),
-        )
-        .sslSocketFactory(sslSocketFactory, handshakeCertificates.trustManager)
+        ).sslSocketFactory(sslSocketFactory, handshakeCertificates.trustManager)
         .build()
 
     server.enqueue(MockResponse(body = "abc1"))
@@ -140,7 +144,9 @@ class SessionReuseTest {
 
     assertEquals(2, sessionIds.size)
     val directSessionIds =
-      sslContext.clientSessionContext.ids.toList().map { it.toByteString().hex() }
+      sslContext.clientSessionContext.ids
+        .toList()
+        .map { it.toByteString().hex() }
 
     if (platform.isConscrypt()) {
       if (tlsVersion == TlsVersion.TLS_1_3) {
@@ -170,12 +176,12 @@ class SessionReuseTest {
 
   private fun enableTls() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .build()
+        ).build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 }

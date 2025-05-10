@@ -45,7 +45,9 @@ import okhttp3.internal.tls.TrustRootIndex
 
 /** Android 5 to 9 (API 21 to 28). */
 @SuppressSignatureCheck
-class AndroidPlatform : Platform(), ContextAwarePlatform {
+class AndroidPlatform :
+  Platform(),
+  ContextAwarePlatform {
   override var applicationContext: Context? = null
 
   private val socketAdapters =
@@ -83,7 +85,8 @@ class AndroidPlatform : Platform(), ContextAwarePlatform {
   }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
-    socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
+    socketAdapters
+      .find { it.matchesSocketFactory(sslSocketFactory) }
       ?.trustManager(sslSocketFactory)
 
   override fun configureTlsExtensions(
@@ -92,7 +95,8 @@ class AndroidPlatform : Platform(), ContextAwarePlatform {
     protocols: List<@JvmSuppressWildcards Protocol>,
   ) {
     // No TLS extensions if the socket class is custom.
-    socketAdapters.find { it.matchesSocket(sslSocket) }
+    socketAdapters
+      .find { it.matchesSocket(sslSocket) }
       ?.configureTlsExtensions(sslSocket, hostname, protocols)
   }
 
@@ -156,8 +160,8 @@ class AndroidPlatform : Platform(), ContextAwarePlatform {
     private val trustManager: X509TrustManager,
     private val findByIssuerAndSignatureMethod: Method,
   ) : TrustRootIndex {
-    override fun findByIssuerAndSignature(cert: X509Certificate): X509Certificate? {
-      return try {
+    override fun findByIssuerAndSignature(cert: X509Certificate): X509Certificate? =
+      try {
         val trustAnchor =
           findByIssuerAndSignatureMethod.invoke(
             trustManager,
@@ -169,7 +173,6 @@ class AndroidPlatform : Platform(), ContextAwarePlatform {
       } catch (_: InvocationTargetException) {
         null
       }
-    }
   }
 
   companion object {

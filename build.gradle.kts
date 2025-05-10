@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.utils.addExtendsFromRelation
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 import java.net.URI
 
@@ -134,6 +135,9 @@ subprojects {
     }
   }
 
+  val androidSignature by configurations.creating
+  val jvmSignature by configurations.creating
+
   // Handled in :okhttp directly
   if (project.name != "okhttp") {
     configure<CheckstyleExtension> {
@@ -146,6 +150,8 @@ subprojects {
     configure<AnimalSnifferExtension> {
       annotation = "okhttp3.internal.SuppressSignatureCheck"
       sourceSets = listOf(project.sourceSets["main"])
+      signatures = androidSignature + jvmSignature
+      failWithoutSignatures = false
     }
   }
 
@@ -158,14 +164,14 @@ subprojects {
 
     if (project.name == "mockwebserver3-junit5") {
       // JUnit 5's APIs need java.util.function.Function and java.util.Optional from API 24.
-      "signature"(rootProject.libs.signature.android.apilevel24) { artifact { type = "signature" } }
+      androidSignature(rootProject.libs.signature.android.apilevel24) { artifact { type = "signature" } }
     } else {
       // Everything else requires Android API 21+.
-      "signature"(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
+      androidSignature(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
     }
 
     // OkHttp requires Java 8+.
-    "signature"(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
+    jvmSignature(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
   }
 
   val javaVersionSetting =
@@ -194,8 +200,10 @@ subprojects {
   if (project.name != "okhttp") {
     val testRuntimeOnly: Configuration by configurations.getting
     dependencies {
+      // https://junit.org/junit5/docs/current/user-guide/#running-tests-build-gradle-bom
       testRuntimeOnly(rootProject.libs.junit.jupiter.engine)
       testRuntimeOnly(rootProject.libs.junit.vintage.engine)
+      testRuntimeOnly(rootProject.libs.junit.platform.launcher)
     }
   }
 
@@ -279,6 +287,51 @@ subprojects {
       languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
     }
   }
+
+  // From https://www.liutikas.net/2025/01/12/Kotlin-Library-Friends.html
+
+    // Create configurations we can use to track friend libraries
+  configurations {
+    val friendsApi = register("friendsApi") {
+      isCanBeResolved = true
+      isCanBeConsumed = false
+      isTransitive = true
+    }
+    val friendsImplementation = register("friendsImplementation") {
+      isCanBeResolved = true
+      isCanBeConsumed = false
+      isTransitive = false
+    }
+    val friendsTestImplementation = register("friendsTestImplementation") {
+      isCanBeResolved = true
+      isCanBeConsumed = false
+      isTransitive = false
+    }
+    configurations.configureEach {
+      if (name == "implementation") {
+        extendsFrom(friendsApi.get(), friendsImplementation.get())
+      }
+      if (name == "api") {
+        extendsFrom(friendsApi.get())
+      }
+      if (name == "testImplementation") {
+        extendsFrom(friendsTestImplementation.get())
+      }
+    }
+  }
+
+    // Make these libraries friends :)
+    tasks.withType<KotlinCompile>().configureEach {
+      configurations.findByName("friendsApi")?.let {
+        friendPaths.from(it.incoming.artifactView { }.files)
+      }
+      configurations.findByName("friendsImplementation")?.let {
+        friendPaths.from(it.incoming.artifactView { }.files)
+      }
+      configurations.findByName("friendsTestImplementation")?.let {
+        friendPaths.from(it.incoming.artifactView { }.files)
+      }
+    }
 }
 
 /** Configure publishing and signing for published Java and JavaPlatform subprojects. */

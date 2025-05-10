@@ -26,7 +26,6 @@ import okhttp3.internal.commonCacheControl
 import okhttp3.internal.commonCacheResponse
 import okhttp3.internal.commonClose
 import okhttp3.internal.commonCode
-import okhttp3.internal.commonEmptyResponse
 import okhttp3.internal.commonHeader
 import okhttp3.internal.commonHeaders
 import okhttp3.internal.commonIsRedirect
@@ -320,7 +319,7 @@ class Response internal constructor(
     internal var message: String? = null
     internal var handshake: Handshake? = null
     internal var headers: Headers.Builder
-    internal var body: ResponseBody = commonEmptyResponse
+    internal var body: ResponseBody = ResponseBody.Empty
     internal var networkResponse: Response? = null
     internal var cacheResponse: Response? = null
     internal var priorResponse: Response? = null

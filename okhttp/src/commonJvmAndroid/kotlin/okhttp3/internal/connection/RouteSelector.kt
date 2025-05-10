@@ -191,7 +191,9 @@ class RouteSelector(
   }
 
   /** A set of selected Routes. */
-  class Selection(val routes: List<Route>) {
+  class Selection(
+    val routes: List<Route>,
+  ) {
     private var nextRouteIndex = 0
 
     operator fun hasNext(): Boolean = nextRouteIndex < routes.size

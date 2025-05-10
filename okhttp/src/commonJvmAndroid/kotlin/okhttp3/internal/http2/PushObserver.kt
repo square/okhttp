@@ -93,17 +93,13 @@ interface PushObserver {
       override fun onRequest(
         streamId: Int,
         requestHeaders: List<Header>,
-      ): Boolean {
-        return true
-      }
+      ): Boolean = true
 
       override fun onHeaders(
         streamId: Int,
         responseHeaders: List<Header>,
         last: Boolean,
-      ): Boolean {
-        return true
-      }
+      ): Boolean = true
 
       @Throws(IOException::class)
       override fun onData(

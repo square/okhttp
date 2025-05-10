@@ -31,7 +31,9 @@ import okhttp3.Route
  * Adapts [Authenticator] to [okhttp3.Authenticator]. Configure OkHttp to use [Authenticator] with
  * [okhttp3.OkHttpClient.Builder.authenticator] or [okhttp3.OkHttpClient.Builder.proxyAuthenticator].
  */
-class JavaNetAuthenticator(private val defaultDns: Dns = Dns.SYSTEM) : okhttp3.Authenticator {
+class JavaNetAuthenticator(
+  private val defaultDns: Dns = Dns.SYSTEM,
+) : okhttp3.Authenticator {
   @Throws(IOException::class)
   override fun authenticate(
     route: Route?,
@@ -83,7 +85,8 @@ class JavaNetAuthenticator(private val defaultDns: Dns = Dns.SYSTEM) : okhttp3.A
             String(auth.password),
             challenge.charset,
           )
-        return request.newBuilder()
+        return request
+          .newBuilder()
           .header(credentialHeader, credential)
           .build()
       }
@@ -96,10 +99,9 @@ class JavaNetAuthenticator(private val defaultDns: Dns = Dns.SYSTEM) : okhttp3.A
   private fun Proxy.connectToInetAddress(
     url: HttpUrl,
     dns: Dns,
-  ): InetAddress {
-    return when (type()) {
+  ): InetAddress =
+    when (type()) {
       Proxy.Type.DIRECT -> dns.lookup(url.host).first()
       else -> (address() as InetSocketAddress).address
     }
-  }
 }

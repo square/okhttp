@@ -26,7 +26,8 @@ class PostForm {
 
   fun run() {
     val formBody =
-      FormBody.Builder()
+      FormBody
+        .Builder()
         .add("search", "Jurassic Park")
         .build()
     val request =

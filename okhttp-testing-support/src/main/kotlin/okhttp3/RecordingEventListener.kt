@@ -97,6 +97,8 @@ open class RecordingEventListener(
 
   inline fun <reified T : CallEvent> removeUpToEvent(): T = removeUpToEvent(T::class.java)
 
+  inline fun <reified T : CallEvent> findEvent(): T = eventSequence.first { it is T } as T
+
   /**
    * Remove and return the next event from the recorded sequence.
    *
@@ -119,10 +121,10 @@ open class RecordingEventListener(
 
     if (elapsedMs != -1L) {
       assertThat(
-        TimeUnit.NANOSECONDS.toMillis(actualElapsedNs)
+        TimeUnit.NANOSECONDS
+          .toMillis(actualElapsedNs)
           .toDouble(),
-      )
-        .isCloseTo(elapsedMs.toDouble(), 100.0)
+      ).isCloseTo(elapsedMs.toDouble(), 100.0)
     }
 
     return result
@@ -288,4 +290,12 @@ open class RecordingEventListener(
     call: Call,
     cachedResponse: Response,
   ) = logEvent(CacheConditionalHit(System.nanoTime(), call))
+
+  override fun retryDecision(
+    call: Call,
+    shouldRetry: Boolean,
+    reason: String,
+  ) = logEvent(
+    CallEvent.RetryDecision(System.nanoTime(), call, shouldRetry, reason),
+  )
 }

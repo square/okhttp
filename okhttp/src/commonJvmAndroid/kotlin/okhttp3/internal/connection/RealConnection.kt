@@ -84,7 +84,9 @@ class RealConnection(
   private val sink: BufferedSink,
   private val pingIntervalMillis: Int,
   internal val connectionListener: ConnectionListener,
-) : Http2Connection.Listener(), Connection, ExchangeCodec.Carrier {
+) : Http2Connection.Listener(),
+  Connection,
+  ExchangeCodec.Carrier {
   private var http2Connection: Http2Connection? = null
 
   internal val lock: ReentrantLock = ReentrantLock()
@@ -170,7 +172,8 @@ class RealConnection(
     socket.soTimeout = 0 // HTTP/2 connection timeouts are set per-stream.
     val flowControlListener = connectionListener as? FlowControlListener ?: FlowControlListener.None
     val http2Connection =
-      Http2Connection.Builder(client = true, taskRunner)
+      Http2Connection
+        .Builder(client = true, taskRunner)
         .socket(socket, route.address.url.host, source, sink)
         .listener(this)
         .pingIntervalMillis(pingIntervalMillis)
@@ -198,7 +201,11 @@ class RealConnection(
     if (!this.route.address.equalsNonHost(address)) return false
 
     // If the host exactly matches, we're done: this connection can carry the address.
-    if (address.url.host == this.route().address.url.host) {
+    if (address.url.host ==
+      this
+        .route()
+        .address.url.host
+    ) {
       return true // This connection is a perfect match.
     }
 
@@ -233,13 +240,12 @@ class RealConnection(
    * can't coalesce connections that use a proxy, since proxies don't tell us the origin server's IP
    * address.
    */
-  private fun routeMatchesAny(candidates: List<Route>): Boolean {
-    return candidates.any {
+  private fun routeMatchesAny(candidates: List<Route>): Boolean =
+    candidates.any {
       it.proxy.type() == Proxy.Type.DIRECT &&
         route.proxy.type() == Proxy.Type.DIRECT &&
         route.socketAddress == it.socketAddress
     }
-  }
 
   private fun supportsUrl(url: HttpUrl): Boolean {
     lock.assertHeld()
@@ -318,7 +324,9 @@ class RealConnection(
 
     val nowNs = System.nanoTime()
 
-    if (rawSocket.isClosed || socket.isClosed || socket.isInputShutdown ||
+    if (rawSocket.isClosed ||
+      socket.isClosed ||
+      socket.isInputShutdown ||
       socket.isOutputShutdown
     ) {
       return false
@@ -439,13 +447,12 @@ class RealConnection(
 
   override fun protocol(): Protocol = protocol
 
-  override fun toString(): String {
-    return "Connection{${route.address.url.host}:${route.address.url.port}," +
+  override fun toString(): String =
+    "Connection{${route.address.url.host}:${route.address.url.port}," +
       " proxy=${route.proxy}" +
       " hostAddress=${route.socketAddress}" +
       " cipherSuite=${handshake?.cipherSuite ?: "none"}" +
       " protocol=$protocol}"
-  }
 
   companion object {
     const val IDLE_CONNECTION_HEALTHY_NS = 10_000_000_000 // 10 seconds.
@@ -473,9 +480,7 @@ class RealConnection(
               override fun read(
                 sink: Buffer,
                 byteCount: Long,
-              ): Long {
-                throw UnsupportedOperationException()
-              }
+              ): Long = throw UnsupportedOperationException()
 
               override fun timeout(): Timeout = Timeout.NONE
             }.buffer(),
@@ -490,9 +495,7 @@ class RealConnection(
               override fun write(
                 source: Buffer,
                 byteCount: Long,
-              ) {
-                throw UnsupportedOperationException()
-              }
+              ): Unit = throw UnsupportedOperationException()
             }.buffer(),
           pingIntervalMillis = 0,
           ConnectionListener.NONE,

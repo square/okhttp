@@ -135,7 +135,8 @@ class CustomTrust {
     // This implementation just embeds the PEM files in Java strings; most applications will
     // instead read this from a resource file that gets bundled with the application.
     val certificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addTrustedCertificate(letsEncryptCertificateAuthority)
         .addTrustedCertificate(entrustRootCertificateAuthority)
         .addTrustedCertificate(comodoRsaCertificationAuthority)
@@ -143,7 +144,8 @@ class CustomTrust {
         // .addPlatformTrustedCertificates()
         .build()
     client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager)
         .build()
   }
@@ -155,7 +157,8 @@ class CustomTrust {
 
   private fun showUrl(url: String) {
     val request = Builder().url(url).build()
-    client.newCall(request)
+    client
+      .newCall(request)
       .execute()
       .use { response ->
         if (!response.isSuccessful) {

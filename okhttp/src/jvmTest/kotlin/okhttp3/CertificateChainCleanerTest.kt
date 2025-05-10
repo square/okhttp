@@ -29,11 +29,13 @@ class CertificateChainCleanerTest {
   @Test
   fun equalsFromCertificate() {
     val rootA =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(1L)
         .build()
     val rootB =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(2L)
         .build()
     assertThat(get(rootB.certificate, rootA.certificate))
@@ -50,7 +52,8 @@ class CertificateChainCleanerTest {
   @Test
   fun normalizeSingleSelfSignedCertificate() {
     val root =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(1L)
         .build()
     val cleaner = get(root.certificate)
@@ -60,7 +63,8 @@ class CertificateChainCleanerTest {
   @Test
   fun normalizeUnknownSelfSignedCertificate() {
     val root =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(1L)
         .build()
     val cleaner = get()
@@ -72,18 +76,21 @@ class CertificateChainCleanerTest {
   @Test
   fun orderedChainOfCertificatesWithRoot() {
     val root =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(1L)
         .certificateAuthority(1)
         .build()
     val certA =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(2L)
         .certificateAuthority(0)
         .signedBy(root)
         .build()
     val certB =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(3L)
         .signedBy(certA)
         .build()
@@ -95,18 +102,21 @@ class CertificateChainCleanerTest {
   @Test
   fun orderedChainOfCertificatesWithoutRoot() {
     val root =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(1L)
         .certificateAuthority(1)
         .build()
     val certA =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(2L)
         .certificateAuthority(0)
         .signedBy(root)
         .build()
     val certB =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(3L)
         .signedBy(certA)
         .build()
@@ -120,24 +130,28 @@ class CertificateChainCleanerTest {
   @Test
   fun unorderedChainOfCertificatesWithRoot() {
     val root =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(1L)
         .certificateAuthority(2)
         .build()
     val certA =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(2L)
         .certificateAuthority(1)
         .signedBy(root)
         .build()
     val certB =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(3L)
         .certificateAuthority(0)
         .signedBy(certA)
         .build()
     val certC =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(4L)
         .signedBy(certB)
         .build()
@@ -150,24 +164,28 @@ class CertificateChainCleanerTest {
   @Test
   fun unorderedChainOfCertificatesWithoutRoot() {
     val root =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(1L)
         .certificateAuthority(2)
         .build()
     val certA =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(2L)
         .certificateAuthority(1)
         .signedBy(root)
         .build()
     val certB =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(3L)
         .certificateAuthority(0)
         .signedBy(certA)
         .build()
     val certC =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(4L)
         .signedBy(certB)
         .build()
@@ -180,23 +198,27 @@ class CertificateChainCleanerTest {
   @Test
   fun unrelatedCertificatesAreOmitted() {
     val root =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(1L)
         .certificateAuthority(1)
         .build()
     val certA =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(2L)
         .certificateAuthority(0)
         .signedBy(root)
         .build()
     val certB =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(3L)
         .signedBy(certA)
         .build()
     val certUnnecessary =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(4L)
         .build()
     val cleaner = get(root.certificate)
@@ -209,24 +231,28 @@ class CertificateChainCleanerTest {
   @Test
   fun chainGoesAllTheWayToSelfSignedRoot() {
     val selfSigned =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(1L)
         .certificateAuthority(2)
         .build()
     val trusted =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(2L)
         .signedBy(selfSigned)
         .certificateAuthority(1)
         .build()
     val certA =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(3L)
         .certificateAuthority(0)
         .signedBy(trusted)
         .build()
     val certB =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(4L)
         .signedBy(certA)
         .build()
@@ -250,24 +276,28 @@ class CertificateChainCleanerTest {
   @Test
   fun trustedRootNotSelfSigned() {
     val unknownSigner =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .serialNumber(1L)
         .certificateAuthority(2)
         .build()
     val trusted =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(unknownSigner)
         .certificateAuthority(1)
         .serialNumber(2L)
         .build()
     val intermediateCa =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(trusted)
         .certificateAuthority(0)
         .serialNumber(3L)
         .build()
     val certificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(intermediateCa)
         .serialNumber(4L)
         .build()
@@ -317,7 +347,8 @@ class CertificateChainCleanerTest {
     for (i in 1..length) {
       result.add(
         0,
-        HeldCertificate.Builder()
+        HeldCertificate
+          .Builder()
           .signedBy(if (result.isNotEmpty()) result[0] else null)
           .certificateAuthority(length - i)
           .serialNumber(i.toLong())

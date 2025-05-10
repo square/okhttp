@@ -61,38 +61,46 @@ class HandshakeCertificatesTest {
     platform.assumeNotBouncyCastle()
 
     val clientRoot =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(1)
         .build()
     val clientIntermediate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .signedBy(clientRoot)
         .build()
     val clientCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(clientIntermediate)
         .build()
     val serverRoot =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(1)
         .build()
     val serverIntermediate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .signedBy(serverRoot)
         .build()
     val serverCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(serverIntermediate)
         .build()
     val server =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addTrustedCertificate(clientRoot.certificate)
         .heldCertificate(serverCertificate, serverIntermediate.certificate)
         .build()
     val client =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addTrustedCertificate(serverRoot.certificate)
         .heldCertificate(clientCertificate, clientIntermediate.certificate)
         .build()
@@ -113,20 +121,24 @@ class HandshakeCertificatesTest {
 
   @Test fun keyManager() {
     val root =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(1)
         .build()
     val intermediate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .signedBy(root)
         .build()
     val certificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(intermediate)
         .build()
     val handshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addTrustedCertificate(root.certificate) // BouncyCastle requires at least one
         .heldCertificate(certificate, intermediate.certificate)
         .build()
@@ -140,7 +152,8 @@ class HandshakeCertificatesTest {
 
   @Test fun platformTrustedCertificates() {
     val handshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addPlatformTrustedCertificates()
         .build()
     val acceptedIssuers = handshakeCertificates.trustManager.acceptedIssuers

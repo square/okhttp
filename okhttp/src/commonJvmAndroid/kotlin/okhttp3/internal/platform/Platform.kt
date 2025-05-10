@@ -163,12 +163,11 @@ open class Platform {
    * should be used specifically for [java.io.Closeable] objects and in conjunction with
    * [logCloseableLeak].
    */
-  open fun getStackTraceForCloseable(closer: String): Any? {
-    return when {
+  open fun getStackTraceForCloseable(closer: String): Any? =
+    when {
       logger.isLoggable(Level.FINE) -> Throwable(closer) // These are expensive to allocate.
       else -> null
     }
-  }
 
   open fun logCloseableLeak(
     message: String,
@@ -189,9 +188,10 @@ open class Platform {
 
   open fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
     try {
-      return newSSLContext().apply {
-        init(null, arrayOf<TrustManager>(trustManager), null)
-      }.socketFactory
+      return newSSLContext()
+        .apply {
+          init(null, arrayOf<TrustManager>(trustManager), null)
+        }.socketFactory
     } catch (e: GeneralSecurityException) {
       throw AssertionError("No System TLS: $e", e) // The system has no TLS. Just give up.
     }

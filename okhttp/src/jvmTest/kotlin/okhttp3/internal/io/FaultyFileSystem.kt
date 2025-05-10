@@ -23,7 +23,9 @@ import okio.ForwardingSink
 import okio.Path
 import okio.Sink
 
-class FaultyFileSystem constructor(delegate: FileSystem?) : ForwardingFileSystem(delegate!!) {
+class FaultyFileSystem constructor(
+  delegate: FileSystem?,
+) : ForwardingFileSystem(delegate!!) {
   private val writeFaults: MutableSet<Path> = LinkedHashSet()
   private val deleteFaults: MutableSet<Path> = LinkedHashSet()
   private val renameFaults: MutableSet<Path> = LinkedHashSet()
@@ -98,7 +100,10 @@ class FaultyFileSystem constructor(delegate: FileSystem?) : ForwardingFileSystem
     mustCreate: Boolean,
   ): Sink = FaultySink(super.sink(file, mustCreate), file)
 
-  inner class FaultySink(sink: Sink, private val file: Path) : ForwardingSink(sink) {
+  inner class FaultySink(
+    sink: Sink,
+    private val file: Path,
+  ) : ForwardingSink(sink) {
     override fun write(
       source: Buffer,
       byteCount: Long,

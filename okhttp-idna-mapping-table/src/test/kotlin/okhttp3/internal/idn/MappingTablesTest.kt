@@ -225,10 +225,11 @@ class MappingTablesTest {
       sourceCodePoint1 = sourceCodePoint1,
       type = TYPE_MAPPED,
       mappedTo =
-        Buffer().also {
-          for (cp in mappedToCodePoints) {
-            it.writeUtf8CodePoint(cp)
-          }
-        }.readByteString(),
+        Buffer()
+          .also {
+            for (cp in mappedToCodePoints) {
+              it.writeUtf8CodePoint(cp)
+            }
+          }.readByteString(),
     )
 }

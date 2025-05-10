@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
 package mockwebserver3
 
@@ -196,7 +195,8 @@ class MockResponse {
       this.streamHandlerVar = null
       this.webSocketListenerVar = null
       this.headers =
-        Headers.Builder()
+        Headers
+          .Builder()
           .add("Content-Length", "0")
       this.trailers = Headers.Builder()
       this.throttleBytesPerPeriod = Long.MAX_VALUE

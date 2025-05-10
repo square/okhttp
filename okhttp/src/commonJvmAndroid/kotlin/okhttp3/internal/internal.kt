@@ -71,8 +71,8 @@ internal fun applyConnectionSpec(
   isFallback: Boolean,
 ) = connectionSpec.apply(sslSocket, isFallback)
 
-internal fun ConnectionSpec.effectiveCipherSuites(socketEnabledCipherSuites: Array<String>): Array<String> {
-  return if (cipherSuitesAsString != null) {
+internal fun ConnectionSpec.effectiveCipherSuites(socketEnabledCipherSuites: Array<String>): Array<String> =
+  if (cipherSuitesAsString != null) {
     // 3 options here for ordering
     // 1) Legacy Platform - based on the Platform/Provider existing ordering in
     // sslSocket.enabledCipherSuites
@@ -85,7 +85,6 @@ internal fun ConnectionSpec.effectiveCipherSuites(socketEnabledCipherSuites: Arr
   } else {
     socketEnabledCipherSuites
   }
-}
 
 internal fun MediaType?.chooseCharset(): Pair<Charset, MediaType?> {
   var charset: Charset = Charsets.UTF_8
@@ -102,9 +101,7 @@ internal fun MediaType?.chooseCharset(): Pair<Charset, MediaType?> {
   return charset to finalContentType
 }
 
-internal fun MediaType?.charsetOrUtf8(): Charset {
-  return this?.charset() ?: Charsets.UTF_8
-}
+internal fun MediaType?.charsetOrUtf8(): Charset = this?.charset() ?: Charsets.UTF_8
 
 internal val Response.connection: RealConnection
   get() = this.exchange!!.connection

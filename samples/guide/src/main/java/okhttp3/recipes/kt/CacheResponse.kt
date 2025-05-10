@@ -21,21 +21,24 @@ import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-class CacheResponse(cacheDirectory: File) {
+class CacheResponse(
+  cacheDirectory: File,
+) {
   private val client: OkHttpClient =
-    OkHttpClient.Builder()
+    OkHttpClient
+      .Builder()
       .cache(
         Cache(
           directory = cacheDirectory,
           // 1 MiB.
           maxSize = 10L * 1024L * 1024L,
         ),
-      )
-      .build()
+      ).build()
 
   fun run() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("http://publicobject.com/helloworld.txt")
         .build()
 

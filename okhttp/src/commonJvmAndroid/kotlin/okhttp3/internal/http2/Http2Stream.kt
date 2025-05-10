@@ -23,7 +23,6 @@ import java.util.ArrayDeque
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import okhttp3.Headers
-import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertNotHeld
 import okhttp3.internal.connection.Locks.newLockCondition
 import okhttp3.internal.connection.Locks.withLock
@@ -174,7 +173,7 @@ class Http2Stream internal constructor(
   fun trailers(): Headers {
     this.withLock {
       if (source.finished && source.receiveBuffer.exhausted() && source.readBuffer.exhausted()) {
-        return source.trailers ?: EMPTY_HEADERS
+        return source.trailers ?: Headers.Empty
       }
       if (errorCode != null) {
         throw errorException ?: StreamResetException(errorCode!!)
@@ -741,13 +740,12 @@ class Http2Stream internal constructor(
       connection.sendDegradedPingLater()
     }
 
-    override fun newTimeoutException(cause: IOException?): IOException {
-      return SocketTimeoutException("timeout").apply {
+    override fun newTimeoutException(cause: IOException?): IOException =
+      SocketTimeoutException("timeout").apply {
         if (cause != null) {
           initCause(cause)
         }
       }
-    }
 
     @Throws(IOException::class)
     fun exitAndThrowIfTimedOut() {
