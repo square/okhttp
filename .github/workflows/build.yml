@@ -425,7 +425,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=24
+        run: ./gradlew test -Dtest.java.version=24 -Dkotlin.jvm.target.validation.mode=IGNORE
 
   testopenjdkearlyaccess:
     runs-on: ubuntu-latest
@@ -451,7 +451,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=25
+        run: ./gradlew test -Dtest.java.version=25 -Dkotlin.jvm.target.validation.mode=IGNORE
 
   testwindows:
     runs-on: windows-latest
