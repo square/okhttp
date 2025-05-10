@@ -449,19 +449,10 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: 11
-
-      - name: Configure JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: 24-ea
-
-      - name: Configure JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: 17
+          java-version: |
+            11
+            17
+            24-ea
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
