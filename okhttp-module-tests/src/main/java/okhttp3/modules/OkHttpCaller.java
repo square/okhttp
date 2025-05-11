@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-package okhttp3.modules
+package okhttp3.modules;
 
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.logging.LoggingEventListener
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+//import okhttp3.logging.LoggingEventListener;
 
 /**
  * Just checking compilation works
  */
-object OkHttpCaller {
-  fun callOkHttp() {
-    val client =
-      OkHttpClient
-        .Builder()
-        .eventListenerFactory(LoggingEventListener.Factory())
-        .build()
-    client.newCall(Request("https://square.com".toHttpUrl()))
+public class OkHttpCaller {
+  public static Call callOkHttp() {
+    OkHttpClient client = new OkHttpClient
+      .Builder()
+//      .eventListenerFactory(LoggingEventListener.Factory())
+      .build();
+    return client.newCall(new Request.Builder().url("https://square.com/robots.txt").build());
   }
 }
