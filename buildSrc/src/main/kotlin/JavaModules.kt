@@ -36,7 +36,9 @@ fun Project.applyJavaModules(
     val compileKotlinTask = tasks.getByName("compileKotlin") as KotlinJvmCompile
     dependsOn(compileKotlinTask)
 
+    // TODO enable this so kotlin compile validates the module-info
 //    compileKotlinTask.source(file("src/main/java9"))
+
     options.compilerArgs.add("-Xlint:-requires-transitive-automatic")
 
     // Patch the compileKotlinJvm output classes into the compilation so exporting packages works correctly.
