@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.gradle.utils.addExtendsFromRelation
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 import java.net.URI
 
@@ -92,6 +91,7 @@ subprojects {
   if (project.name == "regression-test") return@subprojects
   if (project.name == "android-test-app") return@subprojects
   if (project.name == "container-tests") return@subprojects
+  if (project.name == "okhttp-module-tests") return@subprojects
 
   apply(plugin = "checkstyle")
   apply(plugin = "ru.vyarus.animalsniffer")
