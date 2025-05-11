@@ -265,8 +265,13 @@ subprojects {
   }
 
   tasks.withType<JavaCompile> {
-    sourceCompatibility = projectJavaVersion.toString()
-    targetCompatibility = projectJavaVersion.toString()
+    if (name.contains("Java9")) {
+      sourceCompatibility = "9"
+      targetCompatibility = "9"
+    } else {
+      sourceCompatibility = projectJavaVersion.toString()
+      targetCompatibility = projectJavaVersion.toString()
+    }
   }
 }
 

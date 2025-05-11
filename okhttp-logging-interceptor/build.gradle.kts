@@ -10,9 +10,10 @@ plugins {
 
 project.applyOsgi(
   "Export-Package: okhttp3.logging",
-  "Automatic-Module-Name: okhttp3.logging",
   "Bundle-SymbolicName: com.squareup.okhttp3.logging"
 )
+
+project.applyJavaModules("okhttp3.logging")
 
 dependencies {
   "friendsApi"(projects.okhttp)

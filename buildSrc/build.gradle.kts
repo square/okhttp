@@ -15,11 +15,12 @@
  */
 
 plugins {
-    `kotlin-dsl`
+  `kotlin-dsl`
 }
 
 repositories {
-    mavenCentral()
+  mavenCentral()
+  gradlePluginPortal()
 }
 
 dependencies {
@@ -28,4 +29,8 @@ dependencies {
   // Could not create an instance of type aQute.bnd.gradle.BundleTaskExtension.
   // Cannot change attributes of configuration ':native-image-tests:compileClasspath' after it has been locked for mutation
   implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:7.1.0")
+
+  implementation("org.jetbrains.kotlin:kotlin-gradle-plugin-api:2.1.20")
+
+  implementation("me.champeau.mrjar:me.champeau.mrjar.gradle.plugin:0.1.1")
 }
