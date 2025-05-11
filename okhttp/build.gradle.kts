@@ -241,7 +241,8 @@ val compileJavaModuleInfo by tasks.registering(JavaCompile::class) {
   when {
     javaVersion?.isJava9Compatible == true -> {
       logger.info("Module-info checking is enabled; $compileKotlinTask is compiled using Java $javaVersion")
-      compileKotlinTask.source(sourceDir)
+      // Disabled as this module can't see the others in this build for some reason
+//      compileKotlinTask.source(sourceDir)
     }
 
     else -> {

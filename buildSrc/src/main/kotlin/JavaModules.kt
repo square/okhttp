@@ -25,6 +25,7 @@ fun Project.applyJavaModules(
   moduleName: String,
   defaultVersion: Int = 8,
   javaModuleVersion: Int = 9,
+  enableValidation: Boolean = true,
 ) {
   plugins.apply("me.champeau.mrjar")
 
@@ -36,8 +37,9 @@ fun Project.applyJavaModules(
     val compileKotlinTask = tasks.getByName("compileKotlin") as KotlinJvmCompile
     dependsOn(compileKotlinTask)
 
-    // TODO enable this so kotlin compile validates the module-info
-//    compileKotlinTask.source(file("src/main/java9"))
+    if (enableValidation) {
+      compileKotlinTask.source(file("src/main/java9"))
+    }
 
     options.compilerArgs.add("-Xlint:-requires-transitive-automatic")
 
