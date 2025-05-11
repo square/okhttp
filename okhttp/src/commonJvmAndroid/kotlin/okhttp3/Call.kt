@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.Interceptor.Chain
 import okio.IOException
 import okio.Timeout
 
@@ -95,5 +96,9 @@ interface Call : Cloneable {
 
   fun interface Factory {
     fun newCall(request: Request): Call
+  }
+
+  fun interface Decorator {
+    fun newCall(chain: Call.Factory, request: Request): Call
   }
 }

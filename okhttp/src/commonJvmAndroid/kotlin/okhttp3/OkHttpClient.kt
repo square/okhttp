@@ -146,6 +146,15 @@ open class OkHttpClient internal constructor(
     builder.interceptors.toImmutableList()
 
   /**
+   * Returns an immutable list of interceptors that observe the full span of each call: from before
+   * the connection is established (if any) until after the response source is selected (either the
+   * origin server, cache, or both).
+   */
+  @get:JvmName("interceptors")
+  val callDecorators: List<Call.Decorator> =
+    builder.callDecorators.toImmutableList()
+
+  /**
    * Returns an immutable list of interceptors that observe a single network request and response.
    * These interceptors must call [Interceptor.Chain.proceed] exactly once: it is an error for
    * a network interceptor to short-circuit or repeat a network request.
@@ -359,7 +368,20 @@ open class OkHttpClient internal constructor(
   }
 
   /** Prepares the [request] to be executed at some point in the future. */
-  override fun newCall(request: Request): Call = RealCall(this, request, forWebSocket = false)
+  override fun newCall(request: Request): Call {
+    if (callDecorators.isEmpty())
+      return RealCall(this, request, forWebSocket = false)
+
+    return newCall(request, decoratorOrder = callDecorators.listIterator())
+  }
+
+  internal fun newCall(request: Request, decoratorOrder: ListIterator<Call.Decorator>): Call {
+    val decorator = decoratorOrder.next()
+
+    val
+
+    return decorator.newCall(chain, request)
+  }
 
   /** Uses [request] to connect a new web socket. */
   override fun newWebSocket(
@@ -596,6 +618,7 @@ open class OkHttpClient internal constructor(
     internal var dispatcher: Dispatcher = Dispatcher()
     internal var connectionPool: ConnectionPool? = null
     internal val interceptors: MutableList<Interceptor> = mutableListOf()
+    internal val callDecorators: MutableList<Call.Decorator> = mutableListOf()
     internal val networkInterceptors: MutableList<Interceptor> = mutableListOf()
     internal var eventListenerFactory: EventListener.Factory = EventListener.NONE.asFactory()
     internal var retryOnConnectionFailure = true
