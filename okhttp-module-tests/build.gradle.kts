@@ -25,16 +25,19 @@ dependencies {
   testRuntimeOnly(libs.junit.platform.launcher)
 }
 
+val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
+val compileJavaVersion = testJavaVersion.coerceAtLeast(9)
+
 tasks.withType<Test> {
   useJUnitPlatform()
   systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
+
+  enabled = testJavaVersion > 8
 }
 
-val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
-
 java {
-  sourceCompatibility = JavaVersion.toVersion(testJavaVersion)
-  targetCompatibility = JavaVersion.toVersion(testJavaVersion)
+  sourceCompatibility = JavaVersion.toVersion(compileJavaVersion)
+  targetCompatibility = JavaVersion.toVersion(compileJavaVersion)
   toolchain {
     languageVersion.set(JavaLanguageVersion.of(21))
   }
@@ -42,6 +45,6 @@ java {
 
 tasks.withType<KotlinCompile> {
   compilerOptions {
-    jvmTarget.set(JvmTarget.fromTarget(testJavaVersion.toString()))
+    jvmTarget.set(JvmTarget.fromTarget(compileJavaVersion.toString()))
   }
 }
