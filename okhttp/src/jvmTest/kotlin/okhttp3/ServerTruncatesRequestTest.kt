@@ -26,6 +26,7 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.DoNotReadRequestBody
 import okhttp3.Headers.Companion.headersOf
+import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.internal.duplex.AsyncRequestBody
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.PlatformRule
@@ -70,6 +71,9 @@ class ServerTruncatesRequestTest {
 
   @Test
   fun serverTruncatesRequestOnLongPostHttp1() {
+    // SocketException: An established connection was aborted by the software in your host machine
+    assumeNotWindows()
+
     serverTruncatesRequestOnLongPost(https = false)
   }
 
@@ -172,6 +176,9 @@ class ServerTruncatesRequestTest {
 
   @Test
   fun serverTruncatesRequestButTrailersCanStillBeReadHttp1() {
+    // SocketException: An established connection was aborted by the software in your host machine
+    assumeNotWindows()
+
     serverTruncatesRequestButTrailersCanStillBeRead(http2 = false)
   }
 
