@@ -10,9 +10,10 @@ plugins {
 
 project.applyOsgi(
   "Export-Package: okhttp3.sse",
-  "Automatic-Module-Name: okhttp3.sse",
   "Bundle-SymbolicName: com.squareup.okhttp3.sse"
 )
+
+project.applyJavaModules("okhttp3.sse")
 
 dependencies {
   api(projects.okhttp)

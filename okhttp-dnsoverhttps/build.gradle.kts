@@ -10,9 +10,10 @@ plugins {
 
 project.applyOsgi(
   "Export-Package: okhttp3.dnsoverhttps",
-  "Automatic-Module-Name: okhttp3.dnsoverhttps",
   "Bundle-SymbolicName: com.squareup.okhttp3.dnsoverhttps"
 )
+
+project.applyJavaModules("okhttp3.dnsoverhttps")
 
 dependencies {
   "friendsApi"(projects.okhttp)
