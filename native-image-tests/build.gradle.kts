@@ -45,8 +45,6 @@ dependencies {
   implementation(libs.kotlin.test.common)
   implementation(libs.kotlin.test.junit)
 
-  compileOnly(libs.findbugs.jsr305)
-
   "graalCompileOnly"(libs.nativeImageSvm)
   "graalCompileOnly"(libs.graal.sdk)
   nativeImageTestCompileOnly(graal.output.classesDirs)
