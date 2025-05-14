@@ -18,7 +18,6 @@ project.applyOsgi(
 dependencies {
   "friendsApi"(projects.okhttp)
   api(projects.okhttpJavaNetCookiejar)
-  compileOnly(libs.findbugs.jsr305)
   compileOnly(libs.animalsniffer.annotations)
 }
 
