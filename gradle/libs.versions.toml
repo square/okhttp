@@ -16,7 +16,7 @@ org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.10.2"
 org-jetbrains-kotlin = "2.1.21"
 org-junit-jupiter = "5.12.2"
-retrofit = "2.11.0"
+retrofit = "2.12.0"
 startupRuntime = "1.2.0"
 testcontainers = "1.21.0"
 
