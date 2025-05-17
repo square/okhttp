@@ -30,6 +30,7 @@ buildscript {
     classpath(libs.gradlePlugin.binaryCompatibilityValidator)
     classpath(libs.gradlePlugin.mavenSympathy)
     classpath(libs.gradlePlugin.graalvmBuildTools)
+    classpath(libs.gradlePlugin.ksp)
   }
 
   repositories {
