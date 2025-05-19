@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.gradle.utils.addExtendsFromRelation
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 import java.net.URI
 
@@ -240,21 +239,6 @@ subprojects {
   }
   tasks.withType<KotlinJvmTest>().configureEach {
     environment("OKHTTP_ROOT", rootDir)
-  }
-
-  if (project.name != "okhttp") {
-    if (platform == "jdk8alpn") {
-      // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
-      val alpnBootVersion = alpnBootVersion()
-      if (alpnBootVersion != null) {
-        val alpnBootJar = configurations.detachedConfiguration(
-          dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")
-        ).singleFile
-        tasks.withType<Test> {
-          jvmArgs("-Xbootclasspath/p:${alpnBootJar}")
-        }
-      }
-    }
   }
 
   tasks.withType<JavaCompile> {

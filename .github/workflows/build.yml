@@ -224,7 +224,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
+        run: ./gradlew okhttp:test -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
 
   testopenjsse:
     runs-on: ubuntu-latest
@@ -252,7 +252,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=openjsse
+        run: ./gradlew okhttp:test -Dtest.java.version=8 -Dokhttp.platform=openjsse
 
   testconscrypt:
     runs-on: ubuntu-latest
@@ -280,7 +280,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dokhttp.platform=conscrypt
+        run: ./gradlew okhttp:test -Dokhttp.platform=conscrypt
 
   testbouncycastle:
     runs-on: ubuntu-latest
@@ -308,7 +308,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dokhttp.platform=bouncycastle
+        run: ./gradlew okhttp:test -Dokhttp.platform=bouncycastle
 
   testcorretto:
     runs-on: ubuntu-latest
@@ -337,12 +337,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dokhttp.platform=corretto
+        run: ./gradlew okhttp:test -Dokhttp.platform=corretto
 
   testopenjdk17:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
-
 
     steps:
       - name: Checkout
