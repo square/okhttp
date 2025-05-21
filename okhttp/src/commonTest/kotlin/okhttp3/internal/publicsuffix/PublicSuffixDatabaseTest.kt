@@ -24,19 +24,25 @@ import kotlin.test.assertFailsWith
 import okhttp3.internal.publicsuffix.ResourcePublicSuffixList.Companion.PUBLIC_SUFFIX_RESOURCE
 import okhttp3.internal.toCanonicalHost
 import okhttp3.okHttpRoot
-import okhttp3.test.BaseJavaTest
+import okhttp3.test.beforePublicSuffixTest
 import okio.Buffer
 import okio.FileSystem
 import okio.GzipSource
 import okio.Path.Companion.toPath
 import okio.buffer
 import okio.use
+import org.junit.Before
 import org.junit.Test
 
-class PublicSuffixDatabaseTest : BaseJavaTest() {
+class PublicSuffixDatabaseTest {
   private val publicSuffixDatabase = PublicSuffixDatabase.get()
 
   val pathForTests = okHttpRoot / "okhttp/src/jvmMain/resources" / PUBLIC_SUFFIX_RESOURCE
+
+  @Before
+  fun setUp() {
+    beforePublicSuffixTest()
+  }
 
   @Test
   fun allPublicSuffixes() {

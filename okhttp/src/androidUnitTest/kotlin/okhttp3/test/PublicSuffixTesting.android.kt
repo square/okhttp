@@ -17,15 +17,8 @@ package okhttp3.test
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import okhttp3.internal.platform.PlatformRegistry
-import org.junit.Before
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
-actual abstract class BaseJavaTest actual constructor() {
-  @Before
-  fun init() {
-    PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext<Context>()
-  }
+actual fun beforePublicSuffixTest() {
+  PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext<Context>()
 }

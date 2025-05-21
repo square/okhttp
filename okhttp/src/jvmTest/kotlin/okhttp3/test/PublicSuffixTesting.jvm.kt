@@ -15,4 +15,5 @@
  */
 package okhttp3.test
 
-expect abstract class BaseJavaTest()
+actual fun beforePublicSuffixTest() {
+}

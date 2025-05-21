@@ -15,4 +15,4 @@
  */
 package okhttp3.test
 
-actual abstract class BaseJavaTest actual constructor()
+expect fun beforePublicSuffixTest()
