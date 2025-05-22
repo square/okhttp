@@ -2,8 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
-    ":dependencyDashboard",
-    "schedule:daily"
+    ":dependencyDashboard"
   ],
   "semanticCommits": "disabled",
   "labels": [
