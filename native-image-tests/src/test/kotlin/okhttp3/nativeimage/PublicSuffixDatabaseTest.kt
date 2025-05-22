@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Square, Inc.
+ * Copyright (C) 2022 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.nativeImage
+package okhttp3.nativeimage
 
-import org.graalvm.nativeimage.hosted.Feature
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.testing.PlatformRule
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
-class TestRegistration : Feature {
-  override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess) {
+class PublicSuffixDatabaseTest {
+  @RegisterExtension
+  @JvmField
+  val platform = PlatformRule()
+
+  @Test
+  fun testResourcesLoaded() {
+    val url = "https://api.twitter.com".toHttpUrl()
+
+    assertThat(url.topPrivateDomain()).isEqualTo("twitter.com")
   }
 }
