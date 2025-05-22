@@ -83,7 +83,7 @@ class Response internal constructor(
    * [closed][ResponseBody] and may be consumed only once.
    *
    * If this is a [cacheResponse], [networkResponse], or [priorResponse], the server's response body
-   * is not available and it is always an error to attempt read its streamed content. Reading from
+   * is not available, and it is always an error to attempt read its streamed content. Reading from
    * [ResponseBody.source] always throws on such instances.
    *
    * It is safe and supported to call [ResponseBody.contentType] and [ResponseBody.contentLength] on
