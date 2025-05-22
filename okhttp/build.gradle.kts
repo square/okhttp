@@ -101,7 +101,7 @@ kotlin {
       dependsOn(commonJvmAndroid)
 
       dependencies {
-        // These compileOnly dependencies must also be listed in the OSGi configuration above.
+        // These compileOnly dependencies must also be listed as optional in the OSGi manifest entries below.
         compileOnly(libs.conscrypt.openjdk)
         compileOnly(libs.bouncycastle.bcprov)
         compileOnly(libs.bouncycastle.bctls)
