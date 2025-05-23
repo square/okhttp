@@ -459,38 +459,43 @@ class EventListenerTest {
     response.body.string()
     response.body.close()
     Assume.assumeThat(response, responseMatcher)
-    var expectedEventTypes = listOf(
-      "CallStart",
-      "ProxySelectStart",
-      "ProxySelectEnd",
-      "DnsStart",
-      "DnsEnd",
-      "ConnectStart",
-      "SecureConnectStart",
-      "SecureConnectEnd",
-      "ConnectEnd",
-      "ConnectionAcquired",
-      "RequestHeadersStart",
-      "RequestHeadersEnd",
-      "ResponseHeadersStart",
-      "ResponseHeadersEnd",
-    )
-    expectedEventTypes += when {
-      emptyBody -> listOf(
-        "ResponseBodyStart",
-        "ResponseBodyEnd",
-        "FollowUpDecision",
+    var expectedEventTypes =
+      listOf(
+        "CallStart",
+        "ProxySelectStart",
+        "ProxySelectEnd",
+        "DnsStart",
+        "DnsEnd",
+        "ConnectStart",
+        "SecureConnectStart",
+        "SecureConnectEnd",
+        "ConnectEnd",
+        "ConnectionAcquired",
+        "RequestHeadersStart",
+        "RequestHeadersEnd",
+        "ResponseHeadersStart",
+        "ResponseHeadersEnd",
       )
-      else -> listOf(
-        "FollowUpDecision",
-        "ResponseBodyStart",
-        "ResponseBodyEnd",
+    expectedEventTypes +=
+      when {
+        emptyBody ->
+          listOf(
+            "ResponseBodyStart",
+            "ResponseBodyEnd",
+            "FollowUpDecision",
+          )
+        else ->
+          listOf(
+            "FollowUpDecision",
+            "ResponseBodyStart",
+            "ResponseBodyEnd",
+          )
+      }
+    expectedEventTypes +=
+      listOf(
+        "ConnectionReleased",
+        "CallEnd",
       )
-    }
-    expectedEventTypes += listOf(
-      "ConnectionReleased",
-      "CallEnd",
-    )
     assertThat(listener.recordedEventTypes()).isEqualTo(expectedEventTypes)
   }
 

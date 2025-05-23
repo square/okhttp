@@ -85,7 +85,8 @@ class RetryAndFollowUpInterceptor(
 
         // Clear out downstream interceptor's additional request headers, cookies, etc.
         response =
-          response.newBuilder()
+          response
+            .newBuilder()
             .request(request)
             .priorResponse(priorResponse?.stripBody())
             .build()
