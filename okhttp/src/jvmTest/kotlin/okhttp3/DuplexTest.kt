@@ -20,6 +20,7 @@ import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.assertions.prop
@@ -35,7 +36,7 @@ import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.internal.duplex.MockStreamHandler
-import okhttp3.CallEvent.RetryDecision
+import okhttp3.CallEvent.FollowUpDecision
 import okhttp3.Credentials.basic
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -314,6 +315,7 @@ class DuplexTest {
       "RequestBodyStart",
       "ResponseHeadersStart",
       "ResponseHeadersEnd",
+      "FollowUpDecision",
       "ResponseBodyStart",
       "ResponseBodyEnd",
       "RequestBodyEnd",
@@ -448,22 +450,22 @@ class DuplexTest {
       "RequestBodyStart",
       "ResponseHeadersStart",
       "ResponseHeadersEnd",
-      "RetryDecision",
       "ResponseBodyStart",
       "ResponseBodyEnd",
+      "FollowUpDecision",
       "RequestHeadersStart",
       "RequestHeadersEnd",
       "ResponseHeadersStart",
       "ResponseHeadersEnd",
+      "FollowUpDecision",
       "ResponseBodyStart",
       "ResponseBodyEnd",
       "ConnectionReleased",
       "CallEnd",
       "RequestFailed",
     )
-    assertThat(listener.findEvent<RetryDecision>()).all {
-      prop(RetryDecision::reason).isEqualTo("redirect (301)")
-      prop(RetryDecision::shouldRetry).isTrue()
+    assertThat(listener.findEvent<FollowUpDecision>()).all {
+      prop(FollowUpDecision::nextRequest).isNotNull()
     }
   }
 

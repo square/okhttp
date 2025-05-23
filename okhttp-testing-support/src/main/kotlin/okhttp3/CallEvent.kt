@@ -235,7 +235,14 @@ sealed class CallEvent {
   data class RetryDecision(
     override val timestampNs: Long,
     override val call: Call,
-    val shouldRetry: Boolean,
-    val reason: String,
+    val exception: IOException,
+    val retry: Boolean,
+  ) : CallEvent()
+
+  data class FollowUpDecision(
+    override val timestampNs: Long,
+    override val call: Call,
+    val networkResponse: Response,
+    val nextRequest: Request?,
   ) : CallEvent()
 }
