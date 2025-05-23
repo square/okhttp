@@ -24,7 +24,6 @@ import kotlin.test.assertFailsWith
 import okhttp3.internal.publicsuffix.ResourcePublicSuffixList.Companion.PUBLIC_SUFFIX_RESOURCE
 import okhttp3.internal.toCanonicalHost
 import okhttp3.okHttpRoot
-import okhttp3.test.beforePublicSuffixTest
 import okio.Buffer
 import okio.FileSystem
 import okio.GzipSource
@@ -33,7 +32,9 @@ import okio.buffer
 import okio.use
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(PublicSuffixTestRunner::class)
 class PublicSuffixDatabaseTest {
   private val publicSuffixDatabase = PublicSuffixDatabase.get()
 

@@ -13,6 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.test
+package okhttp3.internal.publicsuffix
 
-expect fun beforePublicSuffixTest()
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import okhttp3.internal.platform.PlatformRegistry
+
+actual typealias PublicSuffixTestRunner = AndroidJUnit4
+
+actual fun beforePublicSuffixTest() {
+  PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext<Context>()
+}
