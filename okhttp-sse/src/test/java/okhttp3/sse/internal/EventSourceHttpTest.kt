@@ -257,6 +257,7 @@ class EventSourceHttpTest {
       "RequestHeadersEnd",
       "ResponseHeadersStart",
       "ResponseHeadersEnd",
+      "FollowUpDecision",
       "ResponseBodyStart",
       "ResponseBodyEnd",
       "ConnectionReleased",

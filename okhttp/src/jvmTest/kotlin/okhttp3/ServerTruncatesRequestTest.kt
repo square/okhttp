@@ -120,6 +120,7 @@ class ServerTruncatesRequestTest {
     expectedEvents += "RequestFailed"
     expectedEvents += "ResponseHeadersStart"
     expectedEvents += "ResponseHeadersEnd"
+    expectedEvents += "FollowUpDecision"
     expectedEvents += "ResponseBodyStart"
     expectedEvents += "ResponseBodyEnd"
     expectedEvents += "ConnectionReleased"

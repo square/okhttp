@@ -1724,8 +1724,7 @@ open class CallTest {
       "CallFailed",
     )
     assertThat(listener.findEvent<RetryDecision>()).all {
-      prop(RetryDecision::reason).isEqualTo("retryOnConnectionFailure is false")
-      prop(RetryDecision::shouldRetry).isFalse()
+      prop(RetryDecision::retry).isFalse()
     }
     listener.clearAllEvents()
 
@@ -1745,6 +1744,7 @@ open class CallTest {
       "RequestHeadersEnd",
       "ResponseHeadersStart",
       "ResponseHeadersEnd",
+      "FollowUpDecision",
       "ResponseBodyStart",
       "ResponseBodyEnd",
       "ConnectionReleased",
