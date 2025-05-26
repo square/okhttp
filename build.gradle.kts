@@ -30,6 +30,7 @@ buildscript {
     classpath(libs.gradlePlugin.binaryCompatibilityValidator)
     classpath(libs.gradlePlugin.mavenSympathy)
     classpath(libs.gradlePlugin.graalvmBuildTools)
+    classpath(libs.gradlePlugin.ksp)
   }
 
   repositories {
@@ -252,14 +253,6 @@ subprojects {
         tasks.withType<Test> {
           jvmArgs("-Xbootclasspath/p:${alpnBootJar}")
         }
-      }
-    } else if (platform == "conscrypt") {
-      dependencies {
-//      testRuntimeOnly(rootProject.libs.conscrypt.openjdk)
-      }
-    } else if (platform == "openjsse") {
-      dependencies {
-//      testRuntimeOnly(rootProject.libs.openjsse)
       }
     }
   }

@@ -79,12 +79,15 @@ class Response internal constructor(
   /** Returns the HTTP headers. */
   @get:JvmName("headers") val headers: Headers,
   /**
-   * Returns a non-null value if this response was passed to [Callback.onResponse] or returned
-   * from [Call.execute]. Response bodies must be [closed][ResponseBody] and may
-   * be consumed only once.
+   * Returns a non-null stream with the server's response. The returned value must be
+   * [closed][ResponseBody] and may be consumed only once.
    *
-   * This always returns an unreadable [ResponseBody], which may implement [ResponseBody.contentType] and [ResponseBody.contentLength], on responses returned from [cacheResponse], [networkResponse],
-   * and [priorResponse].
+   * If this is a [cacheResponse], [networkResponse], or [priorResponse], the server's response body
+   * is not available and it is always an error to attempt read its streamed content. Reading from
+   * [ResponseBody.source] always throws on such instances.
+   *
+   * It is safe and supported to call [ResponseBody.contentType] and [ResponseBody.contentLength] on
+   * all instances of [ResponseBody].
    */
   @get:JvmName("body") val body: ResponseBody,
   /**
