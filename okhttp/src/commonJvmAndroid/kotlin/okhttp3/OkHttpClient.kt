@@ -150,7 +150,6 @@ open class OkHttpClient internal constructor(
    * the connection is established (if any) until after the response source is selected (either the
    * origin server, cache, or both).
    */
-  @get:JvmName("interceptors")
   val callDecorators: List<Call.Decorator> =
     builder.callDecorators.toImmutableList()
 
@@ -369,18 +368,24 @@ open class OkHttpClient internal constructor(
 
   /** Prepares the [request] to be executed at some point in the future. */
   override fun newCall(request: Request): Call {
-    if (callDecorators.isEmpty())
-      return RealCall(this, request, forWebSocket = false)
+    if (callDecorators.isNotEmpty()) {
+      return DecoratedCallFactory().newCall(request)
+    }
 
-    return newCall(request, decoratorOrder = callDecorators.listIterator())
+    return RealCall(this, request, forWebSocket = false)
   }
 
-  internal fun newCall(request: Request, decoratorOrder: ListIterator<Call.Decorator>): Call {
-    val decorator = decoratorOrder.next()
+  private inner class DecoratedCallFactory(
+    private val index: Int = 0,
+  ) : Call.Factory {
+    init {
+      println("DecoratedCallFactory index: $index")
+    }
 
-    val
-
-    return decorator.newCall(chain, request)
+    override fun newCall(request: Request): Call {
+      val next = if (index > callDecorators.lastIndex) this@OkHttpClient else DecoratedCallFactory(index + 1)
+      return callDecorators[index].newCall(next, request)
+    }
   }
 
   /** Uses [request] to connect a new web socket. */
@@ -654,6 +659,7 @@ open class OkHttpClient internal constructor(
       this.dispatcher = okHttpClient.dispatcher
       this.connectionPool = okHttpClient.connectionPool
       this.interceptors += okHttpClient.interceptors
+      this.callDecorators += okHttpClient.callDecorators
       this.networkInterceptors += okHttpClient.networkInterceptors
       this.eventListenerFactory = okHttpClient.eventListenerFactory
       this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure
@@ -756,6 +762,11 @@ open class OkHttpClient internal constructor(
     fun eventListenerFactory(eventListenerFactory: EventListener.Factory) =
       apply {
         this.eventListenerFactory = eventListenerFactory
+      }
+
+    fun addCallDecorator(decorator: Call.Decorator) =
+      apply {
+        callDecorators += decorator
       }
 
     /**
