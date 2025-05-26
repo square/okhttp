@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Square, Inc.
+ * Copyright (C) 2024 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.nativeImage
+package okhttp3.internal.publicsuffix
 
-import org.graalvm.nativeimage.hosted.Feature
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import okhttp3.internal.platform.PlatformRegistry
 
-class TestRegistration : Feature {
-  override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess) {
-  }
+actual typealias PublicSuffixTestRunner = AndroidJUnit4
+
+actual fun beforePublicSuffixTest() {
+  PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext<Context>()
 }

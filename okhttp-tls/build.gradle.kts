@@ -19,7 +19,6 @@ project.applyJavaModules("okhttp3.tls")
 dependencies {
   api(libs.squareup.okio)
   "friendsImplementation"(projects.okhttp)
-  compileOnly(libs.findbugs.jsr305)
   compileOnly(libs.animalsniffer.annotations)
 
   testImplementation(projects.okhttpTestingSupport)

@@ -29,6 +29,7 @@ buildscript {
     classpath(libs.gradlePlugin.binaryCompatibilityValidator)
     classpath(libs.gradlePlugin.mavenSympathy)
     classpath(libs.gradlePlugin.graalvmBuildTools)
+    classpath(libs.gradlePlugin.ksp)
   }
 
   repositories {
@@ -239,29 +240,6 @@ subprojects {
   }
   tasks.withType<KotlinJvmTest>().configureEach {
     environment("OKHTTP_ROOT", rootDir)
-  }
-
-  if (project.name != "okhttp") {
-    if (platform == "jdk8alpn") {
-      // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
-      val alpnBootVersion = alpnBootVersion()
-      if (alpnBootVersion != null) {
-        val alpnBootJar = configurations.detachedConfiguration(
-          dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")
-        ).singleFile
-        tasks.withType<Test> {
-          jvmArgs("-Xbootclasspath/p:${alpnBootJar}")
-        }
-      }
-    } else if (platform == "conscrypt") {
-      dependencies {
-//      testRuntimeOnly(rootProject.libs.conscrypt.openjdk)
-      }
-    } else if (platform == "openjsse") {
-      dependencies {
-//      testRuntimeOnly(rootProject.libs.openjsse)
-      }
-    }
   }
 
   tasks.withType<JavaCompile> {

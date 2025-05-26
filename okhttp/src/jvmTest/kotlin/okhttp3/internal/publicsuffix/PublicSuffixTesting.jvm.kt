@@ -13,19 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.test
+package okhttp3.internal.publicsuffix
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import okhttp3.internal.platform.PlatformRegistry
-import org.junit.Before
-import org.junit.runner.RunWith
+import org.junit.runner.Runner
+import org.junit.runner.notification.RunNotifier
+import org.junit.runners.JUnit4
 
-@RunWith(AndroidJUnit4::class)
-actual abstract class BaseJavaTest actual constructor() {
-  @Before
-  fun init() {
-    PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext<Context>()
-  }
+actual class PublicSuffixTestRunner(
+  klass: Class<*>,
+) : Runner() {
+  private val delegate = JUnit4(klass)
+
+  override fun getDescription() = delegate.description
+
+  override fun run(notifier: RunNotifier?) = delegate.run(notifier)
+
+  override fun testCount() = delegate.testCount()
+}
+
+actual fun beforePublicSuffixTest() {
 }

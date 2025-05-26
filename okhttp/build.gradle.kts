@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
-import ru.vyarus.gradle.plugin.animalsniffer.util.TargetType
 
 plugins {
   kotlin("multiplatform")
@@ -15,7 +14,6 @@ plugins {
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
-//  id("io.github.gmazzo.aar2jar") version "1.1.2"
 }
 
 val platform = System.getProperty("okhttp.platform", "jdk9")
@@ -53,7 +51,6 @@ kotlin {
   jvmToolchain(8)
 
   jvm {
-//    withJava() /* <- cannot be used when the Android Plugin is present */
   }
 
   androidTarget {
@@ -73,7 +70,6 @@ kotlin {
         api(libs.squareup.okio)
         api(libs.kotlin.stdlib)
 
-        compileOnly(libs.findbugs.jsr305)
         compileOnly(libs.animalsniffer.annotations)
       }
     }
@@ -106,7 +102,7 @@ kotlin {
       dependsOn(commonJvmAndroid)
 
       dependencies {
-        // These compileOnly dependencies must also be listed in the OSGi configuration above.
+        // These compileOnly dependencies must also be listed as optional in the OSGi manifest entries below.
         compileOnly(libs.conscrypt.openjdk)
         compileOnly(libs.bouncycastle.bcprov)
         compileOnly(libs.bouncycastle.bctls)
@@ -148,7 +144,6 @@ kotlin {
         implementation(libs.junit.jupiter.params)
         implementation(libs.kotlin.test.junit)
         implementation(libs.openjsse)
-        compileOnly(libs.findbugs.jsr305)
 
         implementation(libs.junit.jupiter.engine)
         implementation(libs.junit.vintage.engine)
@@ -298,33 +293,6 @@ tasks.named<Jar>("jvmJar").configure {
 
   from(compileJavaModuleInfo.get().destinationDirectory) {
     into("META-INF/versions/9/")
-  }
-
-//  val bundleExtension = extensions.create(
-//    BundleTaskExtension.NAME,
-//    BundleTaskExtension::class.java,
-//    this,
-//  ).apply {
-//    classpath(libs.kotlin.stdlib.osgi.map { it.artifacts }, tasks.named("jvmMainClasses").map { it.outputs })
-//    bnd(
-//      "Export-Package: okhttp3,okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal",
-//      "Import-Package: " +
-//        "com.oracle.svm.core.annotate;resolution:=optional," +
-//        "com.oracle.svm.core.configure;resolution:=optional," +
-//        "dalvik.system;resolution:=optional," +
-//        "org.conscrypt;resolution:=optional," +
-//        "org.bouncycastle.*;resolution:=optional," +
-//        "org.openjsse.*;resolution:=optional," +
-//        "org.graalvm.nativeimage;resolution:=optional," +
-//        "org.graalvm.nativeimage.hosted;resolution:=optional," +
-//        "sun.security.ssl;resolution:=optional,*",
-//      "Automatic-Module-Name: okhttp3",
-//      "Bundle-SymbolicName: com.squareup.okhttp3"
-//    )
-//  }
-
-  doLast {
-//    bundleExtension.buildAction().execute(this)
   }
 }
 

@@ -26,7 +26,6 @@ dependencies {
 
   api(libs.junit.pioneer)
 
-  compileOnly(libs.findbugs.jsr305)
   compileOnly(libs.robolectric.android)
 
   testImplementation(libs.kotlin.test.common)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Block, Inc.
+ * Copyright (C) 2020 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.test
+package okhttp3.nativeimage
 
-actual abstract class BaseJavaTest actual constructor()
+import org.graalvm.nativeimage.hosted.Feature
+
+class TestRegistration : Feature {
+  override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess) {
+  }
+}
