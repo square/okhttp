@@ -54,7 +54,7 @@ graalvmNative {
 
   binaries {
     named("test") {
-      buildArgs.add("--features=okhttp3.nativeImage.TestRegistration")
+      buildArgs.add("--features=okhttp3.nativeimage.TestRegistration")
       buildArgs.add("--initialize-at-build-time=org.junit.platform.engine.TestTag")
       buildArgs.add("--strict-image-heap")
 
