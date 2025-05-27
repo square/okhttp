@@ -234,7 +234,7 @@ internal inline fun threadName(
 }
 
 /** Returns the Content-Length as reported by the response headers. */
-internal fun Response.headersContentLength(): Long = headers["Content-Length"]?.toLongOrNull() ?: -1L
+internal fun Response.headersContentLength(): Long = headers["Content-Length"]?.toLongOrDefault(-1L) ?: -1L
 
 /** Returns an immutable wrap of this. */
 @Suppress("NOTHING_TO_INLINE")
