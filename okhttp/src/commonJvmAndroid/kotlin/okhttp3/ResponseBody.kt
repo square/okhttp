@@ -23,15 +23,12 @@ import java.io.Reader
 import java.nio.charset.Charset
 import okhttp3.internal.charsetOrUtf8
 import okhttp3.internal.chooseCharset
-import okhttp3.internal.commonAsResponseBody
-import okhttp3.internal.commonByteString
-import okhttp3.internal.commonBytes
-import okhttp3.internal.commonClose
-import okhttp3.internal.commonToResponseBody
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.readBomAsCharset
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
+import okio.use
 
 /**
  * A one-shot stream from the origin server to the client application with the raw bytes of the
@@ -125,7 +122,7 @@ abstract class ResponseBody : Closeable {
    * possibility for your response.
    */
   @Throws(IOException::class)
-  fun bytes() = commonBytes()
+  fun bytes() = consumeSource(BufferedSource::readByteArray) { it.size }
 
   /**
    * Returns the response as a [ByteString].
@@ -135,7 +132,24 @@ abstract class ResponseBody : Closeable {
    * possibility for your response.
    */
   @Throws(IOException::class)
-  fun byteString() = commonByteString()
+  fun byteString() = consumeSource(BufferedSource::readByteString) { it.size }
+
+  private inline fun <T : Any> ResponseBody.consumeSource(
+    consumer: (BufferedSource) -> T,
+    sizeMapper: (T) -> Int,
+  ): T {
+    val contentLength = contentLength()
+    if (contentLength > Int.MAX_VALUE) {
+      throw IOException("Cannot buffer entire body for content length: $contentLength")
+    }
+
+    val bytes = source().use(consumer)
+    val size = sizeMapper(bytes)
+    if (contentLength != -1L && contentLength != size.toLong()) {
+      throw IOException("Content-Length ($contentLength) and stream length ($size) disagree")
+    }
+    return bytes
+  }
 
   /**
    * Returns the response as a character stream.
@@ -178,7 +192,7 @@ abstract class ResponseBody : Closeable {
 
   private fun charset() = contentType().charsetOrUtf8()
 
-  override fun close() = commonClose()
+  override fun close() = source().closeQuietly()
 
   internal class BomAwareReader(
     private val source: BufferedSource,
@@ -244,12 +258,18 @@ abstract class ResponseBody : Closeable {
     /** Returns a new response body that transmits this byte array. */
     @JvmStatic
     @JvmName("create")
-    fun ByteArray.toResponseBody(contentType: MediaType? = null): ResponseBody = commonToResponseBody(contentType)
+    fun ByteArray.toResponseBody(contentType: MediaType? = null): ResponseBody =
+      Buffer()
+        .write(this)
+        .asResponseBody(contentType, size.toLong())
 
     /** Returns a new response body that transmits this byte string. */
     @JvmStatic
     @JvmName("create")
-    fun ByteString.toResponseBody(contentType: MediaType? = null): ResponseBody = commonToResponseBody(contentType)
+    fun ByteString.toResponseBody(contentType: MediaType? = null): ResponseBody =
+      Buffer()
+        .write(this)
+        .asResponseBody(contentType, size.toLong())
 
     /** Returns a new response body that transmits this source. */
     @JvmStatic
@@ -257,7 +277,14 @@ abstract class ResponseBody : Closeable {
     fun BufferedSource.asResponseBody(
       contentType: MediaType? = null,
       contentLength: Long = -1L,
-    ): ResponseBody = commonAsResponseBody(contentType, contentLength)
+    ): ResponseBody =
+      object : ResponseBody() {
+        override fun contentType(): MediaType? = contentType
+
+        override fun contentLength(): Long = contentLength
+
+        override fun source(): BufferedSource = this@asResponseBody
+      }
 
     @JvmStatic
     @Deprecated(
