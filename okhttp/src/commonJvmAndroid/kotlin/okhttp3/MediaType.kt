@@ -148,11 +148,12 @@ class MediaType internal constructor(
     /** Returns a media type for this, or null if this is not a well-formed media type. */
     @JvmStatic
     @JvmName("parse")
-    fun String.toMediaTypeOrNull(): MediaType? = try {
-      toMediaType()
-    } catch (_: IllegalArgumentException) {
-      null
-    }
+    fun String.toMediaTypeOrNull(): MediaType? =
+      try {
+        toMediaType()
+      } catch (_: IllegalArgumentException) {
+        null
+      }
 
     @JvmName("-deprecated_get")
     @Deprecated(
