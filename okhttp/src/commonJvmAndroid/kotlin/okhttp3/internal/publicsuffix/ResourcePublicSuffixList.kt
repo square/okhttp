@@ -16,7 +16,6 @@
 package okhttp3.internal.publicsuffix
 
 import okio.FileSystem
-import okio.GzipSource
 import okio.Path
 import okio.Path.Companion.toPath
 import okio.Source
