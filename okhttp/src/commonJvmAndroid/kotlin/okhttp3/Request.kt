@@ -350,19 +350,21 @@ class Request internal constructor(
     fun <T : Any> tag(
       type: KClass<T>,
       tag: T?,
-    ): Builder = apply {
-      if (tag == null) {
-        if (tags.isNotEmpty()) {
-          (tags as MutableMap).remove(type)
+    ): Builder =
+      apply {
+        if (tag == null) {
+          if (tags.isNotEmpty()) {
+            (tags as MutableMap).remove(type)
+          }
+        } else {
+          val mutableTags =
+            when {
+              tags.isEmpty() -> mutableMapOf<KClass<*>, Any>().also { tags = it }
+              else -> tags as MutableMap<KClass<*>, Any>
+            }
+          mutableTags[type] = type.cast(tag)
         }
-      } else {
-        val mutableTags = when {
-          tags.isEmpty() -> mutableMapOf<KClass<*>, Any>().also { tags = it }
-          else -> tags as MutableMap<KClass<*>, Any>
-        }
-        mutableTags[type] = type.cast(tag)
       }
-    }
 
     /** Attaches [tag] to the request using `Object.class` as a key. */
     open fun tag(tag: Any?): Builder = tag(Any::class, tag)
