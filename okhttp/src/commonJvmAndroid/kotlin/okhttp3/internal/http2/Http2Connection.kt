@@ -674,7 +674,7 @@ class Http2Connection internal constructor(
       }
       dataStream.receiveData(source, length)
       if (inFinished) {
-        dataStream.receiveHeaders(Headers.Empty, true)
+        dataStream.receiveHeaders(Headers.EMPTY, true)
       }
     }
 

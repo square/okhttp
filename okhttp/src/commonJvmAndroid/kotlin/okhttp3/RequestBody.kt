@@ -101,17 +101,9 @@ abstract class RequestBody {
   open fun isOneShot(): Boolean = commonIsOneShot()
 
   companion object {
-    /** Empty request body. */
+    /** Empty request body with no content-type. */
     @JvmField
-    val Empty: RequestBody = EmptyRequestBody()
-
-    private class EmptyRequestBody : RequestBody() {
-      override fun contentType() = null
-
-      override fun contentLength() = 0L
-
-      override fun writeTo(sink: BufferedSink) {}
-    }
+    val EMPTY: RequestBody = ByteString.EMPTY.toRequestBody()
 
     /**
      * Returns a new request body that transmits this string. If [contentType] is non-null and lacks

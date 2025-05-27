@@ -557,7 +557,7 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries("a", "artichaut"), false)
     connection.writePingAndAwaitPong()
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("headers", "bam"))
-    assertThat(stream.trailers()).isEqualTo(Headers.Empty)
+    assertThat(stream.trailers()).isEqualTo(Headers.EMPTY)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
@@ -808,7 +808,7 @@ class Http2ConnectionTest {
     connection.writePingAndAwaitPong()
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("headers", "bam"))
     assertThat(source.readUtf8(5)).isEqualTo("robot")
-    assertThat(stream.trailers()).isEqualTo(Headers.Empty)
+    assertThat(stream.trailers()).isEqualTo(Headers.EMPTY)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.

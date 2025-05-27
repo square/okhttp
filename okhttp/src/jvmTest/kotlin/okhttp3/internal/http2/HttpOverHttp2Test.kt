@@ -1622,7 +1622,7 @@ class HttpOverHttp2Test {
         Request
           .Builder()
           .url(server.url("/"))
-          .method("DELETE", RequestBody.Empty)
+          .method("DELETE", RequestBody.EMPTY)
           .build(),
       )
     val response = call.execute()
