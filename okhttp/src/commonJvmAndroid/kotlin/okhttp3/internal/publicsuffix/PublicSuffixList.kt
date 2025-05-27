@@ -18,7 +18,7 @@ package okhttp3.internal.publicsuffix
 import okio.ByteString
 
 /**
- * Basic I/O for the PublicSuffixDatabase.gz.
+ * Basic I/O for `PublicSuffixDatabase.list`
  */
 internal interface PublicSuffixList {
   fun ensureLoaded()

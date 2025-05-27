@@ -26,10 +26,7 @@ import okhttp3.internal.toCanonicalHost
 import okhttp3.okHttpRoot
 import okio.Buffer
 import okio.FileSystem
-import okio.GzipSource
 import okio.Path.Companion.toPath
-import okio.buffer
-import okio.use
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,11 +45,9 @@ class PublicSuffixDatabaseTest {
   @Test
   fun allPublicSuffixes() {
     val buffer = Buffer()
-    FileSystem.SYSTEM.source(pathForTests).use { resource ->
-      GzipSource(resource).buffer().use { source ->
-        val length = source.readInt()
-        buffer.write(source, length.toLong())
-      }
+    FileSystem.SYSTEM.read(pathForTests) {
+      val length = readInt()
+      buffer.write(this, length.toLong())
     }
     while (!buffer.exhausted()) {
       var publicSuffix = buffer.readUtf8LineStrict()
@@ -69,13 +64,11 @@ class PublicSuffixDatabaseTest {
   @Test
   fun publicSuffixExceptions() {
     val buffer = Buffer()
-    FileSystem.SYSTEM.source(pathForTests).use { resource ->
-      GzipSource(resource).buffer().use { source ->
-        var length = source.readInt()
-        source.skip(length.toLong())
-        length = source.readInt()
-        buffer.write(source, length.toLong())
-      }
+    FileSystem.SYSTEM.read(pathForTests) {
+      var length = readInt()
+      skip(length.toLong())
+      length = readInt()
+      buffer.write(this, length.toLong())
     }
     while (!buffer.exhausted()) {
       val exception = buffer.readUtf8LineStrict()
