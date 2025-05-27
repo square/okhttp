@@ -107,9 +107,10 @@ class Challenge(
   )
   fun charset(): Charset = charset
 
-  override fun equals(other: Any?): Boolean = other is Challenge &&
-    other.scheme == scheme &&
-    other.authParams == authParams
+  override fun equals(other: Any?): Boolean =
+    other is Challenge &&
+      other.scheme == scheme &&
+      other.authParams == authParams
 
   override fun hashCode(): Int {
     var result = 29
