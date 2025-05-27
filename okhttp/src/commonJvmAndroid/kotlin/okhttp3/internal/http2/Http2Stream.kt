@@ -173,7 +173,7 @@ class Http2Stream internal constructor(
   fun trailers(): Headers {
     this.withLock {
       if (source.finished && source.receiveBuffer.exhausted() && source.readBuffer.exhausted()) {
-        return source.trailers ?: Headers.Empty
+        return source.trailers ?: Headers.EMPTY
       }
       if (errorCode != null) {
         throw errorException ?: StreamResetException(errorCode!!)

@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test
 
 class HeadersJvmTest {
   @Test fun byteCount() {
-    assertThat(Headers.Empty.byteCount()).isEqualTo(0L)
+    assertThat(Headers.EMPTY.byteCount()).isEqualTo(0L)
     assertThat(
       Headers
         .Builder()

@@ -322,7 +322,7 @@ class Response internal constructor(
     internal var message: String? = null
     internal var handshake: Handshake? = null
     internal var headers: Headers.Builder
-    internal var body: ResponseBody = ResponseBody.Empty
+    internal var body: ResponseBody = ResponseBody.EMPTY
     internal var networkResponse: Response? = null
     internal var cacheResponse: Response? = null
     internal var priorResponse: Response? = null

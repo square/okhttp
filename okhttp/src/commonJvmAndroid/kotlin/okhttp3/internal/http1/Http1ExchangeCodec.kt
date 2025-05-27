@@ -143,7 +143,7 @@ class Http1ExchangeCodec(
 
   override fun trailers(): Headers {
     check(state == STATE_CLOSED) { "too early; can't read the trailers yet" }
-    return trailers ?: Headers.Empty
+    return trailers ?: Headers.EMPTY
   }
 
   override fun flushRequest() {

@@ -213,17 +213,9 @@ abstract class ResponseBody : Closeable {
   }
 
   companion object {
-    /** Empty response body. */
+    /** Empty response body with no content-type. Closing this response body does nothing. */
     @JvmField
-    val Empty: ResponseBody = EmptyResponseBody()
-
-    private class EmptyResponseBody : ResponseBody() {
-      override fun contentType() = null
-
-      override fun contentLength() = 0L
-
-      override fun source() = Buffer()
-    }
+    val EMPTY: ResponseBody = ByteString.EMPTY.toResponseBody()
 
     /**
      * Returns a new response body that transmits this string. If [contentType] is non-null and

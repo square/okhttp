@@ -269,7 +269,7 @@ class Request internal constructor(
     open fun post(body: RequestBody): Builder = commonPost(body)
 
     @JvmOverloads
-    open fun delete(body: RequestBody? = RequestBody.Empty): Builder = commonDelete(body)
+    open fun delete(body: RequestBody? = RequestBody.EMPTY): Builder = commonDelete(body)
 
     open fun put(body: RequestBody): Builder = commonPut(body)
 
