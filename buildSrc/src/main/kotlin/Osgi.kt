@@ -64,9 +64,7 @@ private fun Project.applyOsgi(
   }
 }
 
-fun Project.applyOsgiMultiplatform(
-  vararg bndProperties: String,
-) {
+fun Project.applyOsgiMultiplatform(vararg bndProperties: String) {
   // BND is incompatible with Kotlin/Multiplatform because it assumes the JVM source set's name is
   // 'main'. Work around this by creating a 'main' source set that forwards to 'jvmMain'.
   //
@@ -75,39 +73,45 @@ fun Project.applyOsgiMultiplatform(
   //
   // https://github.com/bndtools/bnd/issues/6590
   val jvmMainSourceSet = sourceSets.getByName("jvmMain")
-  val mainSourceSet = object : SourceSet by jvmMainSourceSet {
-    override fun getName() = "main"
-    override fun getProcessResourcesTaskName() =
-      "${jvmMainSourceSet.processResourcesTaskName}ForFakeMain"
-    override fun getCompileJavaTaskName() =
-      "${jvmMainSourceSet.compileJavaTaskName}ForFakeMain"
-    override fun getClassesTaskName() =
-      "${jvmMainSourceSet.classesTaskName}ForFakeMain"
-    override fun getTaskName(verb: String?, target: String?) =
-      "${jvmMainSourceSet.getTaskName(verb, target)}ForFakeMain"
-  }
+  val mainSourceSet =
+    object : SourceSet by jvmMainSourceSet {
+      override fun getName() = "main"
+
+      override fun getProcessResourcesTaskName() = "${jvmMainSourceSet.processResourcesTaskName}ForFakeMain"
+
+      override fun getCompileJavaTaskName() = "${jvmMainSourceSet.compileJavaTaskName}ForFakeMain"
+
+      override fun getClassesTaskName() = "${jvmMainSourceSet.classesTaskName}ForFakeMain"
+
+      override fun getTaskName(
+        verb: String?,
+        target: String?,
+      ) = "${jvmMainSourceSet.getTaskName(verb, target)}ForFakeMain"
+    }
   extensions
     .getByType(JavaPluginExtension::class.java)
     .sourceSets
     .add(mainSourceSet)
+  tasks.named { it.endsWith("ForFakeMain") }.configureEach { onlyIf { false } }
 
   val osgiApi = configurations.create("osgiApi")
-
   dependencies {
     osgiApi(kotlinOsgi)
   }
 
   // Call the convention when the task has finished, to modify the jar to contain OSGi metadata.
   tasks.named<Jar>("jvmJar").configure {
-    val bundleExtension = extensions.create(
-      BundleTaskExtension.NAME,
-      BundleTaskExtension::class.java,
-      this,
-    ).apply {
-      classpath(osgiApi.artifacts)
-      classpath(tasks.named("jvmMainClasses").map { it.outputs })
-      bnd(*bndProperties)
-    }
+    val bundleExtension =
+      extensions
+        .create(
+          BundleTaskExtension.NAME,
+          BundleTaskExtension::class.java,
+          this,
+        ).apply {
+          classpath(osgiApi.artifacts)
+          classpath(tasks.named("jvmMainClasses").map { it.outputs })
+          bnd(*bndProperties)
+        }
     doLast {
       bundleExtension.buildAction().execute(this)
     }
@@ -118,9 +122,10 @@ val Project.sourceSets: SourceSetContainer
   get() = (this as ExtensionAware).extensions["sourceSets"] as SourceSetContainer
 
 private val Project.kotlinOsgi: MinimalExternalModuleDependency
-  get() = extensions
-    .getByType(VersionCatalogsExtension::class.java)
-    .named("libs")
-    .findLibrary("kotlin.stdlib.osgi")
-    .get()
-    .get()
+  get() =
+    extensions
+      .getByType(VersionCatalogsExtension::class.java)
+      .named("libs")
+      .findLibrary("kotlin.stdlib.osgi")
+      .get()
+      .get()
