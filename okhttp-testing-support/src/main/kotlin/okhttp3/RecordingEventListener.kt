@@ -41,6 +41,7 @@ import okhttp3.CallEvent.ConnectionAcquired
 import okhttp3.CallEvent.ConnectionReleased
 import okhttp3.CallEvent.DnsEnd
 import okhttp3.CallEvent.DnsStart
+import okhttp3.CallEvent.FollowUpDecision
 import okhttp3.CallEvent.ProxySelectEnd
 import okhttp3.CallEvent.ProxySelectStart
 import okhttp3.CallEvent.RequestBodyEnd
@@ -53,6 +54,7 @@ import okhttp3.CallEvent.ResponseBodyStart
 import okhttp3.CallEvent.ResponseFailed
 import okhttp3.CallEvent.ResponseHeadersEnd
 import okhttp3.CallEvent.ResponseHeadersStart
+import okhttp3.CallEvent.RetryDecision
 import okhttp3.CallEvent.SatisfactionFailure
 import okhttp3.CallEvent.SecureConnectEnd
 import okhttp3.CallEvent.SecureConnectStart
@@ -293,9 +295,13 @@ open class RecordingEventListener(
 
   override fun retryDecision(
     call: Call,
-    shouldRetry: Boolean,
-    reason: String,
-  ) = logEvent(
-    CallEvent.RetryDecision(System.nanoTime(), call, shouldRetry, reason),
-  )
+    exception: IOException,
+    retry: Boolean,
+  ) = logEvent(RetryDecision(System.nanoTime(), call, exception, retry))
+
+  override fun followUpDecision(
+    call: Call,
+    networkResponse: Response,
+    nextRequest: Request?,
+  ) = logEvent(FollowUpDecision(System.nanoTime(), call, networkResponse, nextRequest))
 }

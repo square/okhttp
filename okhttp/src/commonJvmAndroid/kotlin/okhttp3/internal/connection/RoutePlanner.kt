@@ -35,8 +35,8 @@ import okhttp3.HttpUrl
  *     a race in fast follow-up.
  *
  *  4. If there's no existing connection, make a list of routes (which may require blocking DNS
- *     lookups) and attempt a new connection them. When failures occur, retries iterate the list of
- *     available routes.
+ *     lookups) and attempt new connections to them. When failures occur, retries iterate the
+ *     list of available routes.
  *
  * If the pool gains an eligible connection while DNS, TCP, or TLS work is in flight, this finder
  * will prefer pooled connections. Only pooled HTTP/2 connections are used for such de-duplication.
