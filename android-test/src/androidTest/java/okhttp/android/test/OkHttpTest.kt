@@ -537,6 +537,7 @@ class OkHttpTest {
         "RequestHeadersEnd",
         "ResponseHeadersStart",
         "ResponseHeadersEnd",
+        "FollowUpDecision",
         "ResponseBodyStart",
         "ResponseBodyEnd",
         "ConnectionReleased",
