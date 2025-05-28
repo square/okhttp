@@ -25,11 +25,11 @@ import okhttp3.Address
 import okhttp3.ConnectionListener
 import okhttp3.ConnectionPool
 import okhttp3.Route
-import okhttp3.internal.assertHeld
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskQueue
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.concurrent.assertHeld
 import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.connection.RealCall.CallReference
 import okhttp3.internal.okHttpName

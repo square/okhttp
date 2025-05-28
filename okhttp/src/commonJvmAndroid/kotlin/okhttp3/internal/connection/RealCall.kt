@@ -25,7 +25,6 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.ReentrantLock
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.EventListener
@@ -33,11 +32,12 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.assertHeld
-import okhttp3.internal.assertNotHeld
-import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.cache.CacheInterceptor
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.Lock
+import okhttp3.internal.concurrent.assertHeld
+import okhttp3.internal.concurrent.assertNotHeld
+import okhttp3.internal.concurrent.assertThreadDoesntHoldLock
 import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.http.BridgeInterceptor
 import okhttp3.internal.http.CallServerInterceptor
@@ -64,7 +64,7 @@ class RealCall(
   val forWebSocket: Boolean,
 ) : Call,
   Cloneable {
-  internal val lock: ReentrantLock = ReentrantLock()
+  internal val lock = Lock()
 
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
 
@@ -501,7 +501,7 @@ class RealCall(
      * if the executor has been shut down by reporting the call as failed.
      */
     fun executeOn(executorService: ExecutorService) {
-      client.dispatcher.assertThreadDoesntHoldLock()
+      client.dispatcher.lock.assertThreadDoesntHoldLock()
 
       var success = false
       try {

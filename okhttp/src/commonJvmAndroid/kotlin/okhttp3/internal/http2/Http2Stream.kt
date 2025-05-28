@@ -20,11 +20,12 @@ import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.SocketTimeoutException
 import java.util.ArrayDeque
-import java.util.concurrent.locks.Condition
-import java.util.concurrent.locks.ReentrantLock
 import okhttp3.Headers
-import okhttp3.internal.assertNotHeld
-import okhttp3.internal.connection.Locks.newLockCondition
+import okhttp3.internal.concurrent.Lock
+import okhttp3.internal.concurrent.Lockable
+import okhttp3.internal.concurrent.assertNotHeld
+import okhttp3.internal.concurrent.await
+import okhttp3.internal.concurrent.signalAll
 import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.http2.flowcontrol.WindowCounter
 import okhttp3.internal.toHeaderList
@@ -44,8 +45,9 @@ class Http2Stream internal constructor(
   inFinished: Boolean,
   headers: Headers?,
 ) {
-  internal val lock: ReentrantLock = ReentrantLock()
-  val condition: Condition = lock.newLockCondition()
+  internal val lock = Lock()
+  val condition: Lockable
+    get() = lock
 
   // Internal state is guarded by [lock]. No long-running or potentially blocking operations are
   // performed while the lock is held.
