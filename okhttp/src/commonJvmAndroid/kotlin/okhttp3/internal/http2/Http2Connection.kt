@@ -23,13 +23,12 @@ import java.util.concurrent.TimeUnit
 import okhttp3.Headers
 import okhttp3.internal.EMPTY_BYTE_ARRAY
 import okhttp3.internal.closeQuietly
-import okhttp3.internal.concurrent.Lock
 import okhttp3.internal.concurrent.Lockable
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.concurrent.assertThreadDoesntHoldLock
-import okhttp3.internal.concurrent.await
-import okhttp3.internal.concurrent.signalAll
-import okhttp3.internal.connection.Locks.withLock
+import okhttp3.internal.concurrent.assertLockNotHeld
+import okhttp3.internal.concurrent.notifyAll
+import okhttp3.internal.concurrent.wait
+import okhttp3.internal.concurrent.withLock
 import okhttp3.internal.http2.ErrorCode.REFUSED_STREAM
 import okhttp3.internal.http2.Settings.Companion.DEFAULT_INITIAL_WINDOW_SIZE
 import okhttp3.internal.http2.flowcontrol.WindowCounter
@@ -58,11 +57,8 @@ import okio.source
 @Suppress("NAME_SHADOWING")
 class Http2Connection internal constructor(
   builder: Builder,
-) : Closeable {
-  internal val lock = Lock()
-  internal val condition: Lockable
-    get() = lock
-
+) : Closeable,
+  Lockable {
   // Internal state of this connection is guarded by 'lock'. No blocking operations may be
   // performed while holding this lock!
   //
@@ -158,7 +154,7 @@ class Http2Connection internal constructor(
       val pingIntervalNanos = TimeUnit.MILLISECONDS.toNanos(builder.pingIntervalMillis.toLong())
       writerQueue.schedule("$connectionName ping", pingIntervalNanos) {
         val failDueToMissingPong =
-          this.withLock {
+          withLock {
             if (intervalPongsReceived < intervalPingsSent) {
               return@withLock true
             } else {
@@ -180,23 +176,23 @@ class Http2Connection internal constructor(
   /**
    * Returns the number of [open streams][Http2Stream.isOpen] on this connection.
    */
-  fun openStreamCount(): Int = this.withLock { streams.size }
+  fun openStreamCount(): Int = withLock { streams.size }
 
-  fun getStream(id: Int): Http2Stream? = this.withLock { streams[id] }
+  fun getStream(id: Int): Http2Stream? = withLock { streams[id] }
 
   internal fun removeStream(streamId: Int): Http2Stream? {
-    this.withLock {
+    withLock {
       val stream = streams.remove(streamId)
 
       // The removed stream may be blocked on a connection-wide window update.
-      condition.signalAll()
+      notifyAll()
 
       return stream
     }
   }
 
   internal fun updateConnectionFlowControl(read: Long) {
-    this.withLock {
+    withLock {
       readBytes.update(total = read)
       val readBytesToAcknowledge = readBytes.unacknowledged
       if (readBytesToAcknowledge >= okHttpSettings.initialWindowSize / 2) {
@@ -249,7 +245,7 @@ class Http2Connection internal constructor(
     val streamId: Int
 
     writer.withLock {
-      this.withLock {
+      withLock {
         if (nextStreamId > Int.MAX_VALUE / 2) {
           shutdown(REFUSED_STREAM)
         }
@@ -319,7 +315,7 @@ class Http2Connection internal constructor(
     var byteCount = byteCount
     while (byteCount > 0L) {
       var toWrite: Int
-      this.withLock {
+      withLock {
         try {
           while (writeBytesTotal >= writeBytesMaximum) {
             // Before blocking, confirm that the stream we're writing is still open. It's possible
@@ -327,7 +323,7 @@ class Http2Connection internal constructor(
             if (!streams.containsKey(streamId)) {
               throw IOException("stream closed")
             }
-            condition.await() // Wait until we receive a WINDOW_UPDATE.
+            wait() // Wait until we receive a WINDOW_UPDATE.
           }
         } catch (e: InterruptedException) {
           Thread.currentThread().interrupt() // Retain interrupted status.
@@ -400,7 +396,7 @@ class Http2Connection internal constructor(
   /** For testing: sends a ping to be awaited with [awaitPong]. */
   @Throws(InterruptedException::class)
   fun writePing() {
-    this.withLock {
+    withLock {
       awaitPingsSent++
     }
 
@@ -411,9 +407,9 @@ class Http2Connection internal constructor(
   /** For testing: awaits a pong. */
   @Throws(InterruptedException::class)
   fun awaitPong() {
-    this.withLock {
+    withLock {
       while (awaitPongsReceived < awaitPingsSent) {
-        condition.await()
+        wait()
       }
     }
   }
@@ -432,7 +428,7 @@ class Http2Connection internal constructor(
   fun shutdown(statusCode: ErrorCode) {
     writer.withLock {
       val lastGoodStreamId: Int
-      this.withLock {
+      withLock {
         if (isShutdown) {
           return
         }
@@ -458,14 +454,14 @@ class Http2Connection internal constructor(
     streamCode: ErrorCode,
     cause: IOException?,
   ) {
-    this.lock.assertThreadDoesntHoldLock()
+    assertLockNotHeld()
 
     ignoreIoExceptions {
       shutdown(connectionCode)
     }
 
     var streamsToClose: Array<Http2Stream>? = null
-    this.withLock {
+    withLock {
       if (streams.isNotEmpty()) {
         streamsToClose = streams.values.toTypedArray()
         streams.clear()
@@ -526,7 +522,7 @@ class Http2Connection internal constructor(
   @Throws(IOException::class)
   fun setSettings(settings: Settings) {
     writer.withLock {
-      this.withLock {
+      withLock {
         if (isShutdown) {
           throw ConnectionShutdownException()
         }
@@ -537,7 +533,7 @@ class Http2Connection internal constructor(
   }
 
   fun isHealthy(nowNs: Long): Boolean {
-    this.withLock {
+    withLock {
       if (isShutdown) return false
 
       // A degraded pong is overdue.
@@ -563,7 +559,7 @@ class Http2Connection internal constructor(
    * The deadline is currently hardcoded. We may make this configurable in the future!
    */
   internal fun sendDegradedPingLater() {
-    this.withLock {
+    withLock {
       if (degradedPongsReceived < degradedPingsSent) return // Already awaiting a degraded pong.
       degradedPingsSent++
       degradedPongDeadlineNs = System.nanoTime() + DEGRADED_PONG_TIMEOUT_NS
@@ -691,7 +687,7 @@ class Http2Connection internal constructor(
         return
       }
       val stream: Http2Stream?
-      this@Http2Connection.withLock {
+      withLock {
         stream = getStream(streamId)
 
         if (stream == null) {
@@ -771,7 +767,7 @@ class Http2Connection internal constructor(
       var streamsToNotify: Array<Http2Stream>?
       var newPeerSettings: Settings
       writer.withLock {
-        this@Http2Connection.withLock {
+        withLock {
           val previousPeerSettings = peerSettings
           newPeerSettings =
             if (clearPrevious) {
@@ -822,7 +818,7 @@ class Http2Connection internal constructor(
       payload2: Int,
     ) {
       if (ack) {
-        this@Http2Connection.withLock {
+        withLock {
           when (payload1) {
             INTERVAL_PING -> {
               intervalPongsReceived++
@@ -832,7 +828,7 @@ class Http2Connection internal constructor(
             }
             AWAIT_PING -> {
               awaitPongsReceived++
-              condition.signalAll()
+              notifyAll()
             }
             else -> {
               // Ignore an unexpected pong.
@@ -858,7 +854,7 @@ class Http2Connection internal constructor(
 
       // Copy the streams first. We don't want to hold a lock when we call receiveRstStream().
       val streamsCopy: Array<Http2Stream>
-      this@Http2Connection.withLock {
+      withLock {
         streamsCopy = streams.values.toTypedArray()
         isShutdown = true
       }
@@ -877,9 +873,9 @@ class Http2Connection internal constructor(
       windowSizeIncrement: Long,
     ) {
       if (streamId == 0) {
-        this@Http2Connection.withLock {
+        withLock {
           writeBytesMaximum += windowSizeIncrement
-          condition.signalAll()
+          notifyAll()
         }
       } else {
         val stream = getStream(streamId)
@@ -927,7 +923,7 @@ class Http2Connection internal constructor(
     streamId: Int,
     requestHeaders: List<Header>,
   ) {
-    this.withLock {
+    withLock {
       if (streamId in currentPushRequests) {
         writeSynResetLater(streamId, ErrorCode.PROTOCOL_ERROR)
         return
@@ -939,7 +935,7 @@ class Http2Connection internal constructor(
       ignoreIoExceptions {
         if (cancel) {
           writer.rstStream(streamId, ErrorCode.CANCEL)
-          this.withLock {
+          withLock {
             currentPushRequests.remove(streamId)
           }
         }
@@ -957,7 +953,7 @@ class Http2Connection internal constructor(
       ignoreIoExceptions {
         if (cancel) writer.rstStream(streamId, ErrorCode.CANCEL)
         if (cancel || inFinished) {
-          this.withLock {
+          withLock {
             currentPushRequests.remove(streamId)
           }
         }
@@ -984,7 +980,7 @@ class Http2Connection internal constructor(
         val cancel = pushObserver.onData(streamId, buffer, byteCount, inFinished)
         if (cancel) writer.rstStream(streamId, ErrorCode.CANCEL)
         if (cancel || inFinished) {
-          this.withLock {
+          withLock {
             currentPushRequests.remove(streamId)
           }
         }
@@ -998,7 +994,7 @@ class Http2Connection internal constructor(
   ) {
     pushQueue.execute("$connectionName[$streamId] onReset") {
       pushObserver.onReset(streamId, errorCode)
-      this.withLock {
+      withLock {
         currentPushRequests.remove(streamId)
       }
     }

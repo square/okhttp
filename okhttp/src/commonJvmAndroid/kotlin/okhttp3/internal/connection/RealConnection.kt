@@ -34,11 +34,11 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Route
 import okhttp3.internal.closeQuietly
-import okhttp3.internal.concurrent.Lock
+import okhttp3.internal.concurrent.Lockable
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.concurrent.assertHeld
-import okhttp3.internal.concurrent.assertNotHeld
-import okhttp3.internal.connection.Locks.withLock
+import okhttp3.internal.concurrent.assertLockHeld
+import okhttp3.internal.concurrent.assertLockNotHeld
+import okhttp3.internal.concurrent.withLock
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http1.Http1ExchangeCodec
@@ -86,12 +86,11 @@ class RealConnection(
   internal val connectionListener: ConnectionListener,
 ) : Http2Connection.Listener(),
   Connection,
-  ExchangeCodec.Carrier {
+  ExchangeCodec.Carrier,
+  Lockable {
   private var http2Connection: Http2Connection? = null
 
-  internal val lock = Lock()
-
-  // These properties are guarded by [lock].
+  // These properties are guarded by `this`.
 
   /**
    * If true, no new exchanges can be created on this connection. It is necessary to set this to
@@ -140,7 +139,7 @@ class RealConnection(
 
   /** Prevent further exchanges from being created on this connection. */
   override fun noNewExchanges() {
-    this.withLock {
+    withLock {
       noNewExchanges = true
     }
     connectionListener.noNewExchanges(this)
@@ -148,13 +147,13 @@ class RealConnection(
 
   /** Prevent this connection from being used for hosts other than the one in [route]. */
   internal fun noCoalescedConnections() {
-    this.withLock {
+    withLock {
       noCoalescedConnections = true
     }
   }
 
   internal fun incrementSuccessCount() {
-    this.withLock {
+    withLock {
       successCount++
     }
   }
@@ -192,7 +191,7 @@ class RealConnection(
     address: Address,
     routes: List<Route>?,
   ): Boolean {
-    lock.assertHeld()
+    assertLockHeld()
 
     // If this connection is not accepting new exchanges, we're done.
     if (calls.size >= allocationLimit || noNewExchanges) return false
@@ -248,7 +247,7 @@ class RealConnection(
     }
 
   private fun supportsUrl(url: HttpUrl): Boolean {
-    lock.assertHeld()
+    assertLockHeld()
 
     val routeUrl = route.address.url
 
@@ -320,7 +319,7 @@ class RealConnection(
 
   /** Returns true if this connection is ready to host new streams. */
   fun isHealthy(doExtensiveChecks: Boolean): Boolean {
-    lock.assertNotHeld()
+    assertLockNotHeld()
 
     val nowNs = System.nanoTime()
 
@@ -337,7 +336,7 @@ class RealConnection(
       return http2Connection.isHealthy(nowNs)
     }
 
-    val idleDurationNs = this.withLock { nowNs - idleAtNs }
+    val idleDurationNs = withLock { nowNs - idleAtNs }
     if (idleDurationNs >= IDLE_CONNECTION_HEALTHY_NS && doExtensiveChecks) {
       return socket.isHealthy(source)
     }
@@ -356,7 +355,7 @@ class RealConnection(
     connection: Http2Connection,
     settings: Settings,
   ) {
-    this.withLock {
+    withLock {
       val oldLimit = allocationLimit
       allocationLimit = settings.getMaxConcurrentStreams()
 
@@ -400,7 +399,7 @@ class RealConnection(
     e: IOException?,
   ) {
     var noNewExchangesEvent = false
-    this.withLock {
+    withLock {
       if (e is StreamResetException) {
         when {
           e.errorCode == ErrorCode.REFUSED_STREAM -> {

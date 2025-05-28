@@ -41,7 +41,7 @@ import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.concurrent.notifyAll
 import okhttp3.internal.concurrent.wait
-import okhttp3.internal.connection.Locks.withLock
+import okhttp3.internal.concurrent.withLock
 import okio.AsyncTimeout
 import okio.Buffer
 import okio.BufferedSource
