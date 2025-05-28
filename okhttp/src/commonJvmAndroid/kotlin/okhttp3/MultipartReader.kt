@@ -16,10 +16,10 @@
 package okhttp3
 
 import java.io.Closeable
+import java.io.EOFException
 import java.io.IOException
 import java.net.ProtocolException
 import okhttp3.internal.http1.HeadersReader
-import okhttp3.internal.limit
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString.Companion.encodeUtf8
@@ -106,7 +106,7 @@ class MultipartReader
       } else {
         // This is a subsequent part or a preamble. Skip until "\r\n--" followed by the boundary.
         while (true) {
-          val toSkip = currentPartBytesRemaining(maxResult = 8192)
+          val toSkip = currentPartBytesRemaining(maxByteCount = 8192)
           if (toSkip == 0L) break
           source.skip(toSkip)
         }
@@ -165,34 +165,34 @@ class MultipartReader
         require(byteCount >= 0L) { "byteCount < 0: $byteCount" }
         check(currentPart == this) { "closed" }
 
-        source.timeout().intersectWith(timeout) {
-          return when (val limit = currentPartBytesRemaining(maxResult = byteCount)) {
+        return source.timeout().intersectWith(timeout) {
+          when (val limit = currentPartBytesRemaining(maxByteCount = byteCount)) {
             0L -> -1L // No more bytes in this part.
             else -> source.read(sink, limit)
           }
         }
-
-        error("unreachable") // TODO(jwilson): fix intersectWith() to return T.
       }
 
       override fun timeout(): Timeout = timeout
     }
 
     /**
-     * Returns a value in [0..maxByteCount] with the number of bytes that can be read from [source] in
-     * the current part. If this returns 0 the current part is exhausted; otherwise it has at least
-     * one byte left to read.
+     * Returns a value in [0..maxByteCount] with the number of bytes that can be read from [source]
+     * in the current part. If this returns 0 the current part is exhausted; otherwise it has at
+     * least one byte left to read.
      */
-    private fun currentPartBytesRemaining(maxResult: Long): Long {
-      // Avoid indexOf scanning repeatedly over the entire source by using limit
-      // Since maxResult could be midway through the boundary, read further to be safe.
-      val limitSource = source.peek().limit(maxResult + crlfDashDashBoundary.size).buffer()
-      limitSource.require(crlfDashDashBoundary.size.toLong())
-
-      val delimiterIndex = limitSource.buffer.indexOf(crlfDashDashBoundary)
-      return when (delimiterIndex) {
-        -1L -> minOf(maxResult, limitSource.buffer.size - crlfDashDashBoundary.size + 1)
-        else -> minOf(maxResult, delimiterIndex)
+    private fun currentPartBytesRemaining(maxByteCount: Long): Long {
+      val toIndex = minOf(source.buffer.size, maxByteCount) + 1L
+      val boundaryIndex =
+        source.indexOf(
+          bytes = crlfDashDashBoundary,
+          fromIndex = 0L,
+          toIndex = toIndex,
+        )
+      return when {
+        boundaryIndex != -1L -> boundaryIndex // We found the boundary.
+        source.buffer.size >= toIndex -> minOf(toIndex, maxByteCount) // No boundary before toIndex.
+        else -> throw EOFException() // We ran out of data before we found the required boundary.
       }
     }
 
