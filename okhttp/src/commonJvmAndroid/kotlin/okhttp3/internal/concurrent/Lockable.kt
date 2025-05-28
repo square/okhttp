@@ -20,7 +20,7 @@ package okhttp3.internal.concurrent
 import okhttp3.internal.assertionsEnabled
 
 /**
- * Marker interface for objects that use the JVM's `synchronized` mechanism and th related
+ * Marker interface for objects that use the JVM's `synchronized` mechanism and the related
  * `wait()` and `notify()` functions.
  */
 interface Lockable
