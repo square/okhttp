@@ -32,10 +32,11 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
-import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.Lockable
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.concurrent.assertThreadHoldsLock
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.okHttpName
@@ -66,7 +67,8 @@ class RealWebSocket(
   private var minimumDeflateSize: Long,
   private val webSocketCloseTimeout: Long,
 ) : WebSocket,
-  WebSocketReader.FrameCallback {
+  WebSocketReader.FrameCallback,
+  Lockable {
   private val key: String
 
   /** Non-null for client web sockets. These can be canceled. */

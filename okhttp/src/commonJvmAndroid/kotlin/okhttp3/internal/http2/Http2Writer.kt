@@ -17,9 +17,9 @@ package okhttp3.internal.http2
 
 import java.io.Closeable
 import java.io.IOException
-import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level.FINE
 import java.util.logging.Logger
+import okhttp3.internal.concurrent.Lock
 import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.format
 import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
@@ -49,7 +49,7 @@ class Http2Writer(
   private val sink: BufferedSink,
   private val client: Boolean,
 ) : Closeable {
-  internal val lock: ReentrantLock = ReentrantLock()
+  internal val lock = Lock()
 
   private val hpackBuffer: Buffer = Buffer()
   private var maxFrameSize: Int = INITIAL_MAX_FRAME_SIZE

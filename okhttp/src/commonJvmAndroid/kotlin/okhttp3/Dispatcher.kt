@@ -21,8 +21,8 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantLock
-import okhttp3.internal.assertNotHeld
+import okhttp3.internal.concurrent.Lock
+import okhttp3.internal.concurrent.assertNotHeld
 import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealCall.AsyncCall
@@ -38,7 +38,7 @@ import okhttp3.internal.unmodifiable
  * concurrently.
  */
 class Dispatcher() {
-  internal val lock: ReentrantLock = ReentrantLock()
+  internal val lock = Lock()
 
   /**
    * The maximum number of requests to execute concurrently. Above this requests queue in memory,

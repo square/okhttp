@@ -23,7 +23,6 @@ import java.net.Socket
 import java.net.SocketException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit.MILLISECONDS
-import java.util.concurrent.locks.ReentrantLock
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import okhttp3.Address
@@ -34,10 +33,11 @@ import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Route
-import okhttp3.internal.assertHeld
-import okhttp3.internal.assertNotHeld
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.Lock
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.concurrent.assertHeld
+import okhttp3.internal.concurrent.assertNotHeld
 import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RealInterceptorChain
@@ -89,7 +89,7 @@ class RealConnection(
   ExchangeCodec.Carrier {
   private var http2Connection: Http2Connection? = null
 
-  internal val lock: ReentrantLock = ReentrantLock()
+  internal val lock = Lock()
 
   // These properties are guarded by [lock].
 

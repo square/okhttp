@@ -20,13 +20,9 @@ import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.Condition
-import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Logger
 import okhttp3.internal.addIfAbsent
-import okhttp3.internal.assertHeld
 import okhttp3.internal.concurrent.TaskRunner.Companion.INSTANCE
-import okhttp3.internal.connection.Locks.newLockCondition
 import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.okHttpName
 import okhttp3.internal.threadFactory
@@ -46,8 +42,9 @@ class TaskRunner(
   val backend: Backend,
   internal val logger: Logger = TaskRunner.logger,
 ) {
-  internal val lock: ReentrantLock = ReentrantLock()
-  val condition: Condition = lock.newLockCondition()
+  internal val lock = Lock()
+  val condition: Lockable
+    get() = lock
 
   private var nextQueueName = 10000
   private var coordinatorWaiting = false
