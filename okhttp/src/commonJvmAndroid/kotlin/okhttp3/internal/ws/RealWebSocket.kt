@@ -36,7 +36,7 @@ import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Lockable
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.concurrent.assertThreadHoldsLock
+import okhttp3.internal.concurrent.assertLockHeld
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.okHttpName
@@ -498,7 +498,7 @@ class RealWebSocket(
   }
 
   private fun runWriter() {
-    this.assertThreadHoldsLock()
+    assertLockHeld()
 
     val writerTask = writerTask
     if (writerTask != null) {

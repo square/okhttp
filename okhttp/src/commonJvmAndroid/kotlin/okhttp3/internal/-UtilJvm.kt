@@ -35,6 +35,7 @@ import kotlin.text.Charsets.UTF_32BE
 import kotlin.text.Charsets.UTF_32LE
 import kotlin.text.Charsets.UTF_8
 import kotlin.time.Duration
+import okhttp3.Dispatcher
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.HttpUrl
@@ -318,6 +319,13 @@ internal fun <T> readFieldOrNull(
 
 @JvmField
 internal val assertionsEnabled: Boolean = OkHttpClient::class.java.desiredAssertionStatus()
+
+/** Dispatcher is not [Lockable] because we don't want that type in our public API. */
+internal fun Dispatcher.assertLockNotHeld() {
+  if (assertionsEnabled && Thread.holdsLock(this)) {
+    throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
+  }
+}
 
 /**
  * Returns the string "OkHttp" unless the library has been shaded for inclusion in another library,

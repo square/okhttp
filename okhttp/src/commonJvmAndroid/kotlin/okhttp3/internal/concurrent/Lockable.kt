@@ -17,26 +17,19 @@
 
 package okhttp3.internal.concurrent
 
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import okhttp3.internal.assertionsEnabled
 
 /**
  * Marker interface for objects that use the JVM's `synchronized` mechanism and the related
  * `wait()` and `notify()` functions.
+ *
+ * The Lockable interface is particularly handy because it ensures we lock the right `this` when
+ * there are multiple `this` objects in scope.
  */
 interface Lockable
-
-/**
- * Returns a new anonymous object to lock on.
- *
- * Use this to encapsulate locking returned objects:
- *
- *  * So callers don't call `synchronized`, `wait()` or `notify()` on your object
- *  * So the `Lockable` interface is not in the public API
- */
-@Suppress("FunctionName")
-fun Lock(): Lockable =
-  object : Lockable {
-  }
 
 internal inline fun Lockable.wait() = (this as Object).wait()
 
@@ -52,28 +45,20 @@ internal inline fun Lockable.awaitNanos(nanos: Long) {
   }
 }
 
-internal inline fun Lockable.assertNotHeld() {
+internal inline fun Lockable.assertLockNotHeld() {
   if (assertionsEnabled && Thread.holdsLock(this)) {
     throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
   }
 }
 
-internal inline fun Lockable.assertHeld() {
+internal inline fun Lockable.assertLockHeld() {
   if (assertionsEnabled && !Thread.holdsLock(this)) {
     throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
   }
 }
 
-internal inline fun Lockable.await() = wait()
-
-internal inline fun Lockable.signal() = notify()
-
-internal inline fun Lockable.signalAll() = notifyAll()
-
-internal inline fun Lockable.assertThreadDoesntHoldLock() {
-  assertNotHeld()
-}
-
-internal inline fun Lockable.assertThreadHoldsLock() {
-  assertHeld()
+@OptIn(ExperimentalContracts::class)
+inline fun <T> Lockable.withLock(action: () -> T): T {
+  contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
+  return synchronized(this, action)
 }
