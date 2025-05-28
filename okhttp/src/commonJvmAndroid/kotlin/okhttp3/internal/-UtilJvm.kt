@@ -249,14 +249,14 @@ internal inline fun <T> Set<T>.unmodifiable(): Set<T> = Collections.unmodifiable
 internal inline fun <K, V> Map<K, V>.unmodifiable(): Map<K, V> = Collections.unmodifiableMap(this)
 
 /** Returns an immutable copy of this. */
-internal inline fun <reified T> List<T>.toImmutableList(): List<T> = this.toTypedArray().toImmutableList()
+internal inline fun <reified T> List<T>.toImmutableList(): List<T> = if (this.isEmpty()) emptyList() else this.toTypedArray().asList().unmodifiable()
 
 /** Returns an immutable list containing [elements]. */
 @SafeVarargs
 internal fun <T> immutableListOf(vararg elements: T): List<T> = elements.toImmutableList()
 
 /** Returns an immutable list from copy of this. */
-internal fun <T> Array<out T>?.toImmutableList(): List<T> = if (this.isNullOrEmpty()) emptyList() else this.asList().unmodifiable()
+internal fun <T> Array<out T>?.toImmutableList(): List<T> = if (this.isNullOrEmpty()) emptyList() else this.clone().asList().unmodifiable()
 
 /** Closes this, ignoring any checked exceptions. */
 internal fun Socket.closeQuietly() {
