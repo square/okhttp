@@ -1,7 +1,3 @@
-<!--
-  - Copyright 2014-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
-  -->
-
 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M18 9C18 14 14 18 9 18C4 18 0 14 0 9C0 4 4 0 9 0C14 0 18 4 18 9ZM14.2 6.2L12.8 4.8L7.5 10.1L5.3 7.8L3.8 9.2L7.5 13L14.2 6.2Z" fill="#4DBB5F"/>
 </svg>

@@ -25,76 +25,108 @@
 <link href="../../../styles/prism.css" rel="Stylesheet">
 <link href="../../../styles/logo-styles.css" rel="Stylesheet">
 <link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<link href="../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
 <script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
 <script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
 <script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
 <script type="text/javascript" src="../../../scripts/main.js" defer></script>
 <script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../ui-kit/ui-kit.min.js" defer></script>
 <script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
 <body>
     <div class="root">
-<nav class="navigation" id="navigation-wrapper">
-    <div class="navigation--inner">
-        <div class="navigation-title">
-            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
-            <div class="library-name">
+    <nav class="navigation theme-dark" id="navigation-wrapper">
 <a class="library-name--link" href="../../../index.html">
-                            okhttp-parent
-                    </a>            </div>
-            <div class="library-version">5.0.0-SNAPSHOT
+                    okhttp-parent
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">5.0.0-SNAPSHOT
+        </div>
+        <div class="navigation-controls">
+        <div class="filter-section filter-section_loading" id="filter-section">
+                <button class="platform-tag platform-selector common-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/commonMain">common</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox">
+                    <div class="dropdown--header"><span>Platform filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close platform filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option common-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":okhttp:dokkaHtmlPartial/commonMain" data-filter=":okhttp:dokkaHtmlPartial/commonMain">
+                                <span class="checkbox--icon"></span>
+                                common
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
             </div>
         </div>
-        <div class="filter-section" id="filter-section">
-                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/main">jvm</button>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
         </div>
-    </div>
-    <div class="navigation-controls">
-        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
-        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
-    </div>
-</nav>
+    </nav>
         <div id="container">
             <div class="sidebar" id="leftColumn">
-                <div class="sidebar--inner" id="sideMenu"></div>
+                <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                    <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox">
+                        <div class="dropdown--header">
+                            <span>
+                                    okhttp-parent
+                            </span>
+                            <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                                <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                            </button>
+                        </div>
+                        <div class="sidebar--inner" id="sideMenu"></div>
+                    </ul>
+                    <div class="dropdown--overlay"></div>
+                </div>
             </div>
             <div id="main">
-<div class="main-content" data-page-type="classlike" id="content" pageids="okhttp::okhttp3/ConnectionSpec///PointingToDeclaration//1481842020">
+<div class="main-content" data-page-type="classlike" id="content" pageids="okhttp::okhttp3/ConnectionSpec///PointingToDeclaration//985677359">
   <div class="breadcrumbs"><a href="../../index.html">okhttp</a><span class="delimiter">/</span><a href="../index.html">okhttp3</a><span class="delimiter">/</span><span class="current">ConnectionSpec</span></div>
   <div class="cover ">
     <h1 class="cover"><span>Connection</span><wbr><span><span>Spec</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">ConnectionSpec</a></div><p class="paragraph">Specifies configuration for the socket connection that HTTP traffic travels through. For <code class="lang-kotlin">https:</code> URLs, this includes the TLS version and cipher suites to use when negotiating a secure connection.</p><p class="paragraph">The TLS versions configured in a connection spec are only be used if they are also enabled in the SSL socket. For example, if an SSL socket does not have TLS 1.3 enabled, it will not be used even if it is present on the connection spec. The same policy also applies to cipher suites.</p><p class="paragraph">Use <a href="-builder/all-enabled-tls-versions.html">Builder.allEnabledTlsVersions</a> and <a href="-builder/all-enabled-cipher-suites.html">Builder.allEnabledCipherSuites</a> to defer all feature selection to the underlying SSL socket.</p><p class="paragraph">The configuration of each spec changes with each OkHttp release. This is annoying: upgrading your OkHttp library can break connectivity to certain web servers! But it’s a necessary annoyance because the TLS ecosystem is dynamic and staying up to date is necessary to stay secure. See <a href="https://square.github.io/okhttp/tls_configuration_history/">OkHttp's TLS Configuration History</a> to track these changes.</p></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">ConnectionSpec</a></div><p class="paragraph">Specifies configuration for the socket connection that HTTP traffic travels through. For <code class="lang-kotlin">https:</code> URLs, this includes the TLS version and cipher suites to use when negotiating a secure connection.</p><p class="paragraph">The TLS versions configured in a connection spec are only be used if they are also enabled in the SSL socket. For example, if an SSL socket does not have TLS 1.3 enabled, it will not be used even if it is present on the connection spec. The same policy also applies to cipher suites.</p><p class="paragraph">Use <a href="-builder/all-enabled-tls-versions.html">Builder.allEnabledTlsVersions</a> and <a href="-builder/all-enabled-cipher-suites.html">Builder.allEnabledCipherSuites</a> to defer all feature selection to the underlying SSL socket.</p><p class="paragraph">The configuration of each spec changes with each OkHttp release. This is annoying: upgrading your OkHttp library can break connectivity to certain web servers! But it’s a necessary annoyance because the TLS ecosystem is dynamic and staying up to date is necessary to stay secure. See <a href="https://square.github.io/okhttp/tls_configuration_history/">OkHttp's TLS Configuration History</a> to track these changes.</p></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
     <div class="tabs-section-body">
       <div data-togglable="TYPE">
         <h2 class="">Types</h2>
-        <div class="table"><a data-name="242151627%2FClasslikes%2F1481842020" anchor-label="Builder" id="242151627%2FClasslikes%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
+        <div class="table"><a data-name="242151627%2FClasslikes%2F985677359" anchor-label="Builder" id="242151627%2FClasslikes%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-builder/index.html"><span><span>Builder</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="242151627%2FClasslikes%2F1481842020"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="242151627%2FClasslikes%2F985677359"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="-builder/index.html">Builder</a></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-builder/index.html">Builder</a></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="1579150650%2FClasslikes%2F1481842020" anchor-label="Companion" id="1579150650%2FClasslikes%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
+<a data-name="1579150650%2FClasslikes%2F985677359" anchor-label="Companion" id="1579150650%2FClasslikes%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1579150650%2FClasslikes%2F1481842020"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1579150650%2FClasslikes%2F985677359"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a></div></div></div>
                 </div>
               </div>
             </div>
@@ -103,62 +135,62 @@
       </div>
       <div data-togglable="PROPERTY">
         <h2 class="">Properties</h2>
-        <div class="table"><a data-name="-1938345951%2FProperties%2F1481842020" anchor-label="cipherSuites" id="-1938345951%2FProperties%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
+        <div class="table"><a data-name="-1938345951%2FProperties%2F985677359" anchor-label="cipherSuites" id="-1938345951%2FProperties%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="cipher-suites.html"><span>cipher</span><wbr><span><span>Suites</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1938345951%2FProperties%2F1481842020"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1938345951%2FProperties%2F985677359"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"cipherSuites"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="cipher-suites.html">cipherSuites</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../-cipher-suite/index.html">CipherSuite</a><span class="token operator">&gt;</span><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Returns the cipher suites to use for a connection. Returns null if all of the SSL socket's enabled cipher suites should be used.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="cipher-suites.html">cipherSuites</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../-cipher-suite/index.html">CipherSuite</a><span class="token operator">&gt;</span><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Returns the cipher suites to use for a connection. Returns null if all of the SSL socket's enabled cipher suites should be used.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1417444190%2FProperties%2F1481842020" anchor-label="isTls" id="-1417444190%2FProperties%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
+<a data-name="-1417444190%2FProperties%2F985677359" anchor-label="isTls" id="-1417444190%2FProperties%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="is-tls.html"><span>is</span><wbr><span><span>Tls</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1417444190%2FProperties%2F1481842020"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1417444190%2FProperties%2F985677359"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"isTls"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="is-tls.html">isTls</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="is-tls.html">isTls</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="253787656%2FProperties%2F1481842020" anchor-label="supportsTlsExtensions" id="253787656%2FProperties%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
+<a data-name="253787656%2FProperties%2F985677359" anchor-label="supportsTlsExtensions" id="253787656%2FProperties%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="supports-tls-extensions.html"><span>supports</span><wbr><span>Tls</span><wbr><span><span>Extensions</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="253787656%2FProperties%2F1481842020"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="253787656%2FProperties%2F985677359"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"supportsTlsExtensions"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="supports-tls-extensions.html">supportsTlsExtensions</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="supports-tls-extensions.html">supportsTlsExtensions</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="110790269%2FProperties%2F1481842020" anchor-label="tlsVersions" id="110790269%2FProperties%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
+<a data-name="110790269%2FProperties%2F985677359" anchor-label="tlsVersions" id="110790269%2FProperties%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="tls-versions.html"><span>tls</span><wbr><span><span>Versions</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="110790269%2FProperties%2F1481842020"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="110790269%2FProperties%2F985677359"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"tlsVersions"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="tls-versions.html">tlsVersions</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../-tls-version/index.html">TlsVersion</a><span class="token operator">&gt;</span><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Returns the TLS versions to use when negotiating a connection. Returns null if all of the SSL socket's enabled TLS versions should be used.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">val </span><a href="tls-versions.html">tlsVersions</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="../-tls-version/index.html">TlsVersion</a><span class="token operator">&gt;</span><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Returns the TLS versions to use when negotiating a connection. Returns null if all of the SSL socket's enabled TLS versions should be used.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -167,62 +199,62 @@
       </div>
       <div data-togglable="FUNCTION">
         <h2 class="">Functions</h2>
-        <div class="table"><a data-name="-2013950310%2FFunctions%2F1481842020" anchor-label="equals" id="-2013950310%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
+        <div class="table"><a data-name="-2013950310%2FFunctions%2F985677359" anchor-label="equals" id="-2013950310%2FFunctions%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="equals.html"><span><span>equals</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2013950310%2FFunctions%2F1481842020"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2013950310%2FFunctions%2F985677359"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">operator override </span><span class="token keyword">fun </span><a href="equals.html"><span class="token function">equals</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">other<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">operator override </span><span class="token keyword">fun </span><a href="equals.html"><span class="token function">equals</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">other<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-656874228%2FFunctions%2F1481842020" anchor-label="hashCode" id="-656874228%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
+<a data-name="-656874228%2FFunctions%2F985677359" anchor-label="hashCode" id="-656874228%2FFunctions%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="hash-code.html"><span>hash</span><wbr><span><span>Code</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-656874228%2FFunctions%2F1481842020"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-656874228%2FFunctions%2F985677359"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="hash-code.html"><span class="token function">hashCode</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="hash-code.html"><span class="token function">hashCode</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1222277755%2FFunctions%2F1481842020" anchor-label="isCompatible" id="-1222277755%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
+<a data-name="1224748666%2FFunctions%2F985677359" anchor-label="isCompatible" id="1224748666%2FFunctions%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="is-compatible.html"><span>is</span><wbr><span><span>Compatible</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1222277755%2FFunctions%2F1481842020"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1224748666%2FFunctions%2F985677359"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="is-compatible.html"><span class="token function">isCompatible</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">socket<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html">SSLSocket</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Returns <code class="lang-kotlin">true</code> if the socket, as currently configured, supports this connection spec. In order for a socket to be compatible the enabled cipher suites and protocols must intersect.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="is-compatible.html"><span class="token function">isCompatible</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">socket<span class="token operator">: </span><span data-unresolved-link="/<Error class: unknown class>///PointingToDeclaration/">&lt;Error class: unknown class&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Returns <code class="lang-kotlin">true</code> if the socket, as currently configured, supports this connection spec. In order for a socket to be compatible the enabled cipher suites and protocols must intersect.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-835040293%2FFunctions%2F1481842020" anchor-label="toString" id="-835040293%2FFunctions%2F1481842020" data-filterable-set=":okhttp:dokkaHtmlPartial/main"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/main" data-filterable-set=":okhttp:dokkaHtmlPartial/main">
+<a data-name="-835040293%2FFunctions%2F985677359" anchor-label="toString" id="-835040293%2FFunctions%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="to-string.html"><span>to</span><wbr><span><span>String</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-835040293%2FFunctions%2F1481842020"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-835040293%2FFunctions%2F985677359"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="to-string.html"><span class="token function">toString</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="to-string.html"><span class="token function">toString</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div></div></div>
                 </div>
               </div>
             </div>
@@ -232,12 +264,18 @@
     </div>
   </div>
 </div>
-      <div class="footer">
-        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2024 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
-      </div>
+    <div class="footer">
+        <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+        <span>© 2025 Copyright</span>
+        <span class="pull-right">
+            <span>Generated by </span>
+            <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                <span>dokka</span>
+            </a>
+        </span>
+    </div>
             </div>
         </div>
     </div>
 </body>
 </html>
-

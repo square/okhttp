@@ -14,6 +14,7 @@ okhttp3.curl
 okhttp3.curl.logging
 module:okhttp
 okhttp3
+okhttp3.android
 module:okhttp-brotli
 okhttp3.brotli
 module:okhttp-coroutines

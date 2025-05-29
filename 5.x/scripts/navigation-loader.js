@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2014-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 navigationPageText = fetch(pathToRoot + "navigation.html").then(response => response.text())
@@ -8,13 +8,13 @@ displayNavigationFromPage = () => {
     navigationPageText.then(data => {
         document.getElementById("sideMenu").innerHTML = data;
     }).then(() => {
-        document.querySelectorAll(".overview > a").forEach(link => {
+        document.querySelectorAll(".toc--row > a").forEach(link => {
             link.setAttribute("href", pathToRoot + link.getAttribute("href"));
         })
     }).then(() => {
-        document.querySelectorAll(".sideMenuPart").forEach(nav => {
-            if (!nav.classList.contains("hidden"))
-                nav.classList.add("hidden")
+        document.querySelectorAll(".toc--part").forEach(nav => {
+            if (!nav.classList.contains("toc--part_hidden"))
+                nav.classList.add("toc--part_hidden")
         })
     }).then(() => {
         revealNavigationForCurrentPage()
@@ -33,14 +33,14 @@ displayNavigationFromPage = () => {
 
 revealNavigationForCurrentPage = () => {
     let pageId = document.getElementById("content").attributes["pageIds"].value.toString();
-    let parts = document.querySelectorAll(".sideMenuPart");
+    let parts = document.querySelectorAll(".toc--part");
     let found = 0;
     do {
         parts.forEach(part => {
             if (part.attributes['pageId'].value.indexOf(pageId) !== -1 && found === 0) {
                 found = 1;
-                if (part.classList.contains("hidden")) {
-                    part.classList.remove("hidden");
+                if (part.classList.contains("toc--part_hidden")) {
+                    part.classList.remove("toc--part_hidden");
                     part.setAttribute('data-active', "");
                 }
                 revealParents(part)
@@ -50,25 +50,25 @@ revealNavigationForCurrentPage = () => {
     } while (pageId.indexOf("/") !== -1 && found === 0)
 };
 revealParents = (part) => {
-    if (part.classList.contains("sideMenuPart")) {
-        if (part.classList.contains("hidden"))
-            part.classList.remove("hidden");
+    if (part.classList.contains("toc--part")) {
+        if (part.classList.contains("toc--part_hidden"))
+            part.classList.remove("toc--part_hidden");
         revealParents(part.parentNode)
     }
 };
 
 scrollNavigationToSelectedElement = () => {
-    let selectedElement = document.querySelector('div.sideMenuPart[data-active]')
+    let selectedElement = document.querySelector('div.toc--part[data-active]')
     if (selectedElement == null) { // nothing selected, probably just the main page opened
         return
     }
 
-    let hasIcon = selectedElement.querySelectorAll(":scope > div.overview span.nav-icon").length > 0
+    let hasIcon = selectedElement.querySelectorAll(":scope > div.toc--row span.toc--icon").length > 0
 
-    // for instance enums also have children and are expandable, but are not package/module elements
+    // for an instance enums also have children and are expandable but are not package/module elements
     let isPackageElement = selectedElement.children.length > 1 && !hasIcon
     if (isPackageElement) {
-        // if package is selected or linked, it makes sense to align it to top
+        // if a package is selected or linked, it makes sense to align it to top
         // so that you can see all the members it contains
         selectedElement.scrollIntoView(true)
     } else {
@@ -84,9 +84,9 @@ scrollNavigationToSelectedElement = () => {
 
 /*
     This is a work-around for safari being IE of our times.
-    It doesn't fire a DOMContentLoaded, presumabely because eventListener is added after it wants to do it
+    It doesn't fire a DOMContentLoaded, presumably because eventListener is added after it wants to do it
 */
-if (document.readyState == 'loading') {
+if (document.readyState === 'loading') {
     window.addEventListener('DOMContentLoaded', () => {
         displayNavigationFromPage()
     })

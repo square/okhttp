@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2014-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 /* Light weight */
@@ -8,6 +8,7 @@
     src: url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans-Light.woff2') format('woff2'), url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans-Light.woff') format('woff');
     font-weight: 300;
     font-style: normal;
+    font-display: swap;
 }
 /* Regular weight */
 @font-face {
@@ -15,6 +16,7 @@
     src: url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans-Regular.woff2') format('woff2'), url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans-Regular.woff') format('woff');
     font-weight: 400;
     font-style: normal;
+    font-display: swap;
 }
 /* SemiBold weight */
 @font-face {
@@ -22,6 +24,7 @@
     src: url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans-SemiBold.woff2') format('woff2'), url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans-SemiBold.woff') format('woff');
     font-weight: 600;
     font-style: normal;
+    font-display: swap;
 }
 
 @supports (font-variation-settings: normal) {
@@ -32,5 +35,6 @@
         url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans.woff') format('woff-variations');
         font-weight: 100 900;
         font-style: normal;
+        font-display: swap;
     }
 }

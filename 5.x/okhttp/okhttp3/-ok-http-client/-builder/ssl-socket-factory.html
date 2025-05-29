@@ -25,52 +25,90 @@
 <link href="../../../../styles/prism.css" rel="Stylesheet">
 <link href="../../../../styles/logo-styles.css" rel="Stylesheet">
 <link href="../../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<link href="../../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
 <script type="text/javascript" src="../../../../scripts/clipboard.js" async></script>
 <script type="text/javascript" src="../../../../scripts/navigation-loader.js" async></script>
 <script type="text/javascript" src="../../../../scripts/platform-content-handler.js" async></script>
 <script type="text/javascript" src="../../../../scripts/main.js" defer></script>
 <script type="text/javascript" src="../../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../../ui-kit/ui-kit.min.js" defer></script>
 <script type="text/javascript" src="../../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
 <body>
     <div class="root">
-<nav class="navigation" id="navigation-wrapper">
-    <div class="navigation--inner">
-        <div class="navigation-title">
-            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
-            <div class="library-name">
+    <nav class="navigation theme-dark" id="navigation-wrapper">
 <a class="library-name--link" href="../../../../index.html">
-                            okhttp-parent
-                    </a>            </div>
-            <div class="library-version">5.0.0-SNAPSHOT
+                    okhttp-parent
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">5.0.0-SNAPSHOT
+        </div>
+        <div class="navigation-controls">
+        <div class="filter-section filter-section_loading" id="filter-section">
+                <button class="platform-tag platform-selector common-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/commonMain">common</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox">
+                    <div class="dropdown--header"><span>Platform filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close platform filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option common-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":okhttp:dokkaHtmlPartial/commonMain" data-filter=":okhttp:dokkaHtmlPartial/commonMain">
+                                <span class="checkbox--icon"></span>
+                                common
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
             </div>
         </div>
-        <div class="filter-section" id="filter-section">
-                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/main">jvm</button>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
         </div>
-    </div>
-    <div class="navigation-controls">
-        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
-        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
-    </div>
-</nav>
+    </nav>
         <div id="container">
             <div class="sidebar" id="leftColumn">
-                <div class="sidebar--inner" id="sideMenu"></div>
+                <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                    <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox">
+                        <div class="dropdown--header">
+                            <span>
+                                    okhttp-parent
+                            </span>
+                            <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                                <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                            </button>
+                        </div>
+                        <div class="sidebar--inner" id="sideMenu"></div>
+                    </ul>
+                    <div class="dropdown--overlay"></div>
+                </div>
             </div>
             <div id="main">
-<div class="main-content" data-page-type="member" id="content" pageids="okhttp::okhttp3/OkHttpClient.Builder/sslSocketFactory/#javax.net.ssl.SSLSocketFactory#javax.net.ssl.X509TrustManager/PointingToDeclaration//1481842020">
+<div class="main-content" data-page-type="member" id="content" pageids="okhttp::okhttp3/OkHttpClient.Builder/sslSocketFactory/#[Error type: Unresolved type for SSLSocketFactory]#[Error type: Unresolved type for X509TrustManager]/PointingToDeclaration//985677359">
   <div class="breadcrumbs"><a href="../../../index.html">okhttp</a><span class="delimiter">/</span><a href="../../index.html">okhttp3</a><span class="delimiter">/</span><a href="../index.html">OkHttpClient</a><span class="delimiter">/</span><a href="index.html">Builder</a><span class="delimiter">/</span><span class="current">sslSocketFactory</span></div>
   <div class="cover ">
     <h1 class="cover"><span>ssl</span><wbr><span>Socket</span><wbr><span><span>Factory</span></span></h1>
   </div>
-  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="ssl-socket-factory.html"><span class="token function">sslSocketFactory</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">sslSocketFactory<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocketFactory.html">SSLSocketFactory</a><span class="token punctuation">, </span></span><span class="parameter ">trustManager<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/X509TrustManager.html">X509TrustManager</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">OkHttpClient.Builder</a></div><p class="paragraph">Sets the socket factory and trust manager used to secure HTTPS connections. If unset, the system defaults will be used.</p><p class="paragraph">Most applications should not call this method, and instead use the system defaults. Those classes include special optimizations that can be lost if the implementations are decorated.</p><p class="paragraph">If necessary, you can create and configure the defaults yourself with the following code:</p><div class="sample-container"><pre><code class="block lang-java" theme="idea">TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(<br>TrustManagerFactory.getDefaultAlgorithm());<br>trustManagerFactory.init((KeyStore) null);<br>TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();<br>if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {<br>    throw new IllegalStateException("Unexpected default trust managers:"<br>        + Arrays.toString(trustManagers));<br>}<br>X509TrustManager trustManager = (X509TrustManager) trustManagers[0];<br><br>SSLContext sslContext = SSLContext.getInstance("TLS");<br>sslContext.init(null, new TrustManager[] { trustManager }, null);<br>SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();<br><br>OkHttpClient client = new OkHttpClient.Builder()<br>    .sslSocketFactory(sslSocketFactory, trustManager)<br>    .build();</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><h2 class="">TrustManagers on Android are Weird!</h2><p class="paragraph">Trust managers targeting Android must also define a method that has this signature:</p><div class="sample-container"><pre><code class="block lang-java" theme="idea">    @SuppressWarnings("unused")<br>    public List&lt;X509Certificate&gt; checkServerTrusted(<br>        X509Certificate[] chain, String authType, String host) throws CertificateException {<br>    }</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">This method works like <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/X509TrustManager.html#checkServerTrusted-kotlin.Array[java.security.cert.X509Certificate]-kotlin.String-">X509TrustManager.checkServerTrusted</a> but it receives the hostname of the server as an extra parameter. Regardless of what checks this method performs, OkHttp will always check that the server's certificates match its hostname using the <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/HostnameVerifier.html">HostnameVerifier</a>. See <span data-unresolved-link="android.net.http/X509TrustManagerExtensions///PointingToDeclaration/">android.net.http.X509TrustManagerExtensions</span> for more information.</p></div></div>
+  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="ssl-socket-factory.html"><span class="token function">sslSocketFactory</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">sslSocketFactory<span class="token operator">: </span><span data-unresolved-link="/<Error class: unknown class>///PointingToDeclaration/">&lt;Error class: unknown class&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">trustManager<span class="token operator">: </span><span data-unresolved-link="/<Error class: unknown class>///PointingToDeclaration/">&lt;Error class: unknown class&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">OkHttpClient.Builder</a></div><p class="paragraph">Sets the socket factory and trust manager used to secure HTTPS connections. If unset, the system defaults will be used.</p><p class="paragraph">Most applications should not call this method, and instead use the system defaults. Those classes include special optimizations that can be lost if the implementations are decorated.</p><p class="paragraph">If necessary, you can create and configure the defaults yourself with the following code:</p><div class="sample-container"><pre><code class="block lang-java" theme="idea">TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(<br>TrustManagerFactory.getDefaultAlgorithm());<br>trustManagerFactory.init((KeyStore) null);<br>TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();<br>if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {<br>    throw new IllegalStateException("Unexpected default trust managers:"<br>        + Arrays.toString(trustManagers));<br>}<br>X509TrustManager trustManager = (X509TrustManager) trustManagers[0];<br><br>SSLContext sslContext = SSLContext.getInstance("TLS");<br>sslContext.init(null, new TrustManager[] { trustManager }, null);<br>SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();<br><br>OkHttpClient client = new OkHttpClient.Builder()<br>    .sslSocketFactory(sslSocketFactory, trustManager)<br>    .build();</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><h2 class="">TrustManagers on Android are Weird!</h2><p class="paragraph">Trust managers targeting Android must also define a method that has this signature:</p><div class="sample-container"><pre><code class="block lang-java" theme="idea">    @SuppressWarnings("unused")<br>    public List&lt;X509Certificate&gt; checkServerTrusted(<br>        X509Certificate[] chain, String authType, String host) throws CertificateException {<br>    }</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">This method works like X509TrustManager.checkServerTrusted but it receives the hostname of the server as an extra parameter. Regardless of what checks this method performs, OkHttp will always check that the server's certificates match its hostname using the HostnameVerifier. See android.net.http.X509TrustManagerExtensions for more information.</p></div></div>
 </div>
-      <div class="footer">
-        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2024 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
-      </div>
+    <div class="footer">
+        <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+        <span>© 2025 Copyright</span>
+        <span class="pull-right">
+            <span>Generated by </span>
+            <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                <span>dokka</span>
+            </a>
+        </span>
+    </div>
             </div>
         </div>
     </div>
 </body>
 </html>
-
