@@ -634,7 +634,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: 21
+          java-version: 24
 
       - name: Configure JDK
         uses: actions/setup-java@v4
