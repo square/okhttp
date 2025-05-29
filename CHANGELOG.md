@@ -5,6 +5,14 @@ Change Log
 
 See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
 
+## Version 5.0.0-alpha.16
+
+_2024-05-29_
+
+ *  Fix: The previous release would crash when running on Robolectric. We didn't anticipate
+    running our Android artifact on the JVM platform!
+
+
 ## Version 5.0.0-alpha.15
 
 _2024-05-28_
