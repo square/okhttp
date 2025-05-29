@@ -646,7 +646,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dokhttp.platform=loom -Dtest.java.version=21 -PcontainerTests=true
+        run: ./gradlew test -Dokhttp.platform=loom -Dtest.java.version=24 -PcontainerTests=true
 
 
   testandroidregression:
