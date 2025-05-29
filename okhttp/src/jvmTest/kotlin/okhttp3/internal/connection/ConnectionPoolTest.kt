@@ -29,7 +29,7 @@ import okhttp3.Request
 import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.concurrent.TaskRunner.RealBackend
-import okhttp3.internal.connection.Locks.withLock
+import okhttp3.internal.concurrent.withLock
 import okhttp3.internal.http2.Http2
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2ConnectionTest

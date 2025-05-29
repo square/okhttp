@@ -822,7 +822,7 @@ class Cache internal constructor(
       responseHeaders: Headers,
     ): Headers {
       val varyFields = responseHeaders.varyFields()
-      if (varyFields.isEmpty()) return Headers.Empty
+      if (varyFields.isEmpty()) return Headers.EMPTY
 
       val result = Headers.Builder()
       for (i in 0 until requestHeaders.size) {

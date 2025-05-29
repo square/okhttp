@@ -30,7 +30,7 @@ import okhttp3.internal.USER_AGENT
 import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.connection.Locks.withLock
+import okhttp3.internal.concurrent.withLock
 import okhttp3.internal.connection.RoutePlanner.Plan
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.toHostHeader

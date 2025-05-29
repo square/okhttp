@@ -19,11 +19,8 @@ import java.io.File
 import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.io.IOException
+import okhttp3.internal.checkOffsetAndCount
 import okhttp3.internal.chooseCharset
-import okhttp3.internal.commonContentLength
-import okhttp3.internal.commonIsDuplex
-import okhttp3.internal.commonIsOneShot
-import okhttp3.internal.commonToRequestBody
 import okio.BufferedSink
 import okio.ByteString
 import okio.FileSystem
@@ -41,7 +38,7 @@ abstract class RequestBody {
    * or -1 if that count is unknown.
    */
   @Throws(IOException::class)
-  open fun contentLength(): Long = commonContentLength()
+  open fun contentLength(): Long = -1L
 
   /** Writes the content of this request to [sink]. */
   @Throws(IOException::class)
@@ -79,7 +76,7 @@ abstract class RequestBody {
    *
    * [grpc]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
    */
-  open fun isDuplex(): Boolean = commonIsDuplex()
+  open fun isDuplex(): Boolean = false
 
   /**
    * Returns true if this body expects at most one call to [writeTo] and can be transmitted
@@ -98,20 +95,12 @@ abstract class RequestBody {
    *  * A retryable server failure (HTTP 503 with a `Retry-After: 0` response header).
    *  * A misdirected request (HTTP 421) on a coalesced connection.
    */
-  open fun isOneShot(): Boolean = commonIsOneShot()
+  open fun isOneShot(): Boolean = false
 
   companion object {
-    /** Empty request body. */
+    /** Empty request body with no content-type. */
     @JvmField
-    val Empty: RequestBody = EmptyRequestBody()
-
-    private class EmptyRequestBody : RequestBody() {
-      override fun contentType() = null
-
-      override fun contentLength() = 0L
-
-      override fun writeTo(sink: BufferedSink) {}
-    }
+    val EMPTY: RequestBody = ByteString.EMPTY.toRequestBody()
 
     /**
      * Returns a new request body that transmits this string. If [contentType] is non-null and lacks
@@ -127,7 +116,16 @@ abstract class RequestBody {
 
     @JvmStatic
     @JvmName("create")
-    fun ByteString.toRequestBody(contentType: MediaType? = null): RequestBody = commonToRequestBody(contentType)
+    fun ByteString.toRequestBody(contentType: MediaType? = null): RequestBody =
+      object : RequestBody() {
+        override fun contentType() = contentType
+
+        override fun contentLength() = size.toLong()
+
+        override fun writeTo(sink: BufferedSink) {
+          sink.write(this@toRequestBody)
+        }
+      }
 
     /** Returns a new request body that transmits this. */
     @JvmStatic
@@ -154,7 +152,18 @@ abstract class RequestBody {
       contentType: MediaType? = null,
       offset: Int = 0,
       byteCount: Int = size,
-    ): RequestBody = commonToRequestBody(contentType, offset, byteCount)
+    ): RequestBody {
+      checkOffsetAndCount(size.toLong(), offset.toLong(), byteCount.toLong())
+      return object : RequestBody() {
+        override fun contentType() = contentType
+
+        override fun contentLength() = byteCount.toLong()
+
+        override fun writeTo(sink: BufferedSink) {
+          sink.write(this@toRequestBody, offset, byteCount)
+        }
+      }
+    }
 
     /** Returns a new request body that transmits the content of this. */
     @JvmStatic

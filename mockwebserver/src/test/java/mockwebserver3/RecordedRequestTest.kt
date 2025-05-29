@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Timeout
 
 @Timeout(30)
 class RecordedRequestTest {
-  private val headers: Headers = Headers.Empty
+  private val headers: Headers = Headers.EMPTY
 
   @Test fun testIPv4() {
     val socket =

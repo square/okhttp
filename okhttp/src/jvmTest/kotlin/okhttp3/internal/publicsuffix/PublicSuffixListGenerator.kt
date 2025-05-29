@@ -34,7 +34,6 @@ import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
 import okio.buffer
-import okio.gzip
 
 /**
  * Downloads the public suffix list from https://publicsuffix.org/list/public_suffix_list.dat and
@@ -133,8 +132,8 @@ class PublicSuffixListGenerator(
 
   private suspend fun writeOutputFile(importResults: ImportResults) =
     withContext(Dispatchers.IO) {
-      fileSystem.sink(outputFile).gzip().buffer().use { sink ->
-        importResults.writeOut(sink)
+      fileSystem.write(outputFile) {
+        importResults.writeOut(this)
       }
     }
 
