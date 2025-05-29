@@ -24,8 +24,9 @@ actual object PlatformRegistry {
   actual fun findPlatform(): Platform {
     AndroidLog.enable()
 
-    val androidPlatform = Android10Platform.buildIfSupported()
-      ?: AndroidPlatform.buildIfSupported()
+    val androidPlatform =
+      Android10Platform.buildIfSupported()
+        ?: AndroidPlatform.buildIfSupported()
     if (androidPlatform != null) return androidPlatform
 
     // If the API version is 0, assume this is the Android artifact, but running on the JVM.
