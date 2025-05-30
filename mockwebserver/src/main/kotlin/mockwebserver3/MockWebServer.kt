@@ -14,6 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress(
+  "CANNOT_OVERRIDE_INVISIBLE_MEMBER",
+  "INVISIBLE_MEMBER",
+  "INVISIBLE_REFERENCE",
+)
 
 package mockwebserver3
 
@@ -858,6 +863,7 @@ class MockWebServer : Closeable {
     body.writeTo(responseBodySink)
     responseBodySink.emit()
 
+    sleepNanos(response.trailersDelayNanos)
     if ("chunked".equals(response.headers["Transfer-Encoding"], ignoreCase = true)) {
       writeHeaders(sink, response.trailers)
     }
@@ -962,7 +968,7 @@ class MockWebServer : Closeable {
   }
 
   /** Processes HTTP requests layered over HTTP/2. */
-  private inner class Http2SocketHandler constructor(
+  private inner class Http2SocketHandler(
     private val socket: Socket,
     private val protocol: Protocol,
   ) : Http2Connection.Listener() {
@@ -1133,11 +1139,18 @@ class MockWebServer : Closeable {
               socket = socket,
             ).buffer()
         responseBodySink.use {
-          body.writeTo(responseBodySink)
+          body.writeTo(it)
+
+          // Delay trailers by sleeping before we close the stream. It's the same on the wire.
+          if (response.trailersDelayNanos != 0L) {
+            it.flush()
+            sleepNanos(response.trailersDelayNanos)
+          }
         }
       } else if (streamHandler != null) {
         streamHandler.handle(RealStream(stream))
       } else if (!outFinished) {
+        sleepNanos(response.trailersDelayNanos)
         stream.close(ErrorCode.NO_ERROR, null)
       }
     }

@@ -309,8 +309,8 @@ class RealCall(
    */
   internal fun <E : IOException?> messageDone(
     exchange: Exchange,
-    requestDone: Boolean,
-    responseDone: Boolean,
+    requestDone: Boolean = false,
+    responseDone: Boolean = false,
     e: E,
   ): E {
     if (exchange != this.exchange) return e // This exchange was detached violently!
