@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3
+package okhttp3.internal.connection
 
+import okhttp3.Call
+import okhttp3.Connection
+import okhttp3.Route
 import okio.IOException
 
 /**
@@ -24,8 +27,7 @@ import okio.IOException
  * attempt to mutate the event parameters, or be reentrant back into the client.
  * Any IO - writing to files or network should be done asynchronously.
  */
-@ExperimentalOkHttpApi
-abstract class ConnectionListener {
+internal abstract class ConnectionListener {
   /**
    * Invoked as soon as a call causes a connection to be started.
    */
@@ -78,7 +80,6 @@ abstract class ConnectionListener {
    */
   open fun noNewExchanges(connection: Connection) {}
 
-  @ExperimentalOkHttpApi
   companion object {
     val NONE: ConnectionListener = object : ConnectionListener() {}
   }
