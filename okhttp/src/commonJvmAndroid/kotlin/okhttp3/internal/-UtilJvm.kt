@@ -29,13 +29,13 @@ import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantLock
 import kotlin.text.Charsets.UTF_16BE
 import kotlin.text.Charsets.UTF_16LE
 import kotlin.text.Charsets.UTF_32BE
 import kotlin.text.Charsets.UTF_32LE
 import kotlin.text.Charsets.UTF_8
 import kotlin.time.Duration
+import okhttp3.Dispatcher
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.HttpUrl
@@ -302,15 +302,6 @@ internal fun Long.toHexString(): String = java.lang.Long.toHexString(this)
 
 internal fun Int.toHexString(): String = Integer.toHexString(this)
 
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-internal inline fun Any.wait() = (this as Object).wait()
-
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-internal inline fun Any.notify() = (this as Object).notify()
-
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-internal inline fun Any.notifyAll() = (this as Object).notifyAll()
-
 internal fun <T> readFieldOrNull(
   instance: Any,
   fieldType: Class<T>,
@@ -342,6 +333,13 @@ internal fun <T> readFieldOrNull(
 @JvmField
 internal val assertionsEnabled: Boolean = OkHttpClient::class.java.desiredAssertionStatus()
 
+/** Dispatcher is not [Lockable] because we don't want that type in our public API. */
+internal fun Dispatcher.assertLockNotHeld() {
+  if (assertionsEnabled && Thread.holdsLock(this)) {
+    throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
+  }
+}
+
 /**
  * Returns the string "OkHttp" unless the library has been shaded for inclusion in another library,
  * or obfuscated with tools like R8 or ProGuard. In such cases it'll return a longer string like
@@ -353,31 +351,3 @@ internal val okHttpName: String =
   OkHttpClient::class.java.name
     .removePrefix("okhttp3.")
     .removeSuffix("Client")
-
-@Suppress("NOTHING_TO_INLINE")
-internal inline fun ReentrantLock.assertHeld() {
-  if (assertionsEnabled && !this.isHeldByCurrentThread) {
-    throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
-  }
-}
-
-@Suppress("NOTHING_TO_INLINE")
-internal inline fun Any.assertThreadHoldsLock() {
-  if (assertionsEnabled && !Thread.holdsLock(this)) {
-    throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
-  }
-}
-
-@Suppress("NOTHING_TO_INLINE")
-internal inline fun ReentrantLock.assertNotHeld() {
-  if (assertionsEnabled && this.isHeldByCurrentThread) {
-    throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
-  }
-}
-
-@Suppress("NOTHING_TO_INLINE")
-internal inline fun Any.assertThreadDoesntHoldLock() {
-  if (assertionsEnabled && Thread.holdsLock(this)) {
-    throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
-  }
-}

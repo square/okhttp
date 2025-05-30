@@ -25,12 +25,12 @@ import okhttp3.Address
 import okhttp3.ConnectionListener
 import okhttp3.ConnectionPool
 import okhttp3.Route
-import okhttp3.internal.assertHeld
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskQueue
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.connection.Locks.withLock
+import okhttp3.internal.concurrent.assertLockHeld
+import okhttp3.internal.concurrent.withLock
 import okhttp3.internal.connection.RealCall.CallReference
 import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
@@ -143,7 +143,7 @@ class RealConnectionPool(
   }
 
   fun put(connection: RealConnection) {
-    connection.lock.assertHeld()
+    connection.assertLockHeld()
 
     connections.add(connection)
 //    connection.queueEvent { connectionListener.connectEnd(connection) }
@@ -155,7 +155,7 @@ class RealConnectionPool(
    * removed from the pool and should be closed.
    */
   fun connectionBecameIdle(connection: RealConnection): Boolean {
-    connection.lock.assertHeld()
+    connection.assertLockHeld()
 
     return if (connection.noNewExchanges || maxIdleConnections == 0) {
       connection.noNewExchanges = true
@@ -334,7 +334,7 @@ class RealConnectionPool(
     connection: RealConnection,
     now: Long,
   ): Int {
-    connection.lock.assertHeld()
+    connection.assertLockHeld()
 
     val references = connection.calls
     var i = 0

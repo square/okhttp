@@ -16,12 +16,27 @@
 package okhttp3.internal.platform
 
 import android.content.Context
+import android.os.Build
+import java.lang.IllegalStateException
 import okhttp3.internal.platform.android.AndroidLog
 
 actual object PlatformRegistry {
   actual fun findPlatform(): Platform {
     AndroidLog.enable()
-    return Android10Platform.buildIfSupported() ?: AndroidPlatform.buildIfSupported()!!
+
+    val androidPlatform =
+      Android10Platform.buildIfSupported()
+        ?: AndroidPlatform.buildIfSupported()
+    if (androidPlatform != null) return androidPlatform
+
+    // If the API version is 0, assume this is the Android artifact, but running on the JVM.
+    // Robolectric?
+    if (Build.VERSION.SDK_INT == 0) {
+      return Jdk9Platform.buildIfSupported()
+        ?: Platform()
+    }
+
+    throw IllegalStateException("Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}")
   }
 
   actual val isAndroid: Boolean

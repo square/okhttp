@@ -36,11 +36,12 @@ import okhttp3.Headers.Companion.headersOf
 import okhttp3.TestUtil.headerEntries
 import okhttp3.TestUtil.repeat
 import okhttp3.internal.EMPTY_BYTE_ARRAY
+import okhttp3.internal.concurrent.Lockable
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.connection.Locks.withLock
-import okhttp3.internal.notifyAll
-import okhttp3.internal.wait
+import okhttp3.internal.concurrent.notifyAll
+import okhttp3.internal.concurrent.wait
+import okhttp3.internal.concurrent.withLock
 import okio.AsyncTimeout
 import okio.Buffer
 import okio.BufferedSource
@@ -1986,7 +1987,9 @@ class Http2ConnectionTest {
     return connection
   }
 
-  private class RecordingPushObserver : PushObserver {
+  private class RecordingPushObserver :
+    PushObserver,
+    Lockable {
     val events = mutableListOf<Any>()
 
     @Synchronized fun takeEvent(): Any {
