@@ -249,11 +249,14 @@ internal inline fun <T> Set<T>.unmodifiable(): Set<T> = Collections.unmodifiable
 internal inline fun <K, V> Map<K, V>.unmodifiable(): Map<K, V> = Collections.unmodifiableMap(this)
 
 /** Returns an immutable copy of this. */
-internal inline fun <reified T> List<T>.toImmutableList(): List<T> =
+@Suppress("UNCHECKED_CAST")
+internal fun <T> List<T>.toImmutableList(): List<T> =
   when {
     this.isEmpty() -> emptyList()
     this.size == 1 -> Collections.singletonList(this[0])
-    else -> this.toTypedArray().asList().unmodifiable()
+    // Collection.toArray returns Object[] (covariant).
+    // It is faster than creating real T[] via reflection (Arrays.copyOf).
+    else -> (this as java.util.Collection<*>).toArray().asList().unmodifiable() as List<T>
   }
 
 /** Returns an immutable list containing [elements]. */
