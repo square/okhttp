@@ -130,7 +130,6 @@ abstract class RequestBody {
     /** Returns a new request body that transmits this. */
     @JvmStatic
     @JvmName("create")
-    @ExperimentalOkHttpApi
     fun FileDescriptor.toRequestBody(contentType: MediaType? = null): RequestBody =
       object : RequestBody() {
         override fun contentType() = contentType
