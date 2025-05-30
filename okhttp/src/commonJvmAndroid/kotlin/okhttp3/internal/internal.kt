@@ -24,7 +24,6 @@ import java.nio.charset.Charset
 import javax.net.ssl.SSLSocket
 import okhttp3.Cache
 import okhttp3.CipherSuite
-import okhttp3.ConnectionListener
 import okhttp3.ConnectionPool
 import okhttp3.ConnectionSpec
 import okhttp3.Cookie
@@ -36,6 +35,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.ConnectionListener
 import okhttp3.internal.connection.RealConnection
 
 internal fun parseCookie(

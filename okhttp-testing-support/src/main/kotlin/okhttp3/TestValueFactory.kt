@@ -36,6 +36,7 @@ import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.concurrent.withLock
 import okhttp3.internal.connection.CallConnectionUser
+import okhttp3.internal.connection.ConnectionListener
 import okhttp3.internal.connection.FastFallbackExchangeFinder
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealConnection
