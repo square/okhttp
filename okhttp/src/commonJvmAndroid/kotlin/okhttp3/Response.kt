@@ -28,6 +28,7 @@ import okhttp3.internal.connection.Exchange
 import okhttp3.internal.http.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.HTTP_TEMP_REDIRECT
 import okhttp3.internal.http.parseChallenges
+import okhttp3.internal.skipAll
 import okio.Buffer
 
 /**
@@ -109,7 +110,7 @@ class Response internal constructor(
    */
   @get:JvmName("receivedResponseAtMillis") val receivedResponseAtMillis: Long,
   @get:JvmName("exchange") internal val exchange: Exchange?,
-  private var trailersFn: (() -> Headers),
+  private var trailersSource: TrailersSource,
 ) : Closeable {
   internal var lazyCacheControl: CacheControl? = null
 
@@ -176,11 +177,24 @@ class Response internal constructor(
   fun headers(): Headers = headers
 
   /**
-   * Returns the trailers after the HTTP response, which may be empty. It is an error to call this
-   * before the entire HTTP response body has been consumed.
+   * Returns the trailers after the HTTP response, which may be empty. This blocks until the
+   * trailers are available to read.
+   *
+   * It is not safe to call this concurrently with code that is processing the response body. If you
+   * call this without consuming the complete response body, any remaining bytes in the response
+   * body will be discarded before trailers are returned.
+   *
+   * If [Call.cancel] is called while this is blocking, this call will immediately throw.
+   *
+   * @throws IllegalStateException if the response is closed.
+   * @throws IOException if the trailers cannot be loaded, such as if the network connection is
+   *     dropped.
    */
   @Throws(IOException::class)
-  fun trailers(): Headers = trailersFn()
+  fun trailers(): Headers {
+    body.source().skipAll()
+    return trailersSource.get()
+  }
 
   /**
    * Peeks up to [byteCount] bytes from the response body and returns them as a new response
@@ -329,7 +343,7 @@ class Response internal constructor(
     internal var sentRequestAtMillis: Long = 0
     internal var receivedResponseAtMillis: Long = 0
     internal var exchange: Exchange? = null
-    internal var trailersFn: (() -> Headers) = { Headers.headersOf() }
+    internal var trailersSource: TrailersSource = TrailersSource.EMPTY
 
     constructor() {
       headers = Headers.Builder()
@@ -349,7 +363,7 @@ class Response internal constructor(
       this.sentRequestAtMillis = response.sentRequestAtMillis
       this.receivedResponseAtMillis = response.receivedResponseAtMillis
       this.exchange = response.exchange
-      this.trailersFn = response.trailersFn
+      this.trailersSource = response.trailersSource
     }
 
     open fun request(request: Request) =
@@ -445,9 +459,9 @@ class Response internal constructor(
       }
 
     @ExperimentalOkHttpApi
-    open fun trailers(trailersFn: (() -> Headers)): Builder =
+    open fun trailers(trailersSource: TrailersSource): Builder =
       apply {
-        this.trailersFn = trailersFn
+        this.trailersSource = trailersSource
       }
 
     open fun sentRequestAtMillis(sentRequestAtMillis: Long) =
@@ -462,7 +476,7 @@ class Response internal constructor(
 
     internal fun initExchange(exchange: Exchange) {
       this.exchange = exchange
-      this.trailersFn = { exchange.trailers() }
+      this.trailersSource = TrailersSource { exchange.trailers() }
     }
 
     open fun build(): Response {
@@ -481,7 +495,7 @@ class Response internal constructor(
         sentRequestAtMillis,
         receivedResponseAtMillis,
         exchange,
-        trailersFn,
+        trailersSource,
       )
     }
   }

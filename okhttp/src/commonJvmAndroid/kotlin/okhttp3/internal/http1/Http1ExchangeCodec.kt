@@ -192,7 +192,6 @@ class Http1ExchangeCodec(
           .code(statusLine.code)
           .message(statusLine.message)
           .headers(headersReader.readHeaders())
-          .trailers { error("trailers not available") }
 
       return when {
         expectContinue && statusLine.code == HTTP_CONTINUE -> {

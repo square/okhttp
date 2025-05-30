@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress(
+  "CANNOT_OVERRIDE_INVISIBLE_MEMBER",
+  "INVISIBLE_MEMBER",
+  "INVISIBLE_REFERENCE",
+)
 
 package mockwebserver3
 
@@ -63,8 +68,9 @@ class MockResponse {
 
   val socketPolicy: SocketPolicy
 
-  val bodyDelayNanos: Long
   val headersDelayNanos: Long
+  val bodyDelayNanos: Long
+  val trailersDelayNanos: Long
 
   val pushPromises: List<PushPromise>
 
@@ -100,8 +106,9 @@ class MockResponse {
     this.throttleBytesPerPeriod = builder.throttleBytesPerPeriod
     this.throttlePeriodNanos = builder.throttlePeriodNanos
     this.socketPolicy = builder.socketPolicy
-    this.bodyDelayNanos = builder.bodyDelayNanos
     this.headersDelayNanos = builder.headersDelayNanos
+    this.bodyDelayNanos = builder.bodyDelayNanos
+    this.trailersDelayNanos = builder.trailersDelayNanos
     this.pushPromises = builder.pushPromises.toList()
     this.settings =
       Settings().apply {
@@ -178,9 +185,9 @@ class MockResponse {
 
     var socketPolicy: SocketPolicy
 
-    internal var bodyDelayNanos: Long
-
     internal var headersDelayNanos: Long
+    internal var bodyDelayNanos: Long
+    internal var trailersDelayNanos: Long
 
     /** The streams the server will push with this response. */
     val pushPromises: MutableList<PushPromise>
@@ -202,8 +209,9 @@ class MockResponse {
       this.throttleBytesPerPeriod = Long.MAX_VALUE
       this.throttlePeriodNanos = 0L
       this.socketPolicy = KeepOpen
-      this.bodyDelayNanos = 0L
       this.headersDelayNanos = 0L
+      this.bodyDelayNanos = 0L
+      this.trailersDelayNanos = 0L
       this.pushPromises = mutableListOf()
       this.settings = Settings()
     }
@@ -220,8 +228,9 @@ class MockResponse {
       this.throttleBytesPerPeriod = mockResponse.throttleBytesPerPeriod
       this.throttlePeriodNanos = mockResponse.throttlePeriodNanos
       this.socketPolicy = mockResponse.socketPolicy
-      this.bodyDelayNanos = mockResponse.bodyDelayNanos
       this.headersDelayNanos = mockResponse.headersDelayNanos
+      this.bodyDelayNanos = mockResponse.bodyDelayNanos
+      this.trailersDelayNanos = mockResponse.trailersDelayNanos
       this.pushPromises = mockResponse.pushPromises.toMutableList()
       this.settings =
         Settings().apply {
@@ -317,7 +326,7 @@ class MockResponse {
      */
     fun chunkedBody(
       body: Buffer,
-      maxChunkSize: Int,
+      maxChunkSize: Int = Int.MAX_VALUE,
     ) = apply {
       removeHeader("Content-Length")
       headers.add(CHUNKED_BODY_HEADER)
@@ -340,7 +349,7 @@ class MockResponse {
      */
     fun chunkedBody(
       body: String,
-      maxChunkSize: Int,
+      maxChunkSize: Int = Int.MAX_VALUE,
     ): Builder = chunkedBody(Buffer().writeUtf8(body), maxChunkSize)
 
     /** Sets the headers and returns this. */
@@ -374,6 +383,13 @@ class MockResponse {
       throttlePeriodNanos = unit.toNanos(period)
     }
 
+    fun headersDelay(
+      delay: Long,
+      unit: TimeUnit,
+    ) = apply {
+      headersDelayNanos = unit.toNanos(delay)
+    }
+
     /**
      * Set the delayed time of the response body to [delay]. This applies to the response body
      * only; response headers are not affected.
@@ -385,11 +401,11 @@ class MockResponse {
       bodyDelayNanos = unit.toNanos(delay)
     }
 
-    fun headersDelay(
+    fun trailersDelay(
       delay: Long,
       unit: TimeUnit,
     ) = apply {
-      headersDelayNanos = unit.toNanos(delay)
+      trailersDelayNanos = unit.toNanos(delay)
     }
 
     /**
