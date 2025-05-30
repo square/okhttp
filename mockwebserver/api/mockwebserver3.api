@@ -31,6 +31,7 @@ public final class mockwebserver3/MockResponse {
 	public final fun getThrottleBytesPerPeriod ()J
 	public final fun getThrottlePeriodNanos ()J
 	public final fun getTrailers ()Lokhttp3/Headers;
+	public final fun getTrailersDelayNanos ()J
 	public final fun getWebSocketListener ()Lokhttp3/WebSocketListener;
 	public final fun newBuilder ()Lmockwebserver3/MockResponse$Builder;
 	public fun toString ()Ljava/lang/String;
@@ -51,6 +52,8 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 	public final fun build ()Lmockwebserver3/MockResponse;
 	public final fun chunkedBody (Ljava/lang/String;I)Lmockwebserver3/MockResponse$Builder;
 	public final fun chunkedBody (Lokio/Buffer;I)Lmockwebserver3/MockResponse$Builder;
+	public static synthetic fun chunkedBody$default (Lmockwebserver3/MockResponse$Builder;Ljava/lang/String;IILjava/lang/Object;)Lmockwebserver3/MockResponse$Builder;
+	public static synthetic fun chunkedBody$default (Lmockwebserver3/MockResponse$Builder;Lokio/Buffer;IILjava/lang/Object;)Lmockwebserver3/MockResponse$Builder;
 	public final fun clearHeaders ()Lmockwebserver3/MockResponse$Builder;
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lmockwebserver3/MockResponse$Builder;
@@ -83,6 +86,7 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 	public final fun streamHandler (Lmockwebserver3/StreamHandler;)Lmockwebserver3/MockResponse$Builder;
 	public final fun throttleBody (JJLjava/util/concurrent/TimeUnit;)Lmockwebserver3/MockResponse$Builder;
 	public final fun trailers (Lokhttp3/Headers;)Lmockwebserver3/MockResponse$Builder;
+	public final fun trailersDelay (JLjava/util/concurrent/TimeUnit;)Lmockwebserver3/MockResponse$Builder;
 	public final fun webSocketUpgrade (Lokhttp3/WebSocketListener;)Lmockwebserver3/MockResponse$Builder;
 }
 

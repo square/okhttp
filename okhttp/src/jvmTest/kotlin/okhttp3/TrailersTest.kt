@@ -20,6 +20,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isGreaterThan
 import assertk.assertions.isIn
 import assertk.assertions.isLessThan
+import assertk.assertions.isTrue
 import java.lang.Thread.sleep
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
@@ -124,6 +125,7 @@ open class TrailersTest {
     call.execute().use { response ->
       assertThat(response.header("h1")).isEqualTo("v1")
       assertThat(response.trailers()).isEqualTo(headersOf("t1", "v2"))
+      assertThat(response.body.source().exhausted()).isTrue()
     }
   }
 
@@ -305,12 +307,11 @@ open class TrailersTest {
         measureTime {
           val exception =
             assertFailsWith<IOException> {
-              val trailers = response.trailers()
-              println(trailers)
+              response.trailers()
             }
           assertThat(exception.message).isIn(
-            "Socket closed",
-            "stream was reset: CANCEL",
+            "Socket closed", // HTTP/1.1
+            "stream was reset: CANCEL", // HTTP/2
           )
         }
       assertThat(trailersDelay).isGreaterThan(250.milliseconds)
