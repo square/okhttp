@@ -20,6 +20,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isGreaterThan
 import assertk.assertions.isIn
 import assertk.assertions.isLessThan
+import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import java.lang.Thread.sleep
 import java.util.concurrent.TimeUnit
@@ -100,6 +101,35 @@ open class TrailersTest {
   }
 
   @Test
+  fun trailersEmptyResponseBodyHttp1() {
+    trailersEmptyResponseBody(Protocol.HTTP_1_1)
+  }
+
+  @Test
+  fun trailersEmptyResponseBodyHttp2() {
+    trailersEmptyResponseBody(Protocol.HTTP_2)
+  }
+
+  private fun trailersEmptyResponseBody(protocol: Protocol) {
+    enableProtocol(protocol)
+
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .trailers(headersOf("t1", "v2"))
+        .body(protocol, "")
+        .build(),
+    )
+
+    val call = client.newCall(Request(server.url("/")))
+    call.execute().use { response ->
+      val source = response.body.source()
+      assertThat(source.readUtf8()).isEqualTo("")
+      assertThat(response.trailers()).isEqualTo(headersOf("t1", "v2"))
+    }
+  }
+
+  @Test
   fun trailersWithoutReadingFullResponseBodyHttp1() {
     trailersWithoutReadingFullResponseBody(Protocol.HTTP_1_1)
   }
@@ -115,7 +145,6 @@ open class TrailersTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .addHeader("h1", "v1")
         .trailers(headersOf("t1", "v2"))
         .body(protocol, "Hello")
         .build(),
@@ -123,7 +152,6 @@ open class TrailersTest {
 
     val call = client.newCall(Request(server.url("/")))
     call.execute().use { response ->
-      assertThat(response.header("h1")).isEqualTo("v1")
       assertThat(response.trailers()).isEqualTo(headersOf("t1", "v2"))
       assertThat(response.body.source().exhausted()).isTrue()
     }
@@ -188,7 +216,6 @@ open class TrailersTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .addHeader("h1", "v1")
         .trailers(headersOf("t1", "v2"))
         .body(protocol, "Hello")
         .trailersDelay(500, TimeUnit.MILLISECONDS)
@@ -198,7 +225,6 @@ open class TrailersTest {
     val call = client.newCall(Request(server.url("/")))
     call.execute().use { response ->
       val source = response.body.source()
-      assertThat(response.header("h1")).isEqualTo("v1")
       assertThat(source.readUtf8(5)).isEqualTo("Hello")
       val trailersDelay =
         measureTime {
@@ -226,7 +252,6 @@ open class TrailersTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .addHeader("h1", "v1")
         .trailers(headersOf("t1", "v2"))
         .body(protocol, "Hello")
         .socketPolicy(SocketPolicy.DisconnectDuringResponseBody)
@@ -235,7 +260,6 @@ open class TrailersTest {
 
     val call = client.newCall(Request(server.url("/")))
     call.execute().use { response ->
-      assertThat(response.header("h1")).isEqualTo("v1")
       assertFailsWith<IOException> {
         response.trailers()
       }
@@ -258,7 +282,37 @@ open class TrailersTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .addHeader("h1", "v1")
+        .trailers(headersOf("t1", "v2"))
+        .bodyDelay(1, TimeUnit.SECONDS)
+        .body(protocol, "Hello")
+        .build(),
+    )
+
+    val call = client.newCall(Request(server.url("/")))
+    call.execute().use { response ->
+      response.close()
+      assertFailsWith<IOException> {
+        response.trailers()
+      }
+    }
+  }
+
+  @Test
+  fun readTrailersAfterEarlyEofAndCloseHttp1() {
+    readTrailersAfterEarlyEofAndClose(Protocol.HTTP_1_1)
+  }
+
+  @Test
+  fun readTrailersAfterEarlyEofAndCloseHttp2() {
+    readTrailersAfterEarlyEofAndClose(Protocol.HTTP_2)
+  }
+
+  private fun readTrailersAfterEarlyEofAndClose(protocol: Protocol) {
+    enableProtocol(protocol)
+
+    server.enqueue(
+      MockResponse
+        .Builder()
         .trailers(headersOf("t1", "v2"))
         .body(protocol, "Hello")
         .build(),
@@ -266,11 +320,60 @@ open class TrailersTest {
 
     val call = client.newCall(Request(server.url("/")))
     call.execute().use { response ->
-      assertThat(response.header("h1")).isEqualTo("v1")
-      response.close()
-      assertFailsWith<IllegalStateException> {
-        response.trailers()
-      }
+      assertThat(response.body.source().readUtf8()).isEqualTo("Hello")
+      response.body.source().close()
+      assertThat(response.trailers()).isEqualTo(headersOf("t1", "v2"))
+    }
+  }
+
+  @Test
+  fun readEmptyTrailersHttp1EmptyFixedLengthResponse() {
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .body("")
+        .build(),
+    )
+
+    val call = client.newCall(Request(server.url("/")))
+    call.execute().use { response ->
+      assertThat(response.body.source().readUtf8()).isEqualTo("")
+      assertThat(response.trailers()).isEqualTo(Headers.EMPTY)
+    }
+  }
+
+  @Test
+  fun readEmptyTrailersHttp1NonEmptyFixedLengthResponse() {
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .body("Hello")
+        .build(),
+    )
+
+    val call = client.newCall(Request(server.url("/")))
+    call.execute().use { response ->
+      assertThat(response.body.source().readUtf8()).isEqualTo("Hello")
+      assertThat(response.trailers()).isEqualTo(Headers.EMPTY)
+    }
+  }
+
+  @Test
+  fun readEmptyTrailersHttp1UnknownLengthResponse() {
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .body("Hello")
+        .removeHeader("Content-Length")
+        .socketPolicy(SocketPolicy.DisconnectAtEnd)
+        .build(),
+    )
+
+    val call = client.newCall(Request(server.url("/")))
+    call.execute().use { response ->
+      assertThat(response.headers["Content-Length"]).isNull()
+      assertThat(response.body.source().readUtf8()).isEqualTo("Hello")
+      assertThat(response.trailers()).isEqualTo(Headers.EMPTY)
     }
   }
 

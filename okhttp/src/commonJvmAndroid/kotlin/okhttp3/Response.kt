@@ -192,7 +192,10 @@ class Response internal constructor(
    */
   @Throws(IOException::class)
   fun trailers(): Headers {
-    body.source().skipAll()
+    val source = body.source()
+    if (source.isOpen) {
+      source.skipAll()
+    }
     return trailersSource.get()
   }
 
