@@ -175,6 +175,13 @@ internal fun Source.skipAll(
   }
 }
 
+@Throws(IOException::class)
+internal fun BufferedSource.skipAll() {
+  while (!exhausted()) {
+    skip(buffer.size)
+  }
+}
+
 /**
  * Attempts to exhaust this, returning true if successful. This is useful when reading a complete
  * source is helpful, such as when doing so completes a cache body or frees a socket connection for

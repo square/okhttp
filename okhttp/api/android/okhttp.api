@@ -1155,7 +1155,7 @@ public class okhttp3/Response$Builder {
 	public fun removeHeader (Ljava/lang/String;)Lokhttp3/Response$Builder;
 	public fun request (Lokhttp3/Request;)Lokhttp3/Response$Builder;
 	public fun sentRequestAtMillis (J)Lokhttp3/Response$Builder;
-	public fun trailers (Lkotlin/jvm/functions/Function0;)Lokhttp3/Response$Builder;
+	public fun trailers (Lokhttp3/TrailersSource;)Lokhttp3/Response$Builder;
 }
 
 public abstract class okhttp3/ResponseBody : java/io/Closeable {
@@ -1227,6 +1227,15 @@ public final class okhttp3/TlsVersion : java/lang/Enum {
 
 public final class okhttp3/TlsVersion$Companion {
 	public final fun forJavaName (Ljava/lang/String;)Lokhttp3/TlsVersion;
+}
+
+public abstract interface class okhttp3/TrailersSource {
+	public static final field Companion Lokhttp3/TrailersSource$Companion;
+	public static final field EMPTY Lokhttp3/TrailersSource;
+	public abstract fun get ()Lokhttp3/Headers;
+}
+
+public final class okhttp3/TrailersSource$Companion {
 }
 
 public abstract interface class okhttp3/WebSocket {

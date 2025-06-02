@@ -130,6 +130,9 @@ class Http2Stream internal constructor(
       return connection.client == streamIsClient
     }
 
+  val isSourceComplete: Boolean
+    get() = withLock { source.finished && source.readBuffer.exhausted() }
+
   /**
    * Removes and returns the stream's received response headers, blocking if necessary until headers
    * have been received. If the returned list contains multiple blocks of headers the blocks will be
