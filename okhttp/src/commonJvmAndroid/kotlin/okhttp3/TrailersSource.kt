@@ -17,9 +17,17 @@ package okhttp3
 
 import okio.IOException
 
-@ExperimentalOkHttpApi
+/**
+ * Returns the trailers that follow an HTTP response, blocking if they aren't ready yet.
+ * Implementations of this interface should respond to [Call.cancel] by immediately throwing an
+ * [IOException].
+ *
+ * Most callers won't need this interface, and should use [Response.trailers] instead.
+ *
+ * This interface is for test and production code that creates [Response] instances without making
+ * an HTTP call to a remote server.
+ */
 fun interface TrailersSource {
-  /** Returns the trailers, blocking if they need to be loaded. */
   @Throws(IOException::class)
   fun get(): Headers
 
