@@ -88,8 +88,7 @@ class Http1ExchangeCodec(
    */
   private var trailers: Headers? = null
 
-  /** Returns true if this connection is closed. */
-  val isClosed: Boolean
+  override val isResponseComplete: Boolean
     get() = state == STATE_CLOSED
 
   override fun createRequestBody(
@@ -389,7 +388,7 @@ class Http1ExchangeCodec(
       this@Http1ExchangeCodec.trailers = trailers
       state = STATE_CLOSED
       if (trailers.size > 0) {
-        client!!.cookieJar.receiveHeaders(url, trailers)
+        client?.cookieJar?.receiveHeaders(url, trailers)
       }
     }
   }

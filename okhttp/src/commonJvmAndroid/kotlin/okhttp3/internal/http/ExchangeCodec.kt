@@ -29,6 +29,9 @@ interface ExchangeCodec {
   /** The connection or CONNECT tunnel that owns this codec. */
   val carrier: Carrier
 
+  /** Returns true if the response body and (possibly empty) trailers have been received. */
+  val isResponseComplete: Boolean
+
   /** Returns an output stream where the request body can be streamed. */
   @Throws(IOException::class)
   fun createRequestBody(

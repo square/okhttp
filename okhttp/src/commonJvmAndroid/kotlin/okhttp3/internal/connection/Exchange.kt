@@ -328,6 +328,9 @@ class Exchange(
         }
 
         bytesReceived = newBytesReceived
+        if (codec.isResponseComplete) {
+          complete(null)
+        }
 
         return read
       } catch (e: IOException) {

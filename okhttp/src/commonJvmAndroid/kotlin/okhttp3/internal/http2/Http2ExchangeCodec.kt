@@ -64,6 +64,9 @@ class Http2ExchangeCodec(
   @Volatile
   private var canceled = false
 
+  override val isResponseComplete: Boolean
+    get() = stream?.isSourceComplete == true
+
   override fun createRequestBody(
     request: Request,
     contentLength: Long,
