@@ -181,7 +181,6 @@ abstract class RequestBody {
     /** Returns a new request body that transmits the content of this. */
     @JvmStatic
     @JvmName("create")
-    @ExperimentalOkHttpApi
     fun Path.asRequestBody(
       fileSystem: FileSystem,
       contentType: MediaType? = null,
