@@ -1012,8 +1012,8 @@ class URLConnectionTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .body("bogus proxy connect response content")
         .inTunnel()
+        .body("bogus proxy connect response content")
         .build(),
     )
     server.enqueue(MockResponse(body = "response"))

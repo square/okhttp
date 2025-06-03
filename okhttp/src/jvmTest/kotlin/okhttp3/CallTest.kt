@@ -3971,8 +3971,8 @@ open class CallTest {
         .Builder()
         .code(HttpURLConnection.HTTP_PROXY_AUTH)
         .headers(headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""))
-        .body("proxy auth required")
         .inTunnel()
+        .body("proxy auth required")
         .build(),
     )
     server.enqueue(
