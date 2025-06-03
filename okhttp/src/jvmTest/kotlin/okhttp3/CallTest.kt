@@ -3645,7 +3645,10 @@ open class CallTest {
   fun proxyConnectOmitsApplicationHeaders() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse(inTunnel = true),
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
     )
     server.enqueue(
       MockResponse(body = "encrypted response from the origin server"),
@@ -3719,14 +3722,18 @@ open class CallTest {
   fun proxyAuthenticateOnConnect() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse(
-        code = 407,
-        headers = headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""),
-        inTunnel = true,
-      ),
+      MockResponse
+        .Builder()
+        .code(407)
+        .headers(headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""))
+        .inTunnel()
+        .build(),
     )
     server.enqueue(
-      MockResponse(inTunnel = true),
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
     )
     server.enqueue(
       MockResponse(body = "response body"),
@@ -3793,19 +3800,25 @@ open class CallTest {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.protocols = listOf<Protocol>(Protocol.HTTP_1_1)
     server.enqueue(
-      MockResponse(
-        code = 407,
-        headers =
+      MockResponse
+        .Builder()
+        .code(407)
+        .headers(
           headersOf(
             "Proxy-Authenticate",
             "Basic realm=\"localhost\"",
             "Connection",
             "close",
           ),
-        inTunnel = true,
-      ),
+        ).inTunnel()
+        .build(),
     )
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(
       MockResponse(body = "response body"),
     )
@@ -3839,17 +3852,18 @@ open class CallTest {
     server.protocols = listOf(Protocol.HTTP_1_1)
     for (i in 0..20) {
       server.enqueue(
-        MockResponse(
-          code = 407,
-          headers =
+        MockResponse
+          .Builder()
+          .code(407)
+          .headers(
             headersOf(
               "Proxy-Authenticate",
               "Basic realm=\"localhost\"",
               "Connection",
               "close",
             ),
-          inTunnel = true,
-        ),
+          ).inTunnel()
+          .build(),
       )
     }
     client =
@@ -3876,7 +3890,12 @@ open class CallTest {
   @Test
   fun noPreemptiveProxyAuthorization() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse(body = "response body"))
     client =
       client
@@ -3905,7 +3924,12 @@ open class CallTest {
   @Test
   fun preemptiveProxyAuthentication() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse(body = "encrypted response from the origin server"))
     val credential = basic("jesse", "password1")
     client =
@@ -3943,14 +3967,20 @@ open class CallTest {
   fun preemptiveThenReactiveProxyAuthentication() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse(
-        code = HttpURLConnection.HTTP_PROXY_AUTH,
-        headers = headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""),
-        body = "proxy auth required",
-        inTunnel = true,
-      ),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_PROXY_AUTH)
+        .headers(headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""))
+        .body("proxy auth required")
+        .inTunnel()
+        .build(),
     )
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse())
     val challengeSchemes: MutableList<String?> = ArrayList()
     val credential = basic("jesse", "password1")
@@ -3987,10 +4017,11 @@ open class CallTest {
   fun proxyDisconnectsAfterRequest() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse(
-        inTunnel = true,
-        socketPolicy = DisconnectAfterRequest,
-      ),
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .socketPolicy(DisconnectAfterRequest)
+        .build(),
     )
     client =
       client
@@ -4399,7 +4430,12 @@ open class CallTest {
         http2 -> listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
         else -> listOf(Protocol.HTTP_1_1)
       }
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     client =
       client
         .newBuilder()

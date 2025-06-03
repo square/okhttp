@@ -197,7 +197,12 @@ class MockResponseSniTest {
         ).proxy(server.toProxyAddress())
         .build()
 
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse())
 
     val call =

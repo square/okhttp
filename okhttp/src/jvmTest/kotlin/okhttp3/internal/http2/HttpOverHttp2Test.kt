@@ -2094,8 +2094,18 @@ class HttpOverHttp2Test {
     assumeTrue(protocol === Protocol.HTTP_2)
     server.useHttps(handshakeCertificates.sslSocketFactory())
     val queueDispatcher = QueueDispatcher()
-    queueDispatcher.enqueueResponse(MockResponse(inTunnel = true))
-    queueDispatcher.enqueueResponse(MockResponse(inTunnel = true))
+    queueDispatcher.enqueueResponse(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
+    queueDispatcher.enqueueResponse(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     queueDispatcher.enqueueResponse(MockResponse(body = "call2 response"))
     queueDispatcher.enqueueResponse(MockResponse(body = "call1 response"))
 
@@ -2314,7 +2324,12 @@ class HttpOverHttp2Test {
     mockWebServer: MockWebServer,
   ) {
     setUp(protocol, mockWebServer)
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse(body = "ABCDE"))
     val client =
       client
@@ -2355,13 +2370,19 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse(
-        code = 407,
-        headers = headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""),
-        inTunnel = true,
-      ),
+      MockResponse
+        .Builder()
+        .code(407)
+        .headers(headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""))
+        .inTunnel()
+        .build(),
     )
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse(body = "response body"))
     val client =
       client
