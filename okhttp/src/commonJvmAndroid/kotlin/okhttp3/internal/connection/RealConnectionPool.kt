@@ -370,7 +370,7 @@ class RealConnectionPool internal constructor(
    */
   fun setPolicy(
     address: Address,
-    policy: ConnectionPool.AddressPolicy,
+    policy: AddressPolicy,
   ) {
     val state = AddressState(address, taskRunner.newQueue(), policy)
     val newConnectionsNeeded: Int
@@ -442,7 +442,7 @@ class RealConnectionPool internal constructor(
   class AddressState(
     val address: Address,
     val queue: TaskQueue,
-    var policy: ConnectionPool.AddressPolicy,
+    var policy: AddressPolicy,
   ) {
     /**
      * How many calls the pool can carry without opening new connections. This field must only be
