@@ -461,7 +461,6 @@ class Response internal constructor(
         this.priorResponse = priorResponse
       }
 
-    @ExperimentalOkHttpApi
     open fun trailers(trailersSource: TrailersSource): Builder =
       apply {
         this.trailersSource = trailersSource
