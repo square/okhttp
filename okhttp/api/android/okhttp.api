@@ -1017,6 +1017,7 @@ public class okhttp3/Request$Builder {
 	public fun delete (Lokhttp3/RequestBody;)Lokhttp3/Request$Builder;
 	public static synthetic fun delete$default (Lokhttp3/Request$Builder;Lokhttp3/RequestBody;ILjava/lang/Object;)Lokhttp3/Request$Builder;
 	public fun get ()Lokhttp3/Request$Builder;
+	public final fun gzip ()Lokhttp3/Request$Builder;
 	public fun head ()Lokhttp3/Request$Builder;
 	public fun header (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/Request$Builder;
 	public fun headers (Lokhttp3/Headers;)Lokhttp3/Request$Builder;
@@ -1054,7 +1055,6 @@ public abstract class okhttp3/RequestBody {
 	public static final fun create ([BLokhttp3/MediaType;)Lokhttp3/RequestBody;
 	public static final fun create ([BLokhttp3/MediaType;I)Lokhttp3/RequestBody;
 	public static final fun create ([BLokhttp3/MediaType;II)Lokhttp3/RequestBody;
-	public static final fun gzip (Lokhttp3/RequestBody;)Lokhttp3/RequestBody;
 	public fun isDuplex ()Z
 	public fun isOneShot ()Z
 	public abstract fun writeTo (Lokio/BufferedSink;)V
@@ -1083,7 +1083,6 @@ public final class okhttp3/RequestBody$Companion {
 	public static synthetic fun create$default (Lokhttp3/RequestBody$Companion;Lokio/ByteString;Lokhttp3/MediaType;ILjava/lang/Object;)Lokhttp3/RequestBody;
 	public static synthetic fun create$default (Lokhttp3/RequestBody$Companion;Lokio/Path;Lokio/FileSystem;Lokhttp3/MediaType;ILjava/lang/Object;)Lokhttp3/RequestBody;
 	public static synthetic fun create$default (Lokhttp3/RequestBody$Companion;[BLokhttp3/MediaType;IIILjava/lang/Object;)Lokhttp3/RequestBody;
-	public final fun gzip (Lokhttp3/RequestBody;)Lokhttp3/RequestBody;
 }
 
 public final class okhttp3/Response : java/io/Closeable {

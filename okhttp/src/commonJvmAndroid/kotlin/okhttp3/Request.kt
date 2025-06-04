@@ -20,6 +20,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.cast
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.internal.http.GzipRequestBody
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.isSensitiveHeader
 
@@ -391,6 +392,33 @@ class Request internal constructor(
     fun cacheUrlOverride(cacheUrlOverride: HttpUrl?) =
       apply {
         this.cacheUrlOverride = cacheUrlOverride
+      }
+
+    /**
+     * Configures this request's body to be compressed when it is transmitted. This also adds the
+     * 'Content-Encoding: gzip' header.
+     *
+     * Only use this method if you have prior knowledge that the receiving server supports
+     * gzip-compressed requests.
+     *
+     * It is an error to call this multiple times on the same instance.
+     *
+     * @throws IllegalStateException if this request doesn't have a request body, or if it already
+     *     has a 'Content-Encoding' header.
+     */
+    fun gzip() =
+      apply {
+        val identityBody =
+          body
+            ?: throw IllegalStateException("cannot gzip a request that has no body")
+
+        val contentEncoding = headers["Content-Encoding"]
+        check(contentEncoding == null) {
+          "Content-Encoding already set: $contentEncoding"
+        }
+
+        headers.add("Content-Encoding", "gzip")
+        body = GzipRequestBody(identityBody)
       }
 
     open fun build(): Request = Request(this)

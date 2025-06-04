@@ -24,9 +24,7 @@ import okhttp3.internal.chooseCharset
 import okio.BufferedSink
 import okio.ByteString
 import okio.FileSystem
-import okio.GzipSink
 import okio.Path
-import okio.buffer
 import okio.source
 
 abstract class RequestBody {
@@ -257,35 +255,5 @@ abstract class RequestBody {
       contentType: MediaType?,
       file: File,
     ): RequestBody = file.asRequestBody(contentType)
-
-    /**
-     * Returns a gzip version of the RequestBody, with compressed payload.
-     * This is not automatic as not all servers support gzip compressed requests.
-     *
-     * ```
-     * val request = Request.Builder().url("...")
-     *  .addHeader("Content-Encoding", "gzip")
-     *  .post(uncompressedBody.gzip())
-     *  .build()
-     * ```
-     */
-    @JvmStatic
-    @ExperimentalOkHttpApi
-    fun RequestBody.gzip(): RequestBody {
-      return object : RequestBody() {
-        override fun contentType(): MediaType? = this@gzip.contentType()
-
-        override fun contentLength(): Long {
-          return -1 // We don't know the compressed length in advance!
-        }
-
-        @Throws(IOException::class)
-        override fun writeTo(sink: BufferedSink) {
-          GzipSink(sink).buffer().use(this@gzip::writeTo)
-        }
-
-        override fun isOneShot(): Boolean = this@gzip.isOneShot()
-      }
-    }
   }
 }

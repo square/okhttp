@@ -34,7 +34,6 @@ import okhttp3.Protocol
 import okhttp3.RecordingHostnameVerifier
 import okhttp3.Request
 import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.gzip
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.logging.HttpLoggingInterceptor.Level
 import okhttp3.testing.PlatformRule
@@ -586,8 +585,8 @@ class HttpLoggingInterceptorTest {
       client
         .newCall(
           request()
-            .addHeader("Content-Encoding", "gzip")
-            .post("Uncompressed".toRequestBody().gzip())
+            .post("Uncompressed".toRequestBody())
+            .gzip()
             .build(),
         ).execute()
     val responseBody = response.body
