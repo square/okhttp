@@ -17,11 +17,10 @@
 package okhttp.android.test
 
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
+import org.junit.runners.JUnit4
 
-@RunWith(RobolectricTestRunner::class)
-@Config(
-  sdk = [21, 26, 30, 33, 35],
-)
-class RobolectricOkHttpClientTest : BaseOkHttpClientUnitTest()
+/**
+ * Android test running with only stubs.
+ */
+@RunWith(JUnit4::class)
+class NonRobolectricOkHttpClientTest : BaseOkHttpClientUnitTest()
