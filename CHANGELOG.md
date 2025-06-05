@@ -7,7 +7,7 @@ See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) f
 
 ## Version 5.0.0-alpha.16
 
-_2024-05-29_
+_2025-05-29_
 
  *  Fix: The previous release would crash when running on Robolectric. We didn't anticipate
     running our Android artifact on the JVM platform!
@@ -15,7 +15,7 @@ _2024-05-29_
 
 ## Version 5.0.0-alpha.15
 
-_2024-05-28_
+_2025-05-28_
 
 **This release introduces separate JVM and Android artifacts.** Until now, we've distributed OkHttp
 as a JVM library that _detects_ Android capabilities at runtime, but that doesn't offer
