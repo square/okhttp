@@ -334,7 +334,7 @@ subprojects {
 
   plugins.withId("com.vanniktech.maven.publish.base") {
     configure<MavenPublishBaseExtension> {
-      publishToMavenCentral(SonatypeHost.S01, automaticRelease = true)
+      publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
       signAllPublications()
       pom {
         name.set(project.name)
