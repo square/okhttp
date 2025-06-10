@@ -218,7 +218,7 @@ class RealConnection internal constructor(
     // 2. The routes must share an IP address.
     if (routes == null || !routeMatchesAny(routes)) return false
 
-    // 3. This connection's server certificate's must cover the new host.
+    // 3. This connection's server certificates must cover the new host.
     if (address.hostnameVerifier !== OkHostnameVerifier) return false
     if (!supportsUrl(address.url)) return false
 
