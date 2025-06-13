@@ -70,7 +70,7 @@ class Http2ExchangeCodec(
   override fun createRequestBody(
     request: Request,
     contentLength: Long,
-  ): Sink = stream!!.getSink()
+  ): Sink = stream!!.sink
 
   override fun writeRequestHeaders(request: Request) {
     if (stream != null) return
@@ -93,7 +93,7 @@ class Http2ExchangeCodec(
   }
 
   override fun finishRequest() {
-    stream!!.getSink().close()
+    stream!!.sink.close()
   }
 
   override fun readResponseHeaders(expectContinue: Boolean): Response.Builder? {

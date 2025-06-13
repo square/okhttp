@@ -57,7 +57,7 @@ class MockResponse {
   // At most one of (body,webSocketListener,streamHandler) is non-null.
   val body: MockResponseBody?
   val webSocketListener: WebSocketListener?
-  val streamHandler: StreamHandler?
+  val socketHandler: SocketHandler?
 
   val inTunnel: Boolean
   val informationalResponses: List<MockResponse>
@@ -94,7 +94,7 @@ class MockResponse {
     this.headers = builder.headers
     this.trailers = builder.trailers
     this.body = builder.body
-    this.streamHandler = builder.streamHandler
+    this.socketHandler = builder.socketHandler
     this.webSocketListener = builder.webSocketListener
     this.inTunnel = builder.inTunnel
     this.informationalResponses = builder.informationalResponses
@@ -150,22 +150,22 @@ class MockResponse {
     val trailers: Headers
       get() = trailers_.build()
 
-    // At most one of (body,webSocketListener,streamHandler) is non-null.
+    // At most one of (body,webSocketListener,socketHandler) is non-null.
     private var bodyVar: MockResponseBody? = null
-    private var streamHandlerVar: StreamHandler? = null
+    private var socketHandlerVar: SocketHandler? = null
     private var webSocketListenerVar: WebSocketListener? = null
 
     var body: MockResponseBody?
       get() = bodyVar
       private set(value) {
         bodyVar = value
-        streamHandlerVar = null
+        socketHandlerVar = null
         webSocketListenerVar = null
       }
-    var streamHandler: StreamHandler?
-      get() = streamHandlerVar
+    var socketHandler: SocketHandler?
+      get() = socketHandlerVar
       private set(value) {
-        streamHandlerVar = value
+        socketHandlerVar = value
         bodyVar = null
         webSocketListenerVar = null
       }
@@ -174,7 +174,7 @@ class MockResponse {
       private set(value) {
         webSocketListenerVar = value
         bodyVar = null
-        streamHandlerVar = null
+        socketHandlerVar = null
       }
 
     var throttleBytesPerPeriod: Long
@@ -205,7 +205,7 @@ class MockResponse {
       this.informationalResponses_ = mutableListOf()
       this.status = "HTTP/1.1 200 OK"
       this.bodyVar = null
-      this.streamHandlerVar = null
+      this.socketHandlerVar = null
       this.webSocketListenerVar = null
       this.headers_ =
         Headers
@@ -229,7 +229,7 @@ class MockResponse {
       this.headers_ = mockResponse.headers.newBuilder()
       this.trailers_ = mockResponse.trailers.newBuilder()
       this.bodyVar = mockResponse.body
-      this.streamHandlerVar = mockResponse.streamHandler
+      this.socketHandlerVar = mockResponse.socketHandler
       this.webSocketListenerVar = mockResponse.webSocketListener
       this.throttleBytesPerPeriod = mockResponse.throttleBytesPerPeriod
       this.throttlePeriodNanos = mockResponse.throttlePeriodNanos
@@ -322,9 +322,9 @@ class MockResponse {
     /** Sets the response body to the UTF-8 encoded bytes of [body]. */
     fun body(body: String): Builder = body(Buffer().writeUtf8(body))
 
-    fun streamHandler(streamHandler: StreamHandler) =
+    fun socketHandler(socketHandler: SocketHandler) =
       apply {
-        this.streamHandler = streamHandler
+        this.socketHandler = socketHandler
       }
 
     /**

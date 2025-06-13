@@ -16,26 +16,15 @@
 package mockwebserver3
 
 import okhttp3.ExperimentalOkHttpApi
-import okio.BufferedSink
-import okio.BufferedSource
+import okio.Socket
 
 /**
- * A bidirectional sequence of data frames exchanged between client and server.
+ * Handles a call's request and response streams directly. Use this instead of [MockResponseBody] to
+ * begin sending response data before all request data has been received.
+ *
+ * See [okhttp3.RequestBody.isDuplex].
  */
 @ExperimentalOkHttpApi
-interface Stream {
-  val requestBody: BufferedSource
-  val responseBody: BufferedSink
-
-  /**
-   * Terminate the stream so that no further data is transmitted or received. Note that
-   * [requestBody] may return data after this call; that is the buffered data received before this
-   * stream was canceled.
-   *
-   * This does nothing if [requestBody] and [responseBody] are already closed.
-   *
-   * For HTTP/2 this sends the [CANCEL](https://datatracker.ietf.org/doc/html/rfc7540#section-7)
-   * error code.
-   */
-  fun cancel()
+interface SocketHandler {
+  fun handle(socket: Socket)
 }

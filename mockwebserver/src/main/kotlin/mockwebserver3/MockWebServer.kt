@@ -65,7 +65,6 @@ import mockwebserver3.SocketPolicy.ShutdownServerAfterResponse
 import mockwebserver3.SocketPolicy.StallSocketAtStart
 import mockwebserver3.internal.ThrottledSink
 import mockwebserver3.internal.TriggerSink
-import mockwebserver3.internal.duplex.RealStream
 import mockwebserver3.internal.sleepNanos
 import okhttp3.ExperimentalOkHttpApi
 import okhttp3.Headers
@@ -1053,7 +1052,7 @@ class MockWebServer : Closeable {
       val body = Buffer()
       val requestLine = "$method $path HTTP/1.1"
       var exception: IOException? = null
-      if (readBody && peek.streamHandler == null && peek.socketPolicy !is DoNotReadRequestBody) {
+      if (readBody && peek.socketHandler == null && peek.socketPolicy !is DoNotReadRequestBody) {
         try {
           val contentLengthString = headers["content-length"]
           val requestBodySink =
@@ -1065,7 +1064,7 @@ class MockWebServer : Closeable {
                 socket = socket,
               ).buffer()
           requestBodySink.use {
-            it.writeAll(stream.getSource())
+            it.writeAll(stream.source)
           }
         } catch (e: IOException) {
           exception = e
@@ -1109,11 +1108,11 @@ class MockWebServer : Closeable {
       val bodyDelayNanos = response.bodyDelayNanos
       val trailers = response.trailers
       val body = response.body
-      val streamHandler = response.streamHandler
+      val socketHandler = response.socketHandler
       val outFinished = (
         body == null &&
           response.pushPromises.isEmpty() &&
-          streamHandler == null
+          socketHandler == null
       )
       val flushHeaders = body == null || bodyDelayNanos != 0L
       require(!outFinished || trailers.size == 0) {
@@ -1131,7 +1130,7 @@ class MockWebServer : Closeable {
         sleepNanos(bodyDelayNanos)
         val responseBodySink =
           stream
-            .getSink()
+            .sink
             .withThrottlingAndSocketPolicy(
               policy = response,
               disconnectHalfway = response.socketPolicy == DisconnectDuringResponseBody,
@@ -1147,8 +1146,8 @@ class MockWebServer : Closeable {
             sleepNanos(response.trailersDelayNanos)
           }
         }
-      } else if (streamHandler != null) {
-        streamHandler.handle(RealStream(stream))
+      } else if (socketHandler != null) {
+        socketHandler.handle(stream)
       } else if (!outFinished) {
         sleepNanos(response.trailersDelayNanos)
         stream.close(ErrorCode.NO_ERROR, null)
