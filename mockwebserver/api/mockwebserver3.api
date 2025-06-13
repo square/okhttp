@@ -19,9 +19,9 @@ public final class mockwebserver3/MockResponse {
 	public final fun getMessage ()Ljava/lang/String;
 	public final fun getPushPromises ()Ljava/util/List;
 	public final fun getSettings ()Lokhttp3/internal/http2/Settings;
+	public final fun getSocketHandler ()Lmockwebserver3/SocketHandler;
 	public final fun getSocketPolicy ()Lmockwebserver3/SocketPolicy;
 	public final fun getStatus ()Ljava/lang/String;
-	public final fun getStreamHandler ()Lmockwebserver3/StreamHandler;
 	public final fun getThrottleBytesPerPeriod ()J
 	public final fun getThrottlePeriodNanos ()J
 	public final fun getTrailers ()Lokhttp3/Headers;
@@ -61,9 +61,9 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 	public final fun getInformationalResponses ()Ljava/util/List;
 	public final fun getPushPromises ()Ljava/util/List;
 	public final fun getSettings ()Lokhttp3/internal/http2/Settings;
+	public final fun getSocketHandler ()Lmockwebserver3/SocketHandler;
 	public final fun getSocketPolicy ()Lmockwebserver3/SocketPolicy;
 	public final fun getStatus ()Ljava/lang/String;
-	public final fun getStreamHandler ()Lmockwebserver3/StreamHandler;
 	public final fun getThrottleBytesPerPeriod ()J
 	public final fun getThrottlePeriodNanos ()J
 	public final fun getTrailers ()Lokhttp3/Headers;
@@ -75,9 +75,9 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 	public final fun removeHeader (Ljava/lang/String;)Lmockwebserver3/MockResponse$Builder;
 	public final fun setHeader (Ljava/lang/String;Ljava/lang/Object;)Lmockwebserver3/MockResponse$Builder;
 	public final fun settings (Lokhttp3/internal/http2/Settings;)Lmockwebserver3/MockResponse$Builder;
+	public final fun socketHandler (Lmockwebserver3/SocketHandler;)Lmockwebserver3/MockResponse$Builder;
 	public final fun socketPolicy (Lmockwebserver3/SocketPolicy;)Lmockwebserver3/MockResponse$Builder;
 	public final fun status (Ljava/lang/String;)Lmockwebserver3/MockResponse$Builder;
-	public final fun streamHandler (Lmockwebserver3/StreamHandler;)Lmockwebserver3/MockResponse$Builder;
 	public final fun throttleBody (JJLjava/util/concurrent/TimeUnit;)Lmockwebserver3/MockResponse$Builder;
 	public final fun trailers (Lokhttp3/Headers;)Lmockwebserver3/MockResponse$Builder;
 	public final fun trailersDelay (JLjava/util/concurrent/TimeUnit;)Lmockwebserver3/MockResponse$Builder;
@@ -171,6 +171,10 @@ public final class mockwebserver3/RecordedRequest {
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class mockwebserver3/SocketHandler {
+	public abstract fun handle (Lokio/Socket;)V
+}
+
 public abstract interface class mockwebserver3/SocketPolicy {
 }
 
@@ -238,15 +242,5 @@ public final class mockwebserver3/SocketPolicy$ShutdownServerAfterResponse : moc
 
 public final class mockwebserver3/SocketPolicy$StallSocketAtStart : mockwebserver3/SocketPolicy {
 	public static final field INSTANCE Lmockwebserver3/SocketPolicy$StallSocketAtStart;
-}
-
-public abstract interface class mockwebserver3/Stream {
-	public abstract fun cancel ()V
-	public abstract fun getRequestBody ()Lokio/BufferedSource;
-	public abstract fun getResponseBody ()Lokio/BufferedSink;
-}
-
-public abstract interface class mockwebserver3/StreamHandler {
-	public abstract fun handle (Lmockwebserver3/Stream;)V
 }
 

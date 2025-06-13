@@ -44,7 +44,8 @@ class Http2Stream internal constructor(
   outFinished: Boolean,
   inFinished: Boolean,
   headers: Headers?,
-) : Lockable, Socket {
+) : Lockable,
+  Socket {
   // Internal state is guarded by `this`. No long-running or potentially blocking operations are
   // performed while the lock is held.
 
