@@ -28,9 +28,9 @@ import okhttp3.internal.connection.Exchange
 import okhttp3.internal.http.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.HTTP_TEMP_REDIRECT
 import okhttp3.internal.http.parseChallenges
-import okhttp3.internal.http1.Streams
 import okhttp3.internal.skipAll
 import okio.Buffer
+import okio.Socket
 
 /**
  * An HTTP response. Instances of this class are not immutable: the response body is a one-shot
@@ -82,7 +82,7 @@ class Response internal constructor(
   /**
    * Non-null if this response is a successful upgrade ...
    */
-  @get:JvmName("streams") val streams: Streams?,
+  @get:JvmName("socket") val socket: Socket?,
   /**
    * Returns the raw response received from the network. Will be null if this response didn't use
    * the network, such as when the response is fully cached. The body of the returned response
@@ -345,7 +345,7 @@ class Response internal constructor(
     internal var handshake: Handshake? = null
     internal var headers: Headers.Builder
     internal var body: ResponseBody = ResponseBody.EMPTY
-    internal var streams: Streams? = null
+    internal var socket: Socket? = null
     internal var networkResponse: Response? = null
     internal var cacheResponse: Response? = null
     internal var priorResponse: Response? = null
@@ -366,7 +366,7 @@ class Response internal constructor(
       this.handshake = response.handshake
       this.headers = response.headers.newBuilder()
       this.body = response.body
-      this.streams = response.streams
+      this.socket = response.socket
       this.networkResponse = response.networkResponse
       this.cacheResponse = response.cacheResponse
       this.priorResponse = response.priorResponse
@@ -440,9 +440,9 @@ class Response internal constructor(
         this.body = body
       }
 
-    open fun streams(streams: Streams) =
+    open fun socket(socket: Socket) =
       apply {
-        this.streams = streams
+        this.socket = socket
       }
 
     open fun networkResponse(networkResponse: Response?) =
@@ -503,7 +503,7 @@ class Response internal constructor(
         handshake,
         headers.build(),
         body,
-        streams,
+        socket,
         networkResponse,
         cacheResponse,
         priorResponse,

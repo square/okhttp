@@ -41,7 +41,6 @@ import okhttp3.internal.concurrent.withLock
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http1.Http1ExchangeCodec
-import okhttp3.internal.http1.Streams
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.FlowControlListener
@@ -60,6 +59,8 @@ import okio.Sink
 import okio.Source
 import okio.Timeout
 import okio.buffer
+import okio.sink
+import okio.source
 
 /**
  * A connection to a remote web server capable of carrying 1 or more concurrent streams.
@@ -313,24 +314,19 @@ class RealConnection internal constructor(
     }
   }
 
-  @Throws(SocketException::class)
-  internal fun newHttpStreams(exchange: Exchange): Streams {
+  internal fun newHttpSocket(exchange: Exchange): okio.Socket {
     socket.soTimeout = 0
     noNewExchanges()
-    val realSource = this.source
-    val realSink = this.sink
-    return object : Streams {
+    return object : okio.Socket {
       override val source: BufferedSource
-        get() = realSource
+        get() = socket.source().buffer()
 
       override val sink: BufferedSink
-        get() = realSink
+        get() = socket.sink().buffer()
 
       override fun cancel() {
-        sink.flush()
+        socket.sink().flush()
         exchange.cancel()
-//        sink.closeQuietly()
-//        source.closeQuietly()
       }
     }
   }

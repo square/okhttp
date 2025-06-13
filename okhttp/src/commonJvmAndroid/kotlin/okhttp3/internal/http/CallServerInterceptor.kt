@@ -138,7 +138,7 @@ class CallServerInterceptor(
             response
               .stripBody()
               .newBuilder()
-              .streams(exchange.newHttpStreams())
+              .socket(exchange.newHttpStreams())
               .build()
           } else {
             response

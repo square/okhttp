@@ -48,7 +48,6 @@ import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.ProtocolException
 import java.net.Proxy
-import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.net.UnknownServiceException
@@ -81,8 +80,7 @@ import mockwebserver3.SocketPolicy.FailHandshake
 import mockwebserver3.SocketPolicy.HalfCloseAfterRequest
 import mockwebserver3.SocketPolicy.NoResponse
 import mockwebserver3.SocketPolicy.StallSocketAtStart
-import mockwebserver3.Stream
-import mockwebserver3.StreamHandler
+import mockwebserver3.internal.duplex.MockSocketHandler
 import mockwebserver3.junit5.internal.MockWebServerInstance
 import okhttp3.CallEvent.CallEnd
 import okhttp3.CallEvent.ConnectStart
@@ -109,7 +107,6 @@ import okhttp3.internal.http.HTTP_EARLY_HINTS
 import okhttp3.internal.http.HTTP_PROCESSING
 import okhttp3.internal.http.HTTP_SWITCHING_PROTOCOLS
 import okhttp3.internal.http.RecordingProxySelector
-import okhttp3.internal.http1.Streams
 import okhttp3.java.net.cookiejar.JavaNetCookieJar
 import okhttp3.okio.LoggingFilesystem
 import okhttp3.testing.Flaky
@@ -121,6 +118,7 @@ import okio.BufferedSink
 import okio.ForwardingSource
 import okio.GzipSink
 import okio.Path.Companion.toPath
+import okio.Socket
 import okio.buffer
 import okio.fakefilesystem.FakeFileSystem
 import okio.use
@@ -4848,63 +4846,17 @@ open class CallTest {
     }
   }
 
-  // https://github.com/square/okhttp/issues/5874
-  // call.timeoutEarlyExit()
-  // https://docs.docker.com/engine/api/v1.43/#tag/Container/operation/ContainerAttach
-  // https://learn.microsoft.com/en-us/windows/win32/ipc/named-pipe-client
-  // docker run --rm -it --name attach alpine:edge top -b
   @Test
   fun upgradeConnection() {
-    val mockStreamHandler =
-      object : StreamHandler {
-        override fun handle(stream: Stream) {
-          println("[Server] streamHandler invoked")
-          val source = stream.requestBody
-          val sink = stream.responseBody
-
-          val logExec = Executors.newSingleThreadScheduledExecutor()
-          logExec.scheduleAtFixedRate({
-            try {
-              val msg = "ERROR: step test\n"
-              sink.writeUtf8(msg)
-              sink.flush()
-              println("[Server] Sent log: " + msg.trim())
-            } catch (e: IOException) {
-              println("[Server] logExec shutdown")
-              logExec.shutdown()
-            }
-          }, 0, 100, TimeUnit.MILLISECONDS)
-
-          val echoSeen = CountDownLatch(1)
-          Executors.newSingleThreadExecutor().submit({
-            try {
-              var line: String?
-              while (source.readUtf8Line().also { line = it } != null) {
-                println("[Server] Received client line: $line")
-                val echo = "ECHO: $line\n"
-                sink.writeUtf8(echo)
-                sink.flush()
-                println("[Server] Echoed: " + echo.trim())
-                echoSeen.countDown()
-              }
-              println("[Server] Echo thread loop ended")
-            } catch (e: IOException) {
-              println("[Server] Echo thread ended due to error")
-            }
-          })
-
-          try {
-            logExec.awaitTermination(2, TimeUnit.SECONDS)
-            println("[Server] Cancelling stream")
-            // Wait until we see an echo, or 2s, whichever comes first
-            echoSeen.await(2, TimeUnit.SECONDS)
-          } catch (e: InterruptedException) {
-            throw RuntimeException(e)
-          } finally {
-            stream.cancel()
-          }
-        }
-      }
+    val mockStreamHandler = MockSocketHandler()
+      .receiveRequest("request A\n")
+      .sendResponse("response B\n")
+      .receiveRequest("request C\n")
+      .sendResponse("response D\n")
+      .sendResponse("request E\n")
+      .receiveRequest("response F\n")
+      .exhaustRequest()
+      .exhaustResponse()
     server.enqueue(
       MockResponse
         .Builder()
@@ -4919,7 +4871,7 @@ open class CallTest {
             "text/plain; charset=UTF-8",
 //            "Content-Type", "application/vnd.docker.raw-stream",
           ),
-        ).streamHandler(mockStreamHandler)
+        ).socketHandler(mockStreamHandler)
         .build(),
     )
     server.start()
@@ -4934,11 +4886,10 @@ open class CallTest {
           .build(),
       )
 
-    var streams: Streams?
+    var socket: Socket?
     val received: BlockingQueue<String?> = LinkedBlockingQueue<String?>()
 
     call.execute().use { response ->
-      println("[Client] Received response code: " + response.code)
       assertThat(response.code).isEqualTo(HTTP_SWITCHING_PROTOCOLS)
       assertThat(response.headers("Connection").first()).isEqualTo("upgrade", true)
       assertThat(response.headers("Upgrade").first()).isEqualTo("tcp", true)
@@ -4947,47 +4898,38 @@ open class CallTest {
       assertThat(response.headers("Content-Length")).isEmpty()
       assertThat(response.body).isInstanceOf<UnreadableResponseBody>()
 
-      streams = response.streams
-      assertThat(streams).isNotNull()
-      println("[Client] Obtained Streams")
+      socket = response.socket
+      assertThat(socket).isNotNull()
 
-      val reader = streams!!.source
-      val writer = streams.sink
+      val reader = socket!!.source
+      val writer = socket.sink
 
       val readerThread =
         object : Thread("reader") {
           override fun run() {
             try {
               var line: String?
-              while (reader.readUtf8Line().also { line = it } != null) {
-                println("[Client] Received stream: $line")
+              while (reader.buffer().readUtf8Line().also { line = it } != null) {
                 received.add(line)
               }
-            } catch (e: InterruptedException) {
-              println("[Client] Reader thread ended")
-            } catch (e: SocketException) {
-              println("[Client] Reader thread ended")
+            } catch (e: Exception) {
               reader.closeQuietly()
             }
           }
         }
       readerThread.start()
 
-      // Send client message with newline
-      val msg = "hello-test\n"
-      println("[Client] Sending: " + msg.trim())
-      writer.writeUtf8(msg).flush()
-      println("[Client] Sent: " + msg.trim())
+      writer.buffer().writeUtf8("request A\n").flush()
+      writer.buffer().writeUtf8("request C\n").flush()
+      writer.buffer().writeUtf8("response F\n").flush()
     }
 
-    // Assert both echo and error
-    val err = received.poll(2, TimeUnit.SECONDS)
-    val echo = received.poll(2, TimeUnit.SECONDS)
-    assertThat(err).isNotNull().startsWith("ERROR:")
-    assertThat(echo).isNotNull().startsWith("ECHO:")
+    val first = received.poll(2, TimeUnit.SECONDS)
+    val second = received.poll(2, TimeUnit.SECONDS)
+    assertThat(first).isNotNull().startsWith("response B")
+    assertThat(second).isNotNull().startsWith("response D")
 
-    streams?.cancel()
-    println("[Client] Cancelled streams and shutting down")
+    socket?.cancel()
     server.shutdown()
   }
 
