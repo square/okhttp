@@ -104,19 +104,19 @@ class MockSocketHandler : SocketHandler {
   }
 
   override fun handle(socket: Socket) {
-    val task = serviceSocketTask(socket)
+    val task = serviceSocketTask(BufferedSocket(socket))
     results.add(task)
     task.run()
   }
 
   /** Returns a task that processes both request and response from [socket]. */
-  private fun serviceSocketTask(socket: Socket): FutureTask<Void> {
+  private fun serviceSocketTask(socket: BufferedSocket): FutureTask<Void> {
     return FutureTask<Void> {
       socket.source.use {
         socket.sink.use {
           while (true) {
             val action = actions.poll() ?: break
-            action(BufferedSocket(socket))
+            action(socket)
           }
         }
       }
