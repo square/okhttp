@@ -66,7 +66,6 @@ import mockwebserver3.SocketPolicy.StallSocketAtStart
 import mockwebserver3.internal.ThrottledSink
 import mockwebserver3.internal.TriggerSink
 import mockwebserver3.internal.sleepNanos
-import okhttp3.ExperimentalOkHttpApi
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
@@ -101,8 +100,7 @@ import okio.source
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
  * in sequence.
  */
-@ExperimentalOkHttpApi
-class MockWebServer : Closeable {
+public class MockWebServer : Closeable {
   private val taskRunnerBackend =
     TaskRunner.RealBackend(
       threadFactory("MockWebServer TaskRunner", daemon = false),
@@ -120,13 +118,13 @@ class MockWebServer : Closeable {
    * The number of HTTP requests received thus far by this server. This may exceed the number of
    * HTTP connections when connection reuse is in practice.
    */
-  val requestCount: Int
+  public val requestCount: Int
     get() = atomicRequestCount.get()
 
   /** The number of bytes of the POST body to keep in memory to the given limit. */
-  var bodyLimit: Long = Long.MAX_VALUE
+  public var bodyLimit: Long = Long.MAX_VALUE
 
-  var serverSocketFactory: ServerSocketFactory? = null
+  public var serverSocketFactory: ServerSocketFactory? = null
     @Synchronized get() {
       if (field == null && started) {
         field = ServerSocketFactory.getDefault() // Build the default value lazily.
@@ -150,16 +148,16 @@ class MockWebServer : Closeable {
    * Other dispatchers can be configured. They can vary the response based on timing or the content
    * of the request.
    */
-  var dispatcher: Dispatcher = QueueDispatcher()
+  public var dispatcher: Dispatcher = QueueDispatcher()
 
   private var portField: Int = -1
-  val port: Int
+  public val port: Int
     get() {
       before()
       return portField
     }
 
-  val hostName: String
+  public val hostName: String
     get() {
       before()
       return _inetSocketAddress!!.address.hostName
@@ -167,7 +165,7 @@ class MockWebServer : Closeable {
 
   private var _inetSocketAddress: InetSocketAddress? = null
 
-  val inetSocketAddress: InetSocketAddress
+  public val inetSocketAddress: InetSocketAddress
     get() {
       before()
       return InetSocketAddress(hostName, portField)
@@ -178,7 +176,7 @@ class MockWebServer : Closeable {
    * HTTP/2. This is true by default; set to false to disable negotiation and restrict connections
    * to HTTP/1.1.
    */
-  var protocolNegotiationEnabled: Boolean = true
+  public var protocolNegotiationEnabled: Boolean = true
 
   /**
    * The protocols supported by ALPN on incoming HTTPS connections in order of preference. The list
@@ -186,7 +184,7 @@ class MockWebServer : Closeable {
    *
    * This list is ignored when [negotiation is disabled][protocolNegotiationEnabled].
    */
-  var protocols: List<Protocol> = immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
+  public var protocols: List<Protocol> = immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
     set(value) {
       val protocolList = value.toImmutableList()
       require(Protocol.H2_PRIOR_KNOWLEDGE !in protocolList || protocolList.size == 1) {
@@ -199,8 +197,8 @@ class MockWebServer : Closeable {
       field = protocolList
     }
 
-  var started: Boolean = false
-  private var shutdown: Boolean = false
+  public var started: Boolean = false
+  private var closed: Boolean = false
 
   @Synchronized private fun before() {
     if (started) return // Don't call start() in case we're already shut down.
@@ -211,7 +209,7 @@ class MockWebServer : Closeable {
     }
   }
 
-  fun toProxyAddress(): Proxy {
+  public fun toProxyAddress(): Proxy {
     before()
     val address = InetSocketAddress(_inetSocketAddress!!.address.hostName, port)
     return Proxy(Proxy.Type.HTTP, address)
@@ -222,7 +220,7 @@ class MockWebServer : Closeable {
    *
    * @param path the request path, such as "/".
    */
-  fun url(path: String): HttpUrl =
+  public fun url(path: String): HttpUrl =
     HttpUrl
       .Builder()
       .scheme(if (sslSocketFactory != null) "https" else "http")
@@ -234,7 +232,7 @@ class MockWebServer : Closeable {
   /**
    * Serve requests with HTTPS rather than otherwise.
    */
-  fun useHttps(sslSocketFactory: SSLSocketFactory) {
+  public fun useHttps(sslSocketFactory: SSLSocketFactory) {
     this.sslSocketFactory = sslSocketFactory
   }
 
@@ -243,7 +241,7 @@ class MockWebServer : Closeable {
    * authentication to another layer such as in an HTTP cookie or header. This is the default and
    * most common configuration.
    */
-  fun noClientAuth() {
+  public fun noClientAuth() {
     this.clientAuth = CLIENT_AUTH_NONE
   }
 
@@ -254,7 +252,7 @@ class MockWebServer : Closeable {
    * certificate at all! But if the client presents an untrusted certificate the handshake
    * will fail and no connection will be established.
    */
-  fun requestClientAuth() {
+  public fun requestClientAuth() {
     this.clientAuth = CLIENT_AUTH_REQUESTED
   }
 
@@ -264,7 +262,7 @@ class MockWebServer : Closeable {
    * proceed normally. If the client presents an untrusted certificate or no certificate at all the
    * handshake will fail and no connection will be established.
    */
-  fun requireClientAuth() {
+  public fun requireClientAuth() {
     this.clientAuth = CLIENT_AUTH_REQUIRED
   }
 
@@ -276,7 +274,7 @@ class MockWebServer : Closeable {
    * @return the head of the request queue
    */
   @Throws(InterruptedException::class)
-  fun takeRequest(): RecordedRequest = requestQueue.take()
+  public fun takeRequest(): RecordedRequest = requestQueue.take()
 
   /**
    * Awaits the next HTTP request (waiting up to the specified wait time if necessary), removes it,
@@ -288,7 +286,7 @@ class MockWebServer : Closeable {
    * @return the head of the request queue
    */
   @Throws(InterruptedException::class)
-  fun takeRequest(
+  public fun takeRequest(
     timeout: Long,
     unit: TimeUnit,
   ): RecordedRequest? = requestQueue.poll(timeout, unit)
@@ -301,7 +299,9 @@ class MockWebServer : Closeable {
    * @throws ClassCastException if the default dispatcher has been
    * replaced with [setDispatcher][dispatcher].
    */
-  fun enqueue(response: MockResponse) = (dispatcher as QueueDispatcher).enqueueResponse(response)
+  public fun enqueue(response: MockResponse) {
+    (dispatcher as QueueDispatcher).enqueue(response)
+  }
 
   /**
    * Starts the server on the loopback interface for the given port.
@@ -311,7 +311,9 @@ class MockWebServer : Closeable {
    */
   @Throws(IOException::class)
   @JvmOverloads
-  fun start(port: Int = 0) = start(InetAddress.getByName("localhost"), port)
+  public fun start(port: Int = 0) {
+    start(InetAddress.getByName("localhost"), port)
+  }
 
   /**
    * Starts the server on the given address and port.
@@ -321,10 +323,12 @@ class MockWebServer : Closeable {
    * use port 0 to avoid flakiness when a specific port is unavailable.
    */
   @Throws(IOException::class)
-  fun start(
+  public fun start(
     inetAddress: InetAddress,
     port: Int,
-  ) = start(InetSocketAddress(inetAddress, port))
+  ) {
+    start(InetSocketAddress(inetAddress, port))
+  }
 
   /**
    * Starts the server and binds to the given socket address.
@@ -334,7 +338,7 @@ class MockWebServer : Closeable {
   @Synchronized
   @Throws(IOException::class)
   private fun start(inetSocketAddress: InetSocketAddress) {
-    check(!shutdown) { "shutdown() already called" }
+    check(!closed) { "shutdown() already called" }
     if (started) return
     started = true
 
@@ -370,7 +374,7 @@ class MockWebServer : Closeable {
         httpConnection.next().closeQuietly()
         httpConnection.remove()
       }
-      dispatcher.shutdown()
+      dispatcher.close()
     }
   }
 
@@ -396,11 +400,10 @@ class MockWebServer : Closeable {
     }
   }
 
-  @Synchronized
   @Throws(IOException::class)
-  fun shutdown() {
-    if (shutdown) return
-    shutdown = true
+  public override fun close() {
+    if (closed) return
+    closed = true
 
     if (!started) return // Nothing to shut down.
     val serverSocket = this.serverSocket ?: return // If this is null, start() must have failed.
@@ -617,7 +620,7 @@ class MockWebServer : Closeable {
         }
         ShutdownInputAtEnd -> socket.shutdownInput()
         ShutdownOutputAtEnd -> socket.shutdownOutput()
-        ShutdownServerAfterResponse -> shutdown()
+        ShutdownServerAfterResponse -> close()
         else -> {
         }
       }
@@ -926,10 +929,7 @@ class MockWebServer : Closeable {
     check(line.isEmpty()) { "Expected empty but was: $line" }
   }
 
-  override fun toString(): String = "MockWebServer[$portField]"
-
-  @Throws(IOException::class)
-  override fun close() = shutdown()
+  public override fun toString(): String = "MockWebServer[$portField]"
 
   /** A buffer wrapper that drops data after [bodyLimit] bytes. */
   private class TruncatingBuffer(
@@ -1189,8 +1189,7 @@ class MockWebServer : Closeable {
     }
   }
 
-  @ExperimentalOkHttpApi
-  companion object {
+  private companion object {
     private const val CLIENT_AUTH_NONE = 0
     private const val CLIENT_AUTH_REQUESTED = 1
     private const val CLIENT_AUTH_REQUIRED = 2

@@ -217,7 +217,7 @@ class MockWebServer :
   @Synchronized
   @Throws(IOException::class)
   fun shutdown() {
-    delegate.shutdown()
+    delegate.close()
   }
 
   @Synchronized override fun after() {

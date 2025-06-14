@@ -52,7 +52,7 @@ class MockWebServerRule : ExternalResource() {
 
   override fun after() {
     try {
-      server.shutdown()
+      server.close()
     } catch (e: IOException) {
       logger.log(Level.WARNING, "MockWebServer shutdown failed", e)
     }

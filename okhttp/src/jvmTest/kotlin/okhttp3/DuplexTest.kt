@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.internal.duplex.MockSocketHandler
 import okhttp3.CallEvent.FollowUpDecision
 import okhttp3.Credentials.basic
 import okhttp3.Headers.Companion.headersOf
@@ -43,6 +42,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.duplex.AsyncRequestBody
+import okhttp3.internal.duplex.MockSocketHandler
 import okhttp3.testing.PlatformRule
 import okio.BufferedSink
 import org.junit.jupiter.api.AfterEach

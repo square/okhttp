@@ -69,7 +69,7 @@ class InterceptorTest {
 
   @Test
   fun applicationInterceptorsCanShortCircuitResponses() {
-    server.shutdown() // Accept no connections.
+    server.close() // Accept no connections.
     val request =
       Request
         .Builder()

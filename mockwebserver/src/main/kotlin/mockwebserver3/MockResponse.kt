@@ -33,50 +33,50 @@ import okhttp3.internal.http2.Settings
 import okio.Buffer
 
 /** A scripted response to be replayed by the mock web server. */
-class MockResponse {
+public class MockResponse {
   /** Returns the HTTP response line, such as "HTTP/1.1 200 OK". */
-  val status: String
+  public val status: String
 
-  val code: Int
+  public val code: Int
     get() {
       val statusParts = status.split(' ', limit = 3)
       require(statusParts.size >= 2) { "Unexpected status: $status" }
       return statusParts[1].toInt()
     }
 
-  val message: String
+  public val message: String
     get() {
       val statusParts = status.split(' ', limit = 3)
       require(statusParts.size >= 2) { "Unexpected status: $status" }
       return statusParts[2]
     }
 
-  val headers: Headers
-  val trailers: Headers
+  public val headers: Headers
+  public val trailers: Headers
 
   // At most one of (body,webSocketListener,streamHandler) is non-null.
-  val body: MockResponseBody?
-  val webSocketListener: WebSocketListener?
-  val socketHandler: SocketHandler?
+  public val body: MockResponseBody?
+  public val webSocketListener: WebSocketListener?
+  public val socketHandler: SocketHandler?
 
-  val inTunnel: Boolean
-  val informationalResponses: List<MockResponse>
+  public val inTunnel: Boolean
+  public val informationalResponses: List<MockResponse>
 
-  val throttleBytesPerPeriod: Long
-  val throttlePeriodNanos: Long
+  public val throttleBytesPerPeriod: Long
+  public val throttlePeriodNanos: Long
 
-  val socketPolicy: SocketPolicy
+  public val socketPolicy: SocketPolicy
 
-  val headersDelayNanos: Long
-  val bodyDelayNanos: Long
-  val trailersDelayNanos: Long
+  public val headersDelayNanos: Long
+  public val bodyDelayNanos: Long
+  public val trailersDelayNanos: Long
 
   /** The streams the server will push with this response. */
-  val pushPromises: List<PushPromise>
+  public val pushPromises: List<PushPromise>
 
-  val settings: Settings
+  public val settings: Settings
 
-  constructor(
+  public constructor(
     code: Int = 200,
     headers: Headers = headersOf(),
     body: String = "",
@@ -108,22 +108,22 @@ class MockResponse {
     this.settings = builder.settings
   }
 
-  fun newBuilder(): Builder = Builder(this)
+  public fun newBuilder(): Builder = Builder(this)
 
-  override fun toString(): String = status
+  public override fun toString(): String = status
 
-  class Builder : Cloneable {
-    var inTunnel: Boolean
+  public class Builder : Cloneable {
+    public var inTunnel: Boolean
       private set
 
     private val informationalResponses_: MutableList<MockResponse>
-    val informationalResponses: List<MockResponse>
+    public val informationalResponses: List<MockResponse>
       get() = informationalResponses_.toList()
 
-    var status: String
+    public var status: String
       private set
 
-    var code: Int
+    public var code: Int
       get() {
         val statusParts = status.split(' ', limit = 3)
         require(statusParts.size >= 2) { "Unexpected status: $status" }
@@ -143,11 +143,11 @@ class MockResponse {
       }
 
     private var headers_: Headers.Builder
-    val headers: Headers
+    public val headers: Headers
       get() = headers_.build()
 
     private var trailers_: Headers.Builder
-    val trailers: Headers
+    public val trailers: Headers
       get() = trailers_.build()
 
     // At most one of (body,webSocketListener,socketHandler) is non-null.
@@ -155,21 +155,21 @@ class MockResponse {
     private var socketHandlerVar: SocketHandler? = null
     private var webSocketListenerVar: WebSocketListener? = null
 
-    var body: MockResponseBody?
+    public var body: MockResponseBody?
       get() = bodyVar
       private set(value) {
         bodyVar = value
         socketHandlerVar = null
         webSocketListenerVar = null
       }
-    var socketHandler: SocketHandler?
+    public var socketHandler: SocketHandler?
       get() = socketHandlerVar
       private set(value) {
         socketHandlerVar = value
         bodyVar = null
         webSocketListenerVar = null
       }
-    var webSocketListener: WebSocketListener?
+    public var webSocketListener: WebSocketListener?
       get() = webSocketListenerVar
       private set(value) {
         webSocketListenerVar = value
@@ -177,30 +177,30 @@ class MockResponse {
         socketHandlerVar = null
       }
 
-    var throttleBytesPerPeriod: Long
+    public var throttleBytesPerPeriod: Long
       private set
-    var throttlePeriodNanos: Long
-      private set
-
-    var socketPolicy: SocketPolicy
+    public var throttlePeriodNanos: Long
       private set
 
-    var headersDelayNanos: Long
+    public var socketPolicy: SocketPolicy
       private set
-    var bodyDelayNanos: Long
+
+    public var headersDelayNanos: Long
       private set
-    var trailersDelayNanos: Long
+    public var bodyDelayNanos: Long
+      private set
+    public var trailersDelayNanos: Long
       private set
 
     private val pushPromises_: MutableList<PushPromise>
-    val pushPromises: List<PushPromise>
+    public val pushPromises: List<PushPromise>
       get() = pushPromises_.toList()
 
     private val settings_: Settings
-    val settings: Settings
+    public val settings: Settings
       get() = Settings().apply { merge(settings_) }
 
-    constructor() {
+    public constructor() {
       this.inTunnel = false
       this.informationalResponses_ = mutableListOf()
       this.status = "HTTP/1.1 200 OK"
@@ -244,13 +244,13 @@ class MockResponse {
         }
     }
 
-    fun code(code: Int) =
+    public fun code(code: Int): Builder =
       apply {
         this.code = code
       }
 
     /** Sets the status and returns this. */
-    fun status(status: String) =
+    public fun status(status: String): Builder =
       apply {
         this.status = status
       }
@@ -259,7 +259,7 @@ class MockResponse {
      * Removes all HTTP headers including any "Content-Length" and "Transfer-encoding" headers that
      * were added by default.
      */
-    fun clearHeaders() =
+    public fun clearHeaders(): Builder =
       apply {
         headers_ = Headers.Builder()
       }
@@ -268,7 +268,7 @@ class MockResponse {
      * Adds [header] as an HTTP header. For well-formed HTTP [header] should contain a name followed
      * by a colon and a value.
      */
-    fun addHeader(header: String) =
+    public fun addHeader(header: String): Builder =
       apply {
         headers_.add(header)
       }
@@ -277,52 +277,55 @@ class MockResponse {
      * Adds a new header with the name and value. This may be used to add multiple headers with the
      * same name.
      */
-    fun addHeader(
+    public fun addHeader(
       name: String,
       value: Any,
-    ) = apply {
-      headers_.add(name, value.toString())
-    }
+    ): Builder =
+      apply {
+        headers_.add(name, value.toString())
+      }
 
     /**
      * Adds a new header with the name and value. This may be used to add multiple headers with the
      * same name. Unlike [addHeader] this does not validate the name and
      * value.
      */
-    fun addHeaderLenient(
+    public fun addHeaderLenient(
       name: String,
       value: Any,
-    ) = apply {
-      addHeaderLenient(headers_, name, value.toString())
-    }
+    ): Builder =
+      apply {
+        addHeaderLenient(headers_, name, value.toString())
+      }
 
     /** Removes all headers named [name], then adds a new header with the name and value. */
-    fun setHeader(
+    public fun setHeader(
       name: String,
       value: Any,
-    ) = apply {
-      removeHeader(name)
-      addHeader(name, value)
-    }
+    ): Builder =
+      apply {
+        removeHeader(name)
+        addHeader(name, value)
+      }
 
     /** Removes all headers named [name]. */
-    fun removeHeader(name: String) =
+    public fun removeHeader(name: String): Builder =
       apply {
         headers_.removeAll(name)
       }
 
-    fun body(body: Buffer) = body(body.toMockResponseBody())
+    public fun body(body: Buffer): Builder = body(body.toMockResponseBody())
 
-    fun body(body: MockResponseBody) =
+    public fun body(body: MockResponseBody): Builder =
       apply {
         setHeader("Content-Length", body.contentLength)
         this.body = body
       }
 
     /** Sets the response body to the UTF-8 encoded bytes of [body]. */
-    fun body(body: String): Builder = body(Buffer().writeUtf8(body))
+    public fun body(body: String): Builder = body(Buffer().writeUtf8(body))
 
-    fun socketHandler(socketHandler: SocketHandler) =
+    public fun socketHandler(socketHandler: SocketHandler): Builder =
       apply {
         this.socketHandler = socketHandler
       }
@@ -330,48 +333,49 @@ class MockResponse {
     /**
      * Sets the response body to [body], chunked every [maxChunkSize] bytes.
      */
-    fun chunkedBody(
+    public fun chunkedBody(
       body: Buffer,
       maxChunkSize: Int = Int.MAX_VALUE,
-    ) = apply {
-      removeHeader("Content-Length")
-      headers_.add("Transfer-encoding: chunked")
+    ): Builder =
+      apply {
+        removeHeader("Content-Length")
+        headers_.add("Transfer-encoding: chunked")
 
-      val bytesOut = Buffer()
-      while (!body.exhausted()) {
-        val chunkSize = minOf(body.size, maxChunkSize.toLong())
-        bytesOut.writeHexadecimalUnsignedLong(chunkSize)
-        bytesOut.writeUtf8("\r\n")
-        bytesOut.write(body, chunkSize)
-        bytesOut.writeUtf8("\r\n")
+        val bytesOut = Buffer()
+        while (!body.exhausted()) {
+          val chunkSize = minOf(body.size, maxChunkSize.toLong())
+          bytesOut.writeHexadecimalUnsignedLong(chunkSize)
+          bytesOut.writeUtf8("\r\n")
+          bytesOut.write(body, chunkSize)
+          bytesOut.writeUtf8("\r\n")
+        }
+        bytesOut.writeUtf8("0\r\n") // Last chunk. Trailers follow!
+        this.body = bytesOut.toMockResponseBody()
       }
-      bytesOut.writeUtf8("0\r\n") // Last chunk. Trailers follow!
-      this.body = bytesOut.toMockResponseBody()
-    }
 
     /**
      * Sets the response body to the UTF-8 encoded bytes of [body],
      * chunked every [maxChunkSize] bytes.
      */
-    fun chunkedBody(
+    public fun chunkedBody(
       body: String,
       maxChunkSize: Int = Int.MAX_VALUE,
     ): Builder = chunkedBody(Buffer().writeUtf8(body), maxChunkSize)
 
     /** Sets the headers and returns this. */
-    fun headers(headers: Headers) =
+    public fun headers(headers: Headers): Builder =
       apply {
         this.headers_ = headers.newBuilder()
       }
 
     /** Sets the trailers and returns this. */
-    fun trailers(trailers: Headers) =
+    public fun trailers(trailers: Headers): Builder =
       apply {
         this.trailers_ = trailers.newBuilder()
       }
 
     /** Sets the socket policy and returns this. */
-    fun socketPolicy(socketPolicy: SocketPolicy) =
+    public fun socketPolicy(socketPolicy: SocketPolicy): Builder =
       apply {
         this.socketPolicy = socketPolicy
       }
@@ -380,45 +384,49 @@ class MockResponse {
      * Throttles the request reader and response writer to sleep for the given period after each
      * series of [bytesPerPeriod] bytes are transferred. Use this to simulate network behavior.
      */
-    fun throttleBody(
+    public fun throttleBody(
       bytesPerPeriod: Long,
       period: Long,
       unit: TimeUnit,
-    ) = apply {
-      throttleBytesPerPeriod = bytesPerPeriod
-      throttlePeriodNanos = unit.toNanos(period)
-    }
+    ): Builder =
+      apply {
+        throttleBytesPerPeriod = bytesPerPeriod
+        throttlePeriodNanos = unit.toNanos(period)
+      }
 
-    fun headersDelay(
+    public fun headersDelay(
       delay: Long,
       unit: TimeUnit,
-    ) = apply {
-      headersDelayNanos = unit.toNanos(delay)
-    }
+    ): Builder =
+      apply {
+        headersDelayNanos = unit.toNanos(delay)
+      }
 
     /**
      * Set the delayed time of the response body to [delay]. This applies to the response body
      * only; response headers are not affected.
      */
-    fun bodyDelay(
+    public fun bodyDelay(
       delay: Long,
       unit: TimeUnit,
-    ) = apply {
-      bodyDelayNanos = unit.toNanos(delay)
-    }
+    ): Builder =
+      apply {
+        bodyDelayNanos = unit.toNanos(delay)
+      }
 
-    fun trailersDelay(
+    public fun trailersDelay(
       delay: Long,
       unit: TimeUnit,
-    ) = apply {
-      trailersDelayNanos = unit.toNanos(delay)
-    }
+    ): Builder =
+      apply {
+        trailersDelayNanos = unit.toNanos(delay)
+      }
 
     /**
      * When [protocols][MockWebServer.protocols] include [HTTP_2][okhttp3.Protocol], this attaches a
      * pushed stream to this response.
      */
-    fun addPush(promise: PushPromise) =
+    public fun addPush(promise: PushPromise): Builder =
       apply {
         this.pushPromises_ += promise
       }
@@ -427,7 +435,7 @@ class MockResponse {
      * When [protocols][MockWebServer.protocols] include [HTTP_2][okhttp3.Protocol], this pushes
      * [settings] before writing the response.
      */
-    fun settings(settings: Settings) =
+    public fun settings(settings: Settings): Builder =
       apply {
         this.settings_.clear()
         this.settings_.merge(settings)
@@ -437,7 +445,7 @@ class MockResponse {
      * Attempts to perform a web socket upgrade on the connection.
      * This will overwrite any previously set status, body, or streamHandler.
      */
-    fun webSocketUpgrade(listener: WebSocketListener) =
+    public fun webSocketUpgrade(listener: WebSocketListener): Builder =
       apply {
         status = "HTTP/1.1 101 Switching Protocols"
         setHeader("Connection", "Upgrade")
@@ -452,7 +460,7 @@ class MockResponse {
      * When a new connection is received, all in-tunnel responses are served before the connection is
      * upgraded to HTTPS or HTTP/2.
      */
-    fun inTunnel() =
+    public fun inTunnel(): Builder =
       apply {
         removeHeader("Content-Length")
         inTunnel = true
@@ -463,18 +471,18 @@ class MockResponse {
      * [headers delay][headersDelay] applies after this response is transmitted. Set a
      * headers delay on that response to delay its transmission.
      */
-    fun addInformationalResponse(response: MockResponse) =
+    public fun addInformationalResponse(response: MockResponse): Builder =
       apply {
         informationalResponses_ += response
       }
 
-    fun add100Continue() =
+    public fun add100Continue(): Builder =
       apply {
         addInformationalResponse(MockResponse(code = 100))
       }
 
     public override fun clone(): Builder = build().newBuilder()
 
-    fun build(): MockResponse = MockResponse(this)
+    public fun build(): MockResponse = MockResponse(this)
   }
 }

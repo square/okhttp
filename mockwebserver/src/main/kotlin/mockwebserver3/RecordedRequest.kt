@@ -31,47 +31,47 @@ import okio.Buffer
 
 /** An HTTP request that came into the mock web server. */
 @ExperimentalOkHttpApi
-class RecordedRequest(
-  val requestLine: String,
+public class RecordedRequest(
+  public val requestLine: String,
   /** All headers. */
-  val headers: Headers,
+  public val headers: Headers,
   /**
    * The sizes of the chunks of this request's body, or an empty list if the request's body
    * was empty or unchunked.
    */
-  val chunkSizes: List<Int>,
+  public val chunkSizes: List<Int>,
   /** The total size of the body of this POST request (before truncation).*/
-  val bodySize: Long,
+  public val bodySize: Long,
   /** The body of this POST request. This may be truncated. */
-  val body: Buffer,
+  public val body: Buffer,
   /**
    * The index of this request on its HTTP connection. Since a single HTTP connection may serve
    * multiple requests, each request is assigned its own sequence number.
    */
-  val sequenceNumber: Int,
+  public val sequenceNumber: Int,
   socket: Socket,
   /**
    * The failure MockWebServer recorded when attempting to decode this request. If, for example,
    * the inbound request was truncated, this exception will be non-null.
    */
-  val failure: IOException? = null,
+  public val failure: IOException? = null,
 ) {
-  val method: String?
-  val path: String?
+  public val method: String?
+  public val path: String?
 
   /**
    * The TLS handshake of the connection that carried this request, or null if the request was
    * received without TLS.
    */
-  val handshake: Handshake?
-  val requestUrl: HttpUrl?
+  public val handshake: Handshake?
+  public val requestUrl: HttpUrl?
 
   /**
    * Returns the name of the server the client requested via the SNI (Server Name Indication)
    * attribute in the TLS handshake. Unlike the rest of the HTTP exchange, this name is sent in
    * cleartext and may be monitored or blocked by a proxy or other middlebox.
    */
-  val handshakeServerNames: List<String>
+  public val handshakeServerNames: List<String>
 
   init {
     if (socket is SSLSocket) {
@@ -115,5 +115,5 @@ class RecordedRequest(
     }
   }
 
-  override fun toString(): String = requestLine
+  public override fun toString(): String = requestLine
 }
