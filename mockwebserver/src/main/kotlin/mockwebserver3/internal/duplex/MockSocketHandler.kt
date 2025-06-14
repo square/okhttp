@@ -20,24 +20,38 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.FutureTask
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
-import mockwebserver3.Stream
-import mockwebserver3.StreamHandler
+import mockwebserver3.SocketHandler
+import okio.BufferedSink
+import okio.BufferedSource
+import okio.Socket
+import okio.buffer
 import okio.utf8Size
 
-private typealias Action = (Stream) -> Unit
+private typealias Action = (BufferedSocket) -> Unit
+
+private class BufferedSocket(
+  val socket: Socket,
+) {
+  val source: BufferedSource = socket.source.buffer()
+  val sink: BufferedSink = socket.sink.buffer()
+
+  fun cancel() {
+    socket.cancel()
+  }
+}
 
 /**
  * A scriptable request/response conversation. Create the script by calling methods like
  * [receiveRequest] in the sequence they are run.
  */
-class MockStreamHandler : StreamHandler {
+class MockSocketHandler : SocketHandler {
   private val actions = LinkedBlockingQueue<Action>()
   private val results = LinkedBlockingQueue<FutureTask<Void>>()
 
   fun receiveRequest(expected: String) =
     apply {
       actions += { stream ->
-        val actual = stream.requestBody.readUtf8(expected.utf8Size())
+        val actual = stream.source.readUtf8(expected.utf8Size())
         if (actual != expected) throw AssertionError("$actual != $expected")
       }
     }
@@ -45,7 +59,7 @@ class MockStreamHandler : StreamHandler {
   fun exhaustRequest() =
     apply {
       actions += { stream ->
-        if (!stream.requestBody.exhausted()) throw AssertionError("expected exhausted")
+        if (!stream.source.exhausted()) throw AssertionError("expected exhausted")
       }
     }
 
@@ -58,7 +72,7 @@ class MockStreamHandler : StreamHandler {
     apply {
       actions += { stream ->
         try {
-          stream.requestBody.exhausted()
+          stream.source.exhausted()
           throw AssertionError("expected IOException")
         } catch (expected: IOException) {
         }
@@ -71,15 +85,15 @@ class MockStreamHandler : StreamHandler {
     responseSent: CountDownLatch = CountDownLatch(0),
   ) = apply {
     actions += { stream ->
-      stream.responseBody.writeUtf8(s)
-      stream.responseBody.flush()
+      stream.sink.writeUtf8(s)
+      stream.sink.flush()
       responseSent.countDown()
     }
   }
 
   fun exhaustResponse() =
     apply {
-      actions += { stream -> stream.responseBody.close() }
+      actions += { stream -> stream.sink.close() }
     }
 
   fun sleep(
@@ -89,20 +103,20 @@ class MockStreamHandler : StreamHandler {
     actions += { Thread.sleep(unit.toMillis(duration)) }
   }
 
-  override fun handle(stream: Stream) {
-    val task = serviceStreamTask(stream)
+  override fun handle(socket: Socket) {
+    val task = serviceSocketTask(BufferedSocket(socket))
     results.add(task)
     task.run()
   }
 
-  /** Returns a task that processes both request and response from [stream]. */
-  private fun serviceStreamTask(stream: Stream): FutureTask<Void> {
+  /** Returns a task that processes both request and response from [socket]. */
+  private fun serviceSocketTask(socket: BufferedSocket): FutureTask<Void> {
     return FutureTask<Void> {
-      stream.requestBody.use {
-        stream.responseBody.use {
+      socket.source.use {
+        socket.sink.use {
           while (true) {
             val action = actions.poll() ?: break
-            action(stream)
+            action(socket)
           }
         }
       }
