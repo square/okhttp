@@ -31,40 +31,32 @@ public class RecordedRequest(
    * multiple requests, each request is assigned its own sequence number.
    */
   public val sequenceNumber: Int,
-
   /**
    * The TLS handshake of the connection that carried this request, or null if the request was
    * received without TLS.
    */
   public val handshake: Handshake?,
-
   /**
    * Returns the name of the server the client requested via the SNI (Server Name Indication)
    * attribute in the TLS handshake. Unlike the rest of the HTTP exchange, this name is sent in
    * cleartext and may be monitored or blocked by a proxy or other middlebox.
    */
   public val handshakeServerNames: List<String>,
-
   public val requestUrl: HttpUrl?,
   public val requestLine: String,
   public val method: String?,
   public val path: String?,
-
   /** All headers. */
   public val headers: Headers,
-
   /** The body of this request, or [ByteString.EMPTY] if it has none. This may be truncated. */
   public val body: ByteString,
-
   /** The total size of the body of this request (before truncation).*/
   public val bodySize: Long,
-
   /**
    * The sizes of the chunks of this request's body, or an empty list if the request's body
    * was empty or unchunked.
    */
   public val chunkSizes: List<Int>,
-
   /**
    * The failure MockWebServer recorded when attempting to decode this request. If, for example,
    * the inbound request was truncated, this exception will be non-null.

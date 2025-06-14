@@ -37,7 +37,7 @@ internal fun RecordedRequest(
   sequenceNumber: Int,
   socket: Socket,
   failure: IOException? = null,
-) : RecordedRequest {
+): RecordedRequest {
   val handshake: Handshake?
   val handshakeServerNames: List<String>
   if (socket is SSLSocket) {
