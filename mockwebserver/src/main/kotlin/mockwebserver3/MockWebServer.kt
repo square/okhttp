@@ -596,8 +596,15 @@ class MockWebServer : Closeable {
         "Upgrade".equals(request.headers["Connection"], ignoreCase = true) &&
           "websocket".equals(request.headers["Upgrade"], ignoreCase = true)
       val responseWantsWebSockets = response.webSocketListener != null
+      val requestWantsTcp =
+        "Upgrade".equals(request.headers["Connection"], ignoreCase = true) &&
+          "tcp".equals(request.headers["Upgrade"], ignoreCase = true)
+      val responseWantsStream = response.socketHandler != null
       if (requestWantsWebSockets && responseWantsWebSockets) {
         handleWebSocketUpgrade(socket, source, sink, request, response)
+        reuseSocket = false
+      } else if (requestWantsTcp && responseWantsStream) {
+        writeHttpResponse(socket, sink, response)
         reuseSocket = false
       } else {
         writeHttpResponse(socket, sink, response)
@@ -848,6 +855,23 @@ class MockWebServer : Closeable {
     sink.writeUtf8("\r\n")
 
     writeHeaders(sink, response.headers)
+
+    if (response.socketHandler != null) {
+      response.socketHandler.handle(
+        object : okio.Socket {
+          override val source: BufferedSource
+            get() = socket.source().buffer()
+          override val sink: BufferedSink
+            get() = socket.sink().buffer()
+
+          override fun cancel() {
+            socket.sink().flush()
+            socket.closeQuietly()
+          }
+        },
+      )
+      return
+    }
 
     val body = response.body ?: return
     sleepNanos(response.bodyDelayNanos)
