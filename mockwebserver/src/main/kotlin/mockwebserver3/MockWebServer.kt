@@ -63,6 +63,7 @@ import mockwebserver3.SocketPolicy.ShutdownInputAtEnd
 import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
 import mockwebserver3.SocketPolicy.ShutdownServerAfterResponse
 import mockwebserver3.SocketPolicy.StallSocketAtStart
+import mockwebserver3.internal.RecordedRequest
 import mockwebserver3.internal.ThrottledSink
 import mockwebserver3.internal.TriggerSink
 import mockwebserver3.internal.sleepNanos

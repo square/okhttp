@@ -145,9 +145,9 @@ public class mockwebserver3/QueueDispatcher : mockwebserver3/Dispatcher {
 }
 
 public final class mockwebserver3/RecordedRequest {
-	public fun <init> (Ljava/lang/String;Lokhttp3/Headers;Ljava/util/List;JLokio/Buffer;ILjava/net/Socket;Ljava/io/IOException;)V
-	public synthetic fun <init> (Ljava/lang/String;Lokhttp3/Headers;Ljava/util/List;JLokio/Buffer;ILjava/net/Socket;Ljava/io/IOException;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getBody ()Lokio/Buffer;
+	public fun <init> (ILokhttp3/Handshake;Ljava/util/List;Lokhttp3/HttpUrl;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lokhttp3/Headers;Lokio/ByteString;JLjava/util/List;Ljava/io/IOException;)V
+	public synthetic fun <init> (ILokhttp3/Handshake;Ljava/util/List;Lokhttp3/HttpUrl;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lokhttp3/Headers;Lokio/ByteString;JLjava/util/List;Ljava/io/IOException;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getBody ()Lokio/ByteString;
 	public final fun getBodySize ()J
 	public final fun getChunkSizes ()Ljava/util/List;
 	public final fun getFailure ()Ljava/io/IOException;

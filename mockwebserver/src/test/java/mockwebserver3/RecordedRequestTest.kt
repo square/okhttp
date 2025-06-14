@@ -20,6 +20,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import java.net.InetAddress
 import java.net.Socket
+import mockwebserver3.internal.RecordedRequest
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okio.Buffer
