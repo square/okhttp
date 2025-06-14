@@ -587,7 +587,7 @@ class MockWebServerTest {
     val reader = BufferedReader(InputStreamReader(inputStream, UTF_8))
     assertThat(reader.readLine()).isEqualTo("response")
     val request = server.takeRequest()
-    assertThat(request.body.readUtf8()).isEqualTo("request")
+    assertThat(request.body.utf8()).isEqualTo("request")
   }
 
   @Test
@@ -608,7 +608,7 @@ class MockWebServerTest {
     val reader = BufferedReader(InputStreamReader(inputStream, UTF_8))
     assertThat(reader.readLine()).isEqualTo("response")
     val request = server.takeRequest()
-    assertThat(request.body.readUtf8()).isEqualTo("request")
+    assertThat(request.body.utf8()).isEqualTo("request")
   }
 
   @Test

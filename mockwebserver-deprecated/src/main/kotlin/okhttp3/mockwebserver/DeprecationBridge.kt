@@ -30,6 +30,7 @@ import mockwebserver3.SocketPolicy.ShutdownInputAtEnd
 import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
 import mockwebserver3.SocketPolicy.ShutdownServerAfterResponse
 import mockwebserver3.SocketPolicy.StallSocketAtStart
+import okio.Buffer
 
 internal fun Dispatcher.wrap(): mockwebserver3.Dispatcher {
   if (this is QueueDispatcher) return this.delegate
@@ -97,7 +98,7 @@ internal fun mockwebserver3.RecordedRequest.unwrap(): RecordedRequest =
     headers = headers,
     chunkSizes = chunkSizes,
     bodySize = bodySize,
-    body = body,
+    body = Buffer().write(body),
     sequenceNumber = sequenceNumber,
     failure = failure,
     method = method,

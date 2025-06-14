@@ -296,7 +296,7 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("ABCDE")
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
-    assertArrayEquals(postBytes, request.body.readByteArray())
+    assertArrayEquals(postBytes, request.body.toByteArray())
     assertThat(request.headers["Content-Length"]).isNull()
   }
 
@@ -329,7 +329,7 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("ABCDE")
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
-    assertArrayEquals(postBytes, request.body.readByteArray())
+    assertArrayEquals(postBytes, request.body.toByteArray())
     assertThat(request.headers["Content-Length"]!!.toInt()).isEqualTo(postBytes.size)
   }
 
@@ -364,7 +364,7 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("ABCDE")
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
-    assertArrayEquals(postBytes, request.body.readByteArray())
+    assertArrayEquals(postBytes, request.body.toByteArray())
     assertThat(request.headers["Content-Length"]!!.toInt()).isEqualTo(postBytes.size)
   }
 
