@@ -314,7 +314,7 @@ class RouteFailureTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [false, true])
-  fun proxyMoveTest(cleanShutdown: Boolean) {
+  fun proxyMoveTest(cleanClose: Boolean) {
     // Define a single Proxy at myproxy:8008 that will artificially move during the test
     val proxySelector = RecordingProxySelector()
     val socketAddress = InetSocketAddress.createUnresolved("myproxy", 8008)
@@ -348,9 +348,9 @@ class RouteFailureTest {
     println("server1.requestCount ${server1.requestCount}")
     assertThat(server1.requestCount).isEqualTo(1)
 
-    // Shutdown the proxy server
-    if (cleanShutdown) {
-      server1.shutdown()
+    // Close the proxy server
+    if (cleanClose) {
+      server1.close()
     }
 
     // Now redirect with DNS to proxyServer2
@@ -362,7 +362,7 @@ class RouteFailureTest {
     executeSynchronously(request)
       .apply {
         // We may have a single failed request if not clean shutdown
-        if (cleanShutdown) {
+        if (cleanClose) {
           assertSuccessful()
           assertCode(200)
 

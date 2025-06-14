@@ -1262,9 +1262,9 @@ open class CallTest {
           return super.dispatch(request)
         }
       }
-    dispatcher.enqueueResponse(MockResponse(body = "seed connection pool"))
-    dispatcher.enqueueResponse(MockResponse(socketPolicy = DisconnectAfterRequest))
-    dispatcher.enqueueResponse(MockResponse(body = "retry success"))
+    dispatcher.enqueue(MockResponse(body = "seed connection pool"))
+    dispatcher.enqueue(MockResponse(socketPolicy = DisconnectAfterRequest))
+    dispatcher.enqueue(MockResponse(body = "retry success"))
     server.dispatcher = dispatcher
     listener =
       object : RecordingEventListener() {
@@ -4159,7 +4159,7 @@ open class CallTest {
 
   @Test
   fun connectFails() {
-    server.shutdown()
+    server.close()
     executeSynchronously("/")
       .assertFailure(IOException::class.java)
   }
@@ -4177,7 +4177,7 @@ open class CallTest {
             .addProxy(server2.toProxyAddress())
             .addProxy(Proxy.NO_PROXY),
         ).build()
-    server2.shutdown()
+    server2.close()
     val request =
       Request(
         url = server.url("/"),

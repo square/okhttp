@@ -80,7 +80,7 @@ class MockWebServerTest {
 
   @AfterEach
   fun tearDown() {
-    server.shutdown()
+    server.close()
   }
 
   @Test
@@ -469,9 +469,9 @@ class MockWebServerTest {
   }
 
   @Test
-  fun shutdownWithoutStart() {
+  fun closeWithoutStart() {
     val server = MockWebServer()
-    server.shutdown()
+    server.close()
   }
 
   @Test
@@ -481,10 +481,10 @@ class MockWebServerTest {
   }
 
   @Test
-  fun shutdownWithoutEnqueue() {
+  fun closeWithoutEnqueue() {
     val server = MockWebServer()
     server.start()
-    server.shutdown()
+    server.close()
   }
 
   @Test
@@ -506,11 +506,11 @@ class MockWebServerTest {
   fun differentInstancesGetDifferentPorts() {
     val other = MockWebServer()
     assertThat(other.port).isNotEqualTo(server.port)
-    other.shutdown()
+    other.close()
   }
 
   @Test
-  fun shutdownWhileBlockedDispatching() {
+  fun closeWhileBlockedDispatching() {
     // Enqueue a request that'll cause MockWebServer to hang on QueueDispatcher.dispatch().
     val connection = server.url("/").toUrl().openConnection() as HttpURLConnection
     connection.readTimeout = 500
@@ -521,8 +521,8 @@ class MockWebServerTest {
       // Expected.
     }
 
-    // Shutting down the server should unblock the dispatcher.
-    server.shutdown()
+    // Closing the server should unblock the dispatcher.
+    server.close()
   }
 
   @Test
@@ -764,20 +764,20 @@ class MockWebServerTest {
     val server2 = MockWebServer()
     server2.start()
     server2.start()
-    server2.shutdown()
+    server2.close()
   }
 
   @Test
-  fun shutdownTwice() {
+  fun closeTwice() {
     val server2 = MockWebServer()
     server2.start()
-    server2.shutdown()
+    server2.close()
     try {
       server2.start()
       fail<Unit>()
     } catch (expected: IllegalStateException) {
       // Expected.
     }
-    server2.shutdown()
+    server2.close()
   }
 }

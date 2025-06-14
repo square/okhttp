@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package mockwebserver3.internal.duplex
+package okhttp3.internal.duplex
 
 import java.io.IOException
 import java.util.concurrent.CountDownLatch

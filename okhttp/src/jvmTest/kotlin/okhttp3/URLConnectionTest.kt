@@ -273,7 +273,7 @@ class URLConnectionTest {
   @Test
   fun connectRetriesUntilConnectedOrFailed() {
     val request = newRequest("/foo")
-    server.shutdown()
+    server.close()
     assertFailsWith<IOException> {
       getResponse(request)
     }
@@ -301,7 +301,7 @@ class URLConnectionTest {
             .addProxy(server2.toProxyAddress())
             .addProxy(Proxy.NO_PROXY),
         ).build()
-    server2.shutdown()
+    server2.close()
     val request =
       Request(
         url = server.url("/def"),
@@ -3297,7 +3297,7 @@ class URLConnectionTest {
     val source1 = connection1.body.source()
     source1.timeout().timeout(100, TimeUnit.MILLISECONDS)
     assertThat(readAscii(source1.inputStream(), Int.MAX_VALUE)).isEqualTo("ABC")
-    server.shutdown()
+    server.close()
     assertFailsWith<ConnectException> {
       getResponse(newRequest("/"))
     }

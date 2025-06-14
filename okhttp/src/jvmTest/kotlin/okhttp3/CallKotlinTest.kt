@@ -234,7 +234,7 @@ class CallKotlinTest {
     val proxySelector = RecordingProxySelector()
     proxySelector.proxies.add(Proxy(Proxy.Type.HTTP, TestUtil.UNREACHABLE_ADDRESS_IPV4))
     proxySelector.proxies.add(Proxy.NO_PROXY)
-    server.shutdown()
+    server.close()
 
     client =
       client

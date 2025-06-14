@@ -40,7 +40,7 @@ internal fun Dispatcher.wrap(): mockwebserver3.Dispatcher {
 
     override fun peek(): mockwebserver3.MockResponse = delegate.peek().wrap()
 
-    override fun shutdown() {
+    override fun close() {
       delegate.shutdown()
     }
   }

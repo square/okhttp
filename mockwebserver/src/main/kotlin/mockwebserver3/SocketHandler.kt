@@ -15,7 +15,6 @@
  */
 package mockwebserver3
 
-import okhttp3.ExperimentalOkHttpApi
 import okio.Socket
 
 /**
@@ -24,7 +23,6 @@ import okio.Socket
  *
  * See [okhttp3.RequestBody.isDuplex].
  */
-@ExperimentalOkHttpApi
-interface SocketHandler {
-  fun handle(socket: Socket)
+public interface SocketHandler {
+  public fun handle(socket: Socket)
 }

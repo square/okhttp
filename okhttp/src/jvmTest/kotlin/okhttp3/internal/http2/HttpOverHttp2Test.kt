@@ -1229,14 +1229,14 @@ class HttpOverHttp2Test {
         CountDownLatch(0),
       )
     val dispatcher = RespondAfterCancelDispatcher(responseDequeuedLatches, requestCanceledLatches)
-    dispatcher.enqueueResponse(
+    dispatcher.enqueue(
       MockResponse
         .Builder()
         .bodyDelay(10, TimeUnit.SECONDS)
         .body("abc")
         .build(),
     )
-    dispatcher.enqueueResponse(
+    dispatcher.enqueue(
       MockResponse(body = "def"),
     )
     server.dispatcher = dispatcher
@@ -1275,21 +1275,21 @@ class HttpOverHttp2Test {
         CountDownLatch(0),
       )
     val dispatcher = RespondAfterCancelDispatcher(responseDequeuedLatches, requestCanceledLatches)
-    dispatcher.enqueueResponse(
+    dispatcher.enqueue(
       MockResponse
         .Builder()
         .bodyDelay(10, TimeUnit.SECONDS)
         .body("abc")
         .build(),
     )
-    dispatcher.enqueueResponse(
+    dispatcher.enqueue(
       MockResponse
         .Builder()
         .bodyDelay(10, TimeUnit.SECONDS)
         .body("def")
         .build(),
     )
-    dispatcher.enqueueResponse(
+    dispatcher.enqueue(
       MockResponse(body = "ghi"),
     )
     server.dispatcher = dispatcher
@@ -2094,20 +2094,20 @@ class HttpOverHttp2Test {
     assumeTrue(protocol === Protocol.HTTP_2)
     server.useHttps(handshakeCertificates.sslSocketFactory())
     val queueDispatcher = QueueDispatcher()
-    queueDispatcher.enqueueResponse(
+    queueDispatcher.enqueue(
       MockResponse
         .Builder()
         .inTunnel()
         .build(),
     )
-    queueDispatcher.enqueueResponse(
+    queueDispatcher.enqueue(
       MockResponse
         .Builder()
         .inTunnel()
         .build(),
     )
-    queueDispatcher.enqueueResponse(MockResponse(body = "call2 response"))
-    queueDispatcher.enqueueResponse(MockResponse(body = "call1 response"))
+    queueDispatcher.enqueue(MockResponse(body = "call2 response"))
+    queueDispatcher.enqueue(MockResponse(body = "call1 response"))
 
     // We use a re-entrant dispatcher to initiate one HTTPS connection while the other is in flight.
     server.dispatcher =
@@ -2138,8 +2138,8 @@ class HttpOverHttp2Test {
 
         override fun peek(): MockResponse = queueDispatcher.peek()
 
-        override fun shutdown() {
-          queueDispatcher.shutdown()
+        override fun close() {
+          queueDispatcher.close()
         }
       }
     client =
@@ -2266,7 +2266,7 @@ class HttpOverHttp2Test {
               ) {
                 try {
                   if (callCount++ == 1) {
-                    server.shutdown()
+                    server.close()
                   }
                 } catch (e: IOException) {
                   fail("")
