@@ -66,7 +66,7 @@ import mockwebserver3.SocketPolicy.StallSocketAtStart
 import mockwebserver3.internal.RecordedRequest
 import mockwebserver3.internal.ThrottledSink
 import mockwebserver3.internal.TriggerSink
-import mockwebserver3.internal.sleepNanos
+import mockwebserver3.internal.sleepWhileOpen
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
@@ -847,14 +847,14 @@ public class MockWebServer : Closeable {
     sink: BufferedSink,
     response: MockResponse,
   ) {
-    sleepNanos(response.headersDelayNanos)
+    socket.sleepWhileOpen(response.headersDelayNanos)
     sink.writeUtf8(response.status)
     sink.writeUtf8("\r\n")
 
     writeHeaders(sink, response.headers)
 
     val body = response.body ?: return
-    sleepNanos(response.bodyDelayNanos)
+    socket.sleepWhileOpen(response.bodyDelayNanos)
     val responseBodySink =
       sink
         .withThrottlingAndSocketPolicy(
@@ -866,7 +866,7 @@ public class MockWebServer : Closeable {
     body.writeTo(responseBodySink)
     responseBodySink.emit()
 
-    sleepNanos(response.trailersDelayNanos)
+    socket.sleepWhileOpen(response.trailersDelayNanos)
     if ("chunked".equals(response.headers["Transfer-Encoding"], ignoreCase = true)) {
       writeHeaders(sink, response.trailers)
     }
@@ -899,6 +899,7 @@ public class MockWebServer : Closeable {
     if (policy.throttlePeriodNanos > 0L) {
       result =
         ThrottledSink(
+          socket = socket,
           delegate = result,
           bytesPerPeriod = policy.throttleBytesPerPeriod,
           periodDelayNanos = policy.throttlePeriodNanos,
@@ -1043,7 +1044,7 @@ public class MockWebServer : Closeable {
 
       val peek = dispatcher.peek()
       for (response in peek.informationalResponses) {
-        sleepNanos(response.headersDelayNanos)
+        socket.sleepWhileOpen(response.headersDelayNanos)
         stream.writeHeaders(response.toHttp2Headers(), outFinished = false, flushHeaders = true)
         if (response.code == 100) {
           readBody = true
@@ -1120,7 +1121,7 @@ public class MockWebServer : Closeable {
         "unsupported: no body and non-empty trailers $trailers"
       }
 
-      sleepNanos(response.headersDelayNanos)
+      socket.sleepWhileOpen(response.headersDelayNanos)
       stream.writeHeaders(response.toHttp2Headers(), outFinished, flushHeaders)
 
       if (trailers.size > 0) {
@@ -1128,7 +1129,7 @@ public class MockWebServer : Closeable {
       }
       pushPromises(stream, request, response.pushPromises)
       if (body != null) {
-        sleepNanos(bodyDelayNanos)
+        socket.sleepWhileOpen(bodyDelayNanos)
         val responseBodySink =
           stream
             .sink
@@ -1144,13 +1145,13 @@ public class MockWebServer : Closeable {
           // Delay trailers by sleeping before we close the stream. It's the same on the wire.
           if (response.trailersDelayNanos != 0L) {
             it.flush()
-            sleepNanos(response.trailersDelayNanos)
+            socket.sleepWhileOpen(response.trailersDelayNanos)
           }
         }
       } else if (socketHandler != null) {
         socketHandler.handle(stream)
       } else if (!outFinished) {
-        sleepNanos(response.trailersDelayNanos)
+        socket.sleepWhileOpen(response.trailersDelayNanos)
         stream.close(ErrorCode.NO_ERROR, null)
       }
     }
