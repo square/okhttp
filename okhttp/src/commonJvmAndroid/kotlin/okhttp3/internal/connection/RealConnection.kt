@@ -318,14 +318,13 @@ class RealConnection internal constructor(
     socket.soTimeout = 0
     noNewExchanges()
     return object : okio.Socket {
-      override val source: BufferedSource
-        get() = socket.source().buffer()
+      override val source: Source
+        get() = socket.source()
 
-      override val sink: BufferedSink
-        get() = socket.sink().buffer()
+      override val sink: Sink
+        get() = socket.sink()
 
       override fun cancel() {
-        socket.sink().flush()
         exchange.cancel()
       }
     }

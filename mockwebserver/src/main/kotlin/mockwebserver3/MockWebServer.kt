@@ -92,6 +92,7 @@ import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
 import okio.Sink
+import okio.Source
 import okio.Timeout
 import okio.buffer
 import okio.sink
@@ -859,13 +860,12 @@ class MockWebServer : Closeable {
     if (response.socketHandler != null) {
       response.socketHandler.handle(
         object : okio.Socket {
-          override val source: BufferedSource
-            get() = socket.source().buffer()
-          override val sink: BufferedSink
-            get() = socket.sink().buffer()
+          override val source: Source
+            get() = socket.source()
+          override val sink: Sink
+            get() = socket.sink()
 
           override fun cancel() {
-            socket.sink().flush()
             socket.closeQuietly()
           }
         },
