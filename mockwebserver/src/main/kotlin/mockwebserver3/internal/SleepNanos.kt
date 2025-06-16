@@ -30,7 +30,7 @@ internal fun Socket.sleepWhileOpen(nanos: Long) {
     ms -= 100L
   }
 
-  if (ms > 0L || nanos > 0) {
+  if (ms > 0L || ns > 0) {
     Thread.sleep(ms, ns.toInt())
   }
 }
