@@ -16,10 +16,21 @@
  */
 package mockwebserver3.internal
 
-internal fun sleepNanos(nanos: Long) {
-  val ms = nanos / 1_000_000L
+import java.io.InterruptedIOException
+import java.net.Socket
+
+/** Sleeps [nanos], throwing if the socket is closed before that period has elapsed. */
+internal fun Socket.sleepWhileOpen(nanos: Long) {
+  var ms = nanos / 1_000_000L
   val ns = nanos - (ms * 1_000_000L)
-  if (ms > 0L || nanos > 0) {
+
+  while (ms > 100) {
+    Thread.sleep(100)
+    if (isClosed) throw InterruptedIOException("socket closed")
+    ms -= 100L
+  }
+
+  if (ms > 0L || ns > 0) {
     Thread.sleep(ms, ns.toInt())
   }
 }
