@@ -1,5 +1,6 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
+import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 
 plugins {
   kotlin("jvm")
@@ -24,4 +25,8 @@ dependencies {
 
 mavenPublishing {
   configure(KotlinJvm(javadocJar = JavadocJar.Empty()))
+}
+
+kotlin {
+  explicitApi()
 }

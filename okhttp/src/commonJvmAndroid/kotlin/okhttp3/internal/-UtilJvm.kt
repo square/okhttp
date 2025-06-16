@@ -175,6 +175,13 @@ internal fun Source.skipAll(
   }
 }
 
+@Throws(IOException::class)
+internal fun BufferedSource.skipAll() {
+  while (!exhausted()) {
+    skip(buffer.size)
+  }
+}
+
 /**
  * Attempts to exhaust this, returning true if successful. This is useful when reading a complete
  * source is helpful, such as when doing so completes a cache body or frees a socket connection for
@@ -249,14 +256,27 @@ internal inline fun <T> Set<T>.unmodifiable(): Set<T> = Collections.unmodifiable
 internal inline fun <K, V> Map<K, V>.unmodifiable(): Map<K, V> = Collections.unmodifiableMap(this)
 
 /** Returns an immutable copy of this. */
-internal inline fun <reified T> List<T>.toImmutableList(): List<T> = this.toTypedArray().toImmutableList()
+@Suppress("UNCHECKED_CAST")
+internal fun <T> List<T>.toImmutableList(): List<T> =
+  when {
+    this.isEmpty() -> emptyList()
+    this.size == 1 -> Collections.singletonList(this[0])
+    // Collection.toArray returns Object[] (covariant).
+    // It is faster than creating real T[] via reflection (Arrays.copyOf).
+    else -> (this as java.util.Collection<*>).toArray().asList().unmodifiable() as List<T>
+  }
 
 /** Returns an immutable list containing [elements]. */
 @SafeVarargs
 internal fun <T> immutableListOf(vararg elements: T): List<T> = elements.toImmutableList()
 
 /** Returns an immutable list from copy of this. */
-internal fun <T> Array<out T>?.toImmutableList(): List<T> = if (this.isNullOrEmpty()) emptyList() else this.asList().unmodifiable()
+internal fun <T> Array<out T>?.toImmutableList(): List<T> =
+  when {
+    this.isNullOrEmpty() -> emptyList()
+    this.size == 1 -> Collections.singletonList(this[0])
+    else -> this.clone().asList().unmodifiable()
+  }
 
 /** Closes this, ignoring any checked exceptions. */
 internal fun Socket.closeQuietly() {

@@ -150,7 +150,11 @@ class Exchange(
   }
 
   fun webSocketUpgradeFailed() {
-    bodyComplete(-1L, responseDone = true, requestDone = true, e = null)
+    bodyComplete(
+      responseDone = true,
+      requestDone = true,
+      e = null,
+    )
   }
 
   fun noNewExchangesOnConnection() {
@@ -167,7 +171,12 @@ class Exchange(
    */
   fun detachWithViolence() {
     codec.cancel()
-    call.messageDone(this, requestDone = true, responseDone = true, e = null)
+    call.messageDone(
+      exchange = this,
+      requestDone = true,
+      responseDone = true,
+      e = null,
+    )
   }
 
   private fun trackFailure(e: IOException) {
@@ -176,9 +185,9 @@ class Exchange(
   }
 
   fun <E : IOException?> bodyComplete(
-    bytesRead: Long,
-    responseDone: Boolean,
-    requestDone: Boolean,
+    bytesRead: Long = -1L,
+    responseDone: Boolean = false,
+    requestDone: Boolean = false,
     e: E,
   ): E {
     if (e != null) {
@@ -198,11 +207,20 @@ class Exchange(
         eventListener.responseBodyEnd(call, bytesRead)
       }
     }
-    return call.messageDone(this, requestDone, responseDone, e)
+    return call.messageDone(
+      exchange = this,
+      requestDone = requestDone,
+      responseDone = responseDone,
+      e = e,
+    )
   }
 
   fun noRequestBody() {
-    call.messageDone(this, requestDone = true, responseDone = false, e = null)
+    call.messageDone(
+      exchange = this,
+      requestDone = true,
+      e = null,
+    )
   }
 
   /** A request body that fires events when it completes. */
@@ -261,7 +279,11 @@ class Exchange(
     private fun <E : IOException?> complete(e: E): E {
       if (completed) return e
       completed = true
-      return bodyComplete(bytesReceived, responseDone = false, requestDone = true, e = e)
+      return bodyComplete(
+        bytesRead = bytesReceived,
+        requestDone = true,
+        e = e,
+      )
     }
   }
 
@@ -306,7 +328,7 @@ class Exchange(
         }
 
         bytesReceived = newBytesReceived
-        if (newBytesReceived == contentLength) {
+        if (codec.isResponseComplete) {
           complete(null)
         }
 
@@ -336,7 +358,11 @@ class Exchange(
         invokeStartEvent = false
         eventListener.responseBodyStart(call)
       }
-      return bodyComplete(bytesReceived, responseDone = true, requestDone = false, e = e)
+      return bodyComplete(
+        bytesRead = bytesReceived,
+        responseDone = true,
+        e = e,
+      )
     }
   }
 }

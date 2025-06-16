@@ -40,8 +40,8 @@ jobs:
       - name: Upload Artifacts
         run: ./gradlew clean publish --stacktrace
         env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME_COM_SQUAREUP }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD_COM_SQUAREUP }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SECRET_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SECRET_PASSPHRASE }}
 
@@ -634,7 +634,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: 21
+          java-version: 24
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -646,7 +646,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dokhttp.platform=loom -Dtest.java.version=21 -PcontainerTests=true
+        run: ./gradlew test -Dokhttp.platform=loom -Dtest.java.version=24 -PcontainerTests=true
 
 
   testandroidregression:

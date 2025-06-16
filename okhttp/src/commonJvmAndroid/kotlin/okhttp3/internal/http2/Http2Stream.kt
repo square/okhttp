@@ -32,6 +32,7 @@ import okio.AsyncTimeout
 import okio.Buffer
 import okio.BufferedSource
 import okio.Sink
+import okio.Socket
 import okio.Source
 import okio.Timeout
 
@@ -43,7 +44,8 @@ class Http2Stream internal constructor(
   outFinished: Boolean,
   inFinished: Boolean,
   headers: Headers?,
-) : Lockable {
+) : Lockable,
+  Socket {
   // Internal state is guarded by `this`. No long-running or potentially blocking operations are
   // performed while the lock is held.
 
@@ -64,12 +66,12 @@ class Http2Stream internal constructor(
   /** True if response headers have been sent or received. */
   private var hasResponseHeaders: Boolean = false
 
-  internal val source =
+  override val source =
     FramingSource(
       maxByteCount = connection.okHttpSettings.initialWindowSize.toLong(),
       finished = inFinished,
     )
-  internal val sink =
+  override val sink =
     FramingSink(
       finished = outFinished,
     )
@@ -129,6 +131,9 @@ class Http2Stream internal constructor(
       val streamIsClient = (id and 1) == 1
       return connection.client == streamIsClient
     }
+
+  val isSourceComplete: Boolean
+    get() = withLock { source.finished && source.readBuffer.exhausted() }
 
   /**
    * Removes and returns the stream's received response headers, blocking if necessary until headers
@@ -231,24 +236,6 @@ class Http2Stream internal constructor(
 
   fun writeTimeout(): Timeout = writeTimeout
 
-  /** Returns a source that reads data from the peer. */
-  fun getSource(): Source = source
-
-  /**
-   * Returns a sink that can be used to write data to the peer.
-   *
-   * @throws IllegalStateException if this stream was initiated by the peer and a [writeHeaders] has
-   *     not yet been sent.
-   */
-  fun getSink(): Sink {
-    withLock {
-      check(hasResponseHeaders || isLocallyInitiated) {
-        "reply before requesting the sink"
-      }
-    }
-    return sink
-  }
-
   /**
    * Abnormally terminate this stream. This blocks until the `RST_STREAM` frame has been
    * transmitted.
@@ -262,6 +249,10 @@ class Http2Stream internal constructor(
       return // Already closed.
     }
     connection.writeSynReset(id, rstStatusCode)
+  }
+
+  override fun cancel() {
+    closeLater(ErrorCode.CANCEL)
   }
 
   /**
@@ -569,7 +560,7 @@ class Http2Stream internal constructor(
   }
 
   /** A sink that writes outgoing data frames of a stream. This class is not thread safe. */
-  internal inner class FramingSink(
+  inner class FramingSink(
     /** True if either side has cleanly shut down this stream. We shall send no more bytes. */
     var finished: Boolean = false,
   ) : Sink {

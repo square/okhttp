@@ -20,7 +20,6 @@ import java.net.InetAddress
 import java.net.Proxy
 import java.net.Socket
 import okhttp3.Connection
-import okhttp3.ConnectionListener
 import okhttp3.EventListener
 import okhttp3.Handshake
 import okhttp3.HttpUrl

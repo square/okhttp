@@ -15,18 +15,17 @@
  */
 package mockwebserver3
 
+import java.io.Closeable
 import mockwebserver3.SocketPolicy.KeepOpen
-import okhttp3.ExperimentalOkHttpApi
 
 /** Handler for mock server requests. */
-@ExperimentalOkHttpApi
-abstract class Dispatcher {
+public abstract class Dispatcher : Closeable {
   /**
    * Returns a response to satisfy `request`. This method may block (for instance, to wait on
    * a CountdownLatch).
    */
   @Throws(InterruptedException::class)
-  abstract fun dispatch(request: RecordedRequest): MockResponse
+  public abstract fun dispatch(request: RecordedRequest): MockResponse
 
   /**
    * Returns an early guess of the next response, used for policy on how an incoming request should
@@ -34,12 +33,12 @@ abstract class Dispatcher {
    * can return other values to test HTTP edge cases, such as unhappy socket policies or throttled
    * request bodies.
    */
-  open fun peek(): MockResponse = MockResponse(socketPolicy = KeepOpen)
+  public open fun peek(): MockResponse = MockResponse(socketPolicy = KeepOpen)
 
   /**
    * Release any resources held by this dispatcher. Any requests that are currently being dispatched
    * should return immediately. Responses returned after shutdown will not be transmitted: their
    * socket connections have already been closed.
    */
-  open fun shutdown() {}
+  public open override fun close() {}
 }

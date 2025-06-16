@@ -32,16 +32,16 @@ import okhttp3.ExperimentalOkHttpApi
  * server has closed the socket before follow up requests are made.
  */
 @ExperimentalOkHttpApi
-sealed interface SocketPolicy {
+public sealed interface SocketPolicy {
   /**
    * Shutdown [MockWebServer] after writing response.
    */
-  object ShutdownServerAfterResponse : SocketPolicy
+  public object ShutdownServerAfterResponse : SocketPolicy
 
   /**
    * Keep the socket open after the response. This is the default HTTP/1.1 behavior.
    */
-  object KeepOpen : SocketPolicy
+  public object KeepOpen : SocketPolicy
 
   /**
    * Close the socket after the response. This is the default HTTP/1.0 behavior. For HTTP/2
@@ -51,75 +51,75 @@ sealed interface SocketPolicy {
    *
    * See [SocketPolicy] for reasons why this can cause test flakiness and how to avoid it.
    */
-  object DisconnectAtEnd : SocketPolicy
+  public object DisconnectAtEnd : SocketPolicy
 
   /**
    * Request immediate close of connection without even reading the request. Use to simulate buggy
    * SSL servers closing connections in response to unrecognized TLS extensions.
    */
-  object DisconnectAtStart : SocketPolicy
+  public object DisconnectAtStart : SocketPolicy
 
   /**
    * Close connection after reading the request but before writing the response. Use this to
    * simulate late connection pool failures.
    */
-  object DisconnectAfterRequest : SocketPolicy
+  public object DisconnectAfterRequest : SocketPolicy
 
   /**
    * Half close connection (InputStream for client) after reading the request but before
    * writing the response. Use this to simulate late connection pool failures.
    */
-  object HalfCloseAfterRequest : SocketPolicy
+  public object HalfCloseAfterRequest : SocketPolicy
 
   /** Close connection after reading half of the request body (if present). */
-  object DisconnectDuringRequestBody : SocketPolicy
+  public object DisconnectDuringRequestBody : SocketPolicy
 
   /** Close connection after writing half of the response body (if present). */
-  object DisconnectDuringResponseBody : SocketPolicy
+  public object DisconnectDuringResponseBody : SocketPolicy
 
   /**
    * Process the response without even attempting to reading the request body. For HTTP/2 this will
    * send [http2ErrorCode] after the response body or trailers. For HTTP/1 this will close the
    * socket after the response body or trailers.
    */
-  class DoNotReadRequestBody(
-    val http2ErrorCode: Int = 0,
+  public class DoNotReadRequestBody(
+    public val http2ErrorCode: Int = 0,
   ) : SocketPolicy
 
   /** Don't trust the client during the SSL handshake. */
-  object FailHandshake : SocketPolicy
+  public object FailHandshake : SocketPolicy
 
   /**
    * Shutdown the socket input after sending the response. For testing bad behavior.
    *
    * See [SocketPolicy] for reasons why this can cause test flakiness and how to avoid it.
    */
-  object ShutdownInputAtEnd : SocketPolicy
+  public object ShutdownInputAtEnd : SocketPolicy
 
   /**
    * Shutdown the socket output after sending the response. For testing bad behavior.
    *
    * See [SocketPolicy] for reasons why this can cause test flakiness and how to avoid it.
    */
-  object ShutdownOutputAtEnd : SocketPolicy
+  public object ShutdownOutputAtEnd : SocketPolicy
 
   /**
    * After accepting the connection and doing TLS (if configured) don't do HTTP/1.1 or HTTP/2
    * framing. Ignore the socket completely until the server is shut down.
    */
-  object StallSocketAtStart : SocketPolicy
+  public object StallSocketAtStart : SocketPolicy
 
   /**
    * Read the request but don't respond to it. Just keep the socket open. For testing read response
    * header timeout issue.
    */
-  object NoResponse : SocketPolicy
+  public object NoResponse : SocketPolicy
 
   /**
    * Fail HTTP/2 requests without processing them by sending [http2ErrorCode].
    */
   @ExperimentalOkHttpApi
-  class ResetStreamAtStart(
-    val http2ErrorCode: Int = 0,
+  public class ResetStreamAtStart(
+    public val http2ErrorCode: Int = 0,
   ) : SocketPolicy
 }

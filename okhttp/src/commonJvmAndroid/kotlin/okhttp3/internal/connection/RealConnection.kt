@@ -27,7 +27,6 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import okhttp3.Address
 import okhttp3.Connection
-import okhttp3.ConnectionListener
 import okhttp3.Handshake
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
@@ -67,7 +66,7 @@ import okio.buffer
  * Connections are shared in a connection pool. Accesses to the connection's state must be guarded
  * by holding a lock on the connection.
  */
-class RealConnection(
+class RealConnection internal constructor(
   val taskRunner: TaskRunner,
   val connectionPool: RealConnectionPool,
   override val route: Route,
@@ -299,7 +298,12 @@ class RealConnection(
     noNewExchanges()
     return object : RealWebSocket.Streams(true, source, sink) {
       override fun close() {
-        exchange.bodyComplete<IOException?>(-1L, responseDone = true, requestDone = true, e = null)
+        exchange.bodyComplete<IOException?>(
+          bytesRead = -1L,
+          responseDone = true,
+          requestDone = true,
+          e = null,
+        )
       }
 
       override fun cancel() {

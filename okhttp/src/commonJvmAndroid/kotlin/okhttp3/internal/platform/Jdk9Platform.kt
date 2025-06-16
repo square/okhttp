@@ -23,7 +23,11 @@ import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
 
-/** OpenJDK 9+. */
+/**
+ * OpenJDK 9+ and JDK8 build 252+.
+ *
+ * This may also be used for Android tests with Robolectric.
+ */
 open class Jdk9Platform : Platform() {
   @SuppressSignatureCheck
   override fun configureTlsExtensions(

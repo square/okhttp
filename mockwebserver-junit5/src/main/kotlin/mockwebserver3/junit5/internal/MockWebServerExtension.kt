@@ -77,7 +77,7 @@ class MockWebServerExtension :
         val toClear = servers.values.toList()
         servers.clear()
         for (server in toClear) {
-          server.shutdown()
+          server.close()
         }
       } catch (e: IOException) {
         logger.log(Level.WARNING, "MockWebServer shutdown failed", e)

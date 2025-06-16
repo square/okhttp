@@ -394,7 +394,7 @@ open class CallTest {
       .assertBody("abc")
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("POST")
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("def")
     assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
     assertThat(recordedRequest.headers["Content-Type"]).isEqualTo("text/plain; charset=utf-8")
   }
@@ -497,11 +497,11 @@ open class CallTest {
     response.body.close()
     val recordedRequest1 = server.takeRequest()
     assertThat(recordedRequest1.method).isEqualTo("POST")
-    assertThat(recordedRequest1.body.readUtf8()).isEqualTo(body)
+    assertThat(recordedRequest1.body.utf8()).isEqualTo(body)
     assertThat(recordedRequest1.headers["Authorization"]).isNull()
     val recordedRequest2 = server.takeRequest()
     assertThat(recordedRequest2.method).isEqualTo("POST")
-    assertThat(recordedRequest2.body.readUtf8()).isEqualTo(body)
+    assertThat(recordedRequest2.body.utf8()).isEqualTo(body)
     assertThat(recordedRequest2.headers["Authorization"]).isEqualTo(credential)
   }
 
@@ -609,7 +609,7 @@ open class CallTest {
       .assertBody("abc")
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("DELETE")
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("def")
   }
 
   @Test
@@ -626,7 +626,7 @@ open class CallTest {
       .assertBody("abc")
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("PUT")
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("def")
     assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
     assertThat(recordedRequest.headers["Content-Type"]).isEqualTo(
       "text/plain; charset=utf-8",
@@ -659,7 +659,7 @@ open class CallTest {
       .assertBody("abc")
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("PATCH")
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("def")
     assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
     assertThat(recordedRequest.headers["Content-Type"]).isEqualTo("text/plain; charset=utf-8")
   }
@@ -690,7 +690,7 @@ open class CallTest {
       .assertBody("abc")
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("CUSTOM")
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("def")
     assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
     assertThat(recordedRequest.headers["Content-Type"])
       .isEqualTo("text/plain; charset=utf-8")
@@ -709,7 +709,7 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.headers["Content-Type"]).isNull()
     assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("abc")
   }
 
   @Test
@@ -1262,9 +1262,9 @@ open class CallTest {
           return super.dispatch(request)
         }
       }
-    dispatcher.enqueueResponse(MockResponse(body = "seed connection pool"))
-    dispatcher.enqueueResponse(MockResponse(socketPolicy = DisconnectAfterRequest))
-    dispatcher.enqueueResponse(MockResponse(body = "retry success"))
+    dispatcher.enqueue(MockResponse(body = "seed connection pool"))
+    dispatcher.enqueue(MockResponse(socketPolicy = DisconnectAfterRequest))
+    dispatcher.enqueue(MockResponse(body = "retry success"))
     server.dispatcher = dispatcher
     listener =
       object : RecordingEventListener() {
@@ -1676,7 +1676,7 @@ open class CallTest {
       .assertCode(200)
       .assertBody("abc")
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("def")
     assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
     assertThat(recordedRequest.headers["Content-Type"]).isEqualTo("text/plain; charset=utf-8")
   }
@@ -1755,7 +1755,7 @@ open class CallTest {
     assertThat(get.sequenceNumber).isEqualTo(0)
 
     val post1 = server.takeRequest()
-    assertThat(post1.body.readUtf8()).isEqualTo("body!")
+    assertThat(post1.body.utf8()).isEqualTo("body!")
     assertThat(post1.sequenceNumber).isEqualTo(1)
 
     val get2 = server.takeRequest()
@@ -1782,10 +1782,10 @@ open class CallTest {
     val get = server.takeRequest()
     assertThat(get.sequenceNumber).isEqualTo(0)
     val post1 = server.takeRequest()
-    assertThat(post1.body.readUtf8()).isEqualTo("body!")
+    assertThat(post1.body.utf8()).isEqualTo("body!")
     assertThat(post1.sequenceNumber).isEqualTo(1)
     val post2 = server.takeRequest()
-    assertThat(post2.body.readUtf8()).isEqualTo("body!")
+    assertThat(post2.body.utf8()).isEqualTo("body!")
     assertThat(post2.sequenceNumber).isEqualTo(0)
   }
 
@@ -2203,7 +2203,7 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("Page 2")
     val page1 = server.takeRequest()
     assertThat(page1.requestLine).isEqualTo("POST /page1 HTTP/1.1")
-    assertThat(page1.body.readUtf8()).isEqualTo("Request Body")
+    assertThat(page1.body.utf8()).isEqualTo("Request Body")
     val page2 = server.takeRequest()
     assertThat(page2.requestLine).isEqualTo("GET /page2 HTTP/1.1")
   }
@@ -2264,9 +2264,9 @@ open class CallTest {
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("Body")
     val request1 = server.takeRequest()
-    assertThat(request1.body.readUtf8()).isEqualTo("Hello")
+    assertThat(request1.body.utf8()).isEqualTo("Hello")
     val request2 = server.takeRequest()
-    assertThat(request2.body.readUtf8()).isEqualTo("Hello")
+    assertThat(request2.body.utf8()).isEqualTo("Hello")
   }
 
   @Test
@@ -2403,8 +2403,8 @@ open class CallTest {
     val response = client.newCall(request).execute()
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body.string()).isEqualTo("thank you for retrying")
-    assertThat(server.takeRequest().body.readUtf8()).isEqualTo("attempt 0")
-    assertThat(server.takeRequest().body.readUtf8()).isEqualTo("attempt 1")
+    assertThat(server.takeRequest().body.utf8()).isEqualTo("attempt 0")
+    assertThat(server.takeRequest().body.utf8()).isEqualTo("attempt 1")
     assertThat(server.requestCount).isEqualTo(2)
   }
 
@@ -2439,7 +2439,7 @@ open class CallTest {
     val response = client.newCall(request).execute()
     assertThat(response.code).isEqualTo(503)
     assertThat(response.body.string()).isEqualTo("please retry")
-    assertThat(server.takeRequest().body.readUtf8()).isEqualTo("attempt 0")
+    assertThat(server.takeRequest().body.utf8()).isEqualTo("attempt 0")
     assertThat(server.requestCount).isEqualTo(1)
   }
 
@@ -2470,10 +2470,10 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("Page 2")
     val page1 = server.takeRequest()
     assertThat(page1.requestLine).isEqualTo("PROPFIND /page1 HTTP/1.1")
-    assertThat(page1.body.readUtf8()).isEqualTo("Request Body")
+    assertThat(page1.body.utf8()).isEqualTo("Request Body")
     val page2 = server.takeRequest()
     assertThat(page2.requestLine).isEqualTo("PROPFIND /page2 HTTP/1.1")
-    assertThat(page2.body.readUtf8()).isEqualTo("Request Body")
+    assertThat(page2.body.utf8()).isEqualTo("Request Body")
   }
 
   @Test
@@ -3247,7 +3247,7 @@ open class CallTest {
     executeSynchronously(request)
       .assertCode(200)
       .assertSuccessful()
-    assertThat(server.takeRequest().body.readUtf8()).isEqualTo("abc")
+    assertThat(server.takeRequest().body.utf8()).isEqualTo("abc")
   }
 
   @Test
@@ -3292,7 +3292,7 @@ open class CallTest {
       call.execute()
     }
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("")
   }
 
   @Tag("Slowish")
@@ -3319,7 +3319,7 @@ open class CallTest {
       .assertCode(200)
       .assertSuccessful()
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("abc")
   }
 
   @Test
@@ -3349,7 +3349,7 @@ open class CallTest {
       .assertCode(200)
       .assertSuccessful()
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("abc")
     assertThat(recordedRequest.headers["Link"]).isNull()
   }
 
@@ -3377,7 +3377,7 @@ open class CallTest {
       )
     executeSynchronously(request).assertCode(200).assertSuccessful()
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("abc")
   }
 
   @Test
@@ -3406,7 +3406,7 @@ open class CallTest {
       .assertCode(200)
       .assertSuccessful()
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("abc")
   }
 
   @Test
@@ -3433,7 +3433,7 @@ open class CallTest {
       .assertCode(200)
       .assertSuccessful()
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("abc")
   }
 
   @Test
@@ -3461,7 +3461,7 @@ open class CallTest {
       call.execute()
     }
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("abc")
   }
 
   @Tag("Slow")
@@ -3645,7 +3645,10 @@ open class CallTest {
   fun proxyConnectOmitsApplicationHeaders() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse(inTunnel = true),
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
     )
     server.enqueue(
       MockResponse(body = "encrypted response from the origin server"),
@@ -3719,14 +3722,18 @@ open class CallTest {
   fun proxyAuthenticateOnConnect() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse(
-        code = 407,
-        headers = headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""),
-        inTunnel = true,
-      ),
+      MockResponse
+        .Builder()
+        .code(407)
+        .headers(headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""))
+        .inTunnel()
+        .build(),
     )
     server.enqueue(
-      MockResponse(inTunnel = true),
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
     )
     server.enqueue(
       MockResponse(body = "response body"),
@@ -3793,19 +3800,25 @@ open class CallTest {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.protocols = listOf<Protocol>(Protocol.HTTP_1_1)
     server.enqueue(
-      MockResponse(
-        code = 407,
-        headers =
+      MockResponse
+        .Builder()
+        .code(407)
+        .headers(
           headersOf(
             "Proxy-Authenticate",
             "Basic realm=\"localhost\"",
             "Connection",
             "close",
           ),
-        inTunnel = true,
-      ),
+        ).inTunnel()
+        .build(),
     )
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(
       MockResponse(body = "response body"),
     )
@@ -3839,17 +3852,18 @@ open class CallTest {
     server.protocols = listOf(Protocol.HTTP_1_1)
     for (i in 0..20) {
       server.enqueue(
-        MockResponse(
-          code = 407,
-          headers =
+        MockResponse
+          .Builder()
+          .code(407)
+          .headers(
             headersOf(
               "Proxy-Authenticate",
               "Basic realm=\"localhost\"",
               "Connection",
               "close",
             ),
-          inTunnel = true,
-        ),
+          ).inTunnel()
+          .build(),
       )
     }
     client =
@@ -3876,7 +3890,12 @@ open class CallTest {
   @Test
   fun noPreemptiveProxyAuthorization() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse(body = "response body"))
     client =
       client
@@ -3905,7 +3924,12 @@ open class CallTest {
   @Test
   fun preemptiveProxyAuthentication() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse(body = "encrypted response from the origin server"))
     val credential = basic("jesse", "password1")
     client =
@@ -3943,14 +3967,20 @@ open class CallTest {
   fun preemptiveThenReactiveProxyAuthentication() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse(
-        code = HttpURLConnection.HTTP_PROXY_AUTH,
-        headers = headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""),
-        body = "proxy auth required",
-        inTunnel = true,
-      ),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_PROXY_AUTH)
+        .headers(headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""))
+        .inTunnel()
+        .body("proxy auth required")
+        .build(),
     )
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse())
     val challengeSchemes: MutableList<String?> = ArrayList()
     val credential = basic("jesse", "password1")
@@ -3987,10 +4017,11 @@ open class CallTest {
   fun proxyDisconnectsAfterRequest() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse(
-        inTunnel = true,
-        socketPolicy = DisconnectAfterRequest,
-      ),
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .socketPolicy(DisconnectAfterRequest)
+        .build(),
     )
     client =
       client
@@ -4128,7 +4159,7 @@ open class CallTest {
 
   @Test
   fun connectFails() {
-    server.shutdown()
+    server.close()
     executeSynchronously("/")
       .assertFailure(IOException::class.java)
   }
@@ -4146,14 +4177,14 @@ open class CallTest {
             .addProxy(server2.toProxyAddress())
             .addProxy(Proxy.NO_PROXY),
         ).build()
-    server2.shutdown()
+    server2.close()
     val request =
       Request(
         url = server.url("/"),
         body = "abc".toRequestBody("text/plain".toMediaType()),
       )
     executeSynchronously(request)
-    assertThat(server.takeRequest().body.readUtf8()).isEqualTo("abc")
+    assertThat(server.takeRequest().body.utf8()).isEqualTo("abc")
   }
 
   @Disabled // This may fail in DNS lookup, which we don't have timeouts for.
@@ -4399,7 +4430,12 @@ open class CallTest {
         http2 -> listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
         else -> listOf(Protocol.HTTP_1_1)
       }
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     client =
       client
         .newBuilder()

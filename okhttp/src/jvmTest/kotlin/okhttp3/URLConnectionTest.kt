@@ -273,7 +273,7 @@ class URLConnectionTest {
   @Test
   fun connectRetriesUntilConnectedOrFailed() {
     val request = newRequest("/foo")
-    server.shutdown()
+    server.close()
     assertFailsWith<IOException> {
       getResponse(request)
     }
@@ -301,7 +301,7 @@ class URLConnectionTest {
             .addProxy(server2.toProxyAddress())
             .addProxy(Proxy.NO_PROXY),
         ).build()
-    server2.shutdown()
+    server2.close()
     val request =
       Request(
         url = server.url("/def"),
@@ -309,7 +309,7 @@ class URLConnectionTest {
       )
     val response = getResponse(request)
     assertContent("abc", response)
-    assertThat(server.takeRequest().body.readUtf8()).isEqualTo("body")
+    assertThat(server.takeRequest().body.utf8()).isEqualTo("body")
   }
 
   // Check that if we don't read to the end of a response, the next request on the
@@ -973,7 +973,12 @@ class URLConnectionTest {
   private fun testConnectViaHttpProxyToHttps(proxyConfig: ProxyConfig) {
     val hostnameVerifier = RecordingHostnameVerifier()
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse(body = "this response comes via a secure proxy"))
     val url = "https://android.com/foo".toHttpUrl()
     client =
@@ -1005,10 +1010,11 @@ class URLConnectionTest {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     // The inclusion of a body in the response to a CONNECT is key to reproducing b/6754912.
     server.enqueue(
-      MockResponse(
-        body = "bogus proxy connect response content",
-        inTunnel = true,
-      ),
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .body("bogus proxy connect response content")
+        .build(),
     )
     server.enqueue(MockResponse(body = "response"))
 
@@ -1053,7 +1059,12 @@ class URLConnectionTest {
   fun proxyConnectIncludesProxyHeadersOnly() {
     val hostnameVerifier = RecordingHostnameVerifier()
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse(body = "encrypted response from the origin server"))
     client =
       client
@@ -1091,13 +1102,19 @@ class URLConnectionTest {
     java.net.Authenticator.setDefault(RecordingAuthenticator())
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse(
-        code = 407,
-        headers = headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""),
-        inTunnel = true,
-      ),
+      MockResponse
+        .Builder()
+        .code(407)
+        .headers(headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""))
+        .inTunnel()
+        .build(),
     )
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse(body = "A"))
     client =
       client
@@ -1134,7 +1151,12 @@ class URLConnectionTest {
   @Test
   fun proxyWithConnectionClose() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse(body = "this response comes via a proxy"))
     client =
       client
@@ -1161,7 +1183,12 @@ class URLConnectionTest {
     val socketFactory = handshakeCertificates.sslSocketFactory()
     val hostnameVerifier = RecordingHostnameVerifier()
     server.useHttps(socketFactory)
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse(body = "response 1"))
     server.enqueue(MockResponse(body = "response 2"))
     client =
@@ -1680,7 +1707,7 @@ class URLConnectionTest {
       )
     assertThat(response.code).isEqualTo(200)
     val request = server.takeRequest()
-    assertThat(request.body.readUtf8()).isEqualTo("ABCDEFGHIJKLMNOPQ")
+    assertThat(request.body.utf8()).isEqualTo("ABCDEFGHIJKLMNOPQ")
     assertThat(request.chunkSizes).isEqualTo(
       Arrays.asList("ABCDEFGHIJKLMNOPQ".length),
     )
@@ -1725,7 +1752,7 @@ class URLConnectionTest {
     // No authorization header for the request...
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.headers["Authorization"]).isNull()
-    assertThat(recordedRequest.body.readUtf8()).isEqualTo("ABCD")
+    assertThat(recordedRequest.body.utf8()).isEqualTo("ABCD")
   }
 
   @Test
@@ -1775,11 +1802,11 @@ class URLConnectionTest {
     response.body.byteStream().close()
     val recordedRequest1 = server.takeRequest()
     assertThat(recordedRequest1.method).isEqualTo("POST")
-    assertThat(recordedRequest1.body.readUtf8()).isEqualTo(body)
+    assertThat(recordedRequest1.body.utf8()).isEqualTo(body)
     assertThat(recordedRequest1.headers["Authorization"]).isNull()
     val recordedRequest2 = server.takeRequest()
     assertThat(recordedRequest2.method).isEqualTo("POST")
-    assertThat(recordedRequest2.body.readUtf8()).isEqualTo(body)
+    assertThat(recordedRequest2.body.utf8()).isEqualTo(body)
     assertThat(recordedRequest2.headers["Authorization"]).isEqualTo(credential)
   }
 
@@ -2057,7 +2084,7 @@ class URLConnectionTest {
     } else if (streamingMode === TransferKind.CHUNKED) {
       assertThat(request.chunkSizes).containsExactly(4)
     }
-    assertThat(request.body.readUtf8()).isEqualTo("ABCD")
+    assertThat(request.body.utf8()).isEqualTo("ABCD")
   }
 
   @Test
@@ -2104,7 +2131,7 @@ class URLConnectionTest {
       assertThat(request.headers["Authorization"]).isEqualTo(
         "Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
       )
-      assertThat(request.body.readUtf8()).isEqualTo("ABCD")
+      assertThat(request.body.utf8()).isEqualTo("ABCD")
     }
   }
 
@@ -2623,7 +2650,7 @@ class URLConnectionTest {
       .isEqualTo("Page 2")
     val page1 = server.takeRequest()
     assertThat(page1.requestLine).isEqualTo("POST /page1 HTTP/1.1")
-    assertThat(page1.body.readUtf8()).isEqualTo("ABCD")
+    assertThat(page1.body.utf8()).isEqualTo("ABCD")
     val page2 = server.takeRequest()
     assertThat(page2.requestLine).isEqualTo("GET /page2 HTTP/1.1")
   }
@@ -2775,7 +2802,7 @@ class URLConnectionTest {
     val responseString = readAscii(response.body.byteStream(), Int.MAX_VALUE)
     val page1 = server.takeRequest()
     assertThat(page1.requestLine).isEqualTo("POST /page1 HTTP/1.1")
-    assertThat(page1.body.readUtf8()).isEqualTo("ABCD")
+    assertThat(page1.body.utf8()).isEqualTo("ABCD")
     assertThat(server.requestCount).isEqualTo(1)
     assertThat(responseString).isEqualTo("This page has moved!")
   }
@@ -2803,7 +2830,7 @@ class URLConnectionTest {
     val responseString = readAscii(response.body.byteStream(), Int.MAX_VALUE)
     val page1 = server.takeRequest()
     assertThat(page1.requestLine).isEqualTo("POST /page1 HTTP/1.1")
-    assertThat(page1.body.readUtf8()).isEqualTo("ABCD")
+    assertThat(page1.body.utf8()).isEqualTo("ABCD")
     assertThat(server.requestCount).isEqualTo(1)
     assertThat(responseString).isEqualTo("This page has moved!")
   }
@@ -2951,9 +2978,9 @@ class URLConnectionTest {
     assertThat(readAscii(response.body.byteStream(), Int.MAX_VALUE))
       .isEqualTo("Body")
     val request1 = server.takeRequest()
-    assertThat(request1.body.readUtf8()).isEqualTo("Hello")
+    assertThat(request1.body.utf8()).isEqualTo("Hello")
     val request2 = server.takeRequest()
-    assertThat(request2.body.readUtf8()).isEqualTo("Hello")
+    assertThat(request2.body.utf8()).isEqualTo("Hello")
   }
 
   @Test
@@ -3066,7 +3093,7 @@ class URLConnectionTest {
       )
     assertThat(response.code).isEqualTo(200)
     val request = server.takeRequest()
-    assertThat(request.body.readUtf8()).isEqualTo("ABC")
+    assertThat(request.body.utf8()).isEqualTo("ABC")
   }
 
   @Test
@@ -3270,7 +3297,7 @@ class URLConnectionTest {
     val source1 = connection1.body.source()
     source1.timeout().timeout(100, TimeUnit.MILLISECONDS)
     assertThat(readAscii(source1.inputStream(), Int.MAX_VALUE)).isEqualTo("ABC")
-    server.shutdown()
+    server.close()
     assertFailsWith<ConnectException> {
       getResponse(newRequest("/"))
     }
@@ -3489,7 +3516,7 @@ class URLConnectionTest {
     assertThat(requestA.path).isEqualTo("/a")
     val requestB = server.takeRequest()
     assertThat(requestB.path).isEqualTo("/b")
-    assertThat(requestB.body.readUtf8()).isEqualTo(requestBody)
+    assertThat(requestB.body.utf8()).isEqualTo(requestBody)
   }
 
   @Test
@@ -3511,10 +3538,10 @@ class URLConnectionTest {
     val get = server.takeRequest()
     assertThat(get.sequenceNumber).isEqualTo(0)
     val post1 = server.takeRequest()
-    assertThat(post1.body.readUtf8()).isEqualTo("body!")
+    assertThat(post1.body.utf8()).isEqualTo("body!")
     assertThat(post1.sequenceNumber).isEqualTo(1)
     val post2 = server.takeRequest()
-    assertThat(post2.body.readUtf8()).isEqualTo("body!")
+    assertThat(post2.body.utf8()).isEqualTo("body!")
     assertThat(post2.sequenceNumber).isEqualTo(0)
   }
 
@@ -4116,7 +4143,7 @@ class URLConnectionTest {
     assertThat(response.code).isEqualTo(200)
     val request = server.takeRequest()
     assertThat(request.method).isEqualTo("DELETE")
-    assertThat(request.body.readUtf8()).isEqualTo("BODY")
+    assertThat(request.body.utf8()).isEqualTo("BODY")
   }
 
   @Test
@@ -4231,7 +4258,7 @@ class URLConnectionTest {
     val request1 = server.takeRequest()
     assertThat(request1.sequenceNumber).isEqualTo(0)
     val request2 = server.takeRequest()
-    assertThat(request2.body.readUtf8()).isEqualTo("123")
+    assertThat(request2.body.utf8()).isEqualTo("123")
     assertThat(request2.sequenceNumber).isEqualTo(0)
   }
 
