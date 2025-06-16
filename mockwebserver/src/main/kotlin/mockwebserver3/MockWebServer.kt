@@ -401,7 +401,6 @@ public class MockWebServer : Closeable {
     }
   }
 
-  @Throws(IOException::class)
   public override fun close() {
     if (closed) return
     closed = true
@@ -410,12 +409,12 @@ public class MockWebServer : Closeable {
     val serverSocket = this.serverSocket ?: return // If this is null, start() must have failed.
 
     // Cause acceptConnections() to break out.
-    serverSocket.close()
+    serverSocket.closeQuietly()
 
     // Await shutdown.
     for (queue in taskRunner.activeQueues()) {
       if (!queue.idleLatch().await(5, TimeUnit.SECONDS)) {
-        throw IOException("Gave up waiting for queue to shut down")
+        throw AssertionError("Gave up waiting for queue to shut down")
       }
     }
     taskRunnerBackend.shutdown()
