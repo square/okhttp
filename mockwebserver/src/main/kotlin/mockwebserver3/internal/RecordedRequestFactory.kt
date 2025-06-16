@@ -54,12 +54,13 @@ internal fun RecordedRequest(
     handshakeServerNames = listOf()
   }
 
-  val requestUrl = if (requestLine.method == "CONNECT") {
-    "${socket.scheme}://${requestLine.target}/".toHttpUrl()
-  } else {
-    requestLine.target.toHttpUrlOrNull()
-      ?: requestUrl(socket, requestLine, headers)
-  }
+  val requestUrl =
+    if (requestLine.method == "CONNECT") {
+      "${socket.scheme}://${requestLine.target}/".toHttpUrl()
+    } else {
+      requestLine.target.toHttpUrlOrNull()
+        ?: requestUrl(socket, requestLine, headers)
+    }
 
   return RecordedRequest(
     sequenceNumber = sequenceNumber,
@@ -78,10 +79,11 @@ internal fun RecordedRequest(
 }
 
 internal fun decodeRequestLine(requestLine: String?): RequestLine {
-  val parts = when {
-    requestLine != null -> requestLine.split(' ', limit = 3)
-    else -> return DEFAULT_REQUEST_LINE
-  }
+  val parts =
+    when {
+      requestLine != null -> requestLine.split(' ', limit = 3)
+      else -> return DEFAULT_REQUEST_LINE
+    }
 
   if (parts.size != 3) {
     throw ProtocolException("unexpected request line: $requestLine")
@@ -102,35 +104,39 @@ internal class RequestLine(
   override fun toString() = "$method $target $version"
 }
 
-internal val DEFAULT_REQUEST_LINE = RequestLine(
-  method = "GET",
-  target = "/",
-  version = "HTTP/1.1",
-)
+internal val DEFAULT_REQUEST_LINE =
+  RequestLine(
+    method = "GET",
+    target = "/",
+    version = "HTTP/1.1",
+  )
 
 private val Socket.scheme: String
-  get() = when (this) {
-    is SSLSocket -> "https"
-    else -> "http"
-  }
+  get() =
+    when (this) {
+      is SSLSocket -> "https"
+      else -> "http"
+    }
 
 private fun requestUrl(
   socket: Socket,
   requestLine: RequestLine,
   headers: Headers,
 ): HttpUrl {
-  val hostAndPort = headers[":authority"]
-    ?: headers["Host"]
-    ?: when (val inetAddress = socket.localAddress) {
-      is Inet6Address -> "[${inetAddress.hostAddress}]:${socket.localPort}"
-      else -> "${inetAddress.hostAddress}:${socket.localPort}"
-    }
+  val hostAndPort =
+    headers[":authority"]
+      ?: headers["Host"]
+      ?: when (val inetAddress = socket.localAddress) {
+        is Inet6Address -> "[${inetAddress.hostAddress}]:${socket.localPort}"
+        else -> "${inetAddress.hostAddress}:${socket.localPort}"
+      }
 
   // For OPTIONS, the request target may be a '*', like 'OPTIONS * HTTP/1.1'.
-  val path = when {
-    requestLine.method == "OPTIONS" && requestLine.target == "*" -> "/"
-    else -> requestLine.target
-  }
+  val path =
+    when {
+      requestLine.method == "OPTIONS" && requestLine.target == "*" -> "/"
+      else -> requestLine.target
+    }
 
   return "${socket.scheme}://$hostAndPort$path".toHttpUrl()
 }

@@ -74,8 +74,16 @@ class RecordedRequestTest {
         localPort = 80,
       )
     val requestLine = decodeRequestLine("OPTIONS * HTTP/1.1")
-    val request = RecordedRequest(
-      requestLine, headers, emptyList(), 0, Buffer(), 0, socket)
+    val request =
+      RecordedRequest(
+        requestLine,
+        headers,
+        emptyList(),
+        0,
+        Buffer(),
+        0,
+        socket,
+      )
     assertThat(request.target).isEqualTo("*")
     assertThat(request.url.toString()).isEqualTo("http://127.0.0.1/")
   }

@@ -1055,11 +1055,12 @@ public class MockWebServer : Closeable {
       }
 
       val body = Buffer()
-      val requestLine = RequestLine(
-        method = method,
-        target = path,
-        version = "HTTP/1.1",
-      )
+      val requestLine =
+        RequestLine(
+          method = method,
+          target = path,
+          version = "HTTP/1.1",
+        )
       var exception: IOException? = null
       if (readBody && peek.socketHandler == null && peek.socketPolicy !is DoNotReadRequestBody) {
         try {
@@ -1178,11 +1179,12 @@ public class MockWebServer : Closeable {
         for ((name, value) in pushPromiseHeaders) {
           pushedHeaders.add(Header(name, value))
         }
-        val requestLine = RequestLine(
-          method = pushPromise.method,
-          target = pushPromise.path,
-          version = "HTTP/1.1",
-        )
+        val requestLine =
+          RequestLine(
+            method = pushPromise.method,
+            target = pushPromise.path,
+            version = "HTTP/1.1",
+          )
         val chunkSizes = emptyList<Int>() // No chunked encoding for HTTP/2.
         requestQueue.add(
           RecordedRequest(
