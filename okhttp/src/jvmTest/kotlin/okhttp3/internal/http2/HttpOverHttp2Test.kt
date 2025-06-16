@@ -596,9 +596,9 @@ class HttpOverHttp2Test {
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("This is the new location!")
     val request1 = server.takeRequest()
-    assertThat(request1.path).isEqualTo("/")
+    assertThat(request1.url.encodedPath).isEqualTo("/")
     val request2 = server.takeRequest()
-    assertThat(request2.path).isEqualTo("/foo")
+    assertThat(request2.url.encodedPath).isEqualTo("/foo")
   }
 
   @ParameterizedTest
@@ -2158,11 +2158,11 @@ class HttpOverHttp2Test {
     assertThat(call2Connect.sequenceNumber).isEqualTo(0)
     val call2Get = server.takeRequest()
     assertThat(call2Get.method).isEqualTo("GET")
-    assertThat(call2Get.path).isEqualTo("/call2")
+    assertThat(call2Get.url.encodedPath).isEqualTo("/call2")
     assertThat(call2Get.sequenceNumber).isEqualTo(0)
     val call1Get = server.takeRequest()
     assertThat(call1Get.method).isEqualTo("GET")
-    assertThat(call1Get.path).isEqualTo("/call1")
+    assertThat(call1Get.url.encodedPath).isEqualTo("/call1")
     assertThat(call1Get.sequenceNumber).isEqualTo(1)
     assertThat(client.connectionPool.connectionCount()).isEqualTo(1)
   }

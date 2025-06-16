@@ -543,8 +543,8 @@ class MockWebServerTest {
     assertThat(request.requestLine).isEqualTo(
       "GET /a/deep/path?key=foo%20bar HTTP/1.1",
     )
-    val requestUrl = request.requestUrl
-    assertThat(requestUrl!!.scheme).isEqualTo("http")
+    val requestUrl = request.url
+    assertThat(requestUrl.scheme).isEqualTo("http")
     assertThat(requestUrl.host).isEqualTo(server.hostName)
     assertThat(requestUrl.port).isEqualTo(server.port)
     assertThat(requestUrl.encodedPath).isEqualTo("/a/deep/path")
@@ -663,7 +663,7 @@ class MockWebServerTest {
     val reader = BufferedReader(InputStreamReader(connection.inputStream, UTF_8))
     assertThat(reader.readLine()).isEqualTo("abc")
     val request = server.takeRequest()
-    assertThat(request.requestUrl!!.scheme).isEqualTo("https")
+    assertThat(request.url.scheme).isEqualTo("https")
     val handshake = request.handshake
     assertThat(handshake!!.tlsVersion).isNotNull()
     assertThat(handshake.cipherSuite).isNotNull()
@@ -727,7 +727,7 @@ class MockWebServerTest {
     val reader = BufferedReader(InputStreamReader(connection.inputStream, UTF_8))
     assertThat(reader.readLine()).isEqualTo("abc")
     val request = server.takeRequest()
-    assertThat(request.requestUrl!!.scheme).isEqualTo("https")
+    assertThat(request.url.scheme).isEqualTo("https")
     val handshake = request.handshake
     assertThat(handshake!!.tlsVersion).isNotNull()
     assertThat(handshake.cipherSuite).isNotNull()
@@ -756,7 +756,7 @@ class MockWebServerTest {
       assertThat(response.body.string()).isEqualTo("Result")
     }
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.requestUrl).isEqualTo("http://android.com/".toHttpUrl())
+    assertThat(recordedRequest.url).isEqualTo("http://android.com/".toHttpUrl())
   }
 
   @Test

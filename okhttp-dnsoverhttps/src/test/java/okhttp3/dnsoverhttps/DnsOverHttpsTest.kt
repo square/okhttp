@@ -85,7 +85,7 @@ class DnsOverHttpsTest {
     assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("GET")
-    assertThat(recordedRequest.path)
+    assertThat(recordedRequest.url.encodedPath)
       .isEqualTo("/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ")
   }
 
@@ -114,7 +114,7 @@ class DnsOverHttpsTest {
     assertThat(request1.method).isEqualTo("GET")
     val request2 = server.takeRequest()
     assertThat(request2.method).isEqualTo("GET")
-    assertThat(listOf(request1.path, request2.path))
+    assertThat(listOf(request1.url.encodedPath, request2.url.encodedPath))
       .containsExactlyInAnyOrder(
         "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
         "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AABwAAQ",
@@ -138,7 +138,7 @@ class DnsOverHttpsTest {
     }
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("GET")
-    assertThat(recordedRequest.path)
+    assertThat(recordedRequest.url.encodedPath)
       .isEqualTo("/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ")
   }
 
@@ -197,7 +197,7 @@ class DnsOverHttpsTest {
     assertThat(result).containsExactly(address("157.240.1.18"))
     var recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("GET")
-    assertThat(recordedRequest.path)
+    assertThat(recordedRequest.url.encodedPath)
       .isEqualTo("/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ")
 
     assertThat(cacheEvents()).containsExactly("CacheMiss")
@@ -212,7 +212,7 @@ class DnsOverHttpsTest {
     assertThat(result).containsExactly(address("157.240.1.18"))
     recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("GET")
-    assertThat(recordedRequest.path)
+    assertThat(recordedRequest.url.encodedPath)
       .isEqualTo("/lookup?ct&dns=AAABAAABAAAAAAAAA3d3dwZnb29nbGUDY29tAAABAAE")
 
     assertThat(cacheEvents()).containsExactly("CacheMiss")
@@ -239,7 +239,7 @@ class DnsOverHttpsTest {
     assertThat(result).containsExactly(address("157.240.1.18"))
     var recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("POST")
-    assertThat(recordedRequest.path)
+    assertThat(recordedRequest.url.encodedPath)
       .isEqualTo("/lookup?ct")
 
     assertThat(cacheEvents()).containsExactly("CacheMiss")
@@ -254,7 +254,7 @@ class DnsOverHttpsTest {
     assertThat(result).containsExactly(address("157.240.1.18"))
     recordedRequest = server.takeRequest(0, TimeUnit.MILLISECONDS)!!
     assertThat(recordedRequest.method).isEqualTo("POST")
-    assertThat(recordedRequest.path)
+    assertThat(recordedRequest.url.encodedPath)
       .isEqualTo("/lookup?ct")
 
     assertThat(cacheEvents()).containsExactly("CacheMiss")
@@ -278,7 +278,7 @@ class DnsOverHttpsTest {
     assertThat(result).containsExactly(address("157.240.1.18"))
     var recordedRequest = server.takeRequest(0, TimeUnit.SECONDS)
     assertThat(recordedRequest!!.method).isEqualTo("GET")
-    assertThat(recordedRequest.path).isEqualTo(
+    assertThat(recordedRequest.url.encodedPath).isEqualTo(
       "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
     )
 
@@ -298,7 +298,7 @@ class DnsOverHttpsTest {
     assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
     recordedRequest = server.takeRequest(0, TimeUnit.SECONDS)
     assertThat(recordedRequest!!.method).isEqualTo("GET")
-    assertThat(recordedRequest.path)
+    assertThat(recordedRequest.url.encodedPath)
       .isEqualTo("/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ")
 
     assertThat(cacheEvents()).containsExactly("CacheMiss")

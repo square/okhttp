@@ -2581,7 +2581,7 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("Page 2")
     val redirectRequest = server2.takeRequest()
     assertThat(redirectRequest.headers["Authorization"]).isNull()
-    assertThat(redirectRequest.path).isEqualTo("/b")
+    assertThat(redirectRequest.url.encodedPath).isEqualTo("/b")
   }
 
   @Test
@@ -2902,7 +2902,7 @@ open class CallTest {
     assertFailsWith<IOException> {
       call.execute()
     }
-    assertThat(server.takeRequest().path).isEqualTo("/a")
+    assertThat(server.takeRequest().url.encodedPath).isEqualTo("/a")
   }
 
   @Test
@@ -2946,7 +2946,7 @@ open class CallTest {
       }
     callA.enqueue(callback)
     callB.enqueue(callback)
-    assertThat(server.takeRequest().path).isEqualTo("/a")
+    assertThat(server.takeRequest().url.encodedPath).isEqualTo("/a")
     callback.await(requestA.url).assertBody("A")
     // At this point we know the callback is ready, and that it will receive a cancel failure.
     callback.await(requestB.url).assertFailure("Canceled", "Socket closed")
@@ -2976,7 +2976,7 @@ open class CallTest {
         }
       }
     call.enqueue(callback)
-    assertThat(server.takeRequest().path).isEqualTo("/a")
+    assertThat(server.takeRequest().url.encodedPath).isEqualTo("/a")
     callback.await(requestA.url).assertFailure(
       "Canceled",
       "stream was reset: CANCEL",
@@ -3956,11 +3956,11 @@ open class CallTest {
     val connect = server.takeRequest()
     assertThat(connect.method).isEqualTo("CONNECT")
     assertThat(connect.headers["Proxy-Authorization"]).isEqualTo(credential)
-    assertThat(connect.path).isEqualTo("/")
+    assertThat(connect.url.encodedPath).isEqualTo("/")
     val get = server.takeRequest()
     assertThat(get.method).isEqualTo("GET")
     assertThat(get.headers["Proxy-Authorization"]).isNull()
-    assertThat(get.path).isEqualTo("/foo")
+    assertThat(get.url.encodedPath).isEqualTo("/foo")
   }
 
   @Test
@@ -4267,7 +4267,7 @@ open class CallTest {
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
     assertThat(get.headers["Host"]).isEqualTo("[::1]:$port")
     assertThat(get.headers[":authority"]).isNull()
-    assertThat(get.requestUrl).isEqualTo(url)
+    assertThat(get.url).isEqualTo(url)
   }
 
   @Test
@@ -4301,7 +4301,7 @@ open class CallTest {
     assertThat(get.headers[":authority"]).isEqualTo(
       "[::1]:$port",
     )
-    assertThat(get.requestUrl).isEqualTo(url)
+    assertThat(get.url).isEqualTo(url)
   }
 
   @Test
@@ -4335,7 +4335,7 @@ open class CallTest {
       "127.0.0.1:$port",
     )
     assertThat(get.headers[":authority"]).isNull()
-    assertThat(get.requestUrl).isEqualTo(url)
+    assertThat(get.url).isEqualTo(url)
   }
 
   @Test
@@ -4363,7 +4363,7 @@ open class CallTest {
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
     assertThat(get.headers["Host"]).isNull()
     assertThat(get.headers[":authority"]).isEqualTo("127.0.0.1:$port")
-    assertThat(get.requestUrl).isEqualTo(url)
+    assertThat(get.url).isEqualTo(url)
   }
 
   @Test
@@ -4391,7 +4391,7 @@ open class CallTest {
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
     assertThat(get.headers["Host"]).isEqualTo("any-host-name:$port")
     assertThat(get.headers[":authority"]).isNull()
-    assertThat(get.requestUrl).isEqualTo(url)
+    assertThat(get.url).isEqualTo(url)
   }
 
   @Test
@@ -4419,7 +4419,7 @@ open class CallTest {
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
     assertThat(get.headers["Host"]).isNull()
     assertThat(get.headers[":authority"]).isEqualTo("any-host-name:$port")
-    assertThat(get.requestUrl).isEqualTo(url)
+    assertThat(get.url).isEqualTo(url)
   }
 
   /** Use a proxy to fake IPv6 connectivity, even if localhost doesn't have IPv6.  */

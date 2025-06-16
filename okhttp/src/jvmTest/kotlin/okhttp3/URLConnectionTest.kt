@@ -2591,7 +2591,7 @@ class URLConnectionTest {
     assertContent("Page 2", getResponse(newRequest("/a")))
     val redirectRequest = server2.takeRequest()
     assertThat(redirectRequest.headers["Authorization"]).isNull()
-    assertThat(redirectRequest.path).isEqualTo("/b")
+    assertThat(redirectRequest.url.encodedPath).isEqualTo("/b")
   }
 
   @Test
@@ -3513,9 +3513,9 @@ class URLConnectionTest {
       }
     }
     val requestA = server.takeRequest()
-    assertThat(requestA.path).isEqualTo("/a")
+    assertThat(requestA.url.encodedPath).isEqualTo("/a")
     val requestB = server.takeRequest()
-    assertThat(requestB.path).isEqualTo("/b")
+    assertThat(requestB.url.encodedPath).isEqualTo("/b")
     assertThat(requestB.body.utf8()).isEqualTo(requestBody)
   }
 

@@ -63,9 +63,12 @@ import mockwebserver3.SocketPolicy.ShutdownInputAtEnd
 import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
 import mockwebserver3.SocketPolicy.ShutdownServerAfterResponse
 import mockwebserver3.SocketPolicy.StallSocketAtStart
+import mockwebserver3.internal.DEFAULT_REQUEST_LINE
 import mockwebserver3.internal.RecordedRequest
+import mockwebserver3.internal.RequestLine
 import mockwebserver3.internal.ThrottledSink
 import mockwebserver3.internal.TriggerSink
+import mockwebserver3.internal.decodeRequestLine
 import mockwebserver3.internal.sleepWhileOpen
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
@@ -657,7 +660,7 @@ public class MockWebServer : Closeable {
   ) {
     val request =
       RecordedRequest(
-        "",
+        DEFAULT_REQUEST_LINE,
         headersOf(),
         emptyList(),
         0L,
@@ -678,7 +681,7 @@ public class MockWebServer : Closeable {
     sink: BufferedSink,
     sequenceNumber: Int,
   ): RecordedRequest {
-    var request = ""
+    var request: RequestLine = DEFAULT_REQUEST_LINE
     val headers = Headers.Builder()
     var contentLength = -1L
     var chunked = false
@@ -687,10 +690,11 @@ public class MockWebServer : Closeable {
     var failure: IOException? = null
 
     try {
-      request = source.readUtf8LineStrict()
-      if (request.isEmpty()) {
+      val requestLineString = source.readUtf8LineStrict()
+      if (requestLineString.isEmpty()) {
         throw ProtocolException("no request because the stream is exhausted")
       }
+      request = decodeRequestLine(requestLineString)
 
       while (true) {
         val header = source.readUtf8LineStrict()
@@ -753,8 +757,7 @@ public class MockWebServer : Closeable {
         }
       }
 
-      val method = request.substringBefore(' ')
-      require(!hasBody || HttpMethod.permitsRequestBody(method)) {
+      require(!hasBody || HttpMethod.permitsRequestBody(request.method)) {
         "Request must not have a body: $request"
       }
     } catch (e: IOException) {
@@ -829,7 +832,7 @@ public class MockWebServer : Closeable {
         minimumDeflateSize = 0L,
         webSocketCloseTimeout = RealWebSocket.CANCEL_AFTER_CLOSE_MILLIS,
       )
-    val name = "MockWebServer WebSocket ${request.path!!}"
+    val name = "MockWebServer WebSocket ${request.url.encodedPath}"
     webSocket.initReaderAndWriter(name, streams)
     try {
       webSocket.loopReader(fancyResponse)
@@ -1052,7 +1055,11 @@ public class MockWebServer : Closeable {
       }
 
       val body = Buffer()
-      val requestLine = "$method $path HTTP/1.1"
+      val requestLine = RequestLine(
+        method = method,
+        target = path,
+        version = "HTTP/1.1",
+      )
       var exception: IOException? = null
       if (readBody && peek.socketHandler == null && peek.socketPolicy !is DoNotReadRequestBody) {
         try {
@@ -1171,7 +1178,11 @@ public class MockWebServer : Closeable {
         for ((name, value) in pushPromiseHeaders) {
           pushedHeaders.add(Header(name, value))
         }
-        val requestLine = "${pushPromise.method} ${pushPromise.path} HTTP/1.1"
+        val requestLine = RequestLine(
+          method = pushPromise.method,
+          target = pushPromise.path,
+          version = "HTTP/1.1",
+        )
         val chunkSizes = emptyList<Int>() // No chunked encoding for HTTP/2.
         requestQueue.add(
           RecordedRequest(
