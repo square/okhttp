@@ -63,7 +63,7 @@ class CustomDispatcherTest {
     val dispatcher: Dispatcher =
       object : Dispatcher() {
         override fun dispatch(request: RecordedRequest): MockResponse {
-          if (request.path == firstRequest) {
+          if (request.url.encodedPath == firstRequest) {
             latch.await()
           }
           return MockResponse()

@@ -653,7 +653,7 @@ class URLConnectionTest {
     val response = getResponse(newRequest("/foo"))
     assertContent("this response comes via SSL", response)
     val failHandshakeRequest = server.takeRequest()
-    assertThat(failHandshakeRequest.requestLine).isEmpty()
+    assertThat(failHandshakeRequest.requestLine).isEqualTo("GET / HTTP/1.1")
     val fallbackRequest = server.takeRequest()
     assertThat(fallbackRequest.requestLine).isEqualTo("GET /foo HTTP/1.1")
     assertThat(fallbackRequest.handshake?.tlsVersion).isIn(TlsVersion.TLS_1_2, TlsVersion.TLS_1_3)
@@ -2591,7 +2591,7 @@ class URLConnectionTest {
     assertContent("Page 2", getResponse(newRequest("/a")))
     val redirectRequest = server2.takeRequest()
     assertThat(redirectRequest.headers["Authorization"]).isNull()
-    assertThat(redirectRequest.path).isEqualTo("/b")
+    assertThat(redirectRequest.url.encodedPath).isEqualTo("/b")
   }
 
   @Test
@@ -3513,9 +3513,9 @@ class URLConnectionTest {
       }
     }
     val requestA = server.takeRequest()
-    assertThat(requestA.path).isEqualTo("/a")
+    assertThat(requestA.url.encodedPath).isEqualTo("/a")
     val requestB = server.takeRequest()
-    assertThat(requestB.path).isEqualTo("/b")
+    assertThat(requestB.url.encodedPath).isEqualTo("/b")
     assertThat(requestB.body.utf8()).isEqualTo(requestBody)
   }
 

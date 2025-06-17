@@ -42,10 +42,24 @@ public class RecordedRequest(
    * cleartext and may be monitored or blocked by a proxy or other middlebox.
    */
   public val handshakeServerNames: List<String>,
-  public val requestUrl: HttpUrl?,
-  public val requestLine: String,
-  public val method: String?,
-  public val path: String?,
+  public val method: String,
+  /**
+   * The request target from the original HTTP request.
+   *
+   * For origin-form requests this is a path like `/index.html`, that is combined with the `Host`
+   * header to create the request URL.
+   *
+   * For HTTP proxy requests this will be either an absolute-form string like
+   * `http://example.com/index.html` (HTTP proxy) or an authority-form string like
+   * `example.com:443` (HTTPS proxy).
+   *
+   * For OPTIONS requests, this may be an asterisk, `*`.
+   */
+  public val target: String,
+  /** A string like `HTTP/1.1`. */
+  public val version: String,
+  /** The request URL built using the request line, headers, and local host name. */
+  public val url: HttpUrl,
   /** All headers. */
   public val headers: Headers,
   /** The body of this request, or [ByteString.EMPTY] if it has none. This may be truncated. */
@@ -63,5 +77,8 @@ public class RecordedRequest(
    */
   public val failure: IOException? = null,
 ) {
+  public val requestLine: String
+    get() = "$method $target $version"
+
   public override fun toString(): String = requestLine
 }

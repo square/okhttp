@@ -17,6 +17,7 @@ package mockwebserver3.internal
 
 import java.io.IOException
 import java.net.Inet6Address
+import java.net.ProtocolException
 import java.net.Socket
 import javax.net.ssl.SSLSocket
 import mockwebserver3.RecordedRequest
@@ -24,12 +25,13 @@ import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.internal.platform.Platform
 import okio.Buffer
 
 internal fun RecordedRequest(
-  requestLine: String,
+  requestLine: RequestLine,
   headers: Headers,
   chunkSizes: List<Int>,
   bodySize: Long,
@@ -52,49 +54,89 @@ internal fun RecordedRequest(
     handshakeServerNames = listOf()
   }
 
-  val requestUrl: HttpUrl?
-  val method: String?
-  val path: String?
-  if (requestLine.isNotEmpty()) {
-    val methodEnd = requestLine.indexOf(' ')
-    val urlEnd = requestLine.indexOf(' ', methodEnd + 1)
-    method = requestLine.substring(0, methodEnd)
-    var urlPart = requestLine.substring(methodEnd + 1, urlEnd)
-    if (!urlPart.startsWith("/")) {
-      urlPart = "/"
+  val requestUrl =
+    when (requestLine.method) {
+      "CONNECT" -> "${socket.scheme}://${requestLine.target}/".toHttpUrlOrNull()
+      else -> null
     }
-    path = urlPart
-
-    val scheme = if (socket is SSLSocket) "https" else "http"
-    val localPort = socket.localPort
-    val hostAndPort =
-      headers[":authority"]
-        ?: headers["Host"]
-        ?: when (val inetAddress = socket.localAddress) {
-          is Inet6Address -> "[${inetAddress.hostAddress}]:$localPort"
-          else -> "${inetAddress.hostAddress}:$localPort"
-        }
-
-    // Allow null in failure case to allow for testing bad requests
-    requestUrl = "$scheme://$hostAndPort$path".toHttpUrlOrNull()
-  } else {
-    requestUrl = null
-    method = null
-    path = null
-  }
+      ?: requestLine.target.toHttpUrlOrNull()
+      ?: requestUrl(socket, requestLine, headers)
 
   return RecordedRequest(
     sequenceNumber = sequenceNumber,
     handshake = handshake,
     handshakeServerNames = handshakeServerNames,
-    requestUrl = requestUrl,
-    requestLine = requestLine,
-    method = method,
-    path = path,
+    method = requestLine.method,
+    target = requestLine.target,
+    version = requestLine.version,
+    url = requestUrl,
     headers = headers,
     body = body.readByteString(),
     bodySize = bodySize,
     chunkSizes = chunkSizes,
     failure = failure,
   )
+}
+
+internal fun decodeRequestLine(requestLine: String?): RequestLine {
+  val parts =
+    when {
+      requestLine != null -> requestLine.split(' ', limit = 3)
+      else -> return DEFAULT_REQUEST_LINE
+    }
+
+  if (parts.size != 3) {
+    throw ProtocolException("unexpected request line: $requestLine")
+  }
+
+  return RequestLine(
+    method = parts[0],
+    target = parts[1],
+    version = parts[2],
+  )
+}
+
+internal class RequestLine(
+  val method: String,
+  val target: String,
+  val version: String,
+) {
+  override fun toString() = "$method $target $version"
+}
+
+internal val DEFAULT_REQUEST_LINE =
+  RequestLine(
+    method = "GET",
+    target = "/",
+    version = "HTTP/1.1",
+  )
+
+private val Socket.scheme: String
+  get() =
+    when (this) {
+      is SSLSocket -> "https"
+      else -> "http"
+    }
+
+private fun requestUrl(
+  socket: Socket,
+  requestLine: RequestLine,
+  headers: Headers,
+): HttpUrl {
+  val hostAndPort =
+    headers[":authority"]
+      ?: headers["Host"]
+      ?: when (val inetAddress = socket.localAddress) {
+        is Inet6Address -> "[${inetAddress.hostAddress}]:${socket.localPort}"
+        else -> "${inetAddress.hostAddress}:${socket.localPort}"
+      }
+
+  // For OPTIONS, the request target may be a '*', like 'OPTIONS * HTTP/1.1'.
+  val path =
+    when {
+      requestLine.method == "OPTIONS" && requestLine.target == "*" -> "/"
+      else -> requestLine.target
+    }
+
+  return "${socket.scheme}://$hostAndPort$path".toHttpUrl()
 }

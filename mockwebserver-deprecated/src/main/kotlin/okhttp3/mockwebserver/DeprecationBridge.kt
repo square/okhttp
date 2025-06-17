@@ -102,9 +102,9 @@ internal fun mockwebserver3.RecordedRequest.unwrap(): RecordedRequest =
     sequenceNumber = sequenceNumber,
     failure = failure,
     method = method,
-    path = path,
+    path = url.encodedPath,
     handshake = handshake,
-    requestUrl = requestUrl,
+    requestUrl = url,
   )
 
 private fun MockResponse.wrapSocketPolicy(): mockwebserver3.SocketPolicy =
