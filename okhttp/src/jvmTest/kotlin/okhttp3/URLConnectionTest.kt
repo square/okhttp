@@ -653,7 +653,7 @@ class URLConnectionTest {
     val response = getResponse(newRequest("/foo"))
     assertContent("this response comes via SSL", response)
     val failHandshakeRequest = server.takeRequest()
-    assertThat(failHandshakeRequest.requestLine).isEmpty()
+    assertThat(failHandshakeRequest.requestLine).isEqualTo("GET / HTTP/1.1")
     val fallbackRequest = server.takeRequest()
     assertThat(fallbackRequest.requestLine).isEqualTo("GET /foo HTTP/1.1")
     assertThat(fallbackRequest.handshake?.tlsVersion).isIn(TlsVersion.TLS_1_2, TlsVersion.TLS_1_3)

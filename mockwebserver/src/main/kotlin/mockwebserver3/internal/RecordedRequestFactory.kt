@@ -55,12 +55,12 @@ internal fun RecordedRequest(
   }
 
   val requestUrl =
-    if (requestLine.method == "CONNECT") {
-      "${socket.scheme}://${requestLine.target}/".toHttpUrl()
-    } else {
-      requestLine.target.toHttpUrlOrNull()
-        ?: requestUrl(socket, requestLine, headers)
+    when (requestLine.method) {
+      "CONNECT" -> "${socket.scheme}://${requestLine.target}/".toHttpUrlOrNull()
+      else -> null
     }
+      ?: requestLine.target.toHttpUrlOrNull()
+      ?: requestUrl(socket, requestLine, headers)
 
   return RecordedRequest(
     sequenceNumber = sequenceNumber,
