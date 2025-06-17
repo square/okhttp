@@ -1890,6 +1890,7 @@ class EventListenerTest {
   @Test
   fun redirectUsingNewConnectionEventSequence() {
     val otherServer = MockWebServer()
+    otherServer.start()
     server.enqueue(
       MockResponse
         .Builder()
@@ -1937,6 +1938,7 @@ class EventListenerTest {
     assertThat(listener.findEvent<FollowUpDecision>()).all {
       prop(FollowUpDecision::nextRequest).isNotNull()
     }
+    otherServer.close()
   }
 
   @Test
