@@ -18,6 +18,7 @@
   "CANNOT_OVERRIDE_INVISIBLE_MEMBER",
   "INVISIBLE_MEMBER",
   "INVISIBLE_REFERENCE",
+  "ktlint:standard:property-naming",
 )
 
 package mockwebserver3
@@ -118,6 +119,17 @@ public class MockWebServer : Closeable {
 
   private val atomicRequestCount = AtomicInteger()
 
+  private var serverSocketFactory_: ServerSocketFactory? = null
+  private var serverSocket: ServerSocket? = null
+
+  /** Non-null after [start]. */
+  private var socketAddress_: InetSocketAddress? = null
+
+  private var sslSocketFactory: SSLSocketFactory? = null
+  private var clientAuth = CLIENT_AUTH_NONE
+
+  private var closed: Boolean = false
+
   /**
    * The number of HTTP requests received thus far by this server. This may exceed the number of
    * HTTP connections when connection reuse is in practice.
@@ -128,22 +140,13 @@ public class MockWebServer : Closeable {
   /** The number of bytes of the POST body to keep in memory to the given limit. */
   public var bodyLimit: Long = Long.MAX_VALUE
 
-  public var serverSocketFactory: ServerSocketFactory? = null
-    @Synchronized get() {
-      if (field == null && started) {
-        field = ServerSocketFactory.getDefault() // Build the default value lazily.
-      }
-      return field
-    }
+  public var serverSocketFactory: ServerSocketFactory?
+    @Synchronized get() = serverSocketFactory_
 
     @Synchronized set(value) {
-      check(!started) { "serverSocketFactory must not be set after start()" }
-      field = value
+      check(socketAddress_ == null) { "serverSocketFactory must not be set after start()" }
+      serverSocketFactory_ = value
     }
-
-  private var serverSocket: ServerSocket? = null
-  private var sslSocketFactory: SSLSocketFactory? = null
-  private var clientAuth = CLIENT_AUTH_NONE
 
   /**
    * The dispatcher used to respond to HTTP requests. The default dispatcher is a [QueueDispatcher],
@@ -154,26 +157,18 @@ public class MockWebServer : Closeable {
    */
   public var dispatcher: Dispatcher = QueueDispatcher()
 
-  private var portField: Int = -1
+  public val socketAddress: InetSocketAddress
+    get() = socketAddress_ ?: error("call start() first")
+
   public val port: Int
-    get() {
-      before()
-      return portField
-    }
+    get() = socketAddress.port
 
   public val hostName: String
-    get() {
-      before()
-      return _inetSocketAddress!!.address.hostName
-    }
+    get() = socketAddress.address.hostName
 
-  private var _inetSocketAddress: InetSocketAddress? = null
-
-  public val inetSocketAddress: InetSocketAddress
-    get() {
-      before()
-      return InetSocketAddress(hostName, portField)
-    }
+  /** Returns the address of this server, to connect to it as an HTTP proxy. */
+  public val proxyAddress: Proxy
+    get() = Proxy(Proxy.Type.HTTP, socketAddress)
 
   /**
    * True if ALPN is used on incoming HTTPS connections to negotiate a protocol like HTTP/1.1 or
@@ -201,23 +196,8 @@ public class MockWebServer : Closeable {
       field = protocolList
     }
 
-  public var started: Boolean = false
-  private var closed: Boolean = false
-
-  @Synchronized private fun before() {
-    if (started) return // Don't call start() in case we're already shut down.
-    try {
-      start()
-    } catch (e: IOException) {
-      throw RuntimeException(e)
-    }
-  }
-
-  public fun toProxyAddress(): Proxy {
-    before()
-    val address = InetSocketAddress(_inetSocketAddress!!.address.hostName, port)
-    return Proxy(Proxy.Type.HTTP, address)
-  }
+  public val started: Boolean
+    get() = socketAddress_ != null
 
   /**
    * Returns a URL for connecting to this server.
@@ -337,26 +317,46 @@ public class MockWebServer : Closeable {
   /**
    * Starts the server and binds to the given socket address.
    *
-   * @param inetSocketAddress the socket address to bind the server on
+   * @param socketAddress the socket address to bind the server on
    */
   @Synchronized
   @Throws(IOException::class)
-  private fun start(inetSocketAddress: InetSocketAddress) {
+  private fun start(socketAddress: InetSocketAddress) {
     check(!closed) { "shutdown() already called" }
-    if (started) return
-    started = true
 
-    this._inetSocketAddress = inetSocketAddress
+    val alreadyStartedAddress = socketAddress_
+    if (alreadyStartedAddress != null) {
+      check(socketAddress.address == alreadyStartedAddress.address) {
+        "unexpected address"
+      }
+      check(socketAddress.port == 0 || socketAddress.port == alreadyStartedAddress.port) {
+        "unexpected port"
+      }
+      return // Already started.
+    }
 
-    serverSocket = serverSocketFactory!!.createServerSocket()
+    var boundSocketAddress = socketAddress
+    try {
+      val serverSocketFactory =
+        serverSocketFactory_
+          ?: (ServerSocketFactory.getDefault()!!.also { this.serverSocketFactory_ = it })
 
-    // Reuse if the user specified a port
-    serverSocket!!.reuseAddress = inetSocketAddress.port != 0
-    serverSocket!!.bind(inetSocketAddress, 50)
+      val serverSocket =
+        serverSocketFactory
+          .createServerSocket()!!
+          .also { this.serverSocket = it }
 
-    portField = serverSocket!!.localPort
+      // Reuse if the user specified a port
+      serverSocket.reuseAddress = socketAddress.port != 0
+      serverSocket.bind(socketAddress, 50)
 
-    taskRunner.newQueue().execute("MockWebServer $portField", cancelable = false) {
+      // If the local port was 0, it'll be non-zero after bind().
+      boundSocketAddress = InetSocketAddress(boundSocketAddress.address, serverSocket.localPort)
+    } finally {
+      this.socketAddress_ = boundSocketAddress
+    }
+
+    taskRunner.newQueue().execute(toString(), cancelable = false) {
       try {
         logger.fine("$this starting to accept connections")
         acceptConnections()
@@ -933,7 +933,14 @@ public class MockWebServer : Closeable {
     check(line.isEmpty()) { "Expected empty but was: $line" }
   }
 
-  public override fun toString(): String = "MockWebServer[$portField]"
+  public override fun toString(): String {
+    val socketAddress = socketAddress_
+    return when {
+      closed -> "MockWebServer{closed}"
+      socketAddress != null -> "MockWebServer{port=${socketAddress.port}}"
+      else -> "MockWebServer{new}"
+    }
+  }
 
   /** A buffer wrapper that drops data after [bodyLimit] bytes. */
   private class TruncatingBuffer(

@@ -916,7 +916,7 @@ class EventListenerTest {
     client =
       client
         .newBuilder()
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .build()
     val call =
       client.newCall(
@@ -935,7 +935,7 @@ class EventListenerTest {
     assertThat(connectStart.call).isSameAs(call)
     assertThat(connectStart.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectStart.proxy).isEqualTo(
-      server.toProxyAddress(),
+      server.proxyAddress,
     )
     val connectEnd = listener.removeUpToEvent<CallEvent.ConnectEnd>()
     assertThat(connectEnd.call).isSameAs(call)
@@ -1001,7 +1001,7 @@ class EventListenerTest {
     client =
       client
         .newBuilder()
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
         .build()
     val call =
@@ -1081,7 +1081,7 @@ class EventListenerTest {
     client =
       client
         .newBuilder()
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .build()
     val call =
       client.newCall(

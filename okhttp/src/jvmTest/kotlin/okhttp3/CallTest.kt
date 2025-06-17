@@ -877,21 +877,21 @@ open class CallTest {
       OkHttpClient
         .Builder()
         .connectionPool(client.connectionPool)
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .build()
     executeSynchronously("/a").assertBody("abc")
     client =
       OkHttpClient
         .Builder()
         .connectionPool(client.connectionPool)
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .build()
     executeSynchronously("/b").assertBody("def")
     client =
       OkHttpClient
         .Builder()
         .connectionPool(client.connectionPool)
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .build()
     executeSynchronously("/c").assertBody("ghi")
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
@@ -904,7 +904,7 @@ open class CallTest {
     client =
       OkHttpClient
         .Builder()
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .build()
     server.enqueue(MockResponse(body = "abc"))
     server.enqueue(MockResponse(body = "def"))
@@ -1039,7 +1039,7 @@ open class CallTest {
   fun connectTimeoutsAttemptsAlternateRoute() {
     val proxySelector = RecordingProxySelector()
     proxySelector.proxies.add(Proxy(Proxy.Type.HTTP, TestUtil.UNREACHABLE_ADDRESS_IPV4))
-    proxySelector.proxies.add(server.toProxyAddress())
+    proxySelector.proxies.add(server.proxyAddress)
     server.enqueue(MockResponse(body = "success!"))
     client =
       client
@@ -1121,8 +1121,8 @@ open class CallTest {
       MockResponse(body = "success!"),
     )
     val proxySelector = RecordingProxySelector()
-    proxySelector.proxies.add(server.toProxyAddress())
-    proxySelector.proxies.add(server2.toProxyAddress())
+    proxySelector.proxies.add(server.proxyAddress)
+    proxySelector.proxies.add(server2.proxyAddress)
     client =
       client
         .newBuilder()
@@ -3660,7 +3660,7 @@ open class CallTest {
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        ).proxy(server.toProxyAddress())
+        ).proxy(server.proxyAddress)
         .hostnameVerifier(hostnameVerifier)
         .build()
     val request =
@@ -3706,7 +3706,7 @@ open class CallTest {
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        ).proxy(server.toProxyAddress())
+        ).proxy(server.proxyAddress)
         .hostnameVerifier(hostnameVerifier)
         .build()
     val request = Request("https://android.com/foo".toHttpUrl())
@@ -3744,7 +3744,7 @@ open class CallTest {
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        ).proxy(server.toProxyAddress())
+        ).proxy(server.proxyAddress)
         .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()
@@ -3777,7 +3777,7 @@ open class CallTest {
     client =
       client
         .newBuilder()
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
         .build()
     val request = Request("http://android.com/foo".toHttpUrl())
@@ -3828,7 +3828,7 @@ open class CallTest {
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        ).proxy(server.toProxyAddress())
+        ).proxy(server.proxyAddress)
         .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()
@@ -3872,7 +3872,7 @@ open class CallTest {
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        ).proxy(server.toProxyAddress())
+        ).proxy(server.proxyAddress)
         .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()
@@ -3903,7 +3903,7 @@ open class CallTest {
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        ).proxy(server.toProxyAddress())
+        ).proxy(server.proxyAddress)
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()
     val request =
@@ -3938,7 +3938,7 @@ open class CallTest {
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        ).proxy(server.toProxyAddress())
+        ).proxy(server.proxyAddress)
         .hostnameVerifier(RecordingHostnameVerifier())
         .proxyAuthenticator { _: Route?, response: Response? ->
           assertThat(response!!.request.method).isEqualTo("CONNECT")
@@ -3990,7 +3990,7 @@ open class CallTest {
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        ).proxy(server.toProxyAddress())
+        ).proxy(server.proxyAddress)
         .hostnameVerifier(RecordingHostnameVerifier())
         .proxyAuthenticator { _: Route?, response: Response ->
           val challenges = response.challenges()
@@ -4029,7 +4029,7 @@ open class CallTest {
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        ).proxy(server.toProxyAddress())
+        ).proxy(server.proxyAddress)
         .build()
     val request = Request(server.url("/"))
     assertFailsWith<IOException> {
@@ -4174,7 +4174,7 @@ open class CallTest {
         .newBuilder()
         .proxySelector(
           FakeProxySelector()
-            .addProxy(server2.toProxyAddress())
+            .addProxy(server2.proxyAddress)
             .addProxy(Proxy.NO_PROXY),
         ).build()
     server2.close()
@@ -4443,7 +4443,7 @@ open class CallTest {
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
         ).hostnameVerifier(RecordingHostnameVerifier())
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .build()
   }
 
