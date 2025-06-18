@@ -1102,10 +1102,11 @@ public class MockWebServer : Closeable {
         headers = headers,
         chunkSizes = emptyList(),
         bodySize = bodyByteString?.size?.toLong() ?: 0,
-        body = when {
-          HttpMethod.permitsRequestBody(method) -> bodyByteString
-          else -> null
-        },
+        body =
+          when {
+            HttpMethod.permitsRequestBody(method) -> bodyByteString
+            else -> null
+          },
         sequenceNumber = sequenceNumber.getAndIncrement(),
         socket = socket,
         failure = exception,
