@@ -34,6 +34,7 @@ import javax.net.ssl.X509TrustManager
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.CertificatePinner.Companion.pin
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
@@ -50,7 +51,10 @@ class ConnectionCoalescingTest {
 
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
-  private lateinit var server: MockWebServer
+
+  @StartStop
+  private val server = MockWebServer()
+
   private lateinit var client: OkHttpClient
   private lateinit var rootCa: HeldCertificate
   private lateinit var certificate: HeldCertificate
@@ -59,8 +63,7 @@ class ConnectionCoalescingTest {
   private lateinit var serverIps: List<InetAddress>
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
+  fun setUp() {
     platform.assumeHttp2Support()
     platform.assumeNotBouncyCastle()
     rootCa =

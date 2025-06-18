@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -36,15 +37,14 @@ class LoomTest {
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
 
-  private lateinit var server: MockWebServer
+  @StartStop
+  private val server = MockWebServer()
 
   private lateinit var client: OkHttpClient
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
+  fun setUp() {
     platform.assumeLoom()
-
-    this.server = server
 
     client =
       clientTestRule

@@ -24,6 +24,7 @@ import javax.net.ssl.SSLException
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
@@ -38,12 +39,11 @@ class InsecureForHostTest {
   @RegisterExtension @JvmField
   val clientTestRule = OkHttpClientTestRule()
 
-  private lateinit var server: MockWebServer
+  @StartStop
+  private val server = MockWebServer()
 
   @BeforeEach
-  fun setup(server: MockWebServer) {
-    this.server = server
-
+  fun setup() {
     // BCX509ExtendedTrustManager not supported in TlsUtil.newTrustManager
     platform.assumeNotBouncyCastle()
   }

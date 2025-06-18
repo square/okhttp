@@ -37,6 +37,7 @@ import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.DisconnectAtEnd
+import mockwebserver3.junit5.StartStop
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -49,7 +50,6 @@ import okio.GzipSink
 import okio.Sink
 import okio.Source
 import okio.buffer
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -58,14 +58,12 @@ import org.junit.jupiter.api.extension.RegisterExtension
 class InterceptorTest {
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
-  private lateinit var server: MockWebServer
+
+  @StartStop
+  private val server = MockWebServer()
+
   private var client = clientTestRule.newClient()
   private val callback = RecordingCallback()
-
-  @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
-  }
 
   @Test
   fun applicationInterceptorsCanShortCircuitResponses() {

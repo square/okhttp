@@ -25,6 +25,7 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.DisconnectAfterRequest
 import mockwebserver3.SocketPolicy.DisconnectAtEnd
+import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -33,7 +34,6 @@ import okhttp3.internal.closeQuietly
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import org.bouncycastle.tls.TlsFatalAlert
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -48,14 +48,11 @@ class ConnectionReuseTest {
   @RegisterExtension
   val clientTestRule: OkHttpClientTestRule = OkHttpClientTestRule()
 
-  private lateinit var server: MockWebServer
+  @StartStop
+  private val server = MockWebServer()
+
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client: OkHttpClient = clientTestRule.newClient()
-
-  @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
-  }
 
   @Test
   fun connectionsAreReused() {

@@ -71,11 +71,10 @@ class MockWebServerTest {
   @RegisterExtension
   var platform = PlatformRule()
 
-  private lateinit var server: MockWebServer
+  private val server = MockWebServer()
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
+  fun setUp() {
     server.start()
   }
 

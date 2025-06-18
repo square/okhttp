@@ -38,6 +38,7 @@ import kotlinx.coroutines.withTimeout
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.DisconnectAfterRequest
+import mockwebserver3.junit5.StartStop
 import okhttp3.Callback
 import okhttp3.FailingCall
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -49,7 +50,6 @@ import okhttp3.ResponseBody
 import okio.Buffer
 import okio.ForwardingSource
 import okio.buffer
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
@@ -60,14 +60,10 @@ class ExecuteAsyncTest {
 
   private var client = clientTestRule.newClientBuilder().build()
 
-  private lateinit var server: MockWebServer
+  @StartStop
+  private val server = MockWebServer()
 
   val request by lazy { Request(server.url("/")) }
-
-  @BeforeEach
-  fun setup(server: MockWebServer) {
-    this.server = server
-  }
 
   @Test
   fun suspendCall() {

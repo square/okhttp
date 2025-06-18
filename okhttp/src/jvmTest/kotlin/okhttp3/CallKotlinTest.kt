@@ -28,6 +28,7 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.DisconnectAtStart
 import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
+import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -40,7 +41,6 @@ import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okio.BufferedSink
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -60,12 +60,9 @@ class CallKotlinTest {
 
   private var client = clientTestRule.newClient()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
-  private lateinit var server: MockWebServer
 
-  @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
-  }
+  @StartStop
+  private val server = MockWebServer()
 
   @Test
   fun legalToExecuteTwiceCloning() {

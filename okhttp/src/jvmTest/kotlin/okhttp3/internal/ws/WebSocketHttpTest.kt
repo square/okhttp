@@ -46,6 +46,7 @@ import mockwebserver3.RecordedRequest
 import mockwebserver3.SocketPolicy
 import mockwebserver3.SocketPolicy.KeepOpen
 import mockwebserver3.SocketPolicy.NoResponse
+import mockwebserver3.junit5.StartStop
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
@@ -88,7 +89,10 @@ class WebSocketHttpTest {
 
   @RegisterExtension
   var testLogHandler = TestLogHandler(OkHttpClient::class.java)
-  private lateinit var webServer: MockWebServer
+
+  @StartStop
+  private val webServer = MockWebServer()
+
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private val clientListener = WebSocketRecorder("client")
   private val serverListener = WebSocketRecorder("server")
@@ -114,8 +118,7 @@ class WebSocketHttpTest {
   }
 
   @BeforeEach
-  fun setUp(webServer: MockWebServer) {
-    this.webServer = webServer
+  fun setUp() {
     platform.assumeNotOpenJSSE()
   }
 
