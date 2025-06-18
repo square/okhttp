@@ -60,7 +60,7 @@ class InterceptorTest {
   val clientTestRule = OkHttpClientTestRule()
 
   @StartStop
-  val server = MockWebServer()
+  private val server = MockWebServer()
 
   private var client = clientTestRule.newClient()
   private val callback = RecordingCallback()

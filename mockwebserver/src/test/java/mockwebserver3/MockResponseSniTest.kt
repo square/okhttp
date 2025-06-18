@@ -41,7 +41,7 @@ class MockResponseSniTest {
   val platform = PlatformRule()
 
   @StartStop
-  val server = MockWebServer()
+  private val server = MockWebServer()
 
   @Test
   fun clientSendsServerNameAndServerReceivesIt() {

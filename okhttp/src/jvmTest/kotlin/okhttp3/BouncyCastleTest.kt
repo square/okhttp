@@ -34,7 +34,7 @@ class BouncyCastleTest {
   var client = clientTestRule.newClient()
 
   @StartStop
-  val server = MockWebServer()
+  private val server = MockWebServer()
 
   @BeforeEach
   fun setUp() {

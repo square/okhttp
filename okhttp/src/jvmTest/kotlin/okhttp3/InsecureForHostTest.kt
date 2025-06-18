@@ -40,7 +40,7 @@ class InsecureForHostTest {
   val clientTestRule = OkHttpClientTestRule()
 
   @StartStop
-  val server = MockWebServer()
+  private val server = MockWebServer()
 
   @BeforeEach
   fun setup() {

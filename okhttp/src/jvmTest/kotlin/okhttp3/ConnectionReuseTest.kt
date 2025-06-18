@@ -49,7 +49,7 @@ class ConnectionReuseTest {
   val clientTestRule: OkHttpClientTestRule = OkHttpClientTestRule()
 
   @StartStop
-  val server = MockWebServer()
+  private val server = MockWebServer()
 
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client: OkHttpClient = clientTestRule.newClient()

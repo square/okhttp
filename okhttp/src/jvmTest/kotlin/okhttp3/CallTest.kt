@@ -141,10 +141,10 @@ open class CallTest {
   val testLogHandler = TestLogHandler(OkHttpClient::class.java)
 
   @StartStop
-  val server = MockWebServer()
+  private val server = MockWebServer()
 
   @StartStop
-  val server2 = MockWebServer()
+  private val server2 = MockWebServer()
 
   private var listener = RecordingEventListener()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()

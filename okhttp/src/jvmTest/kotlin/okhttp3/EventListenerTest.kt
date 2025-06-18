@@ -102,7 +102,7 @@ class EventListenerTest {
   val clientTestRule = OkHttpClientTestRule()
 
   @StartStop
-  val server = MockWebServer()
+  private val server = MockWebServer()
 
   private val listener: RecordingEventListener = RecordingEventListener()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()

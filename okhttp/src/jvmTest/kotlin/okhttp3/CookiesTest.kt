@@ -48,7 +48,7 @@ class CookiesTest {
   val clientTestRule = OkHttpClientTestRule()
 
   @StartStop
-  val server = MockWebServer()
+  private val server = MockWebServer()
 
   private var client = clientTestRule.newClient()
 

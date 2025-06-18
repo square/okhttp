@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Timeout
 
 @Timeout(30)
 class CustomDispatcherTest {
-  @StartStop val mockWebServer = MockWebServer()
+  @StartStop private val mockWebServer = MockWebServer()
 
   @Test
   fun simpleDispatch() {

@@ -123,7 +123,7 @@ class HttpOverHttp2Test {
     platform.localhostHandshakeCertificates()
 
   @StartStop
-  val server = MockWebServer()
+  private val server = MockWebServer()
 
   private lateinit var protocol: Protocol
   private lateinit var client: OkHttpClient

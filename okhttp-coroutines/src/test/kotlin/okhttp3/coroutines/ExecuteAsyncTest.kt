@@ -61,7 +61,7 @@ class ExecuteAsyncTest {
   private var client = clientTestRule.newClientBuilder().build()
 
   @StartStop
-  val server = MockWebServer()
+  private val server = MockWebServer()
 
   val request by lazy { Request(server.url("/")) }
 

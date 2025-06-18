@@ -62,7 +62,7 @@ class CallKotlinTest {
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
   @StartStop
-  val server = MockWebServer()
+  private val server = MockWebServer()
 
   @Test
   fun legalToExecuteTwiceCloning() {

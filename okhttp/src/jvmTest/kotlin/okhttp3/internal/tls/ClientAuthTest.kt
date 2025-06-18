@@ -64,7 +64,7 @@ class ClientAuthTest {
   val clientTestRule = OkHttpClientTestRule()
 
   @StartStop
-  val server = MockWebServer()
+  private val server = MockWebServer()
 
   private lateinit var serverRootCa: HeldCertificate
   private lateinit var serverIntermediateCa: HeldCertificate

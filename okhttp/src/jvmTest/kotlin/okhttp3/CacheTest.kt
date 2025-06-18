@@ -77,10 +77,10 @@ class CacheTest {
   val platform = PlatformRule()
 
   @StartStop
-  val server = MockWebServer()
+  private val server = MockWebServer()
 
   @StartStop
-  val server2 = MockWebServer()
+  private val server2 = MockWebServer()
 
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private lateinit var client: OkHttpClient
