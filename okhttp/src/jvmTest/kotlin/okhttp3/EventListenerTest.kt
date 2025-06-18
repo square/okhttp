@@ -46,6 +46,7 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.DisconnectDuringRequestBody
 import mockwebserver3.SocketPolicy.DisconnectDuringResponseBody
 import mockwebserver3.SocketPolicy.FailHandshake
+import mockwebserver3.junit5.StartStop
 import okhttp3.CallEvent.CallEnd
 import okhttp3.CallEvent.CallFailed
 import okhttp3.CallEvent.CallStart
@@ -99,7 +100,10 @@ class EventListenerTest {
 
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
-  private lateinit var server: MockWebServer
+
+  @StartStop
+  val server = MockWebServer()
+
   private val listener: RecordingEventListener = RecordingEventListener()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client =
@@ -111,8 +115,7 @@ class EventListenerTest {
   private var cache: Cache? = null
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
+  fun setUp() {
     platform.assumeNotOpenJSSE()
     listener.forbidLock(get(client.connectionPool))
     listener.forbidLock(client.dispatcher)

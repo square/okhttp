@@ -20,6 +20,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.startsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.HttpClients
 import org.apache.hc.core5.http.io.entity.EntityUtils
@@ -36,11 +37,14 @@ import org.junit.jupiter.api.Test
 class ApacheHttpClientTest {
   private val httpClient = HttpClients.createDefault()
 
+  @StartStop
+  private val server = MockWebServer()
+
   @AfterEach fun tearDown() {
     httpClient.close()
   }
 
-  @Test fun get(server: MockWebServer) {
+  @Test fun get() {
     server.enqueue(
       MockResponse
         .Builder()

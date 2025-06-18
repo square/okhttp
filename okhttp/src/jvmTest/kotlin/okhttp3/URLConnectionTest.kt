@@ -75,7 +75,7 @@ import mockwebserver3.SocketPolicy.DisconnectAtEnd
 import mockwebserver3.SocketPolicy.FailHandshake
 import mockwebserver3.SocketPolicy.ShutdownInputAtEnd
 import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
-import mockwebserver3.junit5.internal.MockWebServerInstance
+import mockwebserver3.junit5.StartStop
 import okhttp3.Credentials.basic
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -121,19 +121,18 @@ class URLConnectionTest {
   @TempDir
   lateinit var tempDir: File
 
-  private lateinit var server: MockWebServer
-  private lateinit var server2: MockWebServer
+  @StartStop
+  val server = MockWebServer()
+
+  @StartStop
+  val server2 = MockWebServer()
+
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client = clientTestRule.newClient()
   private var cache: Cache? = null
 
   @BeforeEach
-  fun setUp(
-    server: MockWebServer,
-    @MockWebServerInstance("server2") server2: MockWebServer,
-  ) {
-    this.server = server
-    this.server2 = server2
+  fun setUp() {
     server.protocolNegotiationEnabled = false
   }
 

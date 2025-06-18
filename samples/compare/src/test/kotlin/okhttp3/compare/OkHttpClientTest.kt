@@ -20,6 +20,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.matches
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.testing.PlatformRule
@@ -35,7 +36,10 @@ class OkHttpClientTest {
   @JvmField @RegisterExtension
   val platform = PlatformRule()
 
-  @Test fun get(server: MockWebServer) {
+  @StartStop
+  private val server = MockWebServer()
+
+  @Test fun get() {
     server.enqueue(MockResponse(body = "hello, OkHttp"))
 
     val client = OkHttpClient()

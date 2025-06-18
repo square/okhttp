@@ -24,7 +24,7 @@ import assertk.assertions.matches
 import java.net.UnknownHostException
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.junit5.internal.MockWebServerExtension
+import mockwebserver3.junit5.StartStop
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.MediaType
@@ -44,14 +44,15 @@ import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 
-@ExtendWith(MockWebServerExtension::class)
 class HttpLoggingInterceptorTest {
   @RegisterExtension
   val platform = PlatformRule()
-  private lateinit var server: MockWebServer
+
+  @StartStop
+  private val server = MockWebServer()
+
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private val hostnameVerifier = RecordingHostnameVerifier()
   private lateinit var client: OkHttpClient
@@ -69,8 +70,7 @@ class HttpLoggingInterceptorTest {
   }
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
+  fun setUp() {
     client =
       OkHttpClient
         .Builder()

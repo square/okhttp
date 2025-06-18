@@ -31,6 +31,7 @@ import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.DisconnectAtEnd
+import mockwebserver3.junit5.StartStop
 import okhttp3.CertificatePinner
 import okhttp3.CertificatePinner.Companion.pin
 import okhttp3.OkHttpClientTestRule
@@ -53,11 +54,11 @@ class CertificatePinnerChainValidationTest {
   @RegisterExtension
   var clientTestRule = OkHttpClientTestRule()
 
-  private lateinit var server: MockWebServer
+  @StartStop
+  private val server = MockWebServer()
 
   @BeforeEach
-  fun setup(server: MockWebServer) {
-    this.server = server
+  fun setup() {
     platform.assumeNotBouncyCastle()
   }
 

@@ -27,7 +27,7 @@ import java.net.SocketTimeoutException
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.ResetStreamAtStart
-import mockwebserver3.junit5.internal.MockWebServerInstance
+import mockwebserver3.junit5.StartStop
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.PlatformRule
@@ -47,8 +47,11 @@ class RouteFailureTest {
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
 
-  private lateinit var server1: MockWebServer
-  private lateinit var server2: MockWebServer
+  @StartStop
+  val server1 = MockWebServer()
+
+  @StartStop
+  val server2 = MockWebServer()
 
   private var listener = RecordingEventListener()
 
@@ -66,14 +69,8 @@ class RouteFailureTest {
   val bodyResponse = MockResponse(body = "body")
 
   @BeforeEach
-  fun setUp(
-    server: MockWebServer,
-    @MockWebServerInstance("server2") server2: MockWebServer,
-  ) {
-    this.server1 = server
-    this.server2 = server2
-
-    socketFactory = SpecificHostSocketFactory(InetSocketAddress(server.hostName, server.port))
+  fun setUp() {
+    socketFactory = SpecificHostSocketFactory(InetSocketAddress(server1.hostName, server1.port))
 
     client =
       clientTestRule

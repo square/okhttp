@@ -20,6 +20,7 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
+import mockwebserver3.junit5.StartStop
 import okhttp3.Dns
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -29,7 +30,6 @@ import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -40,12 +40,8 @@ class MockResponseSniTest {
   @RegisterExtension
   val platform = PlatformRule()
 
-  private lateinit var server: MockWebServer
-
-  @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
-  }
+  @StartStop
+  val server = MockWebServer()
 
   @Test
   fun clientSendsServerNameAndServerReceivesIt() {
