@@ -21,6 +21,7 @@ import java.net.Socket
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.Call
 import okhttp3.Connection
 import okhttp3.EventListener
@@ -29,7 +30,6 @@ import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
 import okhttp3.testing.PlatformRule
 import okio.IOException
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -43,7 +43,10 @@ class SocketFailureTest {
 
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
-  private lateinit var server: MockWebServer
+
+  @StartStop
+  private val server = MockWebServer()
+
   private var client =
     clientTestRule
       .newClientBuilder()
@@ -66,11 +69,6 @@ class SocketFailureTest {
         lastSocket!!.close()
       }
     }
-  }
-
-  @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
   }
 
   @Test

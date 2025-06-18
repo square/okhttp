@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.CallEvent.FollowUpDecision
 import okhttp3.Credentials.basic
 import okhttp3.Headers.Companion.headersOf
@@ -62,7 +63,10 @@ class DuplexTest {
 
   @RegisterExtension
   var clientTestRule = OkHttpClientTestRule()
-  private lateinit var server: MockWebServer
+
+  @StartStop
+  val server = MockWebServer()
+
   private var listener = RecordingEventListener()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client =
@@ -73,8 +77,7 @@ class DuplexTest {
   private val executorService = Executors.newScheduledThreadPool(1)
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
+  fun setUp() {
     platform.assumeNotOpenJSSE()
     platform.assumeHttp2Support()
   }

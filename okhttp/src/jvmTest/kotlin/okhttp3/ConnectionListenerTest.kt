@@ -36,6 +36,7 @@ import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.FailHandshake
+import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.DoubleInetAddressDns
 import okhttp3.internal.connection.RealConnectionPool.Companion.get
@@ -59,7 +60,10 @@ open class ConnectionListenerTest {
 
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
-  private var server: MockWebServer? = null
+
+  @StartStop
+  private val server = MockWebServer()
+
   private val listener = RecordingConnectionListener()
   private val handshakeCertificates = localhost()
 
@@ -73,8 +77,7 @@ open class ConnectionListenerTest {
       .build()
 
   @BeforeEach
-  fun setUp(server: MockWebServer?) {
-    this.server = server
+  fun setUp() {
     platform.assumeNotOpenJSSE()
     platform.assumeNotBouncyCastle()
     listener.forbidLock(get(client.connectionPool))

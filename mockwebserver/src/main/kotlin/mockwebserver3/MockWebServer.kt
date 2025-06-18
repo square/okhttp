@@ -322,7 +322,7 @@ public class MockWebServer : Closeable {
   @Synchronized
   @Throws(IOException::class)
   private fun start(socketAddress: InetSocketAddress) {
-    check(!closed) { "shutdown() already called" }
+    check(!closed) { "close() already called" }
 
     val alreadyStartedAddress = socketAddress_
     if (alreadyStartedAddress != null) {

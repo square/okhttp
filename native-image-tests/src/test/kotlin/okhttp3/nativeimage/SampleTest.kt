@@ -19,21 +19,21 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
 import okhttp3.SimpleProvider
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 
-@ExtendWith(MockWebServerExtension::class)
 class SampleTest {
   @JvmField @RegisterExtension
   val clientRule = OkHttpClientTestRule()
+
+  @StartStop
+  private val server = MockWebServer()
 
   @Test
   fun passingTest() {
@@ -41,7 +41,7 @@ class SampleTest {
   }
 
   @Test
-  fun testMockWebServer(server: MockWebServer) {
+  fun testMockWebServer() {
     server.enqueue(MockResponse(body = "abc"))
 
     val client = clientRule.newClient()

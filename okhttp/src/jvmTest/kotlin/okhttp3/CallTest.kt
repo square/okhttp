@@ -78,7 +78,7 @@ import mockwebserver3.SocketPolicy.FailHandshake
 import mockwebserver3.SocketPolicy.HalfCloseAfterRequest
 import mockwebserver3.SocketPolicy.NoResponse
 import mockwebserver3.SocketPolicy.StallSocketAtStart
-import mockwebserver3.junit5.internal.MockWebServerInstance
+import mockwebserver3.junit5.StartStop
 import okhttp3.CallEvent.CallEnd
 import okhttp3.CallEvent.ConnectStart
 import okhttp3.CallEvent.ConnectionAcquired
@@ -140,8 +140,11 @@ open class CallTest {
   @RegisterExtension
   val testLogHandler = TestLogHandler(OkHttpClient::class.java)
 
-  private lateinit var server: MockWebServer
-  private lateinit var server2: MockWebServer
+  @StartStop
+  val server = MockWebServer()
+
+  @StartStop
+  val server2 = MockWebServer()
 
   private var listener = RecordingEventListener()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
@@ -159,13 +162,7 @@ open class CallTest {
     )
 
   @BeforeEach
-  fun setUp(
-    server: MockWebServer,
-    @MockWebServerInstance("server2") server2: MockWebServer,
-  ) {
-    this.server = server
-    this.server2 = server2
-
+  fun setUp() {
     platform.assumeNotOpenJSSE()
   }
 

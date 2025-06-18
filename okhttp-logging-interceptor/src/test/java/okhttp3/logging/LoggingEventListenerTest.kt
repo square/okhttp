@@ -23,7 +23,7 @@ import java.util.Arrays
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy.FailHandshake
-import mockwebserver3.junit5.internal.MockWebServerExtension
+import mockwebserver3.junit5.StartStop
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -37,18 +37,19 @@ import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @Suppress("ktlint:standard:max-line-length")
-@ExtendWith(MockWebServerExtension::class)
 class LoggingEventListenerTest {
   @RegisterExtension
   val platform = PlatformRule()
 
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
-  private lateinit var server: MockWebServer
+
+  @StartStop
+  private val server = MockWebServer()
+
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private val logRecorder =
     HttpLoggingInterceptorTest.LogRecorder(
@@ -59,8 +60,7 @@ class LoggingEventListenerTest {
   private lateinit var url: HttpUrl
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
+  fun setUp() {
     client =
       clientTestRule
         .newClientBuilder()
