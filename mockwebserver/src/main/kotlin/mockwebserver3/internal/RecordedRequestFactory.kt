@@ -28,14 +28,14 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.internal.platform.Platform
-import okio.Buffer
+import okio.ByteString
 
 internal fun RecordedRequest(
   requestLine: RequestLine,
   headers: Headers,
   chunkSizes: List<Int>,
   bodySize: Long,
-  body: Buffer,
+  body: ByteString?,
   sequenceNumber: Int,
   socket: Socket,
   failure: IOException? = null,
@@ -71,7 +71,7 @@ internal fun RecordedRequest(
     version = requestLine.version,
     url = requestUrl,
     headers = headers,
-    body = body.readByteString(),
+    body = body,
     bodySize = bodySize,
     chunkSizes = chunkSizes,
     failure = failure,

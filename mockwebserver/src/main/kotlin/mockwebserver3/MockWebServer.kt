@@ -95,6 +95,7 @@ import okhttp3.internal.ws.WebSocketProtocol
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
+import okio.ByteString
 import okio.Sink
 import okio.Timeout
 import okio.buffer
@@ -659,13 +660,13 @@ public class MockWebServer : Closeable {
   ) {
     val request =
       RecordedRequest(
-        DEFAULT_REQUEST_LINE,
-        headersOf(),
-        emptyList(),
-        0L,
-        Buffer(),
-        sequenceNumber,
-        socket,
+        requestLine = DEFAULT_REQUEST_LINE,
+        headers = headersOf(),
+        chunkSizes = emptyList(),
+        bodySize = 0L,
+        body = null,
+        sequenceNumber = sequenceNumber,
+        socket = socket,
       )
     atomicRequestCount.incrementAndGet()
     requestQueue.add(request)
@@ -684,6 +685,7 @@ public class MockWebServer : Closeable {
     val headers = Headers.Builder()
     var contentLength = -1L
     var chunked = false
+    var hasBody = false
     val requestBody = TruncatingBuffer(bodyLimit)
     val chunkSizes = mutableListOf<Int>()
     var failure: IOException? = null
@@ -717,7 +719,6 @@ public class MockWebServer : Closeable {
         writeHttpResponse(socket, sink, response)
       }
 
-      var hasBody = false
       val policy = dispatcher.peek()
       val requestBodySink =
         requestBody
@@ -730,11 +731,11 @@ public class MockWebServer : Closeable {
       requestBodySink.use {
         when {
           policy.socketPolicy is DoNotReadRequestBody -> {
-            // Ignore the body completely.
+            hasBody = false // Ignore the body completely.
           }
 
           contentLength != -1L -> {
-            hasBody = contentLength > 0L
+            hasBody = contentLength > 0L || HttpMethod.permitsRequestBody(request.method)
             requestBodySink.write(source, contentLength)
           }
 
@@ -752,7 +753,9 @@ public class MockWebServer : Closeable {
             }
           }
 
-          else -> Unit // No request body.
+          else -> {
+            hasBody = false // No request body.
+          }
         }
       }
 
@@ -768,7 +771,11 @@ public class MockWebServer : Closeable {
       headers = headers.build(),
       chunkSizes = chunkSizes,
       bodySize = requestBody.receivedByteCount,
-      body = requestBody.buffer,
+      body =
+        when {
+          hasBody -> requestBody.buffer.readByteString()
+          else -> null
+        },
       sequenceNumber = sequenceNumber,
       socket = socket,
       failure = failure,
@@ -1060,7 +1067,6 @@ public class MockWebServer : Closeable {
         }
       }
 
-      val body = Buffer()
       val requestLine =
         RequestLine(
           method = method,
@@ -1068,7 +1074,9 @@ public class MockWebServer : Closeable {
           version = "HTTP/1.1",
         )
       var exception: IOException? = null
+      var bodyByteString: ByteString? = null
       if (readBody && peek.socketHandler == null && peek.socketPolicy !is DoNotReadRequestBody) {
+        val body = Buffer()
         try {
           val contentLengthString = headers["content-length"]
           val requestBodySink =
@@ -1084,6 +1092,8 @@ public class MockWebServer : Closeable {
           }
         } catch (e: IOException) {
           exception = e
+        } finally {
+          bodyByteString = body.readByteString()
         }
       }
 
@@ -1091,8 +1101,12 @@ public class MockWebServer : Closeable {
         requestLine = requestLine,
         headers = headers,
         chunkSizes = emptyList(),
-        bodySize = body.size,
-        body = body,
+        bodySize = bodyByteString?.size?.toLong() ?: 0,
+        body =
+          when {
+            HttpMethod.permitsRequestBody(method) -> bodyByteString
+            else -> null
+          },
         sequenceNumber = sequenceNumber.getAndIncrement(),
         socket = socket,
         failure = exception,
@@ -1198,7 +1212,7 @@ public class MockWebServer : Closeable {
             headers = pushPromise.headers,
             chunkSizes = chunkSizes,
             bodySize = 0,
-            body = Buffer(),
+            body = null,
             sequenceNumber = sequenceNumber.getAndIncrement(),
             socket = socket,
           ),

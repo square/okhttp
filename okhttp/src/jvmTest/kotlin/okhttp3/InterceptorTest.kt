@@ -296,7 +296,7 @@ class InterceptorTest {
     client.newCall(request).execute()
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("POST")
-    assertThat(recordedRequest.body.utf8()).isEqualTo("abc")
+    assertThat(recordedRequest.body?.utf8()).isEqualTo("abc")
   }
 
   @Test
@@ -330,7 +330,7 @@ class InterceptorTest {
         .build()
     client.newCall(request).execute()
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.body.utf8()).isEqualTo("ABC")
+    assertThat(recordedRequest.body?.utf8()).isEqualTo("ABC")
     assertThat(recordedRequest.headers["Original-Header"]).isEqualTo("foo")
     assertThat(recordedRequest.headers["OkHttp-Intercepted"]).isEqualTo("yep")
     assertThat(recordedRequest.method).isEqualTo("POST")
