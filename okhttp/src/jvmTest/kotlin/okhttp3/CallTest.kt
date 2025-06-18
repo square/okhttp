@@ -27,6 +27,7 @@ import assertk.assertions.isCloseTo
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isIn
 import assertk.assertions.isLessThan
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNotNull
@@ -110,6 +111,7 @@ import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okio.Buffer
 import okio.BufferedSink
+import okio.ByteString
 import okio.ForwardingSource
 import okio.GzipSink
 import okio.Path.Companion.toPath
@@ -204,7 +206,7 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("GET")
     assertThat(recordedRequest.headers["User-Agent"]).isEqualTo("SyncApiTest")
-    assertThat(recordedRequest.body?.size).isEqualTo(0)
+    assertThat(recordedRequest.body).isNull()
     assertThat(recordedRequest.headers["Content-Length"]).isNull()
   }
 
@@ -308,7 +310,7 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("HEAD")
     assertThat(recordedRequest.headers["User-Agent"]).isEqualTo("SyncApiTest")
-    assertThat(recordedRequest.body?.size).isEqualTo(0)
+    assertThat(recordedRequest.body).isNull()
     assertThat(recordedRequest.headers["Content-Length"]).isNull()
   }
 
@@ -3292,7 +3294,7 @@ open class CallTest {
       call.execute()
     }
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.body?.utf8()).isEqualTo("")
+    assertThat(recordedRequest.body).isIn(null, ByteString.EMPTY)
   }
 
   @Tag("Slowish")
