@@ -62,8 +62,8 @@ public class RecordedRequest(
   public val url: HttpUrl,
   /** All headers. */
   public val headers: Headers,
-  /** The body of this request, or [ByteString.EMPTY] if it has none. This may be truncated. */
-  public val body: ByteString,
+  /** The body of this request, or null if it has none. This may be truncated. */
+  public val body: ByteString?,
   /** The total size of the body of this request (before truncation).*/
   public val bodySize: Long,
   /**

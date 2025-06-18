@@ -50,11 +50,14 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.RecordingHostnameVerifier
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okio.Buffer
+import okio.ByteString
+import okio.ByteString.Companion.encodeUtf8
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
@@ -648,7 +651,7 @@ class MockWebServerTest {
     val reader = BufferedReader(InputStreamReader(inputStream, UTF_8))
     assertThat(reader.readLine()).isEqualTo("response")
     val request = server.takeRequest()
-    assertThat(request.body.utf8()).isEqualTo("request")
+    assertThat(request.body?.utf8()).isEqualTo("request")
   }
 
   @Test
@@ -669,7 +672,7 @@ class MockWebServerTest {
     val reader = BufferedReader(InputStreamReader(inputStream, UTF_8))
     assertThat(reader.readLine()).isEqualTo("response")
     val request = server.takeRequest()
-    assertThat(request.body.utf8()).isEqualTo("request")
+    assertThat(request.body?.utf8()).isEqualTo("request")
   }
 
   @Test
@@ -837,5 +840,73 @@ class MockWebServerTest {
       server2.start()
     }
     server2.close()
+  }
+
+  @Test
+  fun recordedBodyIsNullForGetRequests() {
+    server.enqueue(MockResponse())
+    val client = OkHttpClient()
+    val request =
+      Request(
+        url = server.url("/"),
+      )
+    client.newCall(request).execute().use { response ->
+      assertThat(response.body.string()).isEqualTo("")
+    }
+    val recordedRequest = server.takeRequest()
+    assertThat(recordedRequest.body).isNull()
+  }
+
+  @Test
+  fun recordedBodyIsNullWithDoNotRead() {
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .socketPolicy(SocketPolicy.DoNotReadRequestBody())
+        .build(),
+    )
+    val client = OkHttpClient()
+    val request =
+      Request(
+        url = server.url("/"),
+        body = "hello".toRequestBody(),
+      )
+    client.newCall(request).execute().use { response ->
+      assertThat(response.body.string()).isEqualTo("")
+    }
+    val recordedRequest = server.takeRequest()
+    assertThat(recordedRequest.body).isNull()
+  }
+
+  @Test
+  fun recordedBodyIsEmptyForEmptyPostRequests() {
+    server.enqueue(MockResponse())
+    val client = OkHttpClient()
+    val request =
+      Request(
+        url = server.url("/"),
+        body = "".toRequestBody(),
+      )
+    client.newCall(request).execute().use { response ->
+      assertThat(response.body.string()).isEqualTo("")
+    }
+    val recordedRequest = server.takeRequest()
+    assertThat(recordedRequest.body).isEqualTo(ByteString.EMPTY)
+  }
+
+  @Test
+  fun recordedBodyIsNonEmptyForNonEmptyPostRequests() {
+    server.enqueue(MockResponse())
+    val client = OkHttpClient()
+    val request =
+      Request(
+        url = server.url("/"),
+        body = "hello".toRequestBody(),
+      )
+    client.newCall(request).execute().use { response ->
+      assertThat(response.body.string()).isEqualTo("")
+    }
+    val recordedRequest = server.takeRequest()
+    assertThat(recordedRequest.body).isEqualTo("hello".encodeUtf8())
   }
 }
