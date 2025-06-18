@@ -298,7 +298,7 @@ class URLConnectionTest {
         .newBuilder()
         .proxySelector(
           FakeProxySelector()
-            .addProxy(server2.toProxyAddress())
+            .addProxy(server2.proxyAddress)
             .addProxy(Proxy.NO_PROXY),
         ).build()
     server2.close()
@@ -1028,7 +1028,7 @@ class URLConnectionTest {
           handshakeCertificates.trustManager,
         ).connectionSpecs(listOf(ConnectionSpec.MODERN_TLS))
         .hostnameVerifier(RecordingHostnameVerifier())
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .build()
     val response =
       getResponse(
@@ -1069,7 +1069,7 @@ class URLConnectionTest {
     client =
       client
         .newBuilder()
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
@@ -1120,7 +1120,7 @@ class URLConnectionTest {
       client
         .newBuilder()
         .proxyAuthenticator(Authenticator.JAVA_NET_AUTHENTICATOR)
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
@@ -1161,7 +1161,7 @@ class URLConnectionTest {
     client =
       client
         .newBuilder()
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
@@ -1194,7 +1194,7 @@ class URLConnectionTest {
     client =
       client
         .newBuilder()
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .sslSocketFactory(socketFactory, handshakeCertificates.trustManager)
         .hostnameVerifier(hostnameVerifier)
         .build()
@@ -1215,7 +1215,7 @@ class URLConnectionTest {
         .newBuilder()
         .proxySelector(
           object : ProxySelector() {
-            override fun select(uri: URI): List<Proxy> = listOf(server.toProxyAddress())
+            override fun select(uri: URI): List<Proxy> = listOf(server.proxyAddress)
 
             override fun connectFailed(
               uri: URI,
@@ -1887,7 +1887,7 @@ class URLConnectionTest {
       client =
         client
           .newBuilder()
-          .proxy(server.toProxyAddress())
+          .proxy(server.proxyAddress)
           .proxyAuthenticator(JavaNetAuthenticator())
           .build()
       response = getResponse(Request("http://android.com/".toHttpUrl()))
@@ -2540,7 +2540,7 @@ class URLConnectionTest {
             override fun select(uri: URI): List<Proxy> {
               proxySelectionRequests.add(uri)
               val proxyServer = if (uri.port == server.port) server else server2
-              return listOf(proxyServer.toProxyAddress())
+              return listOf(proxyServer.proxyAddress)
             }
 
             override fun connectFailed(
@@ -4396,7 +4396,7 @@ class URLConnectionTest {
       ): Call.Factory =
         client
           .newBuilder()
-          .proxy(server.toProxyAddress())
+          .proxy(server.proxyAddress)
           .build()
     },
     PROXY_SYSTEM_PROPERTY {

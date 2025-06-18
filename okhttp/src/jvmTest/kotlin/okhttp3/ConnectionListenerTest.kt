@@ -312,7 +312,7 @@ open class ConnectionListenerTest {
   @Throws(IOException::class)
   fun successfulHttpProxyConnect() {
     server!!.enqueue(MockResponse())
-    val proxy = server!!.toProxyAddress()
+    val proxy = server!!.proxyAddress
     client =
       client
         .newBuilder()

@@ -96,12 +96,13 @@ public final class mockwebserver3/MockWebServer : java/io/Closeable {
 	public final fun getBodyLimit ()J
 	public final fun getDispatcher ()Lmockwebserver3/Dispatcher;
 	public final fun getHostName ()Ljava/lang/String;
-	public final fun getInetSocketAddress ()Ljava/net/InetSocketAddress;
 	public final fun getPort ()I
 	public final fun getProtocolNegotiationEnabled ()Z
 	public final fun getProtocols ()Ljava/util/List;
+	public final fun getProxyAddress ()Ljava/net/Proxy;
 	public final fun getRequestCount ()I
 	public final fun getServerSocketFactory ()Ljavax/net/ServerSocketFactory;
+	public final fun getSocketAddress ()Ljava/net/InetSocketAddress;
 	public final fun getStarted ()Z
 	public final fun noClientAuth ()V
 	public final fun requestClientAuth ()V
@@ -111,14 +112,12 @@ public final class mockwebserver3/MockWebServer : java/io/Closeable {
 	public final fun setProtocolNegotiationEnabled (Z)V
 	public final fun setProtocols (Ljava/util/List;)V
 	public final fun setServerSocketFactory (Ljavax/net/ServerSocketFactory;)V
-	public final fun setStarted (Z)V
 	public final fun start ()V
 	public final fun start (I)V
 	public final fun start (Ljava/net/InetAddress;I)V
 	public static synthetic fun start$default (Lmockwebserver3/MockWebServer;IILjava/lang/Object;)V
 	public final fun takeRequest ()Lmockwebserver3/RecordedRequest;
 	public final fun takeRequest (JLjava/util/concurrent/TimeUnit;)Lmockwebserver3/RecordedRequest;
-	public final fun toProxyAddress ()Ljava/net/Proxy;
 	public fun toString ()Ljava/lang/String;
 	public final fun url (Ljava/lang/String;)Lokhttp3/HttpUrl;
 	public final fun useHttps (Ljavax/net/ssl/SSLSocketFactory;)V

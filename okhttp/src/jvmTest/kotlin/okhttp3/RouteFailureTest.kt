@@ -94,8 +94,8 @@ class RouteFailureTest {
     server2.enqueue(bodyResponse)
 
     dns[server1.hostName] = listOf(ipv6, ipv4)
-    socketFactory[ipv6] = server1.inetSocketAddress
-    socketFactory[ipv4] = server2.inetSocketAddress
+    socketFactory[ipv6] = server1.socketAddress
+    socketFactory[ipv4] = server2.socketAddress
 
     client =
       client
@@ -131,8 +131,8 @@ class RouteFailureTest {
     server2.enqueue(bodyResponse)
 
     dns[server1.hostName] = listOf(ipv6, ipv4)
-    socketFactory[ipv6] = server1.inetSocketAddress
-    socketFactory[ipv4] = server2.inetSocketAddress
+    socketFactory[ipv6] = server1.socketAddress
+    socketFactory[ipv4] = server2.socketAddress
 
     client =
       client
@@ -174,8 +174,8 @@ class RouteFailureTest {
     server2.enqueue(bodyResponse)
 
     dns[server1.hostName] = listOf(ipv6, ipv4)
-    socketFactory[ipv6] = server1.inetSocketAddress
-    socketFactory[ipv4] = server2.inetSocketAddress
+    socketFactory[ipv6] = server1.socketAddress
+    socketFactory[ipv4] = server2.socketAddress
 
     client =
       client
@@ -211,8 +211,8 @@ class RouteFailureTest {
     server2.enqueue(bodyResponse)
 
     dns[server1.hostName] = listOf(ipv6, ipv4)
-    socketFactory[ipv6] = server1.inetSocketAddress
-    socketFactory[ipv4] = server2.inetSocketAddress
+    socketFactory[ipv6] = server1.socketAddress
+    socketFactory[ipv4] = server2.socketAddress
 
     client =
       client
@@ -254,7 +254,7 @@ class RouteFailureTest {
     server1.enqueue(refusedStream)
 
     dns[server1.hostName] = listOf(ipv6)
-    socketFactory[ipv6] = server1.inetSocketAddress
+    socketFactory[ipv6] = server1.socketAddress
 
     client =
       client
@@ -288,7 +288,7 @@ class RouteFailureTest {
     server1.enqueue(refusedStream)
 
     dns[server1.hostName] = listOf(ipv6)
-    socketFactory[ipv6] = server1.inetSocketAddress
+    socketFactory[ipv6] = server1.socketAddress
 
     client =
       client
@@ -324,13 +324,13 @@ class RouteFailureTest {
     val proxyServer1 = InetAddress.getByAddress("proxyServer1", byteArrayOf(127, 0, 0, 2))
     val proxyServer2 = InetAddress.getByAddress("proxyServer2", byteArrayOf(127, 0, 0, 3))
 
-    println("Proxy Server 1 is ${server1.inetSocketAddress}")
-    println("Proxy Server 2 is ${server2.inetSocketAddress}")
+    println("Proxy Server 1 is ${server1.socketAddress}")
+    println("Proxy Server 2 is ${server2.socketAddress}")
 
     // Since myproxy:8008 won't resolve, redirect with DNS to proxyServer1
     // Then redirect socket connection to server1
     dns["myproxy"] = listOf(proxyServer1)
-    socketFactory[proxyServer1] = server1.inetSocketAddress
+    socketFactory[proxyServer1] = server1.socketAddress
 
     client = client.newBuilder().proxySelector(proxySelector).build()
 
@@ -340,7 +340,7 @@ class RouteFailureTest {
     server2.enqueue(MockResponse(200))
     server2.enqueue(MockResponse(200))
 
-    println("\n\nRequest to ${server1.inetSocketAddress}")
+    println("\n\nRequest to ${server1.socketAddress}")
     executeSynchronously(request)
       .assertSuccessful()
       .assertCode(200)
@@ -356,9 +356,9 @@ class RouteFailureTest {
     // Now redirect with DNS to proxyServer2
     // Then redirect socket connection to server2
     dns["myproxy"] = listOf(proxyServer2)
-    socketFactory[proxyServer2] = server2.inetSocketAddress
+    socketFactory[proxyServer2] = server2.socketAddress
 
-    println("\n\nRequest to ${server2.inetSocketAddress}")
+    println("\n\nRequest to ${server2.socketAddress}")
     executeSynchronously(request)
       .apply {
         // We may have a single failed request if not clean shutdown
@@ -372,7 +372,7 @@ class RouteFailureTest {
         }
       }
 
-    println("\n\nRequest to ${server2.inetSocketAddress}")
+    println("\n\nRequest to ${server2.socketAddress}")
     executeSynchronously(request)
       .assertSuccessful()
       .assertCode(200)

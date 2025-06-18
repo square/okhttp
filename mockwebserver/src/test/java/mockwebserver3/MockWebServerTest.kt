@@ -32,6 +32,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.net.ConnectException
 import java.net.HttpURLConnection
+import java.net.InetAddress
 import java.net.ProtocolException
 import java.net.SocketTimeoutException
 import java.nio.charset.StandardCharsets.UTF_8
@@ -488,25 +489,88 @@ class MockWebServerTest {
   }
 
   @Test
-  fun portImplicitlyStarts() {
+  fun portValidAfterStart() {
     assertThat(server.port).isGreaterThan(0)
   }
 
   @Test
-  fun hostnameImplicitlyStarts() {
+  fun hostNameValidAfterStart() {
     assertThat(server.hostName).isNotNull()
   }
 
   @Test
-  fun toProxyAddressImplicitlyStarts() {
-    assertThat(server.toProxyAddress()).isNotNull()
+  fun proxyAddressValidAfterStart() {
+    assertThat(server.proxyAddress).isNotNull()
   }
 
   @Test
   fun differentInstancesGetDifferentPorts() {
     val other = MockWebServer()
-    assertThat(other.port).isNotEqualTo(server.port)
-    other.close()
+    other.use {
+      other.start()
+      assertThat(other.port).isNotEqualTo(server.port)
+    }
+  }
+
+  @Test
+  fun cannotAccessAddressBeforeStart() {
+    val other = MockWebServer()
+    assertFailsWith<IllegalStateException> {
+      other.socketAddress
+    }
+    assertFailsWith<IllegalStateException> {
+      other.hostName
+    }
+    assertFailsWith<IllegalStateException> {
+      other.port
+    }
+    assertFailsWith<IllegalStateException> {
+      other.proxyAddress
+    }
+    other.use {
+      other.start()
+      assertThat(other.socketAddress).isNotNull()
+      assertThat(other.hostName).isNotNull()
+      assertThat(other.port).isNotNull()
+      assertThat(other.proxyAddress).isNotNull()
+    }
+  }
+
+  @Test
+  fun startIsIdempotentIfAddressIsConsistent() {
+    val other = MockWebServer()
+    val addressA = InetAddress.getByAddress("localhost", byteArrayOf(127, 0, 0, 1))
+    val addressB = InetAddress.getByAddress("localhost", byteArrayOf(127, 0, 0, 2))
+    other.use {
+      other.start(addressA, 0)
+
+      // Same address is okay.
+      other.start(addressA, 0)
+
+      // Same address with bound port is okay.
+      other.start(addressA, other.port)
+
+      // Different address is not okay.
+      assertFailsWith<IllegalStateException> {
+        other.start(addressB, 0)
+      }
+
+      // Different port is not okay.
+      assertFailsWith<IllegalStateException> {
+        other.start(addressA, other.port - 1)
+      }
+    }
+  }
+
+  @Test
+  fun toStringIncludesLifecycleState() {
+    val other = MockWebServer()
+    assertThat(other.toString()).isEqualTo("MockWebServer{new}")
+    other.use {
+      other.start()
+      assertThat(other.toString()).isEqualTo("MockWebServer{port=${other.port}}")
+    }
+    assertThat(other.toString()).isEqualTo("MockWebServer{closed}")
   }
 
   @Test
@@ -514,11 +578,8 @@ class MockWebServerTest {
     // Enqueue a request that'll cause MockWebServer to hang on QueueDispatcher.dispatch().
     val connection = server.url("/").toUrl().openConnection() as HttpURLConnection
     connection.readTimeout = 500
-    try {
+    assertFailsWith<SocketTimeoutException> {
       connection.responseCode
-      fail<Unit>()
-    } catch (expected: SocketTimeoutException) {
-      // Expected.
     }
 
     // Closing the server should unblock the dispatcher.
@@ -748,7 +809,7 @@ class MockWebServerTest {
     val proxiedClient =
       OkHttpClient
         .Builder()
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .readTimeout(Duration.ofMillis(100))
         .build()
     val request = Request.Builder().url("http://android.com/").build()
@@ -772,11 +833,8 @@ class MockWebServerTest {
     val server2 = MockWebServer()
     server2.start()
     server2.close()
-    try {
+    assertFailsWith<IllegalStateException> {
       server2.start()
-      fail<Unit>()
-    } catch (expected: IllegalStateException) {
-      // Expected.
     }
     server2.close()
   }

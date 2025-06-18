@@ -2145,7 +2145,7 @@ class HttpOverHttp2Test {
     client =
       client
         .newBuilder()
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .build()
     val call1 = client.newCall(Request("https://android.com/call1".toHttpUrl()))
     val response2 = call1.execute()
@@ -2334,7 +2334,7 @@ class HttpOverHttp2Test {
     val client =
       client
         .newBuilder()
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .build()
 
     val url = server.url("/").resolve("//android.com/foo")!!
@@ -2387,7 +2387,7 @@ class HttpOverHttp2Test {
     val client =
       client
         .newBuilder()
-        .proxy(server.toProxyAddress())
+        .proxy(server.proxyAddress)
         .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
         .build()
 

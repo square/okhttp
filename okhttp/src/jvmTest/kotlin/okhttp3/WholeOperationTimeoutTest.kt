@@ -340,6 +340,7 @@ class WholeOperationTimeoutTest {
   @Test
   fun timeoutFollowingRedirectOnNewConnection() {
     val otherServer = MockWebServer()
+    otherServer.start()
     server.enqueue(
       MockResponse
         .Builder()

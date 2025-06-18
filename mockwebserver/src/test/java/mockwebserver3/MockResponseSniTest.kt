@@ -194,7 +194,7 @@ class MockResponseSniTest {
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        ).proxy(server.toProxyAddress())
+        ).proxy(server.proxyAddress)
         .build()
 
     server.enqueue(
