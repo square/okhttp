@@ -1040,8 +1040,8 @@ class WebSocketHttpTest {
         .build()
     val response = client.newCall(regularRequest).execute()
     response.close()
-    assertThat(webServer.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(webServer.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(webServer.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(webServer.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   /** https://github.com/square/okhttp/issues/5705  */

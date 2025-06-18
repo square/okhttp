@@ -36,7 +36,8 @@ internal fun RecordedRequest(
   chunkSizes: List<Int>,
   bodySize: Long,
   body: ByteString?,
-  sequenceNumber: Int,
+  connectionIndex: Int,
+  exchangeIndex: Int,
   socket: Socket,
   failure: IOException? = null,
 ): RecordedRequest {
@@ -63,7 +64,8 @@ internal fun RecordedRequest(
       ?: requestUrl(socket, requestLine, headers)
 
   return RecordedRequest(
-    sequenceNumber = sequenceNumber,
+    connectionIndex = connectionIndex,
+    exchangeIndex = exchangeIndex,
     handshake = handshake,
     handshakeServerNames = handshakeServerNames,
     method = requestLine.method,

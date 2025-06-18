@@ -144,18 +144,19 @@ public class mockwebserver3/QueueDispatcher : mockwebserver3/Dispatcher {
 }
 
 public final class mockwebserver3/RecordedRequest {
-	public fun <init> (ILokhttp3/Handshake;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lokhttp3/HttpUrl;Lokhttp3/Headers;Lokio/ByteString;JLjava/util/List;Ljava/io/IOException;)V
-	public synthetic fun <init> (ILokhttp3/Handshake;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lokhttp3/HttpUrl;Lokhttp3/Headers;Lokio/ByteString;JLjava/util/List;Ljava/io/IOException;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IILokhttp3/Handshake;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lokhttp3/HttpUrl;Lokhttp3/Headers;Lokio/ByteString;JLjava/util/List;Ljava/io/IOException;)V
+	public synthetic fun <init> (IILokhttp3/Handshake;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lokhttp3/HttpUrl;Lokhttp3/Headers;Lokio/ByteString;JLjava/util/List;Ljava/io/IOException;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getBody ()Lokio/ByteString;
 	public final fun getBodySize ()J
 	public final fun getChunkSizes ()Ljava/util/List;
+	public final fun getConnectionIndex ()I
+	public final fun getExchangeIndex ()I
 	public final fun getFailure ()Ljava/io/IOException;
 	public final fun getHandshake ()Lokhttp3/Handshake;
 	public final fun getHandshakeServerNames ()Ljava/util/List;
 	public final fun getHeaders ()Lokhttp3/Headers;
 	public final fun getMethod ()Ljava/lang/String;
 	public final fun getRequestLine ()Ljava/lang/String;
-	public final fun getSequenceNumber ()I
 	public final fun getTarget ()Ljava/lang/String;
 	public final fun getUrl ()Lokhttp3/HttpUrl;
 	public final fun getVersion ()Ljava/lang/String;

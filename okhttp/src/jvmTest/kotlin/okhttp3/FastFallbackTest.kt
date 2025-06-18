@@ -322,7 +322,7 @@ class FastFallbackTest {
     val call = client.newCall(Request(url))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("this was the 2nd request on IPv4")
-    assertThat(serverIpv4.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(serverIpv4.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(serverIpv4.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(serverIpv4.takeRequest().exchangeIndex).isEqualTo(1)
   }
 }

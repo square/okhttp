@@ -435,10 +435,10 @@ class ConnectionCoalescingTest {
     server.enqueue(MockResponse())
     assert200Http2Response(execute(url), "san.com")
     assertThat(client.connectionPool.connectionCount()).isEqualTo(2)
-    assertThat(server.takeRequest().sequenceNumber)
-      .isEqualTo(0) // Fresh connection.
-    assertThat(server.takeRequest().sequenceNumber)
-      .isEqualTo(0) // Fresh connection.
+    val c0e0 = server.takeRequest()
+    assertThat(c0e0.connectionIndex).isEqualTo(0) // Fresh connection.
+    val c1e0 = server.takeRequest()
+    assertThat(c1e0.connectionIndex).isEqualTo(1) // Fresh connection.
   }
 
   /**
@@ -545,10 +545,15 @@ class ConnectionCoalescingTest {
       assertThat(response.priorResponse!!.code).isEqualTo(421)
       assertThat(response.body.string()).isEqualTo("after misdirect")
     }
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
-    assertThat(server.takeRequest().sequenceNumber)
-      .isEqualTo(0) // Fresh connection.
+    val c0e0 = server.takeRequest()
+    assertThat(c0e0.connectionIndex).isEqualTo(0)
+    assertThat(c0e0.exchangeIndex).isEqualTo(0)
+    val c0e1 = server.takeRequest()
+    assertThat(c0e1.connectionIndex).isEqualTo(0)
+    assertThat(c0e1.exchangeIndex).isEqualTo(1)
+    val c1e0 = server.takeRequest()
+    assertThat(c1e0.connectionIndex).isEqualTo(1) // Fresh connection.
+    assertThat(c1e0.exchangeIndex).isEqualTo(0)
     assertThat(client.connectionPool.connectionCount()).isEqualTo(2)
   }
 

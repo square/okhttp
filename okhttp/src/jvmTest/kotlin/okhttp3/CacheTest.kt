@@ -479,13 +479,15 @@ class CacheTest {
     assertThat(response1.body.string()).isEqualTo("ABC")
     val recordedRequest1 = server.takeRequest()
     assertThat(recordedRequest1.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(recordedRequest1.sequenceNumber).isEqualTo(0)
+    assertThat(recordedRequest1.connectionIndex).isEqualTo(0)
+    assertThat(recordedRequest1.exchangeIndex).isEqualTo(0)
     val request2 = Request.Builder().url(server.url("/bar")).build()
     val response2 = client.newCall(request2).execute()
     assertThat(response2.body.string()).isEqualTo("ABC")
     val recordedRequest2 = server.takeRequest()
     assertThat(recordedRequest2.requestLine).isEqualTo("GET /bar HTTP/1.1")
-    assertThat(recordedRequest2.sequenceNumber).isEqualTo(1)
+    assertThat(recordedRequest2.connectionIndex).isEqualTo(0)
+    assertThat(recordedRequest2.exchangeIndex).isEqualTo(1)
 
     // an unrelated request should reuse the pooled connection
     val request3 = Request.Builder().url(server.url("/baz")).build()
@@ -493,7 +495,8 @@ class CacheTest {
     assertThat(response3.body.string()).isEqualTo("DEF")
     val recordedRequest3 = server.takeRequest()
     assertThat(recordedRequest3.requestLine).isEqualTo("GET /baz HTTP/1.1")
-    assertThat(recordedRequest3.sequenceNumber).isEqualTo(2)
+    assertThat(recordedRequest3.connectionIndex).isEqualTo(0)
+    assertThat(recordedRequest3.exchangeIndex).isEqualTo(2)
   }
 
   @Test
@@ -2160,9 +2163,15 @@ class CacheTest {
     assertThat(get(server.url("/a")).body.string()).isEqualTo("A")
     assertThat(get(server.url("/a")).body.string()).isEqualTo("A")
     assertThat(get(server.url("/b")).body.string()).isEqualTo("B")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
+    val c0e0 = server.takeRequest()
+    assertThat(c0e0.connectionIndex).isEqualTo(0)
+    assertThat(c0e0.exchangeIndex).isEqualTo(0)
+    val c0e1 = server.takeRequest()
+    assertThat(c0e1.connectionIndex).isEqualTo(0)
+    assertThat(c0e1.exchangeIndex).isEqualTo(1)
+    val c0e2 = server.takeRequest()
+    assertThat(c0e2.connectionIndex).isEqualTo(0)
+    assertThat(c0e2.exchangeIndex).isEqualTo(2)
   }
 
   @Test

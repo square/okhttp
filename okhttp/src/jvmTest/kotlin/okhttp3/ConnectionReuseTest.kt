@@ -157,8 +157,8 @@ class ConnectionReuseTest {
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("b")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @Test
@@ -181,8 +181,8 @@ class ConnectionReuseTest {
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("b")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   @Test
@@ -193,11 +193,11 @@ class ConnectionReuseTest {
     val request = Request(server.url("/"))
     val responseA = client.newCall(request).execute()
     assertThat(responseA.body.string()).isEqualTo("a")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     val responseB = client.newCall(request).execute()
     assertThat(responseB.body.string()).isEqualTo("b")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   @Test
@@ -210,8 +210,8 @@ class ConnectionReuseTest {
     val response2 = client.newCall(request).execute()
     response1.body.string() // Discard the response body.
     response2.body.string() // Discard the response body.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @Test
@@ -231,8 +231,8 @@ class ConnectionReuseTest {
     Thread.sleep(500)
     val response2 = client.newCall(request).execute()
     assertThat(response2.body.string()).isEqualTo("b")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   @Test
@@ -282,8 +282,8 @@ class ConnectionReuseTest {
         .build()
     val response2 = anotherClient.newCall(request).execute()
     response2.body.close()
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   /**
@@ -336,9 +336,9 @@ class ConnectionReuseTest {
         response.body.string(),
       ).isEqualTo("unrelated response body!")
     }
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     // No connection reuse.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     for (response in responsesNotClosed) {
       response!!.closeQuietly()
     }
@@ -371,7 +371,7 @@ class ConnectionReuseTest {
     for (i in requests.indices) {
       val response = client.newCall(requests[i]!!).execute()
       response.body.string() // Discard the response body.
-      assertThat(server.takeRequest().sequenceNumber).isEqualTo(i)
+      assertThat(server.takeRequest().exchangeIndex).isEqualTo(i)
     }
   }
 
@@ -379,7 +379,7 @@ class ConnectionReuseTest {
     for (request in requests) {
       val response = client.newCall(request!!).execute()
       response.body.string() // Discard the response body.
-      assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+      assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     }
   }
 }

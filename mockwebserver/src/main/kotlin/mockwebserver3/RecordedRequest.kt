@@ -27,10 +27,15 @@ import okio.ByteString
 @ExperimentalOkHttpApi
 public class RecordedRequest(
   /**
-   * The index of this request on its HTTP connection. Since a single HTTP connection may serve
-   * multiple requests, each request is assigned its own sequence number.
+   * The index of the socket connection that carried this request. If two recorded requests share a
+   * connection index, they also shared a socket connection.
    */
-  public val sequenceNumber: Int,
+  public val connectionIndex: Int,
+  /**
+   * The index of this exchange on its HTTP connection. A request is uniquely identified by the
+   * (connection index, exchange index) pair.
+   */
+  public val exchangeIndex: Int,
   /**
    * The TLS handshake of the connection that carried this request, or null if the request was
    * received without TLS.

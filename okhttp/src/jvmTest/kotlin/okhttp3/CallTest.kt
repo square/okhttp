@@ -336,8 +336,8 @@ open class CallTest {
     executeSynchronously(getRequest)
       .assertCode(200)
       .assertBody("abc")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @Test
@@ -364,8 +364,8 @@ open class CallTest {
     executeSynchronously(getRequest)
       .assertCode(200)
       .assertBody("abc")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @Test
@@ -856,9 +856,9 @@ open class CallTest {
     executeSynchronously("/a").assertBody("abc")
     executeSynchronously("/b").assertBody("def")
     executeSynchronously("/c").assertBody("ghi")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(2)
   }
 
   /**
@@ -893,9 +893,9 @@ open class CallTest {
         .proxy(server.proxyAddress)
         .build()
     executeSynchronously("/c").assertBody("ghi")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(2)
   }
 
   @Test
@@ -914,9 +914,9 @@ open class CallTest {
     executeSynchronously("/b").assertBody("def")
     client = client.newBuilder().build()
     executeSynchronously("/c").assertBody("ghi")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(2)
   }
 
   @Test
@@ -930,9 +930,9 @@ open class CallTest {
     callback.await(server.url("/b")).assertBody("def")
     client.newCall(Request.Builder().url(server.url("/c")).build()).enqueue(callback)
     callback.await(server.url("/c")).assertBody("ghi")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(2)
   }
 
   @Test
@@ -963,9 +963,9 @@ open class CallTest {
     )
     callback.await(server.url("/b")).assertCode(200).assertBody("def")
     // New connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     // Connection reuse!
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @Test
@@ -1194,8 +1194,8 @@ open class CallTest {
     assertThat(response2.code).isEqualTo(200)
 
     // Use sequence numbers to confirm the connection was pooled.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @Test
@@ -1218,8 +1218,8 @@ open class CallTest {
     assertThat(body2.timeout().hasDeadline()).isFalse()
 
     // Use sequence numbers to confirm the connection was pooled.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @Test
@@ -1751,14 +1751,14 @@ open class CallTest {
     )
 
     val get = server.takeRequest()
-    assertThat(get.sequenceNumber).isEqualTo(0)
+    assertThat(get.exchangeIndex).isEqualTo(0)
 
     val post1 = server.takeRequest()
     assertThat(post1.body?.utf8()).isEqualTo("body!")
-    assertThat(post1.sequenceNumber).isEqualTo(1)
+    assertThat(post1.exchangeIndex).isEqualTo(1)
 
     val get2 = server.takeRequest()
-    assertThat(get2.sequenceNumber).isEqualTo(0)
+    assertThat(get2.exchangeIndex).isEqualTo(0)
   }
 
   @Test
@@ -1779,13 +1779,13 @@ open class CallTest {
     val response2 = client.newCall(request2).execute()
     assertThat(response2.body.string()).isEqualTo("def")
     val get = server.takeRequest()
-    assertThat(get.sequenceNumber).isEqualTo(0)
+    assertThat(get.exchangeIndex).isEqualTo(0)
     val post1 = server.takeRequest()
     assertThat(post1.body?.utf8()).isEqualTo("body!")
-    assertThat(post1.sequenceNumber).isEqualTo(1)
+    assertThat(post1.exchangeIndex).isEqualTo(1)
     val post2 = server.takeRequest()
     assertThat(post2.body?.utf8()).isEqualTo("body!")
-    assertThat(post2.sequenceNumber).isEqualTo(0)
+    assertThat(post2.exchangeIndex).isEqualTo(0)
   }
 
   @Test
@@ -2174,11 +2174,11 @@ open class CallTest {
       .assertHeader("Test", "Redirect from /a to /b")
 
     // New connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     // Connection reused.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
     // Connection reused again!
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(2)
   }
 
   @Test
@@ -2626,11 +2626,11 @@ open class CallTest {
       .assertHeader("Test", "Redirect from /a to /b")
 
     // New connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     // Connection reused.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
     // Connection reused again!
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(2)
   }
 
   @Tag("Slow")
@@ -3192,9 +3192,9 @@ open class CallTest {
     // Make another request just to confirm that that connection can be reused...
     executeSynchronously("/").assertBody("def")
     // New connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     // Connection reused.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
 
     // ... even before we close the response body!
     response.body.close()
@@ -3488,8 +3488,8 @@ open class CallTest {
         .build(),
     )
     executeSynchronously(Request(server.url("/")))
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @Tag("Slow")
@@ -3513,8 +3513,8 @@ open class CallTest {
         .build(),
     )
     executeSynchronously(Request(server.url("/")))
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   @Test
@@ -3532,8 +3532,8 @@ open class CallTest {
         .build(),
     )
     executeSynchronously(Request(server.url("/")))
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   /** We forbid non-ASCII characters in outgoing request headers, but accept UTF-8.  */
@@ -3836,13 +3836,13 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("response body")
 
     // First CONNECT call needs a new connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
 
     // Second CONNECT call needs a new connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
 
     // GET reuses the connection from the second connect.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @Test

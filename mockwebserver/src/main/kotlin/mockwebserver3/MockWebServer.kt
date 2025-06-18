@@ -385,6 +385,7 @@ public class MockWebServer : Closeable {
 
   @Throws(Exception::class)
   private fun acceptConnections() {
+    var nextConnectionIndex = 0
     while (true) {
       val socket: Socket
       try {
@@ -396,11 +397,11 @@ public class MockWebServer : Closeable {
 
       val socketPolicy = dispatcher.peek().socketPolicy
       if (socketPolicy === DisconnectAtStart) {
-        dispatchBookkeepingRequest(0, socket)
+        dispatchBookkeepingRequest(nextConnectionIndex++, 0, socket)
         socket.close()
       } else {
         openClientSockets.add(socket)
-        serveConnection(socket)
+        serveConnection(nextConnectionIndex++, socket)
       }
     }
   }
@@ -424,10 +425,13 @@ public class MockWebServer : Closeable {
     taskRunnerBackend.shutdown()
   }
 
-  private fun serveConnection(raw: Socket) {
+  private fun serveConnection(
+    connectionIndex: Int,
+    raw: Socket,
+  ) {
     taskRunner.newQueue().execute("MockWebServer ${raw.remoteSocketAddress}", cancelable = false) {
       try {
-        SocketHandler(raw).handle()
+        SocketHandler(connectionIndex, raw).handle()
       } catch (e: IOException) {
         logger.fine("$this connection from ${raw.inetAddress} failed: $e")
       } catch (e: Exception) {
@@ -437,9 +441,10 @@ public class MockWebServer : Closeable {
   }
 
   internal inner class SocketHandler(
+    private val connectionIndex: Int,
     private val raw: Socket,
   ) {
-    private var sequenceNumber = 0
+    private var nextExchangeIndex = 0
 
     @Throws(Exception::class)
     fun handle() {
@@ -451,7 +456,7 @@ public class MockWebServer : Closeable {
       when {
         sslSocketFactory != null -> {
           if (socketPolicy === FailHandshake) {
-            dispatchBookkeepingRequest(sequenceNumber, raw)
+            dispatchBookkeepingRequest(connectionIndex, nextExchangeIndex++, raw)
             processHandshakeFailure(raw)
             return
           }
@@ -501,12 +506,12 @@ public class MockWebServer : Closeable {
       }
 
       if (socketPolicy === StallSocketAtStart) {
-        dispatchBookkeepingRequest(sequenceNumber, socket)
+        dispatchBookkeepingRequest(connectionIndex, nextExchangeIndex++, socket)
         return // Ignore the socket until the server is shut down!
       }
 
       if (protocol === Protocol.HTTP_2 || protocol === Protocol.H2_PRIOR_KNOWLEDGE) {
-        val http2SocketHandler = Http2SocketHandler(socket, protocol)
+        val http2SocketHandler = Http2SocketHandler(connectionIndex, socket, protocol)
         val connection =
           Http2Connection
             .Builder(false, taskRunner)
@@ -527,7 +532,7 @@ public class MockWebServer : Closeable {
       while (processOneRequest(socket, source, sink)) {
       }
 
-      if (sequenceNumber == 0) {
+      if (nextExchangeIndex == 0) {
         logger.warning(
           "${this@MockWebServer} connection from ${raw.inetAddress} didn't make a request",
         )
@@ -575,7 +580,7 @@ public class MockWebServer : Closeable {
         return false // No more requests on this socket.
       }
 
-      val request = readRequest(socket, source, sink, sequenceNumber)
+      val request = readRequest(socket, source, sink, connectionIndex, nextExchangeIndex)
       atomicRequestCount.incrementAndGet()
       requestQueue.add(request)
 
@@ -628,7 +633,7 @@ public class MockWebServer : Closeable {
         else -> {
         }
       }
-      sequenceNumber++
+      nextExchangeIndex++
       return reuseSocket
     }
   }
@@ -655,7 +660,8 @@ public class MockWebServer : Closeable {
 
   @Throws(InterruptedException::class)
   private fun dispatchBookkeepingRequest(
-    sequenceNumber: Int,
+    connectionIndex: Int,
+    exchangeIndex: Int,
     socket: Socket,
   ) {
     val request =
@@ -665,7 +671,8 @@ public class MockWebServer : Closeable {
         chunkSizes = emptyList(),
         bodySize = 0L,
         body = null,
-        sequenceNumber = sequenceNumber,
+        connectionIndex = connectionIndex,
+        exchangeIndex = exchangeIndex,
         socket = socket,
       )
     atomicRequestCount.incrementAndGet()
@@ -673,13 +680,14 @@ public class MockWebServer : Closeable {
     dispatcher.dispatch(request)
   }
 
-  /** @param sequenceNumber the index of this request on this connection.*/
+  /** @param exchangeIndex the index of this request on this connection.*/
   @Throws(IOException::class)
   private fun readRequest(
     socket: Socket,
     source: BufferedSource,
     sink: BufferedSink,
-    sequenceNumber: Int,
+    connectionIndex: Int,
+    exchangeIndex: Int,
   ): RecordedRequest {
     var request: RequestLine = DEFAULT_REQUEST_LINE
     val headers = Headers.Builder()
@@ -776,7 +784,8 @@ public class MockWebServer : Closeable {
           hasBody -> requestBody.buffer.readByteString()
           else -> null
         },
-      sequenceNumber = sequenceNumber,
+      connectionIndex = connectionIndex,
+      exchangeIndex = exchangeIndex,
       socket = socket,
       failure = failure,
     )
@@ -986,16 +995,17 @@ public class MockWebServer : Closeable {
 
   /** Processes HTTP requests layered over HTTP/2. */
   private inner class Http2SocketHandler(
+    private val connectionIndex: Int,
     private val socket: Socket,
     private val protocol: Protocol,
   ) : Http2Connection.Listener() {
-    private val sequenceNumber = AtomicInteger()
+    private val nextExchangeIndex = AtomicInteger()
 
     @Throws(IOException::class)
     override fun onStream(stream: Http2Stream) {
       val peekedResponse = dispatcher.peek()
       if (peekedResponse.socketPolicy is ResetStreamAtStart) {
-        dispatchBookkeepingRequest(sequenceNumber.getAndIncrement(), socket)
+        dispatchBookkeepingRequest(connectionIndex, nextExchangeIndex.getAndIncrement(), socket)
         stream.close(ErrorCode.fromHttp2(peekedResponse.socketPolicy.http2ErrorCode)!!, null)
         return
       }
@@ -1107,7 +1117,8 @@ public class MockWebServer : Closeable {
             HttpMethod.permitsRequestBody(method) -> bodyByteString
             else -> null
           },
-        sequenceNumber = sequenceNumber.getAndIncrement(),
+        connectionIndex = connectionIndex,
+        exchangeIndex = nextExchangeIndex.getAndIncrement(),
         socket = socket,
         failure = exception,
       )
@@ -1213,7 +1224,8 @@ public class MockWebServer : Closeable {
             chunkSizes = chunkSizes,
             bodySize = 0,
             body = null,
-            sequenceNumber = sequenceNumber.getAndIncrement(),
+            connectionIndex = connectionIndex,
+            exchangeIndex = nextExchangeIndex.getAndIncrement(),
             socket = socket,
           ),
         )
