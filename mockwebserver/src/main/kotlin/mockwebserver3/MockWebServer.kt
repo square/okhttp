@@ -64,7 +64,8 @@ import mockwebserver3.SocketPolicy.ShutdownInputAtEnd
 import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
 import mockwebserver3.SocketPolicy.ShutdownServerAfterResponse
 import mockwebserver3.SocketPolicy.StallSocketAtStart
-import mockwebserver3.internal.DEFAULT_REQUEST_LINE
+import mockwebserver3.internal.DEFAULT_REQUEST_LINE_HTTP_1
+import mockwebserver3.internal.DEFAULT_REQUEST_LINE_HTTP_2
 import mockwebserver3.internal.RecordedRequest
 import mockwebserver3.internal.RequestLine
 import mockwebserver3.internal.ThrottledSink
@@ -397,7 +398,11 @@ public class MockWebServer : Closeable {
 
       val socketPolicy = dispatcher.peek().socketPolicy
       if (socketPolicy === DisconnectAtStart) {
-        dispatchBookkeepingRequest(nextConnectionIndex++, 0, socket)
+        dispatchBookkeepingRequest(
+          connectionIndex = nextConnectionIndex++,
+          exchangeIndex = 0,
+          socket = socket,
+        )
         socket.close()
       } else {
         openClientSockets.add(socket)
@@ -456,7 +461,11 @@ public class MockWebServer : Closeable {
       when {
         sslSocketFactory != null -> {
           if (socketPolicy === FailHandshake) {
-            dispatchBookkeepingRequest(connectionIndex, nextExchangeIndex++, raw)
+            dispatchBookkeepingRequest(
+              connectionIndex = connectionIndex,
+              exchangeIndex = nextExchangeIndex++,
+              socket = raw,
+            )
             processHandshakeFailure(raw)
             return
           }
@@ -506,7 +515,11 @@ public class MockWebServer : Closeable {
       }
 
       if (socketPolicy === StallSocketAtStart) {
-        dispatchBookkeepingRequest(connectionIndex, nextExchangeIndex++, socket)
+        dispatchBookkeepingRequest(
+          connectionIndex = connectionIndex,
+          exchangeIndex = nextExchangeIndex++,
+          socket = socket,
+        )
         return // Ignore the socket until the server is shut down!
       }
 
@@ -663,10 +676,11 @@ public class MockWebServer : Closeable {
     connectionIndex: Int,
     exchangeIndex: Int,
     socket: Socket,
+    requestLine: RequestLine = DEFAULT_REQUEST_LINE_HTTP_1,
   ) {
     val request =
       RecordedRequest(
-        requestLine = DEFAULT_REQUEST_LINE,
+        requestLine = requestLine,
         headers = headersOf(),
         chunkSizes = emptyList(),
         bodySize = 0L,
@@ -689,7 +703,7 @@ public class MockWebServer : Closeable {
     connectionIndex: Int,
     exchangeIndex: Int,
   ): RecordedRequest {
-    var request: RequestLine = DEFAULT_REQUEST_LINE
+    var request: RequestLine = DEFAULT_REQUEST_LINE_HTTP_1
     val headers = Headers.Builder()
     var contentLength = -1L
     var chunked = false
@@ -1005,7 +1019,12 @@ public class MockWebServer : Closeable {
     override fun onStream(stream: Http2Stream) {
       val peekedResponse = dispatcher.peek()
       if (peekedResponse.socketPolicy is ResetStreamAtStart) {
-        dispatchBookkeepingRequest(connectionIndex, nextExchangeIndex.getAndIncrement(), socket)
+        dispatchBookkeepingRequest(
+          connectionIndex = connectionIndex,
+          exchangeIndex = nextExchangeIndex.getAndIncrement(),
+          socket = socket,
+          requestLine = DEFAULT_REQUEST_LINE_HTTP_2,
+        )
         stream.close(ErrorCode.fromHttp2(peekedResponse.socketPolicy.http2ErrorCode)!!, null)
         return
       }
@@ -1081,7 +1100,7 @@ public class MockWebServer : Closeable {
         RequestLine(
           method = method,
           target = path,
-          version = "HTTP/1.1",
+          version = "HTTP/2",
         )
       var exception: IOException? = null
       var bodyByteString: ByteString? = null
@@ -1214,7 +1233,7 @@ public class MockWebServer : Closeable {
           RequestLine(
             method = pushPromise.method,
             target = pushPromise.path,
-            version = "HTTP/1.1",
+            version = "HTTP/2",
           )
         val chunkSizes = emptyList<Int>() // No chunked encoding for HTTP/2.
         requestQueue.add(

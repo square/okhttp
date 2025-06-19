@@ -20,7 +20,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import java.net.InetAddress
 import java.net.Socket
-import mockwebserver3.internal.DEFAULT_REQUEST_LINE
+import mockwebserver3.internal.DEFAULT_REQUEST_LINE_HTTP_1
 import mockwebserver3.internal.RecordedRequest
 import mockwebserver3.internal.decodeRequestLine
 import okhttp3.Headers
@@ -39,7 +39,7 @@ class RecordedRequestTest {
         localAddress = InetAddress.getByAddress("127.0.0.1", byteArrayOf(127, 0, 0, 1)),
         localPort = 80,
       )
-    val request = RecordedRequest(DEFAULT_REQUEST_LINE, headers, emptyList(), 0, ByteString.EMPTY, 0, 0, socket)
+    val request = RecordedRequest(DEFAULT_REQUEST_LINE_HTTP_1, headers, emptyList(), 0, ByteString.EMPTY, 0, 0, socket)
     assertThat(request.url.toString()).isEqualTo("http://127.0.0.1/")
   }
 
@@ -99,7 +99,7 @@ class RecordedRequestTest {
           ),
         localPort = 80,
       )
-    val request = RecordedRequest(DEFAULT_REQUEST_LINE, headers, emptyList(), 0, ByteString.EMPTY, 0, 0, socket)
+    val request = RecordedRequest(DEFAULT_REQUEST_LINE_HTTP_1, headers, emptyList(), 0, ByteString.EMPTY, 0, 0, socket)
     assertThat(request.url.toString()).isEqualTo("http://[::1]/")
   }
 
@@ -109,7 +109,7 @@ class RecordedRequestTest {
         localAddress = InetAddress.getByAddress("127.0.0.1", byteArrayOf(127, 0, 0, 1)),
         localPort = 80,
       )
-    val request = RecordedRequest(DEFAULT_REQUEST_LINE, headers, emptyList(), 0, ByteString.EMPTY, 0, 0, socket)
+    val request = RecordedRequest(DEFAULT_REQUEST_LINE_HTTP_1, headers, emptyList(), 0, ByteString.EMPTY, 0, 0, socket)
     assertThat(request.url.toString()).isEqualTo("http://127.0.0.1/")
   }
 
@@ -124,7 +124,7 @@ class RecordedRequestTest {
           ),
         localPort = 80,
       )
-    val request = RecordedRequest(DEFAULT_REQUEST_LINE, headers, emptyList(), 0, ByteString.EMPTY, 0, 0, socket)
+    val request = RecordedRequest(DEFAULT_REQUEST_LINE_HTTP_1, headers, emptyList(), 0, ByteString.EMPTY, 0, 0, socket)
     assertThat(request.url.toString()).isEqualTo("http://host-from-header.com/")
   }
 

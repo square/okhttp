@@ -84,7 +84,7 @@ internal fun decodeRequestLine(requestLine: String?): RequestLine {
   val parts =
     when {
       requestLine != null -> requestLine.split(' ', limit = 3)
-      else -> return DEFAULT_REQUEST_LINE
+      else -> return DEFAULT_REQUEST_LINE_HTTP_1
     }
 
   if (parts.size != 3) {
@@ -106,11 +106,18 @@ internal class RequestLine(
   override fun toString() = "$method $target $version"
 }
 
-internal val DEFAULT_REQUEST_LINE =
+internal val DEFAULT_REQUEST_LINE_HTTP_1 =
   RequestLine(
     method = "GET",
     target = "/",
     version = "HTTP/1.1",
+  )
+
+internal val DEFAULT_REQUEST_LINE_HTTP_2 =
+  RequestLine(
+    method = "GET",
+    target = "/",
+    version = "HTTP/2",
   )
 
 private val Socket.scheme: String
