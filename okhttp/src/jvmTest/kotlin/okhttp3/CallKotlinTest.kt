@@ -210,7 +210,7 @@ class CallKotlinTest {
     val responseA = client.newCall(requestA).execute()
 
     assertThat(responseA.body.string()).isEqualTo("a")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
 
     // Give the socket a chance to become stale.
     connection!!.idleAtNs -= IDLE_CONNECTION_HEALTHY_NS
@@ -223,7 +223,7 @@ class CallKotlinTest {
       )
     val responseB = client.newCall(requestB).execute()
     assertThat(responseB.body.string()).isEqualTo("b")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   /** Confirm suppressed exceptions that occur while connecting are returned. */

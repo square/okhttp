@@ -16,7 +16,6 @@
 package mockwebserver3.junit5
 
 import mockwebserver3.junit5.internal.StartStopExtension
-import okhttp3.ExperimentalOkHttpApi
 import org.junit.jupiter.api.extension.ExtendWith
 
 /**
@@ -38,5 +37,4 @@ import org.junit.jupiter.api.extension.ExtendWith
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 @ExtendWith(StartStopExtension::class)
-@ExperimentalOkHttpApi
 annotation class StartStop

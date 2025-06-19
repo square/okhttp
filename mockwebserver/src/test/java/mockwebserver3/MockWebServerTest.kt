@@ -284,8 +284,12 @@ class MockWebServerTest {
     assertThat(in2.read()).isEqualTo('E'.code)
     assertThat(in2.read()).isEqualTo('F'.code)
     assertThat(in2.read()).isEqualTo(-1)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    val c0e0 = server.takeRequest()
+    assertThat(c0e0.connectionIndex).isEqualTo(0)
+    assertThat(c0e0.exchangeIndex).isEqualTo(0)
+    val c1e0 = server.takeRequest()
+    assertThat(c1e0.connectionIndex).isEqualTo(1)
+    assertThat(c1e0.exchangeIndex).isEqualTo(0)
   }
 
   @Disabled("Not actually failing where expected")

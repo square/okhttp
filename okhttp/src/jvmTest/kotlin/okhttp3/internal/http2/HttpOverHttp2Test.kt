@@ -360,8 +360,12 @@ class HttpOverHttp2Test {
     assertThat(response2.body.source().readUtf8(3)).isEqualTo("GHI")
     assertThat(response1.body.source().readUtf8(3)).isEqualTo("DEF")
     assertThat(response2.body.source().readUtf8(3)).isEqualTo("JKL")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    val c0e0 = server.takeRequest()
+    assertThat(c0e0.connectionIndex).isEqualTo(0)
+    assertThat(c0e0.exchangeIndex).isEqualTo(0)
+    val c0e1 = server.takeRequest()
+    assertThat(c0e1.connectionIndex).isEqualTo(0)
+    assertThat(c0e1.exchangeIndex).isEqualTo(1)
     response1.close()
     response2.close()
   }
@@ -484,8 +488,8 @@ class HttpOverHttp2Test {
     executor.execute(AsyncRequest("/r1", countDownLatch))
     executor.execute(AsyncRequest("/r2", countDownLatch))
     countDownLatch.await()
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @ParameterizedTest
@@ -597,8 +601,8 @@ class HttpOverHttp2Test {
     assertThat(response2.body.string()).isEqualTo("A")
 
     // Confirm that the connection was reused.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   /**
@@ -671,8 +675,8 @@ class HttpOverHttp2Test {
     assertThat(response2.body.string()).isEqualTo(body)
 
     // Confirm that the connection was reused.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @ParameterizedTest
@@ -719,8 +723,8 @@ class HttpOverHttp2Test {
     }
 
     // Confirm that the connection was reused.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @ParameterizedTest
@@ -880,7 +884,7 @@ class HttpOverHttp2Test {
     val call2 = client.newCall(Request(server.url("/")))
     val response2 = call2.execute()
     assertThat(response2.body.string()).isEqualTo("def")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
 
     // Clean up the connection.
     response.close()
@@ -919,12 +923,12 @@ class HttpOverHttp2Test {
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("abc")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
 
     // Note that although we have two routes available, we only use one. The retry is permitted
     // because there are routes available, but it chooses the existing connection since it isn't
     // yet considered unhealthy.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @ParameterizedTest
@@ -952,9 +956,9 @@ class HttpOverHttp2Test {
     }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
     }
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0) // New connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1) // Pooled connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0) // New connection.
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0) // New connection.
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1) // Pooled connection.
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0) // New connection.
   }
 
   @ParameterizedTest
@@ -973,12 +977,12 @@ class HttpOverHttp2Test {
     }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
     }
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
 
     // Second call succeeds on the pooled connection.
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("abc")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @ParameterizedTest
@@ -1001,19 +1005,19 @@ class HttpOverHttp2Test {
     }.also { expected ->
       assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
     }
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0) // New connection.
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0) // New connection.
 
     // Second call attempts the pooled connection, and it fails. Then it retries a new route which
     // succeeds.
     val response2 = client.newCall(request).execute()
     assertThat(response2.body.string()).isEqualTo("abc")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1) // Pooled connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0) // New connection.
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1) // Pooled connection.
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0) // New connection.
 
     // Third call reuses the second connection.
     val response3 = client.newCall(request).execute()
     assertThat(response3.body.string()).isEqualTo("def")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1) // New connection.
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1) // New connection.
   }
 
   /**
@@ -1071,9 +1075,13 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("abc")
 
     // New connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    val c0e0 = server.takeRequest()
+    assertThat(c0e0.connectionIndex).isEqualTo(0)
+    assertThat(c0e0.exchangeIndex).isEqualTo(0)
     // New connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    val c1e0 = server.takeRequest()
+    assertThat(c1e0.connectionIndex).isEqualTo(1)
+    assertThat(c1e0.exchangeIndex).isEqualTo(0)
   }
 
   @ParameterizedTest
@@ -1097,11 +1105,11 @@ class HttpOverHttp2Test {
     assertThat(response.body.string()).isEqualTo("abc")
 
     // New connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     // Reused connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
     // New connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   @ParameterizedTest
@@ -1142,7 +1150,7 @@ class HttpOverHttp2Test {
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("def")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @ParameterizedTest
@@ -1193,7 +1201,7 @@ class HttpOverHttp2Test {
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("ghi")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(2)
   }
 
   private class RespondAfterCancelDispatcher(
@@ -1243,7 +1251,7 @@ class HttpOverHttp2Test {
         }
       },
     )
-    assertThat(server.takeRequest().sequenceNumber)
+    assertThat(server.takeRequest().exchangeIndex)
       .isEqualTo(expectedSequenceNumber)
     responseDequeuedLatch!!.await()
     call.cancel()
@@ -1345,23 +1353,23 @@ class HttpOverHttp2Test {
     blockingAuthClient.newCall(request).enqueue(callback)
     val response1 = responses.take()
     assertThat(response1).isEqualTo("")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
 
     // Now make the second request which will restrict the first HTTP/2 connection from creating new
     // streams.
     client.newCall(request).enqueue(callback)
     val response2 = responses.take()
     assertThat(response2).isEqualTo("DEF")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
 
     // Let the first request proceed. It should discard the the held HTTP/2 connection and get a new
     // one.
     latch.countDown()
     val response3 = responses.take()
     assertThat(response3).isEqualTo("ABC")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(2)
   }
 
   @ParameterizedTest
@@ -1670,9 +1678,9 @@ class HttpOverHttp2Test {
     }
 
     // All calls share a connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(2)
   }
 
   private fun firstFrame(
@@ -1740,13 +1748,13 @@ class HttpOverHttp2Test {
     assertThat(response2.body.string()).isEqualTo("DEF")
     assertThat(response3.body.string()).isEqualTo("GHI")
     // Settings connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     // Reuse settings connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
     // Reuse settings connection.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(2)
     // New connection!
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   @ParameterizedTest
@@ -1787,8 +1795,8 @@ class HttpOverHttp2Test {
     val call2 = localClient.newCall(Request(server.url("/")))
     val response2 = call2.execute()
     assertThat(response2.body.string()).isEqualTo("DEF")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   @Throws(InterruptedException::class, TimeoutException::class)
@@ -1851,8 +1859,8 @@ class HttpOverHttp2Test {
     val call = client2.newCall(Request(server.url("/")))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("DEF")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   @Flaky @ParameterizedTest
@@ -1986,18 +1994,18 @@ class HttpOverHttp2Test {
     assertThat(response2.body.string()).isEqualTo("call1 response")
     val call1Connect = server.takeRequest()
     assertThat(call1Connect.method).isEqualTo("CONNECT")
-    assertThat(call1Connect.sequenceNumber).isEqualTo(0)
+    assertThat(call1Connect.exchangeIndex).isEqualTo(0)
     val call2Connect = server.takeRequest()
     assertThat(call2Connect.method).isEqualTo("CONNECT")
-    assertThat(call2Connect.sequenceNumber).isEqualTo(0)
+    assertThat(call2Connect.exchangeIndex).isEqualTo(0)
     val call2Get = server.takeRequest()
     assertThat(call2Get.method).isEqualTo("GET")
     assertThat(call2Get.url.encodedPath).isEqualTo("/call2")
-    assertThat(call2Get.sequenceNumber).isEqualTo(0)
+    assertThat(call2Get.exchangeIndex).isEqualTo(0)
     val call1Get = server.takeRequest()
     assertThat(call1Get.method).isEqualTo("GET")
     assertThat(call1Get.url.encodedPath).isEqualTo("/call1")
-    assertThat(call1Get.sequenceNumber).isEqualTo(1)
+    assertThat(call1Get.exchangeIndex).isEqualTo(1)
     assertThat(client.connectionPool.connectionCount()).isEqualTo(1)
   }
 

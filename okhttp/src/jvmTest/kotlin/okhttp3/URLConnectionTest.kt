@@ -342,11 +342,11 @@ class URLConnectionTest {
     server.enqueue(response)
     server.enqueue(response)
     assertContent("ABCDEFGHIJKLMNOPQR", getResponse(newRequest("/foo")))
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     assertContent("ABCDEFGHIJKLMNOPQR", getResponse(newRequest("/bar?baz=quux")))
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
     assertContent("ABCDEFGHIJKLMNOPQR", getResponse(newRequest("/z")))
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(2)
   }
 
   @Test
@@ -360,11 +360,11 @@ class URLConnectionTest {
     server.enqueue(response)
     server.enqueue(response)
     assertContent("ABCDEFGHIJKLMNOPQR", getResponse(newRequest("/foo")))
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     assertContent("ABCDEFGHIJKLMNOPQR", getResponse(newRequest("/bar?baz=quux")))
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
     assertContent("ABCDEFGHIJKLMNOPQR", getResponse(newRequest("/z")))
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(2)
   }
 
   @Test
@@ -416,7 +416,7 @@ class URLConnectionTest {
       .timeout()
       .timeout(100, TimeUnit.MILLISECONDS)
     assertContent("This connection won't pool properly", response1)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
 
     // Give the server time to enact the socket policy if it's one that could happen after the
     // client has received the response.
@@ -435,9 +435,9 @@ class URLConnectionTest {
     // of recording is non-deterministic.
     val requestAfter = server.takeRequest()
     assertThat(
-      requestAfter.sequenceNumber == 0 ||
+      requestAfter.exchangeIndex == 0 ||
         server.requestCount == 3 &&
-        server.takeRequest().sequenceNumber == 0,
+        server.takeRequest().exchangeIndex == 0,
     ).isTrue()
   }
 
@@ -585,8 +585,8 @@ class URLConnectionTest {
     }
     val response2 = getResponse(newRequest("/"))
     assertContent("another response via HTTPS", response2)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @Test
@@ -1571,7 +1571,7 @@ class URLConnectionTest {
       )
     val gunzippedIn: InputStream = GZIPInputStream(response1.body.byteStream())
     assertThat(readAscii(gunzippedIn, Int.MAX_VALUE)).isEqualTo("one (gzipped)")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     val response2 =
       getResponse(
         Request
@@ -1580,7 +1580,7 @@ class URLConnectionTest {
           .build(),
       )
     assertThat(readAscii(response2.body.byteStream(), Int.MAX_VALUE)).isEqualTo("two (identity)")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @Test
@@ -1607,9 +1607,9 @@ class URLConnectionTest {
 
     // This connection will need to be recovered. When it is, transparent gzip should still work!
     assertContent("b", getResponse(newRequest("/")))
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     // Connection is not pooled.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   @Test
@@ -1657,9 +1657,9 @@ class URLConnectionTest {
     assertThat(readAscii(in2, 5)).isEqualTo("LMNOP")
     in2.close()
     call2.cancel()
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     // Connection is pooled!
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @Test
@@ -1689,9 +1689,9 @@ class URLConnectionTest {
 
     // Do another request to confirm that the discarded connection was not pooled.
     assertContent("A", getResponse(newRequest("/")))
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     // Connection is not pooled.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   @Test
@@ -2335,7 +2335,7 @@ class URLConnectionTest {
     val retry = server.takeRequest()
     assertThat(retry.requestLine).isEqualTo("GET /foo HTTP/1.1")
     if (reuse) {
-      assertThat(retry.sequenceNumber, "Expected connection reuse")
+      assertThat(retry.exchangeIndex, "Expected connection reuse")
         .isEqualTo(1)
     }
   }
@@ -2369,7 +2369,7 @@ class URLConnectionTest {
     assertThat(first.requestLine).isEqualTo("GET / HTTP/1.1")
     val retry = server.takeRequest()
     assertThat(retry.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(retry.sequenceNumber, "Expected connection reuse")
+    assertThat(retry.exchangeIndex, "Expected connection reuse")
       .isEqualTo(1)
   }
 
@@ -2522,9 +2522,9 @@ class URLConnectionTest {
     val server2Host = server2.hostName + ":" + server2.port
     assertThat(server.takeRequest().headers["Host"]).isEqualTo(server1Host)
     assertThat(server2.takeRequest().headers["Host"]).isEqualTo(server2Host)
-    assertThat(server.takeRequest().sequenceNumber, "Expected connection reuse")
+    assertThat(server.takeRequest().exchangeIndex, "Expected connection reuse")
       .isEqualTo(1)
-    assertThat(server2.takeRequest().sequenceNumber, "Expected connection reuse")
+    assertThat(server2.takeRequest().exchangeIndex, "Expected connection reuse")
       .isEqualTo(1)
   }
 
@@ -3110,9 +3110,9 @@ class URLConnectionTest {
     assertThat(a.code).isEqualTo(200)
     val b = getResponse(newRequest("/"))
     assertThat(b.code).isEqualTo(200)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     assertThat(
-      server.takeRequest().sequenceNumber,
+      server.takeRequest().exchangeIndex,
       "When connection: close is used, each request should get its own connection",
     ).isEqualTo(0)
   }
@@ -3125,9 +3125,9 @@ class URLConnectionTest {
     assertThat(a.code).isEqualTo(200)
     val b = getResponse(newRequest("/"))
     assertThat(b.code).isEqualTo(200)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     assertThat(
-      server.takeRequest().sequenceNumber,
+      server.takeRequest().exchangeIndex,
       "When connection: close is used, each request should get its own connection",
     ).isEqualTo(0)
   }
@@ -3151,9 +3151,9 @@ class URLConnectionTest {
     assertThat(readAscii(response.body.byteStream(), Int.MAX_VALUE)).isEqualTo(
       "This is the new location!",
     )
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     assertThat(
-      server.takeRequest().sequenceNumber,
+      server.takeRequest().exchangeIndex,
       "When connection: close is used, each request should get its own connection",
     ).isEqualTo(0)
   }
@@ -3173,8 +3173,8 @@ class URLConnectionTest {
     )
     server.enqueue(MockResponse(body = "This is the new page!"))
     assertContent("This is the new page!", getResponse(newRequest("/")))
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   @Test
@@ -3535,13 +3535,13 @@ class URLConnectionTest {
       )
     assertContent("def", post)
     val get = server.takeRequest()
-    assertThat(get.sequenceNumber).isEqualTo(0)
+    assertThat(get.exchangeIndex).isEqualTo(0)
     val post1 = server.takeRequest()
     assertThat(post1.body?.utf8()).isEqualTo("body!")
-    assertThat(post1.sequenceNumber).isEqualTo(1)
+    assertThat(post1.exchangeIndex).isEqualTo(1)
     val post2 = server.takeRequest()
     assertThat(post2.body?.utf8()).isEqualTo("body!")
-    assertThat(post2.sequenceNumber).isEqualTo(0)
+    assertThat(post2.exchangeIndex).isEqualTo(0)
   }
 
   @Test
@@ -4093,9 +4093,9 @@ class URLConnectionTest {
     assertThat(response2.code).isEqualTo(HttpURLConnection.HTTP_OK)
     assertContent("b", response2)
     val requestA = server.takeRequest()
-    assertThat(requestA.sequenceNumber).isEqualTo(0)
+    assertThat(requestA.exchangeIndex).isEqualTo(0)
     val requestB = server.takeRequest()
-    assertThat(requestB.sequenceNumber).isEqualTo(1)
+    assertThat(requestB.exchangeIndex).isEqualTo(1)
   }
 
   /**
@@ -4119,9 +4119,9 @@ class URLConnectionTest {
     val response = getResponse(newRequest("/"))
     assertContent("This is the new page!", response)
     val requestA = server.takeRequest()
-    assertThat(requestA.sequenceNumber).isEqualTo(0)
+    assertThat(requestA.exchangeIndex).isEqualTo(0)
     val requestB = server.takeRequest()
-    assertThat(requestB.sequenceNumber).isEqualTo(1)
+    assertThat(requestB.exchangeIndex).isEqualTo(1)
   }
 
   /**
@@ -4255,10 +4255,10 @@ class URLConnectionTest {
       ),
     )
     val request1 = server.takeRequest()
-    assertThat(request1.sequenceNumber).isEqualTo(0)
+    assertThat(request1.exchangeIndex).isEqualTo(0)
     val request2 = server.takeRequest()
     assertThat(request2.body?.utf8()).isEqualTo("123")
-    assertThat(request2.sequenceNumber).isEqualTo(0)
+    assertThat(request2.exchangeIndex).isEqualTo(0)
   }
 
   @Test
