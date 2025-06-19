@@ -14,8 +14,6 @@
  * limitations under the License.
  *
  */
-@file:OptIn(ExperimentalCoroutinesApi::class)
-
 package okhttp3.coroutines
 
 import assertk.assertThat
@@ -27,7 +25,6 @@ import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.job
@@ -93,7 +90,7 @@ class ExecuteAsyncTest {
 
       val call = client.newCall(request)
 
-      try {
+      assertFailsWith<TimeoutCancellationException> {
         withTimeout(1.seconds) {
           call.executeAsync().use {
             withContext(Dispatchers.IO) {
@@ -102,8 +99,6 @@ class ExecuteAsyncTest {
             fail("No expected to get response")
           }
         }
-      } catch (to: TimeoutCancellationException) {
-        // expected
       }
 
       assertThat(call.isCanceled()).isTrue()
@@ -123,16 +118,13 @@ class ExecuteAsyncTest {
 
       val call = client.newCall(request)
 
-      try {
+      assertFailsWith<IOException> {
         call.executeAsync().use {
           call.cancel()
           withContext(Dispatchers.IO) {
             it.body.string()
           }
-          fail("No expected to get response")
         }
-      } catch (ioe: IOException) {
-        // expected
       }
 
       assertThat(call.isCanceled()).isTrue()
