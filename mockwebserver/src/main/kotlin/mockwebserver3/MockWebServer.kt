@@ -662,7 +662,7 @@ public class MockWebServer : Closeable {
       RecordedRequest(
         requestLine = requestLine,
         headers = headersOf(),
-        chunkSizes = emptyList(),
+        chunkSizes = null,
         bodySize = 0L,
         body = null,
         connectionIndex = connectionIndex,
@@ -689,7 +689,7 @@ public class MockWebServer : Closeable {
     var chunked = false
     var hasBody = false
     val requestBody = TruncatingBuffer(bodyLimit)
-    val chunkSizes = mutableListOf<Int>()
+    var chunkSizes: List<Int>? = null
     var failure: IOException? = null
 
     try {
@@ -741,6 +741,7 @@ public class MockWebServer : Closeable {
           }
 
           chunked -> {
+            chunkSizes = mutableListOf()
             hasBody = true
             while (true) {
               val chunkSize = source.readUtf8LineStrict().trim().toInt(16)
@@ -1146,7 +1147,7 @@ public class MockWebServer : Closeable {
       return RecordedRequest(
         requestLine = requestLine,
         headers = headers,
-        chunkSizes = emptyList(),
+        chunkSizes = null, // No chunked encoding for HTTP/2.
         bodySize = bodyByteString?.size?.toLong() ?: 0,
         body =
           when {
@@ -1249,12 +1250,11 @@ public class MockWebServer : Closeable {
             target = pushPromise.path,
             version = "HTTP/2",
           )
-        val chunkSizes = emptyList<Int>() // No chunked encoding for HTTP/2.
         requestQueue.add(
           RecordedRequest(
             requestLine = requestLine,
             headers = pushPromise.headers,
-            chunkSizes = chunkSizes,
+            chunkSizes = null, // No chunked encoding for HTTP/2.
             bodySize = 0,
             body = null,
             connectionIndex = connectionIndex,

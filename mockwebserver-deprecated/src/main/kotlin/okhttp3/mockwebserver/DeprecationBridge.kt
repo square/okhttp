@@ -106,7 +106,7 @@ internal fun mockwebserver3.RecordedRequest.unwrap(): RecordedRequest =
   RecordedRequest(
     requestLine = requestLine,
     headers = headers,
-    chunkSizes = chunkSizes,
+    chunkSizes = chunkSizes ?: listOf(),
     bodySize = bodySize,
     body = Buffer().write(body ?: ByteString.EMPTY),
     sequenceNumber = exchangeIndex,
