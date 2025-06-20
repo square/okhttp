@@ -16,20 +16,10 @@
 package okhttp3.mockwebserver
 
 import java.util.concurrent.TimeUnit.MILLISECONDS
-import mockwebserver3.SocketPolicy.DisconnectAfterRequest
-import mockwebserver3.SocketPolicy.DisconnectAtEnd
-import mockwebserver3.SocketPolicy.DisconnectAtStart
-import mockwebserver3.SocketPolicy.DisconnectDuringRequestBody
-import mockwebserver3.SocketPolicy.DisconnectDuringResponseBody
-import mockwebserver3.SocketPolicy.DoNotReadRequestBody
-import mockwebserver3.SocketPolicy.FailHandshake
-import mockwebserver3.SocketPolicy.KeepOpen
-import mockwebserver3.SocketPolicy.NoResponse
-import mockwebserver3.SocketPolicy.ResetStreamAtStart
-import mockwebserver3.SocketPolicy.ShutdownInputAtEnd
-import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
-import mockwebserver3.SocketPolicy.ShutdownServerAfterResponse
-import mockwebserver3.SocketPolicy.StallSocketAtStart
+import mockwebserver3.SocketEffect
+import mockwebserver3.SocketEffect.CloseSocket
+import mockwebserver3.SocketEffect.CloseStream
+import mockwebserver3.SocketEffect.ShutdownConnection
 import okio.Buffer
 import okio.ByteString
 
@@ -66,19 +56,38 @@ internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
   result.status(status)
   result.headers(headers)
   result.trailers(trailers)
-  result.socketPolicy(
-    when (socketPolicy) {
-      SocketPolicy.EXPECT_CONTINUE, SocketPolicy.CONTINUE_ALWAYS -> {
-        result.add100Continue()
-        KeepOpen
-      }
-      SocketPolicy.UPGRADE_TO_SSL_AT_END -> {
-        result.inTunnel()
-        KeepOpen
-      }
-      else -> wrapSocketPolicy()
-    },
-  )
+
+  when (socketPolicy) {
+    SocketPolicy.EXPECT_CONTINUE, SocketPolicy.CONTINUE_ALWAYS -> result.add100Continue()
+    SocketPolicy.UPGRADE_TO_SSL_AT_END -> result.inTunnel()
+    SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE -> result.shutdownServer(true)
+    SocketPolicy.KEEP_OPEN -> Unit
+    SocketPolicy.DISCONNECT_AT_END -> result.onResponseEnd(ShutdownConnection)
+    SocketPolicy.DISCONNECT_AT_START -> result.onRequestStart(CloseSocket())
+    SocketPolicy.DISCONNECT_AFTER_REQUEST -> result.onResponseStart(CloseSocket())
+    SocketPolicy.DISCONNECT_DURING_REQUEST_BODY -> result.onRequestBody(CloseSocket())
+    SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY -> result.onResponseBody(CloseSocket())
+    SocketPolicy.DO_NOT_READ_REQUEST_BODY -> result.doNotReadRequestBody()
+    SocketPolicy.FAIL_HANDSHAKE -> result.failHandshake()
+    SocketPolicy.SHUTDOWN_INPUT_AT_END ->
+      result.onResponseEnd(
+        CloseSocket(
+          closeSocket = false,
+          shutdownInput = true,
+        ),
+      )
+    SocketPolicy.SHUTDOWN_OUTPUT_AT_END ->
+      result.onResponseEnd(
+        CloseSocket(
+          closeSocket = false,
+          shutdownOutput = true,
+        ),
+      )
+    SocketPolicy.STALL_SOCKET_AT_START -> result.onRequestStart(SocketEffect.Stall)
+    SocketPolicy.NO_RESPONSE -> result.onResponseStart(SocketEffect.Stall)
+    SocketPolicy.RESET_STREAM_AT_START -> result.onRequestStart(CloseStream(http2ErrorCode))
+  }
+
   result.throttleBody(throttleBytesPerPeriod, getThrottlePeriod(MILLISECONDS), MILLISECONDS)
   result.bodyDelay(getBodyDelay(MILLISECONDS), MILLISECONDS)
   result.headersDelay(getHeadersDelay(MILLISECONDS), MILLISECONDS)
@@ -107,22 +116,3 @@ internal fun mockwebserver3.RecordedRequest.unwrap(): RecordedRequest =
     handshake = handshake,
     requestUrl = url,
   )
-
-private fun MockResponse.wrapSocketPolicy(): mockwebserver3.SocketPolicy =
-  when (val socketPolicy = socketPolicy) {
-    SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE -> ShutdownServerAfterResponse
-    SocketPolicy.KEEP_OPEN -> KeepOpen
-    SocketPolicy.DISCONNECT_AT_END -> DisconnectAtEnd
-    SocketPolicy.DISCONNECT_AT_START -> DisconnectAtStart
-    SocketPolicy.DISCONNECT_AFTER_REQUEST -> DisconnectAfterRequest
-    SocketPolicy.DISCONNECT_DURING_REQUEST_BODY -> DisconnectDuringRequestBody
-    SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY -> DisconnectDuringResponseBody
-    SocketPolicy.DO_NOT_READ_REQUEST_BODY -> DoNotReadRequestBody(http2ErrorCode)
-    SocketPolicy.FAIL_HANDSHAKE -> FailHandshake
-    SocketPolicy.SHUTDOWN_INPUT_AT_END -> ShutdownInputAtEnd
-    SocketPolicy.SHUTDOWN_OUTPUT_AT_END -> ShutdownOutputAtEnd
-    SocketPolicy.STALL_SOCKET_AT_START -> StallSocketAtStart
-    SocketPolicy.NO_RESPONSE -> NoResponse
-    SocketPolicy.RESET_STREAM_AT_START -> ResetStreamAtStart(http2ErrorCode)
-    else -> error("Unexpected SocketPolicy: $socketPolicy")
-  }

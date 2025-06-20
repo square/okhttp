@@ -16,7 +16,6 @@
 package mockwebserver3
 
 import java.io.Closeable
-import mockwebserver3.SocketPolicy.KeepOpen
 
 /** Handler for mock server requests. */
 public abstract class Dispatcher : Closeable {
@@ -33,7 +32,7 @@ public abstract class Dispatcher : Closeable {
    * can return other values to test HTTP edge cases, such as unhappy socket policies or throttled
    * request bodies.
    */
-  public open fun peek(): MockResponse = MockResponse(socketPolicy = KeepOpen)
+  public open fun peek(): MockResponse = MockResponse()
 
   /**
    * Release any resources held by this dispatcher. Any requests that are currently being dispatched

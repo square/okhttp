@@ -45,10 +45,9 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.PushPromise
 import mockwebserver3.QueueDispatcher
 import mockwebserver3.RecordedRequest
-import mockwebserver3.SocketPolicy.DisconnectAtEnd
-import mockwebserver3.SocketPolicy.NoResponse
-import mockwebserver3.SocketPolicy.ResetStreamAtStart
-import mockwebserver3.SocketPolicy.StallSocketAtStart
+import mockwebserver3.SocketEffect.CloseStream
+import mockwebserver3.SocketEffect.ShutdownConnection
+import mockwebserver3.SocketEffect.Stall
 import mockwebserver3.junit5.StartStop
 import okhttp3.Cache
 import okhttp3.Call
@@ -579,7 +578,7 @@ class HttpOverHttp2Test {
   @ArgumentsSource(ProtocolParamProvider::class)
   fun readResponseHeaderTimeout(protocol: Protocol) {
     setUp(protocol)
-    server.enqueue(MockResponse(socketPolicy = NoResponse))
+    server.enqueue(MockResponse.Builder().onResponseStart(Stall).build())
     server.enqueue(MockResponse(body = "A"))
     client =
       client
@@ -895,7 +894,10 @@ class HttpOverHttp2Test {
   fun noRecoveryFromOneRefusedStream(protocol: Protocol) {
     setUp(protocol)
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode)),
+      MockResponse
+        .Builder()
+        .onRequestStart(CloseStream(ErrorCode.REFUSED_STREAM.httpCode))
+        .build(),
     )
     server.enqueue(MockResponse(body = "abc"))
     val call = client.newCall(Request(server.url("/")))
@@ -916,7 +918,10 @@ class HttpOverHttp2Test {
         .dns(DoubleInetAddressDns()) // Two routes!
         .build()
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode)),
+      MockResponse
+        .Builder()
+        .onRequestStart(CloseStream(ErrorCode.REFUSED_STREAM.httpCode))
+        .build(),
     )
     server.enqueue(MockResponse(body = "abc"))
 
@@ -941,13 +946,22 @@ class HttpOverHttp2Test {
         .dns(DoubleInetAddressDns()) // Two routes!
         .build()
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode)),
+      MockResponse
+        .Builder()
+        .onRequestStart(CloseStream(ErrorCode.REFUSED_STREAM.httpCode))
+        .build(),
     )
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode)),
+      MockResponse
+        .Builder()
+        .onRequestStart(CloseStream(ErrorCode.REFUSED_STREAM.httpCode))
+        .build(),
     )
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode)),
+      MockResponse
+        .Builder()
+        .onRequestStart(CloseStream(ErrorCode.REFUSED_STREAM.httpCode))
+        .build(),
     )
 
     val request = Request(server.url("/"))
@@ -966,7 +980,10 @@ class HttpOverHttp2Test {
   fun connectionWithOneRefusedStreamIsPooled(protocol: Protocol) {
     setUp(protocol)
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode)),
+      MockResponse
+        .Builder()
+        .onRequestStart(CloseStream(ErrorCode.REFUSED_STREAM.httpCode))
+        .build(),
     )
     server.enqueue(MockResponse(body = "abc"))
     val request = Request(server.url("/"))
@@ -990,10 +1007,16 @@ class HttpOverHttp2Test {
   fun connectionWithTwoRefusedStreamsIsNotPooled(protocol: Protocol) {
     setUp(protocol)
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode)),
+      MockResponse
+        .Builder()
+        .onRequestStart(CloseStream(ErrorCode.REFUSED_STREAM.httpCode))
+        .build(),
     )
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode)),
+      MockResponse
+        .Builder()
+        .onRequestStart(CloseStream(ErrorCode.REFUSED_STREAM.httpCode))
+        .build(),
     )
     server.enqueue(MockResponse(body = "abc"))
     server.enqueue(MockResponse(body = "def"))
@@ -1030,10 +1053,16 @@ class HttpOverHttp2Test {
   fun noRecoveryFromTwoRefusedStreams(protocol: Protocol) {
     setUp(protocol)
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode)),
+      MockResponse
+        .Builder()
+        .onRequestStart(CloseStream(ErrorCode.REFUSED_STREAM.httpCode))
+        .build(),
     )
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode)),
+      MockResponse
+        .Builder()
+        .onRequestStart(CloseStream(ErrorCode.REFUSED_STREAM.httpCode))
+        .build(),
     )
     server.enqueue(
       MockResponse(body = "abc"),
@@ -1062,7 +1091,7 @@ class HttpOverHttp2Test {
 
   private fun recoverFromOneHttp2ErrorRequiresNewConnection(errorCode: ErrorCode?) {
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(errorCode!!.httpCode)),
+      MockResponse.Builder().onRequestStart(CloseStream(errorCode!!.httpCode)).build(),
     )
     server.enqueue(MockResponse(body = "abc"))
     client =
@@ -1089,10 +1118,16 @@ class HttpOverHttp2Test {
   fun recoverFromMultipleRefusedStreamsRequiresNewConnection(protocol: Protocol) {
     setUp(protocol)
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode)),
+      MockResponse
+        .Builder()
+        .onRequestStart(CloseStream(ErrorCode.REFUSED_STREAM.httpCode))
+        .build(),
     )
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode)),
+      MockResponse
+        .Builder()
+        .onRequestStart(CloseStream(ErrorCode.REFUSED_STREAM.httpCode))
+        .build(),
     )
     server.enqueue(MockResponse(body = "abc"))
     client =
@@ -1282,7 +1317,7 @@ class HttpOverHttp2Test {
 
   private fun noRecoveryFromErrorWithRetryDisabled(errorCode: ErrorCode?) {
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(errorCode!!.httpCode)),
+      MockResponse.Builder().onRequestStart(CloseStream(errorCode!!.httpCode)).build(),
     )
     server.enqueue(MockResponse(body = "abc"))
     client =
@@ -1304,7 +1339,10 @@ class HttpOverHttp2Test {
     setUp(protocol)
     server.enqueue(MockResponse(code = 401))
     server.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.INTERNAL_ERROR.httpCode)),
+      MockResponse
+        .Builder()
+        .onRequestStart(CloseStream(ErrorCode.INTERNAL_ERROR.httpCode))
+        .build(),
     )
     server.enqueue(MockResponse(body = "DEF"))
     server.enqueue(
@@ -1561,7 +1599,7 @@ class HttpOverHttp2Test {
         .build()
 
     // Set up the server to ignore the socket. It won't respond to pings!
-    server.enqueue(MockResponse(socketPolicy = StallSocketAtStart))
+    server.enqueue(MockResponse.Builder().onRequestStart(Stall).build())
 
     // Make a call. It'll fail as soon as our pings detect a problem.
     val call = client.newCall(Request(server.url("/")))
@@ -1597,7 +1635,7 @@ class HttpOverHttp2Test {
         .build()
 
     // Stalling the socket will cause TWO requests to time out!
-    server.enqueue(MockResponse(socketPolicy = StallSocketAtStart))
+    server.enqueue(MockResponse.Builder().onRequestStart(Stall).build())
 
     // The 3rd request should be sent to a fresh connection.
     server.enqueue(
@@ -1760,10 +1798,11 @@ class HttpOverHttp2Test {
   fun connectionNotReusedAfterShutdown(protocol: Protocol) {
     setUp(protocol)
     server.enqueue(
-      MockResponse(
-        body = "ABC",
-        socketPolicy = DisconnectAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .body("ABC")
+        .onResponseEnd(ShutdownConnection)
+        .build(),
     )
     server.enqueue(MockResponse(body = "DEF"))
     // Enqueue an additional response that show if we burnt a good prior response.
@@ -1819,10 +1858,11 @@ class HttpOverHttp2Test {
   fun connectionShutdownAfterHealthCheck(protocol: Protocol) {
     setUp(protocol)
     server.enqueue(
-      MockResponse(
-        body = "ABC",
-        socketPolicy = DisconnectAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .body("ABC")
+        .onResponseEnd(ShutdownConnection)
+        .build(),
     )
     server.enqueue(MockResponse(body = "DEF"))
     val client2 =
@@ -1873,10 +1913,11 @@ class HttpOverHttp2Test {
         .build(),
     )
     server.enqueue(
-      MockResponse(
-        body = "DEF",
-        socketPolicy = DisconnectAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .body("DEF")
+        .onResponseEnd(ShutdownConnection)
+        .build(),
     )
     val latch = CountDownLatch(2)
     val errors = ArrayList<IOException?>()
@@ -1912,7 +1953,7 @@ class HttpOverHttp2Test {
       assertThat(server.requestCount).isEqualTo(2)
     } else {
       // https://github.com/square/okhttp/issues/4836
-      // As documented in SocketPolicy, this is known to be flaky.
+      // As documented in SocketEffect, this is known to be flaky.
       val error = errors[0]
       if (error !is StreamResetException) {
         throw error!!

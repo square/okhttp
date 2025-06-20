@@ -43,9 +43,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.DisconnectDuringRequestBody
-import mockwebserver3.SocketPolicy.DisconnectDuringResponseBody
-import mockwebserver3.SocketPolicy.FailHandshake
+import mockwebserver3.SocketEffect.CloseSocket
 import mockwebserver3.junit5.StartStop
 import okhttp3.CallEvent.CallEnd
 import okhttp3.CallEvent.CallFailed
@@ -324,7 +322,7 @@ class EventListenerTest {
         .Builder()
         .body("0123456789")
         .throttleBody(2, 100, TimeUnit.MILLISECONDS)
-        .socketPolicy(DisconnectDuringResponseBody)
+        .onResponseBody(CloseSocket())
         .build(),
     )
     client =
@@ -856,7 +854,7 @@ class EventListenerTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(FailHandshake)
+        .failHandshake()
         .build(),
     )
     val call =
@@ -888,7 +886,7 @@ class EventListenerTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(FailHandshake)
+        .failHandshake()
         .build(),
     )
     server.enqueue(MockResponse())
@@ -1051,7 +1049,7 @@ class EventListenerTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(FailHandshake)
+        .failHandshake()
         .build(),
     )
     val call =
@@ -1109,7 +1107,7 @@ class EventListenerTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(FailHandshake)
+        .failHandshake()
         .build(),
     )
     server.enqueue(MockResponse())
@@ -1309,7 +1307,7 @@ class EventListenerTest {
       MockResponse
         .Builder()
         .body(Buffer().write(ByteArray(responseBodySize)))
-        .socketPolicy(DisconnectDuringResponseBody)
+        .onResponseBody(CloseSocket())
         .build(),
     )
     val call =
@@ -1339,7 +1337,7 @@ class EventListenerTest {
         .Builder()
         .body("")
         .bodyDelay(1, TimeUnit.SECONDS)
-        .socketPolicy(DisconnectDuringResponseBody)
+        .onResponseBody(CloseSocket())
         .build(),
     )
     val call =
@@ -1418,7 +1416,7 @@ class EventListenerTest {
         .Builder()
         .body("abc")
         .bodyDelay(1, TimeUnit.SECONDS)
-        .socketPolicy(DisconnectDuringResponseBody)
+        .onResponseBody(CloseSocket())
         .build(),
     )
     val call =
@@ -1475,7 +1473,7 @@ class EventListenerTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(DisconnectDuringRequestBody)
+        .onRequestBody(CloseSocket())
         .build(),
     )
     val request = NonCompletingRequestBody()
@@ -1549,7 +1547,7 @@ class EventListenerTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(DisconnectDuringRequestBody)
+        .onRequestBody(CloseSocket())
         .build(),
     )
     val call =

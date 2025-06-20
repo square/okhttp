@@ -43,9 +43,8 @@ import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
-import mockwebserver3.SocketPolicy
-import mockwebserver3.SocketPolicy.KeepOpen
-import mockwebserver3.SocketPolicy.NoResponse
+import mockwebserver3.SocketEffect.CloseSocket
+import mockwebserver3.SocketEffect.Stall
 import mockwebserver3.junit5.StartStop
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -399,7 +398,7 @@ class WebSocketHttpTest {
     webServer.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(SocketPolicy.DisconnectAtStart)
+        .onRequestStart(CloseSocket())
         .build(),
     )
     val webSocket = newWebSocket()
@@ -427,7 +426,7 @@ class WebSocketHttpTest {
     webServer.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(SocketPolicy.DisconnectAtStart)
+        .onRequestStart(CloseSocket())
         .build(),
     )
     val webSocket = newWebSocket()
@@ -454,7 +453,7 @@ class WebSocketHttpTest {
     webServer.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(SocketPolicy.DisconnectAtStart)
+        .onRequestStart(CloseSocket())
         .build(),
     )
     val webSocket = newWebSocket()
@@ -482,7 +481,7 @@ class WebSocketHttpTest {
     webServer.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(SocketPolicy.DisconnectAtStart)
+        .onRequestStart(CloseSocket())
         .build(),
     )
     val webSocket = newWebSocket()
@@ -509,7 +508,7 @@ class WebSocketHttpTest {
     webServer.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(SocketPolicy.DisconnectAtStart)
+        .onRequestStart(CloseSocket())
         .build(),
     )
     val webSocket = newWebSocket()
@@ -537,7 +536,7 @@ class WebSocketHttpTest {
     webServer.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(SocketPolicy.DisconnectAtStart)
+        .onRequestStart(CloseSocket())
         .build(),
     )
     val webSocket = newWebSocket()
@@ -744,7 +743,7 @@ class WebSocketHttpTest {
     webServer.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(NoResponse)
+        .onResponseStart(Stall)
         .build(),
     )
     val webSocket: WebSocket = newWebSocket()
@@ -769,7 +768,6 @@ class WebSocketHttpTest {
           upgradeResponse(request)
             .body(Buffer().write("81".decodeHex())) // Truncated frame.
             .removeHeader("Content-Length")
-            .socketPolicy(KeepOpen)
             .build()
       }
     val webSocket: WebSocket = newWebSocket()

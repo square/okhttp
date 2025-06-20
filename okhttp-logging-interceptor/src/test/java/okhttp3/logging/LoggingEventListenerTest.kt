@@ -22,7 +22,6 @@ import java.net.UnknownHostException
 import java.util.Arrays
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.FailHandshake
 import mockwebserver3.junit5.StartStop
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -205,7 +204,7 @@ class LoggingEventListenerTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(FailHandshake)
+        .failHandshake()
         .build(),
     )
     url = server.url("/")

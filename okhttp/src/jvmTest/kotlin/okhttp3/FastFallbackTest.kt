@@ -30,7 +30,7 @@ import javax.net.SocketFactory
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.ResetStreamAtStart
+import mockwebserver3.SocketEffect.CloseStream
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.Flaky
 import org.junit.jupiter.api.AfterEach
@@ -309,7 +309,10 @@ class FastFallbackTest {
 
     // Set up a same-connection retry.
     serverIpv4.enqueue(
-      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode)),
+      MockResponse
+        .Builder()
+        .onRequestStart(CloseStream(ErrorCode.REFUSED_STREAM.httpCode))
+        .build(),
     )
     serverIpv4.enqueue(
       MockResponse(body = "this was the 2nd request on IPv4"),

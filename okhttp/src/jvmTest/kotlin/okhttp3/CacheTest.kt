@@ -40,7 +40,7 @@ import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
-import mockwebserver3.SocketPolicy.DisconnectAtEnd
+import mockwebserver3.SocketEffect.ShutdownConnection
 import mockwebserver3.junit5.StartStop
 import okhttp3.Cache.Companion.key
 import okhttp3.Headers.Companion.headersOf
@@ -3842,7 +3842,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     numBytesToKeep: Int,
   ): MockResponse.Builder {
     val response = builder.build()
-    builder.socketPolicy(DisconnectAtEnd)
+    builder.onResponseEnd(ShutdownConnection)
     val headers = response.headers
     val fullBody = Buffer()
     response.body!!.writeTo(fullBody)
@@ -3879,7 +3879,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         chunkSize: Int,
       ) {
         response.body(content)
-        response.socketPolicy(DisconnectAtEnd)
+        response.onResponseEnd(ShutdownConnection)
         response.removeHeader("Content-Length")
       }
     }, ;

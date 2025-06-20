@@ -72,13 +72,9 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.QueueDispatcher
 import mockwebserver3.RecordedRequest
-import mockwebserver3.SocketPolicy.DisconnectAfterRequest
-import mockwebserver3.SocketPolicy.DisconnectAtEnd
-import mockwebserver3.SocketPolicy.DisconnectAtStart
-import mockwebserver3.SocketPolicy.FailHandshake
-import mockwebserver3.SocketPolicy.HalfCloseAfterRequest
-import mockwebserver3.SocketPolicy.NoResponse
-import mockwebserver3.SocketPolicy.StallSocketAtStart
+import mockwebserver3.SocketEffect.CloseSocket
+import mockwebserver3.SocketEffect.ShutdownConnection
+import mockwebserver3.SocketEffect.Stall
 import mockwebserver3.junit5.StartStop
 import okhttp3.CallEvent.CallEnd
 import okhttp3.CallEvent.ConnectStart
@@ -546,11 +542,12 @@ open class CallTest {
   @Test
   fun authenticateWithNoConnection() {
     server.enqueue(
-      MockResponse(
-        code = 401,
-        headers = headersOf("Connection", "close"),
-        socketPolicy = DisconnectAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .code(401)
+        .addHeader("Connection", "close")
+        .onResponseEnd(ShutdownConnection)
+        .build(),
     )
     val authenticator = RecordingOkAuthenticator(null, null)
     client =
@@ -1016,7 +1013,7 @@ open class CallTest {
   @Test
   fun tlsTimeoutsNotRetried() {
     enableTls()
-    server.enqueue(MockResponse(socketPolicy = NoResponse))
+    server.enqueue(MockResponse.Builder().onResponseStart(Stall).build())
     server.enqueue(MockResponse(body = "unreachable!"))
     client =
       client
@@ -1062,7 +1059,7 @@ open class CallTest {
   /** https://github.com/square/okhttp/issues/4875  */
   @Test
   fun interceptorRecoversWhenRoutesExhausted() {
-    server.enqueue(MockResponse(socketPolicy = DisconnectAtStart))
+    server.enqueue(MockResponse.Builder().onRequestStart(CloseSocket()).build())
     server.enqueue(MockResponse())
     client =
       client
@@ -1115,7 +1112,7 @@ open class CallTest {
    */
   @Test
   fun readTimeoutFails() {
-    server.enqueue(MockResponse(socketPolicy = StallSocketAtStart))
+    server.enqueue(MockResponse.Builder().onRequestStart(Stall).build())
     server2.enqueue(
       MockResponse(body = "success!"),
     )
@@ -1255,14 +1252,14 @@ open class CallTest {
     val dispatcher: QueueDispatcher =
       object : QueueDispatcher() {
         override fun dispatch(request: RecordedRequest): MockResponse {
-          if (peek().socketPolicy === DisconnectAfterRequest) {
+          if (peek().onResponseStart is CloseSocket) {
             requestFinished.await()
           }
           return super.dispatch(request)
         }
       }
     dispatcher.enqueue(MockResponse(body = "seed connection pool"))
-    dispatcher.enqueue(MockResponse(socketPolicy = DisconnectAfterRequest))
+    dispatcher.enqueue(MockResponse.Builder().onResponseStart(CloseSocket()).build())
     dispatcher.enqueue(MockResponse(body = "retry success"))
     server.dispatcher = dispatcher
     listener =
@@ -1306,7 +1303,7 @@ open class CallTest {
   @Test
   fun noRecoverWhenRetryOnConnectionFailureIsFalse() {
     server.enqueue(MockResponse(body = "seed connection pool"))
-    server.enqueue(MockResponse(socketPolicy = DisconnectAfterRequest))
+    server.enqueue(MockResponse.Builder().onResponseStart(CloseSocket()).build())
     server.enqueue(MockResponse(body = "unreachable!"))
     client =
       client
@@ -1337,7 +1334,7 @@ open class CallTest {
     platform.assumeNotBouncyCastle()
 
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(socketPolicy = FailHandshake))
+    server.enqueue(MockResponse.Builder().failHandshake().build())
     server.enqueue(MockResponse(body = "response that will never be received"))
     val response = executeSynchronously("/")
     response.assertFailure(
@@ -1356,7 +1353,7 @@ open class CallTest {
     platform.assumeNotBouncyCastle()
 
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(socketPolicy = FailHandshake))
+    server.enqueue(MockResponse.Builder().failHandshake().build())
     server.enqueue(MockResponse(body = "abc"))
     client =
       client
@@ -1385,7 +1382,7 @@ open class CallTest {
       return
     }
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(socketPolicy = FailHandshake))
+    server.enqueue(MockResponse.Builder().failHandshake().build())
     val clientSocketFactory =
       RecordingSSLSocketFactory(
         handshakeCertificates.sslSocketFactory(),
@@ -1417,7 +1414,7 @@ open class CallTest {
     platform.assumeNotBouncyCastle()
 
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(socketPolicy = FailHandshake))
+    server.enqueue(MockResponse.Builder().failHandshake().build())
     server.enqueue(MockResponse(body = "abc"))
     client =
       client
@@ -1449,7 +1446,7 @@ open class CallTest {
           handshakeCertificates.trustManager,
         ).build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(socketPolicy = FailHandshake))
+    server.enqueue(MockResponse.Builder().failHandshake().build())
     val request = Request.Builder().url(server.url("/")).build()
     assertFailsWith<IOException> {
       client.newCall(request).execute()
@@ -1683,7 +1680,16 @@ open class CallTest {
   @Test
   fun serverHalfClosingBeforeResponse() {
     server.enqueue(MockResponse(body = "abc"))
-    server.enqueue(MockResponse(socketPolicy = HalfCloseAfterRequest))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .onResponseStart(
+          CloseSocket(
+            closeSocket = false,
+            shutdownOutput = true,
+          ),
+        ).build(),
+    )
     server.enqueue(MockResponse(body = "abc"))
 
     val client =
@@ -1764,7 +1770,7 @@ open class CallTest {
   @Test
   fun postBodyRetransmittedOnFailureRecovery() {
     server.enqueue(MockResponse(body = "abc"))
-    server.enqueue(MockResponse(socketPolicy = DisconnectAfterRequest))
+    server.enqueue(MockResponse.Builder().onResponseStart(CloseSocket()).build())
     server.enqueue(MockResponse(body = "def"))
 
     // Seed the connection pool so we have something that can fail.
@@ -2210,12 +2216,13 @@ open class CallTest {
   @Test
   fun getClientRequestTimeout() {
     server.enqueue(
-      MockResponse(
-        code = 408,
-        headers = headersOf("Connection", "Close"),
-        body = "You took too long!",
-        socketPolicy = DisconnectAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .code(408)
+        .addHeader("Connection", "Close")
+        .body("You took too long!")
+        .onResponseEnd(ShutdownConnection)
+        .build(),
     )
     server.enqueue(MockResponse(body = "Body"))
     val request = Request(server.url("/"))
@@ -2226,18 +2233,14 @@ open class CallTest {
   @Test
   fun getClientRequestTimeoutWithBackPressure() {
     server.enqueue(
-      MockResponse(
-        code = 408,
-        headers =
-          headersOf(
-            "Connection",
-            "Close",
-            "Retry-After",
-            "1",
-          ),
-        body = "You took too long!",
-        socketPolicy = DisconnectAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .code(408)
+        .addHeader("Connection", "Close")
+        .addHeader("Retry-After", "1")
+        .body("You took too long!")
+        .onResponseEnd(ShutdownConnection)
+        .build(),
     )
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
@@ -2247,12 +2250,13 @@ open class CallTest {
   @Test
   fun requestBodyRetransmittedOnClientRequestTimeout() {
     server.enqueue(
-      MockResponse(
-        code = 408,
-        headers = headersOf("Connection", "Close"),
-        body = "You took too long!",
-        socketPolicy = DisconnectAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .code(408)
+        .addHeader("Connection", "Close")
+        .body("You took too long!")
+        .onResponseEnd(ShutdownConnection)
+        .build(),
     )
     server.enqueue(MockResponse(body = "Body"))
     val request =
@@ -2271,12 +2275,13 @@ open class CallTest {
   @Test
   fun disableClientRequestTimeoutRetry() {
     server.enqueue(
-      MockResponse(
-        code = 408,
-        headers = headersOf("Connection", "Close"),
-        body = "You took too long!",
-        socketPolicy = DisconnectAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .code(408)
+        .addHeader("Connection", "Close")
+        .body("You took too long!")
+        .onResponseEnd(ShutdownConnection)
+        .build(),
     )
     client =
       client
@@ -2292,20 +2297,22 @@ open class CallTest {
   @Test
   fun maxClientRequestTimeoutRetries() {
     server.enqueue(
-      MockResponse(
-        code = 408,
-        headers = headersOf("Connection", "Close"),
-        body = "You took too long!",
-        socketPolicy = DisconnectAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .code(408)
+        .addHeader("Connection", "Close")
+        .body("You took too long!")
+        .onResponseEnd(ShutdownConnection)
+        .build(),
     )
     server.enqueue(
-      MockResponse(
-        code = 408,
-        headers = headersOf("Connection", "Close"),
-        body = "You took too long!",
-        socketPolicy = DisconnectAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .code(408)
+        .addHeader("Connection", "Close")
+        .body("You took too long!")
+        .onResponseEnd(ShutdownConnection)
+        .build(),
     )
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
@@ -2317,32 +2324,24 @@ open class CallTest {
   @Test
   fun maxUnavailableTimeoutRetries() {
     server.enqueue(
-      MockResponse(
-        code = 503,
-        headers =
-          headersOf(
-            "Connection",
-            "Close",
-            "Retry-After",
-            "0",
-          ),
-        body = "You took too long!",
-        socketPolicy = DisconnectAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .code(503)
+        .addHeader("Connection", "Close")
+        .addHeader("Retry-After", "0")
+        .body("You took too long!")
+        .onResponseEnd(ShutdownConnection)
+        .build(),
     )
     server.enqueue(
-      MockResponse(
-        code = 503,
-        headers =
-          headersOf(
-            "Connection",
-            "Close",
-            "Retry-After",
-            "0",
-          ),
-        body = "You took too long!",
-        socketPolicy = DisconnectAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .code(503)
+        .addHeader("Connection", "Close")
+        .addHeader("Retry-After", "0")
+        .body("You took too long!")
+        .onResponseEnd(ShutdownConnection)
+        .build(),
     )
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
@@ -2354,18 +2353,14 @@ open class CallTest {
   @Test
   fun retryOnUnavailableWith0RetryAfter() {
     server.enqueue(
-      MockResponse(
-        code = 503,
-        headers =
-          headersOf(
-            "Connection",
-            "Close",
-            "Retry-After",
-            "0",
-          ),
-        body = "You took too long!",
-        socketPolicy = DisconnectAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .code(503)
+        .addHeader("Connection", "Close")
+        .addHeader("Retry-After", "0")
+        .body("You took too long!")
+        .onResponseEnd(ShutdownConnection)
+        .build(),
     )
     server.enqueue(MockResponse(body = "Body"))
     val request = Request(server.url("/"))
@@ -2786,7 +2781,7 @@ open class CallTest {
 
   /** Cancel a call that's waiting for connect to complete.  */
   private fun cancelDuringConnect(scheme: String?) {
-    server.enqueue(MockResponse(socketPolicy = StallSocketAtStart))
+    server.enqueue(MockResponse.Builder().onRequestStart(Stall).build())
     val cancelDelayMillis = 300L
     val call =
       client.newCall(
@@ -3273,7 +3268,7 @@ open class CallTest {
   @Tag("Slowish")
   @Test
   fun expect100ContinueTimesOutWithoutContinue() {
-    server.enqueue(MockResponse(socketPolicy = NoResponse))
+    server.enqueue(MockResponse.Builder().onResponseStart(Stall).build())
     client =
       client
         .newBuilder()
@@ -3695,7 +3690,7 @@ open class CallTest {
         .Builder()
         .body("abc")
         .setHeader("Content-Length", "5")
-        .socketPolicy(DisconnectAtEnd)
+        .onResponseEnd(ShutdownConnection)
         .build(),
     )
     val hostnameVerifier = RecordingHostnameVerifier()
@@ -4019,7 +4014,7 @@ open class CallTest {
       MockResponse
         .Builder()
         .inTunnel()
-        .socketPolicy(DisconnectAfterRequest)
+        .onResponseStart(CloseSocket())
         .build(),
     )
     client =

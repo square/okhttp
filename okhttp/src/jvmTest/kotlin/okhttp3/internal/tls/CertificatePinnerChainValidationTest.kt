@@ -30,7 +30,7 @@ import javax.net.ssl.TrustManager
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.DisconnectAtEnd
+import mockwebserver3.SocketEffect.ShutdownConnection
 import mockwebserver3.junit5.StartStop
 import okhttp3.CertificatePinner
 import okhttp3.CertificatePinner.Companion.pin
@@ -193,7 +193,7 @@ class CertificatePinnerChainValidationTest {
       MockResponse
         .Builder()
         .body("abc")
-        .socketPolicy(DisconnectAtEnd)
+        .onResponseEnd(ShutdownConnection)
         .build(),
     )
     val call1 =
@@ -215,7 +215,7 @@ class CertificatePinnerChainValidationTest {
       MockResponse
         .Builder()
         .body("def")
-        .socketPolicy(DisconnectAtEnd)
+        .onResponseEnd(ShutdownConnection)
         .build(),
     )
     val call2 =

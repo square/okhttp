@@ -26,8 +26,7 @@ import java.time.Duration
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.DisconnectAtStart
-import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
+import mockwebserver3.SocketEffect.CloseSocket
 import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
@@ -199,10 +198,15 @@ class CallKotlinTest {
         ).build()
 
     server.enqueue(
-      MockResponse(
-        body = "a",
-        socketPolicy = ShutdownOutputAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .body("a")
+        .onResponseEnd(
+          CloseSocket(
+            closeSocket = false,
+            shutdownOutput = true,
+          ),
+        ).build(),
     )
     server.enqueue(MockResponse(body = "b"))
 
@@ -255,8 +259,8 @@ class CallKotlinTest {
 
   /** Confirm suppressed exceptions that occur after connecting are returned. */
   @Test fun httpExceptionsAreReturnedAsSuppressed() {
-    server.enqueue(MockResponse(socketPolicy = DisconnectAtStart))
-    server.enqueue(MockResponse(socketPolicy = DisconnectAtStart))
+    server.enqueue(MockResponse.Builder().onRequestStart(CloseSocket()).build())
+    server.enqueue(MockResponse.Builder().onRequestStart(CloseSocket()).build())
 
     client =
       client
