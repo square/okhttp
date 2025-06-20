@@ -135,10 +135,11 @@ class ExecuteAsyncTest {
   fun failedCall() {
     runTest {
       server.enqueue(
-        MockResponse.Builder()
+        MockResponse
+          .Builder()
           .body("abc")
           .onResponseStart(SocketEffect.ShutdownConnection)
-          .build()
+          .build(),
       )
 
       val call = client.newCall(request)
