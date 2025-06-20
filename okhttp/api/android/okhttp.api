@@ -513,9 +513,6 @@ public abstract interface class okhttp3/EventListener$Factory {
 	public abstract fun create (Lokhttp3/Call;)Lokhttp3/EventListener;
 }
 
-public abstract interface annotation class okhttp3/ExperimentalOkHttpApi : java/lang/annotation/Annotation {
-}
-
 public final class okhttp3/FormBody : okhttp3/RequestBody {
 	public static final field Companion Lokhttp3/FormBody$Companion;
 	public final fun -deprecated_size ()I
