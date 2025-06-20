@@ -6,21 +6,28 @@ public abstract class mockwebserver3/Dispatcher : java/io/Closeable {
 }
 
 public final class mockwebserver3/MockResponse {
-	public fun <init> (ILokhttp3/Headers;Ljava/lang/String;Lmockwebserver3/SocketPolicy;)V
-	public synthetic fun <init> (ILokhttp3/Headers;Ljava/lang/String;Lmockwebserver3/SocketPolicy;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ILokhttp3/Headers;Ljava/lang/String;)V
+	public synthetic fun <init> (ILokhttp3/Headers;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lmockwebserver3/MockResponse$Builder;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getBody ()Lmockwebserver3/MockResponseBody;
 	public final fun getBodyDelayNanos ()J
 	public final fun getCode ()I
+	public final fun getDoNotReadRequestBody ()Z
+	public final fun getFailHandshake ()Z
 	public final fun getHeaders ()Lokhttp3/Headers;
 	public final fun getHeadersDelayNanos ()J
 	public final fun getInTunnel ()Z
 	public final fun getInformationalResponses ()Ljava/util/List;
 	public final fun getMessage ()Ljava/lang/String;
+	public final fun getOnRequestBody ()Lmockwebserver3/SocketEffect;
+	public final fun getOnRequestStart ()Lmockwebserver3/SocketEffect;
+	public final fun getOnResponseBody ()Lmockwebserver3/SocketEffect;
+	public final fun getOnResponseEnd ()Lmockwebserver3/SocketEffect;
+	public final fun getOnResponseStart ()Lmockwebserver3/SocketEffect;
 	public final fun getPushPromises ()Ljava/util/List;
 	public final fun getSettings ()Lokhttp3/internal/http2/Settings;
+	public final fun getShutdownServer ()Z
 	public final fun getSocketHandler ()Lmockwebserver3/SocketHandler;
-	public final fun getSocketPolicy ()Lmockwebserver3/SocketPolicy;
 	public final fun getStatus ()Ljava/lang/String;
 	public final fun getThrottleBytesPerPeriod ()J
 	public final fun getThrottlePeriodNanos ()J
@@ -52,17 +59,26 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lmockwebserver3/MockResponse$Builder;
 	public final fun code (I)Lmockwebserver3/MockResponse$Builder;
+	public final fun doNotReadRequestBody ()Lmockwebserver3/MockResponse$Builder;
+	public final fun failHandshake ()Lmockwebserver3/MockResponse$Builder;
 	public final fun getBody ()Lmockwebserver3/MockResponseBody;
 	public final fun getBodyDelayNanos ()J
 	public final fun getCode ()I
+	public final fun getDoNotReadRequestBody ()Z
+	public final fun getFailHandshake ()Z
 	public final fun getHeaders ()Lokhttp3/Headers;
 	public final fun getHeadersDelayNanos ()J
 	public final fun getInTunnel ()Z
 	public final fun getInformationalResponses ()Ljava/util/List;
+	public final fun getOnRequestBody ()Lmockwebserver3/SocketEffect;
+	public final fun getOnRequestStart ()Lmockwebserver3/SocketEffect;
+	public final fun getOnResponseBody ()Lmockwebserver3/SocketEffect;
+	public final fun getOnResponseEnd ()Lmockwebserver3/SocketEffect;
+	public final fun getOnResponseStart ()Lmockwebserver3/SocketEffect;
 	public final fun getPushPromises ()Ljava/util/List;
 	public final fun getSettings ()Lokhttp3/internal/http2/Settings;
+	public final fun getShutdownServer ()Z
 	public final fun getSocketHandler ()Lmockwebserver3/SocketHandler;
-	public final fun getSocketPolicy ()Lmockwebserver3/SocketPolicy;
 	public final fun getStatus ()Ljava/lang/String;
 	public final fun getThrottleBytesPerPeriod ()J
 	public final fun getThrottlePeriodNanos ()J
@@ -72,11 +88,16 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 	public final fun headers (Lokhttp3/Headers;)Lmockwebserver3/MockResponse$Builder;
 	public final fun headersDelay (JLjava/util/concurrent/TimeUnit;)Lmockwebserver3/MockResponse$Builder;
 	public final fun inTunnel ()Lmockwebserver3/MockResponse$Builder;
+	public final fun onRequestBody (Lmockwebserver3/SocketEffect;)Lmockwebserver3/MockResponse$Builder;
+	public final fun onRequestStart (Lmockwebserver3/SocketEffect;)Lmockwebserver3/MockResponse$Builder;
+	public final fun onResponseBody (Lmockwebserver3/SocketEffect;)Lmockwebserver3/MockResponse$Builder;
+	public final fun onResponseEnd (Lmockwebserver3/SocketEffect;)Lmockwebserver3/MockResponse$Builder;
+	public final fun onResponseStart (Lmockwebserver3/SocketEffect;)Lmockwebserver3/MockResponse$Builder;
 	public final fun removeHeader (Ljava/lang/String;)Lmockwebserver3/MockResponse$Builder;
 	public final fun setHeader (Ljava/lang/String;Ljava/lang/Object;)Lmockwebserver3/MockResponse$Builder;
 	public final fun settings (Lokhttp3/internal/http2/Settings;)Lmockwebserver3/MockResponse$Builder;
+	public final fun shutdownServer (Z)Lmockwebserver3/MockResponse$Builder;
 	public final fun socketHandler (Lmockwebserver3/SocketHandler;)Lmockwebserver3/MockResponse$Builder;
-	public final fun socketPolicy (Lmockwebserver3/SocketPolicy;)Lmockwebserver3/MockResponse$Builder;
 	public final fun status (Ljava/lang/String;)Lmockwebserver3/MockResponse$Builder;
 	public final fun throttleBody (JJLjava/util/concurrent/TimeUnit;)Lmockwebserver3/MockResponse$Builder;
 	public final fun trailers (Lokhttp3/Headers;)Lmockwebserver3/MockResponse$Builder;
@@ -163,76 +184,34 @@ public final class mockwebserver3/RecordedRequest {
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class mockwebserver3/SocketEffect {
+}
+
+public final class mockwebserver3/SocketEffect$CloseSocket : mockwebserver3/SocketEffect {
+	public fun <init> ()V
+	public fun <init> (ZZZ)V
+	public synthetic fun <init> (ZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCloseSocket ()Z
+	public final fun getShutdownInput ()Z
+	public final fun getShutdownOutput ()Z
+}
+
+public final class mockwebserver3/SocketEffect$CloseStream : mockwebserver3/SocketEffect {
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getHttp2ErrorCode ()I
+}
+
+public final class mockwebserver3/SocketEffect$ShutdownConnection : mockwebserver3/SocketEffect {
+	public static final field INSTANCE Lmockwebserver3/SocketEffect$ShutdownConnection;
+}
+
+public final class mockwebserver3/SocketEffect$Stall : mockwebserver3/SocketEffect {
+	public static final field INSTANCE Lmockwebserver3/SocketEffect$Stall;
+}
+
 public abstract interface class mockwebserver3/SocketHandler {
 	public abstract fun handle (Lokio/Socket;)V
-}
-
-public abstract interface class mockwebserver3/SocketPolicy {
-}
-
-public final class mockwebserver3/SocketPolicy$DisconnectAfterRequest : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectAfterRequest;
-}
-
-public final class mockwebserver3/SocketPolicy$DisconnectAtEnd : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectAtEnd;
-}
-
-public final class mockwebserver3/SocketPolicy$DisconnectAtStart : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectAtStart;
-}
-
-public final class mockwebserver3/SocketPolicy$DisconnectDuringRequestBody : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectDuringRequestBody;
-}
-
-public final class mockwebserver3/SocketPolicy$DisconnectDuringResponseBody : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectDuringResponseBody;
-}
-
-public final class mockwebserver3/SocketPolicy$DoNotReadRequestBody : mockwebserver3/SocketPolicy {
-	public fun <init> ()V
-	public fun <init> (I)V
-	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getHttp2ErrorCode ()I
-}
-
-public final class mockwebserver3/SocketPolicy$FailHandshake : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$FailHandshake;
-}
-
-public final class mockwebserver3/SocketPolicy$HalfCloseAfterRequest : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$HalfCloseAfterRequest;
-}
-
-public final class mockwebserver3/SocketPolicy$KeepOpen : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$KeepOpen;
-}
-
-public final class mockwebserver3/SocketPolicy$NoResponse : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$NoResponse;
-}
-
-public final class mockwebserver3/SocketPolicy$ResetStreamAtStart : mockwebserver3/SocketPolicy {
-	public fun <init> ()V
-	public fun <init> (I)V
-	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getHttp2ErrorCode ()I
-}
-
-public final class mockwebserver3/SocketPolicy$ShutdownInputAtEnd : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$ShutdownInputAtEnd;
-}
-
-public final class mockwebserver3/SocketPolicy$ShutdownOutputAtEnd : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$ShutdownOutputAtEnd;
-}
-
-public final class mockwebserver3/SocketPolicy$ShutdownServerAfterResponse : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$ShutdownServerAfterResponse;
-}
-
-public final class mockwebserver3/SocketPolicy$StallSocketAtStart : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$StallSocketAtStart;
 }
 
