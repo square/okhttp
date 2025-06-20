@@ -40,10 +40,7 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.HttpsURLConnection
 import kotlin.test.assertFailsWith
-import mockwebserver3.SocketPolicy.DisconnectAtStart
-import mockwebserver3.SocketPolicy.DisconnectDuringRequestBody
-import mockwebserver3.SocketPolicy.DisconnectDuringResponseBody
-import mockwebserver3.SocketPolicy.ShutdownServerAfterResponse
+import mockwebserver3.SocketEffect.CloseSocket
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -298,7 +295,7 @@ class MockWebServerTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(DisconnectAtStart)
+        .onRequestStart(CloseSocket())
         .build(),
     )
     server.enqueue(MockResponse()) // The jdk's HttpUrlConnection is a bastard.
@@ -413,7 +410,7 @@ class MockWebServerTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(DisconnectDuringRequestBody)
+        .onRequestBody(CloseSocket())
         .build(),
     )
     // Limit the size of the request body that the server holds in memory to an arbitrary
@@ -450,7 +447,7 @@ class MockWebServerTest {
       MockResponse
         .Builder()
         .body("ab")
-        .socketPolicy(DisconnectDuringResponseBody)
+        .onResponseBody(CloseSocket())
         .build(),
     )
     val connection = server.url("/").toUrl().openConnection()
@@ -623,7 +620,7 @@ class MockWebServerTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(ShutdownServerAfterResponse)
+        .shutdownServer(true)
         .build(),
     )
     val url = server.url("/").toUrl()
@@ -865,7 +862,7 @@ class MockWebServerTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(SocketPolicy.DoNotReadRequestBody())
+        .doNotReadRequestBody()
         .build(),
     )
     val client = OkHttpClient()

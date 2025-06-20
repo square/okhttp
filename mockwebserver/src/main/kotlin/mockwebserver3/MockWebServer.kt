@@ -50,20 +50,10 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
-import mockwebserver3.SocketPolicy.DisconnectAfterRequest
-import mockwebserver3.SocketPolicy.DisconnectAtEnd
-import mockwebserver3.SocketPolicy.DisconnectAtStart
-import mockwebserver3.SocketPolicy.DisconnectDuringRequestBody
-import mockwebserver3.SocketPolicy.DisconnectDuringResponseBody
-import mockwebserver3.SocketPolicy.DoNotReadRequestBody
-import mockwebserver3.SocketPolicy.FailHandshake
-import mockwebserver3.SocketPolicy.HalfCloseAfterRequest
-import mockwebserver3.SocketPolicy.NoResponse
-import mockwebserver3.SocketPolicy.ResetStreamAtStart
-import mockwebserver3.SocketPolicy.ShutdownInputAtEnd
-import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
-import mockwebserver3.SocketPolicy.ShutdownServerAfterResponse
-import mockwebserver3.SocketPolicy.StallSocketAtStart
+import mockwebserver3.SocketEffect.CloseSocket
+import mockwebserver3.SocketEffect.CloseStream
+import mockwebserver3.SocketEffect.ShutdownConnection
+import mockwebserver3.SocketEffect.Stall
 import mockwebserver3.internal.DEFAULT_REQUEST_LINE_HTTP_1
 import mockwebserver3.internal.DEFAULT_REQUEST_LINE_HTTP_2
 import mockwebserver3.internal.RecordedRequest
@@ -396,8 +386,8 @@ public class MockWebServer : Closeable {
         return
       }
 
-      val socketPolicy = dispatcher.peek().socketPolicy
-      if (socketPolicy === DisconnectAtStart) {
+      val peek = dispatcher.peek()
+      if (peek.onRequestStart is CloseSocket) {
         dispatchBookkeepingRequest(
           connectionIndex = nextConnectionIndex++,
           exchangeIndex = 0,
@@ -406,7 +396,7 @@ public class MockWebServer : Closeable {
         socket.close()
       } else {
         openClientSockets.add(socket)
-        serveConnection(nextConnectionIndex++, socket)
+        serveConnection(nextConnectionIndex++, socket, peek)
       }
     }
   }
@@ -433,10 +423,11 @@ public class MockWebServer : Closeable {
   private fun serveConnection(
     connectionIndex: Int,
     raw: Socket,
+    firstExchangePeek: MockResponse,
   ) {
     taskRunner.newQueue().execute("MockWebServer ${raw.remoteSocketAddress}", cancelable = false) {
       try {
-        SocketHandler(connectionIndex, raw).handle()
+        SocketHandler(connectionIndex, raw, firstExchangePeek).handle()
       } catch (e: IOException) {
         logger.fine("$this connection from ${raw.inetAddress} failed: $e")
       } catch (e: Exception) {
@@ -448,6 +439,7 @@ public class MockWebServer : Closeable {
   internal inner class SocketHandler(
     private val connectionIndex: Int,
     private val raw: Socket,
+    private val firstExchangePeek: MockResponse,
   ) {
     private var nextExchangeIndex = 0
 
@@ -455,12 +447,11 @@ public class MockWebServer : Closeable {
     fun handle() {
       if (!processTunnelRequests()) return
 
-      val socketPolicy = dispatcher.peek().socketPolicy
       val protocol: Protocol
       val socket: Socket
       when {
         sslSocketFactory != null -> {
-          if (socketPolicy === FailHandshake) {
+          if (firstExchangePeek.failHandshake) {
             dispatchBookkeepingRequest(
               connectionIndex = connectionIndex,
               exchangeIndex = nextExchangeIndex++,
@@ -514,7 +505,7 @@ public class MockWebServer : Closeable {
         }
       }
 
-      if (socketPolicy === StallSocketAtStart) {
+      if (firstExchangePeek.onRequestStart == Stall) {
         dispatchBookkeepingRequest(
           connectionIndex = connectionIndex,
           exchangeIndex = nextExchangeIndex++,
@@ -593,7 +584,7 @@ public class MockWebServer : Closeable {
         return false // No more requests on this socket.
       }
 
-      val request = readRequest(socket, source, sink, connectionIndex, nextExchangeIndex)
+      val request = readRequest(socket, source, sink, connectionIndex, nextExchangeIndex++)
       atomicRequestCount.incrementAndGet()
       requestQueue.add(request)
 
@@ -602,52 +593,41 @@ public class MockWebServer : Closeable {
       }
 
       val response = dispatcher.dispatch(request)
-      if (response.socketPolicy === DisconnectAfterRequest) {
-        socket.close()
-        return false
-      }
-      if (response.socketPolicy === HalfCloseAfterRequest) {
-        socket.shutdownOutput()
-        return false
-      }
-      if (response.socketPolicy === NoResponse) {
-        // This read should block until the socket is closed. (Because nobody is writing.)
-        if (source.exhausted()) return false
-        throw ProtocolException("unexpected data")
-      }
 
-      var reuseSocket = true
-      val requestWantsWebSockets =
-        "Upgrade".equals(request.headers["Connection"], ignoreCase = true) &&
-          "websocket".equals(request.headers["Upgrade"], ignoreCase = true)
-      val responseWantsWebSockets = response.webSocketListener != null
-      if (requestWantsWebSockets && responseWantsWebSockets) {
-        handleWebSocketUpgrade(socket, source, sink, request, response)
-        reuseSocket = false
-      } else {
-        writeHttpResponse(socket, sink, response)
-      }
-
-      if (logger.isLoggable(Level.FINE)) {
-        logger.fine(
-          "${this@MockWebServer} received request: $request and responded: $response",
-        )
-      }
-
-      // See warnings associated with these socket policies in SocketPolicy.
-      when (response.socketPolicy) {
-        DisconnectAtEnd, is DoNotReadRequestBody -> {
-          socket.close()
+      try {
+        if (handleSocketEffect(response.onResponseStart, socket)) {
           return false
         }
-        ShutdownInputAtEnd -> socket.shutdownInput()
-        ShutdownOutputAtEnd -> socket.shutdownOutput()
-        ShutdownServerAfterResponse -> close()
-        else -> {
+
+        var reuseSocket = true
+        val requestWantsWebSockets =
+          "Upgrade".equals(request.headers["Connection"], ignoreCase = true) &&
+            "websocket".equals(request.headers["Upgrade"], ignoreCase = true)
+        val responseWantsWebSockets = response.webSocketListener != null
+        if (requestWantsWebSockets && responseWantsWebSockets) {
+          handleWebSocketUpgrade(socket, source, sink, request, response)
+          reuseSocket = false
+        } else {
+          writeHttpResponse(socket, sink, response)
+        }
+
+        if (logger.isLoggable(Level.FINE)) {
+          logger.fine(
+            "${this@MockWebServer} received request: $request and responded: $response",
+          )
+        }
+
+        // See warnings associated with these socket policies in SocketPolicy.
+        if (handleSocketEffect(response.onResponseEnd, socket)) {
+          return false
+        }
+
+        return reuseSocket
+      } finally {
+        if (response.shutdownServer) {
+          close()
         }
       }
-      nextExchangeIndex++
-      return reuseSocket
     }
   }
 
@@ -666,7 +646,7 @@ public class MockWebServer : Closeable {
     try {
       socket.startHandshake() // we're testing a handshake failure
       throw AssertionError()
-    } catch (expected: IOException) {
+    } catch (_: IOException) {
     }
     socket.close()
   }
@@ -741,18 +721,17 @@ public class MockWebServer : Closeable {
         writeHttpResponse(socket, sink, response)
       }
 
-      val policy = dispatcher.peek()
       val requestBodySink =
         requestBody
           .withThrottlingAndSocketPolicy(
-            policy = policy,
-            disconnectHalfway = policy.socketPolicy == DisconnectDuringRequestBody,
+            policy = peek,
+            socketEffect = peek.onRequestBody,
             expectedByteCount = contentLength,
             socket = socket,
           ).buffer()
       requestBodySink.use {
         when {
-          policy.socketPolicy is DoNotReadRequestBody -> {
+          peek.doNotReadRequestBody -> {
             hasBody = false // Ignore the body completely.
           }
 
@@ -891,7 +870,7 @@ public class MockWebServer : Closeable {
       sink
         .withThrottlingAndSocketPolicy(
           policy = response,
-          disconnectHalfway = response.socketPolicy == DisconnectDuringResponseBody,
+          socketEffect = response.onResponseBody,
           expectedByteCount = body.contentLength,
           socket = socket,
         ).buffer()
@@ -922,9 +901,10 @@ public class MockWebServer : Closeable {
   /** Returns a sink that applies throttling and disconnecting. */
   private fun Sink.withThrottlingAndSocketPolicy(
     policy: MockResponse,
-    disconnectHalfway: Boolean,
+    socketEffect: SocketEffect?,
     expectedByteCount: Long,
     socket: Socket,
+    stream: Http2Stream? = null,
   ): Sink {
     var result: Sink = this
 
@@ -938,7 +918,7 @@ public class MockWebServer : Closeable {
         )
     }
 
-    if (disconnectHalfway) {
+    if (socketEffect != null) {
       val halfwayByteCount =
         when {
           expectedByteCount != -1L -> expectedByteCount / 2
@@ -950,11 +930,52 @@ public class MockWebServer : Closeable {
           triggerByteCount = halfwayByteCount,
         ) {
           result.flush()
-          socket.close()
+          handleSocketEffect(socketEffect, socket, stream)
         }
     }
 
     return result
+  }
+
+  /** Returns true if processing this exchange is complete. */
+  private fun handleSocketEffect(
+    effect: SocketEffect?,
+    socket: Socket,
+    stream: Http2Stream? = null,
+  ): Boolean {
+    if (effect == null) return false
+
+    when (effect) {
+      is CloseStream -> {
+        if (stream != null) {
+          stream.close(ErrorCode.fromHttp2(effect.http2ErrorCode)!!, null)
+        } else {
+          socket.close()
+        }
+      }
+
+      ShutdownConnection -> {
+        if (stream != null) {
+          stream.connection.shutdown(ErrorCode.NO_ERROR)
+        } else {
+          socket.close()
+        }
+      }
+
+      is CloseSocket -> {
+        if (effect.shutdownInput) socket.shutdownInput()
+        if (effect.shutdownOutput) socket.shutdownOutput()
+        if (effect.closeSocket) socket.close()
+      }
+
+      Stall -> {
+        // Sleep until the socket is closed.
+        socket.sleepWhileOpen(TimeUnit.MINUTES.toNanos(60))
+        error("expected timeout")
+      }
+    }
+
+    return true
   }
 
   @Throws(IOException::class)
@@ -1017,15 +1038,14 @@ public class MockWebServer : Closeable {
 
     @Throws(IOException::class)
     override fun onStream(stream: Http2Stream) {
-      val peekedResponse = dispatcher.peek()
-      if (peekedResponse.socketPolicy is ResetStreamAtStart) {
+      val peek = dispatcher.peek()
+      if (handleSocketEffect(peek.onRequestStart, socket, stream)) {
         dispatchBookkeepingRequest(
           connectionIndex = connectionIndex,
           exchangeIndex = nextExchangeIndex.getAndIncrement(),
           socket = socket,
           requestLine = DEFAULT_REQUEST_LINE_HTTP_2,
         )
-        stream.close(ErrorCode.fromHttp2(peekedResponse.socketPolicy.http2ErrorCode)!!, null)
         return
       }
 
@@ -1036,29 +1056,25 @@ public class MockWebServer : Closeable {
         return // Nothing to respond to.
       }
 
-      val response: MockResponse = dispatcher.dispatch(request)
+      val response = dispatcher.dispatch(request)
 
-      val socketPolicy = response.socketPolicy
-      if (socketPolicy === DisconnectAfterRequest) {
-        socket.close()
-        return
-      }
-      writeResponse(stream, request, response)
-      if (logger.isLoggable(Level.FINE)) {
-        logger.fine(
-          "${this@MockWebServer} received request: $request " +
-            "and responded: $response protocol is $protocol",
-        )
-      }
+      try {
+        if (handleSocketEffect(peek.onResponseStart, socket, stream)) {
+          return
+        }
 
-      when (socketPolicy) {
-        DisconnectAtEnd -> {
-          stream.connection.shutdown(ErrorCode.NO_ERROR)
+        writeResponse(stream, request, response)
+        if (logger.isLoggable(Level.FINE)) {
+          logger.fine(
+            "${this@MockWebServer} received request: $request " +
+              "and responded: $response protocol is $protocol",
+          )
         }
-        is DoNotReadRequestBody -> {
-          stream.close(ErrorCode.fromHttp2(socketPolicy.http2ErrorCode)!!, null)
-        }
-        else -> {
+
+        handleSocketEffect(peek.onResponseEnd, socket, stream)
+      } finally {
+        if (response.shutdownServer) {
+          close()
         }
       }
     }
@@ -1104,7 +1120,7 @@ public class MockWebServer : Closeable {
         )
       var exception: IOException? = null
       var bodyByteString: ByteString? = null
-      if (readBody && peek.socketHandler == null && peek.socketPolicy !is DoNotReadRequestBody) {
+      if (readBody && peek.socketHandler == null && !peek.doNotReadRequestBody) {
         val body = Buffer()
         try {
           val contentLengthString = headers["content-length"]
@@ -1112,9 +1128,10 @@ public class MockWebServer : Closeable {
             body
               .withThrottlingAndSocketPolicy(
                 policy = peek,
-                disconnectHalfway = peek.socketPolicy == DisconnectDuringRequestBody,
+                socketEffect = peek.onRequestBody,
                 expectedByteCount = contentLengthString?.toLong() ?: Long.MAX_VALUE,
                 socket = socket,
+                stream = stream,
               ).buffer()
           requestBodySink.use {
             it.writeAll(stream.source)
@@ -1161,10 +1178,6 @@ public class MockWebServer : Closeable {
       val settings = response.settings
       stream.connection.setSettings(settings)
 
-      if (response.socketPolicy === NoResponse) {
-        return
-      }
-
       val bodyDelayNanos = response.bodyDelayNanos
       val trailers = response.trailers
       val body = response.body
@@ -1193,9 +1206,10 @@ public class MockWebServer : Closeable {
             .sink
             .withThrottlingAndSocketPolicy(
               policy = response,
-              disconnectHalfway = response.socketPolicy == DisconnectDuringResponseBody,
+              socketEffect = response.onResponseBody,
               expectedByteCount = body.contentLength,
               socket = socket,
+              stream = stream,
             ).buffer()
         responseBodySink.use {
           body.writeTo(it)

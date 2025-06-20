@@ -31,7 +31,8 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy
+import mockwebserver3.SocketEffect.CloseSocket
+import mockwebserver3.SocketEffect.ShutdownConnection
 import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.testing.PlatformRule
@@ -250,7 +251,7 @@ open class TrailersTest {
         .Builder()
         .trailers(headersOf("t1", "v2"))
         .body(protocol, "Hello")
-        .socketPolicy(SocketPolicy.DisconnectDuringResponseBody)
+        .onResponseBody(CloseSocket())
         .build(),
     )
 
@@ -361,7 +362,7 @@ open class TrailersTest {
         .Builder()
         .body("Hello")
         .removeHeader("Content-Length")
-        .socketPolicy(SocketPolicy.DisconnectAtEnd)
+        .onResponseEnd(ShutdownConnection)
         .build(),
     )
 

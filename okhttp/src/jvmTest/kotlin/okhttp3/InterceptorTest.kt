@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.DisconnectAtEnd
+import mockwebserver3.SocketEffect.ShutdownConnection
 import mockwebserver3.junit5.StartStop
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -653,7 +653,7 @@ class InterceptorTest {
     server.enqueue(
       MockResponse
         .Builder()
-        .socketPolicy(DisconnectAtEnd)
+        .onResponseEnd(ShutdownConnection)
         .addHeader("Connection", "Close")
         .build(),
     )

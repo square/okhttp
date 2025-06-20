@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.FailHandshake
 import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.DoubleInetAddressDns
@@ -258,7 +257,7 @@ open class ConnectionListenerTest {
   @Throws(UnknownHostException::class)
   fun failedConnect() {
     enableTls()
-    server!!.enqueue(MockResponse(socketPolicy = FailHandshake))
+    server!!.enqueue(MockResponse.Builder().failHandshake().build())
     val call =
       client.newCall(
         Request
@@ -284,7 +283,7 @@ open class ConnectionListenerTest {
   @Throws(IOException::class)
   fun multipleConnectsForSingleCall() {
     enableTls()
-    server!!.enqueue(MockResponse(socketPolicy = FailHandshake))
+    server!!.enqueue(MockResponse.Builder().failHandshake().build())
     server!!.enqueue(MockResponse())
     client =
       client

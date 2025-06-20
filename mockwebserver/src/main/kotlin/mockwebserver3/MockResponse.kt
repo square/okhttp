@@ -23,12 +23,13 @@
 package mockwebserver3
 
 import java.util.concurrent.TimeUnit
-import mockwebserver3.SocketPolicy.KeepOpen
+import mockwebserver3.SocketEffect.CloseStream
 import mockwebserver3.internal.toMockResponseBody
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.WebSocketListener
 import okhttp3.internal.addHeaderLenient
+import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.Settings
 import okio.Buffer
 
@@ -65,7 +66,14 @@ public class MockResponse {
   public val throttleBytesPerPeriod: Long
   public val throttlePeriodNanos: Long
 
-  public val socketPolicy: SocketPolicy
+  public val failHandshake: Boolean
+  public val onRequestStart: SocketEffect?
+  public val doNotReadRequestBody: Boolean
+  public val onRequestBody: SocketEffect?
+  public val onResponseStart: SocketEffect?
+  public val onResponseBody: SocketEffect?
+  public val onResponseEnd: SocketEffect?
+  public val shutdownServer: Boolean
 
   public val headersDelayNanos: Long
   public val bodyDelayNanos: Long
@@ -80,13 +88,11 @@ public class MockResponse {
     code: Int = 200,
     headers: Headers = headersOf(),
     body: String = "",
-    socketPolicy: SocketPolicy = KeepOpen,
   ) : this(
     Builder()
       .code(code)
       .headers(headers)
-      .body(body)
-      .socketPolicy(socketPolicy),
+      .body(body),
   )
 
   private constructor(builder: Builder) {
@@ -100,7 +106,14 @@ public class MockResponse {
     this.informationalResponses = builder.informationalResponses
     this.throttleBytesPerPeriod = builder.throttleBytesPerPeriod
     this.throttlePeriodNanos = builder.throttlePeriodNanos
-    this.socketPolicy = builder.socketPolicy
+    this.failHandshake = builder.failHandshake
+    this.onRequestStart = builder.onRequestStart
+    this.doNotReadRequestBody = builder.doNotReadRequestBody
+    this.onRequestBody = builder.onRequestBody
+    this.onResponseStart = builder.onResponseStart
+    this.onResponseBody = builder.onResponseBody
+    this.onResponseEnd = builder.onResponseEnd
+    this.shutdownServer = builder.shutdownServer
     this.headersDelayNanos = builder.headersDelayNanos
     this.bodyDelayNanos = builder.bodyDelayNanos
     this.trailersDelayNanos = builder.trailersDelayNanos
@@ -182,7 +195,21 @@ public class MockResponse {
     public var throttlePeriodNanos: Long
       private set
 
-    public var socketPolicy: SocketPolicy
+    public var failHandshake: Boolean
+      private set
+    public var onRequestStart: SocketEffect?
+      private set
+    public var doNotReadRequestBody: Boolean
+      private set
+    public var onRequestBody: SocketEffect?
+      private set
+    public var onResponseStart: SocketEffect?
+      private set
+    public var onResponseBody: SocketEffect?
+      private set
+    public var onResponseEnd: SocketEffect?
+      private set
+    public var shutdownServer: Boolean
       private set
 
     public var headersDelayNanos: Long
@@ -214,7 +241,14 @@ public class MockResponse {
       this.trailers_ = Headers.Builder()
       this.throttleBytesPerPeriod = Long.MAX_VALUE
       this.throttlePeriodNanos = 0L
-      this.socketPolicy = KeepOpen
+      this.failHandshake = false
+      this.onRequestStart = null
+      this.doNotReadRequestBody = false
+      this.onRequestBody = null
+      this.onResponseStart = null
+      this.onResponseBody = null
+      this.onResponseEnd = null
+      this.shutdownServer = false
       this.headersDelayNanos = 0L
       this.bodyDelayNanos = 0L
       this.trailersDelayNanos = 0L
@@ -233,7 +267,14 @@ public class MockResponse {
       this.webSocketListenerVar = mockResponse.webSocketListener
       this.throttleBytesPerPeriod = mockResponse.throttleBytesPerPeriod
       this.throttlePeriodNanos = mockResponse.throttlePeriodNanos
-      this.socketPolicy = mockResponse.socketPolicy
+      this.failHandshake = mockResponse.failHandshake
+      this.onRequestStart = mockResponse.onRequestStart
+      this.doNotReadRequestBody = mockResponse.doNotReadRequestBody
+      this.onRequestBody = mockResponse.onRequestBody
+      this.onResponseStart = mockResponse.onResponseStart
+      this.onResponseBody = mockResponse.onResponseBody
+      this.onResponseEnd = mockResponse.onResponseEnd
+      this.shutdownServer = mockResponse.shutdownServer
       this.headersDelayNanos = mockResponse.headersDelayNanos
       this.bodyDelayNanos = mockResponse.bodyDelayNanos
       this.trailersDelayNanos = mockResponse.trailersDelayNanos
@@ -374,10 +415,56 @@ public class MockResponse {
         this.trailers_ = trailers.newBuilder()
       }
 
-    /** Sets the socket policy and returns this. */
-    public fun socketPolicy(socketPolicy: SocketPolicy): Builder =
+    /** Don't trust the client during the SSL handshake. */
+    public fun failHandshake(): Builder =
       apply {
-        this.socketPolicy = socketPolicy
+        failHandshake = true
+      }
+
+    /** Trigger [socketEffect] before the request headers are read. */
+    public fun onRequestStart(socketEffect: SocketEffect?): Builder =
+      apply {
+        this.onRequestStart = socketEffect
+      }
+
+    /**
+     * Process the response without even attempting to reading the request body. For HTTP/2 this
+     * will close the response stream after the response body or trailers. For HTTP/1 this will
+     * close the socket after the response body or trailers.
+     */
+    public fun doNotReadRequestBody(): Builder =
+      apply {
+        doNotReadRequestBody = true
+        onResponseEnd = CloseStream(ErrorCode.NO_ERROR.httpCode)
+      }
+
+    /** Trigger [socketEffect] while reading the request body. */
+    public fun onRequestBody(socketEffect: SocketEffect?): Builder =
+      apply {
+        this.onRequestBody = socketEffect
+      }
+
+    /** Trigger [socketEffect] before the response headers are sent. */
+    public fun onResponseStart(socketEffect: SocketEffect?): Builder =
+      apply {
+        this.onResponseStart = socketEffect
+      }
+
+    /** Trigger [socketEffect] while writing the response body. */
+    public fun onResponseBody(socketEffect: SocketEffect?): Builder =
+      apply {
+        this.onResponseBody = socketEffect
+      }
+
+    /** Trigger [socketEffect] after writing the response body. */
+    public fun onResponseEnd(socketEffect: SocketEffect?): Builder =
+      apply {
+        this.onResponseEnd = socketEffect
+      }
+
+    public fun shutdownServer(shutdownServer: Boolean): Builder =
+      apply {
+        this.shutdownServer = shutdownServer
       }
 
     /**

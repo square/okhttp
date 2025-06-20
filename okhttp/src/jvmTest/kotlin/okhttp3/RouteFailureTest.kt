@@ -26,7 +26,7 @@ import java.net.Proxy
 import java.net.SocketTimeoutException
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.ResetStreamAtStart
+import mockwebserver3.SocketEffect.CloseStream
 import mockwebserver3.junit5.StartStop
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.internal.http2.ErrorCode
@@ -63,9 +63,10 @@ class RouteFailureTest {
   val ipv6 = InetAddress.getByName("2001:db8:ffff:ffff:ffff:ffff:ffff:1")
 
   val refusedStream =
-    MockResponse(
-      socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode),
-    )
+    MockResponse
+      .Builder()
+      .onRequestStart(CloseStream(ErrorCode.REFUSED_STREAM.httpCode))
+      .build()
   val bodyResponse = MockResponse(body = "body")
 
   @BeforeEach

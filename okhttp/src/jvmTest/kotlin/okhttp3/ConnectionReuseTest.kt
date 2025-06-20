@@ -23,8 +23,8 @@ import javax.net.ssl.SSLException
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.DisconnectAfterRequest
-import mockwebserver3.SocketPolicy.DisconnectAtEnd
+import mockwebserver3.SocketEffect.CloseSocket
+import mockwebserver3.SocketEffect.ShutdownConnection
 import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
@@ -118,7 +118,7 @@ class ConnectionReuseTest {
         .Builder()
         .body("a")
         .clearHeaders()
-        .socketPolicy(DisconnectAtEnd)
+        .onResponseEnd(ShutdownConnection)
         .build(),
     )
     server.enqueue(MockResponse(body = "b"))
@@ -188,7 +188,7 @@ class ConnectionReuseTest {
   @Test
   fun silentRetryWhenIdempotentRequestFailsOnReusedConnection() {
     server.enqueue(MockResponse(body = "a"))
-    server.enqueue(MockResponse(socketPolicy = DisconnectAfterRequest))
+    server.enqueue(MockResponse.Builder().onResponseStart(CloseSocket()).build())
     server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     val responseA = client.newCall(request).execute()
