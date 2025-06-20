@@ -3757,7 +3757,7 @@ open class CallTest {
     assertThat(connect2.requestLine).isEqualTo("CONNECT android.com:443 HTTP/1.1")
     assertThat(connect2.headers["Proxy-Authorization"]).isEqualTo("password")
     val get = server.takeRequest()
-    assertThat(get.requestLine).isEqualTo("GET /foo HTTP/1.1")
+    assertThat(get.requestLine).isEqualTo("GET /foo HTTP/2")
     assertThat(get.headers["Proxy-Authorization"]).isNull()
   }
 
@@ -4295,7 +4295,7 @@ open class CallTest {
     )
     assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
-    assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
+    assertThat(get.requestLine).isEqualTo("GET / HTTP/2")
     assertThat(get.headers["Host"]).isNull()
     assertThat(get.headers[":authority"]).isEqualTo(
       "[::1]:$port",
@@ -4359,7 +4359,7 @@ open class CallTest {
     assertThat(connect.headers["Host"]).isEqualTo("127.0.0.1:$port")
     assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
-    assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
+    assertThat(get.requestLine).isEqualTo("GET / HTTP/2")
     assertThat(get.headers["Host"]).isNull()
     assertThat(get.headers[":authority"]).isEqualTo("127.0.0.1:$port")
     assertThat(get.url).isEqualTo(url)
@@ -4415,7 +4415,7 @@ open class CallTest {
     assertThat(connect.headers["Host"]).isEqualTo("any-host-name:$port")
     assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
-    assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
+    assertThat(get.requestLine).isEqualTo("GET / HTTP/2")
     assertThat(get.headers["Host"]).isNull()
     assertThat(get.headers[":authority"]).isEqualTo("any-host-name:$port")
     assertThat(get.url).isEqualTo(url)

@@ -184,7 +184,7 @@ class HttpOverHttp2Test {
     assertThat(response.message).isEqualTo("")
     assertThat(response.protocol).isEqualTo(protocol)
     val request = server.takeRequest()
-    assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
+    assertThat(request.requestLine).isEqualTo("GET /foo HTTP/2")
     assertThat(request.headers[":scheme"]).isEqualTo(scheme)
     assertThat(request.headers[":authority"]).isEqualTo("${server.hostName}:${server.port}")
   }
@@ -211,7 +211,7 @@ class HttpOverHttp2Test {
     assertThat(response.header("content-length")).isNull()
     assertThat(response.code).isEqualTo(204)
     val request = server.takeRequest()
-    assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
+    assertThat(request.requestLine).isEqualTo("GET /foo HTTP/2")
   }
 
   @ParameterizedTest
@@ -242,7 +242,7 @@ class HttpOverHttp2Test {
     // Content-Length header stays correctly.
     assertThat(response.header("content-length")).isEqualTo("5")
     val request = server.takeRequest()
-    assertThat(request.requestLine).isEqualTo("HEAD /foo HTTP/1.1")
+    assertThat(request.requestLine).isEqualTo("HEAD /foo HTTP/2")
   }
 
   @ParameterizedTest
@@ -279,7 +279,7 @@ class HttpOverHttp2Test {
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("ABCDE")
     val request = server.takeRequest()
-    assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
+    assertThat(request.requestLine).isEqualTo("POST /foo HTTP/2")
     assertArrayEquals(postBytes, request.body?.toByteArray())
     assertThat(request.headers["Content-Length"]).isNull()
   }
@@ -309,7 +309,7 @@ class HttpOverHttp2Test {
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("ABCDE")
     val request = server.takeRequest()
-    assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
+    assertThat(request.requestLine).isEqualTo("POST /foo HTTP/2")
     assertArrayEquals(postBytes, request.body?.toByteArray())
     assertThat(request.headers["Content-Length"]!!.toInt()).isEqualTo(postBytes.size)
   }
@@ -341,7 +341,7 @@ class HttpOverHttp2Test {
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("ABCDE")
     val request = server.takeRequest()
-    assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
+    assertThat(request.requestLine).isEqualTo("POST /foo HTTP/2")
     assertArrayEquals(postBytes, request.body?.toByteArray())
     assertThat(request.headers["Content-Length"]!!.toInt()).isEqualTo(postBytes.size)
   }
@@ -534,7 +534,7 @@ class HttpOverHttp2Test {
     val denied = server.takeRequest()
     assertThat(denied.headers["Authorization"]).isNull()
     val accepted = server.takeRequest()
-    assertThat(accepted.requestLine).isEqualTo("GET / HTTP/1.1")
+    assertThat(accepted.requestLine).isEqualTo("GET / HTTP/2")
     assertThat(accepted.headers["Authorization"]).isEqualTo(credential)
   }
 
@@ -1414,13 +1414,13 @@ class HttpOverHttp2Test {
     assertThat(response.code).isEqualTo(200)
     assertThat(response.message).isEqualTo("")
     val request = server.takeRequest()
-    assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
+    assertThat(request.requestLine).isEqualTo("GET /foo HTTP/2")
     assertThat(request.headers[":scheme"]).isEqualTo(scheme)
     assertThat(request.headers[":authority"]).isEqualTo(
       server.hostName + ":" + server.port,
     )
     val pushedRequest = server.takeRequest()
-    assertThat(pushedRequest.requestLine).isEqualTo("GET /foo/bar HTTP/1.1")
+    assertThat(pushedRequest.requestLine).isEqualTo("GET /foo/bar HTTP/2")
     assertThat(pushedRequest.headers["foo"]).isEqualTo("bar")
   }
 
@@ -1448,15 +1448,13 @@ class HttpOverHttp2Test {
     assertThat(response.code).isEqualTo(200)
     assertThat(response.message).isEqualTo("")
     val request = server.takeRequest()
-    assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
+    assertThat(request.requestLine).isEqualTo("GET /foo HTTP/2")
     assertThat(request.headers[":scheme"]).isEqualTo(scheme)
     assertThat(request.headers[":authority"]).isEqualTo(
       server.hostName + ":" + server.port,
     )
     val pushedRequest = server.takeRequest()
-    assertThat(pushedRequest.requestLine).isEqualTo(
-      "HEAD /foo/bar HTTP/1.1",
-    )
+    assertThat(pushedRequest.requestLine).isEqualTo("HEAD /foo/bar HTTP/2")
     assertThat(pushedRequest.headers["foo"]).isEqualTo("bar")
   }
 
@@ -2186,7 +2184,7 @@ class HttpOverHttp2Test {
     assertThat(tunnelRequest.requestLine).isEqualTo("CONNECT android.com:$port HTTP/1.1")
 
     val request = server.takeRequest()
-    assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
+    assertThat(request.requestLine).isEqualTo("GET /foo HTTP/2")
     assertThat(request.headers[":scheme"]).isEqualTo(scheme)
     assertThat(request.headers[":authority"]).isEqualTo("android.com")
   }
@@ -2239,7 +2237,7 @@ class HttpOverHttp2Test {
     assertThat(connect2.headers["Proxy-Authorization"]).isEqualTo("password")
 
     val get = server.takeRequest()
-    assertThat(get.requestLine).isEqualTo("GET /foo HTTP/1.1")
+    assertThat(get.requestLine).isEqualTo("GET /foo HTTP/2")
     assertThat(get.headers["Proxy-Authorization"]).isNull()
   }
 }
