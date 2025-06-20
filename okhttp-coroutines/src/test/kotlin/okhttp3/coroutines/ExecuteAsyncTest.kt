@@ -34,7 +34,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.DisconnectAfterRequest
+import mockwebserver3.SocketEffect
 import mockwebserver3.junit5.StartStop
 import okhttp3.Callback
 import okhttp3.FailingCall
@@ -135,10 +135,10 @@ class ExecuteAsyncTest {
   fun failedCall() {
     runTest {
       server.enqueue(
-        MockResponse(
-          body = "abc",
-          socketPolicy = DisconnectAfterRequest,
-        ),
+        MockResponse.Builder()
+          .body("abc")
+          .onResponseStart(SocketEffect.ShutdownConnection)
+          .build()
       )
 
       val call = client.newCall(request)

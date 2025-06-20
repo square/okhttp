@@ -723,7 +723,7 @@ public class MockWebServer : Closeable {
 
       val requestBodySink =
         requestBody
-          .withThrottlingAndSocketPolicy(
+          .withThrottlingAndSocketEffect(
             policy = peek,
             socketEffect = peek.onRequestBody,
             expectedByteCount = contentLength,
@@ -868,7 +868,7 @@ public class MockWebServer : Closeable {
     socket.sleepWhileOpen(response.bodyDelayNanos)
     val responseBodySink =
       sink
-        .withThrottlingAndSocketPolicy(
+        .withThrottlingAndSocketEffect(
           policy = response,
           socketEffect = response.onResponseBody,
           expectedByteCount = body.contentLength,
@@ -899,7 +899,7 @@ public class MockWebServer : Closeable {
   }
 
   /** Returns a sink that applies throttling and disconnecting. */
-  private fun Sink.withThrottlingAndSocketPolicy(
+  private fun Sink.withThrottlingAndSocketEffect(
     policy: MockResponse,
     socketEffect: SocketEffect?,
     expectedByteCount: Long,
@@ -1126,7 +1126,7 @@ public class MockWebServer : Closeable {
           val contentLengthString = headers["content-length"]
           val requestBodySink =
             body
-              .withThrottlingAndSocketPolicy(
+              .withThrottlingAndSocketEffect(
                 policy = peek,
                 socketEffect = peek.onRequestBody,
                 expectedByteCount = contentLengthString?.toLong() ?: Long.MAX_VALUE,
@@ -1204,7 +1204,7 @@ public class MockWebServer : Closeable {
         val responseBodySink =
           stream
             .sink
-            .withThrottlingAndSocketPolicy(
+            .withThrottlingAndSocketEffect(
               policy = response,
               socketEffect = response.onResponseBody,
               expectedByteCount = body.contentLength,

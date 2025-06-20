@@ -1953,7 +1953,7 @@ class HttpOverHttp2Test {
       assertThat(server.requestCount).isEqualTo(2)
     } else {
       // https://github.com/square/okhttp/issues/4836
-      // As documented in SocketPolicy, this is known to be flaky.
+      // As documented in SocketEffect, this is known to be flaky.
       val error = errors[0]
       if (error !is StreamResetException) {
         throw error!!
