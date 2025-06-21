@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress(
+  "CANNOT_OVERRIDE_INVISIBLE_MEMBER",
+  "INVISIBLE_MEMBER",
+  "INVISIBLE_REFERENCE",
+)
+
 package okhttp3
 
 import assertk.assertThat
@@ -24,11 +30,12 @@ import java.util.Deque
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
 import okhttp3.ConnectionEvent.NoNewExchanges
+import okhttp3.internal.connection.ConnectionListener
 import okhttp3.internal.connection.RealConnection
 import okio.IOException
 import org.junit.jupiter.api.Assertions
 
-open class RecordingConnectionListener(
+internal open class RecordingConnectionListener(
   /**
    * An override to ignore the normal order that is enforced.
    * EventListeners added by Interceptors will not see all events.

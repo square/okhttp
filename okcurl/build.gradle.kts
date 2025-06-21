@@ -7,7 +7,7 @@ plugins {
   kotlin("jvm")
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
-  id("com.github.johnrengelman.shadow")
+  id("com.gradleup.shadow")
 }
 
 val testJavaVersion = System.getProperty("test.java.version", "21").toInt()

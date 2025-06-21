@@ -1,5 +1,6 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
+import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 
 plugins {
   kotlin("jvm")
@@ -15,7 +16,7 @@ dependencies {
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.okhttpTls)
-  testRuntimeOnly(projects.mockwebserver3Junit5)
+  testImplementation(projects.mockwebserver3Junit5)
   testImplementation(libs.junit)
   testImplementation(libs.kotlin.test.common)
   testImplementation(libs.kotlin.test.junit)
@@ -24,4 +25,8 @@ dependencies {
 
 mavenPublishing {
   configure(KotlinJvm(javadocJar = JavadocJar.Empty()))
+}
+
+kotlin {
+  explicitApi()
 }

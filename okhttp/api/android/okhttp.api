@@ -27,33 +27,6 @@ public final class okhttp3/Address {
 	public final fun url ()Lokhttp3/HttpUrl;
 }
 
-public abstract interface class okhttp3/AsyncDns {
-	public static final field Companion Lokhttp3/AsyncDns$Companion;
-	public static final field TYPE_A I
-	public static final field TYPE_AAAA I
-	public abstract fun query (Ljava/lang/String;Lokhttp3/AsyncDns$Callback;)V
-}
-
-public abstract interface class okhttp3/AsyncDns$Callback {
-	public abstract fun onFailure (Ljava/lang/String;Ljava/io/IOException;)V
-	public abstract fun onResponse (Ljava/lang/String;Ljava/util/List;)V
-}
-
-public final class okhttp3/AsyncDns$Companion {
-	public static final field TYPE_A I
-	public static final field TYPE_AAAA I
-	public final fun toDns ([Lokhttp3/AsyncDns;)Lokhttp3/Dns;
-}
-
-public final class okhttp3/AsyncDns$DnsClass : java/lang/Enum {
-	public static final field IPV4 Lokhttp3/AsyncDns$DnsClass;
-	public static final field IPV6 Lokhttp3/AsyncDns$DnsClass;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public final fun getType ()I
-	public static fun valueOf (Ljava/lang/String;)Lokhttp3/AsyncDns$DnsClass;
-	public static fun values ()[Lokhttp3/AsyncDns$DnsClass;
-}
-
 public abstract interface class okhttp3/Authenticator {
 	public static final field Companion Lokhttp3/Authenticator$Companion;
 	public static final field JAVA_NET_AUTHENTICATOR Lokhttp3/Authenticator;
@@ -360,40 +333,12 @@ public abstract interface class okhttp3/Connection {
 	public abstract fun socket ()Ljava/net/Socket;
 }
 
-public abstract class okhttp3/ConnectionListener {
-	public static final field Companion Lokhttp3/ConnectionListener$Companion;
-	public fun <init> ()V
-	public fun connectEnd (Lokhttp3/Connection;Lokhttp3/Route;Lokhttp3/Call;)V
-	public fun connectFailed (Lokhttp3/Route;Lokhttp3/Call;Ljava/io/IOException;)V
-	public fun connectStart (Lokhttp3/Route;Lokhttp3/Call;)V
-	public fun connectionAcquired (Lokhttp3/Connection;Lokhttp3/Call;)V
-	public fun connectionClosed (Lokhttp3/Connection;)V
-	public fun connectionReleased (Lokhttp3/Connection;Lokhttp3/Call;)V
-	public fun noNewExchanges (Lokhttp3/Connection;)V
-}
-
-public final class okhttp3/ConnectionListener$Companion {
-	public final fun getNONE ()Lokhttp3/ConnectionListener;
-}
-
 public final class okhttp3/ConnectionPool {
 	public fun <init> ()V
 	public fun <init> (IJLjava/util/concurrent/TimeUnit;)V
-	public fun <init> (IJLjava/util/concurrent/TimeUnit;Lokhttp3/ConnectionListener;)V
-	public synthetic fun <init> (IJLjava/util/concurrent/TimeUnit;Lokhttp3/ConnectionListener;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun connectionCount ()I
 	public final fun evictAll ()V
 	public final fun idleConnectionCount ()I
-	public final fun setPolicy (Lokhttp3/Address;Lokhttp3/ConnectionPool$AddressPolicy;)V
-}
-
-public final class okhttp3/ConnectionPool$AddressPolicy {
-	public final field backoffDelayMillis J
-	public final field backoffJitterMillis I
-	public final field minimumConcurrentCalls I
-	public fun <init> ()V
-	public fun <init> (IJI)V
-	public synthetic fun <init> (IJIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public final class okhttp3/ConnectionSpec {
@@ -542,6 +487,7 @@ public abstract class okhttp3/EventListener {
 	public fun connectionReleased (Lokhttp3/Call;Lokhttp3/Connection;)V
 	public fun dnsEnd (Lokhttp3/Call;Ljava/lang/String;Ljava/util/List;)V
 	public fun dnsStart (Lokhttp3/Call;Ljava/lang/String;)V
+	public fun followUpDecision (Lokhttp3/Call;Lokhttp3/Response;Lokhttp3/Request;)V
 	public fun proxySelectEnd (Lokhttp3/Call;Lokhttp3/HttpUrl;Ljava/util/List;)V
 	public fun proxySelectStart (Lokhttp3/Call;Lokhttp3/HttpUrl;)V
 	public fun requestBodyEnd (Lokhttp3/Call;J)V
@@ -554,7 +500,7 @@ public abstract class okhttp3/EventListener {
 	public fun responseFailed (Lokhttp3/Call;Ljava/io/IOException;)V
 	public fun responseHeadersEnd (Lokhttp3/Call;Lokhttp3/Response;)V
 	public fun responseHeadersStart (Lokhttp3/Call;)V
-	public fun retryDecision (Lokhttp3/Call;ZLjava/lang/String;)V
+	public fun retryDecision (Lokhttp3/Call;Ljava/io/IOException;Z)V
 	public fun satisfactionFailure (Lokhttp3/Call;Lokhttp3/Response;)V
 	public fun secureConnectEnd (Lokhttp3/Call;Lokhttp3/Handshake;)V
 	public fun secureConnectStart (Lokhttp3/Call;)V
@@ -624,7 +570,7 @@ public final class okhttp3/Handshake$Companion {
 
 public final class okhttp3/Headers : java/lang/Iterable, kotlin/jvm/internal/markers/KMappedMarker {
 	public static final field Companion Lokhttp3/Headers$Companion;
-	public static final field Empty Lokhttp3/Headers;
+	public static final field EMPTY Lokhttp3/Headers;
 	public final fun -deprecated_size ()I
 	public final fun byteCount ()J
 	public fun equals (Ljava/lang/Object;)Z
@@ -1071,6 +1017,7 @@ public class okhttp3/Request$Builder {
 	public fun delete (Lokhttp3/RequestBody;)Lokhttp3/Request$Builder;
 	public static synthetic fun delete$default (Lokhttp3/Request$Builder;Lokhttp3/RequestBody;ILjava/lang/Object;)Lokhttp3/Request$Builder;
 	public fun get ()Lokhttp3/Request$Builder;
+	public final fun gzip ()Lokhttp3/Request$Builder;
 	public fun head ()Lokhttp3/Request$Builder;
 	public fun header (Ljava/lang/String;Ljava/lang/String;)Lokhttp3/Request$Builder;
 	public fun headers (Lokhttp3/Headers;)Lokhttp3/Request$Builder;
@@ -1089,7 +1036,7 @@ public class okhttp3/Request$Builder {
 
 public abstract class okhttp3/RequestBody {
 	public static final field Companion Lokhttp3/RequestBody$Companion;
-	public static final field Empty Lokhttp3/RequestBody;
+	public static final field EMPTY Lokhttp3/RequestBody;
 	public fun <init> ()V
 	public fun contentLength ()J
 	public abstract fun contentType ()Lokhttp3/MediaType;
@@ -1108,7 +1055,6 @@ public abstract class okhttp3/RequestBody {
 	public static final fun create ([BLokhttp3/MediaType;)Lokhttp3/RequestBody;
 	public static final fun create ([BLokhttp3/MediaType;I)Lokhttp3/RequestBody;
 	public static final fun create ([BLokhttp3/MediaType;II)Lokhttp3/RequestBody;
-	public static final fun gzip (Lokhttp3/RequestBody;)Lokhttp3/RequestBody;
 	public fun isDuplex ()Z
 	public fun isOneShot ()Z
 	public abstract fun writeTo (Lokio/BufferedSink;)V
@@ -1137,7 +1083,6 @@ public final class okhttp3/RequestBody$Companion {
 	public static synthetic fun create$default (Lokhttp3/RequestBody$Companion;Lokio/ByteString;Lokhttp3/MediaType;ILjava/lang/Object;)Lokhttp3/RequestBody;
 	public static synthetic fun create$default (Lokhttp3/RequestBody$Companion;Lokio/Path;Lokio/FileSystem;Lokhttp3/MediaType;ILjava/lang/Object;)Lokhttp3/RequestBody;
 	public static synthetic fun create$default (Lokhttp3/RequestBody$Companion;[BLokhttp3/MediaType;IIILjava/lang/Object;)Lokhttp3/RequestBody;
-	public final fun gzip (Lokhttp3/RequestBody;)Lokhttp3/RequestBody;
 }
 
 public final class okhttp3/Response : java/io/Closeable {
@@ -1199,12 +1144,12 @@ public class okhttp3/Response$Builder {
 	public fun removeHeader (Ljava/lang/String;)Lokhttp3/Response$Builder;
 	public fun request (Lokhttp3/Request;)Lokhttp3/Response$Builder;
 	public fun sentRequestAtMillis (J)Lokhttp3/Response$Builder;
-	public fun trailers (Lkotlin/jvm/functions/Function0;)Lokhttp3/Response$Builder;
+	public fun trailers (Lokhttp3/TrailersSource;)Lokhttp3/Response$Builder;
 }
 
 public abstract class okhttp3/ResponseBody : java/io/Closeable {
 	public static final field Companion Lokhttp3/ResponseBody$Companion;
-	public static final field Empty Lokhttp3/ResponseBody;
+	public static final field EMPTY Lokhttp3/ResponseBody;
 	public fun <init> ()V
 	public final fun byteStream ()Ljava/io/InputStream;
 	public final fun byteString ()Lokio/ByteString;
@@ -1273,6 +1218,15 @@ public final class okhttp3/TlsVersion$Companion {
 	public final fun forJavaName (Ljava/lang/String;)Lokhttp3/TlsVersion;
 }
 
+public abstract interface class okhttp3/TrailersSource {
+	public static final field Companion Lokhttp3/TrailersSource$Companion;
+	public static final field EMPTY Lokhttp3/TrailersSource;
+	public abstract fun get ()Lokhttp3/Headers;
+}
+
+public final class okhttp3/TrailersSource$Companion {
+}
+
 public abstract interface class okhttp3/WebSocket {
 	public abstract fun cancel ()V
 	public abstract fun close (ILjava/lang/String;)Z
@@ -1294,17 +1248,5 @@ public abstract class okhttp3/WebSocketListener {
 	public fun onMessage (Lokhttp3/WebSocket;Ljava/lang/String;)V
 	public fun onMessage (Lokhttp3/WebSocket;Lokio/ByteString;)V
 	public fun onOpen (Lokhttp3/WebSocket;Lokhttp3/Response;)V
-}
-
-public final class okhttp3/android/AndroidAsyncDns : okhttp3/AsyncDns {
-	public static final field Companion Lokhttp3/android/AndroidAsyncDns$Companion;
-	public fun <init> (Lokhttp3/AsyncDns$DnsClass;Landroid/net/Network;)V
-	public synthetic fun <init> (Lokhttp3/AsyncDns$DnsClass;Landroid/net/Network;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun query (Ljava/lang/String;Lokhttp3/AsyncDns$Callback;)V
-}
-
-public final class okhttp3/android/AndroidAsyncDns$Companion {
-	public final fun getIPv4 ()Lokhttp3/android/AndroidAsyncDns;
-	public final fun getIPv6 ()Lokhttp3/android/AndroidAsyncDns;
 }
 

@@ -20,21 +20,9 @@ import kotlin.reflect.KClass
 import kotlin.reflect.cast
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.internal.canonicalUrl
-import okhttp3.internal.commonAddHeader
-import okhttp3.internal.commonCacheControl
-import okhttp3.internal.commonDelete
-import okhttp3.internal.commonGet
-import okhttp3.internal.commonHead
-import okhttp3.internal.commonHeader
-import okhttp3.internal.commonHeaders
-import okhttp3.internal.commonMethod
-import okhttp3.internal.commonPatch
-import okhttp3.internal.commonPost
-import okhttp3.internal.commonPut
-import okhttp3.internal.commonRemoveHeader
-import okhttp3.internal.commonTag
-import okhttp3.internal.commonToString
+import okhttp3.internal.http.GzipRequestBody
+import okhttp3.internal.http.HttpMethod
+import okhttp3.internal.isSensitiveHeader
 
 /**
  * An HTTP request. Instances of this class are immutable if their [body] is null or itself
@@ -60,7 +48,7 @@ class Request internal constructor(
 
   internal val tags: Map<KClass<*>, Any> = builder.tags.toMap()
 
-  internal var lazyCacheControl: CacheControl? = null
+  private var lazyCacheControl: CacheControl? = null
 
   val isHttps: Boolean
     get() = url.isHttps
@@ -92,9 +80,9 @@ class Request internal constructor(
       ),
   )
 
-  fun header(name: String): String? = commonHeader(name)
+  fun header(name: String): String? = headers[name]
 
-  fun headers(name: String): List<String> = commonHeaders(name)
+  fun headers(name: String): List<String> = headers.values(name)
 
   /** Returns the tag attached with [T] as a key, or null if no tag is attached with that key. */
   @JvmName("reifiedTag")
@@ -178,7 +166,30 @@ class Request internal constructor(
   )
   fun cacheControl(): CacheControl = cacheControl
 
-  override fun toString(): String = commonToString()
+  override fun toString(): String =
+    buildString(32) {
+      append("Request{method=")
+      append(method)
+      append(", url=")
+      append(url)
+      if (headers.size != 0) {
+        append(", headers=[")
+        headers.forEachIndexed { index, (name, value) ->
+          if (index > 0) {
+            append(", ")
+          }
+          append(name)
+          append(':')
+          append(if (isSensitiveHeader(name)) "██" else value)
+        }
+        append(']')
+      }
+      if (tags.isNotEmpty()) {
+        append(", tags=")
+        append(tags)
+      }
+      append('}')
+    }
 
   open class Builder {
     internal var url: HttpUrl? = null
@@ -221,6 +232,14 @@ class Request internal constructor(
      */
     open fun url(url: String): Builder = url(canonicalUrl(url).toHttpUrl())
 
+    // Silently replace web socket URLs with HTTP URLs.
+    private fun canonicalUrl(url: String) =
+      when {
+        url.startsWith("ws:", ignoreCase = true) -> "http:${url.substring(3)}"
+        url.startsWith("wss:", ignoreCase = true) -> "https:${url.substring(4)}"
+        else -> url
+      }
+
     /**
      * Sets the URL target of this request.
      *
@@ -235,7 +254,9 @@ class Request internal constructor(
     open fun header(
       name: String,
       value: String,
-    ) = commonHeader(name, value)
+    ) = apply {
+      headers[name] = value
+    }
 
     /**
      * Adds a header with [name] and [value]. Prefer this method for multiply-valued
@@ -247,38 +268,68 @@ class Request internal constructor(
     open fun addHeader(
       name: String,
       value: String,
-    ) = commonAddHeader(name, value)
+    ) = apply {
+      headers.add(name, value)
+    }
 
     /** Removes all headers named [name] on this builder. */
-    open fun removeHeader(name: String) = commonRemoveHeader(name)
+    open fun removeHeader(name: String) =
+      apply {
+        headers.removeAll(name)
+      }
 
     /** Removes all headers on this builder and adds [headers]. */
-    open fun headers(headers: Headers) = commonHeaders(headers)
+    open fun headers(headers: Headers) =
+      apply {
+        this.headers = headers.newBuilder()
+      }
 
     /**
      * Sets this request's `Cache-Control` header, replacing any cache control headers already
      * present. If [cacheControl] doesn't define any directives, this clears this request's
      * cache-control headers.
      */
-    open fun cacheControl(cacheControl: CacheControl): Builder = commonCacheControl(cacheControl)
+    open fun cacheControl(cacheControl: CacheControl): Builder {
+      val value = cacheControl.toString()
+      return when {
+        value.isEmpty() -> removeHeader("Cache-Control")
+        else -> header("Cache-Control", value)
+      }
+    }
 
-    open fun get(): Builder = commonGet()
+    open fun get(): Builder = method("GET", null)
 
-    open fun head(): Builder = commonHead()
+    open fun head(): Builder = method("HEAD", null)
 
-    open fun post(body: RequestBody): Builder = commonPost(body)
+    open fun post(body: RequestBody): Builder = method("POST", body)
 
     @JvmOverloads
-    open fun delete(body: RequestBody? = RequestBody.Empty): Builder = commonDelete(body)
+    open fun delete(body: RequestBody? = RequestBody.EMPTY): Builder = method("DELETE", body)
 
-    open fun put(body: RequestBody): Builder = commonPut(body)
+    open fun put(body: RequestBody): Builder = method("PUT", body)
 
-    open fun patch(body: RequestBody): Builder = commonPatch(body)
+    open fun patch(body: RequestBody): Builder = method("PATCH", body)
 
     open fun method(
       method: String,
       body: RequestBody?,
-    ): Builder = commonMethod(method, body)
+    ): Builder =
+      apply {
+        require(method.isNotEmpty()) {
+          "method.isEmpty() == true"
+        }
+        if (body == null) {
+          require(!HttpMethod.requiresRequestBody(method)) {
+            "method $method must have a request body."
+          }
+        } else {
+          require(HttpMethod.permitsRequestBody(method)) {
+            "method $method must not have a request body."
+          }
+        }
+        this.method = method
+        this.body = body
+      }
 
     /**
      * Attaches [tag] to the request using [T] as a key. Tags can be read from a request using
@@ -300,10 +351,24 @@ class Request internal constructor(
     fun <T : Any> tag(
       type: KClass<T>,
       tag: T?,
-    ): Builder = commonTag(type, type.cast(tag))
+    ): Builder =
+      apply {
+        if (tag == null) {
+          if (tags.isNotEmpty()) {
+            (tags as MutableMap).remove(type)
+          }
+        } else {
+          val mutableTags =
+            when {
+              tags.isEmpty() -> mutableMapOf<KClass<*>, Any>().also { tags = it }
+              else -> tags as MutableMap<KClass<*>, Any>
+            }
+          mutableTags[type] = type.cast(tag)
+        }
+      }
 
     /** Attaches [tag] to the request using `Object.class` as a key. */
-    open fun tag(tag: Any?): Builder = commonTag(Any::class, tag)
+    open fun tag(tag: Any?): Builder = tag(Any::class, tag)
 
     /**
      * Attaches [tag] to the request using [type] as a key. Tags can be read from a
@@ -315,7 +380,7 @@ class Request internal constructor(
     open fun <T> tag(
       type: Class<in T>,
       tag: T?,
-    ) = commonTag(type.kotlin, tag)
+    ) = tag(type.kotlin, tag)
 
     /**
      * Override the [Request.url] for caching, if it is either polluted with
@@ -327,6 +392,33 @@ class Request internal constructor(
     fun cacheUrlOverride(cacheUrlOverride: HttpUrl?) =
       apply {
         this.cacheUrlOverride = cacheUrlOverride
+      }
+
+    /**
+     * Configures this request's body to be compressed when it is transmitted. This also adds the
+     * 'Content-Encoding: gzip' header.
+     *
+     * Only use this method if you have prior knowledge that the receiving server supports
+     * gzip-compressed requests.
+     *
+     * It is an error to call this multiple times on the same instance.
+     *
+     * @throws IllegalStateException if this request doesn't have a request body, or if it already
+     *     has a 'Content-Encoding' header.
+     */
+    fun gzip() =
+      apply {
+        val identityBody =
+          body
+            ?: throw IllegalStateException("cannot gzip a request that has no body")
+
+        val contentEncoding = headers["Content-Encoding"]
+        check(contentEncoding == null) {
+          "Content-Encoding already set: $contentEncoding"
+        }
+
+        headers.add("Content-Encoding", "gzip")
+        body = GzipRequestBody(identityBody)
       }
 
     open fun build(): Request = Request(this)

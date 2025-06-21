@@ -17,7 +17,6 @@ project.applyJavaModules("okhttp3.java.net.cookiejar")
 
 dependencies {
   "friendsApi"(projects.okhttp)
-  compileOnly(libs.findbugs.jsr305)
   compileOnly(libs.animalsniffer.annotations)
 }
 

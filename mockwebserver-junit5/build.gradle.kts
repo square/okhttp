@@ -13,7 +13,6 @@ project.applyJavaModules("mockwebserver3.junit5", enableValidation = false)
 tasks {
   test {
     useJUnitPlatform()
-    systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
   }
 }
 

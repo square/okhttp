@@ -17,6 +17,7 @@ package okhttp3
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
+import assertk.assertions.hasMessage
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
@@ -34,6 +35,9 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
+import okio.GzipSource
+import okio.buffer
+import okio.use
 import org.junit.jupiter.api.Test
 
 class RequestTest {
@@ -563,6 +567,80 @@ class RequestTest {
         " user-agent:OkHttp" +
         "]}",
     )
+  }
+
+  @Test
+  fun gzip() {
+    val mediaType = "text/plain; charset=utf-8".toMediaType()
+    val originalBody = "This is the original message".toRequestBody(mediaType)
+    assertThat(originalBody.contentLength()).isEqualTo(28L)
+    assertThat(originalBody.contentType()).isEqualTo(mediaType)
+
+    val request =
+      Request
+        .Builder()
+        .url("https://square.com/")
+        .post(originalBody)
+        .gzip()
+        .build()
+    assertThat(request.headers["Content-Encoding"]).isEqualTo("gzip")
+    assertThat(request.body?.contentLength()).isEqualTo(-1L)
+    assertThat(request.body?.contentType()).isEqualTo(mediaType)
+
+    val requestBodyBytes =
+      Buffer()
+        .apply {
+          request.body?.writeTo(this)
+        }
+
+    val decompressedRequestBody =
+      GzipSource(requestBodyBytes).use {
+        it.buffer().readUtf8()
+      }
+    assertThat(decompressedRequestBody).isEqualTo("This is the original message")
+  }
+
+  @Test
+  fun cannotGzipWithoutABody() {
+    assertFailsWith<IllegalStateException> {
+      Request
+        .Builder()
+        .url("https://square.com/")
+        .gzip()
+        .build()
+    }.also {
+      assertThat(it).hasMessage("cannot gzip a request that has no body")
+    }
+  }
+
+  @Test
+  fun cannotGzipWithAnotherContentEncoding() {
+    assertFailsWith<IllegalStateException> {
+      Request
+        .Builder()
+        .url("https://square.com/")
+        .post("This is the original message".toRequestBody())
+        .addHeader("Content-Encoding", "deflate")
+        .gzip()
+        .build()
+    }.also {
+      assertThat(it).hasMessage("Content-Encoding already set: deflate")
+    }
+  }
+
+  @Test
+  fun cannotGzipTwice() {
+    assertFailsWith<IllegalStateException> {
+      Request
+        .Builder()
+        .url("https://square.com/")
+        .post("This is the original message".toRequestBody())
+        .gzip()
+        .gzip()
+        .build()
+    }.also {
+      assertThat(it).hasMessage("Content-Encoding already set: gzip")
+    }
   }
 
   private fun bodyToHex(body: RequestBody): String {

@@ -22,30 +22,27 @@ sourceSets {
 }
 
 dependencies {
+  friendsImplementation(projects.okhttp)
+  friendsImplementation(projects.okhttpBrotli)
+  friendsImplementation(projects.okhttpDnsoverhttps)
+  friendsImplementation(projects.loggingInterceptor)
+  friendsImplementation(projects.okhttpSse)
+  friendsImplementation(projects.okhttpTestingSupport)
+  friendsImplementation(projects.okhttpTls)
+  friendsImplementation(projects.mockwebserver3)
+  friendsImplementation(projects.mockwebserver)
+  friendsImplementation(projects.okhttpJavaNetCookiejar)
+  friendsImplementation(projects.mockwebserver3Junit5)
+
+  implementation(libs.aqute.resolve)
+  implementation(libs.assertk)
   implementation(libs.junit.jupiter.api)
   implementation(libs.junit.jupiter.engine)
-  implementation(libs.junit.platform.console)
-  implementation(libs.squareup.okio.fakefilesystem)
-
-  implementation(projects.okhttp)
-  implementation(projects.okhttpBrotli)
-  implementation(projects.okhttpDnsoverhttps)
-  implementation(projects.loggingInterceptor)
-  implementation(projects.okhttpSse)
-  implementation(projects.okhttpTestingSupport)
-  implementation(projects.okhttpTls)
-  implementation(projects.mockwebserver3)
-  implementation(projects.mockwebserver)
-  implementation(projects.okhttpJavaNetCookiejar)
-  implementation(projects.mockwebserver3Junit5)
-  implementation(libs.aqute.resolve)
-  implementation(libs.junit.jupiter.api)
   implementation(libs.junit.jupiter.params)
-  implementation(libs.assertk)
+  implementation(libs.junit.platform.console)
   implementation(libs.kotlin.test.common)
   implementation(libs.kotlin.test.junit)
-
-  compileOnly(libs.findbugs.jsr305)
+  implementation(libs.squareup.okio.fakefilesystem)
 
   "graalCompileOnly"(libs.nativeImageSvm)
   "graalCompileOnly"(libs.graal.sdk)
@@ -57,7 +54,7 @@ graalvmNative {
 
   binaries {
     named("test") {
-      buildArgs.add("--features=okhttp3.nativeImage.TestRegistration")
+      buildArgs.add("--features=okhttp3.nativeimage.TestRegistration")
       buildArgs.add("--initialize-at-build-time=org.junit.platform.engine.TestTag")
       buildArgs.add("--strict-image-heap")
 

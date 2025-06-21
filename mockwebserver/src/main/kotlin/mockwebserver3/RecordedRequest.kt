@@ -17,103 +17,73 @@
 package mockwebserver3
 
 import java.io.IOException
-import java.net.Inet6Address
-import java.net.Socket
-import javax.net.ssl.SSLSocket
 import okhttp3.ExperimentalOkHttpApi
 import okhttp3.Handshake
-import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers
 import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.internal.platform.Platform
-import okio.Buffer
+import okio.ByteString
 
 /** An HTTP request that came into the mock web server. */
 @ExperimentalOkHttpApi
-class RecordedRequest(
-  val requestLine: String,
-  /** All headers. */
-  val headers: Headers,
+public class RecordedRequest(
   /**
-   * The sizes of the chunks of this request's body, or an empty list if the request's body
-   * was empty or unchunked.
+   * The index of the socket connection that carried this request. If two recorded requests share a
+   * connection index, they also shared a socket connection.
    */
-  val chunkSizes: List<Int>,
-  /** The total size of the body of this POST request (before truncation).*/
-  val bodySize: Long,
-  /** The body of this POST request. This may be truncated. */
-  val body: Buffer,
+  public val connectionIndex: Int,
   /**
-   * The index of this request on its HTTP connection. Since a single HTTP connection may serve
-   * multiple requests, each request is assigned its own sequence number.
+   * The index of this exchange on its HTTP connection. A request is uniquely identified by the
+   * (connection index, exchange index) pair.
    */
-  val sequenceNumber: Int,
-  socket: Socket,
-  /**
-   * The failure MockWebServer recorded when attempting to decode this request. If, for example,
-   * the inbound request was truncated, this exception will be non-null.
-   */
-  val failure: IOException? = null,
-) {
-  val method: String?
-  val path: String?
-
+  public val exchangeIndex: Int,
   /**
    * The TLS handshake of the connection that carried this request, or null if the request was
    * received without TLS.
    */
-  val handshake: Handshake?
-  val requestUrl: HttpUrl?
-
+  public val handshake: Handshake?,
   /**
    * Returns the name of the server the client requested via the SNI (Server Name Indication)
    * attribute in the TLS handshake. Unlike the rest of the HTTP exchange, this name is sent in
    * cleartext and may be monitored or blocked by a proxy or other middlebox.
    */
-  val handshakeServerNames: List<String>
+  public val handshakeServerNames: List<String>,
+  public val method: String,
+  /**
+   * The request target from the original HTTP request.
+   *
+   * For origin-form requests this is a path like `/index.html`, that is combined with the `Host`
+   * header to create the request URL.
+   *
+   * For HTTP proxy requests this will be either an absolute-form string like
+   * `http://example.com/index.html` (HTTP proxy) or an authority-form string like
+   * `example.com:443` (HTTPS proxy).
+   *
+   * For OPTIONS requests, this may be an asterisk, `*`.
+   */
+  public val target: String,
+  /** A string like `HTTP/1.1`. */
+  public val version: String,
+  /** The request URL built using the request line, headers, and local host name. */
+  public val url: HttpUrl,
+  /** All headers. */
+  public val headers: Headers,
+  /** The body of this request, or null if it has none. This may be truncated. */
+  public val body: ByteString?,
+  /** The total size of the body of this request (before truncation).*/
+  public val bodySize: Long,
+  /**
+   * The sizes of the chunks of this request's body, or an empty list if the request's body
+   * was empty or unchunked.
+   */
+  public val chunkSizes: List<Int>,
+  /**
+   * The failure MockWebServer recorded when attempting to decode this request. If, for example,
+   * the inbound request was truncated, this exception will be non-null.
+   */
+  public val failure: IOException? = null,
+) {
+  public val requestLine: String
+    get() = "$method $target $version"
 
-  init {
-    if (socket is SSLSocket) {
-      try {
-        this.handshake = socket.session.handshake()
-        this.handshakeServerNames = Platform.get().getHandshakeServerNames(socket)
-      } catch (e: IOException) {
-        throw IllegalArgumentException(e)
-      }
-    } else {
-      this.handshake = null
-      this.handshakeServerNames = listOf()
-    }
-
-    if (requestLine.isNotEmpty()) {
-      val methodEnd = requestLine.indexOf(' ')
-      val pathEnd = requestLine.indexOf(' ', methodEnd + 1)
-      this.method = requestLine.substring(0, methodEnd)
-      var path = requestLine.substring(methodEnd + 1, pathEnd)
-      if (!path.startsWith("/")) {
-        path = "/"
-      }
-      this.path = path
-
-      val scheme = if (socket is SSLSocket) "https" else "http"
-      val localPort = socket.localPort
-      val hostAndPort =
-        headers[":authority"]
-          ?: headers["Host"]
-          ?: when (val inetAddress = socket.localAddress) {
-            is Inet6Address -> "[${inetAddress.hostAddress}]:$localPort"
-            else -> "${inetAddress.hostAddress}:$localPort"
-          }
-
-      // Allow null in failure case to allow for testing bad requests
-      this.requestUrl = "$scheme://$hostAndPort$path".toHttpUrlOrNull()
-    } else {
-      this.requestUrl = null
-      this.method = null
-      this.path = null
-    }
-  }
-
-  override fun toString(): String = requestLine
+  public override fun toString(): String = requestLine
 }

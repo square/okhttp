@@ -17,13 +17,11 @@ project.applyJavaModules("okhttp3.sse")
 
 dependencies {
   api(projects.okhttp)
-  compileOnly(libs.findbugs.jsr305)
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.mockwebserver3)
   testImplementation(projects.mockwebserver3Junit5)
   testImplementation(libs.junit)
-  testCompileOnly(libs.findbugs.jsr305)
 }
 
 mavenPublishing {

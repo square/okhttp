@@ -3,10 +3,8 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
-import ru.vyarus.gradle.plugin.animalsniffer.util.TargetType
 
 plugins {
   kotlin("multiplatform")
@@ -15,7 +13,6 @@ plugins {
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
-//  id("io.github.gmazzo.aar2jar") version "1.1.2"
 }
 
 val platform = System.getProperty("okhttp.platform", "jdk9")
@@ -53,7 +50,6 @@ kotlin {
   jvmToolchain(8)
 
   jvm {
-//    withJava() /* <- cannot be used when the Android Plugin is present */
   }
 
   androidTarget {
@@ -73,7 +69,6 @@ kotlin {
         api(libs.squareup.okio)
         api(libs.kotlin.stdlib)
 
-        compileOnly(libs.findbugs.jsr305)
         compileOnly(libs.animalsniffer.annotations)
       }
     }
@@ -106,7 +101,7 @@ kotlin {
       dependsOn(commonJvmAndroid)
 
       dependencies {
-        // These compileOnly dependencies must also be listed in the OSGi configuration above.
+        // These compileOnly dependencies must also be listed in applyOsgiMultiplatform() below.
         compileOnly(libs.conscrypt.openjdk)
         compileOnly(libs.bouncycastle.bcprov)
         compileOnly(libs.bouncycastle.bctls)
@@ -148,7 +143,6 @@ kotlin {
         implementation(libs.junit.jupiter.params)
         implementation(libs.kotlin.test.junit)
         implementation(libs.openjsse)
-        compileOnly(libs.findbugs.jsr305)
 
         implementation(libs.junit.jupiter.engine)
         implementation(libs.junit.vintage.engine)
@@ -215,116 +209,31 @@ android {
   }
 }
 
-// From https://github.com/Kotlin/kotlinx-atomicfu/blob/master/atomicfu/build.gradle.kts
-val compileJavaModuleInfo by tasks.registering(JavaCompile::class) {
-  val moduleName = "okhttp3"
-  val compilation = kotlin.targets["jvm"].compilations["main"]
-  val compileKotlinTask = compilation.compileTaskProvider.get() as KotlinJvmCompile
-  val targetDir = compileKotlinTask.destinationDirectory.dir("../java9")
-  val sourceDir = file("src/jvmMain/java9/")
+project.applyOsgiMultiplatform(
+  "Export-Package: okhttp3,okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal",
+  "Import-Package: " +
+    "com.oracle.svm.core.annotate;resolution:=optional," +
+    "com.oracle.svm.core.configure;resolution:=optional," +
+    "dalvik.system;resolution:=optional," +
+    "org.conscrypt;resolution:=optional," +
+    "org.bouncycastle.*;resolution:=optional," +
+    "org.openjsse.*;resolution:=optional," +
+    "org.graalvm.nativeimage;resolution:=optional," +
+    "org.graalvm.nativeimage.hosted;resolution:=optional," +
+    "sun.security.ssl;resolution:=optional,*",
+  "Automatic-Module-Name: okhttp3",
+  "Bundle-SymbolicName: com.squareup.okhttp3",
+)
 
-  // Use a Java 11 compiler for the module info.
-  javaCompiler.set(project.javaToolchains.compilerFor { languageVersion.set(JavaLanguageVersion.of(11)) })
-
-  // Always compile kotlin classes before the module descriptor.
-  dependsOn(compileKotlinTask)
-
-  // Add the module-info source file.
-  source(sourceDir)
-
-  // Also add the module-info.java source file to the Kotlin compile task.
-  // The Kotlin compiler will parse and check module dependencies,
-  // but it currently won't compile to a module-info.class file.
-  // Note that module checking only works on JDK 9+,
-  // because the JDK built-in base modules are not available in earlier versions.
-  val javaVersion = compileKotlinTask.kotlinJavaToolchain.javaVersion.getOrNull()
-  when {
-    javaVersion?.isJava9Compatible == true -> {
-      logger.info("Module-info checking is enabled; $compileKotlinTask is compiled using Java $javaVersion")
-      // Disabled as this module can't see the others in this build for some reason
-//      compileKotlinTask.source(sourceDir)
-    }
-
-    else -> {
-      logger.info("Module-info checking is disabled")
-    }
-  }
-  // Set the task outputs and destination dir
-  outputs.dir(targetDir)
-  destinationDirectory.set(targetDir)
-
-  // Configure JVM compatibility
-  sourceCompatibility = JavaVersion.VERSION_1_9.toString()
-  targetCompatibility = JavaVersion.VERSION_1_9.toString()
-
-  // Set the Java release version.
-  options.release.set(9)
-
-  // Ignore warnings about using 'requires transitive' on automatic modules.
-  // not needed when compiling with recent JDKs, e.g. 17
-  options.compilerArgs.add("-Xlint:-requires-transitive-automatic")
-
-  // Patch the compileKotlinJvm output classes into the compilation so exporting packages works correctly.
-  options.compilerArgs.addAll(
-    listOf(
-      "--patch-module",
-      "$moduleName=${compileKotlinTask.destinationDirectory.get().asFile}"
-    )
-  )
-
-  // Use the classpath of the compileKotlinJvm task.
-  // Also, ensure that the module path is used instead of the classpath.
-  classpath = compileKotlinTask.libraries
-  modularity.inferModulePath.set(true)
-}
-
-// Call the convention when the task has finished, to modify the jar to contain OSGi metadata.
 tasks.named<Jar>("jvmJar").configure {
-  // Disable to unblock Kotlin bump
-  // Raised https://github.com/bndtools/bnd/issues/6590
-
   manifest {
     attributes(
       "Multi-Release" to true,
-      "Bundle-ManifestVersion" to "okhttp3",
-      "Bundle-Name" to "com.squareup.okhttp3",
-      "Bundle-SymbolicName" to "com.squareup.okhttp3",
-      "Bundle-Version" to "5.0.0",
-      "Require-Capability" to "osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version=1.8))",
-      "Export-Package" to """okhttp3;uses:="javax.net,javax.net.ssl,kotlin,kotlin.annotation,kotlin.enums,kotlin.jvm,kotlin.jvm.functions,kotlin.jvm.internal,kotlin.jvm.internal.markers,kotlin.reflect,okhttp3.internal.cache,okhttp3.internal.concurrent,okhttp3.internal.connection,okhttp3.internal.tls,okio";version="5.0.0",okhttp3.internal;okhttpinternal=true;mandatory:=okhttpinternal;uses:="javax.net.ssl,kotlin,kotlin.annotation,kotlin.jvm.functions,kotlin.reflect,okhttp3,okhttp3.internal.concurrent,okhttp3.internal.connection,okhttp3.internal.http2,okio";version="5.0.0",okhttp3.internal.authenticator;okhttpinternal=true;mandatory:=okhttpinternal;uses:="kotlin,kotlin.jvm.internal,okhttp3";version="5.0.0",okhttp3.internal.cache;okhttpinternal=true;mandatory:=okhttpinternal;uses:="kotlin,kotlin.jvm.functions,kotlin.jvm.internal,kotlin.jvm.internal.markers,kotlin.text,okhttp3,okhttp3.internal.concurrent,okio";version="5.0.0",okhttp3.internal.cache2;okhttpinternal=true;mandatory:=okhttpinternal;uses:="kotlin,kotlin.jvm.internal,okio";version="5.0.0",okhttp3.internal.concurrent;okhttpinternal=true;mandatory:=okhttpinternal;uses:="kotlin,kotlin.jvm.functions,kotlin.jvm.internal";version="5.0.0",okhttp3.internal.connection;okhttpinternal=true;mandatory:=okhttpinternal;uses:="javax.net.ssl,kotlin,kotlin.collections,kotlin.jvm.functions,kotlin.jvm.internal,okhttp3,okhttp3.internal.concurrent,okhttp3.internal.http,okhttp3.internal.http2,okhttp3.internal.ws,okio";version="5.0.0",okhttp3.internal.graal;okhttpinternal=true;mandatory:=okhttpinternal;uses:="com.oracle.svm.core.annotate,kotlin,okhttp3.internal.platform,org.graalvm.nativeimage.hosted";version="5.0.0",okhttp3.internal.http;okhttpinternal=true;mandatory:=okhttpinternal;uses:="kotlin,kotlin.jvm,kotlin.jvm.internal,okhttp3,okhttp3.internal.connection,okio";version="5.0.0",okhttp3.internal.http1;okhttpinternal=true;mandatory:=okhttpinternal;uses:="kotlin,kotlin.jvm.internal,okhttp3,okhttp3.internal.http,okio";version="5.0.0",okhttp3.internal.http2;okhttpinternal=true;mandatory:=okhttpinternal;uses:="kotlin,kotlin.enums,kotlin.jvm.functions,kotlin.jvm.internal,okhttp3,okhttp3.internal.concurrent,okhttp3.internal.http,okhttp3.internal.http2.flowcontrol,okio";version="5.0.0",okhttp3.internal.http2.flowcontrol;okhttpinternal=true;mandatory:=okhttpinternal;uses:=kotlin;version="5.0.0",okhttp3.internal.idn;okhttpinternal=true;mandatory:=okhttpinternal;uses:="kotlin,kotlin.jvm.functions,okio";version="5.0.0",okhttp3.internal.platform;okhttpinternal=true;mandatory:=okhttpinternal;uses:="javax.net.ssl,kotlin,kotlin.jvm,kotlin.jvm.internal,okhttp3,okhttp3.internal.tls,org.conscrypt";version="5.0.0",okhttp3.internal.proxy;okhttpinternal=true;mandatory:=okhttpinternal;uses:=kotlin;version="5.0.0",okhttp3.internal.publicsuffix;okhttpinternal=true;mandatory:=okhttpinternal;uses:="kotlin,kotlin.jvm.internal,okio";version="5.0.0",okhttp3.internal.tls;okhttpinternal=true;mandatory:=okhttpinternal;uses:="javax.net.ssl,kotlin,kotlin.jvm.internal";version="5.0.0",okhttp3.internal.url;okhttpinternal=true;mandatory:=okhttpinternal;uses:="kotlin,okio";version="5.0.0",okhttp3.internal.ws;okhttpinternal=true;mandatory:=okhttpinternal;uses:="kotlin,kotlin.jvm.internal,okhttp3,okhttp3.internal.concurrent,okhttp3.internal.connection,okio";version="5.0.0"""",
-      "Import-Package" to """com.oracle.svm.core.annotate;resolution:=optional,org.conscrypt;resolution:=optional;version="[2.5,3)",org.bouncycastle.jsse;resolution:=optional;version="[1.80,2)",org.bouncycastle.jsse.provider;resolution:=optional;version="[1.80,2)",org.openjsse.javax.net.ssl;resolution:=optional,org.openjsse.net.ssl;resolution:=optional,org.graalvm.nativeimage.hosted;resolution:=optional,sun.security.ssl;resolution:=optional,java.io,java.lang,java.lang.annotation,java.lang.invoke,java.lang.ref,java.lang.reflect,java.net,java.nio.channels,java.nio.charset,java.security,java.security.cert,java.text,java.time,java.util,java.util.concurrent,java.util.concurrent.atomic,java.util.concurrent.locks,java.util.logging,java.util.regex,java.util.zip,javax.net,javax.net.ssl,javax.security.auth.x500,kotlin,kotlin.annotation,kotlin.collections,kotlin.comparisons,kotlin.enums,kotlin.internal,kotlin.io,kotlin.jvm,kotlin.jvm.functions,kotlin.jvm.internal,kotlin.jvm.internal.markers,kotlin.ranges,kotlin.reflect,kotlin.sequences,kotlin.text,kotlin.time,okio,com.oracle.svm.core.configure;resolution:=optional,dalvik.system;resolution:=optional,org.graalvm.nativeimage;resolution:=optional""",
     )
   }
 
   from(compileJavaModuleInfo.get().destinationDirectory) {
     into("META-INF/versions/9/")
-  }
-
-//  val bundleExtension = extensions.create(
-//    BundleTaskExtension.NAME,
-//    BundleTaskExtension::class.java,
-//    this,
-//  ).apply {
-//    classpath(libs.kotlin.stdlib.osgi.map { it.artifacts }, tasks.named("jvmMainClasses").map { it.outputs })
-//    bnd(
-//      "Export-Package: okhttp3,okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal",
-//      "Import-Package: " +
-//        "com.oracle.svm.core.annotate;resolution:=optional," +
-//        "com.oracle.svm.core.configure;resolution:=optional," +
-//        "dalvik.system;resolution:=optional," +
-//        "org.conscrypt;resolution:=optional," +
-//        "org.bouncycastle.*;resolution:=optional," +
-//        "org.openjsse.*;resolution:=optional," +
-//        "org.graalvm.nativeimage;resolution:=optional," +
-//        "org.graalvm.nativeimage.hosted;resolution:=optional," +
-//        "sun.security.ssl;resolution:=optional,*",
-//      "Automatic-Module-Name: okhttp3",
-//      "Bundle-SymbolicName: com.squareup.okhttp3"
-//    )
-//  }
-
-  doLast {
-//    bundleExtension.buildAction().execute(this)
   }
 }
 
@@ -370,6 +279,10 @@ afterEvaluate {
       // Work around robolectric requirements and limitations
       // https://cs.android.com/android-studio/platform/tools/base/+/mirror-goog-studio-main:build-system/gradle-core/src/main/java/com/android/build/gradle/tasks/factory/AndroidUnitTest.java;l=339
       allJvmArgs = allJvmArgs.filter { !it.startsWith("--add-opens") }
+    }
+    if (name.matches("test.*UnitTest".toRegex()) && javaLauncher.get().metadata.languageVersion.asInt() < 17) {
+      // Work around robolectric requirements and limitations
+      // https://github.com/robolectric/robolectric/issues/10419
       filter {
         excludeTest("okhttp3.internal.publicsuffix.PublicSuffixDatabaseTest", null)
       }

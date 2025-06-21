@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress(
+  "CANNOT_OVERRIDE_INVISIBLE_MEMBER",
+  "INVISIBLE_MEMBER",
+  "INVISIBLE_REFERENCE",
+)
 
 package okhttp3
 
@@ -29,9 +34,10 @@ import javax.net.ssl.SSLSocketFactory
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.concurrent.withLock
 import okhttp3.internal.connection.CallConnectionUser
+import okhttp3.internal.connection.ConnectionListener
 import okhttp3.internal.connection.FastFallbackExchangeFinder
-import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RealConnectionPool

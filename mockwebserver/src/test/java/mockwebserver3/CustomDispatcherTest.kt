@@ -21,18 +21,13 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
-import org.junit.jupiter.api.BeforeEach
+import mockwebserver3.junit5.StartStop
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 
 @Timeout(30)
 class CustomDispatcherTest {
-  private lateinit var mockWebServer: MockWebServer
-
-  @BeforeEach
-  fun setUp(mockWebServer: MockWebServer) {
-    this.mockWebServer = mockWebServer
-  }
+  @StartStop private val mockWebServer = MockWebServer()
 
   @Test
   fun simpleDispatch() {
@@ -63,7 +58,7 @@ class CustomDispatcherTest {
     val dispatcher: Dispatcher =
       object : Dispatcher() {
         override fun dispatch(request: RecordedRequest): MockResponse {
-          if (request.path == firstRequest) {
+          if (request.url.encodedPath == firstRequest) {
             latch.await()
           }
           return MockResponse()

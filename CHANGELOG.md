@@ -5,6 +5,82 @@ Change Log
 
 See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
 
+## Version 5.0.0-alpha.16
+
+_2025-05-29_
+
+ *  Fix: The previous release would crash when running on Robolectric. We didn't anticipate
+    running our Android artifact on the JVM platform!
+
+
+## Version 5.0.0-alpha.15
+
+_2025-05-28_
+
+**This release introduces separate JVM and Android artifacts.** Until now, we've distributed OkHttp
+as a JVM library that _detects_ Android capabilities at runtime, but that doesn't offer
+Android-specific APIs. With this release we're starting to publish OkHttp as an AAR for Android
+users in addition to our existing JAR for JVM users.
+
+This first Android-specific artifact adopts Android's `assets` mechanism to embed the public suffix
+data. We will build more Android integration in future releases.
+
+The okhttp-android artifact first introduced in `5.0.0-alpha.7` is no longer available:
+
+ *  The `AndroidAsyncDns` class moved to the `okhttp` artifact.
+ *  The `AndroidLogging` class is no longer necessary. `LoggingEventListener` and
+    `HttpLoggingInterceptor` write to logcat by default.
+
+The rest of this release is our highest-quality release yet. Though we continue to use the word
+_alpha_ in the version name, the only unstable thing in it is some non-final APIs tagged
+`@ExperimentalOkHttpApi`. You can safely use this release in production.
+
+ *  Fix: Attempt to read the response even if sending the request failed. This makes it possible
+    to handle response statuses like `HTTP/1.1 431 "Request Header Fields Too Large`.
+
+ *  Fix: Handle multiple 1xx responses.
+
+ *  Fix: Address a performance bug in our internal task runner. We had a race condition that could
+    result in it OkHttp starting a thread for each queued task, even when a single thread could run
+    all of them.
+
+ *  Fix: Address a performance bug in `MultipartReader`. We were scanning the entire input stream
+    for a delimiter when we only needed to scan enough to return a result.
+
+ *  Fix: Don't double-compress the public suffix database. OkHttp is usually distributed in a
+    compressed file (like a JAR or APK), so compressing its internal data was redundant.
+
+ *  Fix: Call `ProxySelector.connectFailed()` when a connection's initial TCP handshake fails.
+
+ *  Fix: Change the signature of `Dispatcher` to accept a nullable `ExecutorService`. Changing this
+    parameter to be non-null was an unintended signature change in OkHttp 4.0.
+
+ *  New: `EventListener.retryDecision()` is called each time a request fails with an `IOException`.
+    It notifies your listener if OkHttp will retry.
+
+ *  New: `EventListener.followUpDecision()` is called each time a response is received. It notifies
+    your listener if OkHttp has decided to make a follow-up request. Some common follow-ups are
+    authentication challenges and redirects.
+
+ *  New: Handy constants for `Headers.EMPTY`, `RequestBody.EMPTY`, and `ResponseBody.EMPTY`.
+
+ *  New: OkHttp now calls `StrictMode.noteSlowCall()` when initializing TLS on Android. Use
+    `StrictMode` to detect if your `OkHttpClient` is being initialized on the main thread.
+
+ *  Upgrade: [Okio 3.12.0][okio_3_12_0].
+
+ *  Upgrade: [Kotlin 2.1.21][kotlin_2_1_21].
+
+ *  Upgrade: [kotlinx.coroutines 1.10.2][coroutines_1_10_2]. This is used by the optional
+    `okhttp-coroutines` artifact.
+
+ *  Upgrade: [AndroidX Startup 1.2.0][startup_1_2_0]. The Android variant of the `okhttp` artifact
+    now depends on this. This is a new dependency.
+
+ *  Upgrade: [AndroidX Annotation 1.9.1][annotation_1_9_1]. As above, the Android variant of the
+    `okhttp` artifact now depends on this. This is also a new dependency.
+
+
 ## Version 5.0.0-alpha.14
 
 _2024-04-17_
@@ -436,7 +512,9 @@ release is the version name.
 
 
 [Ktor]: https://ktor.io/
+[annotation_1_9_1]: https://developer.android.com/jetpack/androidx/releases/annotation#annotation-1.9.1
 [assertk]: https://github.com/willowtreeapps/assertk
+[coroutines_1_10_2]: https://github.com/Kotlin/kotlinx.coroutines/releases/tag/1.10.2
 [graalvm]: https://www.graalvm.org/
 [graalvm_21]: https://www.graalvm.org/release-notes/21_0/
 [graalvm_22]: https://www.graalvm.org/release-notes/22_2/
@@ -448,12 +526,15 @@ release is the version name.
 [kotlin_1_7_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.7.10
 [kotlin_1_9_21]: https://github.com/JetBrains/kotlin/releases/tag/v1.9.21
 [kotlin_1_9_23]: https://github.com/JetBrains/kotlin/releases/tag/v1.9.23
+[kotlin_2_1_21]: https://github.com/JetBrains/kotlin/releases/tag/v2.1.21
 [loom]: https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html
 [okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
 [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
+[okio_3_12_0]: https://square.github.io/okio/changelog/#version-3120
 [okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
 [okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
 [okio_3_7_0]: https://square.github.io/okio/changelog/#version-370
 [okio_3_9_0]: https://square.github.io/okio/changelog/#version-390
+[startup_1_2_0]: https://developer.android.com/jetpack/androidx/releases/startup#1.2.0
 [rfc_8305]: https://tools.ietf.org/html/rfc8305
 [uts46]: https://www.unicode.org/reports/tr46

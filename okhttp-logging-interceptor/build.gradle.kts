@@ -17,9 +17,7 @@ project.applyJavaModules("okhttp3.logging")
 
 dependencies {
   "friendsApi"(projects.okhttp)
-  compileOnly(libs.findbugs.jsr305)
 
-  testCompileOnly(libs.findbugs.jsr305)
   testImplementation(libs.junit)
   testImplementation(projects.mockwebserver3)
   testImplementation(projects.mockwebserver3Junit5)

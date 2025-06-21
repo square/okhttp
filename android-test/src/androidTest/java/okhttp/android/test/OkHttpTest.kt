@@ -44,6 +44,7 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.Cache
 import okhttp3.Call
 import okhttp3.CertificatePinner
@@ -117,14 +118,13 @@ class OkHttpTest {
 
   private val handshakeCertificates = localhost()
 
-  private lateinit var server: MockWebServer
+  @StartStop
+  private val server = MockWebServer()
 
   @BeforeEach
-  fun setup(server: MockWebServer) {
+  fun setup() {
     // Needed because of Platform.resetForTests
     PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext<Context>()
-
-    this.server = server
   }
 
   @Test
@@ -537,6 +537,7 @@ class OkHttpTest {
         "RequestHeadersEnd",
         "ResponseHeadersStart",
         "ResponseHeadersEnd",
+        "FollowUpDecision",
         "ResponseBodyStart",
         "ResponseBodyEnd",
         "ConnectionReleased",
@@ -559,6 +560,7 @@ class OkHttpTest {
         "RequestHeadersEnd",
         "ResponseHeadersStart",
         "ResponseHeadersEnd",
+        "FollowUpDecision",
         "ResponseBodyStart",
         "ResponseBodyEnd",
         "ConnectionReleased",

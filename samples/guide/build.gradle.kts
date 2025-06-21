@@ -1,6 +1,6 @@
 plugins {
   kotlin("jvm")
-  id("com.google.devtools.ksp").version(libs.versions.ksp)
+  id("com.google.devtools.ksp")
 }
 
 dependencies {

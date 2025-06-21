@@ -18,7 +18,6 @@ project.applyJavaModules("okhttp3.brotli")
 dependencies {
   api(projects.okhttp)
   api(libs.brotli.dec)
-  compileOnly(libs.findbugs.jsr305)
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(libs.conscrypt.openjdk)
