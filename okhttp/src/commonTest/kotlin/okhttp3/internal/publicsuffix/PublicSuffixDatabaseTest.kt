@@ -21,14 +21,18 @@ import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import okhttp3.internal.platform.PlatformRegistry
 import okhttp3.internal.publicsuffix.ResourcePublicSuffixList.Companion.PUBLIC_SUFFIX_RESOURCE
 import okhttp3.internal.toCanonicalHost
 import okhttp3.okHttpRoot
+import okhttp3.testing.PlatformVersion
 import okio.Buffer
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import org.junit.Before
 import org.junit.Test
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.BeforeAll
 import org.junit.runner.RunWith
 
 @RunWith(PublicSuffixTestRunner::class)
@@ -223,6 +227,18 @@ class PublicSuffixDatabaseTest {
       assertThat(result).isNull()
     } else {
       assertThat(result).isEqualTo(registrablePart.toCanonicalHost())
+    }
+  }
+
+  companion object {
+    // JDK 16 dependency in robolectric
+    // https://github.com/robolectric/robolectric/issues/10419
+    @BeforeAll
+    @JvmStatic
+    fun checkJdkForRobolectric() {
+      if (PlatformRegistry.isAndroid) {
+        assumeTrue(PlatformVersion.majorVersion >= 16)
+      }
     }
   }
 }
