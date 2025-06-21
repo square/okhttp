@@ -19,8 +19,6 @@ package okhttp3
 
 import assertk.assertThat
 import assertk.assertions.contains
-import assertk.assertions.containsExactly
-import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThanOrEqualTo
@@ -535,9 +533,9 @@ class URLConnectionTest {
     val request = server.takeRequest()
     assertThat(request.bodySize).isEqualTo(n.toLong())
     if (uploadKind === TransferKind.CHUNKED) {
-      assertThat(request.chunkSizes).isNotEmpty()
+      assertThat(request.chunkSizes!!).isNotEmpty()
     } else {
-      assertThat(request.chunkSizes).isEmpty()
+      assertThat(request.chunkSizes).isNull()
     }
   }
 
@@ -1731,9 +1729,7 @@ class URLConnectionTest {
     assertThat(response.code).isEqualTo(200)
     val request = server.takeRequest()
     assertThat(request.body?.utf8()).isEqualTo("ABCDEFGHIJKLMNOPQ")
-    assertThat(request.chunkSizes).isEqualTo(
-      Arrays.asList("ABCDEFGHIJKLMNOPQ".length),
-    )
+    assertThat(request.chunkSizes).isEqualTo(listOf("ABCDEFGHIJKLMNOPQ".length))
   }
 
   @Test
@@ -2103,9 +2099,9 @@ class URLConnectionTest {
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST / HTTP/1.1")
     if (streamingMode === TransferKind.FIXED_LENGTH) {
-      assertThat(request.chunkSizes).isEqualTo(emptyList<Int>())
+      assertThat(request.chunkSizes).isNull()
     } else if (streamingMode === TransferKind.CHUNKED) {
-      assertThat(request.chunkSizes).containsExactly(4)
+      assertThat(request.chunkSizes).isEqualTo(listOf(4))
     }
     assertThat(request.body?.utf8()).isEqualTo("ABCD")
   }
