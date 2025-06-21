@@ -17,14 +17,12 @@
 package mockwebserver3
 
 import java.io.IOException
-import okhttp3.ExperimentalOkHttpApi
 import okhttp3.Handshake
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okio.ByteString
 
 /** An HTTP request that came into the mock web server. */
-@ExperimentalOkHttpApi
 public class RecordedRequest(
   /**
    * The index of the socket connection that carried this request. If two recorded requests share a
@@ -47,6 +45,7 @@ public class RecordedRequest(
    * cleartext and may be monitored or blocked by a proxy or other middlebox.
    */
   public val handshakeServerNames: List<String>,
+  /** A string like `GET` or `POST`. */
   public val method: String,
   /**
    * The request target from the original HTTP request.
@@ -61,7 +60,7 @@ public class RecordedRequest(
    * For OPTIONS requests, this may be an asterisk, `*`.
    */
   public val target: String,
-  /** A string like `HTTP/1.1`. */
+  /** A string like `HTTP/1.1` or `HTTP/2`. */
   public val version: String,
   /** The request URL built using the request line, headers, and local host name. */
   public val url: HttpUrl,
@@ -72,10 +71,10 @@ public class RecordedRequest(
   /** The total size of the body of this request (before truncation).*/
   public val bodySize: Long,
   /**
-   * The sizes of the chunks of this request's body, or an empty list if the request's body
-   * was empty or unchunked.
+   * The sizes of the chunks of this request's body, or null if the request's body was not encoded
+   * with chunked encoding.
    */
-  public val chunkSizes: List<Int>,
+  public val chunkSizes: List<Int>?,
   /**
    * The failure MockWebServer recorded when attempting to decode this request. If, for example,
    * the inbound request was truncated, this exception will be non-null.

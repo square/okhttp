@@ -24,7 +24,6 @@ import assertk.assertions.hasMessage
 import assertk.assertions.hasSize
 import assertk.assertions.index
 import assertk.assertions.isCloseTo
-import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isIn
@@ -4194,7 +4193,15 @@ open class CallTest {
     upload(true, 1048576, 256)
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.bodySize).isEqualTo(1048576)
-    assertThat(recordedRequest.chunkSizes).isNotEmpty()
+    assertThat(recordedRequest.chunkSizes).isNotNull()
+  }
+
+  @Test
+  fun uploadBodyEmptyChunkedEncoding() {
+    upload(true, 0, 256)
+    val recordedRequest = server.takeRequest()
+    assertThat(recordedRequest.bodySize).isEqualTo(0)
+    assertThat(recordedRequest.chunkSizes).isEqualTo(listOf())
   }
 
   @Test
@@ -4202,7 +4209,7 @@ open class CallTest {
     upload(true, 1048576, 65536)
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.bodySize).isEqualTo(1048576)
-    assertThat(recordedRequest.chunkSizes).isNotEmpty()
+    assertThat(recordedRequest.chunkSizes).isNotNull()
   }
 
   @Test
@@ -4210,7 +4217,7 @@ open class CallTest {
     upload(false, 1048576, 256)
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.bodySize).isEqualTo(1048576)
-    assertThat(recordedRequest.chunkSizes).isEmpty()
+    assertThat(recordedRequest.chunkSizes).isNull()
   }
 
   @Test
@@ -4218,7 +4225,7 @@ open class CallTest {
     upload(false, 1048576, 65536)
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.bodySize).isEqualTo(1048576)
-    assertThat(recordedRequest.chunkSizes).isEmpty()
+    assertThat(recordedRequest.chunkSizes).isNull()
   }
 
   private fun upload(
