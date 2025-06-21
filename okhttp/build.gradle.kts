@@ -210,22 +210,6 @@ android {
   }
 }
 
-project.applyOsgiMultiplatform(
-  "Export-Package: okhttp3,okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal",
-  "Import-Package: " +
-    "com.oracle.svm.core.annotate;resolution:=optional," +
-    "com.oracle.svm.core.configure;resolution:=optional," +
-    "dalvik.system;resolution:=optional," +
-    "org.conscrypt;resolution:=optional," +
-    "org.bouncycastle.*;resolution:=optional," +
-    "org.openjsse.*;resolution:=optional," +
-    "org.graalvm.nativeimage;resolution:=optional," +
-    "org.graalvm.nativeimage.hosted;resolution:=optional," +
-    "sun.security.ssl;resolution:=optional,*",
-  "Automatic-Module-Name: okhttp3",
-  "Bundle-SymbolicName: com.squareup.okhttp3",
-)
-
 // From https://github.com/Kotlin/kotlinx-atomicfu/blob/master/atomicfu/build.gradle.kts
 val compileJavaModuleInfo by tasks.registering(JavaCompile::class) {
   val moduleName = "okhttp3"
@@ -289,6 +273,7 @@ val compileJavaModuleInfo by tasks.registering(JavaCompile::class) {
   modularity.inferModulePath.set(true)
 }
 
+// Call the convention when the task has finished, to modify the jar to contain OSGi metadata.
 tasks.named<Jar>("jvmJar").configure {
   manifest {
     attributes(
@@ -301,17 +286,21 @@ tasks.named<Jar>("jvmJar").configure {
   }
 }
 
-tasks.named<Jar>("jvmJar").configure {
-  manifest {
-    attributes(
-      "Multi-Release" to true,
-    )
-  }
-
-  from(compileJavaModuleInfo.get().destinationDirectory) {
-    into("META-INF/versions/9/")
-  }
-}
+project.applyOsgiMultiplatform(
+  "Export-Package: okhttp3,okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal",
+  "Import-Package: " +
+    "com.oracle.svm.core.annotate;resolution:=optional," +
+    "com.oracle.svm.core.configure;resolution:=optional," +
+    "dalvik.system;resolution:=optional," +
+    "org.conscrypt;resolution:=optional," +
+    "org.bouncycastle.*;resolution:=optional," +
+    "org.openjsse.*;resolution:=optional," +
+    "org.graalvm.nativeimage;resolution:=optional," +
+    "org.graalvm.nativeimage.hosted;resolution:=optional," +
+    "sun.security.ssl;resolution:=optional,*",
+  "Automatic-Module-Name: okhttp3",
+  "Bundle-SymbolicName: com.squareup.okhttp3",
+)
 
 val androidSignature by configurations.getting
 val jvmSignature by configurations.getting
