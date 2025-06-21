@@ -29,10 +29,10 @@ import okhttp3.testing.PlatformVersion
 import okio.Buffer
 import okio.FileSystem
 import okio.Path.Companion.toPath
+import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Test
-import org.junit.jupiter.api.Assumptions.assumeTrue
-import org.junit.jupiter.api.BeforeAll
 import org.junit.runner.RunWith
 
 @RunWith(PublicSuffixTestRunner::class)
@@ -233,7 +233,7 @@ class PublicSuffixDatabaseTest {
   companion object {
     // JDK 16 dependency in robolectric
     // https://github.com/robolectric/robolectric/issues/10419
-    @BeforeAll
+    @BeforeClass
     @JvmStatic
     fun checkJdkForRobolectric() {
       if (PlatformRegistry.isAndroid) {
