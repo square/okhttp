@@ -183,6 +183,10 @@ class MockWebServer :
   @Throws(IOException::class)
   override fun close() = delegate.close()
 
+  fun reset() {
+    delegate.reset()
+  }
+
   companion object {
     private val logger = Logger.getLogger(MockWebServer::class.java.name)
   }

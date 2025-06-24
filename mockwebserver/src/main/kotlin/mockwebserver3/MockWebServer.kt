@@ -1269,6 +1269,18 @@ public class MockWebServer : Closeable {
     }
   }
 
+  /**
+   * Resets the request queue and count to their initial state.
+   *
+   * This is useful for test suites which start the `MockWebServer` once at the beginning, shut it down at the end,
+   * and reuse it across tests. This can be called in a `BeforeEach` or `AfterEach` method  for the request queue
+   * and count to be reset in between tests.
+   */
+  public fun reset() {
+    requestQueue.clear()
+    atomicRequestCount.set(0)
+  }
+
   private companion object {
     private const val CLIENT_AUTH_NONE = 0
     private const val CLIENT_AUTH_REQUESTED = 1
