@@ -1,0 +1,7 @@
+[versions]
+
+[libraries]
+assertk = "com.willowtreeapps.assertk:assertk:0.28.1"
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.1.20" }

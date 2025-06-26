@@ -332,6 +332,17 @@ subprojects {
     }
   }
 
+  plugins.withId("publishing") {
+    extensions.configure<PublishingExtension> {
+      repositories {
+        maven {
+          name = "LocalMaven"
+          url = rootProject.layout.buildDirectory.asFile.get().resolve("localMaven").toURI()
+        }
+      }
+    }
+  }
+
   plugins.withId("com.vanniktech.maven.publish.base") {
     configure<MavenPublishBaseExtension> {
       publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
