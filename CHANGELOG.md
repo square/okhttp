@@ -5,6 +5,74 @@ Change Log
 
 See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
 
+## Version 5.0.0-alpha.17
+
+_2025-06-29_
+
+This release stabilizes many APIs for the imminent OkHttp 5.0.0 release.
+
+ *  New: `TrailersSource`, a public API for HTTP trailers. Production callers shouldn't need this
+    as the API to read response trailers is unchanged. Testers may use this new stable API to
+    supply trailers for a `Response`.
+
+ *  New: `Path.asRequestBody()` is now a non-experimental API.
+
+ *  New: `FileDescriptor.toRequestBody()` is now a non-experimental API.
+
+ *  New: Stop using experimental coroutines APIs in our `okhttp-coroutines` artifact.
+
+ *  Breaking: Move `gzip` from `RequestBody` to `Request.Builder`. This new API handles both
+    compressing the request body and also adding the corresponding `Content-Encoding` header. Note
+    that this function is sensitive to when it is called: the response body must be supplied before
+    it can be compressed.
+
+ *  Breaking: Remove `AddressPolicy`, `AsyncDns`, and `ConnectionListener` from the public API. We
+    intend to ship a public API for these features, but we don't want to hold OkHttp 5.0.0 until
+    those APIs are stable.
+
+ *  Fix: Change `MockWebServer.close()` to cancel ongoing calls that are blocked on a delay.
+
+ *  Upgrade: [Okio 3.13.0][okio_3_13_0].
+
+This release also stabilizes many APIs in the `mockwebserver3` artifact that's new in 5.0.
+
+ *  Breaking: `RecordedRequest.body` is now nullable. Null is used when the request does not have a
+    body.
+
+ *  Breaking: `RecordedRequest.chunkSizes` is now nullable. Null is used when the request does not
+    use chunked encoding. This is different from an empty list - that indicates the request is
+    chunked but has no data.
+
+ *  Breaking: Replace `SocketPolicy` with a new type, `SocketEffect`. It splits triggers (request
+    start, response body, etc.) from effects (closing the socket, closing the stream, etc.).
+
+ *  Breaking: Rename `RecordedRequest.sequenceNumber` to `exchangeIndex` and introduce
+    `connectionIndex` on that type. These properties may be useful when testing features like
+    connection reuse.
+
+ *  Breaking: Replace our parameters-based JUnit 5 extension with a new annotation, `@StartStop`.
+    Put this annotation on a `MockWebServer` property and the extension will start it before your
+    test executes and stop it after it completes. No further configuration is required.
+
+    ```kotlin
+    @StartStop val server = MockWebServer()
+    ```
+
+ *  Breaking: Don't automatically start `MockWebServer` after calls to accessors like `port`. Now
+    these accessors will throw an `IllegalStateException` if the service has not yet been started.
+
+ *  Breaking: Decompose the `RecordedRequest.requestLine` into three properties, `method`, `target`,
+    and `version`. This better suits HTTP/2 where the request line had to be synthesized from
+    component headers.
+
+ *  Breaking: Change `RecordedRequest.body` from a mutable `Buffer` to an immutable `ByteString`.
+
+ *  Breaking: Adopt Okio's new `Socket` interface for `MockResponse.socketHandler`.
+
+Note that any _Breaking_ changes above impact only APIs introduced in earlier 5.0.0-alpha releasees.
+We don't break binary compatibility with non-alpha APIs.
+
+
 ## Version 5.0.0-alpha.16
 
 _2025-05-29_
@@ -531,6 +599,7 @@ release is the version name.
 [okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
 [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
 [okio_3_12_0]: https://square.github.io/okio/changelog/#version-3120
+[okio_3_13_0]: https://square.github.io/okio/changelog/#version-3130
 [okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
 [okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
 [okio_3_7_0]: https://square.github.io/okio/changelog/#version-370
