@@ -94,24 +94,24 @@
   <div class="breadcrumbs"><a href="../../index.html">mockwebserver3</a><span class="delimiter">/</span><a href="../index.html">mockwebserver3</a><span class="delimiter">/</span><span class="current">RecordedRequest</span></div>
   <div class="cover ">
     <h1 class="cover"><span>Recorded</span><wbr><span><span>Request</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="../../../okhttp/okhttp3/-experimental-ok-http-api/index.html"><span class="token annotation builtin">ExperimentalOkHttpApi</span></a></div></div><span class="token keyword">class </span><a href="index.html">RecordedRequest</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>requestLine<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>headers<span class="token operator">: </span><a href="../../../okhttp/okhttp3/-headers/index.html">Headers</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>chunkSizes<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>bodySize<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>body<span class="token operator">: </span><a href="https://square.github.io/okio/3.x/okio/okio/okio/-buffer/index.html">Buffer</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>sequenceNumber<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">socket<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Socket.html">Socket</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>failure<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html">IOException</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span></div><p class="paragraph">An HTTP request that came into the mock web server.</p></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">RecordedRequest</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>connectionIndex<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>exchangeIndex<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>handshake<span class="token operator">: </span><a href="../../../okhttp/okhttp3/-handshake/index.html">Handshake</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>handshakeServerNames<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>method<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>target<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>version<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>url<span class="token operator">: </span><a href="../../../okhttp/okhttp3/-http-url/index.html">HttpUrl</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>headers<span class="token operator">: </span><a href="../../../okhttp/okhttp3/-headers/index.html">Headers</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>body<span class="token operator">: </span><a href="https://square.github.io/okio/3.x/okio/okio/okio/-byte-string/index.html">ByteString</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>bodySize<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>chunkSizes<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>failure<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html">IOException</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span></div><p class="paragraph">An HTTP request that came into the mock web server.</p></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
     <div class="tabs-section-body">
       <div data-togglable="CONSTRUCTOR">
         <h2 class="">Constructors</h2>
-        <div class="table"><a data-name="1330441366%2FConstructors%2F21570178" anchor-label="RecordedRequest" id="1330441366%2FConstructors%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+        <div class="table"><a data-name="1933322857%2FConstructors%2F21570178" anchor-label="RecordedRequest" id="1933322857%2FConstructors%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-recorded-request.html"><span>Recorded</span><wbr><span><span>Request</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1330441366%2FConstructors%2F21570178"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1933322857%2FConstructors%2F21570178"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">requestLine<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">headers<span class="token operator">: </span><a href="../../../okhttp/okhttp3/-headers/index.html">Headers</a><span class="token punctuation">, </span></span><span class="parameter ">chunkSizes<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">bodySize<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">body<span class="token operator">: </span><a href="https://square.github.io/okio/3.x/okio/okio/okio/-buffer/index.html">Buffer</a><span class="token punctuation">, </span></span><span class="parameter ">sequenceNumber<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">socket<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Socket.html">Socket</a><span class="token punctuation">, </span></span><span class="parameter ">failure<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html">IOException</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">connectionIndex<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">exchangeIndex<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">handshake<span class="token operator">: </span><a href="../../../okhttp/okhttp3/-handshake/index.html">Handshake</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">handshakeServerNames<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">method<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">target<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">version<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">url<span class="token operator">: </span><a href="../../../okhttp/okhttp3/-http-url/index.html">HttpUrl</a><span class="token punctuation">, </span></span><span class="parameter ">headers<span class="token operator">: </span><a href="../../../okhttp/okhttp3/-headers/index.html">Headers</a><span class="token punctuation">, </span></span><span class="parameter ">body<span class="token operator">: </span><a href="https://square.github.io/okio/3.x/okio/okio/okio/-byte-string/index.html">ByteString</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">bodySize<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">chunkSizes<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">failure<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html">IOException</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span></div></div></div>
                 </div>
               </div>
             </div>
@@ -130,7 +130,7 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="body.html">body</a><span class="token operator">: </span><a href="https://square.github.io/okio/3.x/okio/okio/okio/-buffer/index.html">Buffer</a></div><div class="brief "><p class="paragraph">The body of this POST request. This may be truncated.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="body.html">body</a><span class="token operator">: </span><a href="https://square.github.io/okio/3.x/okio/okio/okio/-byte-string/index.html">ByteString</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">The body of this request, or null if it has none. This may be truncated.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -145,7 +145,7 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="body-size.html">bodySize</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a></div><div class="brief "><p class="paragraph">The total size of the body of this POST request (before truncation).</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="body-size.html">bodySize</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a></div><div class="brief "><p class="paragraph">The total size of the body of this request (before truncation).</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -160,7 +160,37 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="chunk-sizes.html">chunkSizes</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The sizes of the chunks of this request's body, or an empty list if the request's body was empty or unchunked.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="chunk-sizes.html">chunkSizes</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token operator">&gt;</span><span class="token operator">?</span></div><div class="brief "><p class="paragraph">The sizes of the chunks of this request's body, or null if the request's body was not encoded with chunked encoding.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-333819006%2FProperties%2F21570178" anchor-label="connectionIndex" id="-333819006%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="connection-index.html"><span>connection</span><wbr><span><span>Index</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-333819006%2FProperties%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="connection-index.html">connectionIndex</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">The index of the socket connection that carried this request. If two recorded requests share a connection index, they also shared a socket connection.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1297006151%2FProperties%2F21570178" anchor-label="exchangeIndex" id="1297006151%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="exchange-index.html"><span>exchange</span><wbr><span><span>Index</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1297006151%2FProperties%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="exchange-index.html">exchangeIndex</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">The index of this exchange on its HTTP connection. A request is uniquely identified by the (connection index, exchange index) pair.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -235,22 +265,7 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="method.html">method</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-<a data-name="2119531263%2FProperties%2F21570178" anchor-label="path" id="2119531263%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
-          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
-            <div class="main-subrow keyValue ">
-              <div class=""><span class="inline-flex">
-                  <div><a href="path.html"><span><span>path</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2119531263%2FProperties%2F21570178"></span>
-                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                  </span></span></div>
-              <div>
-                <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="path.html">path</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="method.html">method</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">A string like <code class="lang-kotlin">GET</code> or <code class="lang-kotlin">POST</code>.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -270,32 +285,47 @@
               </div>
             </div>
           </div>
-<a data-name="664517092%2FProperties%2F21570178" anchor-label="requestUrl" id="664517092%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+<a data-name="-639350445%2FProperties%2F21570178" anchor-label="target" id="-639350445%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
-                  <div><a href="request-url.html"><span>request</span><wbr><span><span>Url</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="664517092%2FProperties%2F21570178"></span>
+                  <div><a href="target.html"><span><span>target</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-639350445%2FProperties%2F21570178"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="request-url.html">requestUrl</a><span class="token operator">: </span><a href="../../../okhttp/okhttp3/-http-url/index.html">HttpUrl</a><span class="token operator">?</span></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="target.html">target</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">The request target from the original HTTP request.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-386232422%2FProperties%2F21570178" anchor-label="sequenceNumber" id="-386232422%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+<a data-name="445529223%2FProperties%2F21570178" anchor-label="url" id="445529223%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
-                  <div><a href="sequence-number.html"><span>sequence</span><wbr><span><span>Number</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-386232422%2FProperties%2F21570178"></span>
+                  <div><a href="url.html"><span><span>url</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="445529223%2FProperties%2F21570178"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="sequence-number.html">sequenceNumber</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">The index of this request on its HTTP connection. Since a single HTTP connection may serve multiple requests, each request is assigned its own sequence number.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="url.html">url</a><span class="token operator">: </span><a href="../../../okhttp/okhttp3/-http-url/index.html">HttpUrl</a></div><div class="brief "><p class="paragraph">The request URL built using the request line, headers, and local host name.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1355642690%2FProperties%2F21570178" anchor-label="version" id="-1355642690%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="version.html"><span><span>version</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1355642690%2FProperties%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="version.html">version</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">A string like <code class="lang-kotlin">HTTP/1.1</code> or <code class="lang-kotlin">HTTP/2</code>.</p></div></div></div>
                 </div>
               </div>
             </div>

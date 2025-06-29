@@ -94,7 +94,7 @@
   <div class="breadcrumbs"><a href="../../index.html">mockwebserver3</a><span class="delimiter">/</span><a href="../index.html">mockwebserver3</a><span class="delimiter">/</span><span class="current">Dispatcher</span></div>
   <div class="cover ">
     <h1 class="cover"><span><span>Dispatcher</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="../../../okhttp/okhttp3/-experimental-ok-http-api/index.html"><span class="token annotation builtin">ExperimentalOkHttpApi</span></a></div></div><span class="token keyword">abstract </span><span class="token keyword">class </span><a href="index.html">Dispatcher</a></div><p class="paragraph">Handler for mock server requests.</p><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-queue-dispatcher/index.html">QueueDispatcher</a></div></span></div><div></div></div></div></div></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">class </span><a href="index.html">Dispatcher</a> : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a></div><p class="paragraph">Handler for mock server requests.</p><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-queue-dispatcher/index.html">QueueDispatcher</a></div></span></div><div></div></div></div></div></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
@@ -120,7 +120,22 @@
       </div>
       <div data-togglable="FUNCTION">
         <h2 class="">Functions</h2>
-        <div class="table"><a data-name="783641293%2FFunctions%2F21570178" anchor-label="dispatch" id="783641293%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+        <div class="table"><a data-name="214234820%2FFunctions%2F21570178" anchor-label="close" id="214234820%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="close.html"><span><span>close</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="214234820%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="close.html"><span class="token function">close</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Release any resources held by this dispatcher. Any requests that are currently being dispatched should return immediately. Responses returned after shutdown will not be transmitted: their socket connections have already been closed.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="783641293%2FFunctions%2F21570178" anchor-label="dispatch" id="783641293%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
@@ -146,21 +161,6 @@
               <div>
                 <div class="title">
                   <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="peek.html"><span class="token function">peek</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-mock-response/index.html">MockResponse</a></div><div class="brief "><p class="paragraph">Returns an early guess of the next response, used for policy on how an incoming request should be received. The default implementation returns an empty response. Mischievous implementations can return other values to test HTTP edge cases, such as unhappy socket policies or throttled request bodies.</p></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-<a data-name="1170705352%2FFunctions%2F21570178" anchor-label="shutdown" id="1170705352%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
-          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
-            <div class="main-subrow keyValue ">
-              <div class=""><span class="inline-flex">
-                  <div><a href="shutdown.html"><span><span>shutdown</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1170705352%2FFunctions%2F21570178"></span>
-                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                  </span></span></div>
-              <div>
-                <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="shutdown.html"><span class="token function">shutdown</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Release any resources held by this dispatcher. Any requests that are currently being dispatched should return immediately. Responses returned after shutdown will not be transmitted: their socket connections have already been closed.</p></div></div></div>
                 </div>
               </div>
             </div>

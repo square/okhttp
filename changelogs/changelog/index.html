@@ -1019,6 +1019,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#version-500-alpha17" class="md-nav__link">
+    <span class="md-ellipsis">
+      Version 5.0.0-alpha.17
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-500-alpha16" class="md-nav__link">
     <span class="md-ellipsis">
       Version 5.0.0-alpha.16
@@ -1469,6 +1478,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#version-500-alpha17" class="md-nav__link">
+    <span class="md-ellipsis">
+      Version 5.0.0-alpha.17
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-500-alpha16" class="md-nav__link">
     <span class="md-ellipsis">
       Version 5.0.0-alpha.16
@@ -1631,14 +1649,95 @@
 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
 <h2 id="version-4x">Version 4.x<a class="headerlink" href="#version-4x" title="Permanent link">&para;</a></h2>
 <p>See <a href="https://square.github.io/okhttp/changelogs/changelog_4x/">4.x Change log</a> for the stable version changelogs.</p>
+<h2 id="version-500-alpha17">Version 5.0.0-alpha.17<a class="headerlink" href="#version-500-alpha17" title="Permanent link">&para;</a></h2>
+<p><em>2025-06-29</em></p>
+<p>This release stabilizes many APIs for the imminent OkHttp 5.0.0 release.</p>
+<ul>
+<li>
+<p>New: <code>TrailersSource</code>, a public API for HTTP trailers. Production callers shouldn&rsquo;t need this
+    as the API to read response trailers is unchanged. Testers may use this new stable API to
+    supply trailers for a <code>Response</code>.</p>
+</li>
+<li>
+<p>New: <code>Path.asRequestBody()</code> is now a non-experimental API.</p>
+</li>
+<li>
+<p>New: <code>FileDescriptor.toRequestBody()</code> is now a non-experimental API.</p>
+</li>
+<li>
+<p>New: Stop using experimental coroutines APIs in our <code>okhttp-coroutines</code> artifact.</p>
+</li>
+<li>
+<p>Breaking: Move <code>gzip</code> from <code>RequestBody</code> to <code>Request.Builder</code>. This new API handles both
+    compressing the request body and also adding the corresponding <code>Content-Encoding</code> header. Note
+    that this function is sensitive to when it is called: the response body must be supplied before
+    it can be compressed.</p>
+</li>
+<li>
+<p>Breaking: Remove <code>AddressPolicy</code>, <code>AsyncDns</code>, and <code>ConnectionListener</code> from the public API. We
+    intend to ship a public API for these features, but we don&rsquo;t want to hold OkHttp 5.0.0 until
+    those APIs are stable.</p>
+</li>
+<li>
+<p>Fix: Change <code>MockWebServer.close()</code> to cancel ongoing calls that are blocked on a delay.</p>
+</li>
+<li>
+<p>Upgrade: <a href="https://square.github.io/okio/changelog/#version-3130">Okio 3.13.0</a>.</p>
+</li>
+</ul>
+<p>This release also stabilizes many APIs in the <code>mockwebserver3</code> artifact that&rsquo;s new in 5.0.</p>
+<ul>
+<li>
+<p>Breaking: <code>RecordedRequest.body</code> is now nullable. Null is used when the request does not have a
+    body.</p>
+</li>
+<li>
+<p>Breaking: <code>RecordedRequest.chunkSizes</code> is now nullable. Null is used when the request does not
+    use chunked encoding. This is different from an empty list - that indicates the request is
+    chunked but has no data.</p>
+</li>
+<li>
+<p>Breaking: Replace <code>SocketPolicy</code> with a new type, <code>SocketEffect</code>. It splits triggers (request
+    start, response body, etc.) from effects (closing the socket, closing the stream, etc.).</p>
+</li>
+<li>
+<p>Breaking: Rename <code>RecordedRequest.sequenceNumber</code> to <code>exchangeIndex</code> and introduce
+    <code>connectionIndex</code> on that type. These properties may be useful when testing features like
+    connection reuse.</p>
+</li>
+<li>
+<p>Breaking: Replace our parameters-based JUnit 5 extension with a new annotation, <code>@StartStop</code>.
+    Put this annotation on a <code>MockWebServer</code> property and the extension will start it before your
+    test executes and stop it after it completes. No further configuration is required.</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@StartStop</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MockWebServer</span><span class="p">()</span>
+</code></pre></div>
+</li>
+<li>
+<p>Breaking: Don&rsquo;t automatically start <code>MockWebServer</code> after calls to accessors like <code>port</code>. Now
+    these accessors will throw an <code>IllegalStateException</code> if the service has not yet been started.</p>
+</li>
+<li>
+<p>Breaking: Decompose the <code>RecordedRequest.requestLine</code> into three properties, <code>method</code>, <code>target</code>,
+    and <code>version</code>. This better suits HTTP/2 where the request line had to be synthesized from
+    component headers.</p>
+</li>
+<li>
+<p>Breaking: Change <code>RecordedRequest.body</code> from a mutable <code>Buffer</code> to an immutable <code>ByteString</code>.</p>
+</li>
+<li>
+<p>Breaking: Adopt Okio&rsquo;s new <code>Socket</code> interface for <code>MockResponse.socketHandler</code>.</p>
+</li>
+</ul>
+<p>Note that any <em>Breaking</em> changes above impact only APIs introduced in earlier 5.0.0-alpha releasees.
+We don&rsquo;t break binary compatibility with non-alpha APIs.</p>
 <h2 id="version-500-alpha16">Version 5.0.0-alpha.16<a class="headerlink" href="#version-500-alpha16" title="Permanent link">&para;</a></h2>
-<p><em>2024-05-29</em></p>
+<p><em>2025-05-29</em></p>
 <ul>
 <li>Fix: The previous release would crash when running on Robolectric. We didn&rsquo;t anticipate
     running our Android artifact on the JVM platform!</li>
 </ul>
 <h2 id="version-500-alpha15">Version 5.0.0-alpha.15<a class="headerlink" href="#version-500-alpha15" title="Permanent link">&para;</a></h2>
-<p><em>2024-05-28</em></p>
+<p><em>2025-05-28</em></p>
 <p><strong>This release introduces separate JVM and Android artifacts.</strong> Until now, we&rsquo;ve distributed OkHttp
 as a JVM library that <em>detects</em> Android capabilities at runtime, but that doesn&rsquo;t offer
 Android-specific APIs. With this release we&rsquo;re starting to publish OkHttp as an AAR for Android
