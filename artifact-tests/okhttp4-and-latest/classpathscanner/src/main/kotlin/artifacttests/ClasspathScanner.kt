@@ -4,6 +4,10 @@ import java.io.File
 import java.net.URI
 import java.net.URL
 
+/**
+ * This extracts a list of directories and .jar files that make up the current class path. This code
+ * is stolen from Okio's ResourceFileSystem.
+ */
 object ClasspathScanner {
   val roots: List<File> = run {
     val classloader = ClasspathScanner::class.java.classLoader

@@ -1,7 +1,10 @@
 [versions]
+kotlin = "2.1.20"
 
 [libraries]
 assertk = "com.willowtreeapps.assertk:assertk:0.28.1"
 
 [plugins]
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.1.20" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+android-library = { id = "com.android.library", version = "8.10.1" }
