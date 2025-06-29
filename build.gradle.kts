@@ -3,8 +3,6 @@
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
-import groovy.util.Node
-import groovy.util.NodeList
 import java.net.URI
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
@@ -346,7 +344,6 @@ subprojects {
   }
 
   plugins.withId("com.vanniktech.maven.publish.base") {
-    val publishingExtension = extensions.getByType(PublishingExtension::class.java)
     configure<MavenPublishBaseExtension> {
       publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
       signAllPublications()
@@ -370,34 +367,6 @@ subprojects {
           developer {
             name.set("Square, Inc.")
           }
-        }
-      }
-    }
-
-    // Configure the kotlinMultiplatform artifact to depend on the JVM artifact in pom.xml only.
-    // This hack allows Maven users to continue using our original OkHttp artifact names (like
-    // com.squareup.okhttp3:okhttp:4.x.y) even though we changed that artifact from JVM-only to
-    // Kotlin Multiplatform. Note that module.json doesn't need this hack.
-    val mavenPublications = publishingExtension.publications.withType<MavenPublication>()
-    mavenPublications.configureEach {
-      println("MAVEN PUBLICATION NAME IS $name")
-      if (name != "jvm") return@configureEach
-      val jvmPublication = this
-      val kmpPublication = mavenPublications.getByName("kotlinMultiplatform")
-      println("REWRITING ${kmpPublication.groupId} ${kmpPublication.artifactId}")
-      kmpPublication.pom.withXml {
-        val root = asNode()
-        val dependencies = (root["dependencies"] as NodeList).firstOrNull() as Node?
-          ?: root.appendNode("dependencies")
-        for (child in dependencies.children().toList()) {
-          dependencies.remove(child as Node)
-        }
-        println("REWRITING $dependencies OF ${kmpPublication}")
-        dependencies.appendNode("dependency").apply {
-          appendNode("groupId", jvmPublication.groupId)
-          appendNode("artifactId", jvmPublication.artifactId)
-          appendNode("version", jvmPublication.version)
-          appendNode("scope", "compile")
         }
       }
     }
