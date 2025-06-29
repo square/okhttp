@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.1.20"
+kotlin = "2.1.21"
 
 [libraries]
 assertk = "com.willowtreeapps.assertk:assertk:0.28.1"

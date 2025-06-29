@@ -20,6 +20,7 @@ pluginManagement {
 
 
 include("android-depends-on-ld-and-latest")
+include("android-depends-on-lots")
 include("android-depends-on-wire-and-latest")
 include("classpathscanner")
 include("lib-depends-on-4x-and-latest")
