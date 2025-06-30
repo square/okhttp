@@ -61,6 +61,9 @@ This release also stabilizes many APIs in the `mockwebserver3` artifact that's n
  *  Breaking: Don't automatically start `MockWebServer` after calls to accessors like `port`. Now
     these accessors will throw an `IllegalStateException` if the service has not yet been started.
 
+ *  Breaking: Rename `RecordedRequest.path` to `RecordedRequest.target`. (This property is
+    _sometimes_ a path, but it can also be a path and query, or a full URL.)
+
  *  Breaking: Decompose the `RecordedRequest.requestLine` into three properties, `method`, `target`,
     and `version`. This better suits HTTP/2 where the request line had to be synthesized from
     component headers.
