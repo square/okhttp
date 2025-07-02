@@ -423,7 +423,7 @@ class Request internal constructor(
 
     open fun build(): Request = Request(this)
   }
-  
+
   /**
    * Returns a cURL command equivalent to this request, useful for debugging and reproducing requests.
    *
@@ -442,20 +442,39 @@ class Request internal constructor(
     if (method != "GET") {
       curl.append(" -X ").append(method)
     }
-    
+
     for ((name, value) in headers) {
-      curl.append(" -H ")
-        .append("\"").append(name).append(": ").append(value).append("\"")
+      curl
+        .append(" -H ")
+        .append("\"")
+        .append(name)
+        .append(": ")
+        .append(value)
+        .append("\"")
     }
-    
+
     body?.let { requestBody ->
       val buffer = okio.Buffer()
       requestBody.writeTo(buffer)
-      val bodyString = buffer.readUtf8()
-      curl.append(" --data ")
-        .append("\"").append(bodyString.replace("\"", "\\\"")).append("\"")
+
+      val contentType = requestBody.contentType()?.toString() ?: ""
+
+      if (contentType.startsWith("text/") ||
+        contentType.contains("json") ||
+        contentType.contains("xml") ||
+        contentType.contains("form-urlencoded")
+      ) {
+        val bodyString = buffer.readUtf8()
+        curl
+          .append(" --data ")
+          .append("\"")
+          .append(bodyString.replace("\"", "\\\""))
+          .append("\"")
+      } else {
+        curl.append(" --data-binary \"[binary body omitted]\"")
+      }
     }
-    
+
     curl.append(" \"").append(url).append("\"")
     return curl.toString()
   }
