@@ -30,5 +30,6 @@ include("lib-depends-on-ld-and-latest")
 include("lib-depends-on-latest")
 include("lib-depends-on-latest-jvm")
 include("lib-depends-on-retrofit-and-latest")
+include("lib-depends-on-sentry-and-latest")
 include("lib-depends-on-wire-and-latest")
 
