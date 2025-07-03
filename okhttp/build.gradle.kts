@@ -1,11 +1,11 @@
 @file:Suppress("UnstableApiUsage")
 
-import aQute.bnd.gradle.BundleTaskExtension
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   kotlin("multiplatform")
@@ -276,6 +276,15 @@ afterEvaluate {
         excludeTest("okhttp3.internal.publicsuffix.PublicSuffixDatabaseTest", null)
       }
     }
+  }
+}
+
+// Work around issue 8826, where the Sentry SDK assumes that OkHttp's internal-visibility symbols
+// will be suffixed '$okhttp' in deployable artifacts. This isn't intended to be a published API,
+// but it's easy enough for us to keep it working. https://github.com/square/okhttp/issues/8826
+tasks.withType<KotlinCompile> {
+  compilerOptions {
+    freeCompilerArgs = listOf("-module-name=okhttp")
   }
 }
 
