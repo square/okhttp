@@ -513,6 +513,7 @@ class MockWebServerTest {
     assertThat(request.requestLine).isEqualTo(
       "GET /a/deep/path?key=foo%20bar HTTP/1.1",
     )
+    assertThat(request.path).isEqualTo("/a/deep/path?key=foo%20bar")
     val requestUrl = request.requestUrl
     assertThat(requestUrl!!.scheme).isEqualTo("http")
     assertThat(requestUrl.host).isEqualTo(server.hostName)

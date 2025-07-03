@@ -112,7 +112,7 @@ internal fun mockwebserver3.RecordedRequest.unwrap(): RecordedRequest =
     sequenceNumber = exchangeIndex,
     failure = failure,
     method = method,
-    path = url.encodedPath,
+    path = target,
     handshake = handshake,
     requestUrl = url,
   )
