@@ -28,7 +28,6 @@ import okhttp3.internal.connection.Exchange
 import okhttp3.internal.http.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.HTTP_TEMP_REDIRECT
 import okhttp3.internal.http.parseChallenges
-import okhttp3.internal.skipAll
 import okio.Buffer
 
 /**
@@ -191,13 +190,7 @@ class Response internal constructor(
    *     dropped.
    */
   @Throws(IOException::class)
-  fun trailers(): Headers {
-    val source = body.source()
-    if (source.isOpen) {
-      source.skipAll()
-    }
-    return trailersSource.get()
-  }
+  fun trailers(): Headers = trailersSource.get()
 
   /**
    * Peeks up to [byteCount] bytes from the response body and returns them as a new response
@@ -478,7 +471,6 @@ class Response internal constructor(
 
     internal fun initExchange(exchange: Exchange) {
       this.exchange = exchange
-      this.trailersSource = TrailersSource { exchange.trailers() }
     }
 
     open fun build(): Response {
