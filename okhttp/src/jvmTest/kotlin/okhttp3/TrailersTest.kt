@@ -35,7 +35,10 @@ import mockwebserver3.SocketEffect.CloseSocket
 import mockwebserver3.SocketEffect.ShutdownConnection
 import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.testing.PlatformRule
+import okio.BufferedSource
 import okio.IOException
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
@@ -417,6 +420,70 @@ open class TrailersTest {
       assertThat(trailersDelay).isGreaterThan(250.milliseconds)
       assertThat(trailersDelay).isLessThan(750.milliseconds)
     }
+  }
+
+  @Test
+  fun bufferResponseBodyAndReadTrailersHttp1() {
+    bufferResponseBodyAndReadTrailers(Protocol.HTTP_1_1)
+  }
+
+  @Test
+  fun bufferResponseBodyAndReadTrailersHttp2() {
+    bufferResponseBodyAndReadTrailers(Protocol.HTTP_2)
+  }
+
+  private fun bufferResponseBodyAndReadTrailers(protocol: Protocol) {
+    enableProtocol(protocol)
+
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .trailers(headersOf("t1", "v1"))
+        .body(protocol, "Hello")
+        .build(),
+    )
+
+    val call = client.newCall(Request(server.url("/")))
+    call.execute().use { originalResponse ->
+      val responseBodyData = originalResponse.body.byteString()
+      val responseTrailers = originalResponse.trailers()
+      assertThat(responseTrailers).isEqualTo(headersOf("t1", "v1"))
+
+      val rewrittenResponse =
+        originalResponse
+          .newBuilder()
+          .body(responseBodyData.toResponseBody())
+          .build()
+      assertThat(rewrittenResponse.body.string()).isEqualTo("Hello")
+      assertThat(rewrittenResponse.trailers()).isEqualTo(headersOf("t1", "v1"))
+    }
+  }
+
+  /**
+   * We had a bug where a custom `ResponseBody` interacted poorly with `Response.trailers()`.
+   * Confirm custom trailers can be read without even accessing the response body.
+   */
+  @Test
+  fun customTrailersDoNotUseResponseBody() {
+    val response =
+      Response
+        .Builder()
+        .request(Request(url = "https://example.com".toHttpUrl()))
+        .protocol(Protocol.HTTP_1_1)
+        .code(200)
+        .message("OK")
+        .body(
+          object : ResponseBody() {
+            override fun contentType(): MediaType? = null
+
+            override fun contentLength(): Long = -1L
+
+            override fun source(): BufferedSource = error("unexpected call")
+          },
+        ).trailers { headersOf("t1", "v1") }
+        .build()
+
+    assertThat(response.trailers()).isEqualTo(headersOf("t1", "v1"))
   }
 
   private fun MockResponse.Builder.body(
