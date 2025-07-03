@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../assets/images/icon-square.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -1019,6 +1019,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#version-500" class="md-nav__link">
+    <span class="md-ellipsis">
+      Version 5.0.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-500-alpha17" class="md-nav__link">
     <span class="md-ellipsis">
       Version 5.0.0-alpha.17
@@ -1478,6 +1487,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#version-500" class="md-nav__link">
+    <span class="md-ellipsis">
+      Version 5.0.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-500-alpha17" class="md-nav__link">
     <span class="md-ellipsis">
       Version 5.0.0-alpha.17
@@ -1649,6 +1667,64 @@
 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
 <h2 id="version-4x">Version 4.x<a class="headerlink" href="#version-4x" title="Permanent link">&para;</a></h2>
 <p>See <a href="https://square.github.io/okhttp/changelogs/changelog_4x/">4.x Change log</a> for the stable version changelogs.</p>
+<h2 id="version-500">Version 5.0.0<a class="headerlink" href="#version-500" title="Permanent link">&para;</a></h2>
+<p><em>2025-07-02</em></p>
+<p>This is our first stable release of OkHttp since 2023. Here&rsquo;s the highlights if you&rsquo;re upgrading
+from OkHttp 4.x:</p>
+<p><strong>OkHttp is now packaged as separate JVM and Android artifacts.</strong> This allows us to offer
+platform-specific features and optimizations. If your build system handles <a href="https://docs.gradle.org/current/userguide/publishing_gradle_module_metadata.html">Gradle module metadata</a>,
+this change should be automatic.</p>
+<p><strong>MockWebServer has a new coordinate and package name.</strong> We didn’t like that our old artifact
+depends on JUnit 4 so the new one doesn’t. It also has a better API built on immutable values. (We
+intend to continue publishing the old <code>okhttp3.mockwebserver</code> artifact so there’s no urgency to
+migrate.)</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Coordinate</th>
+<th style="text-align: left;">Package Name</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">com.squareup.okhttp3:mockwebserver3:5.0.0</td>
+<td style="text-align: left;">mockwebserver3</td>
+<td style="text-align: left;">Core module. No JUnit dependency!</td>
+</tr>
+<tr>
+<td style="text-align: left;">com.squareup.okhttp3:mockwebserver3-junit4:5.0.0</td>
+<td style="text-align: left;">mockwebserver3.junit4</td>
+<td style="text-align: left;">Optional JUnit 4 integration.</td>
+</tr>
+<tr>
+<td style="text-align: left;">com.squareup.okhttp3:mockwebserver3-junit5:5.0.0</td>
+<td style="text-align: left;">mockwebserver3.junit5</td>
+<td style="text-align: left;">Optional JUnit 5 integration.</td>
+</tr>
+<tr>
+<td style="text-align: left;">com.squareup.okhttp3:mockwebserver:5.0.0</td>
+<td style="text-align: left;">okhttp3.mockwebserver</td>
+<td style="text-align: left;">Obsolete. Depends on JUnit 4.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>OkHttp now supports Happy Eyeballs (<a href="https://tools.ietf.org/html/rfc8305">RFC 8305</a>) for IPv4+IPv6 networks.</strong> It attempts
+both IPv6 and IPv4 connections concurrently, keeping whichever connects first.</p>
+<p><strong>We’ve improved our Kotlin APIs.</strong> You can skip the builder:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">val</span><span class="w"> </span><span class="nv">request</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Request</span><span class="p">(</span>
+<span class="w">  </span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://cash.app/&quot;</span><span class="p">.</span><span class="na">toHttpUrl</span><span class="p">(),</span>
+<span class="p">)</span>
+</code></pre></div>
+<p><strong>OkHttp now supports <a href="https://www.graalvm.org/">GraalVM</a>.</strong></p>
+<p>Here’s what has changed since 5.0.0-alpha.17:</p>
+<ul>
+<li>Upgrade: <a href="https://square.github.io/okio/changelog/#version-3150">Okio 3.15.0</a>.</li>
+<li>Upgrade: <a href="https://github.com/JetBrains/kotlin/releases/tag/v2.2.0">Kotlin 2.2.0</a>.</li>
+<li>Fix: Don&rsquo;t crash with a <code>NoSuchMethodError</code> when using OkHttp with the Sentry SDK.</li>
+<li>Fix: Retain the query data in the old <code>okhttp3.mockwebserver.RecordedRequest.path</code> property. We
+    inadvertently changed this behavior when we introduced the <code>mockwebserver3</code> API.</li>
+</ul>
 <h2 id="version-500-alpha17">Version 5.0.0-alpha.17<a class="headerlink" href="#version-500-alpha17" title="Permanent link">&para;</a></h2>
 <p><em>2025-06-29</em></p>
 <p>This release stabilizes many APIs for the imminent OkHttp 5.0.0 release.</p>
@@ -1715,6 +1791,10 @@
 <li>
 <p>Breaking: Don&rsquo;t automatically start <code>MockWebServer</code> after calls to accessors like <code>port</code>. Now
     these accessors will throw an <code>IllegalStateException</code> if the service has not yet been started.</p>
+</li>
+<li>
+<p>Breaking: Rename <code>RecordedRequest.path</code> to <code>RecordedRequest.target</code>. (This property is
+    <em>sometimes</em> a path, but it can also be a path and query, or a full URL.)</p>
 </li>
 <li>
 <p>Breaking: Decompose the <code>RecordedRequest.requestLine</code> into three properties, <code>method</code>, <code>target</code>,
@@ -2318,7 +2398,7 @@ release is the version name.</p>
       <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
     
   </body>
