@@ -491,8 +491,7 @@ jobs:
 
   testgraal:
     runs-on: ubuntu-latest
-    # TODO add master build after fixing all tests in CI
-    if: contains(github.event.pull_request.labels.*.name, 'graal')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'graal')
 
     steps:
       - name: Checkout
