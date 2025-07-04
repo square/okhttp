@@ -149,7 +149,7 @@ OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/5.0.0/jar).
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:5.0.0")
+testImplementation("com.squareup.okhttp3:mockwebserver3:5.0.0")
 ```
 
 MockWebServer is used for firstly for internal testing, and for basic testing of apps using OkHttp client.
