@@ -17,24 +17,17 @@ package okhttp3.nativeimage
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import kotlin.test.Test
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.junit5.StartStop
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClientTestRule
+import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.SimpleProvider
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ArgumentsSource
 
 class SampleTest {
-  @JvmField @RegisterExtension
-  val clientRule = OkHttpClientTestRule()
-
-  @StartStop
   private val server = MockWebServer()
+
+  private val client = OkHttpClient()
 
   @Test
   fun passingTest() {
@@ -45,7 +38,7 @@ class SampleTest {
   fun testMockWebServer() {
     server.enqueue(MockResponse(body = "abc"))
 
-    val client = clientRule.newClient()
+    server.start()
 
     client.newCall(Request(url = server.url("/"))).execute().use {
       assertThat(it.body.string()).isEqualTo("abc")
@@ -54,19 +47,8 @@ class SampleTest {
 
   @Test
   fun testExternalSite() {
-    val client = clientRule.newClient()
-
     client.newCall(Request(url = "https://google.com/robots.txt".toHttpUrl())).execute().use {
       assertThat(it.code).isEqualTo(200)
     }
   }
-
-  @ParameterizedTest
-  @ArgumentsSource(SampleTestProvider::class)
-  fun testParams(mode: String) {
-  }
-}
-
-class SampleTestProvider : SimpleProvider() {
-  override fun arguments() = listOf("A", "B")
 }
