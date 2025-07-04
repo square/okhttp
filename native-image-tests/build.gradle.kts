@@ -33,8 +33,8 @@ graalvmNative {
 
   binaries {
     named("test") {
-      // speed up development testing
       buildArgs.add("--strict-image-heap")
+
       // see https://github.com/junit-team/junit5/wiki/Upgrading-to-JUnit-5.13
       // should not be needed after updating native build tools to 0.11.0
       val initializeAtBuildTime = listOf(
@@ -58,7 +58,8 @@ graalvmNative {
         "org.junit.platform.suite.engine.SuiteTestDescriptor\$LifecycleMethods"
       )
       buildArgs.add("--initialize-at-build-time=${initializeAtBuildTime.joinToString(",")}")
-      buildArgs.add("--trace-class-initialization=kotlin.annotation.AnnotationTarget,org.junit.platform.launcher.core.DiscoveryIssueNotifier,org.junit.platform.launcher.core.LauncherPhase,org.junit.platform.launcher.core.HierarchicalOutputDirectoryProvider,kotlin.annotation.AnnotationRetention,org.junit.platform.engine.support.store.NamespacedHierarchicalStore\$EvaluatedValue")
+
+      // speed up development testing
       buildArgs.add("-Ob")
     }
   }
