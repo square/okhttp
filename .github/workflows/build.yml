@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - publish-fork
   pull_request:
     types: [opened, labeled, unlabeled, synchronize]
 
@@ -14,6 +15,42 @@ env:
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
 
 jobs:
+  publish-ghcr:
+    runs-on: ubuntu-latest
+    if: github.repository == 'gesellix/okhttp'
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 11
+
+      - name: Configure JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Upload Artifacts
+        run: ./gradlew clean publishAllPublicationsToGithubPackagesRepository --stacktrace
+        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ORG_GRADLE_PROJECT_githubPackagesUsername: ${{ env.GITHUB_ACTOR }}
+          ORG_GRADLE_PROJECT_githubPackagesPassword: ${{ secrets.GITHUB_TOKEN }}
+#          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SECRET_KEY }}
+#          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SECRET_PASSPHRASE }}
+
   publish:
     runs-on: ubuntu-latest
     if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
