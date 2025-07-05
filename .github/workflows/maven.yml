@@ -34,4 +34,4 @@ jobs:
 
       - name: Run maven test
         working-directory: ./maven-tests
-        run: ./mvnw verify
+        run: ./mvnw -q verify
