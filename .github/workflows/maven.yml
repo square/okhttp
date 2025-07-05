@@ -1,4 +1,4 @@
-name: containers
+name: maven
 
 on:
   push:
@@ -14,7 +14,7 @@ env:
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
 
 jobs:
-  test_containers:
+  test_maven:
     permissions:
       checks: write # for actions/upload-artifact
     runs-on: ubuntu-latest
