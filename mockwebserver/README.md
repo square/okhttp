@@ -27,50 +27,50 @@ Use MockWebServer the same way that you use mocking frameworks like
 
 Here's a complete example:
 
-```java
-public void test() throws Exception {
+```kotlin
+fun test() {
   // Create a MockWebServer. These are lean enough that you can create a new
   // instance for every unit test.
-  MockWebServer server = new MockWebServer();
+  val server = MockWebServer()
 
   // Schedule some responses.
-  server.enqueue(new MockResponse.Builder().body("hello, world!").build());
-  server.enqueue(new MockResponse.Builder().body("sup, bra?").build());
-  server.enqueue(new MockResponse.Builder().body("yo dog").build());
+  server.enqueue(MockResponse(body = "hello, world!"))
+  server.enqueue(MockResponse(body = "sup, bra?"))
+  server.enqueue(MockResponse(body = "yo dog"))
 
   // Start the server.
-  server.start();
+  server.start()
 
   // Ask the server for its URL. You'll need this to make HTTP requests.
-  HttpUrl baseUrl = server.url("/v1/chat/");
+  val baseUrl = server.url("/v1/chat/")
 
   // Exercise your application code, which should make those HTTP requests.
   // Responses are returned in the same order that they are enqueued.
-  Chat chat = new Chat(baseUrl);
+  val chat = Chat(baseUrl)
 
-  chat.loadMore();
-  assertEquals("hello, world!", chat.messages());
+  chat.loadMore()
+  assertThat(chat.messages()).isEqualTo("hello, world!")
 
-  chat.loadMore();
-  chat.loadMore();
-  assertEquals(""
-      + "hello, world!\n"
-      + "sup, bra?\n"
-      + "yo dog", chat.messages());
+  chat.loadMore()
+  chat.loadMore()
+  assertThat(chat.messages()).isEqualTo(""
+    + "hello, world!\n"
+    + "sup, bra?\n"
+    + "yo dog")
 
   // Optional: confirm that your app made the HTTP requests you were expecting.
-  RecordedRequest request1 = server.takeRequest();
-  assertEquals("/v1/chat/messages/", request1.getUrl().encodedPath());
-  assertNotNull(request1.getHeaders().get("Authorization"));
+  val request1 = server.takeRequest()
+  assertThat(request1.url.encodedPath).isEqualTo("/v1/chat/messages/")
+  assertThat(request1.headers["Authorization"]).isNotNull()
 
-  RecordedRequest request2 = server.takeRequest();
-  assertEquals("/v1/chat/messages/2", request2.getUrl().encodedPath());
+  val request2 = server.takeRequest()
+  assertThat(request2.url.encodedPath).isEqualTo("/v1/chat/messages/2")
 
-  RecordedRequest request3 = server.takeRequest();
-  assertEquals("/v1/chat/messages/3", request3.getUrl().encodedPath());
+  val request3 = server.takeRequest()
+  assertThat(request3.url.encodedPath).isEqualTo("/v1/chat/messages/3")
 
   // Shut down the server. Instances cannot be reused.
-  server.close();
+  server.close()
 }
 ```
 
@@ -85,12 +85,12 @@ Mock responses default to an empty response body and a `200` status code.
 You can set a custom body with a string, input stream or byte array. Also
 add headers with a fluent builder API.
 
-```java
-MockResponse response = new MockResponse().Builder()
-    .addHeader("Content-Type", "application/json; charset=utf-8")
-    .addHeader("Cache-Control", "no-cache")
-    .body("{}")
-    .build();
+```kotlin
+val response = MockResponse.Builder()
+  .addHeader("Content-Type", "application/json; charset=utf-8")
+  .addHeader("Cache-Control", "no-cache")
+  .body("{}")
+  .build()
 ```
 
 MockResponse can be used to simulate a slow network. This is useful for
@@ -98,13 +98,13 @@ testing timeouts and interactive testing.
 Note: In OkHttp 5.x, throttleBody() must be called on the Builder before build(),
 since MockResponse is immutable.
 
-```java
-MockResponse response = new MockResponse.Builder()
+```kotlin
+val response = MockResponse.Builder()
   .addHeader("Content-Type", "application/json; charset=utf-8")
   .addHeader("Cache-Control", "no-cache")
   .body("{}")
   .throttleBody(1024, 1, TimeUnit.SECONDS)
-  .build();
+  .build()
 ```
 
 
@@ -112,11 +112,11 @@ MockResponse response = new MockResponse.Builder()
 
 Verify requests by their method, path, HTTP version, body, and headers.
 
-```java
-RecordedRequest request = server.takeRequest();
-assertEquals("POST /v1/chat/send HTTP/1.1", request.getRequestLine());
-assertEquals("application/json; charset=utf-8", request.getHeaders().get("Content-Type"));
-assertEquals("{}", request.getBody().utf8());
+```kotlin
+val request = server.takeRequest()
+assertThat(request.requestLine).isEqualTo("POST /v1/chat/send HTTP/1.1")
+assertThat(request.headers["Content-Type"]).isEqualTo("application/json; charset=utf-8")
+assertThat(request.body!!.utf8()).isEqualTo("{}")
 ```
 
 #### Dispatcher
@@ -126,25 +126,37 @@ Dispatcher (`import okhttp3.mockwebserver.Dispatcher`) to handle requests using 
 dispatch on the request path.
 You can, for example, filter the request instead of using `server.enqueue()`.
 
-```java
-final Dispatcher dispatcher = new Dispatcher() {
-
-    @NotNull
-    @Override
-    public MockResponse dispatch (@NotNull RecordedRequest request) throws InterruptedException {
-
-        switch (request.getUrl().encodedPath()) {
-            case "/v1/login/auth/":
-                return new MockResponse.Builder().code(200).build();
-            case "/v1/check/version/":
-                return new MockResponse.Builder().code(200).body("version=9").build();
-            case "/v1/profile/info":
-                return new MockResponse.Builder().code(200).body("{\\\"info\\\":{\\\"name\":\"Lucas Albuquerque\",\"age\":\"21\",\"gender\":\"male\"}}").build();
-        }
-        return new MockResponse.Builder().code(404).build();
+```kotlin
+val dispatcher = object : Dispatcher() {
+  override fun dispatch(request: RecordedRequest): MockResponse {
+    return when (request.url.encodedPath) {
+      "/v1/login/auth/" -> {
+        MockResponse.Builder()
+          .code(200)
+          .build()
+      }
+      "/v1/check/version/" -> {
+        MockResponse.Builder()
+          .code(200)
+          .body("version=9")
+          .build()
+      }
+      "/v1/profile/info" -> {
+        MockResponse.Builder()
+          .code(200)
+          .body("{\\\"info\\\":{\\\"name\":\"Lucas Albuquerque\",\"age\":\"21\",\"gender\":\"male\"}}")
+          .build()
+      }
+      else -> {
+        MockResponse.Builder()
+          .code(404)
+          .build()
+      }
     }
-};
-server.setDispatcher(dispatcher);
+  }
+}
+
+server.dispatcher = dispatcher
 ```
 
 
