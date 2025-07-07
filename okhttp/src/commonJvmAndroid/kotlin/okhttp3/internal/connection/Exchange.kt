@@ -141,7 +141,7 @@ class Exchange(
   }
 
   @Throws(IOException::class)
-  fun trailers(): Headers = codec.trailers()
+  fun peekTrailers(): Headers? = codec.peekTrailers()
 
   @Throws(SocketException::class)
   fun newWebSocketStreams(): RealWebSocket.Streams {
