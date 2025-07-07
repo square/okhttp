@@ -6,6 +6,7 @@
   <application>
     <provider
       android:name="androidx.startup.InitializationProvider"
+      android:multiprocess="true"
       android:authorities="${applicationId}.androidx-startup"
       android:exported="false"
       tools:node="merge">
