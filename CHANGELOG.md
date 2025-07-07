@@ -5,6 +5,19 @@ Change Log
 
 See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
 
+## Version 5.1.0
+
+_2025-07-07_
+
+ *  New: `Response.peekTrailers()`. When we changed `Response.trailers()` to block instead of
+    throwing in 5.0.0, we inadvertently removed the ability for callers to peek the trailers
+    (by catching the `IllegalStateException` if they weren't available). This new API restores that
+    capability.
+
+ *  Fix: Don't crash on `trailers()` if the response doesn't have a body. We broke [Retrofit] users
+    who read the trailers on the `raw()` OkHttp response, after its body was decoded.
+
+
 ## Version 5.0.0
 
 _2025-07-02_
@@ -630,6 +643,7 @@ release is the version name.
 [GraalVM]: https://www.graalvm.org/
 [Gradle module metadata]: https://docs.gradle.org/current/userguide/publishing_gradle_module_metadata.html
 [Ktor]: https://ktor.io/
+[Retrofit]: https://square.github.io/retrofit/
 [annotation_1_9_1]: https://developer.android.com/jetpack/androidx/releases/annotation#annotation-1.9.1
 [assertk]: https://github.com/willowtreeapps/assertk
 [coroutines_1_10_2]: https://github.com/Kotlin/kotlinx.coroutines/releases/tag/1.10.2
