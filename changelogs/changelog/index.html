@@ -1019,6 +1019,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#version-510" class="md-nav__link">
+    <span class="md-ellipsis">
+      Version 5.1.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-500" class="md-nav__link">
     <span class="md-ellipsis">
       Version 5.0.0
@@ -1487,6 +1496,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#version-510" class="md-nav__link">
+    <span class="md-ellipsis">
+      Version 5.1.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-500" class="md-nav__link">
     <span class="md-ellipsis">
       Version 5.0.0
@@ -1667,6 +1685,20 @@
 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
 <h2 id="version-4x">Version 4.x<a class="headerlink" href="#version-4x" title="Permanent link">&para;</a></h2>
 <p>See <a href="https://square.github.io/okhttp/changelogs/changelog_4x/">4.x Change log</a> for the stable version changelogs.</p>
+<h2 id="version-510">Version 5.1.0<a class="headerlink" href="#version-510" title="Permanent link">&para;</a></h2>
+<p><em>2025-07-07</em></p>
+<ul>
+<li>
+<p>New: <code>Response.peekTrailers()</code>. When we changed <code>Response.trailers()</code> to block instead of
+    throwing in 5.0.0, we inadvertently removed the ability for callers to peek the trailers
+    (by catching the <code>IllegalStateException</code> if they weren&rsquo;t available). This new API restores that
+    capability.</p>
+</li>
+<li>
+<p>Fix: Don&rsquo;t crash on <code>trailers()</code> if the response doesn&rsquo;t have a body. We broke <a href="https://square.github.io/retrofit/">Retrofit</a> users
+    who read the trailers on the <code>raw()</code> OkHttp response, after its body was decoded.</p>
+</li>
+</ul>
 <h2 id="version-500">Version 5.0.0<a class="headerlink" href="#version-500" title="Permanent link">&para;</a></h2>
 <p><em>2025-07-02</em></p>
 <p>This is our first stable release of OkHttp since 2023. Here&rsquo;s the highlights if you&rsquo;re upgrading
