@@ -64,8 +64,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -101,8 +99,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -143,8 +139,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -171,8 +165,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -199,8 +191,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Install Old JDK 8
         uses: actions/setup-java@v4
@@ -233,8 +223,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -261,8 +249,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -289,8 +275,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -318,8 +302,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -346,8 +328,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -374,8 +354,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -408,8 +386,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDKs
         uses: actions/setup-java@v4
@@ -438,8 +414,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -468,8 +442,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -496,8 +468,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -547,8 +517,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -620,8 +588,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -663,8 +629,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
