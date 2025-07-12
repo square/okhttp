@@ -716,3 +716,26 @@ jobs:
           script: ./gradlew -PandroidBuild=true :regression-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
+
+  test_maven:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Publish local snapshot
+        run: ./gradlew publishToMavenLocal
+
+      - name: Run maven test
+        working-directory: ./maven-tests
+        run: ./mvnw -q verify
