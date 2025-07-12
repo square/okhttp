@@ -403,6 +403,7 @@ jobs:
 
   testopenjdkearlyaccess:
     runs-on: ubuntu-latest
+    if: false # https://youtrack.jetbrains.com/issue/KTOR-8489
 
     steps:
       - name: Checkout
