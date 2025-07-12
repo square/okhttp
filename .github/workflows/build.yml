@@ -718,8 +718,6 @@ jobs:
           API_LEVEL: ${{ matrix.api-level }}
 
   test_maven:
-    permissions:
-      checks: write # for actions/upload-artifact
     runs-on: ubuntu-latest
 
     steps:
