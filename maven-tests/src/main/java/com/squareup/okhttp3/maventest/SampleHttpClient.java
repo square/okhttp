@@ -31,8 +31,8 @@ public class SampleHttpClient {
     client = new OkHttpClient.Builder().build();
   }
 
-  public void makeCall() throws IOException {
-    try (Response response = client.newCall(new Request(HttpUrl.get("https://google.com/robots.txt"), Headers.EMPTY, "GET", null)).execute()) {
+  public void makeCall(HttpUrl url) throws IOException {
+    try (Response response = client.newCall(new Request(url, Headers.EMPTY, "GET", null)).execute()) {
       System.out.println(response.body().string());
     }
   }

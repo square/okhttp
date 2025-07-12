@@ -6,7 +6,7 @@
 
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>maven-tests</artifactId>
-  <version>5.0.0-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
 
   <name>maven-tests</name>
   <description>A simple maven-test.</description>
@@ -21,27 +21,28 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.12</version>
+      <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
+<!--      <artifactId>okhttp</artifactId>-->
       <artifactId>okhttp-jvm</artifactId>
-      <version>5.0.0</version>
+      <version>[5.0.0-SNAPSHOT,6.0.0-SNAPSHOT)</version>
     </dependency>
 
-<!--    <dependency>-->
-<!--      <groupId>com.squareup.okhttp3</groupId>-->
-<!--      <artifactId>okhttp</artifactId>-->
-<!--      <version>5.0.0</version>-->
-<!--    </dependency>-->
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>mockwebserver3</artifactId>
+      <version>[5.0.0-SNAPSHOT,6.0.0-SNAPSHOT)</version>
+    </dependency>
 
-<!--    <dependency>-->
-<!--      <groupId>com.squareup.okhttp3</groupId>-->
-<!--      <artifactId>logging-interceptor</artifactId>-->
-<!--      <version>5.0.0</version>-->
-<!--    </dependency>-->
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>logging-interceptor</artifactId>
+      <version>[5.0.0-SNAPSHOT,6.0.0-SNAPSHOT)</version>
+    </dependency>
   </dependencies>
 
   <build>
