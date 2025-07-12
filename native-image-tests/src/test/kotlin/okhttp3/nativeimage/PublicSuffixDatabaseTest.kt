@@ -18,15 +18,9 @@ package okhttp3.nativeimage
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 
 class PublicSuffixDatabaseTest {
-  @RegisterExtension
-  @JvmField
-  val platform = PlatformRule()
-
   @Test
   fun testResourcesLoaded() {
     val url = "https://api.twitter.com".toHttpUrl()

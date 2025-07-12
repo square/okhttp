@@ -168,11 +168,10 @@ class Http2Stream internal constructor(
   }
 
   /**
-   * Returns the trailers. It is only safe to call this once the source stream has been completely
-   * exhausted.
+   * Returns the trailers if they're immediately available.
    */
   @Throws(IOException::class)
-  fun trailers(): Headers {
+  fun peekTrailers(): Headers? {
     withLock {
       if (source.finished && source.receiveBuffer.exhausted() && source.readBuffer.exhausted()) {
         return source.trailers ?: Headers.EMPTY
@@ -180,7 +179,7 @@ class Http2Stream internal constructor(
       if (errorCode != null) {
         throw errorException ?: StreamResetException(errorCode!!)
       }
-      throw IllegalStateException("too early; can't read the trailers yet")
+      return null
     }
   }
 

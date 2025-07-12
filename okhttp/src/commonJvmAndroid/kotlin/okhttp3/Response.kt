@@ -28,7 +28,6 @@ import okhttp3.internal.connection.Exchange
 import okhttp3.internal.http.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.HTTP_TEMP_REDIRECT
 import okhttp3.internal.http.parseChallenges
-import okhttp3.internal.skipAll
 import okio.Buffer
 
 /**
@@ -191,13 +190,27 @@ class Response internal constructor(
    *     dropped.
    */
   @Throws(IOException::class)
-  fun trailers(): Headers {
-    val source = body.source()
-    if (source.isOpen) {
-      source.skipAll()
-    }
-    return trailersSource.get()
-  }
+  fun trailers(): Headers = trailersSource.get()
+
+  /**
+   * Returns the trailers after the HTTP response, if they are available to read immediately. Unlike
+   * [trailers], this doesn't block if the trailers are not immediately available, and instead
+   * returns null.
+   *
+   * This will typically return null until [ResponseBody.source] has buffered the last byte of the
+   * response body. Call `body.source().request(1024 * 1024)` to block until either that's done, or
+   * 1 MiB of response data is loaded into memory. (You could use any size here, though large values
+   * risk exhausting memory.)
+   *
+   * This returns an empty value if the trailers are available, but have no data.
+   *
+   * It is not safe to call this concurrently with code that is processing the response body.
+   *
+   * @throws IOException if the trailers cannot be loaded, such as if the network connection is
+   *     dropped.
+   */
+  @Throws(IOException::class)
+  fun peekTrailers(): Headers? = trailersSource.peek()
 
   /**
    * Peeks up to [byteCount] bytes from the response body and returns them as a new response
@@ -478,7 +491,6 @@ class Response internal constructor(
 
     internal fun initExchange(exchange: Exchange) {
       this.exchange = exchange
-      this.trailersSource = TrailersSource { exchange.trailers() }
     }
 
     open fun build(): Response {

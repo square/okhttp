@@ -17,10 +17,13 @@ package okhttp3.internal.http
 
 import java.io.IOException
 import java.net.ProtocolException
+import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Response
+import okhttp3.TrailersSource
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.http2.ConnectionShutdownException
+import okhttp3.internal.skipAll
 import okhttp3.internal.stripBody
 import okio.buffer
 
@@ -129,10 +132,23 @@ class CallServerInterceptor(
           // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
           response.stripBody()
         } else {
+          val responseBody = exchange.openResponseBody(response)
           response
             .newBuilder()
-            .body(exchange.openResponseBody(response))
-            .build()
+            .body(responseBody)
+            .trailers(
+              object : TrailersSource {
+                override fun peek() = exchange.peekTrailers()
+
+                override fun get(): Headers {
+                  val source = responseBody.source()
+                  if (source.isOpen) {
+                    source.skipAll()
+                  }
+                  return peek() ?: error("null trailers after exhausting response body?!")
+                }
+              },
+            ).build()
         }
       if ("close".equals(response.request.header("Connection"), ignoreCase = true) ||
         "close".equals(response.header("Connection"), ignoreCase = true)

@@ -33,7 +33,7 @@ import okio.ByteString
 internal fun RecordedRequest(
   requestLine: RequestLine,
   headers: Headers,
-  chunkSizes: List<Int>,
+  chunkSizes: List<Int>?,
   bodySize: Long,
   body: ByteString?,
   connectionIndex: Int,

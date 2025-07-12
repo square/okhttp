@@ -40,9 +40,11 @@ class ResponseJvmTest {
   fun worksIfTrailersSet() {
     val response =
       newResponse("".toResponseBody()) {
-        trailers {
-          Headers.headersOf("a", "b")
-        }
+        trailers(
+          object : TrailersSource {
+            override fun get() = Headers.headersOf("a", "b")
+          },
+        )
       }
 
     assertThat(response.trailers()["a"]).isEqualTo("b")
