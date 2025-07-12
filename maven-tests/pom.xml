@@ -22,7 +22,7 @@
       <dependency>
         <groupId>com.squareup.okhttp3</groupId>
         <artifactId>okhttp-bom</artifactId>
-        <version>5.2.0-SNAPSHOT</version>
+        <version>[5.2.0-SNAPSHOT,6.0.0-SNAPSHOT)</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
