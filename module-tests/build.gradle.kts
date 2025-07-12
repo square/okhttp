@@ -12,12 +12,10 @@ dependencies {
   implementation(projects.okhttp)
   implementation(projects.loggingInterceptor)
 
-  testImplementation(projects.okhttpTestingSupport)
-  testImplementation(libs.junit)
-  testImplementation(libs.kotlin.test.common)
-  testImplementation(libs.kotlin.test.junit)
-  testImplementation(libs.assertk)
+  testImplementation(projects.okhttp)
+  testImplementation(projects.loggingInterceptor)
 
+  testImplementation(libs.junit.jupiter.api)
   testRuntimeOnly(libs.junit.jupiter.engine)
   testRuntimeOnly(libs.junit.platform.launcher)
 }
@@ -45,7 +43,6 @@ val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
 
 tasks.withType<Test> {
   useJUnitPlatform()
-  systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
 
   enabled = testJavaVersion > 8
 

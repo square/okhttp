@@ -37,7 +37,6 @@ include(":okhttp-hpacktests")
 include(":okhttp-idna-mapping-table")
 include(":okhttp-java-net-cookiejar")
 include(":okhttp-logging-interceptor")
-include(":okhttp-module-tests")
 include(":okhttp-osgi-tests")
 include(":okhttp-sse")
 include(":okhttp-testing-support")
@@ -52,6 +51,7 @@ include(":samples:static-server")
 include(":samples:tlssurvey")
 include(":samples:unixdomainsockets")
 include(":container-tests")
+include(":module-tests")
 
 project(":okhttp-logging-interceptor").name = "logging-interceptor"
 
