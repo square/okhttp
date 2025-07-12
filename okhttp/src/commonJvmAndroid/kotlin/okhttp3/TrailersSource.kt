@@ -27,12 +27,20 @@ import okio.IOException
  * This interface is for test and production code that creates [Response] instances without making
  * an HTTP call to a remote server.
  */
-fun interface TrailersSource {
+interface TrailersSource {
+  @Throws(IOException::class)
+  fun peek(): Headers? = null
+
   @Throws(IOException::class)
   fun get(): Headers
 
   companion object {
     @JvmField
-    val EMPTY: TrailersSource = TrailersSource { Headers.EMPTY }
+    val EMPTY: TrailersSource =
+      object : TrailersSource {
+        override fun peek() = Headers.EMPTY
+
+        override fun get() = Headers.EMPTY
+      }
   }
 }

@@ -23,6 +23,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThan
 import assertk.assertions.isLessThan
+import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import java.io.EOFException
 import java.io.IOException
@@ -558,7 +559,7 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries("a", "artichaut"), false)
     connection.writePingAndAwaitPong()
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("headers", "bam"))
-    assertThat(stream.trailers()).isEqualTo(Headers.EMPTY)
+    assertThat(stream.peekTrailers()).isEqualTo(Headers.EMPTY)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
@@ -586,7 +587,7 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries("a", "artichaut"), false)
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("headers", "bam"))
     connection.writePingAndAwaitPong()
-    assertThat(stream.trailers()).isEqualTo(headersOf("trailers", "boom"))
+    assertThat(stream.peekTrailers()).isEqualTo(headersOf("trailers", "boom"))
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
@@ -647,7 +648,7 @@ class Http2ConnectionTest {
     connection.writePingAndAwaitPong()
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
     stream.sink.close()
-    assertThat(stream.trailers()).isEqualTo(headersOf("z", "zebra"))
+    assertThat(stream.peekTrailers()).isEqualTo(headersOf("z", "zebra"))
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
@@ -748,9 +749,7 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("a", "artichaut"), true)
     connection.writePingAndAwaitPong()
-    assertFailsWith<IllegalStateException> {
-      stream.trailers()
-    }
+    assertThat(stream.peekTrailers()).isNull()
   }
 
   @Test fun clientCannotReadTrailersIfTheStreamFailed() {
@@ -768,7 +767,7 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries("a", "artichaut"), true)
     connection.writePingAndAwaitPong()
     assertFailsWith<StreamResetException> {
-      stream.trailers()
+      stream.peekTrailers()
     }
   }
 
@@ -809,7 +808,7 @@ class Http2ConnectionTest {
     connection.writePingAndAwaitPong()
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("headers", "bam"))
     assertThat(source.readUtf8(5)).isEqualTo("robot")
-    assertThat(stream.trailers()).isEqualTo(Headers.EMPTY)
+    assertThat(stream.peekTrailers()).isEqualTo(Headers.EMPTY)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
@@ -1701,7 +1700,7 @@ class Http2ConnectionTest {
     stream.connection.flush()
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
     connection.writePingAndAwaitPong()
-    assertThat(stream.trailers()).isEqualTo(headersOf("c", "cola"))
+    assertThat(stream.peekTrailers()).isEqualTo(headersOf("c", "cola"))
 
     // Verify the peer received what was expected.
     assertThat(peer.takeFrame().type).isEqualTo(Http2.TYPE_HEADERS)

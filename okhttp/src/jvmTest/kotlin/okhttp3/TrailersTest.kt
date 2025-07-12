@@ -37,6 +37,7 @@ import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.internal.http2.Http2Connection.Companion.OKHTTP_CLIENT_WINDOW_SIZE
 import okhttp3.testing.PlatformRule
 import okio.BufferedSource
 import okio.IOException
@@ -480,10 +481,141 @@ open class TrailersTest {
 
             override fun source(): BufferedSource = error("unexpected call")
           },
-        ).trailers { headersOf("t1", "v1") }
-        .build()
+        ).trailers(
+          object : TrailersSource {
+            override fun get(): Headers = headersOf("t1", "v1")
+          },
+        ).build()
 
     assertThat(response.trailers()).isEqualTo(headersOf("t1", "v1"))
+  }
+
+  @Test
+  fun peekTrailersHttp1() {
+    peekTrailers(Protocol.HTTP_1_1)
+  }
+
+  @Test
+  fun peekTrailersHttp2() {
+    peekTrailers(Protocol.HTTP_2)
+  }
+
+  private fun peekTrailers(protocol: Protocol) {
+    val responseBody = "a".repeat(OKHTTP_CLIENT_WINDOW_SIZE)
+    enableProtocol(protocol)
+
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("h1", "v1")
+        .trailers(headersOf("t1", "v2"))
+        .body(protocol, responseBody)
+        .build(),
+    )
+
+    val call = client.newCall(Request(server.url("/")))
+    call.execute().use { response ->
+      val source = response.body.source()
+      assertThat(response.header("h1")).isEqualTo("v1")
+      assertThat(response.peekTrailers()).isNull()
+      assertThat(source.readUtf8()).isEqualTo(responseBody)
+      assertThat(response.peekTrailers()).isEqualTo(headersOf("t1", "v2"))
+      assertThat(response.peekTrailers()).isEqualTo(headersOf("t1", "v2")) // Idempotent.
+      assertThat(response.trailers()).isEqualTo(headersOf("t1", "v2"))
+    }
+  }
+
+  @Test
+  fun trailersWithServerTruncatedResponseHttp1() {
+    trailersWithServerTruncatedResponse(Protocol.HTTP_1_1)
+  }
+
+  @Test
+  fun trailersWithServerTruncatedResponseHttp2() {
+    trailersWithServerTruncatedResponse(Protocol.HTTP_2)
+  }
+
+  /**
+   * If the server closes the connection while the client is consuming the response body, attempts
+   * to peek or read the trailers should throw.
+   */
+  private fun trailersWithServerTruncatedResponse(protocol: Protocol) {
+    val responseBody = "a".repeat(OKHTTP_CLIENT_WINDOW_SIZE)
+    enableProtocol(protocol)
+
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("h1", "v1")
+        .trailers(headersOf("t1", "v2"))
+        .body(protocol, responseBody)
+        .onResponseBody(CloseSocket())
+        .build(),
+    )
+
+    val call = client.newCall(Request(server.url("/")))
+    call.execute().use { response ->
+      val source = response.body.source()
+      assertThat(response.header("h1")).isEqualTo("v1")
+      assertThat(response.peekTrailers()).isNull()
+      assertFailsWith<IOException> {
+        source.readUtf8()
+      }
+      try {
+        assertThat(response.peekTrailers()).isNull() // Okay. This is what HTTP/1 does.
+      } catch (_: IOException) {
+        // Also okay. This is what HTTP/2 does.
+      }
+      assertFailsWith<IOException> {
+        response.trailers()
+      }
+    }
+  }
+
+  @Test
+  fun trailersWithClientPrematureCloseHttp1() {
+    trailersWithClientPrematureClose(Protocol.HTTP_1_1)
+  }
+
+  @Test
+  fun trailersWithClientPrematureCloseHttp2() {
+    trailersWithClientPrematureClose(Protocol.HTTP_2)
+  }
+
+  /**
+   * If the client closes the connection while it is consuming the response body, attempts to peek
+   * or read the trailers should throw.
+   */
+  private fun trailersWithClientPrematureClose(protocol: Protocol) {
+    val halfResponseBody = "a".repeat(OKHTTP_CLIENT_WINDOW_SIZE)
+    enableProtocol(protocol)
+
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("h1", "v1")
+        .trailers(headersOf("t1", "v2"))
+        .body(protocol, halfResponseBody + halfResponseBody)
+        .build(),
+    )
+
+    val call = client.newCall(Request(server.url("/")))
+    call.execute().use { response ->
+      val source = response.body.source()
+      assertThat(response.header("h1")).isEqualTo("v1")
+      assertThat(response.peekTrailers()).isNull()
+      assertThat(source.readUtf8(halfResponseBody.length.toLong())).isEqualTo(halfResponseBody)
+      source.close()
+      assertFailsWith<IllegalStateException> {
+        source.readUtf8()
+      }
+      assertFailsWith<IOException> {
+        response.peekTrailers()
+      }
+      assertFailsWith<IOException> {
+        response.trailers()
+      }
+    }
   }
 
   private fun MockResponse.Builder.body(
@@ -491,7 +623,7 @@ open class TrailersTest {
     body: String,
   ) = apply {
     when (protocol) {
-      Protocol.HTTP_1_1 -> chunkedBody(body)
+      Protocol.HTTP_1_1 -> chunkedBody(body, 1024) // Force multiple chunks.
       else -> body(body)
     }
   }
