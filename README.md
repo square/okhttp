@@ -141,6 +141,48 @@ Also, we have a [bill of materials (BOM)][bom] available to help you keep OkHttp
     }
 ```
 
+Maven and JVM Projects
+----------------------
+
+OkHttp is published as a Kotlin Multiplatform project. While Gradle handles this automatically,
+Maven projects must select between `okhttp-jvm` and `okhttp-android`. The `okhttp` artifact will be empty in
+Maven projects.
+
+```xml
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp-bom</artifactId>
+      <version>5.2.0</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+```
+
+
+
+```xml
+<dependency>
+  <groupId>com.squareup.okhttp3</groupId>
+  <artifactId>okhttp-jvm</artifactId>
+  <!-- Remove after OkHttp 5.3.0 with updated BOM. -->
+  <version>5.2.0</version>
+</dependency>
+
+<dependency>
+  <groupId>com.squareup.okhttp3</groupId>
+  <artifactId>mockwebserver3</artifactId>
+</dependency>
+
+<dependency>
+  <groupId>com.squareup.okhttp3</groupId>
+  <artifactId>logging-interceptor</artifactId>
+</dependency>
+```
+
 MockWebServer
 -------------
 
