@@ -115,7 +115,7 @@ class Http2ExchangeCodec(
 
   override fun openResponseBodySource(response: Response): Source = stream!!.source
 
-  override fun trailers(): Headers = stream!!.trailers()
+  override fun peekTrailers(): Headers? = stream!!.peekTrailers()
 
   override fun cancel() {
     canceled = true

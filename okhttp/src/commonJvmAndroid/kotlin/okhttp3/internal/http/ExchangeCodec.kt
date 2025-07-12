@@ -66,9 +66,9 @@ interface ExchangeCodec {
   @Throws(IOException::class)
   fun openResponseBodySource(response: Response): Source
 
-  /** Returns the trailers after the HTTP response. May be empty. */
+  /** Returns the trailers after the HTTP response if they're ready. May be empty. */
   @Throws(IOException::class)
-  fun trailers(): Headers
+  fun peekTrailers(): Headers?
 
   /**
    * Cancel this stream. Resources held by this stream will be cleaned up, though not synchronously.

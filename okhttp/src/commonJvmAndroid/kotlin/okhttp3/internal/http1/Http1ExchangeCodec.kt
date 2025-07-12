@@ -147,11 +147,14 @@ class Http1ExchangeCodec(
       }
     }
 
-  override fun trailers(): Headers {
+  override fun peekTrailers(): Headers? {
     if (trailers === TRAILERS_RESPONSE_BODY_TRUNCATED) {
       throw IOException("Trailers cannot be read because the response body was truncated")
     }
-    return trailers ?: error("state: $state")
+    check(state == STATE_READING_RESPONSE_BODY || state == STATE_CLOSED) {
+      "Trailers cannot be read because the state is $state"
+    }
+    return trailers
   }
 
   override fun flushRequest() {
