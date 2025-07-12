@@ -18,7 +18,6 @@ project(":mockwebserver-junit5").name = "mockwebserver3-junit5"
 val androidBuild: String by settings
 val graalBuild: String by settings
 val loomBuild: String by settings
-val mavenBuild: String by settings
 
 if (androidBuild.toBoolean()) {
   include(":regression-test")
@@ -52,10 +51,6 @@ include(":samples:static-server")
 include(":samples:tlssurvey")
 include(":samples:unixdomainsockets")
 include(":container-tests")
-
-if (mavenBuild.toBoolean()) {
-  include(":maven-tests")
-}
 
 project(":okhttp-logging-interceptor").name = "logging-interceptor"
 
