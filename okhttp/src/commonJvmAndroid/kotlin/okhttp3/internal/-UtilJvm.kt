@@ -29,13 +29,13 @@ import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantLock
 import kotlin.text.Charsets.UTF_16BE
 import kotlin.text.Charsets.UTF_16LE
 import kotlin.text.Charsets.UTF_32BE
 import kotlin.text.Charsets.UTF_32LE
 import kotlin.text.Charsets.UTF_8
 import kotlin.time.Duration
+import okhttp3.Dispatcher
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.HttpUrl
@@ -175,6 +175,13 @@ internal fun Source.skipAll(
   }
 }
 
+@Throws(IOException::class)
+internal fun BufferedSource.skipAll() {
+  while (!exhausted()) {
+    skip(buffer.size)
+  }
+}
+
 /**
  * Attempts to exhaust this, returning true if successful. This is useful when reading a complete
  * source is helpful, such as when doing so completes a cache body or frees a socket connection for
@@ -234,7 +241,7 @@ internal inline fun threadName(
 }
 
 /** Returns the Content-Length as reported by the response headers. */
-internal fun Response.headersContentLength(): Long = headers["Content-Length"]?.toLongOrNull() ?: -1L
+internal fun Response.headersContentLength(): Long = headers["Content-Length"]?.toLongOrDefault(-1L) ?: -1L
 
 /** Returns an immutable wrap of this. */
 @Suppress("NOTHING_TO_INLINE")
@@ -249,14 +256,27 @@ internal inline fun <T> Set<T>.unmodifiable(): Set<T> = Collections.unmodifiable
 internal inline fun <K, V> Map<K, V>.unmodifiable(): Map<K, V> = Collections.unmodifiableMap(this)
 
 /** Returns an immutable copy of this. */
-internal inline fun <reified T> List<T>.toImmutableList(): List<T> = this.toTypedArray().toImmutableList()
+@Suppress("UNCHECKED_CAST")
+internal fun <T> List<T>.toImmutableList(): List<T> =
+  when {
+    this.isEmpty() -> emptyList()
+    this.size == 1 -> Collections.singletonList(this[0])
+    // Collection.toArray returns Object[] (covariant).
+    // It is faster than creating real T[] via reflection (Arrays.copyOf).
+    else -> (this as java.util.Collection<*>).toArray().asList().unmodifiable() as List<T>
+  }
 
 /** Returns an immutable list containing [elements]. */
 @SafeVarargs
 internal fun <T> immutableListOf(vararg elements: T): List<T> = elements.toImmutableList()
 
 /** Returns an immutable list from copy of this. */
-internal fun <T> Array<out T>?.toImmutableList(): List<T> = if (this.isNullOrEmpty()) emptyList() else this.asList().unmodifiable()
+internal fun <T> Array<out T>?.toImmutableList(): List<T> =
+  when {
+    this.isNullOrEmpty() -> emptyList()
+    this.size == 1 -> Collections.singletonList(this[0])
+    else -> this.clone().asList().unmodifiable()
+  }
 
 /** Closes this, ignoring any checked exceptions. */
 internal fun Socket.closeQuietly() {
@@ -289,15 +309,6 @@ internal fun Long.toHexString(): String = java.lang.Long.toHexString(this)
 
 internal fun Int.toHexString(): String = Integer.toHexString(this)
 
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-internal inline fun Any.wait() = (this as Object).wait()
-
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-internal inline fun Any.notify() = (this as Object).notify()
-
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-internal inline fun Any.notifyAll() = (this as Object).notifyAll()
-
 internal fun <T> readFieldOrNull(
   instance: Any,
   fieldType: Class<T>,
@@ -329,6 +340,13 @@ internal fun <T> readFieldOrNull(
 @JvmField
 internal val assertionsEnabled: Boolean = OkHttpClient::class.java.desiredAssertionStatus()
 
+/** Dispatcher is not [Lockable] because we don't want that type in our public API. */
+internal fun Dispatcher.assertLockNotHeld() {
+  if (assertionsEnabled && Thread.holdsLock(this)) {
+    throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
+  }
+}
+
 /**
  * Returns the string "OkHttp" unless the library has been shaded for inclusion in another library,
  * or obfuscated with tools like R8 or ProGuard. In such cases it'll return a longer string like
@@ -340,31 +358,3 @@ internal val okHttpName: String =
   OkHttpClient::class.java.name
     .removePrefix("okhttp3.")
     .removeSuffix("Client")
-
-@Suppress("NOTHING_TO_INLINE")
-internal inline fun ReentrantLock.assertHeld() {
-  if (assertionsEnabled && !this.isHeldByCurrentThread) {
-    throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
-  }
-}
-
-@Suppress("NOTHING_TO_INLINE")
-internal inline fun Any.assertThreadHoldsLock() {
-  if (assertionsEnabled && !Thread.holdsLock(this)) {
-    throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
-  }
-}
-
-@Suppress("NOTHING_TO_INLINE")
-internal inline fun ReentrantLock.assertNotHeld() {
-  if (assertionsEnabled && this.isHeldByCurrentThread) {
-    throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
-  }
-}
-
-@Suppress("NOTHING_TO_INLINE")
-internal inline fun Any.assertThreadDoesntHoldLock() {
-  if (assertionsEnabled && Thread.holdsLock(this)) {
-    throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
-  }
-}

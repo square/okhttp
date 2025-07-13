@@ -20,13 +20,12 @@ import java.net.HttpURLConnection.HTTP_UNAVAILABLE
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.logging.Logger
-import okhttp3.ExperimentalOkHttpApi
 
 /**
- * Default dispatcher that processes a script of responses. Populate the script by calling [enqueueResponse].
+ * Default dispatcher that processes a script of responses. Populate the script by calling
+ * [enqueue].
  */
-@ExperimentalOkHttpApi
-open class QueueDispatcher : Dispatcher() {
+public open class QueueDispatcher : Dispatcher() {
   protected val responseQueue: BlockingQueue<MockResponse> = LinkedBlockingQueue()
   private var failFastResponse: MockResponse? = null
 
@@ -53,36 +52,35 @@ open class QueueDispatcher : Dispatcher() {
     return result
   }
 
-  override fun peek(): MockResponse = responseQueue.peek() ?: failFastResponse ?: super.peek()
+  public override fun peek(): MockResponse = responseQueue.peek() ?: failFastResponse ?: super.peek()
 
-  open fun enqueueResponse(response: MockResponse) {
+  public open fun enqueue(response: MockResponse) {
     responseQueue.add(response)
   }
 
-  open fun clear() {
+  public open fun clear() {
     responseQueue.clear()
   }
 
-  override fun shutdown() {
+  public override fun close() {
     responseQueue.add(DEAD_LETTER)
   }
 
-  open fun setFailFast(failFast: Boolean) {
-    val failFastResponse =
-      if (failFast) {
-        MockResponse(code = HttpURLConnection.HTTP_NOT_FOUND)
-      } else {
-        null
-      }
-    setFailFast(failFastResponse)
+  public open fun setFailFast(failFast: Boolean) {
+    setFailFast(
+      failFastResponse =
+        when {
+          failFast -> MockResponse(code = HttpURLConnection.HTTP_NOT_FOUND)
+          else -> null
+        },
+    )
   }
 
-  open fun setFailFast(failFastResponse: MockResponse?) {
+  public open fun setFailFast(failFastResponse: MockResponse?) {
     this.failFastResponse = failFastResponse
   }
 
-  @ExperimentalOkHttpApi
-  companion object {
+  private companion object {
     /**
      * Enqueued on shutdown to release threads waiting on [dispatch]. Note that this response
      * isn't transmitted because the connection is closed before this response is returned.

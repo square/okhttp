@@ -398,6 +398,9 @@ class MockWebServerTest {
     } catch (e: ProtocolException) {
       // On Android, HttpURLConnection is implemented by OkHttp v2. OkHttp
       // treats an incomplete response body as a ProtocolException.
+    } catch (ioe: IOException) {
+      // Change in https://bugs.openjdk.org/browse/JDK-8335135
+      assertThat(ioe.message).isEqualTo("Premature EOF")
     }
   }
 
@@ -510,6 +513,7 @@ class MockWebServerTest {
     assertThat(request.requestLine).isEqualTo(
       "GET /a/deep/path?key=foo%20bar HTTP/1.1",
     )
+    assertThat(request.path).isEqualTo("/a/deep/path?key=foo%20bar")
     val requestUrl = request.requestUrl
     assertThat(requestUrl!!.scheme).isEqualTo("http")
     assertThat(requestUrl.host).isEqualTo(server.hostName)

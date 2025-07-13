@@ -1041,7 +1041,7 @@ class KotlinSourceModernTest {
     var path: String? = recordedRequest.path
     var headers: Headers = recordedRequest.headers
     val header: String? = recordedRequest.getHeader("")
-    var chunkSizes: List<Int> = recordedRequest.chunkSizes
+    var chunkSizes: List<Int>? = recordedRequest.chunkSizes
     var bodySize: Long = recordedRequest.bodySize
     var body: Buffer = recordedRequest.body
     var utf8Body: String = recordedRequest.body.readUtf8()

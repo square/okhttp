@@ -7,49 +7,25 @@ animalsniffer {
   isIgnoreFailures = true
 }
 
-val graal by sourceSets.creating
-
-sourceSets {
-  named("graal") {}
-  test {
-    java.srcDirs(
-      "../okhttp-brotli/src/test/java",
-      "../okhttp-dnsoverhttps/src/test/java",
-      "../okhttp-logging-interceptor/src/test/java",
-      "../okhttp-sse/src/test/java",
-    )
-  }
-}
+// TODO reenable other tests
+// https://github.com/square/okhttp/issues/8901
+//sourceSets {
+//  test {
+//    java.srcDirs(
+//      "../okhttp-brotli/src/test/java",
+//      "../okhttp-dnsoverhttps/src/test/java",
+//      "../okhttp-logging-interceptor/src/test/java",
+//      "../okhttp-sse/src/test/java",
+//    )
+//  }
+//}
 
 dependencies {
-  implementation(libs.junit.jupiter.api)
-  implementation(libs.junit.jupiter.engine)
-  implementation(libs.junit.platform.console)
-  implementation(libs.squareup.okio.fakefilesystem)
-
   implementation(projects.okhttp)
-  implementation(projects.okhttpBrotli)
-  implementation(projects.okhttpDnsoverhttps)
-  implementation(projects.loggingInterceptor)
-  implementation(projects.okhttpSse)
-  implementation(projects.okhttpTestingSupport)
-  implementation(projects.okhttpTls)
-  implementation(projects.mockwebserver3)
-  implementation(projects.mockwebserver)
-  implementation(projects.okhttpJavaNetCookiejar)
-  implementation(projects.mockwebserver3Junit5)
-  implementation(libs.aqute.resolve)
-  implementation(libs.junit.jupiter.api)
-  implementation(libs.junit.jupiter.params)
-  implementation(libs.assertk)
-  implementation(libs.kotlin.test.common)
-  implementation(libs.kotlin.test.junit)
 
-  compileOnly(libs.findbugs.jsr305)
-
-  "graalCompileOnly"(libs.nativeImageSvm)
-  "graalCompileOnly"(libs.graal.sdk)
-  nativeImageTestCompileOnly(graal.output.classesDirs)
+  testImplementation(projects.mockwebserver3Junit5)
+  testImplementation(libs.assertk)
+  testImplementation(kotlin("test"))
 }
 
 graalvmNative {
@@ -57,9 +33,31 @@ graalvmNative {
 
   binaries {
     named("test") {
-      buildArgs.add("--features=okhttp3.nativeImage.TestRegistration")
-      buildArgs.add("--initialize-at-build-time=org.junit.platform.engine.TestTag")
       buildArgs.add("--strict-image-heap")
+
+      // see https://github.com/junit-team/junit5/wiki/Upgrading-to-JUnit-5.13
+      // should not be needed after updating native build tools to 0.11.0
+      val initializeAtBuildTime = listOf(
+        "kotlin.coroutines.intrinsics.CoroutineSingletons",
+        "org.junit.jupiter.api.DisplayNameGenerator\$IndicativeSentences",
+        "org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor\$ClassInfo",
+        "org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor\$LifecycleMethods",
+        "org.junit.jupiter.engine.descriptor.ClassTemplateInvocationTestDescriptor",
+        "org.junit.jupiter.engine.descriptor.ClassTemplateTestDescriptor",
+        "org.junit.jupiter.engine.descriptor.DynamicDescendantFilter\$Mode",
+        "org.junit.jupiter.engine.descriptor.ExclusiveResourceCollector\$1",
+        "org.junit.jupiter.engine.descriptor.MethodBasedTestDescriptor\$MethodInfo",
+        "org.junit.jupiter.engine.config.InstantiatingConfigurationParameterConverter",
+        "org.junit.jupiter.engine.discovery.ClassSelectorResolver\$DummyClassTemplateInvocationContext",
+        "org.junit.platform.engine.support.store.NamespacedHierarchicalStore\$EvaluatedValue",
+        "org.junit.platform.launcher.core.DiscoveryIssueNotifier",
+        "org.junit.platform.launcher.core.HierarchicalOutputDirectoryProvider",
+        "org.junit.platform.launcher.core.LauncherConfig",
+        "org.junit.platform.launcher.core.LauncherPhase",
+        "org.junit.platform.launcher.core.LauncherDiscoveryResult\$EngineResultInfo",
+        "org.junit.platform.suite.engine.SuiteTestDescriptor\$LifecycleMethods"
+      )
+      buildArgs.add("--initialize-at-build-time=${initializeAtBuildTime.joinToString(",")}")
 
       // speed up development testing
       buildArgs.add("-Ob")

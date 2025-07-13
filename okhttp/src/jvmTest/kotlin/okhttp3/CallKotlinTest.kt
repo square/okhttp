@@ -26,8 +26,8 @@ import java.time.Duration
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.DisconnectAtStart
-import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
+import mockwebserver3.SocketEffect.CloseSocket
+import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -40,7 +40,6 @@ import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okio.BufferedSink
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -60,12 +59,9 @@ class CallKotlinTest {
 
   private var client = clientTestRule.newClient()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
-  private lateinit var server: MockWebServer
 
-  @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
-  }
+  @StartStop
+  private val server = MockWebServer()
 
   @Test
   fun legalToExecuteTwiceCloning() {
@@ -202,10 +198,15 @@ class CallKotlinTest {
         ).build()
 
     server.enqueue(
-      MockResponse(
-        body = "a",
-        socketPolicy = ShutdownOutputAtEnd,
-      ),
+      MockResponse
+        .Builder()
+        .body("a")
+        .onResponseEnd(
+          CloseSocket(
+            closeSocket = false,
+            shutdownOutput = true,
+          ),
+        ).build(),
     )
     server.enqueue(MockResponse(body = "b"))
 
@@ -213,7 +214,7 @@ class CallKotlinTest {
     val responseA = client.newCall(requestA).execute()
 
     assertThat(responseA.body.string()).isEqualTo("a")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
 
     // Give the socket a chance to become stale.
     connection!!.idleAtNs -= IDLE_CONNECTION_HEALTHY_NS
@@ -226,7 +227,7 @@ class CallKotlinTest {
       )
     val responseB = client.newCall(requestB).execute()
     assertThat(responseB.body.string()).isEqualTo("b")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   /** Confirm suppressed exceptions that occur while connecting are returned. */
@@ -234,7 +235,7 @@ class CallKotlinTest {
     val proxySelector = RecordingProxySelector()
     proxySelector.proxies.add(Proxy(Proxy.Type.HTTP, TestUtil.UNREACHABLE_ADDRESS_IPV4))
     proxySelector.proxies.add(Proxy.NO_PROXY)
-    server.shutdown()
+    server.close()
 
     client =
       client
@@ -258,8 +259,8 @@ class CallKotlinTest {
 
   /** Confirm suppressed exceptions that occur after connecting are returned. */
   @Test fun httpExceptionsAreReturnedAsSuppressed() {
-    server.enqueue(MockResponse(socketPolicy = DisconnectAtStart))
-    server.enqueue(MockResponse(socketPolicy = DisconnectAtStart))
+    server.enqueue(MockResponse.Builder().onRequestStart(CloseSocket()).build())
+    server.enqueue(MockResponse.Builder().onRequestStart(CloseSocket()).build())
 
     client =
       client

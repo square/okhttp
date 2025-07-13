@@ -26,11 +26,11 @@ class QueueDispatcher : Dispatcher() {
   override fun peek(): MockResponse = throw UnsupportedOperationException("unexpected call")
 
   fun enqueueResponse(response: MockResponse) {
-    delegate.enqueueResponse(response.wrap())
+    delegate.enqueue(response.wrap())
   }
 
   override fun shutdown() {
-    delegate.shutdown()
+    delegate.close()
   }
 
   fun setFailFast(failFast: Boolean) {

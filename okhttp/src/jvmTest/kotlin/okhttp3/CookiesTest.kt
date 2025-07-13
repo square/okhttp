@@ -33,10 +33,10 @@ import java.net.InetAddress
 import java.net.URI
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.Cookie.Companion.parse
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.java.net.cookiejar.JavaNetCookieJar
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -46,13 +46,11 @@ import org.junit.jupiter.api.extension.RegisterExtension
 class CookiesTest {
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
-  private lateinit var server: MockWebServer
-  private var client = clientTestRule.newClient()
 
-  @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
-  }
+  @StartStop
+  private val server = MockWebServer()
+
+  private var client = clientTestRule.newClient()
 
   @Test
   fun testNetscapeResponse() {

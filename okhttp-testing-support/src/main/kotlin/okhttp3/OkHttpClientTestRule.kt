@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress(
+  "CANNOT_OVERRIDE_INVISIBLE_MEMBER",
+  "INVISIBLE_MEMBER",
+  "INVISIBLE_REFERENCE",
+)
 
 package okhttp3
 
@@ -26,7 +31,7 @@ import java.util.logging.LogRecord
 import java.util.logging.Logger
 import okhttp3.internal.buildConnectionPool
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.connection.Locks.withLock
+import okhttp3.internal.concurrent.withLock
 import okhttp3.internal.connection.RealConnectionPool
 import okhttp3.internal.http2.Http2
 import okhttp3.internal.taskRunnerInternal
@@ -55,7 +60,7 @@ class OkHttpClientTestRule :
   private lateinit var testName: String
   private var defaultUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
   private var taskQueuesWereIdle: Boolean = false
-  val connectionListener = RecordingConnectionListener()
+  private val connectionListener = RecordingConnectionListener()
 
   var logger: Logger? = null
 
