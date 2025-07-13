@@ -24,8 +24,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.android.AndroidxTracingConnectionListener
-import okhttp3.android.AndroidxTracingInterceptor
+import okhttp3.android.tracing.AndroidxTracingConnectionListener
+import okhttp3.android.tracing.AndroidxTracingInterceptor
 import okhttp3.internal.platform.AndroidPlatform
 import okio.IOException
 
