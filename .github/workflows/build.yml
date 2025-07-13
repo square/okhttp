@@ -40,8 +40,8 @@ jobs:
       - name: Upload Artifacts
         run: ./gradlew clean publish --stacktrace
         env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME_COM_SQUAREUP }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD_COM_SQUAREUP }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SECRET_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SECRET_PASSPHRASE }}
 
@@ -64,8 +64,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -101,8 +99,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -138,13 +134,10 @@ jobs:
 
   testzulu11:
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'zulu')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -166,13 +159,10 @@ jobs:
 
   testopenjdk8:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -199,8 +189,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Install Old JDK 8
         uses: actions/setup-java@v4
@@ -224,7 +212,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
+        run: ./gradlew okhttp:test -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
 
   testopenjsse:
     runs-on: ubuntu-latest
@@ -233,8 +221,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -252,7 +238,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=openjsse
+        run: ./gradlew okhttp:test -Dtest.java.version=8 -Dokhttp.platform=openjsse
 
   testconscrypt:
     runs-on: ubuntu-latest
@@ -261,8 +247,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -280,7 +264,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dokhttp.platform=conscrypt
+        run: ./gradlew okhttp:test -Dokhttp.platform=conscrypt
 
   testbouncycastle:
     runs-on: ubuntu-latest
@@ -289,8 +273,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -308,7 +290,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dokhttp.platform=bouncycastle
+        run: ./gradlew okhttp:test -Dokhttp.platform=bouncycastle
 
   testcorretto:
     runs-on: ubuntu-latest
@@ -318,8 +300,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -337,18 +317,14 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dokhttp.platform=corretto
+        run: ./gradlew okhttp:test -Dokhttp.platform=corretto
 
   testopenjdk17:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
-
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -370,13 +346,10 @@ jobs:
 
   testopenjdk21:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -404,13 +377,10 @@ jobs:
 
   testopenjdklatest:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDKs
         uses: actions/setup-java@v4
@@ -433,14 +403,11 @@ jobs:
 
   testopenjdkearlyaccess:
     runs-on: ubuntu-latest
-#    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
     if: false # https://youtrack.jetbrains.com/issue/KTOR-8489
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -463,14 +430,10 @@ jobs:
 
   testwindows:
     runs-on: windows-latest
-    # TODO add master build after fixing all tests in CI
-    if: contains(github.event.pull_request.labels.*.name, 'windows')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -492,14 +455,10 @@ jobs:
 
   testgraal:
     runs-on: ubuntu-latest
-    # TODO add master build after fixing all tests in CI
-    if: contains(github.event.pull_request.labels.*.name, 'graal')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -536,7 +495,6 @@ jobs:
   testandroid:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'android') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
     strategy:
       fail-fast: false
@@ -549,8 +507,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -617,13 +573,10 @@ jobs:
 
   testloom:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'loom')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -635,7 +588,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: 21
+          java-version: 24
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -647,7 +600,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew test -Dokhttp.platform=loom -Dtest.java.version=21 -PcontainerTests=true
+        run: ./gradlew test -Dokhttp.platform=loom -Dtest.java.version=24 -PcontainerTests=true
 
 
   testandroidregression:
@@ -665,8 +618,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -718,3 +669,26 @@ jobs:
           script: ./gradlew -PandroidBuild=true :regression-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
+
+  test_maven:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Publish local snapshot
+        run: ./gradlew publishToMavenLocal
+
+      - name: Run maven test
+        working-directory: ./maven-tests
+        run: ./mvnw -q verify

@@ -18,6 +18,7 @@ package okhttp3
 
 import java.util.concurrent.TimeUnit
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.ConnectionListener
 import okhttp3.internal.connection.FastFallbackExchangeFinder
 import okhttp3.internal.connection.ForceConnectRoutePlanner
 import okhttp3.internal.connection.RealConnectionPool
@@ -82,9 +83,8 @@ class ConnectionPool internal constructor(
     ),
   )
 
-  // Public API
-  @ExperimentalOkHttpApi
-  constructor(
+  // Internal until we promote ConnectionListener to be a public API.
+  internal constructor(
     maxIdleConnections: Int = 5,
     keepAliveDuration: Long = 5,
     timeUnit: TimeUnit = TimeUnit.MINUTES,
@@ -125,32 +125,4 @@ class ConnectionPool internal constructor(
   fun evictAll() {
     delegate.evictAll()
   }
-
-  /**
-   * Sets a policy that applies to [address].
-   * Overwrites any existing policy for that address.
-   */
-  @ExperimentalOkHttpApi
-  fun setPolicy(
-    address: Address,
-    policy: AddressPolicy,
-  ) {
-    delegate.setPolicy(address, policy)
-  }
-
-  /**
-   * A policy for how the pool should treat a specific address.
-   */
-  class AddressPolicy(
-    /**
-     * How many concurrent calls should be possible to make at any time.
-     * The pool will routinely try to pre-emptively open connections to satisfy this minimum.
-     * Connections will still be closed if they idle beyond the keep-alive but will be replaced.
-     */
-    @JvmField val minimumConcurrentCalls: Int = 0,
-    /** How long to wait to retry pre-emptive connection attempts that fail. */
-    @JvmField val backoffDelayMillis: Long = 60 * 1000,
-    /** How much jitter to introduce in connection retry backoff delays */
-    @JvmField val backoffJitterMillis: Int = 100,
-  )
 }

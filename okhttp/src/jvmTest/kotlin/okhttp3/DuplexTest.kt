@@ -20,6 +20,7 @@ import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.assertions.prop
@@ -34,14 +35,15 @@ import java.util.concurrent.TimeUnit
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.internal.duplex.MockStreamHandler
-import okhttp3.CallEvent.RetryDecision
+import mockwebserver3.junit5.StartStop
+import okhttp3.CallEvent.FollowUpDecision
 import okhttp3.Credentials.basic
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.duplex.AsyncRequestBody
+import okhttp3.internal.duplex.MockSocketHandler
 import okhttp3.testing.PlatformRule
 import okio.BufferedSink
 import org.junit.jupiter.api.AfterEach
@@ -61,7 +63,10 @@ class DuplexTest {
 
   @RegisterExtension
   var clientTestRule = OkHttpClientTestRule()
-  private lateinit var server: MockWebServer
+
+  @StartStop
+  private val server = MockWebServer()
+
   private var listener = RecordingEventListener()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client =
@@ -72,8 +77,7 @@ class DuplexTest {
   private val executorService = Executors.newScheduledThreadPool(1)
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
+  fun setUp() {
     platform.assumeNotOpenJSSE()
     platform.assumeHttp2Support()
   }
@@ -103,7 +107,7 @@ class DuplexTest {
   fun trueDuplexClientWritesFirst() {
     enableProtocol(Protocol.HTTP_2)
     val body =
-      MockStreamHandler()
+      MockSocketHandler()
         .receiveRequest("request A\n")
         .sendResponse("response B\n")
         .receiveRequest("request C\n")
@@ -116,7 +120,7 @@ class DuplexTest {
       MockResponse
         .Builder()
         .clearHeaders()
-        .streamHandler(body)
+        .socketHandler(body)
         .build(),
     )
     val call =
@@ -152,7 +156,7 @@ class DuplexTest {
   fun trueDuplexServerWritesFirst() {
     enableProtocol(Protocol.HTTP_2)
     val body =
-      MockStreamHandler()
+      MockSocketHandler()
         .sendResponse("response A\n")
         .receiveRequest("request B\n")
         .sendResponse("response C\n")
@@ -165,7 +169,7 @@ class DuplexTest {
       MockResponse
         .Builder()
         .clearHeaders()
-        .streamHandler(body)
+        .socketHandler(body)
         .build(),
     )
     val call =
@@ -201,7 +205,7 @@ class DuplexTest {
   fun clientReadsHeadersDataTrailers() {
     enableProtocol(Protocol.HTTP_2)
     val body =
-      MockStreamHandler()
+      MockSocketHandler()
         .sendResponse("ok")
         .exhaustResponse()
     server.enqueue(
@@ -211,7 +215,7 @@ class DuplexTest {
         .addHeader("h1", "v1")
         .addHeader("h2", "v2")
         .trailers(headersOf("trailers", "boom"))
-        .streamHandler(body)
+        .socketHandler(body)
         .build(),
     )
     val call =
@@ -237,7 +241,7 @@ class DuplexTest {
     assumeNotWindows()
     enableProtocol(Protocol.HTTP_2)
     val body =
-      MockStreamHandler()
+      MockSocketHandler()
         .exhaustResponse()
         .receiveRequest("hey\n")
         .receiveRequest("whats going on\n")
@@ -248,7 +252,7 @@ class DuplexTest {
         .clearHeaders()
         .addHeader("h1", "v1")
         .addHeader("h2", "v2")
-        .streamHandler(body)
+        .socketHandler(body)
         .build(),
     )
     val request =
@@ -271,7 +275,7 @@ class DuplexTest {
   fun requestBodyEndsAfterResponseBody() {
     enableProtocol(Protocol.HTTP_2)
     val body =
-      MockStreamHandler()
+      MockSocketHandler()
         .exhaustResponse()
         .receiveRequest("request A\n")
         .exhaustRequest()
@@ -279,7 +283,7 @@ class DuplexTest {
       MockResponse
         .Builder()
         .clearHeaders()
-        .streamHandler(body)
+        .socketHandler(body)
         .build(),
     )
     val call =
@@ -314,6 +318,7 @@ class DuplexTest {
       "RequestBodyStart",
       "ResponseHeadersStart",
       "ResponseHeadersEnd",
+      "FollowUpDecision",
       "ResponseBodyStart",
       "ResponseBodyEnd",
       "RequestBodyEnd",
@@ -326,7 +331,7 @@ class DuplexTest {
   fun duplexWith100Continue() {
     enableProtocol(Protocol.HTTP_2)
     val body =
-      MockStreamHandler()
+      MockSocketHandler()
         .receiveRequest("request body\n")
         .sendResponse("response body\n")
         .exhaustRequest()
@@ -335,7 +340,7 @@ class DuplexTest {
         .Builder()
         .clearHeaders()
         .add100Continue()
-        .streamHandler(body)
+        .socketHandler(body)
         .build(),
     )
     val call =
@@ -391,7 +396,7 @@ class DuplexTest {
         .eventListener(listener)
         .build()
     val body =
-      MockStreamHandler()
+      MockSocketHandler()
         .sendResponse("/a has moved!\n", duplexResponseSent)
         .requestIOException()
         .exhaustResponse()
@@ -401,7 +406,7 @@ class DuplexTest {
         .clearHeaders()
         .code(HttpURLConnection.HTTP_MOVED_PERM)
         .addHeader("Location: /b")
-        .streamHandler(body)
+        .socketHandler(body)
         .build(),
     )
     server.enqueue(
@@ -448,22 +453,22 @@ class DuplexTest {
       "RequestBodyStart",
       "ResponseHeadersStart",
       "ResponseHeadersEnd",
-      "RetryDecision",
       "ResponseBodyStart",
       "ResponseBodyEnd",
+      "FollowUpDecision",
       "RequestHeadersStart",
       "RequestHeadersEnd",
       "ResponseHeadersStart",
       "ResponseHeadersEnd",
+      "FollowUpDecision",
       "ResponseBodyStart",
       "ResponseBodyEnd",
       "ConnectionReleased",
       "CallEnd",
       "RequestFailed",
     )
-    assertThat(listener.findEvent<RetryDecision>()).all {
-      prop(RetryDecision::reason).isEqualTo("redirect (301)")
-      prop(RetryDecision::shouldRetry).isTrue()
+    assertThat(listener.findEvent<FollowUpDecision>()).all {
+      prop(FollowUpDecision::nextRequest).isNotNull()
     }
   }
 
@@ -481,7 +486,7 @@ class DuplexTest {
         .authenticator(RecordingOkAuthenticator(credential, null))
         .build()
     val body1 =
-      MockStreamHandler()
+      MockSocketHandler()
         .sendResponse("please authenticate!\n")
         .requestIOException()
         .exhaustResponse()
@@ -490,11 +495,11 @@ class DuplexTest {
         .Builder()
         .clearHeaders()
         .code(HttpURLConnection.HTTP_UNAUTHORIZED)
-        .streamHandler(body1)
+        .socketHandler(body1)
         .build(),
     )
     val body =
-      MockStreamHandler()
+      MockSocketHandler()
         .sendResponse("response body\n")
         .exhaustResponse()
         .receiveRequest("request body\n")
@@ -503,7 +508,7 @@ class DuplexTest {
       MockResponse
         .Builder()
         .clearHeaders()
-        .streamHandler(body)
+        .socketHandler(body)
         .build(),
     )
     val call =
@@ -570,7 +575,7 @@ class DuplexTest {
   fun fullCallTimeoutDoesNotApplyOnceConnected() {
     enableProtocol(Protocol.HTTP_2)
     val body =
-      MockStreamHandler()
+      MockSocketHandler()
         .sendResponse("response A\n")
         .sleep(750, TimeUnit.MILLISECONDS)
         .sendResponse("response B\n")
@@ -581,7 +586,7 @@ class DuplexTest {
       MockResponse
         .Builder()
         .clearHeaders()
-        .streamHandler(body)
+        .socketHandler(body)
         .build(),
     )
     val request =
@@ -612,7 +617,7 @@ class DuplexTest {
   fun duplexWithRewriteInterceptors() {
     enableProtocol(Protocol.HTTP_2)
     val body =
-      MockStreamHandler()
+      MockSocketHandler()
         .receiveRequest("REQUEST A\n")
         .sendResponse("response B\n")
         .exhaustRequest()
@@ -621,7 +626,7 @@ class DuplexTest {
       MockResponse
         .Builder()
         .clearHeaders()
-        .streamHandler(body)
+        .socketHandler(body)
         .build(),
     )
     client =
@@ -670,7 +675,7 @@ class DuplexTest {
     val log: BlockingQueue<String?> = LinkedBlockingQueue()
     enableProtocol(Protocol.HTTP_2)
     val body =
-      MockStreamHandler()
+      MockSocketHandler()
         .sendResponse("success!")
         .exhaustResponse()
         .cancelStream()
@@ -678,7 +683,7 @@ class DuplexTest {
       MockResponse
         .Builder()
         .clearHeaders()
-        .streamHandler(body)
+        .socketHandler(body)
         .build(),
     )
     val call =

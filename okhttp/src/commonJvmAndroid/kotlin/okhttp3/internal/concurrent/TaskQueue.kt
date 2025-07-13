@@ -17,9 +17,6 @@ package okhttp3.internal.concurrent
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.locks.ReentrantLock
-import okhttp3.internal.assertNotHeld
-import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.okHttpName
 
 /**
@@ -32,8 +29,6 @@ class TaskQueue internal constructor(
   internal val taskRunner: TaskRunner,
   internal val name: String,
 ) {
-  internal val lock: ReentrantLock = ReentrantLock()
-
   internal var shutdown = false
 
   /** This queue's currently-executing task, or null if none is currently executing. */
@@ -204,7 +199,7 @@ class TaskQueue internal constructor(
    * be removed from the execution schedule.
    */
   fun cancelAll() {
-    lock.assertNotHeld()
+    taskRunner.assertLockNotHeld()
 
     taskRunner.withLock {
       if (cancelAllAndDecide()) {
@@ -214,7 +209,7 @@ class TaskQueue internal constructor(
   }
 
   fun shutdown() {
-    lock.assertNotHeld()
+    taskRunner.assertLockNotHeld()
 
     taskRunner.withLock {
       shutdown = true

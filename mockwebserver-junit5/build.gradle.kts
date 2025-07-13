@@ -16,7 +16,6 @@ tasks {
   }
   test {
     useJUnitPlatform()
-    systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
   }
 }
 

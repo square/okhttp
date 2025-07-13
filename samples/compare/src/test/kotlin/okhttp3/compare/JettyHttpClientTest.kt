@@ -21,6 +21,7 @@ import assertk.assertions.isNull
 import assertk.assertions.matches
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import org.eclipse.jetty.client.HttpClient
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -36,6 +37,9 @@ import org.junit.jupiter.api.Test
 class JettyHttpClientTest {
   private val client = HttpClient()
 
+  @StartStop
+  private val server = MockWebServer()
+
   @BeforeEach fun setUp() {
     client.start()
   }
@@ -44,7 +48,7 @@ class JettyHttpClientTest {
     client.stop()
   }
 
-  @Test fun get(server: MockWebServer) {
+  @Test fun get() {
     server.enqueue(MockResponse(body = "hello, Jetty HTTP Client"))
 
     val request =

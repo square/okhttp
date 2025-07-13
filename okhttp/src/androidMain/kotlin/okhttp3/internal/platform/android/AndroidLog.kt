@@ -104,8 +104,13 @@ object AndroidLog {
   }
 
   fun enable() {
-    for ((logger, tag) in knownLoggers) {
-      enableLogging(logger, tag)
+    try {
+      for ((logger, tag) in knownLoggers) {
+        enableLogging(logger, tag)
+      }
+    } catch (re: RuntimeException) {
+      // Possibly running android unit test without robolectric
+      re.printStackTrace()
     }
   }
 

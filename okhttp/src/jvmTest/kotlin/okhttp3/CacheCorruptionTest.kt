@@ -30,6 +30,7 @@ import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSession
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.buildCache
 import okhttp3.java.net.cookiejar.JavaNetCookieJar
@@ -58,12 +59,12 @@ class CacheCorruptionTest {
   private lateinit var cache: Cache
   private val nullHostnameVerifier = HostnameVerifier { _: String?, _: SSLSession? -> true }
   private val cookieManager = CookieManager()
-  private lateinit var server: MockWebServer
+
+  @StartStop
+  private val server = MockWebServer()
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
-
+  fun setUp() {
     platform.assumeNotOpenJSSE()
     server.protocolNegotiationEnabled = false
     val loggingFileSystem = LoggingFilesystem(fileSystem)

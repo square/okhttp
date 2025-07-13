@@ -37,7 +37,7 @@ OkHttp follows modern HTTP specifications such as
 Where the spec is ambiguous, OkHttp follows modern user agents such as popular Browsers or common HTTP Libraries.
 
 OkHttp is principled and avoids being overly configurable, especially when such configuration is
-to workaround a buggy server, test invalid scenarios or that contradict the relevant RFC. 
+to workaround a buggy server, test invalid scenarios or that contradict the relevant RFC.
 Other HTTP libraries exist that fill that gap allowing extensive customisation including potentially
 invalid requests.
 
@@ -120,10 +120,10 @@ Releases
 
 Our [change log][changelog] has release history.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/4.12.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/5.1.0/jar).
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp:4.12.0")
+implementation("com.squareup.okhttp3:okhttp:5.1.0")
 ```
 
 Snapshot builds are [available][snap]. [R8 and ProGuard][r8_proguard] rules are available.
@@ -133,7 +133,7 @@ Also, we have a [bill of materials (BOM)][bom] available to help you keep OkHttp
 ```kotlin
     dependencies {
        // define a BOM and its version
-       implementation(platform("com.squareup.okhttp3:okhttp-bom:4.12.0"))
+       implementation(platform("com.squareup.okhttp3:okhttp-bom:5.1.0"))
 
        // define any required OkHttp artifacts without version
        implementation("com.squareup.okhttp3:okhttp")
@@ -141,20 +141,62 @@ Also, we have a [bill of materials (BOM)][bom] available to help you keep OkHttp
     }
 ```
 
+Maven and JVM Projects
+----------------------
+
+OkHttp is published as a Kotlin Multiplatform project. While Gradle handles this automatically,
+Maven projects must select between `okhttp-jvm` and `okhttp-android`. The `okhttp` artifact will be empty in
+Maven projects.
+
+```xml
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp-bom</artifactId>
+      <version>5.2.0</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+```
+
+
+
+```xml
+<dependency>
+  <groupId>com.squareup.okhttp3</groupId>
+  <artifactId>okhttp-jvm</artifactId>
+  <!-- Remove after OkHttp 5.3.0 with updated BOM. -->
+  <version>5.2.0</version>
+</dependency>
+
+<dependency>
+  <groupId>com.squareup.okhttp3</groupId>
+  <artifactId>mockwebserver3</artifactId>
+</dependency>
+
+<dependency>
+  <groupId>com.squareup.okhttp3</groupId>
+  <artifactId>logging-interceptor</artifactId>
+</dependency>
+```
+
 MockWebServer
 -------------
 
 OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/4.12.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/5.1.0/jar).
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+testImplementation("com.squareup.okhttp3:mockwebserver3:5.1.0")
 ```
 
-MockWebServer is used for firstly for internal testing, and for basic testing of apps using OkHttp client. 
+MockWebServer is used for firstly for internal testing, and for basic testing of apps using OkHttp client.
 It is not a full featured HTTP testing library that is developed standalone. It is not being actively developed
-for new features. As such you might find your needs outgrow MockWebServer and you may which to use a 
+for new features. As such you might find your needs outgrow MockWebServer and you may which to use a
 more full featured testing library such as [MockServer](https://www.mock-server.com/).
 
 GraalVM Native Image

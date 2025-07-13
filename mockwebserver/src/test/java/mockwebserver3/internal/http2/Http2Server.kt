@@ -130,7 +130,7 @@ class Http2Server(
       outFinished = false,
       flushHeaders = false,
     )
-    val out = stream.getSink().buffer()
+    val out = stream.sink.buffer()
     out.writeUtf8("Not found: $path")
     out.close()
   }
@@ -150,7 +150,7 @@ class Http2Server(
       outFinished = false,
       flushHeaders = false,
     )
-    val out = stream.getSink().buffer()
+    val out = stream.sink.buffer()
     for (file in files) {
       val target = if (file.isDirectory) file.name + "/" else file.name
       out.writeUtf8("<a href='$target'>$target</a><br>")
@@ -174,7 +174,7 @@ class Http2Server(
       flushHeaders = false,
     )
     file.source().use { source ->
-      stream.getSink().buffer().use { sink ->
+      stream.sink.buffer().use { sink ->
         sink.writeAll(source)
       }
     }

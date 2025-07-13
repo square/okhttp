@@ -20,14 +20,9 @@ import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.Condition
-import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Logger
 import okhttp3.internal.addIfAbsent
-import okhttp3.internal.assertHeld
 import okhttp3.internal.concurrent.TaskRunner.Companion.INSTANCE
-import okhttp3.internal.connection.Locks.newLockCondition
-import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.okHttpName
 import okhttp3.internal.threadFactory
 
@@ -45,10 +40,7 @@ import okhttp3.internal.threadFactory
 class TaskRunner(
   val backend: Backend,
   internal val logger: Logger = TaskRunner.logger,
-) {
-  internal val lock: ReentrantLock = ReentrantLock()
-  val condition: Condition = lock.newLockCondition()
-
+) : Lockable {
   private var nextQueueName = 10000
   private var coordinatorWaiting = false
   private var coordinatorWakeUpAt = 0L
@@ -59,7 +51,7 @@ class TaskRunner(
    * the already-requested ones are in service, otherwise we might create more threads than we need.
    *
    * We use [executeCallCount] and [runCallCount] to defend against starting more threads than we
-   * need. Both fields are guarded by [lock].
+   * need. Both fields are guarded by `this`.
    */
   private var executeCallCount = 0
   private var runCallCount = 0
@@ -108,7 +100,7 @@ class TaskRunner(
     }
 
   internal fun kickCoordinator(taskQueue: TaskQueue) {
-    lock.assertHeld()
+    assertLockHeld()
 
     if (taskQueue.activeTask == null) {
       if (taskQueue.futureTasks.isNotEmpty()) {
@@ -126,7 +118,7 @@ class TaskRunner(
   }
 
   private fun beforeRun(task: Task) {
-    lock.assertHeld()
+    assertLockHeld()
 
     task.nextExecuteNanoTime = -1L
     val queue = task.queue!!
@@ -141,7 +133,7 @@ class TaskRunner(
     delayNanos: Long,
     completedNormally: Boolean,
   ) {
-    lock.assertHeld()
+    assertLockHeld()
 
     val queue = task.queue!!
     check(queue.activeTask === task)
@@ -172,7 +164,7 @@ class TaskRunner(
    * this will start another thread to handle that work.
    */
   fun awaitTaskToRun(): Task? {
-    lock.assertHeld()
+    assertLockHeld()
 
     while (true) {
       if (readyQueues.isEmpty()) {
@@ -252,7 +244,7 @@ class TaskRunner(
 
   /** Start another thread, unless a new thread is already scheduled to start. */
   private fun startAnotherThread() {
-    lock.assertHeld()
+    assertLockHeld()
     if (executeCallCount > runCallCount) return // A thread is still starting.
 
     executeCallCount++
@@ -275,7 +267,7 @@ class TaskRunner(
   }
 
   fun cancelAll() {
-    lock.assertHeld()
+    assertLockHeld()
     for (i in busyQueues.size - 1 downTo 0) {
       busyQueues[i].cancelAllAndDecide()
     }
@@ -325,7 +317,7 @@ class TaskRunner(
     override fun nanoTime() = System.nanoTime()
 
     override fun coordinatorNotify(taskRunner: TaskRunner) {
-      taskRunner.condition.signal()
+      taskRunner.notify()
     }
 
     /**
@@ -338,9 +330,9 @@ class TaskRunner(
       taskRunner: TaskRunner,
       nanos: Long,
     ) {
-      taskRunner.lock.assertHeld()
+      taskRunner.assertLockHeld()
       if (nanos > 0) {
-        taskRunner.condition.awaitNanos(nanos)
+        taskRunner.awaitNanos(nanos)
       }
     }
 

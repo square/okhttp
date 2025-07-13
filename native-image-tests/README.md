@@ -9,6 +9,6 @@ Execute
 The native image runs JUnit 5 tests in the project.
 
 ```
-./gradlew --info native-image-tests:nativeTest
+./gradlew -PgraalBuild=true --info native-image-tests:nativeTest
 ```
 

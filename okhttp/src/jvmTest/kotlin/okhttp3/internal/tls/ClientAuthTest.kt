@@ -37,6 +37,7 @@ import javax.security.auth.x500.X500Principal
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
 import okhttp3.RecordingEventListener
@@ -62,7 +63,9 @@ class ClientAuthTest {
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
 
-  private lateinit var server: MockWebServer
+  @StartStop
+  private val server = MockWebServer()
+
   private lateinit var serverRootCa: HeldCertificate
   private lateinit var serverIntermediateCa: HeldCertificate
   private lateinit var serverCert: HeldCertificate
@@ -71,8 +74,7 @@ class ClientAuthTest {
   private lateinit var clientCert: HeldCertificate
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
+  fun setUp() {
     platform.assumeNotOpenJSSE()
     platform.assumeNotBouncyCastle()
     serverRootCa =

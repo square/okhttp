@@ -34,6 +34,7 @@ import javax.net.ssl.X509TrustManager
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.CertificatePinner.Companion.pin
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
@@ -50,7 +51,10 @@ class ConnectionCoalescingTest {
 
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
-  private lateinit var server: MockWebServer
+
+  @StartStop
+  private val server = MockWebServer()
+
   private lateinit var client: OkHttpClient
   private lateinit var rootCa: HeldCertificate
   private lateinit var certificate: HeldCertificate
@@ -59,8 +63,7 @@ class ConnectionCoalescingTest {
   private lateinit var serverIps: List<InetAddress>
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
+  fun setUp() {
     platform.assumeHttp2Support()
     platform.assumeNotBouncyCastle()
     rootCa =
@@ -432,10 +435,10 @@ class ConnectionCoalescingTest {
     server.enqueue(MockResponse())
     assert200Http2Response(execute(url), "san.com")
     assertThat(client.connectionPool.connectionCount()).isEqualTo(2)
-    assertThat(server.takeRequest().sequenceNumber)
-      .isEqualTo(0) // Fresh connection.
-    assertThat(server.takeRequest().sequenceNumber)
-      .isEqualTo(0) // Fresh connection.
+    val c0e0 = server.takeRequest()
+    assertThat(c0e0.connectionIndex).isEqualTo(0) // Fresh connection.
+    val c1e0 = server.takeRequest()
+    assertThat(c1e0.connectionIndex).isEqualTo(1) // Fresh connection.
   }
 
   /**
@@ -542,10 +545,15 @@ class ConnectionCoalescingTest {
       assertThat(response.priorResponse!!.code).isEqualTo(421)
       assertThat(response.body.string()).isEqualTo("after misdirect")
     }
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
-    assertThat(server.takeRequest().sequenceNumber)
-      .isEqualTo(0) // Fresh connection.
+    val c0e0 = server.takeRequest()
+    assertThat(c0e0.connectionIndex).isEqualTo(0)
+    assertThat(c0e0.exchangeIndex).isEqualTo(0)
+    val c0e1 = server.takeRequest()
+    assertThat(c0e1.connectionIndex).isEqualTo(0)
+    assertThat(c0e1.exchangeIndex).isEqualTo(1)
+    val c1e0 = server.takeRequest()
+    assertThat(c1e0.connectionIndex).isEqualTo(1) // Fresh connection.
+    assertThat(c1e0.exchangeIndex).isEqualTo(0)
     assertThat(client.connectionPool.connectionCount()).isEqualTo(2)
   }
 

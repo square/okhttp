@@ -27,9 +27,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okio.BufferedSink;
-import okio.GzipSink;
-import okio.Okio;
 
 public final class RequestBodyCompression {
   /**
@@ -78,28 +75,9 @@ public final class RequestBodyCompression {
       }
 
       Request compressedRequest = originalRequest.newBuilder()
-          .header("Content-Encoding", "gzip")
-          .method(originalRequest.method(), gzip(originalRequest.body()))
+          .gzip()
           .build();
       return chain.proceed(compressedRequest);
-    }
-
-    private RequestBody gzip(final RequestBody body) {
-      return new RequestBody() {
-        @Override public MediaType contentType() {
-          return body.contentType();
-        }
-
-        @Override public long contentLength() {
-          return -1; // We don't know the compressed length in advance!
-        }
-
-        @Override public void writeTo(BufferedSink sink) throws IOException {
-          BufferedSink gzipSink = Okio.buffer(new GzipSink(sink));
-          body.writeTo(gzipSink);
-          gzipSink.close();
-        }
-      };
     }
   }
 }

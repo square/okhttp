@@ -71,7 +71,7 @@ enum class Protocol(
    *
    * See also [Starting HTTP/2 with Prior Knowledge][rfc_7540_34].
    *
-   * [rfc_7540_34]: https://tools.ietf.org/html/rfc7540.section-3.4
+   * [rfc_7540_34]: https://datatracker.ietf.org/doc/html/rfc7540#autoid-10
    */
   H2_PRIOR_KNOWLEDGE("h2_prior_knowledge"),
 

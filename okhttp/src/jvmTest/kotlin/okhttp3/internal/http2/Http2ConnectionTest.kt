@@ -23,6 +23,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThan
 import assertk.assertions.isLessThan
+import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import java.io.EOFException
 import java.io.IOException
@@ -36,11 +37,12 @@ import okhttp3.Headers.Companion.headersOf
 import okhttp3.TestUtil.headerEntries
 import okhttp3.TestUtil.repeat
 import okhttp3.internal.EMPTY_BYTE_ARRAY
+import okhttp3.internal.concurrent.Lockable
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.connection.Locks.withLock
-import okhttp3.internal.notifyAll
-import okhttp3.internal.wait
+import okhttp3.internal.concurrent.notifyAll
+import okhttp3.internal.concurrent.wait
+import okhttp3.internal.concurrent.withLock
 import okio.AsyncTimeout
 import okio.Buffer
 import okio.BufferedSource
@@ -169,7 +171,7 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     connection.writePingAndAwaitPong() // Ensure the SETTINGS have been received.
     val stream = connection.newStream(headerEntries("a", "android"), true)
-    val sink = stream.getSink().buffer()
+    val sink = stream.sink.buffer()
     sink.writeUtf8("abcdefghi")
     sink.flush()
 
@@ -204,7 +206,7 @@ class Http2ConnectionTest {
     peer.play()
     val connection = connect(peer)
     val stream1 = connection.newStream(headerEntries("b", "bark"), false)
-    val source = stream1.getSource()
+    val source = stream1.source
     val buffer = Buffer()
     while (buffer.size != 1024L) source.read(buffer, 1024)
     stream1.close(ErrorCode.CANCEL, null)
@@ -235,8 +237,8 @@ class Http2ConnectionTest {
     val stream1 = connection.newStream(headerEntries("a", "android"), true)
     val stream2 = connection.newStream(headerEntries("b", "banana"), true)
     connection.writePingAndAwaitPong() // Ensure the GO_AWAY that resets stream2 has been received.
-    val sink1 = stream1.getSink().buffer()
-    val sink2 = stream2.getSink().buffer()
+    val sink1 = stream1.sink.buffer()
+    val sink2 = stream2.sink.buffer()
     sink1.writeUtf8("abc")
     assertFailsWith<IOException> {
       sink2.writeUtf8("abc")
@@ -293,7 +295,7 @@ class Http2ConnectionTest {
     assertThat(stream.readBytes.acknowledged).isEqualTo(0L)
     assertThat(stream.readBytes.total).isEqualTo(0L)
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
-    val source = stream.getSource()
+    val source = stream.source
     val buffer = Buffer()
     buffer.writeAll(source)
     assertThat(source.read(buffer, 1)).isEqualTo(-1)
@@ -327,7 +329,7 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     val client = connection.newStream(headerEntries("b", "banana"), false)
-    assertThat(client.getSource().read(Buffer(), 1)).isEqualTo(-1)
+    assertThat(client.source.read(Buffer(), 1)).isEqualTo(-1)
 
     // Verify the peer received what was expected.
     val synStream = peer.takeFrame()
@@ -347,7 +349,7 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     val client = connection.newStream(headerEntries("b", "banana"), true)
-    val out = client.getSink().buffer()
+    val out = client.sink.buffer()
     out.write(EMPTY_BYTE_ARRAY)
     out.flush()
     out.close()
@@ -374,7 +376,7 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("b", "banana"), true)
-    val out = stream.getSink().buffer()
+    val out = stream.sink.buffer()
     out.write(buff)
     out.flush()
     out.close()
@@ -412,7 +414,7 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer, observer, Http2Connection.Listener.REFUSE_INCOMING_STREAMS)
     val client = connection.newStream(headerEntries("b", "banana"), false)
-    assertThat(client.getSource().read(Buffer(), 1)).isEqualTo(-1)
+    assertThat(client.source.read(Buffer(), 1)).isEqualTo(-1)
 
     // Verify the peer received what was expected.
     assertThat(peer.takeFrame().type).isEqualTo(Http2.TYPE_HEADERS)
@@ -523,11 +525,11 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("b", "banana"), true)
-    val out = stream.getSink().buffer()
+    val out = stream.sink.buffer()
     out.writeUtf8("c3po")
     out.close()
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
-    assertStreamData("robot", stream.getSource())
+    assertStreamData("robot", stream.source)
     connection.writePingAndAwaitPong()
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
@@ -557,7 +559,7 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries("a", "artichaut"), false)
     connection.writePingAndAwaitPong()
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("headers", "bam"))
-    assertThat(stream.trailers()).isEqualTo(Headers.Empty)
+    assertThat(stream.peekTrailers()).isEqualTo(Headers.EMPTY)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
@@ -585,7 +587,7 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries("a", "artichaut"), false)
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("headers", "bam"))
     connection.writePingAndAwaitPong()
-    assertThat(stream.trailers()).isEqualTo(headersOf("trailers", "boom"))
+    assertThat(stream.peekTrailers()).isEqualTo(headersOf("trailers", "boom"))
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
@@ -615,9 +617,9 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries(), false)
     connection.writePingAndAwaitPong()
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
-    val source = stream.getSource().buffer()
+    val source = stream.source.buffer()
     assertThat(source.readUtf8(5)).isEqualTo("robot")
-    stream.getSink().close()
+    stream.sink.close()
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
@@ -645,8 +647,8 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries(), true)
     connection.writePingAndAwaitPong()
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
-    stream.getSink().close()
-    assertThat(stream.trailers()).isEqualTo(headersOf("z", "zebra"))
+    stream.sink.close()
+    assertThat(stream.peekTrailers()).isEqualTo(headersOf("z", "zebra"))
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
@@ -676,7 +678,7 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries(), true)
     connection.writePingAndAwaitPong()
-    val sink = stream.getSink().buffer()
+    val sink = stream.sink.buffer()
     sink.writeUtf8("abc")
     assertFailsWith<StreamResetException> {
       sink.close()
@@ -684,7 +686,7 @@ class Http2ConnectionTest {
       assertThat(expected.errorCode).isEqualTo(ErrorCode.NO_ERROR)
     }
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
-    val source = stream.getSource().buffer()
+    val source = stream.source.buffer()
     assertThat(source.readUtf8(5)).isEqualTo("robot")
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
@@ -715,7 +717,7 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("a", "android"), true)
     stream.enqueueTrailers(headersOf("foo", "bar"))
-    val sink = stream.getSink().buffer()
+    val sink = stream.sink.buffer()
     sink.writeUtf8("abcdefghi")
     sink.close()
 
@@ -747,9 +749,7 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("a", "artichaut"), true)
     connection.writePingAndAwaitPong()
-    assertFailsWith<IllegalStateException> {
-      stream.trailers()
-    }
+    assertThat(stream.peekTrailers()).isNull()
   }
 
   @Test fun clientCannotReadTrailersIfTheStreamFailed() {
@@ -767,7 +767,7 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries("a", "artichaut"), true)
     connection.writePingAndAwaitPong()
     assertFailsWith<StreamResetException> {
-      stream.trailers()
+      stream.peekTrailers()
     }
   }
 
@@ -804,11 +804,11 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("a", "artichaut"), false)
-    val source = stream.getSource().buffer()
+    val source = stream.source.buffer()
     connection.writePingAndAwaitPong()
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("headers", "bam"))
     assertThat(source.readUtf8(5)).isEqualTo("robot")
-    assertThat(stream.trailers()).isEqualTo(Headers.Empty)
+    assertThat(stream.peekTrailers()).isEqualTo(Headers.EMPTY)
     assertThat(connection.openStreamCount()).isEqualTo(0)
 
     // Verify the peer received what was expected.
@@ -835,7 +835,7 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("b", "banana"), true)
-    val out = stream.getSink().buffer()
+    val out = stream.sink.buffer()
     out.writeUtf8("c3po")
     out.close()
     stream.writeHeaders(headerEntries("e", "elephant"), false, false)
@@ -1087,7 +1087,7 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("a", "android"), true)
-    val out = stream.getSink().buffer()
+    val out = stream.sink.buffer()
     connection.writePingAndAwaitPong() // Ensure that the RST_CANCEL has been received.
     assertFailsWith<IOException> {
       out.writeUtf8("square")
@@ -1124,8 +1124,8 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("a", "android"), false)
-    val source = stream.getSource()
-    val out = stream.getSink().buffer()
+    val source = stream.source
+    val out = stream.sink.buffer()
     source.close()
     assertFailsWith<IOException> {
       source.read(Buffer(), 1)
@@ -1166,8 +1166,8 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("a", "android"), true)
-    val source = stream.getSource()
-    val out = stream.getSink().buffer()
+    val source = stream.source
+    val out = stream.sink.buffer()
     source.close()
     assertFailsWith<IOException> {
       source.read(Buffer(), 1)
@@ -1210,7 +1210,7 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("a", "android"), false)
-    val source = stream.getSource()
+    val source = stream.source
     assertStreamData("square", source)
     connection.writePingAndAwaitPong() // Ensure that inFinished has been received.
     assertThat(connection.openStreamCount()).isEqualTo(0)
@@ -1263,7 +1263,7 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("b", "banana"), false)
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
-    assertStreamData("robot", stream.getSource())
+    assertStreamData("robot", stream.source)
 
     // Verify the peer received what was expected.
     val synStream = peer.takeFrame()
@@ -1350,8 +1350,8 @@ class Http2ConnectionTest {
     val stream1 = connection.newStream(headerEntries("a", "android"), true)
     val stream2 = connection.newStream(headerEntries("b", "banana"), true)
     connection.writePingAndAwaitPong() // Ensure the GO_AWAY that resets stream2 has been received.
-    val sink1 = stream1.getSink().buffer()
-    val sink2 = stream2.getSink().buffer()
+    val sink1 = stream1.sink.buffer()
+    val sink2 = stream2.sink.buffer()
     sink1.writeUtf8("abc")
     assertFailsWith<IOException> {
       sink2.writeUtf8("abc")
@@ -1434,7 +1434,7 @@ class Http2ConnectionTest {
     assertFailsWith<ConnectionShutdownException> {
       connection.newStream(headerEntries("b", "banana"), false)
     }
-    val sink = stream.getSink().buffer()
+    val sink = stream.sink.buffer()
     assertFailsWith<IOException> {
       sink.writeByte(0)
       sink.flush()
@@ -1442,7 +1442,7 @@ class Http2ConnectionTest {
       assertThat(expected.message).isEqualTo("stream finished")
     }
     assertFailsWith<IOException> {
-      stream.getSource().read(Buffer(), 1)
+      stream.source.read(Buffer(), 1)
     }.also { expected ->
       assertThat(expected.message).isEqualTo("stream was reset: CANCEL")
     }
@@ -1508,7 +1508,7 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("b", "banana"), false)
     stream.readTimeout().timeout(500, TimeUnit.MILLISECONDS)
-    val source = stream.getSource().buffer()
+    val source = stream.source.buffer()
     source.require(3)
     val startNanos = System.nanoTime()
     assertFailsWith<InterruptedIOException> {
@@ -1558,7 +1558,7 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     connection.writePingAndAwaitPong() // Make sure settings have been received.
     val stream = connection.newStream(headerEntries("b", "banana"), true)
-    val sink = stream.getSink()
+    val sink = stream.sink
     sink.write(Buffer().writeUtf8("abcde"), 5)
     stream.writeTimeout().timeout(500, TimeUnit.MILLISECONDS)
     val startNanos = System.nanoTime()
@@ -1603,7 +1603,7 @@ class Http2ConnectionTest {
     connection.writePingAndAwaitPong() // Make sure settings have been acked.
     val stream = connection.newStream(headerEntries("b", "banana"), true)
     connection.writePingAndAwaitPong() // Make sure the window update has been received.
-    val sink = stream.getSink()
+    val sink = stream.sink
     stream.writeTimeout().timeout(500, TimeUnit.MILLISECONDS)
     sink.write(Buffer().writeUtf8("abcdef"), 6)
     val startNanos = System.nanoTime()
@@ -1639,7 +1639,7 @@ class Http2ConnectionTest {
     val stream = connection.newStream(headerEntries("b", "banana"), true)
 
     // two outgoing writes
-    val sink = stream.getSink()
+    val sink = stream.sink
     sink.write(Buffer().writeUtf8("abcde"), 5)
     sink.write(Buffer().writeUtf8("fghij"), 5)
     sink.close()
@@ -1700,7 +1700,7 @@ class Http2ConnectionTest {
     stream.connection.flush()
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
     connection.writePingAndAwaitPong()
-    assertThat(stream.trailers()).isEqualTo(headersOf("c", "cola"))
+    assertThat(stream.peekTrailers()).isEqualTo(headersOf("c", "cola"))
 
     // Verify the peer received what was expected.
     assertThat(peer.takeFrame().type).isEqualTo(Http2.TYPE_HEADERS)
@@ -1734,7 +1734,7 @@ class Http2ConnectionTest {
     assertThat(stream.readBytes.acknowledged).isEqualTo(0L)
     assertThat(stream.readBytes.total).isEqualTo(0L)
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
-    val source = stream.getSource()
+    val source = stream.source
     val buffer = Buffer()
     buffer.writeAll(source)
     assertThat(source.read(buffer, 1)).isEqualTo(-1)
@@ -1769,7 +1769,7 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     val client = connection.newStream(headerEntries("b", "banana"), false)
-    assertThat(client.getSource().read(Buffer(), 1)).isEqualTo(-1)
+    assertThat(client.source.read(Buffer(), 1)).isEqualTo(-1)
 
     // Verify the peer received what was expected.
     val synStream = peer.takeFrame()
@@ -1789,7 +1789,7 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     val client = connection.newStream(headerEntries("b", "banana"), true)
-    val out = client.getSink().buffer()
+    val out = client.sink.buffer()
     out.write(EMPTY_BYTE_ARRAY)
     out.flush()
     out.close()
@@ -1814,7 +1814,7 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("b", "banana"), false)
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
-    val source = stream.getSource()
+    val source = stream.source
     assertFailsWith<EOFException> {
       source.buffer().readByteString(101)
     }
@@ -1838,7 +1838,7 @@ class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer)
     val stream1 = connection.newStream(headerEntries("a", "apple"), true)
-    val out1 = stream1.getSink().buffer()
+    val out1 = stream1.sink.buffer()
     out1.write(ByteArray(Settings.DEFAULT_INITIAL_WINDOW_SIZE))
     out1.flush()
 
@@ -1865,7 +1865,7 @@ class Http2ConnectionTest {
 
     // Another stream should be able to send data even though 1 is blocked.
     val stream2 = connection.newStream(headerEntries("b", "banana"), true)
-    val out2 = stream2.getSink().buffer()
+    val out2 = stream2.sink.buffer()
     out2.writeUtf8("foo")
     out2.flush()
     assertThat(connection.writeBytesTotal)
@@ -1986,7 +1986,9 @@ class Http2ConnectionTest {
     return connection
   }
 
-  private class RecordingPushObserver : PushObserver {
+  private class RecordingPushObserver :
+    PushObserver,
+    Lockable {
     val events = mutableListOf<Any>()
 
     @Synchronized fun takeEvent(): Any {

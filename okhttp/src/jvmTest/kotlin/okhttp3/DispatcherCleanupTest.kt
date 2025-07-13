@@ -17,11 +17,15 @@ package okhttp3
 
 import java.io.IOException
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import org.junit.jupiter.api.Test
 
 class DispatcherCleanupTest {
+  @StartStop
+  private val server = MockWebServer()
+
   @Test
-  fun testFinish(server: MockWebServer) {
+  fun testFinish() {
     val okhttp = OkHttpClient()
     val callback =
       object : Callback {

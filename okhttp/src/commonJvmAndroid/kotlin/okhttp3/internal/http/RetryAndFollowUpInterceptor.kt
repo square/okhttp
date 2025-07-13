@@ -75,11 +75,10 @@ class RetryAndFollowUpInterceptor(
           newRoutePlanner = true
         } catch (e: IOException) {
           // An attempt to communicate with a server failed. The request may have been sent.
-          if (!recover(e, call, request, requestSendStarted = e !is ConnectionShutdownException)) {
-            throw e.withSuppressed(recoveredFailures)
-          } else {
-            recoveredFailures += e
-          }
+          val isRecoverable = recover(e, call, request)
+          call.eventListener.retryDecision(call, e, isRecoverable)
+          if (!isRecoverable) throw e.withSuppressed(recoveredFailures)
+          recoveredFailures += e
           newRoutePlanner = false
           continue
         }
@@ -93,30 +92,32 @@ class RetryAndFollowUpInterceptor(
             .build()
 
         val exchange = call.interceptorScopedExchange
-        val followUp = followUpRequest(response, exchange, call)
+        val followUp = followUpRequest(response, exchange)
 
         if (followUp == null) {
           if (exchange != null && exchange.isDuplex) {
             call.timeoutEarlyExit()
           }
           closeActiveExchange = false
+          call.eventListener.followUpDecision(call, response, null)
           return response
         }
 
         val followUpBody = followUp.body
         if (followUpBody != null && followUpBody.isOneShot()) {
           closeActiveExchange = false
-          call.eventListener.retryDecision(call, false, "request.body isOneShot is true")
+          call.eventListener.followUpDecision(call, response, null)
           return response
         }
 
         response.body.closeQuietly()
 
         if (++followUpCount > MAX_FOLLOW_UPS) {
-          call.eventListener.retryDecision(call, false, "Too many follow-up requests: $followUpCount")
+          call.eventListener.followUpDecision(call, response, null)
           throw ProtocolException("Too many follow-up requests: $followUpCount")
         }
 
+        call.eventListener.followUpDecision(call, response, followUp)
         request = followUp
         priorResponse = response
       } finally {
@@ -135,22 +136,17 @@ class RetryAndFollowUpInterceptor(
     e: IOException,
     call: RealCall,
     userRequest: Request,
-    requestSendStarted: Boolean,
   ): Boolean {
+    val requestSendStarted = e !is ConnectionShutdownException
+
     // The application layer has forbidden retries.
-    if (!client.retryOnConnectionFailure) {
-      call.eventListener.retryDecision(call, false, "retryOnConnectionFailure is false")
-      return false
-    }
+    if (!client.retryOnConnectionFailure) return false
 
     // We can't send the request body again.
-    if (requestSendStarted && requestIsOneShot(e, userRequest)) {
-      call.eventListener.retryDecision(call, false, "request.body isOneShot is true")
-      return false
-    }
+    if (requestSendStarted && requestIsOneShot(e, userRequest)) return false
 
     // This exception is fatal.
-    if (!isRecoverable(e, requestSendStarted, call)) return false
+    if (!isRecoverable(e, requestSendStarted)) return false
 
     // No more routes to attempt.
     if (!call.retryAfterFailure()) return false
@@ -171,28 +167,16 @@ class RetryAndFollowUpInterceptor(
   private fun isRecoverable(
     e: IOException,
     requestSendStarted: Boolean,
-    call: RealCall,
   ): Boolean {
     // If there was a protocol problem, don't recover.
     if (e is ProtocolException) {
-      call.eventListener.retryDecision(call, false, "failure was ProtocolException")
       return false
     }
 
     // If there was an interruption don't recover, but if there was a timeout connecting to a route
     // we should try the next route (if there is one).
     if (e is InterruptedIOException) {
-      if (e is SocketTimeoutException) {
-        if (requestSendStarted) {
-          call.eventListener.retryDecision(call, false, "request was at least partially sent")
-          return false
-        }
-      } else {
-        call.eventListener.retryDecision(call, false, "failure was InterruptedIOException")
-        return false
-      }
-
-      return true
+      return e is SocketTimeoutException && !requestSendStarted
     }
 
     // Look for known client-side or negotiation errors that are unlikely to be fixed by trying
@@ -201,17 +185,13 @@ class RetryAndFollowUpInterceptor(
       // If the problem was a CertificateException from the X509TrustManager,
       // do not retry.
       if (e.cause is CertificateException) {
-        call.eventListener.retryDecision(call, false, "failure was CertificateException")
         return false
       }
     }
-
     if (e is SSLPeerUnverifiedException) {
       // e.g. a certificate pinning error.
-      call.eventListener.retryDecision(call, false, "certificate pinning failure")
       return false
     }
-
     // An example of one we might want to retry with a different route is a problem connecting to a
     // proxy and would manifest as a standard IOException. Unless it is one we know we should not
     // retry, we return true and try a new route.
@@ -227,7 +207,6 @@ class RetryAndFollowUpInterceptor(
   private fun followUpRequest(
     userResponse: Response,
     exchange: Exchange?,
-    call: RealCall,
   ): Request? {
     val route = exchange?.connection?.route()
     val responseCode = userResponse.code
@@ -237,23 +216,15 @@ class RetryAndFollowUpInterceptor(
       HTTP_PROXY_AUTH -> {
         val selectedProxy = route!!.proxy
         if (selectedProxy.type() != Proxy.Type.HTTP) {
-          call.eventListener.retryDecision(call, false, "Received HTTP_PROXY_AUTH (407) code while not using proxy")
           throw ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy")
         }
-        call.eventListener.retryDecision(call, true, "Received HTTP_PROXY_AUTH (407) code")
         return client.proxyAuthenticator.authenticate(route, userResponse)
       }
 
-      HTTP_UNAUTHORIZED -> return client.authenticator.authenticate(route, userResponse).also {
-        if (it != null) {
-          call.eventListener.retryDecision(call, true, "Received HTTP_UNAUTHORIZED (401) and authenticate request")
-        } else {
-          call.eventListener.retryDecision(call, false, "Received HTTP_UNAUTHORIZED (401) without authenticate request")
-        }
-      }
+      HTTP_UNAUTHORIZED -> return client.authenticator.authenticate(route, userResponse)
 
       HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> {
-        return buildRedirectRequest(userResponse, method, call)
+        return buildRedirectRequest(userResponse, method)
       }
 
       HTTP_CLIENT_TIMEOUT -> {
@@ -262,28 +233,23 @@ class RetryAndFollowUpInterceptor(
         // repeat the request (even non-idempotent ones.)
         if (!client.retryOnConnectionFailure) {
           // The application layer has directed us not to retry the request.
-          call.eventListener.retryDecision(call, false, "HTTP_CLIENT_TIMEOUT (408) and retryOnConnectionFailure is false")
           return null
         }
 
         val requestBody = userResponse.request.body
         if (requestBody != null && requestBody.isOneShot()) {
-          call.eventListener.retryDecision(call, false, "HTTP_CLIENT_TIMEOUT (408) and request.body isOneShot is true")
           return null
         }
         val priorResponse = userResponse.priorResponse
         if (priorResponse != null && priorResponse.code == HTTP_CLIENT_TIMEOUT) {
-          call.eventListener.retryDecision(call, false, "HTTP_CLIENT_TIMEOUT (408) received on retry")
           // We attempted to retry and got another timeout. Give up.
           return null
         }
 
         if (retryAfter(userResponse, 0) > 0) {
-          call.eventListener.retryDecision(call, false, "HTTP_CLIENT_TIMEOUT (408) with Retry-After")
           return null
         }
 
-        call.eventListener.retryDecision(call, true, "HTTP_CLIENT_TIMEOUT (408)")
         return userResponse.request
       }
 
@@ -291,17 +257,14 @@ class RetryAndFollowUpInterceptor(
         val priorResponse = userResponse.priorResponse
         if (priorResponse != null && priorResponse.code == HTTP_UNAVAILABLE) {
           // We attempted to retry and got another timeout. Give up.
-          call.eventListener.retryDecision(call, false, "HTTP_UNAVAILABLE (503) received on retry")
           return null
         }
 
         if (retryAfter(userResponse, Integer.MAX_VALUE) == 0) {
-          // specifically received an instruction to retry without delay
-          call.eventListener.retryDecision(call, true, "HTTP_UNAVAILABLE (503) with Retry-After = 0")
+          // specifically received an instruction to retry without delay.
           return userResponse.request
         }
 
-        call.eventListener.retryDecision(call, false, "HTTP_UNAVAILABLE (503)")
         return null
       }
 
@@ -311,56 +274,35 @@ class RetryAndFollowUpInterceptor(
         // we can retry on a different connection.
         val requestBody = userResponse.request.body
         if (requestBody != null && requestBody.isOneShot()) {
-          call.eventListener.retryDecision(call, false, "HTTP_MISDIRECTED_REQUEST (421) and request.body isOneShot is true")
           return null
         }
 
         if (exchange == null || !exchange.isCoalescedConnection) {
-          call.eventListener.retryDecision(call, false, "HTTP_MISDIRECTED_REQUEST (421) on non coalesced connection")
           return null
         }
 
         exchange.connection.noCoalescedConnections()
-        call.eventListener.retryDecision(call, true, "HTTP_MISDIRECTED_REQUEST (421), retrying without coalesced connection")
         return userResponse.request
       }
 
-      else -> return null.also {
-        if (!userResponse.isSuccessful) {
-          call.eventListener.retryDecision(call, false, "No rule to retry request ($responseCode)")
-        }
-      }
+      else -> return null
     }
   }
 
   private fun buildRedirectRequest(
     userResponse: Response,
     method: String,
-    call: RealCall,
   ): Request? {
     // Does the client allow redirects?
-    if (!client.followRedirects) {
-      call.eventListener.retryDecision(call, false, "followRedirects is false after redirect (${userResponse.code})")
-      return null
-    }
+    if (!client.followRedirects) return null
 
-    val location =
-      userResponse.header("Location") ?: return null.also {
-        call.eventListener.retryDecision(call, false, "redirect (${userResponse.code}) without Location")
-      }
+    val location = userResponse.header("Location") ?: return null
     // Don't follow redirects to unsupported protocols.
-    val url =
-      userResponse.request.url.resolve(location) ?: return null.also {
-        call.eventListener.retryDecision(call, false, "redirect (${userResponse.code}) to unsupported protocol")
-      }
+    val url = userResponse.request.url.resolve(location) ?: return null
 
     // If configured, don't follow redirects between SSL and non-SSL.
     val sameScheme = url.scheme == userResponse.request.url.scheme
-    if (!sameScheme && !client.followSslRedirects) {
-      return null.also {
-        call.eventListener.retryDecision(call, false, "redirect (${userResponse.code}) switching scheme and followSslRedirects is false")
-      }
-    }
+    if (!sameScheme && !client.followSslRedirects) return null
 
     // Most redirects don't include a request body.
     val requestBuilder = userResponse.request.newBuilder()
@@ -389,8 +331,6 @@ class RetryAndFollowUpInterceptor(
     if (!userResponse.request.url.canReuseConnectionFor(url)) {
       requestBuilder.removeHeader("Authorization")
     }
-
-    call.eventListener.retryDecision(call, true, "redirect (${userResponse.code})")
 
     return requestBuilder.url(url).build()
   }

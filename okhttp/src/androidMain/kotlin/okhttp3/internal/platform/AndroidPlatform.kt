@@ -178,19 +178,7 @@ class AndroidPlatform :
   companion object {
     val Tag = "OkHttp"
 
-    val isSupported: Boolean =
-      when {
-        !isAndroid -> false
-        Build.VERSION.SDK_INT >= 30 -> false // graylisted methods are banned
-        else -> {
-          // Fail Fast
-          check(
-            Build.VERSION.SDK_INT >= 21,
-          ) { "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}" }
-
-          true
-        }
-      }
+    val isSupported: Boolean = isAndroid && Build.VERSION.SDK_INT in 21 until 29
 
     fun buildIfSupported(): Platform? = if (isSupported) AndroidPlatform() else null
   }

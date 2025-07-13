@@ -34,9 +34,15 @@ public void test() throws Exception {
   MockWebServer server = new MockWebServer();
 
   // Schedule some responses.
-  server.enqueue(new MockResponse().setBody("hello, world!"));
-  server.enqueue(new MockResponse().setBody("sup, bra?"));
-  server.enqueue(new MockResponse().setBody("yo dog"));
+  server.enqueue(new MockResponse.Builder()
+      .body("hello, world!")
+      .build());
+  server.enqueue(new MockResponse.Builder()
+      .body("sup, bra?")
+      .build());
+  server.enqueue(new MockResponse.Builder()
+      .body("yo dog")
+      .build());
 
   // Start the server.
   server.start();
@@ -61,7 +67,7 @@ public void test() throws Exception {
   // Optional: confirm that your app made the HTTP requests you were expecting.
   RecordedRequest request1 = server.takeRequest();
   assertEquals("/v1/chat/messages/", request1.getPath());
-  assertNotNull(request1.getHeader("Authorization"));
+  assertNotNull(request1.getHeaders().get("Authorization"));
 
   RecordedRequest request2 = server.takeRequest();
   assertEquals("/v1/chat/messages/2", request2.getPath());
@@ -70,7 +76,7 @@ public void test() throws Exception {
   assertEquals("/v1/chat/messages/3", request3.getPath());
 
   // Shut down the server. Instances cannot be reused.
-  server.shutdown();
+  server.close();
 }
 ```
 
@@ -86,17 +92,20 @@ You can set a custom body with a string, input stream or byte array. Also
 add headers with a fluent builder API.
 
 ```java
-MockResponse response = new MockResponse()
+MockResponse response = new MockResponse.Builder()
     .addHeader("Content-Type", "application/json; charset=utf-8")
     .addHeader("Cache-Control", "no-cache")
-    .setBody("{}");
+    .body("{}")
+    .build();
 ```
 
 MockResponse can be used to simulate a slow network. This is useful for
 testing timeouts and interactive testing.
 
 ```java
-response.throttleBody(1024, 1, TimeUnit.SECONDS);
+MockResponse response = new MockResponse.Builder()
+    .throttleBody(1024, 1, TimeUnit.SECONDS)
+    .build();
 ```
 
 
@@ -107,7 +116,7 @@ Verify requests by their method, path, HTTP version, body, and headers.
 ```java
 RecordedRequest request = server.takeRequest();
 assertEquals("POST /v1/chat/send HTTP/1.1", request.getRequestLine());
-assertEquals("application/json; charset=utf-8", request.getHeader("Content-Type"));
+assertEquals("application/json; charset=utf-8", request.getHeaders().get("Content-Type"));
 assertEquals("{}", request.getBody().readUtf8());
 ```
 
@@ -125,14 +134,24 @@ final Dispatcher dispatcher = new Dispatcher() {
     public MockResponse dispatch (RecordedRequest request) throws InterruptedException {
 
         switch (request.getPath()) {
-            case "/v1/login/auth/":
-                return new MockResponse().setResponseCode(200);
-            case "/v1/check/version/":
-                return new MockResponse().setResponseCode(200).setBody("version=9");
-            case "/v1/profile/info":
-                return new MockResponse().setResponseCode(200).setBody("{\\\"info\\\":{\\\"name\":\"Lucas Albuquerque\",\"age\":\"21\",\"gender\":\"male\"}}");
+          case "/v1/login/auth/":
+              return new MockResponse.Builder()
+                  .code(200)
+                  .build();
+          case "/v1/check/version/":
+              return new MockResponse.Builder()
+                  .code(200)
+                  .body("version=9")
+                  .build();
+          case "/v1/profile/info":
+            return new MockResponse.Builder()
+                .code(200)
+                .body("{\\\"info\\\":{\\\"name\":\"Lucas Albuquerque\",\"age\":\"21\",\"gender\":\"male\"}}")
+                .build();
         }
-        return new MockResponse().setResponseCode(404);
+        return new MockResponse.Builder()
+            .code(404)
+            .build();
     }
 };
 server.setDispatcher(dispatcher);
@@ -142,7 +161,7 @@ server.setDispatcher(dispatcher);
 ### Download
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+testImplementation("com.squareup.okhttp3:mockwebserver3:5.1.0")
 ```
 
 ### License

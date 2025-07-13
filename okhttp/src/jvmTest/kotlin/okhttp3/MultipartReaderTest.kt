@@ -29,6 +29,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
+import okio.BufferedSink
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
@@ -129,7 +130,7 @@ class MultipartReaderTest {
 
     val part = parts.nextPart()!!
     assertFailsWith<EOFException> {
-      assertThat(part.body.readUtf8()).isEqualTo("abcd\r\nefgh\r\n")
+      part.body.readUtf8()
     }
 
     assertFailsWith<EOFException> {
@@ -590,50 +591,52 @@ class MultipartReaderTest {
     assertThat(reader.nextPart()).isNull()
   }
 
+  /**
+   * Read 100 MiB of 'a' chars. This was really slow due to a performance bug in [MultipartReader],
+   * and will be really slow if we regress the fix for that.
+   */
   @Test
   fun `reading a large part with small byteCount`() {
-    val multipartBody: RequestBody =
+    val multipartBody =
       MultipartBody
         .Builder("foo")
         .addPart(
           headersOf("header-name", "header-value"),
           object : RequestBody() {
-            override fun contentType(): MediaType? = "application/octet-stream".toMediaTypeOrNull()
+            override fun contentType() = "application/octet-stream".toMediaTypeOrNull()
 
-            override fun contentLength(): Long = (1024 * 1024 * 100).toLong()
+            override fun contentLength() = 1024L * 1024L * 100L
 
-            override fun writeTo(sink: okio.BufferedSink) {
+            override fun writeTo(sink: BufferedSink) {
+              val a1024x1024 = "a".repeat(1024 * 1024)
               repeat(100) {
-                sink.writeUtf8(
-                  "a".repeat(1024 * 1024),
-                )
+                sink.writeUtf8(a1024x1024)
               }
             }
           },
         ).build()
-    val buffer =
-      Buffer().apply {
-        multipartBody.writeTo(this)
-      }
+    val buffer = Buffer()
+    multipartBody.writeTo(buffer)
 
     val multipartReader = MultipartReader(buffer, "foo")
+    val onlyPart = multipartReader.nextPart()!!
+    assertThat(onlyPart.headers).isEqualTo(
+      headersOf(
+        "header-name",
+        "header-value",
+        "Content-Type",
+        "application/octet-stream",
+      ),
+    )
+    val readBuff = Buffer()
+    var byteCount = 0L
     while (true) {
-      val part = multipartReader.nextPart()
-
-      if (part == null) break
-
-      assertThat(part.headers["header-name"]).isEqualTo("header-value")
-      while (true) {
-        val readBuff = Buffer()
-        val read = part.body.read(readBuff, (1024).toLong())
-        if (read == -1L) {
-          break
-        } else {
-          assertThat(readBuff.readUtf8()).isEqualTo(
-            "a".repeat(read.toInt()),
-          )
-        }
-      }
+      val readByteCount = onlyPart.body.read(readBuff, 1024L)
+      if (readByteCount == -1L) break
+      byteCount += readByteCount
+      assertThat(readBuff.readUtf8()).isEqualTo("a".repeat(readByteCount.toInt()))
     }
+    assertThat(byteCount).isEqualTo(1024L * 1024L * 100L)
+    assertThat(multipartReader.nextPart()).isNull()
   }
 }

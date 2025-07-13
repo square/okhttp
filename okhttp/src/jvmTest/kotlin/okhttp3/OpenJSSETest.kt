@@ -21,6 +21,7 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.internal.connectionAccessor
 import okhttp3.internal.exchangeAccessor
@@ -45,11 +46,11 @@ class OpenJSSETest {
 
   var client = clientTestRule.newClient()
 
-  private lateinit var server: MockWebServer
+  @StartStop
+  private val server = MockWebServer()
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
+  fun setUp() {
     platform.assumeOpenJSSE()
   }
 

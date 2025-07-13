@@ -31,7 +31,6 @@ import java.net.URI
 import java.net.UnknownHostException
 import kotlin.test.assertFailsWith
 import okhttp3.Address
-import okhttp3.ConnectionListener
 import okhttp3.FakeDns
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request

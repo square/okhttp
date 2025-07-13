@@ -37,25 +37,14 @@ class ResponseJvmTest {
   }
 
   @Test
-  fun testFailsIfTrailersNotSet() {
-    val response =
-      newResponse("".toResponseBody()) {
-        // All live paths (Http1, Http2) in OkHttp do this
-        trailers { error("trailers not available") }
-      }
-
-    assertFailsWith<IllegalStateException>(message = "trailers not available") {
-      response.trailers()
-    }
-  }
-
-  @Test
   fun worksIfTrailersSet() {
     val response =
       newResponse("".toResponseBody()) {
-        trailers {
-          Headers.headersOf("a", "b")
-        }
+        trailers(
+          object : TrailersSource {
+            override fun get() = Headers.headersOf("a", "b")
+          },
+        )
       }
 
     assertThat(response.trailers()["a"]).isEqualTo("b")

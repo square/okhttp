@@ -37,6 +37,7 @@ import javax.net.ssl.SSLSocketFactory
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.internal.platform.Platform.Companion.get
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.testing.PlatformRule
@@ -44,7 +45,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -55,11 +55,8 @@ class OkHttpClientTest {
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
 
-  private var server: MockWebServer? = null
-
-  @BeforeEach fun setUp(server: MockWebServer?) {
-    this.server = server
-  }
+  @StartStop
+  private val server = MockWebServer()
 
   @AfterEach fun tearDown() {
     ProxySelector.setDefault(DEFAULT_PROXY_SELECTOR)

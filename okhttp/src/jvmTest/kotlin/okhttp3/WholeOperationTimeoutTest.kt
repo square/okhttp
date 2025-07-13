@@ -30,11 +30,11 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.TestUtil.repeat
 import okhttp3.testing.Flaky
 import okio.BufferedSink
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -47,12 +47,8 @@ class WholeOperationTimeoutTest {
   val clientTestRule = OkHttpClientTestRule()
   private val client = clientTestRule.newClient()
 
-  private lateinit var server: MockWebServer
-
-  @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
-  }
+  @StartStop
+  private val server = MockWebServer()
 
   @Test
   fun defaultConfigIsNoTimeout() {
@@ -340,6 +336,7 @@ class WholeOperationTimeoutTest {
   @Test
   fun timeoutFollowingRedirectOnNewConnection() {
     val otherServer = MockWebServer()
+    otherServer.start()
     server.enqueue(
       MockResponse
         .Builder()

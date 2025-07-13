@@ -22,6 +22,7 @@ import assertk.assertions.isNotEmpty
 import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
@@ -45,12 +46,11 @@ class SessionReuseTest {
 
   var client = clientTestRule.newClient()
 
-  private lateinit var server: MockWebServer
+  @StartStop
+  private val server = MockWebServer()
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
-
+  fun setUp() {
     // Default after JDK 14, but we are avoiding tests that assume special setup.
     // System.setProperty("jdk.tls.client.enableSessionTicketExtension", "true")
     // System.setProperty("jdk.tls.server.enableSessionTicketExtension", "true")

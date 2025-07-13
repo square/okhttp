@@ -30,6 +30,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.StandardConstants
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
 import okhttp3.Provider.CONSCRYPT
@@ -83,12 +84,11 @@ class SocketChannelTest {
     }
   private var acceptedHostName: String? = null
 
-  private lateinit var server: MockWebServer
+  @StartStop
+  private val server = MockWebServer()
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
-
+  fun setUp() {
     // Test designed for Conscrypt and JSSE
     platform.assumeNotBouncyCastle()
   }

@@ -29,7 +29,7 @@ import okhttp3.Request
 import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.concurrent.TaskRunner.RealBackend
-import okhttp3.internal.connection.Locks.withLock
+import okhttp3.internal.concurrent.withLock
 import okhttp3.internal.http2.Http2
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2ConnectionTest
@@ -222,7 +222,7 @@ class ConnectionPoolTest {
     val pool = routePlanner.pool
 
     // Connections are created as soon as a policy is set
-    setPolicy(pool, address, ConnectionPool.AddressPolicy(2))
+    setPolicy(pool, address, AddressPolicy(2))
     assertThat(pool.connectionCount()).isEqualTo(2)
 
     // Connections are replaced if they idle out or are evicted from the pool
@@ -232,7 +232,7 @@ class ConnectionPoolTest {
     assertThat(pool.connectionCount()).isEqualTo(2)
 
     // Excess connections aren't removed until they idle out, even if no longer needed
-    setPolicy(pool, address, ConnectionPool.AddressPolicy(1))
+    setPolicy(pool, address, AddressPolicy(1))
     assertThat(pool.connectionCount()).isEqualTo(2)
     forceConnectionsToExpire(pool, expireTime)
     assertThat(pool.connectionCount()).isEqualTo(1)
@@ -251,7 +251,7 @@ class ConnectionPoolTest {
 
     // Add a connection to the pool that won't expire for a while
     routePlanner.defaultConnectionIdleAtNanos = expireLater
-    setPolicy(pool, address, ConnectionPool.AddressPolicy(1))
+    setPolicy(pool, address, AddressPolicy(1))
     assertThat(pool.connectionCount()).isEqualTo(1)
 
     // All other connections created will expire sooner
@@ -261,7 +261,7 @@ class ConnectionPoolTest {
     // which can satisfy a larger policy
     val connection = routePlanner.plans.first().connection
     val http2Connection = connectHttp2(peer, connection, 5)
-    setPolicy(pool, address, ConnectionPool.AddressPolicy(5))
+    setPolicy(pool, address, AddressPolicy(5))
     assertThat(pool.connectionCount()).isEqualTo(1)
 
     // Decrease the connection's max so that another connection is needed
@@ -277,7 +277,7 @@ class ConnectionPoolTest {
   private fun setPolicy(
     pool: RealConnectionPool,
     address: Address,
-    policy: ConnectionPool.AddressPolicy,
+    policy: AddressPolicy,
   ) {
     pool.setPolicy(address, policy)
     taskFaker.runTasks()

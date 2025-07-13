@@ -24,28 +24,30 @@ import kotlin.test.assertFailsWith
 import okhttp3.internal.publicsuffix.ResourcePublicSuffixList.Companion.PUBLIC_SUFFIX_RESOURCE
 import okhttp3.internal.toCanonicalHost
 import okhttp3.okHttpRoot
-import okhttp3.test.BaseJavaTest
 import okio.Buffer
 import okio.FileSystem
-import okio.GzipSource
 import okio.Path.Companion.toPath
-import okio.buffer
-import okio.use
+import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 
-class PublicSuffixDatabaseTest : BaseJavaTest() {
+@RunWith(PublicSuffixTestRunner::class)
+class PublicSuffixDatabaseTest {
   private val publicSuffixDatabase = PublicSuffixDatabase.get()
 
   val pathForTests = okHttpRoot / "okhttp/src/jvmMain/resources" / PUBLIC_SUFFIX_RESOURCE
 
+  @Before
+  fun setUp() {
+    beforePublicSuffixTest()
+  }
+
   @Test
   fun allPublicSuffixes() {
     val buffer = Buffer()
-    FileSystem.SYSTEM.source(pathForTests).use { resource ->
-      GzipSource(resource).buffer().use { source ->
-        val length = source.readInt()
-        buffer.write(source, length.toLong())
-      }
+    FileSystem.SYSTEM.read(pathForTests) {
+      val length = readInt()
+      buffer.write(this, length.toLong())
     }
     while (!buffer.exhausted()) {
       var publicSuffix = buffer.readUtf8LineStrict()
@@ -62,13 +64,11 @@ class PublicSuffixDatabaseTest : BaseJavaTest() {
   @Test
   fun publicSuffixExceptions() {
     val buffer = Buffer()
-    FileSystem.SYSTEM.source(pathForTests).use { resource ->
-      GzipSource(resource).buffer().use { source ->
-        var length = source.readInt()
-        source.skip(length.toLong())
-        length = source.readInt()
-        buffer.write(source, length.toLong())
-      }
+    FileSystem.SYSTEM.read(pathForTests) {
+      var length = readInt()
+      skip(length.toLong())
+      length = readInt()
+      buffer.write(this, length.toLong())
     }
     while (!buffer.exhausted()) {
       val exception = buffer.readUtf8LineStrict()
