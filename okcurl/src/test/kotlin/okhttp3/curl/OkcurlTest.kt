@@ -16,9 +16,18 @@
 package okhttp3.curl
 
 import com.github.ajalt.clikt.core.main
+import kotlin.test.BeforeTest
 import kotlin.test.Test
+import okhttp3.TestUtil.assumeNotWindows
 
 class OkcurlTest {
+  @BeforeTest
+  fun skipWindows() {
+    // Failing with
+    // org.gradle.internal.remote.internal.MessageIOException: Could not write '/127.0.0.1:16225'.
+    assumeNotWindows()
+  }
+
   @Test
   fun simple() {
     Main().main(listOf("--help"))
