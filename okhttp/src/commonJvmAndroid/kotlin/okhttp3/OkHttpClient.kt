@@ -146,9 +146,9 @@ open class OkHttpClient internal constructor(
     builder.interceptors.toImmutableList()
 
   /**
-   * Returns an immutable list of interceptors that observe the full span of each call: from before
-   * the connection is established (if any) until after the response source is selected (either the
-   * origin server, cache, or both).
+   * Returns an immutable list of Call decorators that have a chance to return a different, likely
+   * decorating, implementation of Call. This allows functionality such as fail fast without normal Call
+   * execution based on network conditions, or setting Tracing context on the calling thread.
    */
   val callDecorators: List<Call.Decorator> =
     builder.callDecorators.toImmutableList()
@@ -378,10 +378,6 @@ open class OkHttpClient internal constructor(
   private inner class DecoratedCallFactory(
     private val index: Int = 0,
   ) : Call.Factory {
-    init {
-      println("DecoratedCallFactory index: $index")
-    }
-
     override fun newCall(request: Request): Call {
       val next = if (index > callDecorators.lastIndex) this@OkHttpClient else DecoratedCallFactory(index + 1)
       return callDecorators[index].newCall(next, request)
