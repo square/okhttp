@@ -88,9 +88,10 @@ class ZstdInterceptorTest {
   fun testUnknownAlgorithm() {
     val s = "hello unknown algorithm world".encodeUtf8()
 
-    val response = response("https://example.com/", s) {
-      header("Content-Encoding", "deflate")
-    }
+    val response =
+      response("https://example.com/", s) {
+        header("Content-Encoding", "deflate")
+      }
 
     val decompressed = decompress(response)
     assertThat(decompressed.header("Content-Encoding")).isEqualTo("deflate")

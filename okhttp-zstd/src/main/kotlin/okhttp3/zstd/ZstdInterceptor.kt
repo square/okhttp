@@ -41,7 +41,8 @@ object ZstdInterceptor : Interceptor {
       return chain.proceed(originalRequest)
     }
 
-    val request = originalRequest
+    val request =
+      originalRequest
         .newBuilder()
         .header("Accept-Encoding", "zstd,gzip")
         .build()
