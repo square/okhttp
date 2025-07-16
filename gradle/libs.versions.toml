@@ -55,7 +55,7 @@ gradlePlugin-graalvmBuildTools = "org.graalvm.buildtools.native:org.graalvm.buil
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
-gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.33.0"
+gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.34.0"
 gradlePlugin-mavenSympathy = "io.github.usefulness.maven-sympathy:io.github.usefulness.maven-sympathy.gradle.plugin:0.3.0"
 gradlePlugin-shadow = "com.gradleup.shadow:shadow-gradle-plugin:8.3.8"
 gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:7.1.0"
