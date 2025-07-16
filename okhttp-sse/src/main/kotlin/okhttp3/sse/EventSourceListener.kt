@@ -19,6 +19,11 @@ import okhttp3.Response
 
 abstract class EventSourceListener {
   /**
+   * Seconds elapsed between 2 events until connection failed. Doesn't timeout if null
+   */
+  open var timeout: Long? = null
+
+  /**
    * Invoked when an event source has been accepted by the remote peer and may begin transmitting
    * events.
    */
@@ -29,7 +34,12 @@ abstract class EventSourceListener {
   }
 
   /**
-   * TODO description.
+   * Invoked when an event is received.
+   *
+   * @param eventSource Source of the event
+   * @param id SSE event's id
+   * @param type SSE event's type
+   * @param data SSE event's data
    */
   open fun onEvent(
     eventSource: EventSource,
@@ -40,7 +50,7 @@ abstract class EventSourceListener {
   }
 
   /**
-   * TODO description.
+   * Invoked when the connection has been properly closed by the server.
    *
    * No further calls to this listener will be made.
    */
