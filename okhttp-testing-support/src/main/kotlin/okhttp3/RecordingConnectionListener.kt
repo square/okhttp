@@ -144,11 +144,13 @@ internal open class RecordingConnectionListener(
   }
 
   override fun connectStart(
+    connectionId: Long,
     route: Route,
     call: Call,
   ) = logEvent(ConnectionEvent.ConnectStart(System.nanoTime(), route, call))
 
   override fun connectFailed(
+    connectionId: Long,
     route: Route,
     call: Call,
     failure: IOException,

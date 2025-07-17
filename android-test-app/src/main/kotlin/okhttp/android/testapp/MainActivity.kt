@@ -19,10 +19,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import okhttp3.Call
 import okhttp3.Callback
+import okhttp3.ConnectionPool
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.android.tracing.AndroidxTracingConnectionListener
+import okhttp3.android.tracing.AndroidxTracingInterceptor
 import okhttp3.internal.platform.AndroidPlatform
 import okio.IOException
 
@@ -30,7 +33,12 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    val client = OkHttpClient()
+    val client =
+      OkHttpClient
+        .Builder()
+        .connectionPool(ConnectionPool(connectionListener = AndroidxTracingConnectionListener()))
+        .addNetworkInterceptor(AndroidxTracingInterceptor())
+        .build()
 
     // Ensure we are compiling against the right variant
     println(AndroidPlatform.isSupported)

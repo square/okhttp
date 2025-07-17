@@ -27,11 +27,12 @@ import okio.IOException
  * attempt to mutate the event parameters, or be reentrant back into the client.
  * Any IO - writing to files or network should be done asynchronously.
  */
-internal abstract class ConnectionListener {
+abstract class ConnectionListener {
   /**
    * Invoked as soon as a call causes a connection to be started.
    */
   open fun connectStart(
+    connectionId: Long,
     route: Route,
     call: Call,
   ) {}
@@ -40,6 +41,7 @@ internal abstract class ConnectionListener {
    * Invoked when a connection fails to be established.
    */
   open fun connectFailed(
+    connectionId: Long,
     route: Route,
     call: Call,
     failure: IOException,
