@@ -378,13 +378,12 @@ open class OkHttpClient internal constructor(
   private inner class DecoratedCallFactory(
     private val index: Int = 0,
   ) : Call.Factory {
-    override fun newCall(request: Request): Call {
-      return if (index > callDecorators.lastIndex) {
+    override fun newCall(request: Request): Call =
+      if (index > callDecorators.lastIndex) {
         RealCall(this@OkHttpClient, request, forWebSocket = false)
       } else {
         callDecorators[index].newCall(DecoratedCallFactory(index + 1), request)
       }
-    }
   }
 
   /** Uses [request] to connect a new web socket. */

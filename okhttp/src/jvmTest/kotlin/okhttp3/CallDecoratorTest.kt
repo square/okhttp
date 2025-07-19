@@ -88,7 +88,9 @@ class CallDecoratorTest {
     }
   }
 
-  class WrappedCall(delegate: Call) : Call by delegate
+  class WrappedCall(
+    delegate: Call,
+  ) : Call by delegate
 
   @Test
   fun testWrappedCallIsObserved() {
@@ -102,37 +104,34 @@ class CallDecoratorTest {
         .addCallDecorator { chain, request ->
           // First Call.Decorator will see the result of later decorators
           chain.newCall(request).also {
-            if (it !is WrappedCall)
+            if (it !is WrappedCall) {
               throw IOException("expecting wrapped call")
+            }
           }
-        }
-        .addCallDecorator { chain, request ->
+        }.addCallDecorator { chain, request ->
           WrappedCall(chain.newCall(request.newBuilder().tag<String>("wrapped").build()))
-        }
-        .addCallDecorator { chain, request ->
+        }.addCallDecorator { chain, request ->
 //          check(request.tag<String>() == "wrapped")
           chain.newCall(request).also {
-            if (it !is RealCall)
+            if (it !is RealCall) {
               throw IOException("expecting RealCall")
+            }
           }
-        }
-        .addInterceptor { chain ->
+        }.addInterceptor { chain ->
           // TODO
 //          if (chain.call() is WrappedCall) {
-            chain.proceed(chain.request())
+          chain.proceed(chain.request())
 //          } else {
 //            throw IOException("expecting wrapped call")
 //          }
-        }
-        .addNetworkInterceptor { chain ->
+        }.addNetworkInterceptor { chain ->
           // TODO
 //          if (chain.call() is WrappedCall) {
-            chain.proceed(chain.request())
+          chain.proceed(chain.request())
 //          } else {
 //            throw IOException("expecting wrapped call")
 //          }
-        }
-        .build()
+        }.build()
 
     client.newCall(request).execute().use {
       assertEquals(200, it.code)
@@ -156,12 +155,10 @@ class CallDecoratorTest {
         .addCallDecorator { _, request ->
           // Use the other client
           client.newCall(request)
-        }
-        .addInterceptor {
+        }.addInterceptor {
           // Fail if we get here
           throw IOException("You shall not pass")
-        }
-        .build()
+        }.build()
 
     redirectingClient.newCall(request).execute().use {
       assertEquals(200, it.code)
@@ -177,9 +174,7 @@ class CallDecoratorTest {
   }
 }
 
-
 private object AlwaysHttps : Call.Decorator {
-
   override fun newCall(
     chain: Call.Factory,
     request: Request,
