@@ -2,7 +2,6 @@
 
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
-import com.vanniktech.maven.publish.SonatypeHost
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
@@ -317,7 +316,7 @@ subprojects {
 
   plugins.withId("com.vanniktech.maven.publish.base") {
     configure<MavenPublishBaseExtension> {
-      publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
+      publishToMavenCentral(automaticRelease = true)
       signAllPublications()
       pom {
         name.set(project.name)
