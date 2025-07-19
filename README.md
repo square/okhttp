@@ -213,6 +213,25 @@ $ ./gradlew okcurl:nativeImage
 $ ./okcurl/build/graal/okcurl https://httpbin.org/get
 ```
 
+Java Modules
+------------
+
+OkHttp (5.3+) implements Java 9 Modules such that in Java builds.
+The list of defined modules is:
+
+- okhttp3
+- okhttp3.brotli
+- okhttp3.coroutines
+- okhttp3.dnsoverhttps
+- okhttp3.java.net.cookiejar
+- okhttp3.logging
+- okhttp3.sse
+- okhttp3.tls
+- okhttp3.urlconnection
+- mockwebserver3
+- mockwebserver3.junit4
+- mockwebserver3.junit5
+
 License
 -------
 

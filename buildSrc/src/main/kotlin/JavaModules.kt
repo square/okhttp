@@ -41,6 +41,8 @@ fun Project.applyJavaModules(
       compileKotlinTask.source(file("src/main/java9"))
     }
 
+    // Ignore warnings about using 'requires transitive' on automatic modules.
+    // not needed when compiling with recent JDKs, e.g. 17
     options.compilerArgs.add("-Xlint:-requires-transitive-automatic")
 
     // Patch the compileKotlinJvm output classes into the compilation so exporting packages works correctly.

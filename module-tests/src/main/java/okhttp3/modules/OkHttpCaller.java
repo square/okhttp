@@ -28,7 +28,7 @@ public class OkHttpCaller {
   public static Call callOkHttp() {
     OkHttpClient client = new OkHttpClient
       .Builder()
-//      .eventListenerFactory(LoggingEventListener.Factory())
+      .eventListenerFactory(LoggingEventListener.Factory())
       .build();
     return client.newCall(new Request.Builder().url("https://square.com/robots.txt").build());
   }

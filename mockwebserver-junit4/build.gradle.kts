@@ -8,7 +8,7 @@ plugins {
   id("binary-compatibility-validator")
 }
 
-project.applyJavaModules("mockwebserver3.junit4", enableValidation = false)
+project.applyJavaModules("mockwebserver3.junit4")
 
 dependencies {
   api(projects.okhttp)

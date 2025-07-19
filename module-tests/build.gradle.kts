@@ -22,7 +22,7 @@ dependencies {
 
 application {
   mainClass = "okhttp3.modules.Main"
-  mainModule = "okhttp3.modules"
+  mainModule = "okhttp3.module.tests"
 }
 
 extraJavaModuleInfo {
