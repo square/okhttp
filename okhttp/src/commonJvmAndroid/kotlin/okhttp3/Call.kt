@@ -98,7 +98,7 @@ interface Call : Cloneable {
   }
 
   /**
-   * The equivalent of an Interceptor for [Call.Factory], but critically supported with an [OkHttpClient].
+   * The equivalent of an Interceptor for [Call.Factory], but critically supported within an [OkHttpClient].
    *
    * While an [Interceptor] forms a chain as part of execution of a Call. Call.Decorator intercepts
    * [Call.Factory.newCall] with similar flexibility to Application [OkHttpClient.interceptors].
