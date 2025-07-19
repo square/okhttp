@@ -217,6 +217,17 @@ Java Modules
 ------------
 
 OkHttp (5.3+) implements Java 9 Modules such that in Java builds.
+
+With this in place Java builds should fail if apps attempt to use internal packages.
+
+```
+error: package okhttp3.internal.platform is not visible
+    okhttp3.internal.platform.Platform.get();
+                    ^
+  (package okhttp3.internal.platform is declared in module okhttp3,
+    which does not export it to module i.am.bad.and.i.should.feel.bad)
+```
+
 The list of defined modules is:
 
 - okhttp3
