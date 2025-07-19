@@ -19,7 +19,7 @@ package okhttp3.modules;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-//import okhttp3.logging.LoggingEventListener;
+import okhttp3.logging.LoggingEventListener;
 
 /**
  * Just checking compilation works
