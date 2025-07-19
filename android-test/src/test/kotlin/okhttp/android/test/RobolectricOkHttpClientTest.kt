@@ -31,6 +31,7 @@ class RobolectricOkHttpClientTest : BaseOkHttpClientUnitTest() {
   @Before
   fun setContext() {
     // This is awkward because Robolectric won't run our initializers and we don't want test deps
+    // https://github.com/robolectric/robolectric/issues/8461
     PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext()
   }
 }
