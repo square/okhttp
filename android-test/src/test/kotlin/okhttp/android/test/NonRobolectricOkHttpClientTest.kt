@@ -16,6 +16,8 @@
  */
 package okhttp.android.test
 
+import org.junit.Ignore
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
@@ -23,4 +25,10 @@ import org.junit.runners.JUnit4
  * Android test running with only stubs.
  */
 @RunWith(JUnit4::class)
-class NonRobolectricOkHttpClientTest : BaseOkHttpClientUnitTest()
+class NonRobolectricOkHttpClientTest : BaseOkHttpClientUnitTest() {
+  @Ignore("Requires an Asset")
+  @Test
+  override fun testPublicSuffixDb() {
+    super.testPublicSuffixDb()
+  }
+}
