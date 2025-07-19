@@ -3,7 +3,6 @@ plugins {
   id("application")
   id("com.github.iherasymenko.jlink") version "0.7"
   id("org.gradlex.extra-java-module-info") version "1.13"
-  id("com.ryandens.jlink-application") version "0.4.1"
 }
 
 dependencies {
@@ -23,6 +22,11 @@ dependencies {
 application {
   mainClass = "okhttp3.modules.Main"
   mainModule = "okhttp3.modules"
+}
+
+jlinkApplication {
+  stripDebug = true
+  addModules.addAll("jdk.crypto.ec", "java.logging")
 }
 
 extraJavaModuleInfo {
@@ -57,9 +61,4 @@ java {
   toolchain {
     languageVersion.set(JavaLanguageVersion.of(21))
   }
-}
-
-jlinkJre {
-  modules.addAll("jdk.crypto.ec", "java.logging")
-  stripDebug.set(true)
 }
