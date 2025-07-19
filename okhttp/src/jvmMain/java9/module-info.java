@@ -2,7 +2,11 @@
 module okhttp3 {
   requires transitive kotlin.stdlib;
   requires transitive okio;
+  requires java.io;
   requires java.logging;
+  requires java.net;
+  requires java.util;
+  requires javax.net.ssl;
   exports okhttp3;
   exports okhttp3.internal to okhttp3.logging, okhttp3.sse, okhttp3.java.net.cookiejar, okhttp3.dnsoverhttps, mockwebserver3, okhttp3.mockwebserver, okhttp3.coroutines, okhttp3.tls;
   exports okhttp3.internal.platform to okhttp3.logging, okhttp3.java.net.cookiejar, okhttp3.dnsoverhttps, mockwebserver3, okhttp3.mockwebserver, okhttp3.tls;
