@@ -176,7 +176,7 @@ subprojects {
   val javaVersionSetting =
     if (testJavaVersion > 8 && (project.name == "okcurl" || project.name == "native-image-tests")) {
       // Depends on native-image-tools which is 11+, but avoids on Java 8 tests
-      "11"
+      "17"
     } else {
       "1.8"
     }
