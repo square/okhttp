@@ -53,7 +53,7 @@ class AlwaysHttps(
   enum class Policy {
     Always {
       override val hostPolicy: HostPolicy
-        get() = HostPolicy { true }
+        get() = HostPolicy { false }
     },
     Manifest {
       override val hostPolicy: HostPolicy

@@ -68,6 +68,8 @@ class AndroidCallDecoratorTest {
   fun testInsecureRequestChangedToSecure() {
     enableTls()
 
+    server.enqueue(MockResponse())
+
     val request =
       Request
         .Builder()
