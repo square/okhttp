@@ -24,6 +24,7 @@ import java.net.Socket
 import java.net.UnknownServiceException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import okhttp3.CertificatePinner
@@ -79,6 +80,8 @@ class ConnectPlan(
   internal val isTlsFallback: Boolean,
 ) : RoutePlanner.Plan,
   ExchangeCodec.Carrier {
+  private val id = idGenerator.incrementAndGet()
+
   /** True if this connect was canceled; typically because it lost a race. */
   @Volatile private var canceled = false
 
@@ -135,7 +138,7 @@ class ConnectPlan(
     // Tell the call about the connecting call so async cancels work.
     user.addPlanToCancel(this)
     try {
-      user.connectStart(route)
+      user.connectStart(id, route)
 
       connectSocket()
       success = true
@@ -149,7 +152,7 @@ class ConnectPlan(
           e,
         )
       }
-      user.connectFailed(route, null, e)
+      user.connectFailed(id, route, null, e)
       return ConnectResult(plan = this, throwable = e)
     } finally {
       user.removePlanToCancel(this)
@@ -231,6 +234,7 @@ class ConnectPlan(
           sink = sink,
           pingIntervalMillis = pingIntervalMillis,
           connectionListener = connectionPool.connectionListener,
+          id = id,
         )
       this.connection = connection
       connection.start()
@@ -240,7 +244,7 @@ class ConnectPlan(
       success = true
       return ConnectResult(plan = this)
     } catch (e: IOException) {
-      user.connectFailed(route, null, e)
+      user.connectFailed(id, route, null, e)
 
       if (!retryOnConnectionFailure || !retryTlsHandshake(e)) {
         retryTlsConnection = null
@@ -333,7 +337,7 @@ class ConnectPlan(
           ProtocolException(
             "Too many tunnel connections attempted: $MAX_TUNNEL_ATTEMPTS",
           )
-        user.connectFailed(route, null, failure)
+        user.connectFailed(id, route, null, failure)
         return ConnectResult(plan = this, throwable = failure)
       }
     }
@@ -565,5 +569,7 @@ class ConnectPlan(
   companion object {
     private const val NPE_THROW_WITH_NULL = "throw with null exception"
     private const val MAX_TUNNEL_ATTEMPTS = 21
+
+    private val idGenerator = AtomicLong(0)
   }
 }
