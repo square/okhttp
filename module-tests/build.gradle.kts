@@ -1,11 +1,9 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
   id("java")
   id("application")
   id("com.github.iherasymenko.jlink") version "0.7"
-  id("org.gradlex.extra-java-module-info") version "1.12"
+  id("org.gradlex.extra-java-module-info") version "1.13"
+  id("com.ryandens.jlink-application") version "0.4.1"
 }
 
 dependencies {
@@ -22,7 +20,7 @@ dependencies {
 
 application {
   mainClass = "okhttp3.modules.Main"
-  mainModule = "okhttp3.module.tests"
+  mainModule = "okhttp3.modules"
 }
 
 extraJavaModuleInfo {
@@ -57,4 +55,9 @@ java {
   toolchain {
     languageVersion.set(JavaLanguageVersion.of(21))
   }
+}
+
+jlinkJre {
+  modules.addAll("jdk.crypto.ec", "java.logging")
+  stripDebug.set(true)
 }
