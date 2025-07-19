@@ -216,7 +216,7 @@ $ ./okcurl/build/graal/okcurl https://httpbin.org/get
 Java Modules
 ------------
 
-OkHttp (5.3+) implements Java 9 Modules such that in Java builds.
+OkHttp (5.3+) implements Java 9 Modules.
 
 With this in place Java builds should fail if apps attempt to use internal packages.
 
@@ -228,7 +228,7 @@ error: package okhttp3.internal.platform is not visible
     which does not export it to module i.am.bad.and.i.should.feel.bad)
 ```
 
-The list of defined modules is:
+The stable public API is based on the list of defined modules:
 
 - okhttp3
 - okhttp3.brotli
