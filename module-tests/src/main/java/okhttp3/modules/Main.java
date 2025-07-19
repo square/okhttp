@@ -17,12 +17,13 @@
 package okhttp3.modules;
 
 import okhttp3.Call;
+import okhttp3.HttpUrl;
 
 import java.io.IOException;
 
 public class Main {
   public static void main(String[] args) throws IOException {
-    Call call = OkHttpCaller.callOkHttp();
+    Call call = OkHttpCaller.callOkHttp(HttpUrl.get("https://square.com/robots.txt"));
 
     System.out.println(call.execute().body().string());
   }

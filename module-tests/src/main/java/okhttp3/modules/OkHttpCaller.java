@@ -17,6 +17,7 @@
 package okhttp3.modules;
 
 import okhttp3.Call;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -26,11 +27,11 @@ import okhttp3.logging.LoggingEventListener;
  * Just checking compilation works
  */
 public class OkHttpCaller {
-  public static Call callOkHttp() {
+  public static Call callOkHttp(HttpUrl url) {
     OkHttpClient client = new OkHttpClient
       .Builder()
       .eventListenerFactory(new LoggingEventListener.Factory(HttpLoggingInterceptor.Logger.DEFAULT))
       .build();
-    return client.newCall(new Request.Builder().url("https://square.com/robots.txt").build());
+    return client.newCall(new Request.Builder().url(url).build());
   }
 }

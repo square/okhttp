@@ -12,6 +12,8 @@ dependencies {
 
   testImplementation(projects.okhttp)
   testImplementation(projects.loggingInterceptor)
+  testImplementation(projects.mockwebserver3)
+  testImplementation(projects.mockwebserver3Junit5)
 
   testImplementation(libs.junit.jupiter.api)
   testRuntimeOnly(libs.junit.jupiter.engine)
