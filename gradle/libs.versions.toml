@@ -107,3 +107,4 @@ squareup-okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem
 squareup-okio-nodefilesystem = { module = "com.squareup.okio:okio-nodefilesystem", version.ref = "com-squareup-okio" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainers-junit5 = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+zstd-kmp-okio = { module = "com.squareup.zstd:zstd-kmp-okio", version = "0.3.0" }

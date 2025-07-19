@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-  compileSdk = 35
+  compileSdk = 36
 
   namespace = "okhttp.android.testapp"
 
@@ -14,7 +14,7 @@ android {
 
   defaultConfig {
     minSdk = 21
-    targetSdk = 34
+    targetSdk = 36
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
@@ -35,6 +35,10 @@ android {
       setProguardFiles(listOf(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"))
       testProguardFiles("test-proguard-rules.pro")
     }
+  }
+
+  lint {
+    abortOnError = true
   }
 }
 
