@@ -64,8 +64,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -101,8 +99,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -138,13 +134,10 @@ jobs:
 
   testzulu11:
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'zulu')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -166,13 +159,10 @@ jobs:
 
   testopenjdk8:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -199,8 +189,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Install Old JDK 8
         uses: actions/setup-java@v4
@@ -233,8 +221,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -261,8 +247,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -289,8 +273,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -318,8 +300,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -341,13 +321,10 @@ jobs:
 
   testopenjdk17:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -369,13 +346,10 @@ jobs:
 
   testopenjdk21:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -403,13 +377,10 @@ jobs:
 
   testopenjdklatest:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDKs
         uses: actions/setup-java@v4
@@ -432,14 +403,11 @@ jobs:
 
   testopenjdkearlyaccess:
     runs-on: ubuntu-latest
-#    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
     if: false # https://youtrack.jetbrains.com/issue/KTOR-8489
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -462,14 +430,10 @@ jobs:
 
   testwindows:
     runs-on: windows-latest
-    # TODO add master build after fixing all tests in CI
-    if: contains(github.event.pull_request.labels.*.name, 'windows')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -491,13 +455,10 @@ jobs:
 
   testgraal:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'graal')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -534,7 +495,6 @@ jobs:
   testandroid:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'android') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
     strategy:
       fail-fast: false
@@ -547,8 +507,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -615,13 +573,10 @@ jobs:
 
   testloom:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'loom')
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -663,8 +618,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configure JDK
         uses: actions/setup-java@v4
@@ -716,3 +669,26 @@ jobs:
           script: ./gradlew -PandroidBuild=true :regression-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
+
+  test_maven:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Publish local snapshot
+        run: ./gradlew publishToMavenLocal
+
+      - name: Run maven test
+        working-directory: ./maven-tests
+        run: ./mvnw -q verify

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (C) 2025 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.curl
+package com.squareup.okhttp3.maventest;
 
-import com.github.ajalt.clikt.core.main
-import kotlin.test.Test
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
+import okhttp3.Headers;
+import org.junit.Test;
 
-class OkcurlTest {
+import java.io.IOException;
+
+/**
+ * Unit test for simple App.
+ */
+public class AppTest {
+  private final MockWebServer mockWebServer = new MockWebServer();
+
   @Test
-  fun simple() {
-    Main().main(listOf("--help"))
+  public void testApp() throws IOException {
+    mockWebServer.enqueue(new MockResponse(200, Headers.of(), "Hello, Maven!"));
+    mockWebServer.start();
+
+    new SampleHttpClient().makeCall(mockWebServer.url("/"));
   }
 }
