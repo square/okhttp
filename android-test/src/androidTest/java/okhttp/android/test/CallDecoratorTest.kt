@@ -18,13 +18,13 @@ package okhttp.android.test
 import java.util.logging.Logger
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp.android.test.AlwaysHttps.Policy
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
 import okhttp3.tls.internal.TlsUtil.localhost
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -46,14 +46,10 @@ class CallDecoratorTest {
       .addCallDecorator(OffMainThread)
       .build()
 
-  private lateinit var server: MockWebServer
+  @StartStop
+  private val server = MockWebServer()
 
   private val handshakeCertificates = localhost()
-
-  @BeforeEach
-  fun setup(server: MockWebServer) {
-    this.server = server
-  }
 
   @Test
   fun testSecureRequest() {
