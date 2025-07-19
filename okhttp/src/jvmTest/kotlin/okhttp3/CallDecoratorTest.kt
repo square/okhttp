@@ -96,8 +96,6 @@ class CallDecoratorTest {
   fun testWrappedCallIsObserved() {
     server.enqueue(MockResponse())
 
-    val request = Request.Builder().url(server.url("/")).build()
-
     val client: OkHttpClient =
       clientTestRule
         .newClientBuilder()
@@ -107,33 +105,37 @@ class CallDecoratorTest {
             if (it !is WrappedCall) {
               throw IOException("expecting wrapped call")
             }
+            if (it.request().tag<String>() != "wrapped")
+              throw IOException("expecting tag1")
           }
         }.addCallDecorator { chain, request ->
-          WrappedCall(chain.newCall(request.newBuilder().tag<String>("wrapped").build()))
+          // Wrap here
+          val updatedRequest = request.newBuilder().tag<String>("wrapped").build()
+          WrappedCall(chain.newCall(updatedRequest))
         }.addCallDecorator { chain, request ->
-//          check(request.tag<String>() == "wrapped")
+          // Updated requests are seen
+          if (request.tag<String>() != "wrapped")
+            throw IOException("expecting tag2")
           chain.newCall(request).also {
+            // But Call is RealCall
             if (it !is RealCall) {
               throw IOException("expecting RealCall")
             }
           }
         }.addInterceptor { chain ->
-          // TODO
-//          if (chain.call() is WrappedCall) {
+          // Updated requests are seen in interceptors
+          if (chain.request().tag<String>() != "wrapped")
+            throw IOException("expecting tag3")
           chain.proceed(chain.request())
-//          } else {
-//            throw IOException("expecting wrapped call")
-//          }
         }.addNetworkInterceptor { chain ->
-          // TODO
-//          if (chain.call() is WrappedCall) {
+          // and network interceptors
+          if (chain.request().tag<String>() != "wrapped")
+            throw IOException("expecting tag4")
           chain.proceed(chain.request())
-//          } else {
-//            throw IOException("expecting wrapped call")
-//          }
         }.build()
 
-    client.newCall(request).execute().use {
+    val originalRequest = Request.Builder().url(server.url("/")).build()
+    client.newCall(originalRequest).execute().use {
       assertEquals(200, it.code)
     }
   }
