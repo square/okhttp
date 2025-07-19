@@ -24,7 +24,7 @@ import okio.buffer
 import okio.gzip
 
 /**
- * Transparent ZStandard response support.
+ * Transparent Zstandard response support.
  *
  * This must be installed as an application interceptor.
  *

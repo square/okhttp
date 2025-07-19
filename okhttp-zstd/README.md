@@ -1,7 +1,7 @@
-OkHttp ZStandard (zstd) Integration
+OkHttp Zstandard (zstd) Integration
 ===================================
 
-This module enables [ZStandard (zstd)][1] response compression in addition to Gzip, as long as
+This module enables [Zstandard (zstd)][1] response compression in addition to Gzip, as long as
 the `Accept-Encoding` header is not otherwise set. Web servers must be configured to return zstd
 responses.
 

@@ -115,7 +115,7 @@ class ZstdInterceptorTest {
     assertFailsWith<IOException> {
       decompressed.body.string()
     }.also { ioe ->
-      assertThat(ioe).hasMessage("Unknown frame descriptor")
+      assertThat(ioe).hasMessage("zstd decompress failed: Unknown frame descriptor")
     }
   }
 
