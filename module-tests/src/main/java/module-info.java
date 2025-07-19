@@ -1,3 +1,4 @@
+@SuppressWarnings("module")
 module okhttp3.modules {
   requires okhttp3;
   requires okhttp3.logging;

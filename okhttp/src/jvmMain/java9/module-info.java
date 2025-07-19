@@ -1,3 +1,4 @@
+@SuppressWarnings("module")
 module okhttp3 {
   requires transitive kotlin.stdlib;
   requires transitive okio;
