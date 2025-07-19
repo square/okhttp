@@ -105,8 +105,9 @@ class CallDecoratorTest {
             if (it !is WrappedCall) {
               throw IOException("expecting wrapped call")
             }
-            if (it.request().tag<String>() != "wrapped")
+            if (it.request().tag<String>() != "wrapped") {
               throw IOException("expecting tag1")
+            }
           }
         }.addCallDecorator { chain, request ->
           // Wrap here
@@ -114,8 +115,9 @@ class CallDecoratorTest {
           WrappedCall(chain.newCall(updatedRequest))
         }.addCallDecorator { chain, request ->
           // Updated requests are seen
-          if (request.tag<String>() != "wrapped")
+          if (request.tag<String>() != "wrapped") {
             throw IOException("expecting tag2")
+          }
           chain.newCall(request).also {
             // But Call is RealCall
             if (it !is RealCall) {
@@ -124,13 +126,15 @@ class CallDecoratorTest {
           }
         }.addInterceptor { chain ->
           // Updated requests are seen in interceptors
-          if (chain.request().tag<String>() != "wrapped")
+          if (chain.request().tag<String>() != "wrapped") {
             throw IOException("expecting tag3")
+          }
           chain.proceed(chain.request())
         }.addNetworkInterceptor { chain ->
           // and network interceptors
-          if (chain.request().tag<String>() != "wrapped")
+          if (chain.request().tag<String>() != "wrapped") {
             throw IOException("expecting tag4")
+          }
           chain.proceed(chain.request())
         }.build()
 

@@ -29,10 +29,6 @@ object OffMainThread : Call.Decorator {
   private class StrictModeCall(
     private val delegate: Call,
   ) : Call by delegate {
-    init {
-      println("StrictModeCall")
-    }
-
     override fun execute(): Response {
       if (Looper.getMainLooper().isCurrentThread) {
         throw IllegalStateException("Network on main thread")

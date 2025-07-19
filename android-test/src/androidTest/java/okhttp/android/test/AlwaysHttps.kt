@@ -29,8 +29,6 @@ class AlwaysHttps(
     chain: Call.Factory,
     request: Request,
   ): Call {
-    println("AlwaysHttps")
-
     val updatedRequest =
       if (request.url.scheme == "http" && !hostPolicy.isCleartextTrafficPermitted(request)) {
         request
