@@ -63,6 +63,13 @@ if (testJavaVersion >= 11) {
         imageName = "okcurl"
         mainClass = "okhttp3.curl.MainCommandLineKt"
       }
+
+      if (System.getenv("GRAALVM_HOME") == null) {
+        toolchainDetection.set(true)
+//        javaLauncher.set(javaToolchains.launcherFor {
+//          languageVersion.set(JavaLanguageVersion.of(21))
+//        })
+      }
     }
   }
 }
