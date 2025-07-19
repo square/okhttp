@@ -4,7 +4,7 @@ checkStyle = "10.26.1"
 com-squareup-moshi = "1.15.2"
 com-squareup-okio = "3.15.0"
 de-mannodermaus-junit5 = "1.8.0"
-graalvm = "24.2.1"
+graalvm = "24.2.2"
 junit-platform = "1.13.3"
 kotlinx-serialization = "1.9.0"
 ksp = "2.2.0-2.0.2"
@@ -54,7 +54,7 @@ gradlePlugin-graalvmBuildTools = "org.graalvm.buildtools.native:org.graalvm.buil
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
-gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.33.0"
+gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.34.0"
 gradlePlugin-mavenSympathy = "io.github.usefulness.maven-sympathy:io.github.usefulness.maven-sympathy.gradle.plugin:0.3.0"
 gradlePlugin-mrjar = "me.champeau.mrjar:me.champeau.mrjar.gradle.plugin:0.1.1"
 gradlePlugin-shadow = "com.gradleup.shadow:shadow-gradle-plugin:8.3.8"
