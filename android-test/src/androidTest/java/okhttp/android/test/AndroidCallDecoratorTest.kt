@@ -30,13 +30,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @Tag("Slow")
-class CallDecoratorTest {
+class AndroidCallDecoratorTest {
   @Suppress("RedundantVisibilityModifier")
   @JvmField
   @RegisterExtension
   public val clientTestRule =
     OkHttpClientTestRule().apply {
-      logger = Logger.getLogger(CallDecoratorTest::class.java.name)
+      logger = Logger.getLogger(AndroidCallDecoratorTest::class.java.name)
     }
 
   private var client: OkHttpClient =
