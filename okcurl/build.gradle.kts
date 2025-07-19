@@ -28,13 +28,11 @@ kotlin {
 }
 
 dependencies {
-  api(libs.kotlin.stdlib)
   api(projects.okhttp)
   api(projects.loggingInterceptor)
   api(libs.squareup.okio)
   implementation(libs.clikt)
 
-  testImplementation(projects.okhttpTestingSupport)
   testApi(libs.assertk)
   testImplementation(kotlin("test"))
 }
