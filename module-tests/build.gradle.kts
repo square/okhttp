@@ -26,7 +26,10 @@ application {
 
 jlinkApplication {
   stripDebug = true
+  stripJavaDebugAttributes = true
+  compress.set("zip-9")
   addModules.addAll("jdk.crypto.ec", "java.logging")
+  vm.set("server")
 }
 
 extraJavaModuleInfo {
