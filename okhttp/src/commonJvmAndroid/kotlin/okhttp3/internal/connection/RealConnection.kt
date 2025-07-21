@@ -298,7 +298,7 @@ class RealConnection internal constructor(
     noNewExchanges()
     return object : RealWebSocket.Streams(true, source, sink) {
       override fun close() {
-        exchange.bodyComplete<IOException?>(
+        exchange.bodyComplete(
           bytesRead = -1L,
           responseDone = true,
           requestDone = true,
