@@ -25,7 +25,9 @@ dependencies {
 
   testImplementation(projects.mockwebserver3Junit5)
   testImplementation(libs.assertk)
-  testImplementation(kotlin("test"))
+  testRuntimeOnly(libs.junit.jupiter.engine)
+  testImplementation(libs.kotlin.junit5)
+  testImplementation(libs.junit.jupiter.params)
 }
 
 graalvmNative {

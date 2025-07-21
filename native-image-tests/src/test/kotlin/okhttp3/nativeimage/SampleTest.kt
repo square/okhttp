@@ -17,14 +17,16 @@ package okhttp3.nativeimage
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import kotlin.test.Test
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import mockwebserver3.junit5.StartStop
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.junit.jupiter.api.Test
 
 class SampleTest {
+  @StartStop
   private val server = MockWebServer()
 
   private val client = OkHttpClient()
@@ -37,8 +39,6 @@ class SampleTest {
   @Test
   fun testMockWebServer() {
     server.enqueue(MockResponse(body = "abc"))
-
-    server.start()
 
     client.newCall(Request(url = server.url("/"))).execute().use {
       assertThat(it.body.string()).isEqualTo("abc")
