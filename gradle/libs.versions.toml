@@ -58,7 +58,7 @@ gradlePlugin-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-
 gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.34.0"
 gradlePlugin-mavenSympathy = "io.github.usefulness.maven-sympathy:io.github.usefulness.maven-sympathy.gradle.plugin:0.3.0"
 gradlePlugin-shadow = "com.gradleup.shadow:shadow-gradle-plugin:8.3.8"
-gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:7.2.0"
+gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:7.2.1"
 hamcrestLibrary = "org.hamcrest:hamcrest-library:3.0"
 httpClient5 = "org.apache.httpcomponents.client5:httpclient5:5.5"
 jettyClient = "org.eclipse.jetty:jetty-client:9.4.57.v20241219"
