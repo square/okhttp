@@ -98,6 +98,8 @@ OkHttp works on Android 5.0+ (API level 21+) and Java 8+.
 
 OkHttp depends on [Okio][okio] for high-performance I/O and the [Kotlin standard library][kotlin]. Both are small libraries with strong backward-compatibility.
 
+On Android, okhttp uses [AndroidX Startup](https://developer.android.com/jetpack/androidx/releases/startup). Make sure that you don't disable Startup in the manifest.
+
 We highly recommend you keep OkHttp up-to-date. As with auto-updating web browsers, staying current
 with HTTPS clients is an important defense against potential security problems. [We
 track][tls_history] the dynamic TLS ecosystem and adjust OkHttp to improve connectivity and
