@@ -229,19 +229,16 @@ class CallKotlinTest {
     val requestB =
       Request(
         url = server.url("/"),
-        body = object : RequestBody() {
-          override fun contentType(): MediaType? {
-            return "text/plain".toMediaType()
-          }
+        body =
+          object : RequestBody() {
+            override fun contentType(): MediaType? = "text/plain".toMediaType()
 
-          override fun writeTo(sink: BufferedSink) {
-            sink.write("b".toByteArray())
-          }
+            override fun writeTo(sink: BufferedSink) {
+              sink.write("b".toByteArray())
+            }
 
-          override fun isOneShot(): Boolean {
-            return isOneShot
-          }
-        },
+            override fun isOneShot(): Boolean = isOneShot
+          },
       )
     if (isOneShot) {
       // extensiveHealthcheck on the stale connection will create a new connection
@@ -251,12 +248,12 @@ class CallKotlinTest {
     } else {
       // extensiveHealthcheck is skipped because this request could be retried
       // However the exception is thrown because retryOnConnectionFailure=false
-      val throwable = assertFails {
-        client.newCall(requestB).execute()
-      }
+      val throwable =
+        assertFails {
+          client.newCall(requestB).execute()
+        }
       assertThat(throwable.message!!).contains("unexpected end of stream")
     }
-
   }
 
   /** Confirm suppressed exceptions that occur while connecting are returned. */
