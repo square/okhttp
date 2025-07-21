@@ -40,8 +40,6 @@ class WithArgumentSourceTest {
 internal class FakeArgumentsProvider : ArgumentsProvider {
   override fun provideArguments(
     parameters: ParameterDeclarations?,
-    context: ExtensionContext?
-  ): Stream<out Arguments> {
-    return listOf(Arguments.of(1), Arguments.of(2)).stream()
-  }
+    context: ExtensionContext?,
+  ): Stream<out Arguments> = listOf(Arguments.of(1), Arguments.of(2)).stream()
 }

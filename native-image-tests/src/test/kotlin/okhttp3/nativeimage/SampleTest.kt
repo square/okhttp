@@ -19,8 +19,8 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import mockwebserver3.junit5.StartStop
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.junit.jupiter.api.Test
