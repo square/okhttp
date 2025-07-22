@@ -52,7 +52,7 @@ tasks.shadowJar {
   mergeServiceFiles()
 }
 
-if (testJavaVersion >= 11) {
+if (testJavaVersion >= 17) {
   apply(plugin = "org.graalvm.buildtools.native")
 
   configure<GraalVMExtension> {
