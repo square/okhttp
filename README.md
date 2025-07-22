@@ -96,6 +96,9 @@ Requirements
 
 OkHttp works on Android 5.0+ (API level 21+) and Java 8+.
 
+On Android, OkHttp uses [AndroidX Startup][androidx_startup]. If you disable the initialiser in the manifest,
+then apps are responsible for calling `OkHttp.initialiseApplicationContext(applicationContext)` in `Application.onCreate`.
+
 OkHttp depends on [Okio][okio] for high-performance I/O and the [Kotlin standard library][kotlin]. Both are small libraries with strong backward-compatibility.
 
 We highly recommend you keep OkHttp up-to-date. As with auto-updating web browsers, staying current
@@ -231,6 +234,7 @@ limitations under the License.
 ```
 
  [GraalVM]: https://www.graalvm.org/
+ [androidx_startup]: https://developer.android.com/jetpack/androidx/releases/startup
  [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
  [changelog]: https://square.github.io/okhttp/changelog/
  [conscrypt]: https://github.com/google/conscrypt/
