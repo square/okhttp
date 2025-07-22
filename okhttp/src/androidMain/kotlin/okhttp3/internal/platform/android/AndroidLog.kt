@@ -109,7 +109,7 @@ object AndroidLog {
         enableLogging(logger, tag)
       }
     } catch (re: RuntimeException) {
-      // Possibly running android unit test without robolectric
+      System.err.println("Possibly running android unit test without robolectric")
       re.printStackTrace()
     }
   }
