@@ -715,6 +715,10 @@ public final class okhttp3/HttpUrl$Companion {
 	public final fun parse (Ljava/lang/String;)Lokhttp3/HttpUrl;
 }
 
+public final class okhttp3/InitialiseApplicationContextKt {
+	public static final fun initialiseApplicationContext (Lokhttp3/OkHttp;Landroid/content/Context;)V
+}
+
 public abstract interface class okhttp3/Interceptor {
 	public static final field Companion Lokhttp3/Interceptor$Companion;
 	public abstract fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;

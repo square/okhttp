@@ -16,10 +16,15 @@
  */
 package okhttp.android.test
 
-import androidx.test.core.app.ApplicationProvider
-import okhttp3.OkHttp
-import okhttp3.initialiseApplicationContext
-import org.junit.Before
+import assertk.all
+import assertk.assertFailure
+import assertk.assertions.cause
+import assertk.assertions.hasClass
+import assertk.assertions.hasMessage
+import assertk.assertions.isNotNull
+import java.io.IOException
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -28,11 +33,16 @@ import org.robolectric.annotation.Config
 @Config(
   sdk = [21, 26, 30, 33, 35],
 )
-class RobolectricOkHttpClientTest : BaseOkHttpClientUnitTest() {
-  @Before
-  fun setContext() {
-    // This is awkward because Robolectric won't run our initializers and we don't want test deps
-    // https://github.com/robolectric/robolectric/issues/8461
-    OkHttp.initialiseApplicationContext(ApplicationProvider.getApplicationContext())
+class DisabledInitialiserTest {
+  @Test
+  fun testWithoutContext() {
+    val httpUrl = "https://www.google.co.uk".toHttpUrl()
+    assertFailure { httpUrl.topPrivateDomain() }.all {
+      hasMessage("Unable to load PublicSuffixDatabase.list resource.")
+      cause().isNotNull().all {
+        hasMessage("Platform applicationContext not initialized.")
+        hasClass<IOException>()
+      }
+    }
   }
 }

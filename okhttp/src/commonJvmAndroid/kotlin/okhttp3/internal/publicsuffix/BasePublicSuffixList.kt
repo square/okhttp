@@ -38,6 +38,8 @@ internal abstract class BasePublicSuffixList : PublicSuffixList {
   override lateinit var bytes: ByteString
   override lateinit var exceptionBytes: ByteString
 
+  private var readFailure: IOException? = null
+
   @Throws(IOException::class)
   private fun readTheList() {
     var publicSuffixListBytes: ByteString?
@@ -74,9 +76,11 @@ internal abstract class BasePublicSuffixList : PublicSuffixList {
       }
     }
 
-    check(::bytes.isInitialized) {
+    if (!::bytes.isInitialized) {
       // May have failed with an IOException
-      "Unable to load $path resource."
+      throw IllegalStateException("Unable to load $path resource.").apply {
+        initCause(readFailure)
+      }
     }
   }
 
@@ -99,6 +103,7 @@ internal abstract class BasePublicSuffixList : PublicSuffixList {
           interrupted = true
         } catch (e: IOException) {
           Platform.get().log("Failed to read public suffix list", Platform.Companion.WARN, e)
+          readFailure = e
           return
         }
       }
