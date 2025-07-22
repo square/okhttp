@@ -98,6 +98,7 @@ OkHttp works on Android 5.0+ (API level 21+) and Java 8+.
 
 On Android, OkHttp uses [AndroidX Startup][androidx_startup]. If you disable the initialiser in the manifest,
 then apps are responsible for calling `OkHttp.initialiseApplicationContext(applicationContext)` in `Application.onCreate`.
+This is mainly required for handling URLs and domains such as Cookies.
 
 OkHttp depends on [Okio][okio] for high-performance I/O and the [Kotlin standard library][kotlin]. Both are small libraries with strong backward-compatibility.
 
