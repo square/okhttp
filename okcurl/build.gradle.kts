@@ -52,15 +52,19 @@ tasks.shadowJar {
   mergeServiceFiles()
 }
 
-if (testJavaVersion >= 17) {
-  apply(plugin = "org.graalvm.buildtools.native")
+tasks.withType<Test> {
+  onlyIf("native build requires Java 17") {
+    testJavaVersion > 17
+  }
+}
 
-  configure<GraalVMExtension> {
-    binaries {
-      named("main") {
-        imageName = "okcurl"
-        mainClass = "okhttp3.curl.MainCommandLineKt"
-      }
+apply(plugin = "org.graalvm.buildtools.native")
+
+configure<GraalVMExtension> {
+  binaries {
+    named("main") {
+      imageName = "okcurl"
+      mainClass = "okhttp3.curl.MainCommandLineKt"
     }
   }
 }
