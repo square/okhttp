@@ -836,7 +836,7 @@ public final class okhttp3/MultipartReader$Part : java/io/Closeable {
 
 public final class okhttp3/OkHttp {
 	public static final field INSTANCE Lokhttp3/OkHttp;
-	public static final field VERSION Ljava/lang/String;
+	public static final fun getVERSION ()Ljava/lang/String;
 }
 
 public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Factory {

@@ -15,15 +15,9 @@
  */
 package okhttp3
 
-import android.content.Context
-import okhttp3.internal.platform.PlatformRegistry
+import okhttp3.internal.CONST_VERSION
 
-/**
- * Configure the ApplicationContext. Not needed unless the AndroidX Startup Initialiser is disabled, or running
- * a robolectric test.
- *
- * The functionality that will fail with a valid Context is primarily Cookies and URL Domain handling.
- */
-fun OkHttp.initialiseApplicationContext(context: Context) {
-  PlatformRegistry.applicationContext = context.applicationContext
+actual object OkHttp {
+  @JvmStatic
+  actual val VERSION: String = CONST_VERSION
 }

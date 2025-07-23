@@ -15,12 +15,9 @@
  */
 package okhttp3
 
-import kotlin.jvm.JvmField
-import okhttp3.internal.CONST_VERSION
-
-object OkHttp {
+expect object OkHttp {
   /**
-   * This is a string like "4.5.0-RC1", "4.5.0", or "4.6.0-SNAPSHOT" indicating the version of
+   * This is a string like "5.0.0", "5.0.0-alpha.762", or "5.3.0-SNAPSHOT" indicating the version of
    * OkHttp in the current runtime. Use this to include the OkHttp version in custom `User-Agent`
    * headers.
    *
@@ -34,7 +31,6 @@ object OkHttp {
    *
    * [semver]: https://semver.org
    */
-  @Suppress("MayBeConstant") // Non-const so external callers get the runtime version.
-  @JvmField
-  val VERSION = CONST_VERSION
+  @JvmStatic
+  val VERSION: String
 }
