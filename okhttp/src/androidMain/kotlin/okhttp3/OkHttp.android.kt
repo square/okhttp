@@ -17,11 +17,12 @@ package okhttp3
 
 import android.content.Context
 import okhttp3.internal.CONST_VERSION
+import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.PlatformRegistry
 
 actual object OkHttp {
-    @JvmStatic
-    actual val VERSION: String = CONST_VERSION
+  @JvmStatic
+  actual val VERSION: String = CONST_VERSION
 
   /**
    * Configure the ApplicationContext. Not needed unless the AndroidX Startup [Initializer] is disabled, or running
@@ -30,7 +31,12 @@ actual object OkHttp {
    * The functionality that will fail without a valid Context is primarily Cookies and URL Domain handling, but
    * may expand in the future.
    */
-  fun OkHttp.initialize(context: Context) {
-    PlatformRegistry.applicationContext = context.applicationContext
+  fun initialize(applicationContext: Context) {
+    if (PlatformRegistry.applicationContext != null) {
+      Platform.get().log("Ignoring OkHttp.initialize as applicationContext already initialised")
+    } else {
+      // Make sure we aren't using an Activity or Service Context
+      PlatformRegistry.applicationContext = applicationContext.applicationContext
+    }
   }
 }
