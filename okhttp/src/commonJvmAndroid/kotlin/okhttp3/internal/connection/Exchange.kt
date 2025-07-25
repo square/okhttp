@@ -160,7 +160,7 @@ class Exchange(
 
   fun newHttpStreams(): Socket {
     call.timeoutEarlyExit()
-    return (codec.carrier as RealConnection).newHttpSocket(this)
+    return (codec.carrier as RealConnection).newHttpSocket()
   }
 
   fun noNewExchangesOnConnection() {

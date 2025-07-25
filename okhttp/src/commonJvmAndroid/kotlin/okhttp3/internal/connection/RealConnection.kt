@@ -58,9 +58,8 @@ import okio.BufferedSource
 import okio.Sink
 import okio.Source
 import okio.Timeout
+import okio.asOkioSocket
 import okio.buffer
-import okio.sink
-import okio.source
 
 /**
  * A connection to a remote web server capable of carrying 1 or more concurrent streams.
@@ -314,20 +313,10 @@ class RealConnection internal constructor(
     }
   }
 
-  internal fun newHttpSocket(exchange: Exchange): okio.Socket {
+  internal fun newHttpSocket(): okio.Socket {
     socket.soTimeout = 0
     noNewExchanges()
-    return object : okio.Socket {
-      override val source: Source
-        get() = socket.source()
-
-      override val sink: Sink
-        get() = socket.sink()
-
-      override fun cancel() {
-        exchange.cancel()
-      }
-    }
+    return socket.asOkioSocket()
   }
 
   override fun route(): Route = route

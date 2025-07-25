@@ -88,8 +88,8 @@ import okio.BufferedSink
 import okio.BufferedSource
 import okio.ByteString
 import okio.Sink
-import okio.Source
 import okio.Timeout
+import okio.asOkioSocket
 import okio.buffer
 import okio.sink
 import okio.source
@@ -874,18 +874,7 @@ public class MockWebServer : Closeable {
     writeHeaders(sink, response.headers)
 
     if (response.socketHandler != null) {
-      response.socketHandler.handle(
-        object : okio.Socket {
-          override val source: Source
-            get() = socket.source()
-          override val sink: Sink
-            get() = socket.sink()
-
-          override fun cancel() {
-            socket.closeQuietly()
-          }
-        },
-      )
+      response.socketHandler.handle(socket.asOkioSocket())
       return
     }
 
