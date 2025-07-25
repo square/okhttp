@@ -89,6 +89,7 @@ import okio.BufferedSource
 import okio.ByteString
 import okio.Sink
 import okio.Timeout
+import okio.asOkioSocket
 import okio.buffer
 import okio.sink
 import okio.source
@@ -604,8 +605,15 @@ public class MockWebServer : Closeable {
           "Upgrade".equals(request.headers["Connection"], ignoreCase = true) &&
             "websocket".equals(request.headers["Upgrade"], ignoreCase = true)
         val responseWantsWebSockets = response.webSocketListener != null
+        val requestWantsTcp =
+          "Upgrade".equals(request.headers["Connection"], ignoreCase = true) &&
+            "tcp".equals(request.headers["Upgrade"], ignoreCase = true)
+        val responseWantsStream = response.socketHandler != null
         if (requestWantsWebSockets && responseWantsWebSockets) {
           handleWebSocketUpgrade(socket, source, sink, request, response)
+          reuseSocket = false
+        } else if (requestWantsTcp && responseWantsStream) {
+          writeHttpResponse(socket, sink, response)
           reuseSocket = false
         } else {
           writeHttpResponse(socket, sink, response)
@@ -864,6 +872,11 @@ public class MockWebServer : Closeable {
     sink.writeUtf8("\r\n")
 
     writeHeaders(sink, response.headers)
+
+    if (response.socketHandler != null) {
+      response.socketHandler.handle(socket.asOkioSocket())
+      return
+    }
 
     val body = response.body ?: return
     socket.sleepWhileOpen(response.bodyDelayNanos)

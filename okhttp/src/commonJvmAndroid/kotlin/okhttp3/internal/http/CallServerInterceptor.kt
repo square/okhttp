@@ -128,9 +128,21 @@ class CallServerInterceptor(
       exchange.responseHeadersEnd(response)
 
       response =
-        if (forWebSocket && code == 101) {
-          // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
-          response.stripBody()
+        if (code == HTTP_SWITCHING_PROTOCOLS &&
+          "upgrade".equals(response.request.header("Connection"), ignoreCase = true) &&
+          "upgrade".equals(response.header("Connection"), ignoreCase = true)
+        ) {
+          if (forWebSocket) {
+            // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
+            response.stripBody()
+          } else {
+            // Generic case to return the raw socket.
+            response
+              .stripBody()
+              .newBuilder()
+              .socket(exchange.newHttpSocket())
+              .build()
+          }
         } else {
           val responseBody = exchange.openResponseBody(response)
           response
