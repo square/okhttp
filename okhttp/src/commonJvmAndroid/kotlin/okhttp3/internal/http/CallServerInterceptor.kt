@@ -140,7 +140,7 @@ class CallServerInterceptor(
             response
               .stripBody()
               .newBuilder()
-              .socket(exchange.newHttpStreams())
+              .socket(exchange.newHttpSocket())
               .build()
           }
         } else {

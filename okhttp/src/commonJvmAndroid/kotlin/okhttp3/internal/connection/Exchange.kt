@@ -158,7 +158,7 @@ class Exchange(
     )
   }
 
-  fun newHttpStreams(): Socket {
+  fun newHttpSocket(): Socket {
     call.timeoutEarlyExit()
     return (codec.carrier as RealConnection).newHttpSocket()
   }
