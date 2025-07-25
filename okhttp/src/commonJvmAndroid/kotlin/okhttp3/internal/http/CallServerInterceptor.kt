@@ -128,40 +128,39 @@ class CallServerInterceptor(
       exchange.responseHeadersEnd(response)
 
       response =
-        if (forWebSocket && code == HTTP_SWITCHING_PROTOCOLS) {
-          // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
-          response.stripBody()
-        } else {
-          if (code == HTTP_SWITCHING_PROTOCOLS &&
-            "upgrade".equals(response.request.header("Connection"), ignoreCase = true) &&
-            "upgrade".equals(response.header("Connection"), ignoreCase = true) &&
-            "tcp".equals(response.request.header("Upgrade"), ignoreCase = true) &&
-            "tcp".equals(response.header("Upgrade"), ignoreCase = true)
-          ) {
+        if (code == HTTP_SWITCHING_PROTOCOLS &&
+          "upgrade".equals(response.request.header("Connection"), ignoreCase = true) &&
+          "upgrade".equals(response.header("Connection"), ignoreCase = true)
+        ) {
+          if (forWebSocket) {
+            // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
+            response.stripBody()
+          } else {
+            // Generic case to return the raw socket.
             response
               .stripBody()
               .newBuilder()
               .socket(exchange.newHttpStreams())
               .build()
-          } else {
-            val responseBody = exchange.openResponseBody(response)
-            response
-              .newBuilder()
-              .body(responseBody)
-              .trailers(
-                object : TrailersSource {
-                  override fun peek() = exchange.peekTrailers()
-
-                  override fun get(): Headers {
-                    val source = responseBody.source()
-                    if (source.isOpen) {
-                      source.skipAll()
-                    }
-                    return peek() ?: error("null trailers after exhausting response body?!")
-                  }
-                },
-              ).build()
           }
+        } else {
+          val responseBody = exchange.openResponseBody(response)
+          response
+            .newBuilder()
+            .body(responseBody)
+            .trailers(
+              object : TrailersSource {
+                override fun peek() = exchange.peekTrailers()
+
+                override fun get(): Headers {
+                  val source = responseBody.source()
+                  if (source.isOpen) {
+                    source.skipAll()
+                  }
+                  return peek() ?: error("null trailers after exhausting response body?!")
+                }
+              },
+            ).build()
         }
       if ("close".equals(response.request.header("Connection"), ignoreCase = true) ||
         "close".equals(response.header("Connection"), ignoreCase = true)
