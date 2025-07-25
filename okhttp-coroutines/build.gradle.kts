@@ -10,9 +10,10 @@ plugins {
 
 project.applyOsgi(
   "Export-Package: okhttp3.coroutines",
-  "Automatic-Module-Name: okhttp3.coroutines",
   "Bundle-SymbolicName: com.squareup.okhttp3.coroutines"
 )
+
+project.applyJavaModules("okhttp3.coroutines")
 
 dependencies {
   api(projects.okhttp)
