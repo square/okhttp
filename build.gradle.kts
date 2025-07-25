@@ -19,6 +19,7 @@ buildscript {
     classpath(libs.gradlePlugin.kotlinSerialization)
     classpath(libs.gradlePlugin.androidJunit5)
     classpath(libs.gradlePlugin.android)
+    classpath(libs.gradlePlugin.androidMultiplatform)
     classpath(libs.gradlePlugin.bnd)
     classpath(libs.gradlePlugin.shadow)
     classpath(libs.gradlePlugin.animalsniffer)

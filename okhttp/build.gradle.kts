@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   kotlin("multiplatform")
-  id("com.android.library")
+  id("com.android.kotlin.multiplatform.library")
   kotlin("plugin.serialization")
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
@@ -48,15 +48,35 @@ val generateIdnaMappingTable = tasks.register<JavaExec>("generateIdnaMappingTabl
 }
 
 kotlin {
+
   jvmToolchain(8)
 
   jvm {
   }
 
-  androidTarget {
-    compilerOptions {
-      jvmTarget.set(JvmTarget.JVM_17)
+  androidLibrary {
+    withJava()
+    compileSdk = 35
+    minSdk = 21
+
+    namespace = "okhttp.okhttp3"
+
+    withHostTestBuilder {
+    }.configure {
+      isIncludeAndroidResources = true
     }
+
+//    defaultConfig {
+//      consumerProguardFiles("okhttp3.pro")
+//    }
+
+//    compilations.configureEach {
+//      compilerOptions.configure {
+//        jvmTarget.set(
+//          JvmTarget.JVM_17
+//        )
+//      }
+//    }
   }
 
   sourceSets {
@@ -156,19 +176,19 @@ kotlin {
       }
     }
 
-    val androidUnitTest by getting {
-      dependencies {
-        implementation(libs.assertk)
-        implementation(libs.kotlin.test.annotations)
-        implementation(libs.kotlin.test.common)
-        implementation(libs.androidx.junit)
-
-        implementation(libs.junit.jupiter.engine)
-        implementation(libs.junit.vintage.engine)
-
-        implementation(libs.robolectric)
-      }
-    }
+//    val androidHostTest by getting {
+//      dependencies {
+//        implementation(libs.assertk)
+//        implementation(libs.kotlin.test.annotations)
+//        implementation(libs.kotlin.test.common)
+//        implementation(libs.androidx.junit)
+//
+//        implementation(libs.junit.jupiter.engine)
+//        implementation(libs.junit.vintage.engine)
+//
+//        implementation(libs.robolectric)
+//      }
+//    }
   }
 }
 
@@ -181,31 +201,6 @@ if (platform == "jdk8alpn") {
     ).singleFile
     tasks.withType<Test> {
       jvmArgs("-Xbootclasspath/p:${alpnBootJar}")
-    }
-  }
-}
-
-android {
-  compileSdk = 35
-
-  namespace = "okhttp.okhttp3"
-
-  defaultConfig {
-    minSdk = 21
-
-    consumerProguardFiles("okhttp3.pro")
-  }
-
-  testOptions {
-    unitTests {
-      isIncludeAndroidResources = true
-    }
-  }
-
-  sourceSets {
-    named("main") {
-      manifest.srcFile("src/androidMain/AndroidManifest.xml")
-      assets.srcDir("src/androidMain/assets")
     }
   }
 }
