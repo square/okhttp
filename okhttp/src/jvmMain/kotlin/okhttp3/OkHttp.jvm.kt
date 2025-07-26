@@ -21,6 +21,7 @@ actual object OkHttp {
   @JvmStatic
   actual val Version: String = CONST_VERSION
 
+  @Suppress("MayBeConstant") // Non-const so external callers get the runtime version.
   @JvmField
   @Deprecated(level = DeprecationLevel.WARNING, message = "Replaced with Version", replaceWith = ReplaceWith("Version"))
   val VERSION: String = CONST_VERSION
