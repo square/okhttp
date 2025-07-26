@@ -33,6 +33,7 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.readFieldOrNull
 import okhttp3.internal.tls.BasicCertificateChainCleaner
 import okhttp3.internal.tls.BasicTrustRootIndex
@@ -212,6 +213,7 @@ open class Platform {
 
     fun resetForTests(platform: Platform = findPlatform()) {
       this.platform = platform
+      PublicSuffixDatabase.resetForTests()
     }
 
     fun alpnProtocolNames(protocols: List<Protocol>) = protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }

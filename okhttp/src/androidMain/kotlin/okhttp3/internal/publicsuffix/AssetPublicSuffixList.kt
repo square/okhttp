@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.publicsuffix
 
+import android.os.Build
 import java.io.IOException
 import okhttp3.internal.platform.PlatformRegistry
 import okio.Source
@@ -24,8 +25,22 @@ internal class AssetPublicSuffixList(
   override val path: String = PUBLIC_SUFFIX_RESOURCE,
 ) : BasePublicSuffixList() {
   override fun listSource(): Source {
-    val assets =
-      PlatformRegistry.applicationContext?.assets ?: throw IOException("Platform applicationContext not initialized")
+    val assets = PlatformRegistry.applicationContext?.assets
+
+    if (assets == null) {
+      if (Build.FINGERPRINT == null) {
+        throw IOException(
+          "Platform applicationContext not initialized. " +
+            "Possibly running Android unit test without Robolectric.",
+        )
+      } else {
+        throw IOException(
+          "Platform applicationContext not initialized. " +
+            "Startup Initializer possibly disabled, " +
+            "call OkHttp.initialize before test.",
+        )
+      }
+    }
 
     return assets.open(path).source()
   }
