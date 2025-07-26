@@ -40,7 +40,7 @@ class DisabledInitialiserTest {
     assertFailure { httpUrl.topPrivateDomain() }.all {
       hasMessage("Unable to load PublicSuffixDatabase.list resource.")
       cause().isNotNull().all {
-        hasMessage("Platform applicationContext not initialized.")
+        hasMessage("Platform applicationContext not initialized")
         hasClass<IOException>()
       }
     }

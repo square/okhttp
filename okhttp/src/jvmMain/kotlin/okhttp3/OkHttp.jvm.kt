@@ -19,5 +19,9 @@ import okhttp3.internal.CONST_VERSION
 
 actual object OkHttp {
   @JvmStatic
-  actual val VERSION: String = CONST_VERSION
+  actual val Version: String = CONST_VERSION
+
+  @JvmField
+  @Deprecated(level = DeprecationLevel.WARNING, message = "Replaced with Version", replaceWith = ReplaceWith("Version"))
+  val VERSION: String = CONST_VERSION
 }

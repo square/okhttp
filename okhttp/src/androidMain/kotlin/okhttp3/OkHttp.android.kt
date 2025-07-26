@@ -22,7 +22,11 @@ import okhttp3.internal.platform.PlatformRegistry
 
 actual object OkHttp {
   @JvmStatic
-  actual val VERSION: String = CONST_VERSION
+  actual val Version: String = CONST_VERSION
+
+  @JvmField
+  @Deprecated(level = DeprecationLevel.WARNING, message = "Replaced with Version", replaceWith = ReplaceWith("Version"))
+  val VERSION: String = CONST_VERSION
 
   /**
    * Configure the ApplicationContext. Not needed unless the AndroidX Startup [Initializer] is disabled, or running

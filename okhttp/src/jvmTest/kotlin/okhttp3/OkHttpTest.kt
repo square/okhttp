@@ -22,6 +22,12 @@ import org.junit.jupiter.api.Test
 class OkHttpTest {
   @Test
   fun testVersion() {
+    assertThat(OkHttp.Version).matches(Regex("[0-9]+\\.[0-9]+\\.[0-9]+(-.+)?"))
+  }
+
+  @Suppress("DEPRECATION")
+  @Test
+  fun testLegacyVERSION() {
     assertThat(OkHttp.VERSION).matches(Regex("[0-9]+\\.[0-9]+\\.[0-9]+(-.+)?"))
   }
 }
