@@ -24,6 +24,10 @@ import assertk.assertions.hasMessage
 import assertk.assertions.isNotNull
 import java.io.IOException
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.internal.platform.Platform
+import okhttp3.internal.platform.PlatformRegistry
+import org.junit.AfterClass
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -34,15 +38,35 @@ import org.robolectric.annotation.Config
   sdk = [21, 26, 30, 33, 35],
 )
 class DisabledInitialiserTest {
+  @Before
+  fun setContext() {
+    // Ensure we aren't succeeding because of another test
+    Platform.resetForTests()
+    PlatformRegistry.applicationContext = null
+  }
+
   @Test
   fun testWithoutContext() {
     val httpUrl = "https://www.google.co.uk".toHttpUrl()
     assertFailure { httpUrl.topPrivateDomain() }.all {
       hasMessage("Unable to load PublicSuffixDatabase.list resource.")
       cause().isNotNull().all {
-        hasMessage("Platform applicationContext not initialized")
+        hasMessage(
+          "Platform applicationContext not initialized. " +
+            "Startup Initializer possibly disabled, " +
+            "call OkHttp.initialize before test.",
+        )
         hasClass<IOException>()
       }
+    }
+  }
+
+  companion object {
+    @AfterClass
+    @JvmStatic
+    fun resetContext() {
+      // Ensure we don't make other tests fail
+      Platform.resetForTests()
     }
   }
 }
