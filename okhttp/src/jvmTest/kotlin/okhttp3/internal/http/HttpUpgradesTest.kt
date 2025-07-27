@@ -94,6 +94,61 @@ class HttpUpgradesTest {
   }
 
   @Test
+  fun upgradeRefusedByServer() {
+    server.enqueue(MockResponse(body = "normal request"))
+    val requestWithUpgrade = Request
+      .Builder()
+      .url(server.url("/"))
+      .header("Connection", "upgrade")
+      .header("Upgrade", "tcp")
+      .build()
+    val response = client.newCall(requestWithUpgrade).execute()
+    response.body.string()
+    assertThat(response.code).isEqualTo(200)
+  }
+
+  @Test
+  fun upgradesOnReusedConnection() {
+    server.enqueue(MockResponse(body = "normal request"))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .code(HTTP_SWITCHING_PROTOCOLS)
+        .headers(
+          headersOf(
+            "Connection",
+            "upgrade",
+            "Upgrade",
+            "tcp",
+            "Content-Type",
+            "text/plain; charset=UTF-8",
+          ),
+        ).socketHandler(      MockSocketHandler())
+        .build())
+    val request = Request(server.url("/"))
+    val requestWithUpgrade = Request
+      .Builder()
+      .url(server.url("/"))
+      .header("Connection", "upgrade")
+      .header("Upgrade", "tcp")
+      .build()
+    assertConnectionReused(request, requestWithUpgrade)
+  }
+
+  // copied from okhttp3.ConnectionReuseTest.assertConnectionReused
+  private fun assertConnectionReused(vararg requests: Request?) {
+    for (i in requests.indices) {
+      val response = client.newCall(requests[i]!!).execute()
+      if (response.code == HTTP_SWITCHING_PROTOCOLS) {
+        response.exchange!!.cancel()
+      } else {
+        response.body.string() // Discard the response body.
+      }
+      assertThat(server.takeRequest().exchangeIndex).isEqualTo(i)
+    }
+  }
+
+  @Test
   fun upgradeConnection() {
     val mockStreamHandler =
       MockSocketHandler()
