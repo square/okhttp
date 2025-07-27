@@ -42,6 +42,7 @@ class CallServerInterceptor(
     var invokeStartEvent = true
     var responseBuilder: Response.Builder? = null
     var sendRequestException: IOException? = null
+    val isUpgradeRequest = "upgrade".equals(request.header("Connection"), ignoreCase = true)
     try {
       exchange.writeRequestHeaders(request)
 
@@ -76,7 +77,7 @@ class CallServerInterceptor(
             exchange.noNewExchangesOnConnection()
           }
         }
-      } else {
+      } else if (!isUpgradeRequest) {
         exchange.noRequestBody()
       }
 
@@ -132,11 +133,10 @@ class CallServerInterceptor(
         throw ProtocolException("Unexpected $HTTP_SWITCHING_PROTOCOLS code on HTTP/2 connection")
       }
 
+      val isUpgradeResponse = "upgrade".equals(response.header("Connection"), ignoreCase = true)
+      // TODO(jwilson): maybe call exchange.noRequestBody() if the upgrade failed?
       response =
-        if (isUpgradeCode &&
-          "upgrade".equals(response.request.header("Connection"), ignoreCase = true) &&
-          "upgrade".equals(response.header("Connection"), ignoreCase = true)
-        ) {
+        if (isUpgradeCode && isUpgradeRequest && isUpgradeResponse) {
           if (forWebSocket) {
             // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
             response.stripBody()

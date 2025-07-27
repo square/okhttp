@@ -16,6 +16,7 @@
 package okhttp3.internal.http
 
 import assertk.assertThat
+import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
@@ -146,6 +147,33 @@ class HttpUpgradesTest {
 
     assertThat(server.takeRequest().connectionIndex).isEqualTo(0)
     assertThat(server.takeRequest().connectionIndex).isEqualTo(0)
+  }
+
+  @Test
+  fun upgradeEvents() {
+    upgrade()
+
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "RequestBodyStart",
+      "FollowUpDecision",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "RequestBodyEnd",
+      "ConnectionReleased",
+      "CallEnd",
+    )
   }
 
   private fun enableTls(vararg protocols: Protocol) {
