@@ -16,58 +16,36 @@
 package okhttp3.internal.http
 
 import assertk.assertThat
-import assertk.assertions.containsExactly
-import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
-import assertk.assertions.isInstanceOf
-import assertk.assertions.isNotNull
-import java.util.concurrent.BlockingQueue
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
-import okhttp3.Cache
 import okhttp3.Headers.Companion.headersOf
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
-import okhttp3.RecordingCallback
+import okhttp3.Protocol
 import okhttp3.RecordingEventListener
+import okhttp3.RecordingHostnameVerifier
 import okhttp3.Request
-import okhttp3.TestLogHandler
-import okhttp3.internal.UnreadableResponseBody
-import okhttp3.internal.closeQuietly
 import okhttp3.internal.duplex.MockSocketHandler
-import okhttp3.okio.LoggingFilesystem
 import okhttp3.testing.PlatformRule
-import okio.Path.Companion.toPath
-import okio.Socket
+import okio.ProtocolException
 import okio.buffer
-import okio.fakefilesystem.FakeFileSystem
 import okio.use
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 class HttpUpgradesTest {
-  private val fileSystem = FakeFileSystem()
-
   @RegisterExtension
   val platform = PlatformRule()
 
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
 
-  @RegisterExtension
-  val testLogHandler = TestLogHandler(OkHttpClient::class.java)
-
   @StartStop
   private val server = MockWebServer()
-
-  @StartStop
-  private val server2 = MockWebServer()
 
   private var listener = RecordingEventListener()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
@@ -76,21 +54,48 @@ class HttpUpgradesTest {
       .newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build()
-  private val callback = RecordingCallback()
-  private val cache =
-    Cache(
-      fileSystem = LoggingFilesystem(fileSystem),
-      directory = "/cache".toPath(),
-      maxSize = Int.MAX_VALUE.toLong(),
-    )
 
-  @BeforeEach
-  fun setUp() {
+  @Test
+  fun upgrade() {
+    val socketHandler = MockSocketHandler()
+      .apply {
+        receiveRequest("client says hello\n")
+        sendResponse("server says hello\n")
+        receiveRequest("client says goodbye\n")
+        sendResponse("server says goodbye\n")
+        exhaustResponse()
+        exhaustRequest()
+      }
+    server.enqueue(socketHandler.upgradeResponse())
+
+    client.newCall(
+      upgradeRequest()
+    ).execute().use { response ->
+      assertThat(response.code).isEqualTo(HTTP_SWITCHING_PROTOCOLS)
+      val socket = response.socket!!
+      socket.sink.buffer().use { sink ->
+        socket.source.buffer().use { source ->
+          sink.writeUtf8("client says hello\n")
+          sink.flush()
+
+          assertThat(source.readUtf8Line()).isEqualTo("server says hello")
+
+          sink.writeUtf8("client says goodbye\n")
+          sink.flush()
+
+          assertThat(source.readUtf8Line()).isEqualTo("server says goodbye")
+
+          assertThat(source.exhausted()).isTrue()
+        }
+      }
+      socketHandler.awaitSuccess()
+    }
   }
 
-  @AfterEach
-  @Throws(Exception::class)
-  fun tearDown() {
+  @Test
+  fun upgradeHttps() {
+    enableTls(Protocol.HTTP_1_1)
+    upgrade()
   }
 
   @Test
@@ -103,31 +108,18 @@ class HttpUpgradesTest {
         .header("Connection", "upgrade")
         .header("Upgrade", "tcp")
         .build()
-    val response = client.newCall(requestWithUpgrade).execute()
-    response.body.string()
-    assertThat(response.code).isEqualTo(200)
+    client.newCall(requestWithUpgrade).execute().use { response ->
+      assertThat(response.code).isEqualTo(200)
+      assertThat(response.socket).isNull()
+      assertThat(response.body.string()).isEqualTo("normal request")
+    }
   }
 
   @Test
-  fun upgradesOnReusedConnection() {
-    server.enqueue(MockResponse(body = "normal request"))
-    server.enqueue(
-      MockResponse
-        .Builder()
-        .code(HTTP_SWITCHING_PROTOCOLS)
-        .headers(
-          headersOf(
-            "Connection",
-            "upgrade",
-            "Upgrade",
-            "tcp",
-            "Content-Type",
-            "text/plain; charset=UTF-8",
-          ),
-        ).socketHandler(MockSocketHandler())
-        .build(),
-    )
-    val request = Request(server.url("/"))
+  fun upgradeForbiddenOnHttp2() {
+    enableTls(Protocol.HTTP_2, Protocol.HTTP_1_1)
+    val socketHandler = MockSocketHandler()
+    server.enqueue(socketHandler.upgradeResponse())
     val requestWithUpgrade =
       Request
         .Builder()
@@ -135,109 +127,50 @@ class HttpUpgradesTest {
         .header("Connection", "upgrade")
         .header("Upgrade", "tcp")
         .build()
-    assertConnectionReused(request, requestWithUpgrade)
-  }
-
-  // copied from okhttp3.ConnectionReuseTest.assertConnectionReused
-  private fun assertConnectionReused(vararg requests: Request?) {
-    for (i in requests.indices) {
-      val response = client.newCall(requests[i]!!).execute()
-      if (response.code == HTTP_SWITCHING_PROTOCOLS) {
-        response.exchange!!.cancel()
-      } else {
-        response.body.string() // Discard the response body.
-      }
-      assertThat(server.takeRequest().exchangeIndex).isEqualTo(i)
+    assertFailsWith<ProtocolException> {
+      client.newCall(requestWithUpgrade).execute()
     }
   }
 
   @Test
-  fun upgradeConnection() {
-    val mockStreamHandler =
-      MockSocketHandler()
-        .receiveRequest("request A\n")
-        .sendResponse("response B\n")
-        .receiveRequest("request C\n")
-        .sendResponse("response D\n")
-        .sendResponse("response E\n")
-        .receiveRequest("response F\n")
-        .exhaustRequest()
-        .exhaustResponse()
-    server.enqueue(
-      MockResponse
-        .Builder()
-        .code(HTTP_SWITCHING_PROTOCOLS)
-        .headers(
-          headersOf(
-            "Connection",
-            "upgrade",
-            "Upgrade",
-            "tcp",
-            "Content-Type",
-            "text/plain; charset=UTF-8",
-//            "Content-Type", "application/vnd.docker.raw-stream",
-          ),
-        ).socketHandler(mockStreamHandler)
-        .build(),
-    )
-    val call =
-      client.newCall(
-        Request
-          .Builder()
-          .url(server.url("/"))
-          .header("Connection", "upgrade")
-          .header("Upgrade", "tcp")
-          // .post(...)
-          .build(),
-      )
-
-    var socket: Socket?
-    val received: BlockingQueue<String?> = LinkedBlockingQueue<String?>()
-
-    call.execute().use { response ->
-      assertThat(response.code).isEqualTo(HTTP_SWITCHING_PROTOCOLS)
-      assertThat(response.headers("Connection").first()).isEqualTo("upgrade", true)
-      assertThat(response.headers("Upgrade").first()).isEqualTo("tcp", true)
-      assertThat(response.headers("Content-Type").first().toMediaType()).isEqualTo("text/plain; charset=UTF-8".toMediaType())
-//      assertThat(response.headers("Content-Type").first().toMediaType()).isEqualTo("application/vnd.docker.raw-stream".toMediaType())
-      assertThat(response.headers("Content-Length")).isEmpty()
-      assertThat(response.body).isInstanceOf<UnreadableResponseBody>()
-
-      socket = response.socket
-      assertThat(socket).isNotNull()
-
-      val reader = socket!!.source
-      val readerThread =
-        object : Thread("reader") {
-          override fun run() {
-            try {
-              var line: String?
-              while (reader.buffer().readUtf8Line().also { line = it } != null) {
-                received.add(line)
-              }
-            } catch (e: Exception) {
-              reader.closeQuietly()
-            }
-          }
-        }
-      readerThread.start()
-
-      val writer = socket.sink
-      writer.buffer().writeUtf8("request A\n").flush()
-      writer.buffer().writeUtf8("request C\n").flush()
-      writer.buffer().writeUtf8("response F\n").flush()
+  fun upgradesOnReusedConnection() {
+    server.enqueue(MockResponse(body = "normal request"))
+    client.newCall(Request(server.url("/"))).execute().use { response ->
+      assertThat(response.body.string()).isEqualTo("normal request")
     }
 
-    val responses = mutableListOf<String?>()
-    responses.add(received.poll(2, TimeUnit.SECONDS))
-    responses.add(received.poll(2, TimeUnit.SECONDS))
-    responses.add(received.poll(2, TimeUnit.SECONDS))
-    assertThat(responses).containsExactly(
-      "response B",
-      "response D",
-      "response E",
-    )
+    upgrade()
 
-    socket?.cancel()
+    assertThat(server.takeRequest().connectionIndex).isEqualTo(0)
+    assertThat(server.takeRequest().connectionIndex).isEqualTo(0)
   }
+
+  private fun enableTls(vararg protocols: Protocol) {
+    client =
+      client
+        .newBuilder()
+        .protocols(protocols.toList())
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        ).hostnameVerifier(RecordingHostnameVerifier())
+        .build()
+    server.useHttps(handshakeCertificates.sslSocketFactory())
+    server.protocols = protocols.toList()
+  }
+
+  private fun upgradeRequest() = Request(
+    url = server.url("/"),
+    headers = headersOf(
+      "Connection", "upgrade",
+      "Upgrade", "tcp",
+    )
+  )
+
+  private fun MockSocketHandler.upgradeResponse() = MockResponse.Builder()
+    .code(HTTP_SWITCHING_PROTOCOLS)
+    .addHeader("Connection", "upgrade")
+    .addHeader("Upgrade", "tcp")
+    .socketHandler(this)
+    .build()
 }
