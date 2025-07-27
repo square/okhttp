@@ -58,7 +58,6 @@ import okio.BufferedSource
 import okio.Sink
 import okio.Source
 import okio.Timeout
-import okio.asOkioSocket
 import okio.buffer
 
 /**
@@ -295,8 +294,7 @@ class RealConnection internal constructor(
 
   @Throws(SocketException::class)
   internal fun newWebSocketStreams(exchange: Exchange): RealWebSocket.Streams {
-    socket.soTimeout = 0
-    noNewExchanges()
+    useAsSocket()
     return object : RealWebSocket.Streams(true, source, sink) {
       override fun close() {
         exchange.bodyComplete(
@@ -313,10 +311,9 @@ class RealConnection internal constructor(
     }
   }
 
-  internal fun newHttpSocket(): okio.Socket {
+  internal fun useAsSocket() {
     socket.soTimeout = 0
     noNewExchanges()
-    return socket.asOkioSocket()
   }
 
   override fun route(): Route = route

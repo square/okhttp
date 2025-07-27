@@ -158,9 +158,20 @@ class Exchange(
     )
   }
 
-  fun newHttpSocket(): Socket {
+  fun upgradeToSocket(): Socket {
     call.timeoutEarlyExit()
-    return (codec.carrier as RealConnection).newHttpSocket()
+    (codec.carrier as RealConnection).useAsSocket()
+
+    eventListener.requestBodyStart(call)
+
+    return object : Socket {
+      override fun cancel() {
+        this@Exchange.cancel()
+      }
+
+      override val sink = RequestBodySink(codec.socketSink, -1L)
+      override val source = ResponseBodySource(codec.socketSource, -1L)
+    }
   }
 
   fun noNewExchangesOnConnection() {

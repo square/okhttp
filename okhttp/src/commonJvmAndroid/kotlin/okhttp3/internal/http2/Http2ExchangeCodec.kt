@@ -67,6 +67,12 @@ class Http2ExchangeCodec(
   override val isResponseComplete: Boolean
     get() = stream?.isSourceComplete == true
 
+  override val socketSink
+    get() = stream!!.sink
+
+  override val socketSource
+    get() = stream!!.source
+
   override fun createRequestBody(
     request: Request,
     contentLength: Long,

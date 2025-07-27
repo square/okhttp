@@ -57,39 +57,42 @@ class HttpUpgradesTest {
 
   @Test
   fun upgrade() {
-    val socketHandler = MockSocketHandler()
-      .apply {
-        receiveRequest("client says hello\n")
-        sendResponse("server says hello\n")
-        receiveRequest("client says goodbye\n")
-        sendResponse("server says goodbye\n")
-        exhaustResponse()
-        exhaustRequest()
-      }
+    val socketHandler =
+      MockSocketHandler()
+        .apply {
+          receiveRequest("client says hello\n")
+          sendResponse("server says hello\n")
+          receiveRequest("client says goodbye\n")
+          sendResponse("server says goodbye\n")
+          exhaustResponse()
+          exhaustRequest()
+        }
     server.enqueue(socketHandler.upgradeResponse())
 
-    client.newCall(
-      upgradeRequest()
-    ).execute().use { response ->
-      assertThat(response.code).isEqualTo(HTTP_SWITCHING_PROTOCOLS)
-      val socket = response.socket!!
-      socket.sink.buffer().use { sink ->
-        socket.source.buffer().use { source ->
-          sink.writeUtf8("client says hello\n")
-          sink.flush()
+    client
+      .newCall(
+        upgradeRequest(),
+      ).execute()
+      .use { response ->
+        assertThat(response.code).isEqualTo(HTTP_SWITCHING_PROTOCOLS)
+        val socket = response.socket!!
+        socket.sink.buffer().use { sink ->
+          socket.source.buffer().use { source ->
+            sink.writeUtf8("client says hello\n")
+            sink.flush()
 
-          assertThat(source.readUtf8Line()).isEqualTo("server says hello")
+            assertThat(source.readUtf8Line()).isEqualTo("server says hello")
 
-          sink.writeUtf8("client says goodbye\n")
-          sink.flush()
+            sink.writeUtf8("client says goodbye\n")
+            sink.flush()
 
-          assertThat(source.readUtf8Line()).isEqualTo("server says goodbye")
+            assertThat(source.readUtf8Line()).isEqualTo("server says goodbye")
 
-          assertThat(source.exhausted()).isTrue()
+            assertThat(source.exhausted()).isTrue()
+          }
         }
+        socketHandler.awaitSuccess()
       }
-      socketHandler.awaitSuccess()
-    }
   }
 
   @Test
@@ -159,18 +162,24 @@ class HttpUpgradesTest {
     server.protocols = protocols.toList()
   }
 
-  private fun upgradeRequest() = Request(
-    url = server.url("/"),
-    headers = headersOf(
-      "Connection", "upgrade",
-      "Upgrade", "tcp",
+  private fun upgradeRequest() =
+    Request(
+      url = server.url("/"),
+      headers =
+        headersOf(
+          "Connection",
+          "upgrade",
+          "Upgrade",
+          "tcp",
+        ),
     )
-  )
 
-  private fun MockSocketHandler.upgradeResponse() = MockResponse.Builder()
-    .code(HTTP_SWITCHING_PROTOCOLS)
-    .addHeader("Connection", "upgrade")
-    .addHeader("Upgrade", "tcp")
-    .socketHandler(this)
-    .build()
+  private fun MockSocketHandler.upgradeResponse() =
+    MockResponse
+      .Builder()
+      .code(HTTP_SWITCHING_PROTOCOLS)
+      .addHeader("Connection", "upgrade")
+      .addHeader("Upgrade", "tcp")
+      .socketHandler(this)
+      .build()
 }

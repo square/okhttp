@@ -145,7 +145,7 @@ class CallServerInterceptor(
             response
               .stripBody()
               .newBuilder()
-              .socket(exchange.newHttpSocket())
+              .socket(exchange.upgradeToSocket())
               .build()
           }
         } else {
