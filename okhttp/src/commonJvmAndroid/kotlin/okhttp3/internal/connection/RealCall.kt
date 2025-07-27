@@ -307,12 +307,12 @@ class RealCall(
    * If the exchange was canceled or timed out, this will wrap [e] in an exception that provides
    * that additional context. Otherwise [e] is returned as-is.
    */
-  internal fun <E : IOException?> messageDone(
+  internal fun messageDone(
     exchange: Exchange,
     requestDone: Boolean = false,
     responseDone: Boolean = false,
-    e: E,
-  ): E {
+    e: IOException?,
+  ): IOException? {
     if (exchange != this.exchange) return e // This exchange was detached violently!
 
     var bothStreamsDone = false
@@ -366,7 +366,7 @@ class RealCall(
    * If the call was canceled or timed out, this will wrap [e] in an exception that provides that
    * additional context. Otherwise [e] is returned as-is.
    */
-  private fun <E : IOException?> callDone(e: E): E {
+  private fun callDone(e: IOException?): IOException? {
     assertLockNotHeld()
 
     val connection = this.connection
@@ -423,14 +423,13 @@ class RealCall(
     return null
   }
 
-  private fun <E : IOException?> timeoutExit(cause: E): E {
+  private fun timeoutExit(cause: IOException?): IOException? {
     if (timeoutEarlyExit) return cause
     if (!timeout.exit()) return cause
 
     val e = InterruptedIOException("timeout")
     if (cause != null) e.initCause(cause)
-    @Suppress("UNCHECKED_CAST") // E is either IOException or IOException?
-    return e as E
+    return e
   }
 
   /**

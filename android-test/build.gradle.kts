@@ -41,6 +41,7 @@ android {
 
   testOptions {
     targetSdk = 34
+    unitTests.isIncludeAndroidResources = true
   }
 
   kotlinOptions {
