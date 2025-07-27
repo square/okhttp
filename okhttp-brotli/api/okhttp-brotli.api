@@ -1,5 +1,8 @@
-public final class okhttp3/brotli/BrotliInterceptor : okhttp3/Interceptor {
+public final class okhttp3/brotli/BrotliInterceptor : okhttp3/CompressionInterceptor {
 	public static final field INSTANCE Lokhttp3/brotli/BrotliInterceptor;
-	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
+}
+
+public final class okhttp3/brotli/BrotliInterceptorKt {
+	public static final fun getBrotli ()Lokhttp3/CompressionInterceptor$DecompressionAlgorithm;
 }
 
