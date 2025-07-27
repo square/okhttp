@@ -28,7 +28,6 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
-import okhttp3.zstd.ZstdInterceptor.decompress
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.EMPTY
@@ -48,7 +47,7 @@ class ZstdInterceptorTest {
         header("Content-Encoding", "zstd")
       }
 
-    val decompressed = decompress(response)
+    val decompressed = ZstdInterceptor.decompress(response)
     assertThat(decompressed.header("Content-Encoding")).isNull()
 
     val responseString = decompressed.body.string()
@@ -64,7 +63,7 @@ class ZstdInterceptorTest {
         header("Content-Encoding", "gzip")
       }
 
-    val decompressed = decompress(response)
+    val decompressed = ZstdInterceptor.decompress(response)
     assertThat(decompressed.header("Content-Encoding")).isNull()
 
     val responseString = decompressed.body.string()
@@ -77,7 +76,7 @@ class ZstdInterceptorTest {
 
     val response = response("https://example.com/", s)
 
-    val decompressed = decompress(response)
+    val decompressed = ZstdInterceptor.decompress(response)
     assertThat(decompressed.header("Content-Encoding")).isNull()
 
     val responseString = decompressed.body.string()
@@ -93,7 +92,7 @@ class ZstdInterceptorTest {
         header("Content-Encoding", "deflate")
       }
 
-    val decompressed = decompress(response)
+    val decompressed = ZstdInterceptor.decompress(response)
     assertThat(decompressed.header("Content-Encoding")).isEqualTo("deflate")
 
     val responseString = decompressed.body.string()
@@ -109,7 +108,7 @@ class ZstdInterceptorTest {
         header("Content-Encoding", "zstd")
       }
 
-    val decompressed = decompress(response)
+    val decompressed = ZstdInterceptor.decompress(response)
     assertThat(decompressed.header("Content-Encoding")).isNull()
 
     assertFailsWith<IOException> {
@@ -128,7 +127,7 @@ class ZstdInterceptorTest {
         message("NO CONTENT")
       }
 
-    val same = decompress(response)
+    val same = ZstdInterceptor.decompress(response)
 
     val responseString = same.body.string()
     assertThat(responseString).isEmpty()
