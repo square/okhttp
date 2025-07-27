@@ -127,8 +127,13 @@ class CallServerInterceptor(
 
       exchange.responseHeadersEnd(response)
 
+      val isUpgradeCode = code == HTTP_SWITCHING_PROTOCOLS
+      if (isUpgradeCode && exchange.connection.isMultiplexed) {
+        throw ProtocolException("Unexpected $HTTP_SWITCHING_PROTOCOLS code on HTTP/2 connection")
+      }
+
       response =
-        if (code == HTTP_SWITCHING_PROTOCOLS &&
+        if (isUpgradeCode &&
           "upgrade".equals(response.request.header("Connection"), ignoreCase = true) &&
           "upgrade".equals(response.header("Connection"), ignoreCase = true)
         ) {
