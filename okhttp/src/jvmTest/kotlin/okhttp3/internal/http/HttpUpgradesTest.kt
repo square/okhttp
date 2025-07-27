@@ -96,12 +96,13 @@ class HttpUpgradesTest {
   @Test
   fun upgradeRefusedByServer() {
     server.enqueue(MockResponse(body = "normal request"))
-    val requestWithUpgrade = Request
-      .Builder()
-      .url(server.url("/"))
-      .header("Connection", "upgrade")
-      .header("Upgrade", "tcp")
-      .build()
+    val requestWithUpgrade =
+      Request
+        .Builder()
+        .url(server.url("/"))
+        .header("Connection", "upgrade")
+        .header("Upgrade", "tcp")
+        .build()
     val response = client.newCall(requestWithUpgrade).execute()
     response.body.string()
     assertThat(response.code).isEqualTo(200)
@@ -123,15 +124,17 @@ class HttpUpgradesTest {
             "Content-Type",
             "text/plain; charset=UTF-8",
           ),
-        ).socketHandler(      MockSocketHandler())
-        .build())
+        ).socketHandler(MockSocketHandler())
+        .build(),
+    )
     val request = Request(server.url("/"))
-    val requestWithUpgrade = Request
-      .Builder()
-      .url(server.url("/"))
-      .header("Connection", "upgrade")
-      .header("Upgrade", "tcp")
-      .build()
+    val requestWithUpgrade =
+      Request
+        .Builder()
+        .url(server.url("/"))
+        .header("Connection", "upgrade")
+        .header("Upgrade", "tcp")
+        .build()
     assertConnectionReused(request, requestWithUpgrade)
   }
 
