@@ -28,7 +28,7 @@ import org.conscrypt.Conscrypt
 fun currentOkHttp(ianaSuites: IanaSuites): Client =
   Client(
     userAgent = "OkHttp",
-    version = OkHttp.Version,
+    version = OkHttp.VERSION,
     enabled =
       ConnectionSpec.MODERN_TLS.cipherSuites!!.map {
         ianaSuites.fromJavaName(it.javaName)
