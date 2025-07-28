@@ -32,6 +32,12 @@ interface ExchangeCodec {
   /** Returns true if the response body and (possibly empty) trailers have been received. */
   val isResponseComplete: Boolean
 
+  /** The source when this is the subject of a protocol upgrade or CONNECT. */
+  val socketSink: Sink
+
+  /** The sink when this is the subject of a protocol upgrade or CONNECT. */
+  val socketSource: Source
+
   /** Returns an output stream where the request body can be streamed. */
   @Throws(IOException::class)
   fun createRequestBody(

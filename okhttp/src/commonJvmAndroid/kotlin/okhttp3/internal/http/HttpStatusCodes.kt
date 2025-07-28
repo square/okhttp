@@ -35,6 +35,9 @@ package okhttp3.internal.http
 /** `100 Continue` (HTTP/1.1 - RFC 7231)  */
 const val HTTP_CONTINUE = 100
 
+/** `101 Switching Protocols` (HTTP/1.1 - RFC 9110)  */
+const val HTTP_SWITCHING_PROTOCOLS = 101
+
 /** `102 Processing` (WebDAV - RFC 2518)  */
 const val HTTP_PROCESSING = 102
 

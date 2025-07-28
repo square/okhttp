@@ -21,10 +21,10 @@ import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.TrailersSource
+import okhttp3.internal.UnreadableResponseBody
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.skipAll
-import okhttp3.internal.stripBody
 import okio.buffer
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
@@ -42,10 +42,14 @@ class CallServerInterceptor(
     var invokeStartEvent = true
     var responseBuilder: Response.Builder? = null
     var sendRequestException: IOException? = null
+    val hasRequestBody = HttpMethod.permitsRequestBody(request.method) && requestBody != null
+    val isUpgradeRequest =
+      !hasRequestBody &&
+        "upgrade".equals(request.header("Connection"), ignoreCase = true)
     try {
       exchange.writeRequestHeaders(request)
 
-      if (HttpMethod.permitsRequestBody(request.method) && requestBody != null) {
+      if (hasRequestBody) {
         // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
         // Continue" response before transmitting the request body. If we don't get that, return
         // what we did get (such as a 4xx response) without ever transmitting the request body.
@@ -76,7 +80,7 @@ class CallServerInterceptor(
             exchange.noNewExchangesOnConnection()
           }
         }
-      } else {
+      } else if (!isUpgradeRequest) {
         exchange.noRequestBody()
       }
 
@@ -127,28 +131,56 @@ class CallServerInterceptor(
 
       exchange.responseHeadersEnd(response)
 
-      response =
-        if (forWebSocket && code == 101) {
-          // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
-          response.stripBody()
-        } else {
-          val responseBody = exchange.openResponseBody(response)
-          response
-            .newBuilder()
-            .body(responseBody)
-            .trailers(
-              object : TrailersSource {
-                override fun peek() = exchange.peekTrailers()
+      val isUpgradeCode = code == HTTP_SWITCHING_PROTOCOLS
+      if (isUpgradeCode && exchange.connection.isMultiplexed) {
+        throw ProtocolException("Unexpected $HTTP_SWITCHING_PROTOCOLS code on HTTP/2 connection")
+      }
 
-                override fun get(): Headers {
-                  val source = responseBody.source()
-                  if (source.isOpen) {
-                    source.skipAll()
-                  }
-                  return peek() ?: error("null trailers after exhausting response body?!")
+      val isUpgradeResponse =
+        isUpgradeCode &&
+          "upgrade".equals(response.header("Connection"), ignoreCase = true)
+
+      response =
+        when {
+          // This is an HTTP/1 upgrade. (This case includes web socket upgrades.)
+          isUpgradeRequest && isUpgradeResponse -> {
+            response
+              .newBuilder()
+              .body(
+                UnreadableResponseBody(
+                  response.body.contentType(),
+                  response.body.contentLength(),
+                ),
+              ).apply {
+                if (!forWebSocket) {
+                  socket(exchange.upgradeToSocket())
                 }
-              },
-            ).build()
+              }.build()
+          }
+
+          // This is not an upgrade response.
+          else -> {
+            if (isUpgradeRequest) {
+              exchange.noRequestBody() // Failed upgrade request has no outbound data.
+            }
+            val responseBody = exchange.openResponseBody(response)
+            response
+              .newBuilder()
+              .body(responseBody)
+              .trailers(
+                object : TrailersSource {
+                  override fun peek() = exchange.peekTrailers()
+
+                  override fun get(): Headers {
+                    val source = responseBody.source()
+                    if (source.isOpen) {
+                      source.skipAll()
+                    }
+                    return peek() ?: error("null trailers after exhausting response body?!")
+                  }
+                },
+              ).build()
+          }
         }
       if ("close".equals(response.request.header("Connection"), ignoreCase = true) ||
         "close".equals(response.header("Connection"), ignoreCase = true)

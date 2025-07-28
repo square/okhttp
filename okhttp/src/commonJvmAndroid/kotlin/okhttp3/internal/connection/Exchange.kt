@@ -30,6 +30,7 @@ import okio.Buffer
 import okio.ForwardingSink
 import okio.ForwardingSource
 import okio.Sink
+import okio.Socket
 import okio.Source
 import okio.buffer
 
@@ -155,6 +156,22 @@ class Exchange(
       requestDone = true,
       e = null,
     )
+  }
+
+  fun upgradeToSocket(): Socket {
+    call.timeoutEarlyExit()
+    (codec.carrier as RealConnection).useAsSocket()
+
+    eventListener.requestBodyStart(call)
+
+    return object : Socket {
+      override fun cancel() {
+        this@Exchange.cancel()
+      }
+
+      override val sink = RequestBodySink(codec.socketSink, -1L)
+      override val source = ResponseBodySource(codec.socketSource, -1L)
+    }
   }
 
   fun noNewExchangesOnConnection() {

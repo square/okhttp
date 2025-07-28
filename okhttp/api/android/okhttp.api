@@ -1121,6 +1121,7 @@ public final class okhttp3/Response : java/io/Closeable {
 	public final fun receivedResponseAtMillis ()J
 	public final fun request ()Lokhttp3/Request;
 	public final fun sentRequestAtMillis ()J
+	public final fun socket ()Lokio/Socket;
 	public fun toString ()Ljava/lang/String;
 	public final fun trailers ()Lokhttp3/Headers;
 }
@@ -1143,6 +1144,7 @@ public class okhttp3/Response$Builder {
 	public fun removeHeader (Ljava/lang/String;)Lokhttp3/Response$Builder;
 	public fun request (Lokhttp3/Request;)Lokhttp3/Response$Builder;
 	public fun sentRequestAtMillis (J)Lokhttp3/Response$Builder;
+	public fun socket (Lokio/Socket;)Lokhttp3/Response$Builder;
 	public fun trailers (Lokhttp3/TrailersSource;)Lokhttp3/Response$Builder;
 }
 
