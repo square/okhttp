@@ -33,5 +33,5 @@ val Brotli =
   object : CompressionInterceptor.DecompressionAlgorithm {
     override val encoding: String = "br"
 
-    override fun BufferedSource.decompress(): Source = BrotliInputStream(this.inputStream()).source()
+    override fun decompress(compressedSource: BufferedSource): Source = BrotliInputStream(compressedSource.inputStream()).source()
   }

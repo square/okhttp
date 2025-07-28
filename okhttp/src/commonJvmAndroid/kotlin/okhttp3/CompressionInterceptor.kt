@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 package okhttp3
 
@@ -26,20 +25,46 @@ import okio.buffer
 /**
  * Transparent Compressed response support.
  *
- * Adds Accept-Encoding to request and checks (and strips) Content-Encoding in
- * responses. n.b. this replaces the transparent gzip compression in BridgeInterceptor so should generally include
- * gzip in the list of algorithms.
+ * The algorithm map will be turned into a heading such as "Accept-Encoding: br;q=1.0, gzip;q=0.8, *;q=0.1"
+ *
+ * If [algorithms] is empty returns "identity" disabling any later compression.
+ *
+ * See https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Accept-Encoding
  */
 open class CompressionInterceptor(
-  vararg val algorithms: DecompressionAlgorithm,
+  val algorithms: Map<DecompressionAlgorithm, Double?>,
 ) : Interceptor {
+  constructor(
+    vararg algorithms: DecompressionAlgorithm,
+  ) : this(
+    algorithms.associateWithTo(LinkedHashMap()) {
+      null
+    },
+  )
+
+  internal val acceptEncoding =
+    if (algorithms.isEmpty()) {
+      "identity"
+    } else {
+      algorithms
+        .map { (algorithm, priority) ->
+          if (priority != null) {
+            "${algorithm.encoding};q=$priority"
+          } else {
+            algorithm.encoding
+          }
+        }.joinToString(separator = ", ")
+    }
+
+  private val algorithmIndex = algorithms.keys.toTypedArray()
+
   override fun intercept(chain: Interceptor.Chain): Response =
     if (chain.request().header("Accept-Encoding") == null) {
       val request =
         chain
           .request()
           .newBuilder()
-          .header("Accept-Encoding", algorithms.joinToString(separator = ",") { it.encoding })
+          .header("Accept-Encoding", acceptEncoding)
           .build()
 
       val response = chain.proceed(request)
@@ -49,6 +74,10 @@ open class CompressionInterceptor(
       chain.proceed(chain.request())
     }
 
+  /**
+   * Returns a decompressed copy of the Response, typically via a streaming Source.
+   * If no known decompression or the response is not compressed, returns the response unmodified.
+   */
   fun decompress(response: Response): Response {
     if (!response.promisesBody()) {
       return response
@@ -56,9 +85,9 @@ open class CompressionInterceptor(
     val body = response.body
     val encoding = response.header("Content-Encoding") ?: return response
 
-    val algorithm = algorithms.find { it.encoding.equals(encoding, ignoreCase = true) } ?: return response
+    val algorithm = lookupDecompressor(encoding) ?: return response
 
-    val decompressedSource = with(algorithm) { body.source().decompress().buffer() }
+    val decompressedSource = algorithm.decompress(body.source()).buffer()
 
     return response
       .newBuilder()
@@ -68,18 +97,54 @@ open class CompressionInterceptor(
       .build()
   }
 
+  internal fun lookupDecompressor(encoding: String): DecompressionAlgorithm? {
+    val algorithm = algorithmIndex.find { it.encoding.equals(encoding, ignoreCase = true) } ?: return null
+
+    if (algorithm == Wildcard || algorithm == Identity) {
+      return null
+    }
+
+    return algorithm
+  }
+
+  /**
+   * A decompression algorithm such as Gzip. Must provide the Accept-Encoding value and decompress a Source.
+   */
   interface DecompressionAlgorithm {
     val encoding: String
 
-    fun BufferedSource.decompress(): Source
+    fun decompress(compressedSource: BufferedSource): Source
   }
 
   companion object {
+    /**
+     * Request "gzip" compression.
+     */
     val Gzip =
       object : DecompressionAlgorithm {
         override val encoding: String = "gzip"
 
-        override fun BufferedSource.decompress(): Source = GzipSource(this)
+        override fun decompress(compressedSource: BufferedSource): Source = GzipSource(compressedSource)
+      }
+
+    /**
+     * Request the response body to be uncompressed.
+     */
+    val Identity =
+      object : DecompressionAlgorithm {
+        override val encoding: String = "identity"
+
+        override fun decompress(compressedSource: BufferedSource): Source = compressedSource
+      }
+
+    /**
+     * Declare support for any compression encoding scheme. However the response will not be decompressed.
+     */
+    val Wildcard =
+      object : DecompressionAlgorithm {
+        override val encoding: String = "*"
+
+        override fun decompress(compressedSource: BufferedSource): Source = compressedSource
       }
   }
 }

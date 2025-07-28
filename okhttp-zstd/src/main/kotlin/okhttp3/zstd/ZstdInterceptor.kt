@@ -21,20 +21,11 @@ import okio.BufferedSource
 import okio.Source
 
 /**
- * Transparent Zstandard response support.
- *
- * This must be installed as an application interceptor.
- *
- * Adds `Accept-Encoding: zstd,gzip` to request and checks (and strips) for `Content-Encoding: zstd`
- * in responses.
- *
- * This replaces the transparent gzip compression in OkHttp.
+ * Support for Zstandard encoding. Use via the [CompressionInterceptor].
  */
-object ZstdInterceptor : CompressionInterceptor(Zstd, Gzip)
-
 val Zstd =
   object : CompressionInterceptor.DecompressionAlgorithm {
     override val encoding: String = "zstd"
 
-    override fun BufferedSource.decompress(): Source = this.zstdDecompress()
+    override fun decompress(compressedSource: BufferedSource): Source = compressedSource.zstdDecompress()
   }

@@ -112,9 +112,11 @@ class OkHttpTest {
       logger = Logger.getLogger(OkHttpTest::class.java.name)
     }
 
-  private var client: OkHttpClient = clientTestRule.newClientBuilder()
-    .addInterceptor(CompressionInterceptor(Zstd, Brotli, Gzip))
-    .build()
+  private var client: OkHttpClient =
+    clientTestRule
+      .newClientBuilder()
+      .addInterceptor(CompressionInterceptor(Zstd, Brotli, Gzip))
+      .build()
 
   private val moshi =
     Moshi
