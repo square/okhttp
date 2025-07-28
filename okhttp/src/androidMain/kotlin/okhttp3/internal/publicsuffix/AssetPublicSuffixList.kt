@@ -31,7 +31,9 @@ internal class AssetPublicSuffixList(
       if (Build.FINGERPRINT == null) {
         throw IOException(
           "Platform applicationContext not initialized. " +
-            "Possibly running Android unit test without Robolectric.",
+            "Possibly running Android unit test without Robolectric. " +
+            "Android tests should run with Robolectric " +
+            "and call OkHttp.initialize before test",
         )
       } else {
         throw IOException(

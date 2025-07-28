@@ -39,7 +39,9 @@ class NonRobolectricOkHttpClientTest : BaseOkHttpClientUnitTest() {
       cause().isNotNull().all {
         hasMessage(
           "Platform applicationContext not initialized. " +
-            "Possibly running Android unit test without Robolectric.",
+            "Possibly running Android unit test without Robolectric. " +
+            "Android tests should run with Robolectric " +
+            "and call OkHttp.initialize before test",
         )
         hasClass<IOException>()
       }

@@ -19,7 +19,6 @@ import java.io.IOException
 import java.io.InterruptedIOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
-import okhttp3.internal.platform.Platform
 import okio.ByteString
 import okio.Source
 import okio.buffer
@@ -102,7 +101,6 @@ internal abstract class BasePublicSuffixList : PublicSuffixList {
           Thread.interrupted() // Temporarily clear the interrupted state.
           interrupted = true
         } catch (e: IOException) {
-          Platform.get().log("Failed to read public suffix list", Platform.Companion.WARN, e)
           readFailure = e
           return
         }

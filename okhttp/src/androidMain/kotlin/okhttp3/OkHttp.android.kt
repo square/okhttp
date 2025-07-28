@@ -17,17 +17,11 @@ package okhttp3
 
 import android.content.Context
 import okhttp3.internal.CONST_VERSION
-import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.PlatformRegistry
 
 actual object OkHttp {
-  @JvmStatic
-  actual val Version: String = CONST_VERSION
-
-  @Suppress("MayBeConstant") // Non-const so external callers get the runtime version.
   @JvmField
-  @Deprecated(level = DeprecationLevel.WARNING, message = "Replaced with Version", replaceWith = ReplaceWith("Version"))
-  val VERSION: String = CONST_VERSION
+  actual val VERSION: String = CONST_VERSION
 
   /**
    * Configure the ApplicationContext. Not needed unless the AndroidX Startup [Initializer] is disabled, or running
@@ -37,9 +31,7 @@ actual object OkHttp {
    * may expand in the future.
    */
   fun initialize(applicationContext: Context) {
-    if (PlatformRegistry.applicationContext != null) {
-      Platform.get().log("Ignoring OkHttp.initialize as applicationContext already initialised")
-    } else {
+    if (PlatformRegistry.applicationContext == null) {
       // Make sure we aren't using an Activity or Service Context
       PlatformRegistry.applicationContext = applicationContext.applicationContext
     }

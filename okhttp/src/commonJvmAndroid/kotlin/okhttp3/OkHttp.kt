@@ -32,5 +32,5 @@ expect object OkHttp {
    * [semver]: https://semver.org
    */
   @JvmStatic
-  val Version: String
+  val VERSION: String
 }
