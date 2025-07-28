@@ -602,7 +602,8 @@ public class MockWebServer : Closeable {
 
         var reuseSocket = true
         val requestWantsSocket = "Upgrade".equals(request.headers["Connection"], ignoreCase = true)
-        val requestWantsWebSocket = requestWantsSocket &&
+        val requestWantsWebSocket =
+          requestWantsSocket &&
             "websocket".equals(request.headers["Upgrade"], ignoreCase = true)
         val responseWantsSocket = response.socketHandler != null
         val responseWantsWebSocket = response.webSocketListener != null

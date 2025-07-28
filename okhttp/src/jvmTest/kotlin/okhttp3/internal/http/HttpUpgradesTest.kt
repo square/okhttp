@@ -211,13 +211,15 @@ class HttpUpgradesTest {
 
   @Test
   fun upgradeRequestMustNotHaveABody() {
-    val e = assertFailsWith<IllegalArgumentException> {
-      Request.Builder()
-        .url(server.url("/"))
-        .header("Connection", "upgrade")
-        .post("Hello".toRequestBody())
-        .build()
-    }
+    val e =
+      assertFailsWith<IllegalArgumentException> {
+        Request
+          .Builder()
+          .url(server.url("/"))
+          .header("Connection", "upgrade")
+          .post("Hello".toRequestBody())
+          .build()
+      }
     assertThat(e).hasMessage("expected a null request body with 'Connection: upgrade'")
   }
 

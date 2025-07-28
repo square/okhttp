@@ -43,8 +43,9 @@ class CallServerInterceptor(
     var responseBuilder: Response.Builder? = null
     var sendRequestException: IOException? = null
     val hasRequestBody = HttpMethod.permitsRequestBody(request.method) && requestBody != null
-    val isUpgradeRequest = !hasRequestBody
-      && "upgrade".equals(request.header("Connection"), ignoreCase = true)
+    val isUpgradeRequest =
+      !hasRequestBody &&
+        "upgrade".equals(request.header("Connection"), ignoreCase = true)
     try {
       exchange.writeRequestHeaders(request)
 
@@ -135,52 +136,52 @@ class CallServerInterceptor(
         throw ProtocolException("Unexpected $HTTP_SWITCHING_PROTOCOLS code on HTTP/2 connection")
       }
 
-      val isUpgradeResponse = isUpgradeCode
-        && "upgrade".equals(response.header("Connection"), ignoreCase = true)
+      val isUpgradeResponse =
+        isUpgradeCode &&
+          "upgrade".equals(response.header("Connection"), ignoreCase = true)
 
-      response = when {
-        // This is an HTTP/1 upgrade. (This case includes web socket upgrades.)
-        isUpgradeRequest && isUpgradeResponse -> {
-          response
-            .newBuilder()
-            .body(
-              UnreadableResponseBody(
-                response.body.contentType(),
-                response.body.contentLength(),
-              )
-            )
-            .apply {
-              if (!forWebSocket) {
-                socket(exchange.upgradeToSocket())
-              }
-            }
-            .build()
-        }
-
-        // This is not an upgrade response.
-        else -> {
-          if (isUpgradeRequest) {
-            exchange.noRequestBody() // Failed upgrade request has no outbound data.
-          }
-          val responseBody = exchange.openResponseBody(response)
-          response
-            .newBuilder()
-            .body(responseBody)
-            .trailers(
-              object : TrailersSource {
-                override fun peek() = exchange.peekTrailers()
-
-                override fun get(): Headers {
-                  val source = responseBody.source()
-                  if (source.isOpen) {
-                    source.skipAll()
-                  }
-                  return peek() ?: error("null trailers after exhausting response body?!")
+      response =
+        when {
+          // This is an HTTP/1 upgrade. (This case includes web socket upgrades.)
+          isUpgradeRequest && isUpgradeResponse -> {
+            response
+              .newBuilder()
+              .body(
+                UnreadableResponseBody(
+                  response.body.contentType(),
+                  response.body.contentLength(),
+                ),
+              ).apply {
+                if (!forWebSocket) {
+                  socket(exchange.upgradeToSocket())
                 }
-              },
-            ).build()
+              }.build()
+          }
+
+          // This is not an upgrade response.
+          else -> {
+            if (isUpgradeRequest) {
+              exchange.noRequestBody() // Failed upgrade request has no outbound data.
+            }
+            val responseBody = exchange.openResponseBody(response)
+            response
+              .newBuilder()
+              .body(responseBody)
+              .trailers(
+                object : TrailersSource {
+                  override fun peek() = exchange.peekTrailers()
+
+                  override fun get(): Headers {
+                    val source = responseBody.source()
+                    if (source.isOpen) {
+                      source.skipAll()
+                    }
+                    return peek() ?: error("null trailers after exhausting response body?!")
+                  }
+                },
+              ).build()
+          }
         }
-      }
       if ("close".equals(response.request.header("Connection"), ignoreCase = true) ||
         "close".equals(response.header("Connection"), ignoreCase = true)
       ) {
