@@ -17,6 +17,7 @@ package okhttp3.internal.http
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
+import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
@@ -30,6 +31,7 @@ import okhttp3.Protocol
 import okhttp3.RecordingEventListener
 import okhttp3.RecordingHostnameVerifier
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.duplex.MockSocketHandler
 import okhttp3.testing.PlatformRule
 import okio.ProtocolException
@@ -110,7 +112,6 @@ class HttpUpgradesTest {
         .Builder()
         .url(server.url("/"))
         .header("Connection", "upgrade")
-        .header("Upgrade", "tcp")
         .build()
     client.newCall(requestWithUpgrade).execute().use { response ->
       assertThat(response.code).isEqualTo(200)
@@ -129,7 +130,6 @@ class HttpUpgradesTest {
         .Builder()
         .url(server.url("/"))
         .header("Connection", "upgrade")
-        .header("Upgrade", "tcp")
         .build()
     assertFailsWith<ProtocolException> {
       client.newCall(requestWithUpgrade).execute()
@@ -176,6 +176,18 @@ class HttpUpgradesTest {
     )
   }
 
+  @Test
+  fun upgradeRequestMustNotHaveABody() {
+    val e = assertFailsWith<IllegalArgumentException> {
+      Request.Builder()
+        .url(server.url("/"))
+        .header("Connection", "upgrade")
+        .post("Hello".toRequestBody())
+        .build()
+    }
+    assertThat(e).hasMessage("expected a null request body with 'Connection: upgrade'")
+  }
+
   private fun enableTls(vararg protocols: Protocol) {
     client =
       client
@@ -197,8 +209,6 @@ class HttpUpgradesTest {
         headersOf(
           "Connection",
           "upgrade",
-          "Upgrade",
-          "tcp",
         ),
     )
 
@@ -207,7 +217,6 @@ class HttpUpgradesTest {
       .Builder()
       .code(HTTP_SWITCHING_PROTOCOLS)
       .addHeader("Connection", "upgrade")
-      .addHeader("Upgrade", "tcp")
       .socketHandler(this)
       .build()
 }
