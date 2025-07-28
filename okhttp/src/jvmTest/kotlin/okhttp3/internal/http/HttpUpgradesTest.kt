@@ -118,6 +118,26 @@ class HttpUpgradesTest {
       assertThat(response.socket).isNull()
       assertThat(response.body.string()).isEqualTo("normal request")
     }
+    // Confirm there's no RequestBodyStart/RequestBodyEnd on failed upgrades.
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "FollowUpDecision",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd",
+    )
   }
 
   @Test
@@ -147,6 +167,19 @@ class HttpUpgradesTest {
 
     assertThat(server.takeRequest().connectionIndex).isEqualTo(0)
     assertThat(server.takeRequest().connectionIndex).isEqualTo(0)
+  }
+
+  @Test
+  fun cannotReuseConnectionAfterUpgrade() {
+    upgrade()
+
+    server.enqueue(MockResponse(body = "normal request"))
+    client.newCall(Request(server.url("/"))).execute().use { response ->
+      assertThat(response.body.string()).isEqualTo("normal request")
+    }
+
+    assertThat(server.takeRequest().connectionIndex).isEqualTo(0)
+    assertThat(server.takeRequest().connectionIndex).isEqualTo(1)
   }
 
   @Test

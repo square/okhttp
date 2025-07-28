@@ -601,18 +601,15 @@ public class MockWebServer : Closeable {
         }
 
         var reuseSocket = true
-        val requestWantsWebSockets =
-          "Upgrade".equals(request.headers["Connection"], ignoreCase = true) &&
+        val requestWantsSocket = "Upgrade".equals(request.headers["Connection"], ignoreCase = true)
+        val requestWantsWebSocket = requestWantsSocket &&
             "websocket".equals(request.headers["Upgrade"], ignoreCase = true)
-        val responseWantsWebSockets = response.webSocketListener != null
-        val requestWantsTcp =
-          "Upgrade".equals(request.headers["Connection"], ignoreCase = true) &&
-            "tcp".equals(request.headers["Upgrade"], ignoreCase = true)
-        val responseWantsStream = response.socketHandler != null
-        if (requestWantsWebSockets && responseWantsWebSockets) {
+        val responseWantsSocket = response.socketHandler != null
+        val responseWantsWebSocket = response.webSocketListener != null
+        if (requestWantsWebSocket && responseWantsWebSocket) {
           handleWebSocketUpgrade(socket, source, sink, request, response)
           reuseSocket = false
-        } else if (requestWantsTcp && responseWantsStream) {
+        } else if (requestWantsSocket && responseWantsSocket) {
           writeHttpResponse(socket, sink, response)
           reuseSocket = false
         } else {
