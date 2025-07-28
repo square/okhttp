@@ -35,7 +35,10 @@ interface ConnectionUser {
 
   fun updateRouteDatabaseAfterSuccess(route: Route)
 
-  fun connectStart(route: Route)
+  fun connectStart(
+    connectionId: Long,
+    route: Route,
+  )
 
   fun secureConnectStart()
 
@@ -52,6 +55,7 @@ interface ConnectionUser {
   )
 
   fun connectFailed(
+    connectionId: Long,
     route: Route,
     protocol: Protocol?,
     e: IOException,

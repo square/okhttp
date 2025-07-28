@@ -1,4 +1,5 @@
 [versions]
+androidx-tracing = "1.3.0"
 # 7.0.0 is JDK 17+ https://github.com/bndtools/bnd/wiki/Changes-in-7.0.0
 biz-aQute-bnd = "7.1.0"
 checkStyle = "10.26.1"
@@ -29,6 +30,7 @@ androidx-junit = "androidx.test.ext:junit:1.2.1"
 androidx-lint-gradle = { module = "androidx.lint:lint-gradle", version.ref = "lintGradle" }
 androidx-startup-runtime = { module = "androidx.startup:startup-runtime", version.ref = "startupRuntime" }
 androidx-test-runner = "androidx.test:runner:1.6.2"
+androidx-tracing-ktx = { module = "androidx.tracing:tracing-ktx", version.ref = "androidx-tracing" }
 animalsniffer-annotations = "org.codehaus.mojo:animal-sniffer-annotations:1.24"
 aqute-resolve = { module = "biz.aQute.bnd:biz.aQute.resolve", version.ref = "biz-aQute-bnd" }
 assertk = "com.willowtreeapps.assertk:assertk:0.28.1"

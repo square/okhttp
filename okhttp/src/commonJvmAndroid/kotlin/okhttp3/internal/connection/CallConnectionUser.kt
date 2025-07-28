@@ -50,18 +50,22 @@ internal class CallConnectionUser(
     call.client.routeDatabase.connected(route)
   }
 
-  override fun connectStart(route: Route) {
+  override fun connectStart(
+    connectionId: Long,
+    route: Route,
+  ) {
     eventListener.connectStart(call, route.socketAddress, route.proxy)
-    poolConnectionListener.connectStart(route, call)
+    poolConnectionListener.connectStart(connectionId, route, call)
   }
 
   override fun connectFailed(
+    connectionId: Long,
     route: Route,
     protocol: Protocol?,
     e: IOException,
   ) {
     eventListener.connectFailed(call, route.socketAddress, route.proxy, null, e)
-    poolConnectionListener.connectFailed(route, call, e)
+    poolConnectionListener.connectFailed(connectionId, route, call, e)
   }
 
   override fun secureConnectStart() {
