@@ -263,9 +263,10 @@ class LoggingEventListenerTest {
   @Test
   fun customLogger() {
     val logs = mutableListOf<String>()
-    val localLogger = HttpLoggingInterceptor.Logger {
-      logs.add(it)
-    }
+    val localLogger =
+      HttpLoggingInterceptor.Logger {
+        logs.add(it)
+      }
 
     client =
       OkHttpClient
@@ -286,13 +287,15 @@ class LoggingEventListenerTest {
       fail<Any>()
     } catch (expected: UnknownHostException) {
     }
-    assertThat(logs).isEqualTo(listOf(
-      """XXX callStart: Request{method=GET, url=$url}""",
-      """XXX proxySelectStart: $url""",
-      """XXX proxySelectEnd: [DIRECT]""",
-      """XXX dnsStart: ${url.host}""",
-      """XXX callFailed: java.net.UnknownHostException: reason"""
-    ))
+    assertThat(logs).isEqualTo(
+      listOf(
+        """XXX callStart: Request{method=GET, url=$url}""",
+        """XXX proxySelectStart: $url""",
+        """XXX proxySelectEnd: [DIRECT]""",
+        """XXX dnsStart: ${url.host}""",
+        """XXX callFailed: java.net.UnknownHostException: reason""",
+      ),
+    )
   }
 
   private fun request(): Request.Builder = Request.Builder().url(url)
