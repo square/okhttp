@@ -16,6 +16,7 @@
 package okhttp3.logging
 
 import assertk.assertThat
+import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import java.io.IOException
 import java.net.UnknownHostException
@@ -23,6 +24,8 @@ import java.util.Arrays
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
+import okhttp3.Call
+import okhttp3.EventListener
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -255,6 +258,41 @@ class LoggingEventListenerTest {
       .assertLogMatch(Regex("""cacheMiss"""))
       .assertLogMatch(Regex("""satisfactionFailure: Response\{protocol=h2, code=200, message=, url=$url\}"""))
       .assertNoMoreLogs()
+  }
+
+  @Test
+  fun customLogger() {
+    val logs = mutableListOf<String>()
+    val localLogger = HttpLoggingInterceptor.Logger {
+      logs.add(it)
+    }
+
+    client =
+      OkHttpClient
+        .Builder()
+        .dns { _ -> throw UnknownHostException("reason") }
+        .eventListenerFactory(
+          object : LoggingEventListener.Factory(localLogger) {
+            override fun create(call: Call): EventListener =
+              object : LoggingEventListener(logger) {
+                override fun logWithTime(message: String) {
+                  logger.log("XXX $message")
+                }
+              }
+          },
+        ).build()
+    try {
+      client.newCall(request().build()).execute()
+      fail<Any>()
+    } catch (expected: UnknownHostException) {
+    }
+    assertThat(logs).isEqualTo(listOf(
+      """XXX callStart: Request{method=GET, url=$url}""",
+      """XXX proxySelectStart: $url""",
+      """XXX proxySelectEnd: [DIRECT]""",
+      """XXX dnsStart: ${url.host}""",
+      """XXX callFailed: java.net.UnknownHostException: reason"""
+    ))
   }
 
   private fun request(): Request.Builder = Request.Builder().url(url)

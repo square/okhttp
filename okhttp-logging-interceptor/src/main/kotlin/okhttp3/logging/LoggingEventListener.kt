@@ -37,8 +37,8 @@ import okhttp3.Response
  * The format of the logs created by this class should not be considered stable and may change
  * slightly between releases. If you need a stable logging format, use your own event listener.
  */
-class LoggingEventListener private constructor(
-  private val logger: HttpLoggingInterceptor.Logger,
+open class LoggingEventListener(
+  val logger: HttpLoggingInterceptor.Logger,
 ) : EventListener() {
   private var startNs: Long = 0
 
@@ -228,7 +228,7 @@ class LoggingEventListener private constructor(
     logWithTime("cacheConditionalHit: $cachedResponse")
   }
 
-  private fun logWithTime(message: String) {
+  open fun logWithTime(message: String) {
     val timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
     logger.log("[$timeMs ms] $message")
   }
@@ -236,7 +236,7 @@ class LoggingEventListener private constructor(
   open class Factory
     @JvmOverloads
     constructor(
-      private val logger: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger.DEFAULT,
+      val logger: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger.DEFAULT,
     ) : EventListener.Factory {
       override fun create(call: Call): EventListener = LoggingEventListener(logger)
     }

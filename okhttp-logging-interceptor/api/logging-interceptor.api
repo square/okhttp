@@ -34,9 +34,9 @@ public abstract interface class okhttp3/logging/HttpLoggingInterceptor$Logger {
 public final class okhttp3/logging/HttpLoggingInterceptor$Logger$Companion {
 }
 
-public final class okhttp3/logging/LoggingEventListener : okhttp3/EventListener {
+public class okhttp3/logging/LoggingEventListener : okhttp3/EventListener {
 	public static final field Companion Lokhttp3/logging/LoggingEventListener$Companion;
-	public synthetic fun <init> (Lokhttp3/logging/HttpLoggingInterceptor$Logger;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lokhttp3/logging/HttpLoggingInterceptor$Logger;)V
 	public fun cacheConditionalHit (Lokhttp3/Call;Lokhttp3/Response;)V
 	public fun cacheHit (Lokhttp3/Call;Lokhttp3/Response;)V
 	public fun cacheMiss (Lokhttp3/Call;)V
@@ -51,6 +51,8 @@ public final class okhttp3/logging/LoggingEventListener : okhttp3/EventListener 
 	public fun connectionReleased (Lokhttp3/Call;Lokhttp3/Connection;)V
 	public fun dnsEnd (Lokhttp3/Call;Ljava/lang/String;Ljava/util/List;)V
 	public fun dnsStart (Lokhttp3/Call;Ljava/lang/String;)V
+	public final fun getLogger ()Lokhttp3/logging/HttpLoggingInterceptor$Logger;
+	public fun logWithTime (Ljava/lang/String;)V
 	public fun proxySelectEnd (Lokhttp3/Call;Lokhttp3/HttpUrl;Ljava/util/List;)V
 	public fun proxySelectStart (Lokhttp3/Call;Lokhttp3/HttpUrl;)V
 	public fun requestBodyEnd (Lokhttp3/Call;J)V
@@ -76,5 +78,6 @@ public class okhttp3/logging/LoggingEventListener$Factory : okhttp3/EventListene
 	public fun <init> (Lokhttp3/logging/HttpLoggingInterceptor$Logger;)V
 	public synthetic fun <init> (Lokhttp3/logging/HttpLoggingInterceptor$Logger;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun create (Lokhttp3/Call;)Lokhttp3/EventListener;
+	public final fun getLogger ()Lokhttp3/logging/HttpLoggingInterceptor$Logger;
 }
 
