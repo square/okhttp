@@ -41,6 +41,7 @@ import okio.BufferedSink
 import okio.BufferedSource
 import okio.ForwardingTimeout
 import okio.Sink
+import okio.Socket
 import okio.Source
 import okio.Timeout
 
@@ -65,6 +66,7 @@ class Http1ExchangeCodec(
   /** The client that configures this stream. May be null for HTTPS proxy tunnels. */
   private val client: OkHttpClient?,
   override val carrier: ExchangeCodec.Carrier,
+  override val socket: Socket,
   private val source: BufferedSource,
   private val sink: BufferedSink,
 ) : ExchangeCodec {
@@ -91,12 +93,6 @@ class Http1ExchangeCodec(
 
   override val isResponseComplete: Boolean
     get() = state == STATE_CLOSED
-
-  override val socketSink
-    get() = sink
-
-  override val socketSource
-    get() = source
 
   override fun createRequestBody(
     request: Request,

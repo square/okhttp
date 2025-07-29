@@ -169,8 +169,8 @@ class Exchange(
         this@Exchange.cancel()
       }
 
-      override val sink = RequestBodySink(codec.socketSink, -1L)
-      override val source = ResponseBodySource(codec.socketSource, -1L)
+      override val sink = RequestBodySink(codec.socket.sink, -1L)
+      override val source = ResponseBodySource(codec.socket.source, -1L)
     }
   }
 

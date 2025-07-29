@@ -20,7 +20,7 @@ import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.net.ProtocolException
 import java.net.Proxy
-import java.net.Socket
+import java.net.Socket as JavaNetSocket
 import java.net.UnknownServiceException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
@@ -44,9 +44,9 @@ import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.toHostHeader
 import okio.BufferedSink
 import okio.BufferedSource
+import okio.Socket as OkioSocket
+import okio.asOkioSocket
 import okio.buffer
-import okio.sink
-import okio.source
 
 /**
  * A single attempt to connect to a remote server, including these steps:
@@ -85,15 +85,16 @@ class ConnectPlan(
   // These properties are initialized by connect() and never reassigned.
 
   /** The low-level TCP socket. */
-  private var rawSocket: Socket? = null
+  private var rawSocket: JavaNetSocket? = null
 
   /**
    * The application layer socket. Either an [SSLSocket] layered over [rawSocket], or [rawSocket]
    * itself if this connection does not use SSL.
    */
-  internal var socket: Socket? = null
+  internal var javaNetSocket: JavaNetSocket? = null
   private var handshake: Handshake? = null
   private var protocol: Protocol? = null
+  private lateinit var okioSocket: OkioSocket
   private lateinit var source: BufferedSource
   private lateinit var sink: BufferedSink
   private var connection: RealConnection? = null
@@ -210,7 +211,7 @@ class ConnectPlan(
         connectTls(sslSocket, connectionSpec)
         user.secureConnectEnd(handshake)
       } else {
-        socket = rawSocket
+        javaNetSocket = rawSocket
         protocol =
           when {
             Protocol.H2_PRIOR_KNOWLEDGE in route.address.protocols -> Protocol.H2_PRIOR_KNOWLEDGE
@@ -224,9 +225,10 @@ class ConnectPlan(
           connectionPool = connectionPool,
           route = route,
           rawSocket = rawSocket,
-          socket = socket!!,
+          socket = javaNetSocket!!,
           handshake = handshake,
           protocol = protocol!!,
+          okioSocket = okioSocket,
           source = source,
           sink = sink,
           pingIntervalMillis = pingIntervalMillis,
@@ -254,7 +256,7 @@ class ConnectPlan(
     } finally {
       user.removePlanToCancel(this)
       if (!success) {
-        socket?.closeQuietly()
+        javaNetSocket?.closeQuietly()
         rawSocket.closeQuietly()
       }
     }
@@ -266,7 +268,7 @@ class ConnectPlan(
     val rawSocket =
       when (route.proxy.type()) {
         Proxy.Type.DIRECT, Proxy.Type.HTTP -> route.address.socketFactory.createSocket()!!
-        else -> Socket(route.proxy)
+        else -> JavaNetSocket(route.proxy)
       }
     this.rawSocket = rawSocket
 
@@ -289,8 +291,9 @@ class ConnectPlan(
     // https://github.com/square/okhttp/issues/3245
     // https://android-review.googlesource.com/#/c/271775/
     try {
-      source = rawSocket.source().buffer()
-      sink = rawSocket.sink().buffer()
+      okioSocket = rawSocket.asOkioSocket()
+      source = okioSocket.source.buffer()
+      sink = okioSocket.sink.buffer()
     } catch (npe: NullPointerException) {
       if (npe.message == NPE_THROW_WITH_NULL) {
         throw IOException(npe)
@@ -404,9 +407,10 @@ class ConnectPlan(
         } else {
           null
         }
-      socket = sslSocket
-      source = sslSocket.source().buffer()
-      sink = sslSocket.sink().buffer()
+      javaNetSocket = sslSocket
+      okioSocket = sslSocket.asOkioSocket()
+      source = okioSocket.source.buffer()
+      sink = okioSocket.sink.buffer()
       protocol = if (maybeProtocol != null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1
       success = true
     } finally {
@@ -433,6 +437,7 @@ class ConnectPlan(
           // No client for CONNECT tunnels:
           client = null,
           carrier = this,
+          socket = okioSocket,
           source = source,
           sink = sink,
         )
@@ -559,7 +564,7 @@ class ConnectPlan(
     )
 
   fun closeQuietly() {
-    socket?.closeQuietly()
+    javaNetSocket?.closeQuietly()
   }
 
   companion object {

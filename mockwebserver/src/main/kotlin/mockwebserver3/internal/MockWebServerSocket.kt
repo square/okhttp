@@ -19,12 +19,15 @@ import java.io.Closeable
 import java.io.InterruptedIOException
 import java.net.InetAddress
 import java.net.Socket
+import java.util.concurrent.CountDownLatch
 import javax.net.ssl.SSLSocket
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.internal.platform.Platform
 import okio.BufferedSink
 import okio.BufferedSource
+import okio.ForwardingSink
+import okio.ForwardingSource
 import okio.asOkioSocket
 import okio.buffer
 
@@ -39,9 +42,35 @@ internal class MockWebServerSocket(
 ) : Closeable,
   okio.Socket {
   private val delegate = javaNetSocket.asOkioSocket()
+  private val closedLatch = CountDownLatch(2)
 
-  override val source: BufferedSource = delegate.source.buffer()
-  override val sink: BufferedSink = delegate.sink.buffer()
+  override val source: BufferedSource =
+    object : ForwardingSource(delegate.source) {
+      private var closed = false
+
+      override fun close() {
+        if (closed) return
+        try {
+          super.close()
+        } finally {
+          closedLatch.countDown()
+        }
+      }
+    }.buffer()
+
+  override val sink: BufferedSink =
+    object : ForwardingSink(delegate.sink) {
+      private var closed = false
+
+      override fun close() {
+        if (closed) return
+        try {
+          super.close()
+        } finally {
+          closedLatch.countDown()
+        }
+      }
+    }.buffer()
 
   val localAddress: InetAddress
     get() = javaNetSocket.localAddress
@@ -95,5 +124,9 @@ internal class MockWebServerSocket(
 
   override fun close() {
     javaNetSocket.close()
+  }
+
+  fun awaitClosed() {
+    closedLatch.await()
   }
 }

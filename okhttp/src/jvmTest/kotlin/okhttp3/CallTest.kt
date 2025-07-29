@@ -2974,6 +2974,7 @@ open class CallTest {
       "Canceled",
       "stream was reset: CANCEL",
       "Socket closed",
+      "Socket is closed",
     )
   }
 
