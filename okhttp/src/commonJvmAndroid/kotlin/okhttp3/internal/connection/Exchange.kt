@@ -46,6 +46,10 @@ class Exchange(
   internal var isDuplex: Boolean = false
     private set
 
+  /** True if the request body should not be used, but the socket, instead. */
+  internal var isSocket: Boolean = false
+    private set
+
   /** True if there was an exception on the connection to the peer. */
   internal var hasFailure: Boolean = false
     private set
@@ -143,10 +147,9 @@ class Exchange(
   fun peekTrailers(): Headers? = codec.peekTrailers()
 
   fun upgradeToSocket(): Socket {
+    isSocket = true
     call.timeoutEarlyExit()
     (codec.carrier as RealConnection).useAsSocket()
-
-    eventListener.requestBodyStart(call)
 
     return object : Socket {
       override fun cancel() {
@@ -185,6 +188,9 @@ class Exchange(
     codec.carrier.trackFailure(call, e)
   }
 
+  // TODO maybe rename, so that a socket use case (say: no body) would still make sense,
+  // or call a socket specific variant instead?
+
   /** If [e] is non-null, this will return a non-null value. */
   fun bodyComplete(
     bytesRead: Long = -1L,
@@ -196,17 +202,33 @@ class Exchange(
       trackFailure(e)
     }
     if (requestDone) {
-      if (e != null) {
-        eventListener.requestFailed(call, e)
+      if (isSocket) {
+        if (e != null) {
+          eventListener.requestFailed(call, e)
+        } else {
+          eventListener.socketSinkEnd(call, bytesRead)
+        }
       } else {
-        eventListener.requestBodyEnd(call, bytesRead)
+        if (e != null) {
+          eventListener.requestFailed(call, e)
+        } else {
+          eventListener.requestBodyEnd(call, bytesRead)
+        }
       }
     }
     if (responseDone) {
-      if (e != null) {
-        eventListener.responseFailed(call, e)
+      if (isSocket) {
+        if (e != null) {
+          eventListener.responseFailed(call, e)
+        } else {
+          eventListener.socketSourceEnd(call, bytesRead)
+        }
       } else {
-        eventListener.responseBodyEnd(call, bytesRead)
+        if (e != null) {
+          eventListener.responseFailed(call, e)
+        } else {
+          eventListener.responseBodyEnd(call, bytesRead)
+        }
       }
     }
     return call.messageDone(
@@ -232,7 +254,10 @@ class Exchange(
     private val contentLength: Long,
   ) : ForwardingSink(delegate) {
     private var completed = false
+
+    // TODO bytesReceived or bytesWritten?
     private var bytesReceived = 0L
+    private var invokeStartEvent = isSocket
     private var closed = false
 
     @Throws(IOException::class)
@@ -247,6 +272,10 @@ class Exchange(
         )
       }
       try {
+        if (invokeStartEvent) {
+          invokeStartEvent = false
+          eventListener.socketSinkStart(call)
+        }
         super.write(source, byteCount)
         this.bytesReceived += byteCount
       } catch (e: IOException) {
@@ -317,7 +346,11 @@ class Exchange(
 
         if (invokeStartEvent) {
           invokeStartEvent = false
-          eventListener.responseBodyStart(call)
+          if (isSocket) {
+            eventListener.socketSourceStart(call)
+          } else {
+            eventListener.responseBodyStart(call)
+          }
         }
 
         if (read == -1L) {
