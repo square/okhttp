@@ -822,6 +822,8 @@ public class MockWebServer : Closeable {
     val streams =
       object : RealWebSocket.Streams(false, socket.source, socket.sink) {
         override fun close() {
+          socket.source.closeQuietly()
+          socket.sink.closeQuietly()
         }
 
         override fun cancel() {
