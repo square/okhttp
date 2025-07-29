@@ -819,14 +819,15 @@ public class MockWebServer : Closeable {
         .protocol(Protocol.HTTP_1_1)
         .build()
 
-    val streams = object : RealWebSocket.Streams(false, socket.source, socket.sink) {
-      override fun close() {
-      }
+    val streams =
+      object : RealWebSocket.Streams(false, socket.source, socket.sink) {
+        override fun close() {
+        }
 
-      override fun cancel() {
-        socket.cancel()
+        override fun cancel() {
+          socket.cancel()
+        }
       }
-    }
     val webSocket =
       RealWebSocket(
         taskRunner = taskRunner,

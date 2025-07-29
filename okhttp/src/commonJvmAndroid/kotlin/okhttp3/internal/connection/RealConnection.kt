@@ -473,34 +473,37 @@ class RealConnection internal constructor(
       socket: JavaNetSocket,
       idleAtNs: Long,
     ): RealConnection {
-      val okioSocket = object : okio.Socket {
-        override val sink: Sink = object : Sink {
-          override fun close() = Unit
+      val okioSocket =
+        object : okio.Socket {
+          override val sink: Sink =
+            object : Sink {
+              override fun close() = Unit
 
-          override fun flush() = Unit
+              override fun flush() = Unit
 
-          override fun timeout(): Timeout = Timeout.NONE
+              override fun timeout(): Timeout = Timeout.NONE
 
-          override fun write(
-            source: Buffer,
-            byteCount: Long,
-          ): Unit = throw UnsupportedOperationException()
+              override fun write(
+                source: Buffer,
+                byteCount: Long,
+              ): Unit = throw UnsupportedOperationException()
+            }
+
+          override val source: Source =
+            object : Source {
+              override fun close() = Unit
+
+              override fun read(
+                sink: Buffer,
+                byteCount: Long,
+              ): Long = throw UnsupportedOperationException()
+
+              override fun timeout(): Timeout = Timeout.NONE
+            }
+
+          override fun cancel() {
+          }
         }
-
-        override val source: Source = object : Source {
-          override fun close() = Unit
-
-          override fun read(
-            sink: Buffer,
-            byteCount: Long,
-          ): Long = throw UnsupportedOperationException()
-
-          override fun timeout(): Timeout = Timeout.NONE
-        }
-
-        override fun cancel() {
-        }
-      }
 
       val result =
         RealConnection(

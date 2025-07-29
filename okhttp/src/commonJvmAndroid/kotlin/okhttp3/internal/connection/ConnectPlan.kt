@@ -44,9 +44,9 @@ import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.toHostHeader
 import okio.BufferedSink
 import okio.BufferedSource
+import okio.Socket as OkioSocket
 import okio.asOkioSocket
 import okio.buffer
-import okio.Socket as OkioSocket
 
 /**
  * A single attempt to connect to a remote server, including these steps:
@@ -466,7 +466,10 @@ class ConnectPlan(
    * This check is imperfect: it doesn't tell us whether a handshake will succeed, just that it will
    * almost certainly fail because the proxy has sent unexpected data.
    */
-  private fun requireExhausted(source: BufferedSource, sink: BufferedSink) {
+  private fun requireExhausted(
+    source: BufferedSource,
+    sink: BufferedSink,
+  ) {
     if (!source.buffer.exhausted() || !sink.buffer.exhausted()) {
       throw IOException("TLS tunnel buffered too many bytes!")
     }

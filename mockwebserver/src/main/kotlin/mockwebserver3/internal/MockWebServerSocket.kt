@@ -44,29 +44,33 @@ internal class MockWebServerSocket(
   private val delegate = javaNetSocket.asOkioSocket()
   private val closedLatch = CountDownLatch(2)
 
-  override val source: BufferedSource = object : ForwardingSource(delegate.source) {
-    private var closed = false
-    override fun close() {
-      if (closed) return
-      try {
-        super.close()
-      } finally {
-        closedLatch.countDown()
-      }
-    }
-  }.buffer()
+  override val source: BufferedSource =
+    object : ForwardingSource(delegate.source) {
+      private var closed = false
 
-  override val sink: BufferedSink = object : ForwardingSink(delegate.sink) {
-    private var closed = false
-    override fun close() {
-      if (closed) return
-      try {
-        super.close()
-      } finally {
-        closedLatch.countDown()
+      override fun close() {
+        if (closed) return
+        try {
+          super.close()
+        } finally {
+          closedLatch.countDown()
+        }
       }
-    }
-  }.buffer()
+    }.buffer()
+
+  override val sink: BufferedSink =
+    object : ForwardingSink(delegate.sink) {
+      private var closed = false
+
+      override fun close() {
+        if (closed) return
+        try {
+          super.close()
+        } finally {
+          closedLatch.countDown()
+        }
+      }
+    }.buffer()
 
   val localAddress: InetAddress
     get() = javaNetSocket.localAddress
