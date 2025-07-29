@@ -1,5 +1,4 @@
-public final class okhttp3/zstd/ZstdInterceptor : okhttp3/Interceptor {
-	public static final field INSTANCE Lokhttp3/zstd/ZstdInterceptor;
-	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
+public final class okhttp3/zstd/ZstdInterceptorKt {
+	public static final fun getZstd ()Lokhttp3/CompressionInterceptor$DecompressionAlgorithm;
 }
 

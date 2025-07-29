@@ -48,6 +48,8 @@ import mockwebserver3.junit5.StartStop
 import okhttp3.Cache
 import okhttp3.Call
 import okhttp3.CertificatePinner
+import okhttp3.CompressionInterceptor
+import okhttp3.CompressionInterceptor.Companion.Gzip
 import okhttp3.Connection
 import okhttp3.DelegatingSSLSocket
 import okhttp3.DelegatingSSLSocketFactory
@@ -60,6 +62,7 @@ import okhttp3.Protocol
 import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.TlsVersion
+import okhttp3.brotli.Brotli
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http2.Http2
@@ -71,6 +74,7 @@ import okhttp3.logging.LoggingEventListener
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.internal.TlsUtil.localhost
+import okhttp3.zstd.Zstd
 import okio.ByteString.Companion.toByteString
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
@@ -108,7 +112,11 @@ class OkHttpTest {
       logger = Logger.getLogger(OkHttpTest::class.java.name)
     }
 
-  private var client: OkHttpClient = clientTestRule.newClient()
+  private var client: OkHttpClient =
+    clientTestRule
+      .newClientBuilder()
+      .addInterceptor(CompressionInterceptor(Zstd, Brotli, Gzip))
+      .build()
 
   private val moshi =
     Moshi

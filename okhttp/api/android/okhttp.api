@@ -326,6 +326,22 @@ public final class okhttp3/CipherSuite$Companion {
 	public final fun forJavaName (Ljava/lang/String;)Lokhttp3/CipherSuite;
 }
 
+public class okhttp3/CompressionInterceptor : okhttp3/Interceptor {
+	public static final field Companion Lokhttp3/CompressionInterceptor$Companion;
+	public fun <init> ([Lokhttp3/CompressionInterceptor$DecompressionAlgorithm;)V
+	public final fun getAlgorithms ()[Lokhttp3/CompressionInterceptor$DecompressionAlgorithm;
+	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
+}
+
+public final class okhttp3/CompressionInterceptor$Companion {
+	public final fun getGzip ()Lokhttp3/CompressionInterceptor$DecompressionAlgorithm;
+}
+
+public abstract interface class okhttp3/CompressionInterceptor$DecompressionAlgorithm {
+	public abstract fun decompress (Lokio/BufferedSource;)Lokio/Source;
+	public abstract fun getEncoding ()Ljava/lang/String;
+}
+
 public abstract interface class okhttp3/Connection {
 	public abstract fun handshake ()Lokhttp3/Handshake;
 	public abstract fun protocol ()Lokhttp3/Protocol;
