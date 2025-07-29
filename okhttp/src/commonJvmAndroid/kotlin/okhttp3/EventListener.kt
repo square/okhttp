@@ -291,6 +291,25 @@ abstract class EventListener {
   }
 
   /**
+   * Invoked just prior to sending bytes on the socket. Will only be invoked for upgraded connections.
+   *
+   * The connection is implicit, and will generally relate to the last [connectionAcquired] event.
+   */
+  open fun socketSinkStart(call: Call) {
+  }
+
+  /**
+   * Invoked immediately before closing the sink.
+   *
+   * This method is always invoked after [socketSinkStart].
+   */
+  open fun socketSinkEnd(
+    call: Call,
+    byteCount: Long,
+  ) {
+  }
+
+  /**
    * Invoked when response headers are first returned from the server.
    *
    * The connection is implicit, and will generally relate to the last [connectionAcquired] event.

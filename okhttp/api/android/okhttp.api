@@ -515,6 +515,8 @@ public abstract class okhttp3/EventListener {
 	public fun satisfactionFailure (Lokhttp3/Call;Lokhttp3/Response;)V
 	public fun secureConnectEnd (Lokhttp3/Call;Lokhttp3/Handshake;)V
 	public fun secureConnectStart (Lokhttp3/Call;)V
+	public fun socketSinkEnd (Lokhttp3/Call;J)V
+	public fun socketSinkStart (Lokhttp3/Call;)V
 }
 
 public final class okhttp3/EventListener$Companion {
