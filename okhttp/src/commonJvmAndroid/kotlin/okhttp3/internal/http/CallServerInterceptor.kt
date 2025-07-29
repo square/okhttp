@@ -22,15 +22,12 @@ import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.TrailersSource
 import okhttp3.internal.UnreadableResponseBody
-import okhttp3.internal.connection.Exchange
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.skipAll
 import okio.buffer
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
-class CallServerInterceptor(
-  private val forWebSocket: Boolean,
-) : Interceptor {
+object CallServerInterceptor : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
     val realChain = chain as RealInterceptorChain
@@ -114,7 +111,7 @@ class CallServerInterceptor(
           .build()
       var code = response.code
 
-      while (shouldIgnoreAndWaitForRealResponse(code, exchange)) {
+      while (shouldIgnoreAndWaitForRealResponse(code)) {
         responseBuilder = exchange.readResponseHeaders(expectContinue = false)!!
         if (invokeStartEvent) {
           exchange.responseHeadersStart()
@@ -151,11 +148,9 @@ class CallServerInterceptor(
                   response.body.contentType(),
                   response.body.contentLength(),
                 ),
-              ).apply {
-                if (!forWebSocket) {
-                  socket(exchange.upgradeToSocket())
-                }
-              }.build()
+              )
+              .socket(exchange.upgradeToSocket())
+              .build()
           }
 
           // This is not an upgrade response.
@@ -202,10 +197,7 @@ class CallServerInterceptor(
     }
   }
 
-  private fun shouldIgnoreAndWaitForRealResponse(
-    code: Int,
-    exchange: Exchange,
-  ): Boolean =
+  private fun shouldIgnoreAndWaitForRealResponse(code: Int): Boolean =
     when {
       // Server sent a 100-continue even though we did not request one. Try again to read the
       // actual response status.

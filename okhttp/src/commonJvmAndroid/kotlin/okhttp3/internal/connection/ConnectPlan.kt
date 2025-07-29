@@ -44,9 +44,8 @@ import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.toHostHeader
 import okio.BufferedSink
 import okio.BufferedSource
+import okio.asOkioSocket
 import okio.buffer
-import okio.sink
-import okio.source
 
 /**
  * A single attempt to connect to a remote server, including these steps:
@@ -289,8 +288,9 @@ class ConnectPlan(
     // https://github.com/square/okhttp/issues/3245
     // https://android-review.googlesource.com/#/c/271775/
     try {
-      source = rawSocket.source().buffer()
-      sink = rawSocket.sink().buffer()
+      val okioSocket = rawSocket.asOkioSocket()
+      source = okioSocket.source.buffer()
+      sink = okioSocket.sink.buffer()
     } catch (npe: NullPointerException) {
       if (npe.message == NPE_THROW_WITH_NULL) {
         throw IOException(npe)
@@ -405,8 +405,9 @@ class ConnectPlan(
           null
         }
       socket = sslSocket
-      source = sslSocket.source().buffer()
-      sink = sslSocket.sink().buffer()
+      val okioSocket = sslSocket.asOkioSocket()
+      source = okioSocket.source.buffer()
+      sink = okioSocket.sink.buffer()
       protocol = if (maybeProtocol != null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1
       success = true
     } finally {

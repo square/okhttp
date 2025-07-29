@@ -87,6 +87,7 @@ import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
 import okio.ByteString
+import okio.ForwardingSink
 import okio.Sink
 import okio.Timeout
 import okio.buffer
@@ -821,14 +822,16 @@ public class MockWebServer : Closeable {
         .build()
 
     val connectionClose = CountDownLatch(1)
-    val streams =
-      object : RealWebSocket.Streams(false, socket.source, socket.sink) {
-        override fun close() = connectionClose.countDown()
-
-        override fun cancel() {
-          socket.closeQuietly()
+    val countDownOnCloseSink: BufferedSink = object : ForwardingSink(socket.sink) {
+      override fun close() {
+        try {
+          super.close()
+        } finally {
+          if (connectionClose.count > 0) connectionClose.countDown()
         }
       }
+    }.buffer()
+
     val webSocket =
       RealWebSocket(
         taskRunner = taskRunner,
@@ -842,7 +845,15 @@ public class MockWebServer : Closeable {
         webSocketCloseTimeout = RealWebSocket.CANCEL_AFTER_CLOSE_MILLIS,
       )
     val name = "MockWebServer WebSocket ${request.url.encodedPath}"
-    webSocket.initReaderAndWriter(name, streams)
+
+    webSocket.initReaderAndWriter(
+      name = name,
+      socket = socket,
+      socketSource = socket.source,
+      socketSink = countDownOnCloseSink,
+      client = false,
+    )
+
     try {
       webSocket.loopReader(fancyResponse)
 
