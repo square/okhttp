@@ -467,6 +467,13 @@ class KotlinSourceModernTest {
           ioe: IOException,
         ) = TODO()
 
+        override fun socketSinkStart(call: Call) = TODO()
+
+        override fun socketSinkEnd(
+          call: Call,
+          byteCount: Long,
+        ) = TODO()
+
         override fun responseHeadersStart(call: Call) = TODO()
 
         override fun responseHeadersEnd(

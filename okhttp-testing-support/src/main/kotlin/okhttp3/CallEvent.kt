@@ -180,6 +180,19 @@ sealed class CallEvent {
     override fun closes(event: CallEvent): Boolean = event is RequestHeadersStart && call == event.call
   }
 
+  data class SocketSinkStart(
+    override val timestampNs: Long,
+    override val call: Call,
+  ) : CallEvent()
+
+  data class SocketSinkEnd(
+    override val timestampNs: Long,
+    override val call: Call,
+    val bytesWritten: Long,
+  ) : CallEvent() {
+    override fun closes(event: CallEvent): Boolean = event is SocketSinkStart && call == event.call
+  }
+
   data class ResponseHeadersStart(
     override val timestampNs: Long,
     override val call: Call,

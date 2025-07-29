@@ -144,6 +144,14 @@ public final class PrintEventsNonConcurrent {
       printEvent("requestFailed");
     }
 
+    @Override public void socketSinkStart(Call call) {
+      printEvent("socketSinkStart");
+    }
+
+    @Override public void socketSinkEnd(Call call, long byteCount) {
+      printEvent("socketSinkEnd");
+    }
+
     @Override public void responseHeadersStart(Call call) {
       printEvent("responseHeadersStart");
     }
