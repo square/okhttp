@@ -61,7 +61,7 @@ open class CompressionInterceptor(
    * Returns a decompressed copy of the Response, typically via a streaming Source.
    * If no known decompression or the response is not compressed, returns the response unmodified.
    */
-  fun decompress(response: Response): Response {
+  internal fun decompress(response: Response): Response {
     if (!response.promisesBody()) {
       return response
     }

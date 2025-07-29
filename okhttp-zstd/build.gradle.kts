@@ -15,7 +15,7 @@ project.applyOsgi(
 )
 
 dependencies {
-  api(projects.okhttp)
+  "friendsApi"(projects.okhttp)
   implementation(libs.zstd.kmp.okio)
 
   testImplementation(projects.okhttpTestingSupport)
