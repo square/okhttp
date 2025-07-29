@@ -841,14 +841,10 @@ public class MockWebServer : Closeable {
       client = false,
     )
 
-    try {
-      webSocket.loopReader(fancyResponse)
+    webSocket.loopReader(fancyResponse)
 
-      // Even if messages are no longer being read we need to wait for the connection close signal.
-      socket.awaitClosed()
-    } finally {
-      socket.source.closeQuietly()
-    }
+    // Even if messages are no longer being read we need to wait for the connection close signal.
+    socket.awaitClosed()
   }
 
   @Throws(IOException::class)

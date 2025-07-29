@@ -263,6 +263,10 @@ class RealWebSocket(
       ?: throw ProtocolException("Web Socket socket missing: bad interceptor?")
   }
 
+  /**
+   * This accepts a [BufferedSource] instead of using [Socket.source], just in case we've already
+   * received data from the peer. This accepts a [BufferedSink] for symmetry with the source.
+   */
   fun initReaderAndWriter(
     name: String,
     socket: Socket,
