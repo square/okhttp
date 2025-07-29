@@ -80,6 +80,8 @@ class RealConnection internal constructor(
   private val handshake: Handshake?,
   private val protocol: Protocol,
   private val okioSocket: okio.Socket,
+  private val source: BufferedSource,
+  private val sink: BufferedSink,
   private val pingIntervalMillis: Int,
   internal val connectionListener: ConnectionListener,
 ) : Http2Connection.Listener(),
@@ -87,9 +89,6 @@ class RealConnection internal constructor(
   ExchangeCodec.Carrier,
   Lockable {
   private var http2Connection: Http2Connection? = null
-
-  private val source: BufferedSource = okioSocket.source.buffer()
-  private val sink: BufferedSink = okioSocket.sink.buffer()
 
   // These properties are guarded by `this`.
 
@@ -515,6 +514,8 @@ class RealConnection internal constructor(
           handshake = null,
           protocol = Protocol.HTTP_2,
           okioSocket = okioSocket,
+          source = okioSocket.source.buffer(),
+          sink = okioSocket.sink.buffer(),
           pingIntervalMillis = 0,
           connectionListener = ConnectionListener.NONE,
         )
