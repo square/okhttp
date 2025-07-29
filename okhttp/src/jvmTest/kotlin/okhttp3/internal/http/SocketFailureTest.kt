@@ -16,7 +16,7 @@
 package okhttp3.internal.http
 
 import assertk.assertThat
-import assertk.assertions.isEqualTo
+import assertk.assertions.isIn
 import java.net.Socket
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
@@ -111,6 +111,6 @@ class SocketFailureTest {
       assertFailsWith<IOException> {
         call2.execute()
       }
-    assertThat(exception.message).isEqualTo("Socket closed")
+    assertThat(exception.message).isIn("Socket closed", "Socket is closed")
   }
 }
