@@ -18,6 +18,7 @@ package okhttp3.internal.ws
 import java.io.Closeable
 import java.io.IOException
 import java.util.Random
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_RSV1
 import okhttp3.internal.ws.WebSocketProtocol.B1_FLAG_MASK
@@ -207,6 +208,7 @@ class WebSocketWriter(
   }
 
   override fun close() {
-    messageDeflater?.close()
+    messageDeflater?.closeQuietly()
+    sink.closeQuietly()
   }
 }

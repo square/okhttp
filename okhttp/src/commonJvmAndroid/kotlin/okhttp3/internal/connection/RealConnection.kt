@@ -51,7 +51,6 @@ import okhttp3.internal.http2.Settings
 import okhttp3.internal.http2.StreamResetException
 import okhttp3.internal.isHealthy
 import okhttp3.internal.tls.OkHostnameVerifier
-import okhttp3.internal.ws.RealWebSocket
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
@@ -290,25 +289,6 @@ class RealConnection internal constructor(
       source.timeout().timeout(chain.readTimeoutMillis.toLong(), MILLISECONDS)
       sink.timeout().timeout(chain.writeTimeoutMillis.toLong(), MILLISECONDS)
       Http1ExchangeCodec(client, this, okioSocket, source, sink)
-    }
-  }
-
-  @Throws(SocketException::class)
-  internal fun newWebSocketStreams(exchange: Exchange): RealWebSocket.Streams {
-    useAsSocket()
-    return object : RealWebSocket.Streams(true, source, sink) {
-      override fun close() {
-        exchange.bodyComplete(
-          bytesRead = -1L,
-          responseDone = true,
-          requestDone = true,
-          e = null,
-        )
-      }
-
-      override fun cancel() {
-        exchange.cancel()
-      }
     }
   }
 
