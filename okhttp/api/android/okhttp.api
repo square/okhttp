@@ -857,6 +857,7 @@ public final class okhttp3/MultipartReader$Part : java/io/Closeable {
 public final class okhttp3/OkHttp {
 	public static final field INSTANCE Lokhttp3/OkHttp;
 	public static final field VERSION Ljava/lang/String;
+	public final fun initialize (Landroid/content/Context;)V
 }
 
 public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Factory {
@@ -1140,6 +1141,7 @@ public final class okhttp3/Response : java/io/Closeable {
 	public final fun receivedResponseAtMillis ()J
 	public final fun request ()Lokhttp3/Request;
 	public final fun sentRequestAtMillis ()J
+	public final fun socket ()Lokio/Socket;
 	public fun toString ()Ljava/lang/String;
 	public final fun trailers ()Lokhttp3/Headers;
 }
@@ -1162,6 +1164,7 @@ public class okhttp3/Response$Builder {
 	public fun removeHeader (Ljava/lang/String;)Lokhttp3/Response$Builder;
 	public fun request (Lokhttp3/Request;)Lokhttp3/Response$Builder;
 	public fun sentRequestAtMillis (J)Lokhttp3/Response$Builder;
+	public fun socket (Lokio/Socket;)Lokhttp3/Response$Builder;
 	public fun trailers (Lokhttp3/TrailersSource;)Lokhttp3/Response$Builder;
 }
 

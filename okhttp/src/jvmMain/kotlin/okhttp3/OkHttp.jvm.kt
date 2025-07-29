@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Square, Inc.
+ * Copyright (C) 2025 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,9 @@
  */
 package okhttp3
 
-import assertk.assertThat
-import assertk.assertions.matches
-import org.junit.jupiter.api.Test
+import okhttp3.internal.CONST_VERSION
 
-class OkHttpTest {
-  @Test
-  fun testVersion() {
-    assertThat(OkHttp.VERSION).matches(Regex("[0-9]+\\.[0-9]+\\.[0-9]+(-.+)?"))
-  }
+actual object OkHttp {
+  @JvmField
+  actual val VERSION: String = CONST_VERSION
 }

@@ -82,7 +82,7 @@ class MockSocketHandler : SocketHandler {
   @JvmOverloads
   fun sendResponse(
     s: String,
-    responseSent: CountDownLatch = CountDownLatch(0),
+    responseSent: CountDownLatch = CountDownLatch(1),
   ) = apply {
     actions += { stream ->
       stream.sink.writeUtf8(s)

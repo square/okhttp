@@ -34,6 +34,7 @@ import okhttp3.internal.http.RequestLine
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.http.promisesBody
 import okhttp3.internal.http.receiveHeaders
+import okhttp3.internal.http1.Http1ExchangeCodec.Companion.TRAILERS_RESPONSE_BODY_TRUNCATED
 import okhttp3.internal.skipAll
 import okio.Buffer
 import okio.BufferedSink
@@ -90,6 +91,12 @@ class Http1ExchangeCodec(
 
   override val isResponseComplete: Boolean
     get() = state == STATE_CLOSED
+
+  override val socketSink
+    get() = sink
+
+  override val socketSource
+    get() = source
 
   override fun createRequestBody(
     request: Request,
