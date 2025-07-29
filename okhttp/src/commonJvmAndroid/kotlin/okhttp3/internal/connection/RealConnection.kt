@@ -19,7 +19,7 @@ package okhttp3.internal.connection
 import java.io.IOException
 import java.lang.ref.Reference
 import java.net.Proxy
-import java.net.Socket
+import java.net.Socket as JavaNetSocket
 import java.net.SocketException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit.MILLISECONDS
@@ -71,16 +71,15 @@ class RealConnection internal constructor(
   val connectionPool: RealConnectionPool,
   override val route: Route,
   /** The low-level TCP socket. */
-  private val rawSocket: Socket,
+  private val rawSocket: JavaNetSocket,
   /**
    * The application layer socket. Either an [SSLSocket] layered over [rawSocket], or [rawSocket]
    * itself if this connection does not use SSL.
    */
-  private val socket: Socket,
+  private val socket: JavaNetSocket,
   private val handshake: Handshake?,
   private val protocol: Protocol,
-  private val source: BufferedSource,
-  private val sink: BufferedSink,
+  private val okioSocket: okio.Socket,
   private val pingIntervalMillis: Int,
   internal val connectionListener: ConnectionListener,
 ) : Http2Connection.Listener(),
@@ -88,6 +87,9 @@ class RealConnection internal constructor(
   ExchangeCodec.Carrier,
   Lockable {
   private var http2Connection: Http2Connection? = null
+
+  private val source: BufferedSource = okioSocket.source.buffer()
+  private val sink: BufferedSink = okioSocket.sink.buffer()
 
   // These properties are guarded by `this`.
 
@@ -288,7 +290,7 @@ class RealConnection internal constructor(
       socket.soTimeout = chain.readTimeoutMillis()
       source.timeout().timeout(chain.readTimeoutMillis.toLong(), MILLISECONDS)
       sink.timeout().timeout(chain.writeTimeoutMillis.toLong(), MILLISECONDS)
-      Http1ExchangeCodec(client, this, source, sink)
+      Http1ExchangeCodec(client, this, okioSocket, source, sink)
     }
   }
 
@@ -323,7 +325,7 @@ class RealConnection internal constructor(
     rawSocket.closeQuietly()
   }
 
-  override fun socket(): Socket = socket
+  override fun socket(): JavaNetSocket = socket
 
   /** Returns true if this connection is ready to host new streams. */
   fun isHealthy(doExtensiveChecks: Boolean): Boolean {
@@ -468,44 +470,50 @@ class RealConnection internal constructor(
       taskRunner: TaskRunner,
       connectionPool: RealConnectionPool,
       route: Route,
-      socket: Socket,
+      socket: JavaNetSocket,
       idleAtNs: Long,
     ): RealConnection {
+      val okioSocket = object : okio.Socket {
+        override val sink: Sink = object : Sink {
+          override fun close() = Unit
+
+          override fun flush() = Unit
+
+          override fun timeout(): Timeout = Timeout.NONE
+
+          override fun write(
+            source: Buffer,
+            byteCount: Long,
+          ): Unit = throw UnsupportedOperationException()
+        }
+
+        override val source: Source = object : Source {
+          override fun close() = Unit
+
+          override fun read(
+            sink: Buffer,
+            byteCount: Long,
+          ): Long = throw UnsupportedOperationException()
+
+          override fun timeout(): Timeout = Timeout.NONE
+        }
+
+        override fun cancel() {
+        }
+      }
+
       val result =
         RealConnection(
           taskRunner = taskRunner,
           connectionPool = connectionPool,
           route = route,
-          rawSocket = Socket(),
+          rawSocket = JavaNetSocket(),
           socket = socket,
           handshake = null,
           protocol = Protocol.HTTP_2,
-          source =
-            object : Source {
-              override fun close() = Unit
-
-              override fun read(
-                sink: Buffer,
-                byteCount: Long,
-              ): Long = throw UnsupportedOperationException()
-
-              override fun timeout(): Timeout = Timeout.NONE
-            }.buffer(),
-          sink =
-            object : Sink {
-              override fun close() = Unit
-
-              override fun flush() = Unit
-
-              override fun timeout(): Timeout = Timeout.NONE
-
-              override fun write(
-                source: Buffer,
-                byteCount: Long,
-              ): Unit = throw UnsupportedOperationException()
-            }.buffer(),
+          okioSocket = okioSocket,
           pingIntervalMillis = 0,
-          ConnectionListener.NONE,
+          connectionListener = ConnectionListener.NONE,
         )
       result.idleAtNs = idleAtNs
       return result

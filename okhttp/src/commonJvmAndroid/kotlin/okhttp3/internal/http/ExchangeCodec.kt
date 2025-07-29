@@ -22,6 +22,7 @@ import okhttp3.Response
 import okhttp3.Route
 import okhttp3.internal.connection.RealCall
 import okio.Sink
+import okio.Socket
 import okio.Source
 
 /** Encodes HTTP requests and decodes HTTP responses. */
@@ -32,11 +33,8 @@ interface ExchangeCodec {
   /** Returns true if the response body and (possibly empty) trailers have been received. */
   val isResponseComplete: Boolean
 
-  /** The source when this is the subject of a protocol upgrade or CONNECT. */
-  val socketSink: Sink
-
-  /** The sink when this is the subject of a protocol upgrade or CONNECT. */
-  val socketSource: Source
+  /** The socket that carries this exchange. */
+  val socket: Socket
 
   /** Returns an output stream where the request body can be streamed. */
   @Throws(IOException::class)

@@ -20,7 +20,7 @@ import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.net.ProtocolException
 import java.net.Proxy
-import java.net.Socket
+import java.net.Socket as JavaNetSocket
 import java.net.UnknownServiceException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
@@ -44,9 +44,9 @@ import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.toHostHeader
 import okio.BufferedSink
 import okio.BufferedSource
+import okio.asOkioSocket
 import okio.buffer
-import okio.sink
-import okio.source
+import okio.Socket as OkioSocket
 
 /**
  * A single attempt to connect to a remote server, including these steps:
@@ -85,17 +85,16 @@ class ConnectPlan(
   // These properties are initialized by connect() and never reassigned.
 
   /** The low-level TCP socket. */
-  private var rawSocket: Socket? = null
+  private var rawSocket: JavaNetSocket? = null
 
   /**
    * The application layer socket. Either an [SSLSocket] layered over [rawSocket], or [rawSocket]
    * itself if this connection does not use SSL.
    */
-  internal var socket: Socket? = null
+  internal var javaNetSocket: JavaNetSocket? = null
   private var handshake: Handshake? = null
   private var protocol: Protocol? = null
-  private lateinit var source: BufferedSource
-  private lateinit var sink: BufferedSink
+  private lateinit var okioSocket: OkioSocket
   private var connection: RealConnection? = null
 
   /** True if this connection is ready for use, including TCP, tunnels, and TLS. */
@@ -180,14 +179,6 @@ class ConnectPlan(
       }
 
       if (route.address.sslSocketFactory != null) {
-        // Assume the server won't send a TLS ServerHello until we send a TLS ClientHello. If
-        // that happens, then we will have buffered bytes that are needed by the SSLSocket!
-        // This check is imperfect: it doesn't tell us whether a handshake will succeed, just
-        // that it will almost certainly fail because the proxy has sent unexpected data.
-        if (!source.buffer.exhausted() || !sink.buffer.exhausted()) {
-          throw IOException("TLS tunnel buffered too many bytes!")
-        }
-
         user.secureConnectStart()
 
         // Create the wrapper over the connected socket.
@@ -210,7 +201,7 @@ class ConnectPlan(
         connectTls(sslSocket, connectionSpec)
         user.secureConnectEnd(handshake)
       } else {
-        socket = rawSocket
+        javaNetSocket = rawSocket
         protocol =
           when {
             Protocol.H2_PRIOR_KNOWLEDGE in route.address.protocols -> Protocol.H2_PRIOR_KNOWLEDGE
@@ -224,11 +215,10 @@ class ConnectPlan(
           connectionPool = connectionPool,
           route = route,
           rawSocket = rawSocket,
-          socket = socket!!,
+          socket = javaNetSocket!!,
           handshake = handshake,
           protocol = protocol!!,
-          source = source,
-          sink = sink,
+          okioSocket = okioSocket,
           pingIntervalMillis = pingIntervalMillis,
           connectionListener = connectionPool.connectionListener,
         )
@@ -254,7 +244,7 @@ class ConnectPlan(
     } finally {
       user.removePlanToCancel(this)
       if (!success) {
-        socket?.closeQuietly()
+        javaNetSocket?.closeQuietly()
         rawSocket.closeQuietly()
       }
     }
@@ -266,7 +256,7 @@ class ConnectPlan(
     val rawSocket =
       when (route.proxy.type()) {
         Proxy.Type.DIRECT, Proxy.Type.HTTP -> route.address.socketFactory.createSocket()!!
-        else -> Socket(route.proxy)
+        else -> JavaNetSocket(route.proxy)
       }
     this.rawSocket = rawSocket
 
@@ -289,8 +279,7 @@ class ConnectPlan(
     // https://github.com/square/okhttp/issues/3245
     // https://android-review.googlesource.com/#/c/271775/
     try {
-      source = rawSocket.source().buffer()
-      sink = rawSocket.sink().buffer()
+      okioSocket = rawSocket.asOkioSocket()
     } catch (npe: NullPointerException) {
       if (npe.message == NPE_THROW_WITH_NULL) {
         throw IOException(npe)
@@ -404,9 +393,8 @@ class ConnectPlan(
         } else {
           null
         }
-      socket = sslSocket
-      source = sslSocket.source().buffer()
-      sink = sslSocket.sink().buffer()
+      javaNetSocket = sslSocket
+      okioSocket = sslSocket.asOkioSocket()
       protocol = if (maybeProtocol != null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1
       success = true
     } finally {
@@ -427,12 +415,15 @@ class ConnectPlan(
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
     val url = route.address.url
     val requestLine = "CONNECT ${url.toHostHeader(includeDefaultPort = true)} HTTP/1.1"
+    val sink = okioSocket.sink.buffer()
+    val source = okioSocket.source.buffer()
     while (true) {
       val tunnelCodec =
         Http1ExchangeCodec(
           // No client for CONNECT tunnels:
           client = null,
           carrier = this,
+          socket = okioSocket,
           source = source,
           sink = sink,
         )
@@ -448,19 +439,36 @@ class ConnectPlan(
       tunnelCodec.skipConnectBody(response)
 
       when (response.code) {
-        HttpURLConnection.HTTP_OK -> return null
+        HttpURLConnection.HTTP_OK -> {
+          requireExhausted(source, sink)
+          return null
+        }
 
         HttpURLConnection.HTTP_PROXY_AUTH -> {
           nextRequest = route.address.proxyAuthenticator.authenticate(route, response)
             ?: throw IOException("Failed to authenticate with proxy")
 
           if ("close".equals(response.header("Connection"), ignoreCase = true)) {
+            requireExhausted(source, sink)
             return nextRequest
           }
         }
 
         else -> throw IOException("Unexpected response code for CONNECT: ${response.code}")
       }
+    }
+  }
+
+  /**
+   * Assume the server won't send a TLS ServerHello until we send a TLS ClientHello. If that
+   * happens, then we will have buffered bytes that are needed by the SSLSocket!
+   *
+   * This check is imperfect: it doesn't tell us whether a handshake will succeed, just that it will
+   * almost certainly fail because the proxy has sent unexpected data.
+   */
+  private fun requireExhausted(source: BufferedSource, sink: BufferedSink) {
+    if (!source.buffer.exhausted() || !sink.buffer.exhausted()) {
+      throw IOException("TLS tunnel buffered too many bytes!")
     }
   }
 
@@ -559,7 +567,7 @@ class ConnectPlan(
     )
 
   fun closeQuietly() {
-    socket?.closeQuietly()
+    javaNetSocket?.closeQuietly()
   }
 
   companion object {

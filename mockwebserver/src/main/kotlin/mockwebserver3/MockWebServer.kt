@@ -38,7 +38,6 @@ import java.security.cert.X509Certificate
 import java.util.Collections
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -820,15 +819,14 @@ public class MockWebServer : Closeable {
         .protocol(Protocol.HTTP_1_1)
         .build()
 
-    val connectionClose = CountDownLatch(1)
-    val streams =
-      object : RealWebSocket.Streams(false, socket.source, socket.sink) {
-        override fun close() = connectionClose.countDown()
-
-        override fun cancel() {
-          socket.closeQuietly()
-        }
+    val streams = object : RealWebSocket.Streams(false, socket.source, socket.sink) {
+      override fun close() {
       }
+
+      override fun cancel() {
+        socket.cancel()
+      }
+    }
     val webSocket =
       RealWebSocket(
         taskRunner = taskRunner,
@@ -847,7 +845,7 @@ public class MockWebServer : Closeable {
       webSocket.loopReader(fancyResponse)
 
       // Even if messages are no longer being read we need to wait for the connection close signal.
-      connectionClose.await()
+      socket.awaitClosed()
     } finally {
       socket.source.closeQuietly()
     }
