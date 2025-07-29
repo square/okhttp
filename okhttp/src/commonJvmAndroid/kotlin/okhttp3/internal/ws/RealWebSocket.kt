@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.ws
 
-import java.io.Closeable
 import java.io.IOException
 import java.net.ProtocolException
 import java.net.SocketTimeoutException
@@ -37,7 +36,6 @@ import okhttp3.internal.concurrent.Lockable
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.concurrent.assertLockHeld
-import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.okHttpName
 import okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY
@@ -50,6 +48,8 @@ import okio.BufferedSource
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
+import okio.Socket
+import okio.buffer
 
 class RealWebSocket(
   taskRunner: TaskRunner,
@@ -60,7 +60,7 @@ class RealWebSocket(
   private val pingIntervalMillis: Long,
   /**
    * For clients this is initially null, and will be assigned to the agreed-upon extensions. For
-   * servers it should be the agreed-upon extensions immediately.
+   * servers, it should be the agreed-upon extensions immediately.
    */
   private var extensions: WebSocketExtensions?,
   /** If compression is negotiated, outbound messages of this size and larger will be compressed. */
@@ -91,8 +91,8 @@ class RealWebSocket(
   /** Names this web socket for observability and debugging. */
   private var name: String? = null
 
-  /** The streams held by this web socket. This is closed when both reader and writer are closed. */
-  private var streams: Streams? = null
+  /** The socket that carries this web socket. This is canceled when the web socket fails. */
+  private var socket: Socket? = null
 
   /** Outgoing pongs in the order they should be written. */
   private val pongQueue = ArrayDeque<ByteString>()
@@ -171,17 +171,16 @@ class RealWebSocket(
           call: Call,
           response: Response,
         ) {
-          val exchange = response.exchange
-          val streams: Streams
-          try {
-            checkUpgradeSuccess(response, exchange)
-            streams = exchange!!.newWebSocketStreams()
-          } catch (e: IOException) {
-            failWebSocket(e, response)
-            response.closeQuietly()
-            exchange?.webSocketUpgradeFailed()
-            return
-          }
+          val socket =
+            try {
+              checkUpgradeSuccess(response)
+            } catch (e: IOException) {
+              failWebSocket(e, response)
+              response.closeQuietly()
+              response.socket?.sink?.closeQuietly()
+              response.socket?.source?.closeQuietly()
+              return
+            }
 
           // Apply the extensions. If they're unacceptable initiate a graceful shut down.
           // TODO(jwilson): Listeners should get onFailure() instead of onClosing() + onClosed(1010).
@@ -196,7 +195,13 @@ class RealWebSocket(
 
           // Process all web socket messages.
           val name = "$okHttpName WebSocket ${request.url.redact()}"
-          initReaderAndWriter(name, streams)
+          initReaderAndWriter(
+            name = name,
+            socket = socket,
+            socketSource = socket.source.buffer(),
+            socketSink = socket.sink.buffer(),
+            client = true,
+          )
           loopReader(response)
         }
 
@@ -225,10 +230,7 @@ class RealWebSocket(
   }
 
   @Throws(IOException::class)
-  internal fun checkUpgradeSuccess(
-    response: Response,
-    exchange: Exchange?,
-  ) {
+  internal fun checkUpgradeSuccess(response: Response): Socket {
     if (response.code != 101) {
       throw ProtocolException(
         "Expected HTTP 101 response but was '${response.code} ${response.message}'",
@@ -257,26 +259,28 @@ class RealWebSocket(
       )
     }
 
-    if (exchange == null) {
-      throw ProtocolException("Web Socket exchange missing: bad interceptor?")
-    }
+    return response.socket
+      ?: throw ProtocolException("Web Socket socket missing: bad interceptor?")
   }
 
   fun initReaderAndWriter(
     name: String,
-    streams: Streams,
+    socket: Socket,
+    socketSource: BufferedSource,
+    socketSink: BufferedSink,
+    client: Boolean,
   ) {
     val extensions = this.extensions!!
     synchronized(this) {
       this.name = name
-      this.streams = streams
+      this.socket = socket
       this.writer =
         WebSocketWriter(
-          isClient = streams.client,
-          sink = streams.sink,
+          isClient = client,
+          sink = socketSink,
           random = random,
           perMessageDeflate = extensions.perMessageDeflate,
-          noContextTakeover = extensions.noContextTakeover(streams.client),
+          noContextTakeover = extensions.noContextTakeover(client),
           minimumDeflateSize = minimumDeflateSize,
         )
       this.writerTask = WriterTask()
@@ -294,11 +298,11 @@ class RealWebSocket(
 
     reader =
       WebSocketReader(
-        isClient = streams.client,
-        source = streams.source,
+        isClient = client,
+        source = socketSource,
         frameCallback = this,
         perMessageDeflate = extensions.perMessageDeflate,
-        noContextTakeover = extensions.noContextTakeover(!streams.client),
+        noContextTakeover = extensions.noContextTakeover(!client),
       )
   }
 
@@ -337,13 +341,11 @@ class RealWebSocket(
    * thread.
    */
   fun finishReader() {
-    val failed: Boolean
     val code: Int
     val reason: String?
-    var streamsToClose: Streams?
+    val sendOnClosed: Boolean
     var readerToClose: WebSocketReader?
     synchronized(this) {
-      failed = this.failed
       code = receivedCloseCode
       reason = receivedCloseReason
 
@@ -363,19 +365,14 @@ class RealWebSocket(
         this.taskQueue.shutdown()
       }
 
-      streamsToClose =
-        when {
-          writer == null -> streams
-          else -> null
-        }
+      sendOnClosed = !failed && writer == null && receivedCloseCode != -1
     }
 
-    if (!failed && streamsToClose != null && receivedCloseCode != -1) {
+    if (sendOnClosed) {
       listener.onClosed(this, code, reason!!)
     }
 
     readerToClose?.closeQuietly()
-    streamsToClose?.closeQuietly()
   }
 
   /** For testing: force this web socket to release its threads. */
@@ -508,12 +505,12 @@ class RealWebSocket(
 
   /**
    * Attempts to remove a single frame from a queue and send it. This prefers to write urgent pongs
-   * before less urgent messages and close frames. For example it's possible that a caller will
+   * before less urgent messages and close frames. For example, it's possible that a caller will
    * enqueue messages followed by pongs, but this sends pongs followed by messages. Pongs are always
    * written in the order they were enqueued.
    *
    * If a frame cannot be sent - because there are none enqueued or because the web socket is not
-   * connected - this does nothing and returns false. Otherwise this returns true and the caller
+   * connected - this does nothing and returns false. Otherwise, this returns true and the caller
    * should immediately invoke this method again until it returns false.
    *
    * This method may only be invoked by the writer thread. There may be only thread invoking this
@@ -526,7 +523,7 @@ class RealWebSocket(
     var messageOrClose: Any? = null
     var receivedCloseCode = -1
     var receivedCloseReason: String? = null
-    var streamsToClose: Streams? = null
+    var sendOnClosed = false
     var writerToClose: WebSocketWriter? = null
 
     synchronized(this@RealWebSocket) {
@@ -544,15 +541,11 @@ class RealWebSocket(
           if (receivedCloseCode != -1) {
             writerToClose = this.writer
             this.writer = null
-            streamsToClose =
-              when {
-                writerToClose != null && reader == null -> this.streams
-                else -> null
-              }
+            sendOnClosed = writerToClose != null && reader == null
             this.taskQueue.shutdown()
           } else {
             // When we request a graceful close also schedule a cancel of the web socket.
-            val cancelAfterCloseMillis = (messageOrClose as Close).cancelAfterCloseMillis
+            val cancelAfterCloseMillis = messageOrClose.cancelAfterCloseMillis
             taskQueue.execute("$name cancel", MILLISECONDS.toNanos(cancelAfterCloseMillis)) {
               cancel()
             }
@@ -567,17 +560,17 @@ class RealWebSocket(
       if (pong != null) {
         writer!!.writePong(pong)
       } else if (messageOrClose is Message) {
-        val message = messageOrClose as Message
+        val message = messageOrClose
         writer!!.writeMessageFrame(message.formatOpcode, message.data)
         synchronized(this) {
           queueSize -= message.data.size.toLong()
         }
       } else if (messageOrClose is Close) {
-        val close = messageOrClose as Close
+        val close = messageOrClose
         writer!!.writeClose(close.code, close.reason)
 
         // We closed the writer: now both reader and writer are closed.
-        if (streamsToClose != null) {
+        if (sendOnClosed) {
           listener.onClosed(this, receivedCloseCode, receivedCloseReason!!)
         }
       } else {
@@ -587,7 +580,6 @@ class RealWebSocket(
       return true
     } finally {
       writerToClose?.closeQuietly()
-      streamsToClose?.closeQuietly()
     }
   }
 
@@ -626,29 +618,21 @@ class RealWebSocket(
     response: Response? = null,
     isWriter: Boolean = false,
   ) {
-    val streamsToCancel: Streams?
-    val streamsToClose: Streams?
+    val socketToCancel: Socket?
     val writerToClose: WebSocketWriter?
     synchronized(this) {
       if (failed) return // Already failed.
       failed = true
 
-      streamsToCancel = this.streams
+      socketToCancel = this.socket
 
       writerToClose = this.writer
       this.writer = null
-
-      streamsToClose =
-        when {
-          writerToClose != null && reader == null -> this.streams
-          else -> null
-        }
 
       if (!isWriter && writerToClose != null) {
         // If the caller isn't the writer thread, get that thread to close the writer.
         taskQueue.execute("$name writer close", cancelable = false) {
           writerToClose.closeQuietly()
-          streamsToClose?.closeQuietly()
         }
       }
 
@@ -658,12 +642,11 @@ class RealWebSocket(
     try {
       listener.onFailure(this, e, response)
     } finally {
-      streamsToCancel?.cancel()
+      socketToCancel?.cancel()
 
       // If the caller is the writer thread, close it on this thread.
       if (isWriter) {
         writerToClose?.closeQuietly()
-        streamsToClose?.closeQuietly()
       }
     }
   }
@@ -678,14 +661,6 @@ class RealWebSocket(
     val reason: ByteString?,
     val cancelAfterCloseMillis: Long,
   )
-
-  abstract class Streams(
-    val client: Boolean,
-    val source: BufferedSource,
-    val sink: BufferedSink,
-  ) : Closeable {
-    abstract fun cancel()
-  }
 
   private inner class WriterTask : Task("$name writer") {
     override fun runOnce(): Long {

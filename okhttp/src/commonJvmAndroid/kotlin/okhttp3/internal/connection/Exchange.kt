@@ -17,7 +17,6 @@ package okhttp3.internal.connection
 
 import java.io.IOException
 import java.net.ProtocolException
-import java.net.SocketException
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.Request
@@ -25,7 +24,6 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RealResponseBody
-import okhttp3.internal.ws.RealWebSocket
 import okio.Buffer
 import okio.ForwardingSink
 import okio.ForwardingSource
@@ -143,20 +141,6 @@ class Exchange(
 
   @Throws(IOException::class)
   fun peekTrailers(): Headers? = codec.peekTrailers()
-
-  @Throws(SocketException::class)
-  fun newWebSocketStreams(): RealWebSocket.Streams {
-    call.timeoutEarlyExit()
-    return (codec.carrier as RealConnection).newWebSocketStreams(this)
-  }
-
-  fun webSocketUpgradeFailed() {
-    bodyComplete(
-      responseDone = true,
-      requestDone = true,
-      e = null,
-    )
-  }
 
   fun upgradeToSocket(): Socket {
     call.timeoutEarlyExit()

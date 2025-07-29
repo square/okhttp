@@ -819,17 +819,6 @@ public class MockWebServer : Closeable {
         .protocol(Protocol.HTTP_1_1)
         .build()
 
-    val streams =
-      object : RealWebSocket.Streams(false, socket.source, socket.sink) {
-        override fun close() {
-          socket.source.closeQuietly()
-          socket.sink.closeQuietly()
-        }
-
-        override fun cancel() {
-          socket.cancel()
-        }
-      }
     val webSocket =
       RealWebSocket(
         taskRunner = taskRunner,
@@ -843,7 +832,15 @@ public class MockWebServer : Closeable {
         webSocketCloseTimeout = RealWebSocket.CANCEL_AFTER_CLOSE_MILLIS,
       )
     val name = "MockWebServer WebSocket ${request.url.encodedPath}"
-    webSocket.initReaderAndWriter(name, streams)
+
+    webSocket.initReaderAndWriter(
+      name = name,
+      socket = socket,
+      socketSource = socket.source,
+      socketSink = socket.sink,
+      client = false,
+    )
+
     try {
       webSocket.loopReader(fancyResponse)
 
