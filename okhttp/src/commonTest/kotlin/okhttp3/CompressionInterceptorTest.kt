@@ -18,59 +18,85 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
-import assertk.assertions.isSameInstanceAs
 import okhttp3.CompressionInterceptor.Companion.Gzip
-import okhttp3.CompressionInterceptor.Companion.Identity
-import okhttp3.CompressionInterceptor.Companion.Wildcard
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.ResponseBody.Companion.asResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
+import okio.GzipSink
 import okio.Source
+import okio.buffer
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 class CompressionInterceptorTest {
+  @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
+
   val source =
     Buffer().apply {
       write("Hello World".encodeUtf8())
     } as Source
 
   @Test
-  fun emptyDefaultsToIdentity() {
+  fun emptyDoesntChangeRequestOrResponse() {
     val empty = CompressionInterceptor()
+    val client =
+      clientTestRule
+        .newClientBuilder()
+        .addInterceptor(empty)
+        .addInterceptor { chain ->
+          assertThat(chain.request().header("Accept-Encoding")).isNull()
+          Response
+            .Builder()
+            .request(chain.request())
+            .protocol(Protocol.HTTP_1_1)
+            .code(200)
+            .message("OK")
+            .body("Hello".toResponseBody())
+            .header("Content-Encoding", "piedpiper")
+            .build()
+        }.build()
 
-    assertThat(empty.acceptEncoding).isEqualTo("identity")
+    val response = client.newCall(Request("https://google.com/robots.txt".toHttpUrl())).execute()
+
+    assertThat(response.header("Content-Encoding")).isEqualTo("piedpiper")
+    assertThat(response.body.string()).isEqualTo("Hello")
   }
 
   @Test
-  fun identityIsIdentity() {
-    val identity = CompressionInterceptor(Identity)
-
-    assertThat(identity.acceptEncoding).isEqualTo("identity")
-    assertThat(identity.lookupDecompressor("gzip")).isNull()
-    assertThat(identity.lookupDecompressor("identity")).isNull()
-  }
-
-  @Test
-  fun wildcardDoesNotDecompress() {
-    val identity = CompressionInterceptor(Wildcard)
-
-    assertThat(identity.acceptEncoding).isEqualTo("*")
-    assertThat(identity.lookupDecompressor("gzip")).isNull()
-    assertThat(identity.lookupDecompressor("identity")).isNull()
-  }
-
-  @Test
-  fun gzipIsSupported() {
+  fun gzipThroughCall() {
     val gzip = CompressionInterceptor(Gzip)
+    val client =
+      clientTestRule
+        .newClientBuilder()
+        .addInterceptor(gzip)
+        .addInterceptor { chain ->
+          assertThat(chain.request().header("Accept-Encoding")).isEqualTo("gzip")
 
-    assertThat(gzip.acceptEncoding).isEqualTo("gzip")
-    assertThat(gzip.lookupDecompressor("gzip")).isSameInstanceAs(Gzip)
-    assertThat(gzip.lookupDecompressor("br")).isNull()
+          Response
+            .Builder()
+            .request(chain.request())
+            .protocol(Protocol.HTTP_1_1)
+            .code(200)
+            .message("OK")
+            .body(gzip("Hello").asResponseBody())
+            .header("Content-Encoding", "gzip")
+            .build()
+        }.build()
+
+    val response = client.newCall(Request("https://google.com/robots.txt".toHttpUrl())).execute()
+
+    assertThat(response.header("Content-Encoding")).isNull()
+    assertThat(response.body.string()).isEqualTo("Hello")
   }
 
-  @Test
-  fun prioritiesAreSupported() {
-    val complex = CompressionInterceptor(linkedMapOf(Gzip to 1.0, Identity to null, Wildcard to 0.3))
-
-    assertThat(complex.acceptEncoding).isEqualTo("gzip;q=1.0, identity, *;q=0.3")
+  private fun gzip(data: String): Buffer {
+    val result = Buffer()
+    val sink = GzipSink(result).buffer()
+    sink.writeUtf8(data)
+    sink.close()
+    return result
   }
 }

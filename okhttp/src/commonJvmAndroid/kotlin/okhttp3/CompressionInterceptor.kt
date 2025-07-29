@@ -25,41 +25,24 @@ import okio.buffer
 /**
  * Transparent Compressed response support.
  *
- * The algorithm map will be turned into a heading such as "Accept-Encoding: br;q=1.0, gzip;q=0.8, *;q=0.1"
+ * The algorithm map will be turned into a heading such as "Accept-Encoding: br, gzip"
  *
- * If [algorithms] is empty returns "identity" disabling any later compression.
+ * If [algorithms] is empty this interceptor has no effect. To disable compression set
+ * a specific "Accept-Encoding: identity" or similar.
  *
  * See https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Accept-Encoding
  */
 open class CompressionInterceptor(
-  val algorithms: Map<DecompressionAlgorithm, Double?>,
+  vararg val algorithms: DecompressionAlgorithm,
 ) : Interceptor {
-  constructor(
-    vararg algorithms: DecompressionAlgorithm,
-  ) : this(
-    algorithms.associateWithTo(LinkedHashMap()) {
-      null
-    },
-  )
-
   internal val acceptEncoding =
-    if (algorithms.isEmpty()) {
-      "identity"
-    } else {
-      algorithms
-        .map { (algorithm, priority) ->
-          if (priority != null) {
-            "${algorithm.encoding};q=$priority"
-          } else {
-            algorithm.encoding
-          }
-        }.joinToString(separator = ", ")
-    }
-
-  private val algorithmIndex = algorithms.keys.toTypedArray()
+    algorithms
+      .map {
+        it.encoding
+      }.joinToString(separator = ", ")
 
   override fun intercept(chain: Interceptor.Chain): Response =
-    if (chain.request().header("Accept-Encoding") == null) {
+    if (algorithms.isNotEmpty() && chain.request().header("Accept-Encoding") == null) {
       val request =
         chain
           .request()
@@ -97,15 +80,10 @@ open class CompressionInterceptor(
       .build()
   }
 
-  internal fun lookupDecompressor(encoding: String): DecompressionAlgorithm? {
-    val algorithm = algorithmIndex.find { it.encoding.equals(encoding, ignoreCase = true) } ?: return null
-
-    if (algorithm == Wildcard || algorithm == Identity) {
-      return null
+  internal fun lookupDecompressor(encoding: String): DecompressionAlgorithm? =
+    algorithms.find {
+      it.encoding.equals(encoding, ignoreCase = true)
     }
-
-    return algorithm
-  }
 
   /**
    * A decompression algorithm such as Gzip. Must provide the Accept-Encoding value and decompress a Source.
@@ -125,26 +103,6 @@ open class CompressionInterceptor(
         override val encoding: String = "gzip"
 
         override fun decompress(compressedSource: BufferedSource): Source = GzipSource(compressedSource)
-      }
-
-    /**
-     * Request the response body to be uncompressed.
-     */
-    val Identity =
-      object : DecompressionAlgorithm {
-        override val encoding: String = "identity"
-
-        override fun decompress(compressedSource: BufferedSource): Source = compressedSource
-      }
-
-    /**
-     * Declare support for any compression encoding scheme. However the response will not be decompressed.
-     */
-    val Wildcard =
-      object : DecompressionAlgorithm {
-        override val encoding: String = "*"
-
-        override fun decompress(compressedSource: BufferedSource): Source = compressedSource
       }
   }
 }
