@@ -836,8 +836,6 @@ public class MockWebServer : Closeable {
     webSocket.initReaderAndWriter(
       name = name,
       socket = socket,
-      socketSource = socket.source,
-      socketSink = socket.sink,
       client = false,
     )
 

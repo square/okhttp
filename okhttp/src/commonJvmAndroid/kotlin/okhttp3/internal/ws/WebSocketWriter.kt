@@ -204,7 +204,7 @@ class WebSocketWriter(
     }
 
     sinkBuffer.write(messageBuffer, dataSize)
-    sink.emit()
+    sink.flush()
   }
 
   override fun close() {

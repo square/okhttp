@@ -36,7 +36,9 @@ import okhttp3.internal.concurrent.Lockable
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.concurrent.assertLockHeld
+import okhttp3.internal.connection.BufferedSocket
 import okhttp3.internal.connection.RealCall
+import okhttp3.internal.connection.asBufferedSocket
 import okhttp3.internal.okHttpName
 import okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY
 import okhttp3.internal.ws.WebSocketProtocol.CLOSE_MESSAGE_MAX
@@ -49,7 +51,6 @@ import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
 import okio.Socket
-import okio.buffer
 
 class RealWebSocket(
   taskRunner: TaskRunner,
@@ -197,9 +198,7 @@ class RealWebSocket(
           val name = "$okHttpName WebSocket ${request.url.redact()}"
           initReaderAndWriter(
             name = name,
-            socket = socket,
-            socketSource = socket.source.buffer(),
-            socketSink = socket.sink.buffer(),
+            socket = socket.asBufferedSocket(),
             client = true,
           )
           loopReader(response)
@@ -269,9 +268,7 @@ class RealWebSocket(
    */
   fun initReaderAndWriter(
     name: String,
-    socket: Socket,
-    socketSource: BufferedSource,
-    socketSink: BufferedSink,
+    socket: BufferedSocket,
     client: Boolean,
   ) {
     val extensions = this.extensions!!
@@ -281,7 +278,7 @@ class RealWebSocket(
       this.writer =
         WebSocketWriter(
           isClient = client,
-          sink = socketSink,
+          sink = socket.sink,
           random = random,
           perMessageDeflate = extensions.perMessageDeflate,
           noContextTakeover = extensions.noContextTakeover(client),
@@ -303,7 +300,7 @@ class RealWebSocket(
     reader =
       WebSocketReader(
         isClient = client,
-        source = socketSource,
+        source = socket.source,
         frameCallback = this,
         perMessageDeflate = extensions.perMessageDeflate,
         noContextTakeover = extensions.noContextTakeover(!client),
