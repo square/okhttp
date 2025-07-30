@@ -23,6 +23,7 @@ import java.util.concurrent.CountDownLatch
 import javax.net.ssl.SSLSocket
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
+import okhttp3.internal.connection.BufferedSocket
 import okhttp3.internal.platform.Platform
 import okio.BufferedSink
 import okio.BufferedSource
@@ -40,7 +41,7 @@ import okio.buffer
 internal class MockWebServerSocket(
   val javaNetSocket: Socket,
 ) : Closeable,
-  okio.Socket {
+  BufferedSocket {
   private val delegate = javaNetSocket.asOkioSocket()
   private val closedLatch = CountDownLatch(2)
 
