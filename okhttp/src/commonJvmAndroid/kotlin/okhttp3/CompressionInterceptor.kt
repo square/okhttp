@@ -101,7 +101,7 @@ open class CompressionInterceptor(
     @JvmField
     public val Gzip =
       object : DecompressionAlgorithm {
-        override val encoding: String = "gzip"
+        override val encoding: String get() = "gzip"
 
         override fun decompress(compressedSource: BufferedSource): Source = GzipSource(compressedSource)
       }
