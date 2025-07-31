@@ -16,6 +16,7 @@
 package okhttp3.brotli
 
 import okhttp3.CompressionInterceptor
+import okhttp3.Gzip
 import okio.BufferedSource
 import okio.Source
 import okio.source
@@ -29,9 +30,8 @@ import org.brotli.dec.BrotliInputStream
  */
 object BrotliInterceptor : CompressionInterceptor(Brotli, Gzip)
 
-val Brotli =
-  object : CompressionInterceptor.DecompressionAlgorithm {
-    override val encoding: String = "br"
+object Brotli : CompressionInterceptor.DecompressionAlgorithm {
+  override val encoding: String = "br"
 
-    override fun decompress(compressedSource: BufferedSource): Source = BrotliInputStream(compressedSource.inputStream()).source()
-  }
+  override fun decompress(compressedSource: BufferedSource): Source = BrotliInputStream(compressedSource.inputStream()).source()
+}

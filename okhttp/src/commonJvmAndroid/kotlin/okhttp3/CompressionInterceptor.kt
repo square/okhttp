@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.CompressionInterceptor.DecompressionAlgorithm
 import okhttp3.ResponseBody.Companion.asResponseBody
 import okhttp3.internal.http.promisesBody
 import okio.BufferedSource
@@ -93,16 +94,13 @@ open class CompressionInterceptor(
 
     fun decompress(compressedSource: BufferedSource): Source
   }
+}
 
-  companion object {
-    /**
-     * Request "gzip" compression.
-     */
-    val Gzip =
-      object : DecompressionAlgorithm {
-        override val encoding: String = "gzip"
+/**
+ * Request "gzip" compression.
+ */
+object Gzip : DecompressionAlgorithm {
+  override val encoding: String = "gzip"
 
-        override fun decompress(compressedSource: BufferedSource): Source = GzipSource(compressedSource)
-      }
-  }
+  override fun decompress(compressedSource: BufferedSource): Source = GzipSource(compressedSource)
 }
