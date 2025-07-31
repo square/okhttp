@@ -24,7 +24,7 @@ testcontainers = "1.21.3"
 amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.5.0"
 androidx-activity = "androidx.activity:activity-ktx:1.10.1"
 androidx-annotation = "androidx.annotation:annotation:1.9.1"
-androidx-espresso-core = "androidx.test.espresso:espresso-core:3.6.1"
+androidx-espresso-core = "androidx.test.espresso:espresso-core:3.7.0"
 androidx-junit = "androidx.test.ext:junit:1.2.1"
 androidx-lint-gradle = { module = "androidx.lint:lint-gradle", version.ref = "lintGradle" }
 androidx-startup-runtime = { module = "androidx.startup:startup-runtime", version.ref = "startupRuntime" }
