@@ -30,7 +30,7 @@ import org.brotli.dec.BrotliInputStream
 object BrotliInterceptor : CompressionInterceptor(Brotli, Gzip)
 
 object Brotli : CompressionInterceptor.DecompressionAlgorithm {
-  override val encoding: String = "br"
+  override val encoding: String get() = "br"
 
   override fun decompress(compressedSource: BufferedSource): Source = BrotliInputStream(compressedSource.inputStream()).source()
 }
