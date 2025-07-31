@@ -15,13 +15,12 @@
  */
 package okhttp3.internal.publicsuffix
 
-import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import okhttp3.internal.platform.PlatformRegistry
+import org.robolectric.RobolectricTestRunner
 
-actual typealias PublicSuffixTestRunner = AndroidJUnit4
+actual typealias PublicSuffixTestRunner = RobolectricTestRunner
 
 actual fun beforePublicSuffixTest() {
-  PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext<Context>()
+  PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext()
 }
