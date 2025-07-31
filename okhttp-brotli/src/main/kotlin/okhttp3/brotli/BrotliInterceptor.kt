@@ -16,7 +16,6 @@
 package okhttp3.brotli
 
 import okhttp3.CompressionInterceptor
-import okhttp3.Gzip
 import okio.BufferedSource
 import okio.Source
 import okio.source
