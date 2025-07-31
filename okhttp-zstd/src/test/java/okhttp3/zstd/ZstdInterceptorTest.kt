@@ -24,6 +24,7 @@ import com.squareup.zstd.okio.zstdCompress
 import java.io.IOException
 import kotlin.test.assertFailsWith
 import okhttp3.CompressionInterceptor
+import okhttp3.CompressionInterceptor.Companion.Gzip
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
 import okhttp3.Request
@@ -39,7 +40,7 @@ import okio.gzip
 import org.junit.jupiter.api.Test
 
 class ZstdInterceptorTest {
-  val zstdInterceptor = CompressionInterceptor(Zstd, CompressionInterceptor.Gzip)
+  val zstdInterceptor = CompressionInterceptor(Zstd, Gzip)
 
   @Test
   fun testDecompressZstd() {

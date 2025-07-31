@@ -29,9 +29,8 @@ import org.brotli.dec.BrotliInputStream
  */
 object BrotliInterceptor : CompressionInterceptor(Brotli, Gzip)
 
-val Brotli =
-  object : CompressionInterceptor.DecompressionAlgorithm {
-    override val encoding: String = "br"
+object Brotli : CompressionInterceptor.DecompressionAlgorithm {
+  override val encoding: String get() = "br"
 
-    override fun decompress(compressedSource: BufferedSource): Source = BrotliInputStream(compressedSource.inputStream()).source()
-  }
+  override fun decompress(compressedSource: BufferedSource): Source = BrotliInputStream(compressedSource.inputStream()).source()
+}
