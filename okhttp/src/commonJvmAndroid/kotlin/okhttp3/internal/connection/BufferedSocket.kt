@@ -18,7 +18,6 @@ package okhttp3.internal.connection
 import java.net.Socket as JavaNetSocket
 import okio.BufferedSink
 import okio.BufferedSource
-import okio.Socket
 import okio.Socket as OkioSocket
 import okio.asOkioSocket
 import okio.buffer
@@ -30,7 +29,7 @@ interface BufferedSocket : OkioSocket {
 
 fun JavaNetSocket.asBufferedSocket(): BufferedSocket = asOkioSocket().asBufferedSocket()
 
-fun Socket.asBufferedSocket(): BufferedSocket =
+fun OkioSocket.asBufferedSocket(): BufferedSocket =
   object : BufferedSocket {
     private val delegate = this@asBufferedSocket
     override val source = delegate.source.buffer()
