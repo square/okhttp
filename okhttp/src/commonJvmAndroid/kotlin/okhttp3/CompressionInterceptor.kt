@@ -94,11 +94,10 @@ open class CompressionInterceptor(
 
     fun decompress(compressedSource: BufferedSource): Source
   }
-
 }
 
 object Gzip : DecompressionAlgorithm {
-    override val encoding: String get() = "gzip"
+  override val encoding: String get() = "gzip"
 
-    override fun decompress(compressedSource: BufferedSource): Source = GzipSource(compressedSource)
-  }
+  override fun decompress(compressedSource: BufferedSource): Source = GzipSource(compressedSource)
+}
