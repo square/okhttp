@@ -516,7 +516,7 @@ public class MockWebServer : Closeable {
         val connection =
           Http2Connection
             .Builder(false, taskRunner)
-            .socket(socket.javaNetSocket)
+            .socket(socket, socket.javaNetSocket.remoteSocketAddress.toString())
             .listener(http2SocketHandler)
             .build()
         connection.start()
@@ -836,8 +836,6 @@ public class MockWebServer : Closeable {
     webSocket.initReaderAndWriter(
       name = name,
       socket = socket,
-      socketSource = socket.source,
-      socketSink = socket.sink,
       client = false,
     )
 

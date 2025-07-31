@@ -316,7 +316,7 @@ class ConnectionPoolTest {
     val connection =
       Http2Connection
         .Builder(true, TaskRunner.INSTANCE)
-        .socket(peer.openSocket())
+        .socket(peer.openSocket().asBufferedSocket(), "peer")
         .pushObserver(Http2ConnectionTest.IGNORE)
         .listener(realConnection)
         .build()

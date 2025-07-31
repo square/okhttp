@@ -42,11 +42,6 @@ import okhttp3.internal.http1.Http1ExchangeCodec
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.toHostHeader
-import okio.BufferedSink
-import okio.BufferedSource
-import okio.Socket as OkioSocket
-import okio.asOkioSocket
-import okio.buffer
 
 /**
  * A single attempt to connect to a remote server, including these steps:
@@ -94,9 +89,7 @@ class ConnectPlan(
   internal var javaNetSocket: JavaNetSocket? = null
   private var handshake: Handshake? = null
   private var protocol: Protocol? = null
-  private lateinit var okioSocket: OkioSocket
-  private lateinit var source: BufferedSource
-  private lateinit var sink: BufferedSink
+  private lateinit var socket: BufferedSocket
   private var connection: RealConnection? = null
 
   /** True if this connection is ready for use, including TCP, tunnels, and TLS. */
@@ -185,7 +178,7 @@ class ConnectPlan(
         // that happens, then we will have buffered bytes that are needed by the SSLSocket!
         // This check is imperfect: it doesn't tell us whether a handshake will succeed, just
         // that it will almost certainly fail because the proxy has sent unexpected data.
-        if (!source.buffer.exhausted() || !sink.buffer.exhausted()) {
+        if (!socket.source.buffer.exhausted() || !socket.sink.buffer.exhausted()) {
           throw IOException("TLS tunnel buffered too many bytes!")
         }
 
@@ -225,12 +218,10 @@ class ConnectPlan(
           connectionPool = connectionPool,
           route = route,
           rawSocket = rawSocket,
-          socket = javaNetSocket!!,
+          javaNetSocket = javaNetSocket!!,
           handshake = handshake,
           protocol = protocol!!,
-          okioSocket = okioSocket,
-          source = source,
-          sink = sink,
+          socket = socket,
           pingIntervalMillis = pingIntervalMillis,
           connectionListener = connectionPool.connectionListener,
         )
@@ -291,9 +282,7 @@ class ConnectPlan(
     // https://github.com/square/okhttp/issues/3245
     // https://android-review.googlesource.com/#/c/271775/
     try {
-      okioSocket = rawSocket.asOkioSocket()
-      source = okioSocket.source.buffer()
-      sink = okioSocket.sink.buffer()
+      this.socket = rawSocket.asBufferedSocket()
     } catch (npe: NullPointerException) {
       if (npe.message == NPE_THROW_WITH_NULL) {
         throw IOException(npe)
@@ -408,9 +397,7 @@ class ConnectPlan(
           null
         }
       javaNetSocket = sslSocket
-      okioSocket = sslSocket.asOkioSocket()
-      source = okioSocket.source.buffer()
-      sink = okioSocket.sink.buffer()
+      socket = sslSocket.asBufferedSocket()
       protocol = if (maybeProtocol != null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1
       success = true
     } finally {
@@ -437,12 +424,10 @@ class ConnectPlan(
           // No client for CONNECT tunnels:
           client = null,
           carrier = this,
-          socket = okioSocket,
-          source = source,
-          sink = sink,
+          socket = socket,
         )
-      source.timeout().timeout(readTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
-      sink.timeout().timeout(writeTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
+      socket.source.timeout().timeout(readTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
+      socket.sink.timeout().timeout(writeTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
       tunnelCodec.writeRequest(nextRequest.headers, requestLine)
       tunnelCodec.finishRequest()
       val response =
