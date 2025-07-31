@@ -24,7 +24,7 @@ import okio.Source
  * Support for Zstandard encoding. Use via the [CompressionInterceptor].
  */
 object Zstd : CompressionInterceptor.DecompressionAlgorithm {
-  override val encoding: String = "zstd"
+  override val encoding: String get() = "zstd"
 
   override fun decompress(compressedSource: BufferedSource): Source = compressedSource.zstdDecompress()
 }
