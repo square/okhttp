@@ -18,7 +18,6 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
-import okhttp3.CompressionInterceptor.Companion.Gzip
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.ResponseBody.Companion.asResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody

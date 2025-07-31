@@ -23,7 +23,7 @@ import assertk.assertions.isEqualTo
 import java.io.IOException
 import kotlin.test.assertFailsWith
 import okhttp3.CompressionInterceptor
-import okhttp3.CompressionInterceptor.Companion.Gzip
+import okhttp3.Gzip
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
 import okhttp3.Request

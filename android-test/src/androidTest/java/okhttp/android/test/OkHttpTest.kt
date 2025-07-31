@@ -49,11 +49,11 @@ import okhttp3.Cache
 import okhttp3.Call
 import okhttp3.CertificatePinner
 import okhttp3.CompressionInterceptor
-import okhttp3.CompressionInterceptor.Companion.Gzip
 import okhttp3.Connection
 import okhttp3.DelegatingSSLSocket
 import okhttp3.DelegatingSSLSocketFactory
 import okhttp3.EventListener
+import okhttp3.Gzip
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient

@@ -16,6 +16,7 @@
 package okhttp3.zstd;
 
 import okhttp3.CompressionInterceptor;
+import okhttp3.Gzip;
 import okhttp3.brotli.Brotli;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +25,7 @@ class ZstdInterceptorJavaTest {
   public void testConstructor() {
     CompressionInterceptor interceptor = new CompressionInterceptor(
       Zstd.INSTANCE,
-      CompressionInterceptor.Gzip,
+      Gzip.INSTANCE,
       Brotli.INSTANCE
     );
   }
