@@ -35,6 +35,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.TestUtil.repeat
 import okhttp3.internal.concurrent.TaskFaker
+import okhttp3.internal.connection.BufferedSocket
 import okhttp3.internal.ws.WebSocketExtensions.Companion.parse
 import okio.BufferedSink
 import okio.BufferedSource
@@ -466,7 +467,7 @@ class RealWebSocketTest {
     private val taskFaker: TaskFaker,
     private val delegate: Socket,
     private val client: Boolean,
-  ) : Socket {
+  ) : BufferedSocket {
     private val name = if (client) "client" else "server"
     val listener = WebSocketRecorder(name)
     var webSocket: RealWebSocket? = null
@@ -530,7 +531,7 @@ class RealWebSocketTest {
               }
           }
         }
-      webSocket!!.initReaderAndWriter(name, this, source, sink, client)
+      webSocket!!.initReaderAndWriter(name, this, client)
     }
 
     /**

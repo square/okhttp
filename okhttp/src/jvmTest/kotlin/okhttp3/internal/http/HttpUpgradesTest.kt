@@ -82,12 +82,12 @@ class HttpUpgradesTest {
         socket.sink.buffer().use { sink ->
           socket.source.buffer().use { source ->
             sink.writeUtf8("client says hello\n")
-            sink.emit()
+            sink.flush()
 
             assertThat(source.readUtf8Line()).isEqualTo("server says hello")
 
             sink.writeUtf8("client says goodbye\n")
-            sink.emit()
+            sink.flush()
 
             assertThat(source.readUtf8Line()).isEqualTo("server says goodbye")
 

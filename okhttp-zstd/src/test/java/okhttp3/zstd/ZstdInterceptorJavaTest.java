@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Square, Inc.
+ * Copyright (c) 2025 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.zstd
+package okhttp3.zstd;
 
-import com.squareup.zstd.okio.zstdDecompress
-import okhttp3.CompressionInterceptor
-import okio.BufferedSource
-import okio.Source
+import okhttp3.CompressionInterceptor;
+import okhttp3.Gzip;
+import okhttp3.brotli.Brotli;
+import org.junit.jupiter.api.Test;
 
-/**
- * Support for Zstandard encoding. Use via the [CompressionInterceptor].
- */
-val Zstd =
-  object : CompressionInterceptor.DecompressionAlgorithm {
-    override val encoding: String = "zstd"
-
-    override fun decompress(compressedSource: BufferedSource): Source = compressedSource.zstdDecompress()
+class ZstdInterceptorJavaTest {
+  @Test
+  public void testConstructor() {
+    CompressionInterceptor interceptor = new CompressionInterceptor(
+      Zstd.INSTANCE,
+      Gzip.INSTANCE,
+      Brotli.INSTANCE
+    );
   }
+}

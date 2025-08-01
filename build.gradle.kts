@@ -99,7 +99,9 @@ subprojects {
   // These are applied inside the okhttp module for that case specifically
   if (project.name != "okhttp") {
     apply(plugin = "biz.aQute.bnd.builder")
-    apply(plugin = "io.github.usefulness.maven-sympathy")
+    if (project.name != "okhttp-testing-support") {
+      apply(plugin = "io.github.usefulness.maven-sympathy")
+    }
   }
 
   // Skip samples parent
