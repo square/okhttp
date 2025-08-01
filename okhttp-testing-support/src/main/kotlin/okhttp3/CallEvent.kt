@@ -233,6 +233,19 @@ sealed class CallEvent {
     override fun closes(event: CallEvent): Boolean = event is ResponseBodyStart && call == event.call
   }
 
+  data class SocketSourceStart(
+    override val timestampNs: Long,
+    override val call: Call,
+  ) : CallEvent()
+
+  data class SocketSourceEnd(
+    override val timestampNs: Long,
+    override val call: Call,
+    val bytesWritten: Long,
+  ) : CallEvent() {
+    override fun closes(event: CallEvent): Boolean = event is SocketSourceStart && call == event.call
+  }
+
   data class ResponseFailed(
     override val timestampNs: Long,
     override val call: Call,
