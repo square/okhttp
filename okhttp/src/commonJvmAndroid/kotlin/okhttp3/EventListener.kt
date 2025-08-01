@@ -376,6 +376,21 @@ abstract class EventListener {
   }
 
   /**
+   * TODO docs
+   */
+  open fun socketSourceStart(call: Call) {
+  }
+
+  /**
+   * TODO docs
+   */
+  open fun socketSourceEnd(
+    call: Call,
+    byteCount: Long,
+  ) {
+  }
+
+  /**
    * Invoked when a response fails to be read.
    *
    * Note that response failures do not necessarily fail the entire call.

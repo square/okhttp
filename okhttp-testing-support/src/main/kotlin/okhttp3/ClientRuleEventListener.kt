@@ -226,6 +226,21 @@ class ClientRuleEventListener(
     delegate.responseBodyEnd(call, byteCount)
   }
 
+  override fun socketSourceStart(call: Call) {
+    logWithTime("socketSourceStart")
+
+    delegate.socketSourceStart(call)
+  }
+
+  override fun socketSourceEnd(
+    call: Call,
+    byteCount: Long,
+  ) {
+    logWithTime("socketSourceEnd: byteCount=$byteCount")
+
+    delegate.socketSourceEnd(call, byteCount)
+  }
+
   override fun responseFailed(
     call: Call,
     ioe: IOException,
