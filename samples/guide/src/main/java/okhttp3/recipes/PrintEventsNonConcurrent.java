@@ -168,6 +168,14 @@ public final class PrintEventsNonConcurrent {
       printEvent("responseBodyEnd");
     }
 
+    @Override public void socketSourceStart(Call call) {
+      printEvent("socketSourceStart");
+    }
+
+    @Override public void socketSourceEnd(Call call, long byteCount) {
+      printEvent("socketSourceEnd");
+    }
+
     @Override public void responseFailed(Call call, IOException ioe) {
       printEvent("responseFailed");
     }
