@@ -17,6 +17,7 @@ package mockwebserver3.internal.http2
 
 import java.io.File
 import java.io.IOException
+import java.net.InetSocketAddress
 import java.net.ProtocolException
 import java.net.ServerSocket
 import java.net.Socket
@@ -28,6 +29,7 @@ import okhttp3.Protocol
 import okhttp3.Protocol.Companion.get
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.asBufferedSocket
 import okhttp3.internal.http2.Header
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2Stream
@@ -57,7 +59,7 @@ class Http2Server(
         val connection =
           Http2Connection
             .Builder(false, TaskRunner.INSTANCE)
-            .socket(sslSocket)
+            .socket(sslSocket.asBufferedSocket(), sslSocket.peerName())
             .listener(this)
             .build()
         connection.start()
@@ -191,6 +193,11 @@ class Http2Server(
       file.name.endsWith(".png") -> "image/png"
       else -> "text/plain"
     }
+
+  private fun Socket.peerName(): String {
+    val address = remoteSocketAddress
+    return if (address is InetSocketAddress) address.hostName else address.toString()
+  }
 
   companion object {
     val logger: Logger = Logger.getLogger(Http2Server::class.java.name)

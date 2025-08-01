@@ -18,7 +18,6 @@ package okhttp3.internal.http2
 import java.io.Closeable
 import java.io.IOException
 import java.io.InterruptedIOException
-import java.net.Socket
 import java.util.concurrent.TimeUnit
 import okhttp3.Headers
 import okhttp3.internal.EMPTY_BYTE_ARRAY
@@ -29,22 +28,18 @@ import okhttp3.internal.concurrent.assertLockNotHeld
 import okhttp3.internal.concurrent.notifyAll
 import okhttp3.internal.concurrent.wait
 import okhttp3.internal.concurrent.withLock
+import okhttp3.internal.connection.BufferedSocket
 import okhttp3.internal.http2.ErrorCode.REFUSED_STREAM
 import okhttp3.internal.http2.Settings.Companion.DEFAULT_INITIAL_WINDOW_SIZE
 import okhttp3.internal.http2.flowcontrol.WindowCounter
 import okhttp3.internal.ignoreIoExceptions
 import okhttp3.internal.okHttpName
-import okhttp3.internal.peerName
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
 import okhttp3.internal.toHeaders
 import okio.Buffer
-import okio.BufferedSink
 import okio.BufferedSource
 import okio.ByteString
-import okio.buffer
-import okio.sink
-import okio.source
 
 /**
  * A socket connection to a remote peer. A connection hosts streams which can send and receive
@@ -140,11 +135,11 @@ class Http2Connection internal constructor(
   var writeBytesMaximum: Long = peerSettings.initialWindowSize.toLong()
     private set
 
-  internal val socket: Socket = builder.socket
-  val writer = Http2Writer(builder.sink, client)
+  internal val socket: BufferedSocket = builder.socket
+  val writer = Http2Writer(socket.sink, client)
 
   // Visible for testing
-  val readerRunnable = ReaderRunnable(Http2Reader(builder.source, client))
+  val readerRunnable = ReaderRunnable(Http2Reader(socket.source, client))
 
   // Guarded by this.
   private val currentPushRequests = mutableSetOf<Int>()
@@ -479,9 +474,9 @@ class Http2Connection internal constructor(
       writer.close()
     }
 
-    // Close the socket to break out the reader thread, which will clean up after itself.
+    // Cancel the socket to break out the reader thread, which will clean up after itself.
     ignoreIoExceptions {
-      socket.close()
+      socket.cancel()
     }
 
     // Release the threads.
@@ -574,22 +569,17 @@ class Http2Connection internal constructor(
     internal var client: Boolean,
     internal val taskRunner: TaskRunner,
   ) {
-    internal lateinit var socket: Socket
+    internal lateinit var socket: BufferedSocket
     internal lateinit var connectionName: String
-    internal lateinit var source: BufferedSource
-    internal lateinit var sink: BufferedSink
     internal var listener = Listener.REFUSE_INCOMING_STREAMS
     internal var pushObserver = PushObserver.CANCEL
     internal var pingIntervalMillis: Int = 0
     internal var flowControlListener: FlowControlListener = FlowControlListener.None
 
     @Throws(IOException::class)
-    @JvmOverloads
     fun socket(
-      socket: Socket,
-      peerName: String = socket.peerName(),
-      source: BufferedSource = socket.source().buffer(),
-      sink: BufferedSink = socket.sink().buffer(),
+      socket: BufferedSocket,
+      peerName: String,
     ) = apply {
       this.socket = socket
       this.connectionName =
@@ -597,8 +587,6 @@ class Http2Connection internal constructor(
           client -> "$okHttpName $peerName"
           else -> "MockWebServer $peerName"
         }
-      this.source = source
-      this.sink = sink
     }
 
     fun listener(listener: Listener) =
@@ -800,7 +788,7 @@ class Http2Connection internal constructor(
         }
       }
       if (streamsToNotify != null) {
-        for (stream in streamsToNotify!!) {
+        for (stream in streamsToNotify) {
           stream.withLock {
             stream.addBytesToWriteWindow(delta)
           }

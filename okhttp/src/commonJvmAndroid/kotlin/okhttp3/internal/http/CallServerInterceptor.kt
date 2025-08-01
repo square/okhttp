@@ -21,16 +21,13 @@ import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.TrailersSource
-import okhttp3.internal.connection.Exchange
+import okhttp3.internal.UnreadableResponseBody
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.skipAll
-import okhttp3.internal.stripBody
 import okio.buffer
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
-class CallServerInterceptor(
-  private val forWebSocket: Boolean,
-) : Interceptor {
+object CallServerInterceptor : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
     val realChain = chain as RealInterceptorChain
@@ -42,10 +39,14 @@ class CallServerInterceptor(
     var invokeStartEvent = true
     var responseBuilder: Response.Builder? = null
     var sendRequestException: IOException? = null
+    val hasRequestBody = HttpMethod.permitsRequestBody(request.method) && requestBody != null
+    val isUpgradeRequest =
+      !hasRequestBody &&
+        "upgrade".equals(request.header("Connection"), ignoreCase = true)
     try {
       exchange.writeRequestHeaders(request)
 
-      if (HttpMethod.permitsRequestBody(request.method) && requestBody != null) {
+      if (hasRequestBody) {
         // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
         // Continue" response before transmitting the request body. If we don't get that, return
         // what we did get (such as a 4xx response) without ever transmitting the request body.
@@ -76,7 +77,7 @@ class CallServerInterceptor(
             exchange.noNewExchangesOnConnection()
           }
         }
-      } else {
+      } else if (!isUpgradeRequest) {
         exchange.noRequestBody()
       }
 
@@ -110,7 +111,7 @@ class CallServerInterceptor(
           .build()
       var code = response.code
 
-      while (shouldIgnoreAndWaitForRealResponse(code, exchange)) {
+      while (shouldIgnoreAndWaitForRealResponse(code)) {
         responseBuilder = exchange.readResponseHeaders(expectContinue = false)!!
         if (invokeStartEvent) {
           exchange.responseHeadersStart()
@@ -127,28 +128,53 @@ class CallServerInterceptor(
 
       exchange.responseHeadersEnd(response)
 
-      response =
-        if (forWebSocket && code == 101) {
-          // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
-          response.stripBody()
-        } else {
-          val responseBody = exchange.openResponseBody(response)
-          response
-            .newBuilder()
-            .body(responseBody)
-            .trailers(
-              object : TrailersSource {
-                override fun peek() = exchange.peekTrailers()
+      val isUpgradeCode = code == HTTP_SWITCHING_PROTOCOLS
+      if (isUpgradeCode && exchange.connection.isMultiplexed) {
+        throw ProtocolException("Unexpected $HTTP_SWITCHING_PROTOCOLS code on HTTP/2 connection")
+      }
 
-                override fun get(): Headers {
-                  val source = responseBody.source()
-                  if (source.isOpen) {
-                    source.skipAll()
+      val isUpgradeResponse =
+        isUpgradeCode &&
+          "upgrade".equals(response.header("Connection"), ignoreCase = true)
+
+      response =
+        when {
+          // This is an HTTP/1 upgrade. (This case includes web socket upgrades.)
+          isUpgradeRequest && isUpgradeResponse -> {
+            response
+              .newBuilder()
+              .body(
+                UnreadableResponseBody(
+                  response.body.contentType(),
+                  response.body.contentLength(),
+                ),
+              ).socket(exchange.upgradeToSocket())
+              .build()
+          }
+
+          // This is not an upgrade response.
+          else -> {
+            if (isUpgradeRequest) {
+              exchange.noRequestBody() // Failed upgrade request has no outbound data.
+            }
+            val responseBody = exchange.openResponseBody(response)
+            response
+              .newBuilder()
+              .body(responseBody)
+              .trailers(
+                object : TrailersSource {
+                  override fun peek() = exchange.peekTrailers()
+
+                  override fun get(): Headers {
+                    val source = responseBody.source()
+                    if (source.isOpen) {
+                      source.skipAll()
+                    }
+                    return peek() ?: error("null trailers after exhausting response body?!")
                   }
-                  return peek() ?: error("null trailers after exhausting response body?!")
-                }
-              },
-            ).build()
+                },
+              ).build()
+          }
         }
       if ("close".equals(response.request.header("Connection"), ignoreCase = true) ||
         "close".equals(response.header("Connection"), ignoreCase = true)
@@ -170,10 +196,7 @@ class CallServerInterceptor(
     }
   }
 
-  private fun shouldIgnoreAndWaitForRealResponse(
-    code: Int,
-    exchange: Exchange,
-  ): Boolean =
+  private fun shouldIgnoreAndWaitForRealResponse(code: Int): Boolean =
     when {
       // Server sent a 100-continue even though we did not request one. Try again to read the
       // actual response status.

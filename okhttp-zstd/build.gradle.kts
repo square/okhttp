@@ -15,9 +15,10 @@ project.applyOsgi(
 )
 
 dependencies {
-  api(projects.okhttp)
+  "friendsApi"(projects.okhttp)
   implementation(libs.zstd.kmp.okio)
 
+  testImplementation(projects.okhttpBrotli)
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(libs.kotlin.test.common)
   testImplementation(libs.kotlin.test.junit)
