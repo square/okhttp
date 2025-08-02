@@ -19,16 +19,19 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.os.Build
 import androidx.annotation.RequiresApi
-import java.util.Collections
+import java.util.*
 import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.android.internal.AndroidDns
-import okhttp3.android.internal.AndroidSocketFactory
 
+/**
+ * Decorator that supports Network Pinning on Android via Request tags.
+ */
 @RequiresApi(Build.VERSION_CODES.Q)
 class AndroidNetworkPinning : Call.Decorator {
   private val pinnedClients = Collections.synchronizedMap(mutableMapOf<String, OkHttpClient>())
 
+  /** ConnectivityManager.NetworkCallback that will cleanup after networks are lost. */
   val networkCallback =
     object : ConnectivityManager.NetworkCallback() {
       override fun onLost(network: Network) {
@@ -52,8 +55,9 @@ class AndroidNetworkPinning : Call.Decorator {
   private fun OkHttpClient.withNetwork(network: Network): OkHttpClient =
     newBuilder()
       .dns(AndroidDns(network))
-      .socketFactory(AndroidSocketFactory(network))
+      .socketFactory(network.socketFactory)
       .apply {
+        // Keep decorators after this one in the new client
         val indexOfThisDecorator = callDecorators.indexOf(this@AndroidNetworkPinning)
         callDecorators.subList(0, indexOfThisDecorator + 1).clear()
       }.build()
