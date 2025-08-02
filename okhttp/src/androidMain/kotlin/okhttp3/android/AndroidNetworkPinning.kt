@@ -23,11 +23,13 @@ import java.util.Collections
 import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.android.internal.AndroidDns
+import okhttp3.internal.SuppressSignatureCheck
 
 /**
  * Decorator that supports Network Pinning on Android via Request tags.
  */
 @RequiresApi(Build.VERSION_CODES.Q)
+@SuppressSignatureCheck
 class AndroidNetworkPinning : Call.Decorator {
   private val pinnedClients = Collections.synchronizedMap(mutableMapOf<String, OkHttpClient>())
 
@@ -45,6 +47,7 @@ class AndroidNetworkPinning : Call.Decorator {
     val pinnedNetwork = request.tag<Network>() ?: return chain.proceed(request)
 
     val pinnedClient =
+      // API 24+
       pinnedClients.computeIfAbsent(pinnedNetwork.toString()) {
         chain.client.withNetwork(network = pinnedNetwork)
       }

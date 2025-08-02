@@ -23,14 +23,18 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.CompletableFuture
 import okhttp3.Dns
+import okhttp3.internal.SuppressSignatureCheck
 
 @RequiresApi(Build.VERSION_CODES.Q)
+@SuppressSignatureCheck
 internal class AndroidDns(
   val network: Network,
 ) : Dns {
+  // API 29+
   private val dnsResolver = DnsResolver.getInstance()
 
   override fun lookup(hostname: String): List<InetAddress> {
+    // API 24+
     val result = CompletableFuture<List<InetAddress>>()
 
     dnsResolver.query(
