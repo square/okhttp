@@ -42,12 +42,11 @@ internal class MockWebServerSocket(
   val javaNetSocket: Socket,
 ) : Closeable,
   BufferedSocket {
-  private val delegate by lazy {
-    javaNetSocket.asOkioSocket()
-  }
+  private val delegate = javaNetSocket.asOkioSocket()
+
   private val closedLatch = CountDownLatch(2)
 
-  override val source: BufferedSource by lazy {
+  override val source: BufferedSource =
     object : ForwardingSource(delegate.source) {
       private var closed = false
 
@@ -60,9 +59,9 @@ internal class MockWebServerSocket(
         }
       }
     }.buffer()
-  }
 
-  override val sink: BufferedSink by lazy {
+
+  override val sink: BufferedSink =
     object : ForwardingSink(delegate.sink) {
       private var closed = false
 
@@ -75,7 +74,6 @@ internal class MockWebServerSocket(
         }
       }
     }.buffer()
-  }
 
   val localAddress: InetAddress
     get() = javaNetSocket.localAddress

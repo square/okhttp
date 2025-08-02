@@ -464,7 +464,6 @@ public class MockWebServer : Closeable {
               raw.port,
               true,
             ) as SSLSocket
-          socket = MockWebServerSocket(sslSocket)
           sslSocket.useClientMode = false
           if (clientAuth == CLIENT_AUTH_REQUIRED) {
             sslSocket.needClientAuth = true
@@ -478,6 +477,9 @@ public class MockWebServer : Closeable {
           }
 
           sslSocket.startHandshake()
+
+          // Wait until after handshake to grab the buffered socket
+          socket = MockWebServerSocket(sslSocket)
 
           if (protocolNegotiationEnabled) {
             val protocolString = Platform.get().getSelectedProtocol(sslSocket)
