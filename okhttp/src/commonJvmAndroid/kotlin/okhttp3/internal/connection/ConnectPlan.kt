@@ -174,12 +174,14 @@ class ConnectPlan(
       }
 
       if (route.address.sslSocketFactory != null) {
-        // Assume the server won't send a TLS ServerHello until we send a TLS ClientHello. If
-        // that happens, then we will have buffered bytes that are needed by the SSLSocket!
-        // This check is imperfect: it doesn't tell us whether a handshake will succeed, just
-        // that it will almost certainly fail because the proxy has sent unexpected data.
-        if (!socket.source.buffer.exhausted() || !socket.sink.buffer.exhausted()) {
-          throw IOException("TLS tunnel buffered too many bytes!")
+        if (this::socket.isInitialized) {
+          // Assume the server won't send a TLS ServerHello until we send a TLS ClientHello. If
+          // that happens, then we will have buffered bytes that are needed by the SSLSocket!
+          // This check is imperfect: it doesn't tell us whether a handshake will succeed, just
+          // that it will almost certainly fail because the proxy has sent unexpected data.
+          if (!socket.source.buffer.exhausted() || !socket.sink.buffer.exhausted()) {
+            throw IOException("TLS tunnel buffered too many bytes!")
+          }
         }
 
         user.secureConnectStart()
@@ -282,7 +284,7 @@ class ConnectPlan(
     // https://github.com/square/okhttp/issues/3245
     // https://android-review.googlesource.com/#/c/271775/
     try {
-      this.socket = rawSocket.asBufferedSocket()
+//      this.socket = rawSocket.asBufferedSocket()
     } catch (npe: NullPointerException) {
       if (npe.message == NPE_THROW_WITH_NULL) {
         throw IOException(npe)
