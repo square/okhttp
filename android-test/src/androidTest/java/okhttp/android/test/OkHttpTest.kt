@@ -157,7 +157,7 @@ class OkHttpTest {
 
   @Test
   fun testLocalhostInsecure() {
-    assumeTrue (Build.VERSION.SDK_INT >= 24)
+    assumeTrue(Build.VERSION.SDK_INT >= 24)
 
     val clientCertificates =
       HandshakeCertificates
@@ -216,8 +216,7 @@ class OkHttpTest {
                 }
               },
             ),
-          )
-          .build()
+          ).build()
 
       val response = client.newCall(request).execute()
 
@@ -300,8 +299,7 @@ class OkHttpTest {
                 }
               },
             ),
-          )
-          .build()
+          ).build()
 
       val response = client.newCall(request).execute()
 
@@ -336,7 +334,8 @@ class OkHttpTest {
       // Need fresh client to reset sslSocketFactoryOrNull
       client =
         OkHttpClient
-          .Builder().sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
+          .Builder()
+          .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
           .build()
 
       localhostInsecureRequest()
@@ -381,8 +380,7 @@ class OkHttpTest {
               }
             },
           ),
-        )
-        .build()
+        ).build()
 
     val response = client.newCall(request).execute()
 
@@ -400,7 +398,7 @@ class OkHttpTest {
 
   @Test
   fun testRequestUsesAndroidConscryptLocalhostInsecure() {
-    assumeTrue (Build.VERSION.SDK_INT >= 24)
+    assumeTrue(Build.VERSION.SDK_INT >= 24)
 
     val clientCertificates =
       HandshakeCertificates
