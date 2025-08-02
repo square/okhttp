@@ -164,6 +164,9 @@ class ConnectPlan(
     // Tell the call about the connecting call so async cancels work.
     user.addPlanToCancel(this)
     try {
+      // Avoid eagerly using socket to this point as Conscrypt doesn't like us crossing the streams
+      check(!this::socket.isInitialized)
+
       if (tunnelRequest != null) {
         val tunnelResult = connectTunnel()
 
@@ -174,16 +177,6 @@ class ConnectPlan(
       }
 
       if (route.address.sslSocketFactory != null) {
-        if (this::socket.isInitialized) {
-          // Assume the server won't send a TLS ServerHello until we send a TLS ClientHello. If
-          // that happens, then we will have buffered bytes that are needed by the SSLSocket!
-          // This check is imperfect: it doesn't tell us whether a handshake will succeed, just
-          // that it will almost certainly fail because the proxy has sent unexpected data.
-          if (!socket.source.buffer.exhausted() || !socket.sink.buffer.exhausted()) {
-            throw IOException("TLS tunnel buffered too many bytes!")
-          }
-        }
-
         user.secureConnectStart()
 
         // Create the wrapper over the connected socket.
@@ -207,6 +200,8 @@ class ConnectPlan(
         user.secureConnectEnd(handshake)
       } else {
         javaNetSocket = rawSocket
+        socket = rawSocket.asBufferedSocket()
+
         protocol =
           when {
             Protocol.H2_PRIOR_KNOWLEDGE in route.address.protocols -> Protocol.H2_PRIOR_KNOWLEDGE
@@ -416,6 +411,8 @@ class ConnectPlan(
    */
   @Throws(IOException::class)
   private fun createTunnel(): Request? {
+    socket = rawSocket!!.asBufferedSocket()
+
     var nextRequest = tunnelRequest!!
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
     val url = route.address.url
