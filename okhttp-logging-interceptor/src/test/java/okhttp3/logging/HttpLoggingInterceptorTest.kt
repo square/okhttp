@@ -19,6 +19,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isLessThan
 import assertk.assertions.isLessThanOrEqualTo
+import assertk.assertions.isNull
 import assertk.assertions.isSameInstanceAs
 import assertk.assertions.matches
 import java.net.UnknownHostException
@@ -35,6 +36,8 @@ import okhttp3.RecordingHostnameVerifier
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.internal.duplex.AsyncRequestBody
+import okhttp3.internal.duplex.MockSocketHandler
 import okhttp3.logging.HttpLoggingInterceptor.Level
 import okhttp3.testing.PlatformRule
 import okio.Buffer
@@ -602,7 +605,7 @@ class HttpLoggingInterceptorTest {
       .assertLogEqual("Accept-Encoding: gzip")
       .assertLogMatch(Regex("""User-Agent: okhttp/.+"""))
       .assertLogEqual("")
-      .assertLogEqual("--> END POST (12-byte, 32-gzipped-byte body)")
+      .assertLogEqual("--> END POST (12-byte, 32-gzip-byte body)")
       .assertLogMatch(Regex("""<-- 200 OK $url \(\d+ms\)"""))
       .assertLogEqual("Content-Type: text/plain; charset=utf-8")
       .assertLogMatch(Regex("""Content-Length: \d+"""))
@@ -641,7 +644,7 @@ class HttpLoggingInterceptorTest {
       .assertLogMatch(Regex("""Content-Length: \d+"""))
       .assertLogEqual("")
       .assertLogEqual("Hello, Hello, Hello")
-      .assertLogMatch(Regex("""<-- END HTTP \(\d+ms, 19-byte, 29-gzipped-byte body\)"""))
+      .assertLogMatch(Regex("""<-- END HTTP \(\d+ms, 19-byte, 29-gzip-byte body\)"""))
       .assertNoMoreLogs()
     applicationLogs
       .assertLogEqual("--> GET $url")
@@ -678,7 +681,7 @@ class HttpLoggingInterceptorTest {
       .assertLogEqual("Content-Encoding: br")
       .assertLogEqual("Content-Type: text/plain; charset=utf-8")
       .assertLogMatch(Regex("""Content-Length: \d+"""))
-      .assertLogEqual("<-- END HTTP (encoded body omitted)")
+      .assertLogEqual("<-- END HTTP (unknown encoded body omitted)")
       .assertNoMoreLogs()
     applicationLogs
       .assertLogEqual("--> GET $url")
@@ -687,12 +690,65 @@ class HttpLoggingInterceptorTest {
       .assertLogEqual("Content-Encoding: br")
       .assertLogEqual("Content-Type: text/plain; charset=utf-8")
       .assertLogMatch(Regex("""Content-Length: \d+"""))
-      .assertLogEqual("<-- END HTTP (encoded body omitted)")
+      .assertLogEqual("<-- END HTTP (unknown encoded body omitted)")
       .assertNoMoreLogs()
   }
 
   @Test
   fun bodyResponseIsStreaming() {
+    setLevel(Level.STREAMING)
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .setHeader("Content-Type", "text/event-stream")
+        .chunkedBody(
+          """
+          |event: add
+          |data: 73857293
+          |
+          |event: remove
+          |data: 2153
+          |
+          |event: add
+          |data: 113411
+          |
+          |
+          """.trimMargin(),
+          8,
+        )
+        .build(),
+    )
+    val parts = mutableListOf<String>()
+    client.newCall(request().build()).execute().use {
+      val source = it.body.source()
+      while (!source.exhausted()) {
+        parts.add(source.readUtf8(source.buffer.size))
+      }
+    }
+    networkLogs
+      .assertLogEqual("--> GET $url http/1.1")
+      .assertLogEqual("--> END GET")
+      .assertLogMatch(Regex("""<-- 200 OK $url \(\d+ms, unknown-length body\)"""))
+      .apply {
+        parts.forEach {
+          assertLogEqual(it)
+        }
+      }.assertLogEqual("<-- END HTTP (streaming body)")
+      .assertNoMoreLogs()
+    applicationLogs
+      .assertLogEqual("--> GET $url")
+      .assertLogEqual("--> END GET")
+      .assertLogMatch(Regex("""<-- 200 OK $url \(\d+ms, unknown-length body\)"""))
+      .apply {
+        parts.forEach {
+          assertLogEqual(it)
+        }
+      }.assertLogEqual("<-- END HTTP (streaming body)")
+      .assertNoMoreLogs()
+  }
+
+  @Test
+  fun bodyResponseIsEventStream() {
     setLevel(Level.BODY)
     server.enqueue(
       MockResponse
@@ -726,7 +782,7 @@ class HttpLoggingInterceptorTest {
       .assertLogMatch(Regex("""<-- 200 OK $url \(\d+ms\)"""))
       .assertLogEqual("Content-Type: text/event-stream")
       .assertLogMatch(Regex("""Transfer-encoding: chunked"""))
-      .assertLogEqual("<-- END HTTP (streaming)")
+      .assertLogEqual("<-- END HTTP (event-stream)")
       .assertNoMoreLogs()
     applicationLogs
       .assertLogEqual("--> GET $url")
@@ -734,7 +790,7 @@ class HttpLoggingInterceptorTest {
       .assertLogMatch(Regex("""<-- 200 OK $url \(\d+ms\)"""))
       .assertLogEqual("Content-Type: text/event-stream")
       .assertLogMatch(Regex("""Transfer-encoding: chunked"""))
-      .assertLogEqual("<-- END HTTP (streaming)")
+      .assertLogEqual("<-- END HTTP (event-stream)")
       .assertNoMoreLogs()
   }
 
@@ -1061,6 +1117,72 @@ class HttpLoggingInterceptorTest {
   }
 
   @Test
+  fun duplexRequestsAreStreamable() {
+    platform.assumeHttp2Support()
+    server.useHttps(handshakeCertificates.sslSocketFactory()) // HTTP/2
+    url = server.url("/")
+    setLevel(Level.STREAMING)
+
+    val body =
+      MockSocketHandler()
+        .receiveRequest("request A\n")
+        .sendResponse("response B\n")
+        .receiveRequest("request C\n")
+        .sendResponse("response D\n")
+        .receiveRequest("request E\n")
+        .sendResponse("response F\n")
+        .exhaustRequest()
+        .exhaustResponse()
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .clearHeaders()
+        .socketHandler(body)
+        .build(),
+    )
+    val call =
+      client.newCall(
+        Request
+          .Builder()
+          .url(server.url("/"))
+          .post(AsyncRequestBody())
+          .build(),
+      )
+    call.execute().use { response ->
+      val requestBody = (call.request().body as AsyncRequestBody?)!!.takeSink()
+      requestBody.writeUtf8("request A\n")
+      requestBody.flush()
+      val responseBody = response.body.source()
+      assertThat(responseBody.readUtf8Line())
+        .isEqualTo("response B")
+      requestBody.writeUtf8("request C\n")
+      requestBody.flush()
+      assertThat(responseBody.readUtf8Line())
+        .isEqualTo("response D")
+      requestBody.writeUtf8("request E\n")
+      requestBody.flush()
+      assertThat(responseBody.readUtf8Line())
+        .isEqualTo("response F")
+      requestBody.close()
+      assertThat(responseBody.readUtf8Line()).isNull()
+    }
+    body.awaitSuccess()
+
+    applicationLogs
+      .assertLogEqual("--> POST $url")
+      .assertLogMatch(Regex("""<-- 200 $url \(\d+ms, unknown-length body\)"""))
+      .assertLogEqual("> request A\n")
+      .assertLogEqual("< response B\n")
+      .assertLogEqual("> request C\n")
+      .assertLogEqual("< response D\n")
+      .assertLogEqual("> request E\n")
+      .assertLogEqual("< response F\n")
+      .assertLogEqual("--> END POST (streaming body)")
+      .assertLogEqual("<-- END HTTP (streaming body)")
+      .assertNoMoreLogs()
+  }
+
+  @Test
   fun oneShotRequestsAreNotLogged() {
     url = server.url("/")
     setLevel(Level.BODY)
@@ -1107,7 +1229,7 @@ class HttpLoggingInterceptorTest {
   internal class LogRecorder(
     val prefix: Regex = Regex(""),
   ) : HttpLoggingInterceptor.Logger {
-    private val logs = mutableListOf<String>()
+    val logs = mutableListOf<String>()
     private var index = 0
 
     fun assertLogEqual(expected: String) =
