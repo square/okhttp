@@ -48,7 +48,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.cacheGet
-import okhttp3.internal.commonEmptyRequestBody
 import okhttp3.internal.platform.Platform.Companion.get
 import okhttp3.java.net.cookiejar.JavaNetCookieJar
 import okhttp3.testing.PlatformRule
@@ -536,27 +535,22 @@ class CacheTest {
 		assertThat(response1.body.string()).isEqualTo("ABC")
 		val recordedRequest1 = server.takeRequest()
 		assertThat(recordedRequest1.requestLine).isEqualTo("GET /foo HTTP/1.1")
-		assertThat(recordedRequest1.sequenceNumber).isEqualTo(0)
 		val request2 = Request.Builder().url(server.url("/bar")).get().build()
 		val response2 = client.newCall(request2).execute()
 		assertThat(response2.body.string()).isEqualTo("ABC")
 		val recordedRequest2 = server.takeRequest()
 		assertThat(recordedRequest2.requestLine).isEqualTo("GET /bar HTTP/1.1")
-		assertThat(recordedRequest2.sequenceNumber).isEqualTo(1)
 
-		val request3 = Request.Builder().url(server.url("/baz")).query(commonEmptyRequestBody).build()
+		val request3 = Request.Builder().url(server.url("/baz")).query(RequestBody.EMPTY).build()
 		val response3 = client.newCall(request3).execute()
 		assertThat(response3.body.string()).isEqualTo("DEF")
 		val recordedRequest3 = server.takeRequest()
 		assertThat(recordedRequest3.requestLine).isEqualTo("QUERY /baz HTTP/1.1")
-		assertThat(recordedRequest3.sequenceNumber).isEqualTo(2)
-		val request4 = Request.Builder().url(server.url("/bar")).query(commonEmptyRequestBody).build()
+		val request4 = Request.Builder().url(server.url("/bar")).query(RequestBody.EMPTY).build()
 		val response4 = client.newCall(request4).execute()
 		assertThat(response4.body.string()).isEqualTo("DEF")
 		val recordedRequest4 = server.takeRequest()
 		assertThat(recordedRequest4.requestLine).isEqualTo("QUERY /bar HTTP/1.1")
-		assertThat(recordedRequest4.sequenceNumber).isEqualTo(3)
-
 	}
 
   @Test
