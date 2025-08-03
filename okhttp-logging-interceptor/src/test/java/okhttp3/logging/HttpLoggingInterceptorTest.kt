@@ -715,8 +715,7 @@ class HttpLoggingInterceptorTest {
           |
           """.trimMargin(),
           8,
-        )
-        .build(),
+        ).build(),
     )
     val parts = mutableListOf<String>()
     client.newCall(request().build()).execute().use {
