@@ -15,13 +15,17 @@
  */
 
 plugins {
-    `kotlin-dsl`
+  `kotlin-dsl`
 }
 
 repositories {
-    mavenCentral()
+  mavenCentral()
 }
 
 dependencies {
-  implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:6.4.0")
+  // TODO (https://github.com/square/okhttp/issues/8612) we will need a consistent version
+  // 7.1.0 is used because it avoids this error
+  // Could not create an instance of type aQute.bnd.gradle.BundleTaskExtension.
+  // Cannot change attributes of configuration ':native-image-tests:compileClasspath' after it has been locked for mutation
+  implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:7.1.0")
 }

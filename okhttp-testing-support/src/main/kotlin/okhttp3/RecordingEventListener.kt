@@ -41,6 +41,7 @@ import okhttp3.CallEvent.ConnectionAcquired
 import okhttp3.CallEvent.ConnectionReleased
 import okhttp3.CallEvent.DnsEnd
 import okhttp3.CallEvent.DnsStart
+import okhttp3.CallEvent.FollowUpDecision
 import okhttp3.CallEvent.ProxySelectEnd
 import okhttp3.CallEvent.ProxySelectStart
 import okhttp3.CallEvent.RequestBodyEnd
@@ -53,6 +54,7 @@ import okhttp3.CallEvent.ResponseBodyStart
 import okhttp3.CallEvent.ResponseFailed
 import okhttp3.CallEvent.ResponseHeadersEnd
 import okhttp3.CallEvent.ResponseHeadersStart
+import okhttp3.CallEvent.RetryDecision
 import okhttp3.CallEvent.SatisfactionFailure
 import okhttp3.CallEvent.SecureConnectEnd
 import okhttp3.CallEvent.SecureConnectStart
@@ -97,6 +99,8 @@ open class RecordingEventListener(
 
   inline fun <reified T : CallEvent> removeUpToEvent(): T = removeUpToEvent(T::class.java)
 
+  inline fun <reified T : CallEvent> findEvent(): T = eventSequence.first { it is T } as T
+
   /**
    * Remove and return the next event from the recorded sequence.
    *
@@ -119,10 +123,10 @@ open class RecordingEventListener(
 
     if (elapsedMs != -1L) {
       assertThat(
-        TimeUnit.NANOSECONDS.toMillis(actualElapsedNs)
+        TimeUnit.NANOSECONDS
+          .toMillis(actualElapsedNs)
           .toDouble(),
-      )
-        .isCloseTo(elapsedMs.toDouble(), 100.0)
+      ).isCloseTo(elapsedMs.toDouble(), 100.0)
     }
 
     return result
@@ -288,4 +292,16 @@ open class RecordingEventListener(
     call: Call,
     cachedResponse: Response,
   ) = logEvent(CacheConditionalHit(System.nanoTime(), call))
+
+  override fun retryDecision(
+    call: Call,
+    exception: IOException,
+    retry: Boolean,
+  ) = logEvent(RetryDecision(System.nanoTime(), call, exception, retry))
+
+  override fun followUpDecision(
+    call: Call,
+    networkResponse: Response,
+    nextRequest: Request?,
+  ) = logEvent(FollowUpDecision(System.nanoTime(), call, networkResponse, nextRequest))
 }

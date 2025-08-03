@@ -29,7 +29,9 @@ import javax.net.ssl.SSLSession
 import javax.net.ssl.SSLSocket
 
 /** An [SSLSocket] that delegates all calls.  */
-abstract class DelegatingSSLSocket(protected val delegate: SSLSocket?) : SSLSocket() {
+abstract class DelegatingSSLSocket(
+  protected val delegate: SSLSocket?,
+) : SSLSocket() {
   @Throws(IOException::class)
   override fun shutdownInput() {
     delegate!!.shutdownInput()
@@ -40,33 +42,23 @@ abstract class DelegatingSSLSocket(protected val delegate: SSLSocket?) : SSLSock
     delegate!!.shutdownOutput()
   }
 
-  override fun getSupportedCipherSuites(): Array<String> {
-    return delegate!!.supportedCipherSuites
-  }
+  override fun getSupportedCipherSuites(): Array<String> = delegate!!.supportedCipherSuites
 
-  override fun getEnabledCipherSuites(): Array<String> {
-    return delegate!!.enabledCipherSuites
-  }
+  override fun getEnabledCipherSuites(): Array<String> = delegate!!.enabledCipherSuites
 
   override fun setEnabledCipherSuites(suites: Array<String>) {
     delegate!!.enabledCipherSuites = suites
   }
 
-  override fun getSupportedProtocols(): Array<String> {
-    return delegate!!.supportedProtocols
-  }
+  override fun getSupportedProtocols(): Array<String> = delegate!!.supportedProtocols
 
-  override fun getEnabledProtocols(): Array<String> {
-    return delegate!!.enabledProtocols
-  }
+  override fun getEnabledProtocols(): Array<String> = delegate!!.enabledProtocols
 
   override fun setEnabledProtocols(protocols: Array<String>) {
     delegate!!.enabledProtocols = protocols
   }
 
-  override fun getSession(): SSLSession {
-    return delegate!!.session
-  }
+  override fun getSession(): SSLSession = delegate!!.session
 
   override fun addHandshakeCompletedListener(listener: HandshakeCompletedListener) {
     delegate!!.addHandshakeCompletedListener(listener)
@@ -85,9 +77,7 @@ abstract class DelegatingSSLSocket(protected val delegate: SSLSocket?) : SSLSock
     delegate!!.useClientMode = mode
   }
 
-  override fun getUseClientMode(): Boolean {
-    return delegate!!.useClientMode
-  }
+  override fun getUseClientMode(): Boolean = delegate!!.useClientMode
 
   override fun setNeedClientAuth(need: Boolean) {
     delegate!!.needClientAuth = need
@@ -97,25 +87,17 @@ abstract class DelegatingSSLSocket(protected val delegate: SSLSocket?) : SSLSock
     delegate!!.wantClientAuth = want
   }
 
-  override fun getNeedClientAuth(): Boolean {
-    return delegate!!.needClientAuth
-  }
+  override fun getNeedClientAuth(): Boolean = delegate!!.needClientAuth
 
-  override fun getWantClientAuth(): Boolean {
-    return delegate!!.wantClientAuth
-  }
+  override fun getWantClientAuth(): Boolean = delegate!!.wantClientAuth
 
   override fun setEnableSessionCreation(flag: Boolean) {
     delegate!!.enableSessionCreation = flag
   }
 
-  override fun getEnableSessionCreation(): Boolean {
-    return delegate!!.enableSessionCreation
-  }
+  override fun getEnableSessionCreation(): Boolean = delegate!!.enableSessionCreation
 
-  override fun getSSLParameters(): SSLParameters {
-    return delegate!!.sslParameters
-  }
+  override fun getSSLParameters(): SSLParameters = delegate!!.sslParameters
 
   override fun setSSLParameters(p: SSLParameters) {
     delegate!!.sslParameters = p
@@ -126,61 +108,37 @@ abstract class DelegatingSSLSocket(protected val delegate: SSLSocket?) : SSLSock
     delegate!!.close()
   }
 
-  override fun getInetAddress(): InetAddress {
-    return delegate!!.inetAddress
-  }
+  override fun getInetAddress(): InetAddress = delegate!!.inetAddress
 
   @Throws(IOException::class)
-  override fun getInputStream(): InputStream {
-    return delegate!!.inputStream
-  }
+  override fun getInputStream(): InputStream = delegate!!.inputStream
 
   @Throws(SocketException::class)
-  override fun getKeepAlive(): Boolean {
-    return delegate!!.keepAlive
-  }
+  override fun getKeepAlive(): Boolean = delegate!!.keepAlive
 
-  override fun getLocalAddress(): InetAddress {
-    return delegate!!.localAddress
-  }
+  override fun getLocalAddress(): InetAddress = delegate!!.localAddress
 
-  override fun getLocalPort(): Int {
-    return delegate!!.localPort
-  }
+  override fun getLocalPort(): Int = delegate!!.localPort
 
   @Throws(IOException::class)
-  override fun getOutputStream(): OutputStream {
-    return delegate!!.outputStream
-  }
+  override fun getOutputStream(): OutputStream = delegate!!.outputStream
 
-  override fun getPort(): Int {
-    return delegate!!.port
-  }
+  override fun getPort(): Int = delegate!!.port
 
   @Throws(SocketException::class)
-  override fun getSoLinger(): Int {
-    return delegate!!.soLinger
-  }
+  override fun getSoLinger(): Int = delegate!!.soLinger
 
   @Throws(SocketException::class)
-  override fun getReceiveBufferSize(): Int {
-    return delegate!!.receiveBufferSize
-  }
+  override fun getReceiveBufferSize(): Int = delegate!!.receiveBufferSize
 
   @Throws(SocketException::class)
-  override fun getSendBufferSize(): Int {
-    return delegate!!.sendBufferSize
-  }
+  override fun getSendBufferSize(): Int = delegate!!.sendBufferSize
 
   @Throws(SocketException::class)
-  override fun getSoTimeout(): Int {
-    return delegate!!.soTimeout
-  }
+  override fun getSoTimeout(): Int = delegate!!.soTimeout
 
   @Throws(SocketException::class)
-  override fun getTcpNoDelay(): Boolean {
-    return delegate!!.tcpNoDelay
-  }
+  override fun getTcpNoDelay(): Boolean = delegate!!.tcpNoDelay
 
   @Throws(SocketException::class)
   override fun setKeepAlive(keepAlive: Boolean) {
@@ -215,29 +173,17 @@ abstract class DelegatingSSLSocket(protected val delegate: SSLSocket?) : SSLSock
     delegate!!.tcpNoDelay = on
   }
 
-  override fun toString(): String {
-    return delegate!!.toString()
-  }
+  override fun toString(): String = delegate!!.toString()
 
-  override fun getLocalSocketAddress(): SocketAddress {
-    return delegate!!.localSocketAddress
-  }
+  override fun getLocalSocketAddress(): SocketAddress = delegate!!.localSocketAddress
 
-  override fun getRemoteSocketAddress(): SocketAddress {
-    return delegate!!.remoteSocketAddress
-  }
+  override fun getRemoteSocketAddress(): SocketAddress = delegate!!.remoteSocketAddress
 
-  override fun isBound(): Boolean {
-    return delegate!!.isBound
-  }
+  override fun isBound(): Boolean = delegate!!.isBound
 
-  override fun isConnected(): Boolean {
-    return delegate!!.isConnected
-  }
+  override fun isConnected(): Boolean = delegate!!.isConnected
 
-  override fun isClosed(): Boolean {
-    return delegate!!.isClosed
-  }
+  override fun isClosed(): Boolean = delegate!!.isClosed
 
   @Throws(IOException::class)
   override fun bind(localAddr: SocketAddress) {
@@ -257,13 +203,9 @@ abstract class DelegatingSSLSocket(protected val delegate: SSLSocket?) : SSLSock
     delegate!!.connect(remoteAddr, timeout)
   }
 
-  override fun isInputShutdown(): Boolean {
-    return delegate!!.isInputShutdown
-  }
+  override fun isInputShutdown(): Boolean = delegate!!.isInputShutdown
 
-  override fun isOutputShutdown(): Boolean {
-    return delegate!!.isOutputShutdown
-  }
+  override fun isOutputShutdown(): Boolean = delegate!!.isOutputShutdown
 
   @Throws(SocketException::class)
   override fun setReuseAddress(reuse: Boolean) {
@@ -271,9 +213,7 @@ abstract class DelegatingSSLSocket(protected val delegate: SSLSocket?) : SSLSock
   }
 
   @Throws(SocketException::class)
-  override fun getReuseAddress(): Boolean {
-    return delegate!!.reuseAddress
-  }
+  override fun getReuseAddress(): Boolean = delegate!!.reuseAddress
 
   @Throws(SocketException::class)
   override fun setOOBInline(oobinline: Boolean) {
@@ -281,9 +221,7 @@ abstract class DelegatingSSLSocket(protected val delegate: SSLSocket?) : SSLSock
   }
 
   @Throws(SocketException::class)
-  override fun getOOBInline(): Boolean {
-    return delegate!!.oobInline
-  }
+  override fun getOOBInline(): Boolean = delegate!!.oobInline
 
   @Throws(SocketException::class)
   override fun setTrafficClass(value: Int) {
@@ -291,36 +229,25 @@ abstract class DelegatingSSLSocket(protected val delegate: SSLSocket?) : SSLSock
   }
 
   @Throws(SocketException::class)
-  override fun getTrafficClass(): Int {
-    return delegate!!.trafficClass
-  }
+  override fun getTrafficClass(): Int = delegate!!.trafficClass
 
   @Throws(IOException::class)
   override fun sendUrgentData(value: Int) {
     delegate!!.sendUrgentData(value)
   }
 
-  override fun getChannel(): SocketChannel {
-    return delegate!!.channel
-  }
+  override fun getChannel(): SocketChannel = delegate!!.channel
 
-  override fun getHandshakeSession(): SSLSession {
-    return delegate!!.handshakeSession
-  }
+  override fun getHandshakeSession(): SSLSession = delegate!!.handshakeSession
 
-  override fun getApplicationProtocol(): String {
-    return delegate!!.applicationProtocol
-  }
+  override fun getApplicationProtocol(): String = delegate!!.applicationProtocol
 
-  override fun getHandshakeApplicationProtocol(): String {
-    return delegate!!.handshakeApplicationProtocol
-  }
+  override fun getHandshakeApplicationProtocol(): String = delegate!!.handshakeApplicationProtocol
 
   override fun setHandshakeApplicationProtocolSelector(selector: BiFunction<SSLSocket, MutableList<String>, String>?) {
     delegate!!.handshakeApplicationProtocolSelector = selector
   }
 
-  override fun getHandshakeApplicationProtocolSelector(): BiFunction<SSLSocket, MutableList<String>, String> {
-    return delegate!!.handshakeApplicationProtocolSelector
-  }
+  override fun getHandshakeApplicationProtocolSelector(): BiFunction<SSLSocket, MutableList<String>, String> =
+    delegate!!.handshakeApplicationProtocolSelector
 }

@@ -17,7 +17,6 @@
 package mockwebserver3
 
 import java.io.IOException
-import okhttp3.ExperimentalOkHttpApi
 import okio.BufferedSink
 
 /**
@@ -26,11 +25,10 @@ import okio.BufferedSink
  * Unlike [okhttp3.ResponseBody], this interface is designed to be implemented by writers and not
  * called by readers.
  */
-@ExperimentalOkHttpApi
-interface MockResponseBody {
+public interface MockResponseBody {
   /** The length of this response in bytes, or -1 if unknown. */
-  val contentLength: Long
+  public val contentLength: Long
 
   @Throws(IOException::class)
-  fun writeTo(sink: BufferedSink)
+  public fun writeTo(sink: BufferedSink)
 }

@@ -15,7 +15,7 @@ tasks.jar {
 }
 
 dependencies {
-  api(projects.okhttp)
+  "friendsApi"(projects.okhttp)
   api(projects.mockwebserver3)
   api(libs.junit)
 

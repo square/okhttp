@@ -15,10 +15,8 @@ project.applyOsgi(
 )
 
 dependencies {
-  api(projects.okhttp)
-  compileOnly(libs.findbugs.jsr305)
+  "friendsApi"(projects.okhttp)
 
-  testCompileOnly(libs.findbugs.jsr305)
   testImplementation(libs.junit)
   testImplementation(projects.mockwebserver3)
   testImplementation(projects.mockwebserver3Junit5)

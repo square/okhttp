@@ -15,9 +15,12 @@
  */
 package okhttp3.brotli
 
-import okhttp3.Interceptor
-import okhttp3.Response
-import okhttp3.brotli.internal.uncompress
+import okhttp3.CompressionInterceptor
+import okhttp3.Gzip
+import okio.BufferedSource
+import okio.Source
+import okio.source
+import org.brotli.dec.BrotliInputStream
 
 /**
  * Transparent Brotli response support.
@@ -25,19 +28,10 @@ import okhttp3.brotli.internal.uncompress
  * Adds Accept-Encoding: br to request and checks (and strips) for Content-Encoding: br in
  * responses.  n.b. this replaces the transparent gzip compression in BridgeInterceptor.
  */
-object BrotliInterceptor : Interceptor {
-  override fun intercept(chain: Interceptor.Chain): Response {
-    return if (chain.request().header("Accept-Encoding") == null) {
-      val request =
-        chain.request().newBuilder()
-          .header("Accept-Encoding", "br,gzip")
-          .build()
+object BrotliInterceptor : CompressionInterceptor(Brotli, Gzip)
 
-      val response = chain.proceed(request)
+object Brotli : CompressionInterceptor.DecompressionAlgorithm {
+  override val encoding: String get() = "br"
 
-      uncompress(response)
-    } else {
-      chain.proceed(chain.request())
-    }
-  }
+  override fun decompress(compressedSource: BufferedSource): Source = BrotliInputStream(compressedSource.inputStream()).source()
 }

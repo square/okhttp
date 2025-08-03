@@ -20,10 +20,12 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import okhttp3.Cache;
 import okhttp3.HttpUrl;
@@ -41,11 +43,14 @@ import org.jsoup.nodes.Element;
 public final class Crawler {
   private final OkHttpClient client;
   private final Set<HttpUrl> fetchedUrls = Collections.synchronizedSet(new LinkedHashSet<>());
-  private final LinkedBlockingQueue<HttpUrl> queue = new LinkedBlockingQueue<>();
+  private final BlockingQueue<HttpUrl> queue;
   private final ConcurrentHashMap<String, AtomicInteger> hostnames = new ConcurrentHashMap<>();
+  private final int hostLimit;
 
-  public Crawler(OkHttpClient client) {
+  public Crawler(OkHttpClient client, int queueLimit, int hostLimit) {
     this.client = client;
+    this.queue = new LinkedBlockingQueue<>(queueLimit);
+    this.hostLimit = hostLimit;
   }
 
   private void parallelDrainQueue(int threadCount) {
@@ -54,7 +59,7 @@ public final class Crawler {
       executor.execute(() -> {
         try {
           drainQueue();
-        } catch (Exception e) {
+        } catch (Throwable e) {
           e.printStackTrace();
         }
       });
@@ -86,7 +91,7 @@ public final class Crawler {
     AtomicInteger hostnameCount = new AtomicInteger();
     AtomicInteger previous = hostnames.putIfAbsent(url.host(), hostnameCount);
     if (previous != null) hostnameCount = previous;
-    if (hostnameCount.incrementAndGet() > 100) return;
+    if (hostnameCount.getAndIncrement() >= hostLimit) return;
 
     Request request = new Request.Builder()
         .url(url)
@@ -116,7 +121,8 @@ public final class Crawler {
         String href = element.attr("href");
         HttpUrl link = response.request().url().resolve(href);
         if (link == null) continue; // URL is either invalid or its scheme isn't http/https.
-        queue.add(link.newBuilder().fragment(null).build());
+        HttpUrl linkWithoutFragment = link.newBuilder().fragment(null).build();
+        if (!queue.offer(linkWithoutFragment)) break; // Queue is full.
       }
     }
   }
@@ -128,14 +134,17 @@ public final class Crawler {
     }
 
     int threadCount = 20;
+    int queueLimit = 1000;
+    int hostLimit = 25;
     long cacheByteCount = 1024L * 1024L * 100L;
 
     Cache cache = new Cache(new File(args[0]), cacheByteCount);
     OkHttpClient client = new OkHttpClient.Builder()
         .cache(cache)
+        .callTimeout(5, TimeUnit.SECONDS)
         .build();
 
-    Crawler crawler = new Crawler(client);
+    Crawler crawler = new Crawler(client, queueLimit, hostLimit);
     crawler.queue.add(HttpUrl.get(args[1]));
     crawler.parallelDrainQueue(threadCount);
   }

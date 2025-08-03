@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
 package okhttp3.tls
 
@@ -93,11 +92,10 @@ class HandshakeCertificates private constructor(
 
   fun sslSocketFactory(): SSLSocketFactory = sslContext().socketFactory
 
-  fun sslContext(): SSLContext {
-    return Platform.get().newSSLContext().apply {
+  fun sslContext(): SSLContext =
+    Platform.get().newSSLContext().apply {
       init(arrayOf<KeyManager>(keyManager), arrayOf<TrustManager>(trustManager), SecureRandom())
     }
-  }
 
   class Builder {
     private var heldCertificate: HeldCertificate? = null

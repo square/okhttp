@@ -20,7 +20,10 @@ import java.util.logging.Handler
 import java.util.logging.LogRecord
 
 object JsseDebugLogging {
-  data class JsseDebugMessage(val message: String, val param: String?) {
+  data class JsseDebugMessage(
+    val message: String,
+    val param: String?,
+  ) {
     enum class Type {
       Handshake,
       Plaintext,
@@ -47,13 +50,12 @@ object JsseDebugLogging {
           else -> Type.Unknown
         }
 
-    override fun toString(): String {
-      return if (param != null) {
+    override fun toString(): String =
+      if (param != null) {
         message + "\n" + param
       } else {
         message
       }
-    }
   }
 
   private fun quietDebug(message: JsseDebugMessage) {
