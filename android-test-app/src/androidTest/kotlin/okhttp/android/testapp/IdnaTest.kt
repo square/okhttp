@@ -16,8 +16,8 @@
 package okhttp3.android
 
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.junit.Test
 import org.junit.Assert.assertEquals
+import org.junit.Test
 
 class IdnaTest {
   @Test
