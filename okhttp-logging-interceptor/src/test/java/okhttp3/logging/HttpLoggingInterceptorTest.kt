@@ -731,7 +731,7 @@ class HttpLoggingInterceptorTest {
       .assertLogMatch(Regex("""<-- 200 OK $url \(\d+ms, unknown-length body\)"""))
       .apply {
         parts.forEach {
-          assertLogEqual(it)
+          assertLogEqual("< $it")
         }
       }.assertLogEqual("<-- END HTTP (streaming body)")
       .assertNoMoreLogs()
@@ -741,7 +741,7 @@ class HttpLoggingInterceptorTest {
       .assertLogMatch(Regex("""<-- 200 OK $url \(\d+ms, unknown-length body\)"""))
       .apply {
         parts.forEach {
-          assertLogEqual(it)
+          assertLogEqual("< $it")
         }
       }.assertLogEqual("<-- END HTTP (streaming body)")
       .assertNoMoreLogs()
