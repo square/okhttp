@@ -228,12 +228,12 @@ class Cache internal constructor(
       return null
     }
 
-		if (requestMethod != "GET" && requestMethod != "QUERY") {
-			// Don't cache non-GET and non-QUERY responses. We're technically allowed to cache HEAD
-			// requests and some POST requests, but the complexity of doing so is high and the benefit
-			// is low.
-			return null
-		}
+    if (requestMethod != "GET" && requestMethod != "QUERY") {
+      // Don't cache non-GET and non-QUERY responses. We're technically allowed to cache HEAD
+      // requests and some POST requests, but the complexity of doing so is high and the benefit
+      // is low.
+      return null
+    }
 
     if (response.hasVaryAll()) {
       return null

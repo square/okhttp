@@ -173,7 +173,7 @@ class CacheTest {
   private fun assertCached(
     shouldWriteToCache: Boolean,
     responseCode: Int,
-		method: String = "GET",
+    method: String = "GET",
   ) {
     var expectedResponseCode = responseCode
     val server = MockWebServer()
@@ -217,7 +217,7 @@ class CacheTest {
       Request
         .Builder()
         .url(server.url("/"))
-				.method(method, null)
+        .method(method, null)
         .build()
     val response = client.newCall(request).execute()
     assertThat(response.code).isEqualTo(expectedResponseCode)
@@ -501,57 +501,81 @@ class CacheTest {
     assertThat(recordedRequest3.exchangeIndex).isEqualTo(2)
   }
 
-	@Test
-	fun getAndQueryRedirectToCachedResultIndependently() {
-		//GET responses
-		server.enqueue(
-			MockResponse.Builder()
-				.addHeader("Cache-Control: max-age=60")
-				.body("ABC")
-				.build(),
-		)
-		server.enqueue(
-			MockResponse.Builder()
-				.code(HttpURLConnection.HTTP_MOVED_PERM)
-				.addHeader("Location: /foo")
-				.build(),
-		)
-		//QUERY responses
-		server.enqueue(
-			MockResponse.Builder()
-				.addHeader("Cache-Control: max-age=60")
-				.body("DEF")
-				.build(),
-		)
-		server.enqueue(
-			MockResponse.Builder()
-				.code(HttpURLConnection.HTTP_MOVED_PERM)
-				.addHeader("Location: /baz")
-				.build(),
-		)
+  @Test
+  fun getAndQueryRedirectToCachedResultIndependently() {
+    // GET responses
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("ABC")
+        .build(),
+    )
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_MOVED_PERM)
+        .addHeader("Location: /foo")
+        .build(),
+    )
+    // QUERY responses
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("DEF")
+        .build(),
+    )
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_MOVED_PERM)
+        .addHeader("Location: /baz")
+        .build(),
+    )
 
-		val request1 = Request.Builder().url(server.url("/foo")).get().build()
-		val response1 = client.newCall(request1).execute()
-		assertThat(response1.body.string()).isEqualTo("ABC")
-		val recordedRequest1 = server.takeRequest()
-		assertThat(recordedRequest1.requestLine).isEqualTo("GET /foo HTTP/1.1")
-		val request2 = Request.Builder().url(server.url("/bar")).get().build()
-		val response2 = client.newCall(request2).execute()
-		assertThat(response2.body.string()).isEqualTo("ABC")
-		val recordedRequest2 = server.takeRequest()
-		assertThat(recordedRequest2.requestLine).isEqualTo("GET /bar HTTP/1.1")
+    val request1 =
+      Request
+        .Builder()
+        .url(server.url("/foo"))
+        .get()
+        .build()
+    val response1 = client.newCall(request1).execute()
+    assertThat(response1.body.string()).isEqualTo("ABC")
+    val recordedRequest1 = server.takeRequest()
+    assertThat(recordedRequest1.requestLine).isEqualTo("GET /foo HTTP/1.1")
+    val request2 =
+      Request
+        .Builder()
+        .url(server.url("/bar"))
+        .get()
+        .build()
+    val response2 = client.newCall(request2).execute()
+    assertThat(response2.body.string()).isEqualTo("ABC")
+    val recordedRequest2 = server.takeRequest()
+    assertThat(recordedRequest2.requestLine).isEqualTo("GET /bar HTTP/1.1")
 
-		val request3 = Request.Builder().url(server.url("/baz")).query(RequestBody.EMPTY).build()
-		val response3 = client.newCall(request3).execute()
-		assertThat(response3.body.string()).isEqualTo("DEF")
-		val recordedRequest3 = server.takeRequest()
-		assertThat(recordedRequest3.requestLine).isEqualTo("QUERY /baz HTTP/1.1")
-		val request4 = Request.Builder().url(server.url("/bar")).query(RequestBody.EMPTY).build()
-		val response4 = client.newCall(request4).execute()
-		assertThat(response4.body.string()).isEqualTo("DEF")
-		val recordedRequest4 = server.takeRequest()
-		assertThat(recordedRequest4.requestLine).isEqualTo("QUERY /bar HTTP/1.1")
-	}
+    val request3 =
+      Request
+        .Builder()
+        .url(server.url("/baz"))
+        .query(RequestBody.EMPTY)
+        .build()
+    val response3 = client.newCall(request3).execute()
+    assertThat(response3.body.string()).isEqualTo("DEF")
+    val recordedRequest3 = server.takeRequest()
+    assertThat(recordedRequest3.requestLine).isEqualTo("QUERY /baz HTTP/1.1")
+    val request4 =
+      Request
+        .Builder()
+        .url(server.url("/bar"))
+        .query(RequestBody.EMPTY)
+        .build()
+    val response4 = client.newCall(request4).execute()
+    assertThat(response4.body.string()).isEqualTo("DEF")
+    val recordedRequest4 = server.takeRequest()
+    assertThat(recordedRequest4.requestLine).isEqualTo("QUERY /bar HTTP/1.1")
+  }
 
   @Test
   fun secureResponseCachingAndRedirects() {
