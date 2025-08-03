@@ -317,7 +317,7 @@ class Request internal constructor(
 
     open fun patch(body: RequestBody): Builder = method("PATCH", body)
 
-    open fun query(body: RequestBody): Builder = commonQuery(body)
+    open fun query(body: RequestBody): Builder = method("QUERY", body)
 
     open fun method(
       method: String,
