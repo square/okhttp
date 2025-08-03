@@ -58,11 +58,9 @@ class HttpLoggingInterceptor
   constructor(
     private val logger: Logger = Logger.DEFAULT,
   ) : Interceptor {
-    @Volatile
-    private var headersToRedact = emptySet<String>()
+    @Volatile private var headersToRedact = emptySet<String>()
 
-    @Volatile
-    private var queryParamsNameToRedact = emptySet<String>()
+    @Volatile private var queryParamsNameToRedact = emptySet<String>()
 
     @set:JvmName("level")
     @Volatile
