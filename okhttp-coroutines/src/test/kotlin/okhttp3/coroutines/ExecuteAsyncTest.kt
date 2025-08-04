@@ -34,7 +34,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.DisconnectAfterRequest
+import mockwebserver3.SocketEffect
+import mockwebserver3.junit5.StartStop
 import okhttp3.Callback
 import okhttp3.FailingCall
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -46,7 +47,6 @@ import okhttp3.ResponseBody
 import okio.Buffer
 import okio.ForwardingSource
 import okio.buffer
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
@@ -57,14 +57,10 @@ class ExecuteAsyncTest {
 
   private var client = clientTestRule.newClientBuilder().build()
 
-  private lateinit var server: MockWebServer
+  @StartStop
+  private val server = MockWebServer()
 
   val request by lazy { Request(server.url("/")) }
-
-  @BeforeEach
-  fun setup(server: MockWebServer) {
-    this.server = server
-  }
 
   @Test
   fun suspendCall() {
@@ -85,7 +81,8 @@ class ExecuteAsyncTest {
   fun timeoutCall() {
     runTest {
       server.enqueue(
-        MockResponse.Builder()
+        MockResponse
+          .Builder()
           .bodyDelay(5, TimeUnit.SECONDS)
           .body("abc")
           .build(),
@@ -93,7 +90,7 @@ class ExecuteAsyncTest {
 
       val call = client.newCall(request)
 
-      try {
+      assertFailsWith<TimeoutCancellationException> {
         withTimeout(1.seconds) {
           call.executeAsync().use {
             withContext(Dispatchers.IO) {
@@ -102,8 +99,6 @@ class ExecuteAsyncTest {
             fail("No expected to get response")
           }
         }
-      } catch (to: TimeoutCancellationException) {
-        // expected
       }
 
       assertThat(call.isCanceled()).isTrue()
@@ -114,7 +109,8 @@ class ExecuteAsyncTest {
   fun cancelledCall() {
     runTest {
       server.enqueue(
-        MockResponse.Builder()
+        MockResponse
+          .Builder()
           .bodyDelay(5, TimeUnit.SECONDS)
           .body("abc")
           .build(),
@@ -122,16 +118,13 @@ class ExecuteAsyncTest {
 
       val call = client.newCall(request)
 
-      try {
+      assertFailsWith<IOException> {
         call.executeAsync().use {
           call.cancel()
           withContext(Dispatchers.IO) {
             it.body.string()
           }
-          fail("No expected to get response")
         }
-      } catch (ioe: IOException) {
-        // expected
       }
 
       assertThat(call.isCanceled()).isTrue()
@@ -142,10 +135,11 @@ class ExecuteAsyncTest {
   fun failedCall() {
     runTest {
       server.enqueue(
-        MockResponse(
-          body = "abc",
-          socketPolicy = DisconnectAfterRequest,
-        ),
+        MockResponse
+          .Builder()
+          .body("abc")
+          .onResponseStart(SocketEffect.ShutdownConnection)
+          .build(),
       )
 
       val call = client.newCall(request)
@@ -184,7 +178,8 @@ class ExecuteAsyncTest {
   /** A call that keeps track of whether its response body is closed. */
   private class ClosableCall : FailingCall() {
     private val response =
-      Response.Builder()
+      Response
+        .Builder()
         .request(Request("https://example.com/".toHttpUrl()))
         .protocol(Protocol.HTTP_1_1)
         .message("OK")
@@ -202,8 +197,7 @@ class ExecuteAsyncTest {
                 }
               }.buffer()
           },
-        )
-        .build()
+        ).build()
 
     var responseClosed = false
     var canceled = false

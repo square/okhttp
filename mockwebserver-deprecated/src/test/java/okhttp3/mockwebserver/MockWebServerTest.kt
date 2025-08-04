@@ -266,11 +266,19 @@ class MockWebServerTest {
     server.enqueue(MockResponse()) // The jdk's HttpUrlConnection is a bastard.
     server.enqueue(MockResponse())
     try {
-      server.url("/a").toUrl().openConnection().getInputStream()
+      server
+        .url("/a")
+        .toUrl()
+        .openConnection()
+        .getInputStream()
       fail<Any>()
     } catch (expected: IOException) {
     }
-    server.url("/b").toUrl().openConnection().getInputStream() // Should succeed.
+    server
+      .url("/b")
+      .toUrl()
+      .openConnection()
+      .getInputStream() // Should succeed.
   }
 
   /**
@@ -390,6 +398,9 @@ class MockWebServerTest {
     } catch (e: ProtocolException) {
       // On Android, HttpURLConnection is implemented by OkHttp v2. OkHttp
       // treats an incomplete response body as a ProtocolException.
+    } catch (ioe: IOException) {
+      // Change in https://bugs.openjdk.org/browse/JDK-8335135
+      assertThat(ioe.message).isEqualTo("Premature EOF")
     }
   }
 
@@ -452,7 +463,11 @@ class MockWebServerTest {
         object : Statement() {
           override fun evaluate() {
             called.set(true)
-            server.url("/").toUrl().openConnection().connect()
+            server
+              .url("/")
+              .toUrl()
+              .openConnection()
+              .connect()
           }
         },
         Description.EMPTY,
@@ -460,7 +475,11 @@ class MockWebServerTest {
     statement.evaluate()
     assertThat(called.get()).isTrue()
     try {
-      server.url("/").toUrl().openConnection().connect()
+      server
+        .url("/")
+        .toUrl()
+        .openConnection()
+        .connect()
       fail<Any>()
     } catch (expected: ConnectException) {
     }
@@ -494,6 +513,7 @@ class MockWebServerTest {
     assertThat(request.requestLine).isEqualTo(
       "GET /a/deep/path?key=foo%20bar HTTP/1.1",
     )
+    assertThat(request.path).isEqualTo("/a/deep/path?key=foo%20bar")
     val requestUrl = request.requestUrl
     assertThat(requestUrl!!.scheme).isEqualTo("http")
     assertThat(requestUrl.host).isEqualTo(server.hostName)
@@ -593,20 +613,24 @@ class MockWebServerTest {
     platform.assumeNotBouncyCastle()
     platform.assumeNotConscrypt()
     val clientCa =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .build()
     val serverCa =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .build()
     val serverCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(serverCa)
         .addSubjectAlternativeName(server.hostName)
         .build()
     val serverHandshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addTrustedCertificate(clientCa.certificate)
         .heldCertificate(serverCertificate)
         .build()
@@ -614,11 +638,13 @@ class MockWebServerTest {
     server.enqueue(MockResponse().setBody("abc"))
     server.requestClientAuth()
     val clientCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .signedBy(clientCa)
         .build()
     val clientHandshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .addTrustedCertificate(serverCa.certificate)
         .heldCertificate(clientCertificate)
         .build()

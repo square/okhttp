@@ -56,16 +56,17 @@ class AlpnOverrideTest {
   @Test
   fun getWithCustomSocketFactory() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(CustomSSLSocketFactory(client.sslSocketFactory), client.x509TrustManager!!)
         .connectionSpecs(
           listOf(
-            ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+            ConnectionSpec
+              .Builder(ConnectionSpec.MODERN_TLS)
               .supportsTlsExtensions(false)
               .build(),
           ),
-        )
-        .eventListener(
+        ).eventListener(
           object : EventListener() {
             override fun connectionAcquired(
               call: Call,
@@ -76,11 +77,11 @@ class AlpnOverrideTest {
               println("Negotiated " + sslSocket.applicationProtocol)
             }
           },
-        )
-        .build()
+        ).build()
 
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://www.google.com")
         .build()
     client.newCall(request).execute().use { response ->

@@ -17,12 +17,12 @@ package okhttp3.sse.internal
 
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
 import okhttp3.sse.EventSources.processResponse
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -31,18 +31,15 @@ import org.junit.jupiter.api.extension.RegisterExtension
 class EventSourcesHttpTest {
   @RegisterExtension
   val platform = PlatformRule()
-  private lateinit var server: MockWebServer
+
+  @StartStop
+  private val server = MockWebServer()
 
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
 
   private val listener = EventSourceRecorder()
   private val client = clientTestRule.newClient()
-
-  @BeforeEach
-  fun before(server: MockWebServer) {
-    this.server = server
-  }
 
   @AfterEach
   fun after() {
@@ -52,7 +49,8 @@ class EventSourcesHttpTest {
   @Test
   fun processResponse() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
@@ -63,7 +61,8 @@ class EventSourcesHttpTest {
         .build(),
     )
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val response = client.newCall(request).execute()
@@ -76,7 +75,8 @@ class EventSourcesHttpTest {
   @Test
   fun cancelShortCircuits() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
@@ -88,7 +88,8 @@ class EventSourcesHttpTest {
     )
     listener.enqueueCancel() // Will cancel in onOpen().
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
         .build()
     val response = client.newCall(request).execute()

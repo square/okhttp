@@ -21,20 +21,16 @@ class QueueDispatcher : Dispatcher() {
   internal val delegate = QueueDispatcher()
 
   @Throws(InterruptedException::class)
-  override fun dispatch(request: RecordedRequest): MockResponse {
-    throw UnsupportedOperationException("unexpected call")
-  }
+  override fun dispatch(request: RecordedRequest): MockResponse = throw UnsupportedOperationException("unexpected call")
 
-  override fun peek(): MockResponse {
-    throw UnsupportedOperationException("unexpected call")
-  }
+  override fun peek(): MockResponse = throw UnsupportedOperationException("unexpected call")
 
   fun enqueueResponse(response: MockResponse) {
-    delegate.enqueueResponse(response.wrap())
+    delegate.enqueue(response.wrap())
   }
 
   override fun shutdown() {
-    delegate.shutdown()
+    delegate.close()
   }
 
   fun setFailFast(failFast: Boolean) {

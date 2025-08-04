@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
 package okhttp3.internal.http
 
@@ -30,8 +29,8 @@ import okhttp3.internal.format
 class RecordingProxySelector : ProxySelector() {
   @JvmField val proxies = mutableListOf<Proxy>()
 
-  private val requestedUris = mutableListOf<URI>()
-  private val failures = mutableListOf<String>()
+  val requestedUris = mutableListOf<URI>()
+  val failures = mutableListOf<String>()
 
   override fun select(uri: URI): List<Proxy> {
     requestedUris.add(uri)
