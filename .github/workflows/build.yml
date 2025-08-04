@@ -89,7 +89,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew check -PandroidBuild=true -PgraalBuild=true -x test -x test
+        run: ./gradlew check -PgraalBuild=true -x jvmTest -x test
 
   testopenjdk11:
     permissions:
@@ -475,7 +475,7 @@ jobs:
       - uses: graalvm/setup-graalvm@v1
         with:
           distribution: 'graalvm'
-          java-version: 21
+          java-version: 24
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: 'gradle'
           native-image-job-reports: true
@@ -531,7 +531,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Gradle cache
-        run: ./gradlew -PandroidBuild=true :android-test:test
+        run: ./gradlew :android-test:test
 
       - name: AVD cache
         uses: actions/cache@v4
@@ -558,7 +558,7 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
-          script: ./gradlew -PandroidBuild=true :android-test:connectedCheck
+          script: ./gradlew :android-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
 
@@ -567,7 +567,19 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
-          script: ./gradlew -PandroidBuild=true :android-test-app:connectedCheck
+          script: ./gradlew :android-test-app:connectedCheck
+        env:
+          API_LEVEL: ${{ matrix.api-level }}
+
+      - name: Build Release App
+        run: ./gradlew android-test-app:lint android-test-app:assembleRelease
+
+      - name: Run Release Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
+          script: ./gradlew :android-test-app:connectedReleaseAndroidTest
         env:
           API_LEVEL: ${{ matrix.api-level }}
 

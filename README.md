@@ -96,6 +96,9 @@ Requirements
 
 OkHttp works on Android 5.0+ (API level 21+) and Java 8+.
 
+On Android, OkHttp uses [AndroidX Startup][androidx_startup]. If you disable the initializer in the manifest,
+then apps are responsible for calling `OkHttp.initialize(applicationContext)` in `Application.onCreate`.
+
 OkHttp depends on [Okio][okio] for high-performance I/O and the [Kotlin standard library][kotlin]. Both are small libraries with strong backward-compatibility.
 
 We highly recommend you keep OkHttp up-to-date. As with auto-updating web browsers, staying current
@@ -202,9 +205,7 @@ more full featured testing library such as [MockServer](https://www.mock-server.
 GraalVM Native Image
 --------------------
 
-Building your native images with Graal https://www.graalvm.org/ should work automatically.
-This is not currently in a final released version, so `5.0.0-alpha.2` should be used.
-Please report any bugs or workarounds you find.
+Building your native images with [GraalVM] should work automatically.
 
 See the okcurl module for an example build.
 
@@ -232,14 +233,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
+ [GraalVM]: https://www.graalvm.org/
+ [androidx_startup]: https://developer.android.com/jetpack/androidx/releases/startup
  [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
  [changelog]: https://square.github.io/okhttp/changelog/
  [conscrypt]: https://github.com/google/conscrypt/
  [get_example]: https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/GetExample.java
  [kotlin]: https://kotlinlang.org/
  [okhttp3_pro]: https://raw.githubusercontent.com/square/okhttp/master/okhttp/src/main/resources/META-INF/proguard/okhttp3.pro
- [okhttp_312x]: https://github.com/square/okhttp/tree/okhttp_3.12.x
  [okhttp]: https://square.github.io/okhttp/
+ [okhttp_312x]: https://github.com/square/okhttp/tree/okhttp_3.12.x
  [okio]: https://github.com/square/okio
  [post_example]: https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/PostExample.java
  [r8_proguard]: https://square.github.io/okhttp/features/r8_proguard/

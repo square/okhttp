@@ -21,24 +21,12 @@ import java.util.concurrent.FutureTask
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import mockwebserver3.SocketHandler
-import okio.BufferedSink
-import okio.BufferedSource
+import okhttp3.internal.connection.BufferedSocket
+import okhttp3.internal.connection.asBufferedSocket
 import okio.Socket
-import okio.buffer
 import okio.utf8Size
 
 private typealias Action = (BufferedSocket) -> Unit
-
-private class BufferedSocket(
-  val socket: Socket,
-) {
-  val source: BufferedSource = socket.source.buffer()
-  val sink: BufferedSink = socket.sink.buffer()
-
-  fun cancel() {
-    socket.cancel()
-  }
-}
 
 /**
  * A scriptable request/response conversation. Create the script by calling methods like
@@ -82,7 +70,7 @@ class MockSocketHandler : SocketHandler {
   @JvmOverloads
   fun sendResponse(
     s: String,
-    responseSent: CountDownLatch = CountDownLatch(0),
+    responseSent: CountDownLatch = CountDownLatch(1),
   ) = apply {
     actions += { stream ->
       stream.sink.writeUtf8(s)
@@ -104,7 +92,7 @@ class MockSocketHandler : SocketHandler {
   }
 
   override fun handle(socket: Socket) {
-    val task = serviceSocketTask(BufferedSocket(socket))
+    val task = serviceSocketTask(socket.asBufferedSocket())
     results.add(task)
     task.run()
   }

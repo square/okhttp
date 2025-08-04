@@ -83,6 +83,18 @@ fun Project.applyOsgiMultiplatform(vararg bndProperties: String) {
 
       override fun getClassesTaskName() = "${jvmMainSourceSet.classesTaskName}ForFakeMain"
 
+      override fun getCompileOnlyConfigurationName(): String = jvmMainSourceSet.compileOnlyConfigurationName + "ForFakeMain"
+
+      override fun getCompileClasspathConfigurationName(): String = jvmMainSourceSet.compileClasspathConfigurationName + "ForFakeMain"
+
+      override fun getImplementationConfigurationName(): String = jvmMainSourceSet.implementationConfigurationName + "ForFakeMain"
+
+      override fun getAnnotationProcessorConfigurationName(): String = jvmMainSourceSet.annotationProcessorConfigurationName + "ForFakeMain"
+
+      override fun getRuntimeClasspathConfigurationName(): String = jvmMainSourceSet.runtimeClasspathConfigurationName + "ForFakeMain"
+
+      override fun getRuntimeOnlyConfigurationName(): String = jvmMainSourceSet.runtimeOnlyConfigurationName + "ForFakeMain"
+
       override fun getTaskName(
         verb: String?,
         target: String?,

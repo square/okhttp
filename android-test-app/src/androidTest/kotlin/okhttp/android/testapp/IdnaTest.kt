@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Square, Inc.
+ * Copyright (c) 2025 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3
+package okhttp3.android
 
-import assertk.assertThat
-import assertk.assertions.matches
-import org.junit.jupiter.api.Test
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
-class OkHttpTest {
+class IdnaTest {
   @Test
-  fun testVersion() {
-    assertThat(OkHttp.VERSION).matches(Regex("[0-9]+\\.[0-9]+\\.[0-9]+(-.+)?"))
+  fun testHostnameFunction() {
+    assertEquals("xn--n3h.net", "https://☃.net/robots.txt".toHttpUrl().host)
   }
 }

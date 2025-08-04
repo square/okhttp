@@ -2,7 +2,6 @@
 
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
-import com.vanniktech.maven.publish.SonatypeHost
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
@@ -100,7 +99,9 @@ subprojects {
   // These are applied inside the okhttp module for that case specifically
   if (project.name != "okhttp") {
     apply(plugin = "biz.aQute.bnd.builder")
-    apply(plugin = "io.github.usefulness.maven-sympathy")
+    if (project.name != "okhttp-testing-support") {
+      apply(plugin = "io.github.usefulness.maven-sympathy")
+    }
   }
 
   // Skip samples parent
@@ -176,8 +177,8 @@ subprojects {
 
   val javaVersionSetting =
     if (testJavaVersion > 8 && (project.name == "okcurl" || project.name == "native-image-tests")) {
-      // Depends on native-image-tools which is 11+, but avoids on Java 8 tests
-      "11"
+      // Depends on native-image-tools which is 17+, but avoids on Java 8 tests
+      "17"
     } else {
       "1.8"
     }
@@ -317,7 +318,7 @@ subprojects {
 
   plugins.withId("com.vanniktech.maven.publish.base") {
     configure<MavenPublishBaseExtension> {
-      publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
+      publishToMavenCentral(automaticRelease = true)
       signAllPublications()
       pom {
         name.set(project.name)

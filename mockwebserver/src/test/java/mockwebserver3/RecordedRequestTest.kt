@@ -21,10 +21,12 @@ import assertk.assertions.isEqualTo
 import java.net.InetAddress
 import java.net.Socket
 import mockwebserver3.internal.DEFAULT_REQUEST_LINE_HTTP_1
+import mockwebserver3.internal.MockWebServerSocket
 import mockwebserver3.internal.RecordedRequest
 import mockwebserver3.internal.decodeRequestLine
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
+import okio.Buffer
 import okio.ByteString
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -35,9 +37,11 @@ class RecordedRequestTest {
 
   @Test fun testIPv4() {
     val socket =
-      FakeSocket(
-        localAddress = InetAddress.getByAddress("127.0.0.1", byteArrayOf(127, 0, 0, 1)),
-        localPort = 80,
+      MockWebServerSocket(
+        FakeSocket(
+          localAddress = InetAddress.getByAddress("127.0.0.1", byteArrayOf(127, 0, 0, 1)),
+          localPort = 80,
+        ),
       )
     val request = RecordedRequest(DEFAULT_REQUEST_LINE_HTTP_1, headers, emptyList(), 0, ByteString.EMPTY, 0, 0, socket)
     assertThat(request.url.toString()).isEqualTo("http://127.0.0.1/")
@@ -45,9 +49,11 @@ class RecordedRequestTest {
 
   @Test fun testAuthorityForm() {
     val socket =
-      FakeSocket(
-        localAddress = InetAddress.getByAddress("127.0.0.1", byteArrayOf(127, 0, 0, 1)),
-        localPort = 80,
+      MockWebServerSocket(
+        FakeSocket(
+          localAddress = InetAddress.getByAddress("127.0.0.1", byteArrayOf(127, 0, 0, 1)),
+          localPort = 80,
+        ),
       )
     val requestLine = decodeRequestLine("CONNECT example.com:8080 HTTP/1.1")
     val request = RecordedRequest(requestLine, headers, emptyList(), 0, ByteString.EMPTY, 0, 0, socket)
@@ -57,9 +63,11 @@ class RecordedRequestTest {
 
   @Test fun testAbsoluteForm() {
     val socket =
-      FakeSocket(
-        localAddress = InetAddress.getByAddress("127.0.0.1", byteArrayOf(127, 0, 0, 1)),
-        localPort = 80,
+      MockWebServerSocket(
+        FakeSocket(
+          localAddress = InetAddress.getByAddress("127.0.0.1", byteArrayOf(127, 0, 0, 1)),
+          localPort = 80,
+        ),
       )
     val requestLine = decodeRequestLine("GET http://example.com:8080/index.html HTTP/1.1")
     val request = RecordedRequest(requestLine, headers, emptyList(), 0, ByteString.EMPTY, 0, 0, socket)
@@ -69,9 +77,11 @@ class RecordedRequestTest {
 
   @Test fun testAsteriskForm() {
     val socket =
-      FakeSocket(
-        localAddress = InetAddress.getByAddress("127.0.0.1", byteArrayOf(127, 0, 0, 1)),
-        localPort = 80,
+      MockWebServerSocket(
+        FakeSocket(
+          localAddress = InetAddress.getByAddress("127.0.0.1", byteArrayOf(127, 0, 0, 1)),
+          localPort = 80,
+        ),
       )
     val requestLine = decodeRequestLine("OPTIONS * HTTP/1.1")
     val request =
@@ -91,13 +101,15 @@ class RecordedRequestTest {
 
   @Test fun testIpv6() {
     val socket =
-      FakeSocket(
-        localAddress =
-          InetAddress.getByAddress(
-            "::1",
-            byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-          ),
-        localPort = 80,
+      MockWebServerSocket(
+        FakeSocket(
+          localAddress =
+            InetAddress.getByAddress(
+              "::1",
+              byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
+            ),
+          localPort = 80,
+        ),
       )
     val request = RecordedRequest(DEFAULT_REQUEST_LINE_HTTP_1, headers, emptyList(), 0, ByteString.EMPTY, 0, 0, socket)
     assertThat(request.url.toString()).isEqualTo("http://[::1]/")
@@ -105,9 +117,11 @@ class RecordedRequestTest {
 
   @Test fun testUsesLocal() {
     val socket =
-      FakeSocket(
-        localAddress = InetAddress.getByAddress("127.0.0.1", byteArrayOf(127, 0, 0, 1)),
-        localPort = 80,
+      MockWebServerSocket(
+        FakeSocket(
+          localAddress = InetAddress.getByAddress("127.0.0.1", byteArrayOf(127, 0, 0, 1)),
+          localPort = 80,
+        ),
       )
     val request = RecordedRequest(DEFAULT_REQUEST_LINE_HTTP_1, headers, emptyList(), 0, ByteString.EMPTY, 0, 0, socket)
     assertThat(request.url.toString()).isEqualTo("http://127.0.0.1/")
@@ -116,13 +130,15 @@ class RecordedRequestTest {
   @Test fun testHostname() {
     val headers = headersOf("Host", "host-from-header.com")
     val socket =
-      FakeSocket(
-        localAddress =
-          InetAddress.getByAddress(
-            "host-from-address.com",
-            byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-          ),
-        localPort = 80,
+      MockWebServerSocket(
+        FakeSocket(
+          localAddress =
+            InetAddress.getByAddress(
+              "host-from-address.com",
+              byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
+            ),
+          localPort = 80,
+        ),
       )
     val request = RecordedRequest(DEFAULT_REQUEST_LINE_HTTP_1, headers, emptyList(), 0, ByteString.EMPTY, 0, 0, socket)
     assertThat(request.url.toString()).isEqualTo("http://host-from-header.com/")
@@ -134,6 +150,10 @@ class RecordedRequestTest {
     private val remoteAddress: InetAddress = localAddress,
     private val remotePort: Int = 1234,
   ) : Socket() {
+    override fun getInputStream() = Buffer().inputStream()
+
+    override fun getOutputStream() = Buffer().outputStream()
+
     override fun getInetAddress() = remoteAddress
 
     override fun getLocalAddress() = localAddress

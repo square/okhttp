@@ -16,6 +16,9 @@
  */
 package okhttp.android.test
 
+import androidx.test.core.app.ApplicationProvider
+import okhttp3.OkHttp
+import org.junit.Before
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -24,4 +27,11 @@ import org.robolectric.annotation.Config
 @Config(
   sdk = [21, 26, 30, 33, 35],
 )
-class RobolectricOkHttpClientTest : BaseOkHttpClientUnitTest()
+class RobolectricOkHttpClientTest : BaseOkHttpClientUnitTest() {
+  @Before
+  fun setContext() {
+    // This is awkward because Robolectric won't run our initializers and we don't want test deps
+    // https://github.com/robolectric/robolectric/issues/8461
+    OkHttp.initialize(ApplicationProvider.getApplicationContext())
+  }
+}

@@ -20,7 +20,7 @@ import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.net.ProtocolException
 import java.net.Proxy
-import java.net.Socket
+import java.net.Socket as JavaNetSocket
 import java.net.UnknownServiceException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
@@ -42,11 +42,6 @@ import okhttp3.internal.http1.Http1ExchangeCodec
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.toHostHeader
-import okio.BufferedSink
-import okio.BufferedSource
-import okio.buffer
-import okio.sink
-import okio.source
 
 /**
  * A single attempt to connect to a remote server, including these steps:
@@ -85,17 +80,16 @@ class ConnectPlan(
   // These properties are initialized by connect() and never reassigned.
 
   /** The low-level TCP socket. */
-  private var rawSocket: Socket? = null
+  private var rawSocket: JavaNetSocket? = null
 
   /**
    * The application layer socket. Either an [SSLSocket] layered over [rawSocket], or [rawSocket]
    * itself if this connection does not use SSL.
    */
-  internal var socket: Socket? = null
+  internal var javaNetSocket: JavaNetSocket? = null
   private var handshake: Handshake? = null
   private var protocol: Protocol? = null
-  private lateinit var source: BufferedSource
-  private lateinit var sink: BufferedSink
+  private lateinit var socket: BufferedSocket
   private var connection: RealConnection? = null
 
   /** True if this connection is ready for use, including TCP, tunnels, and TLS. */
@@ -184,7 +178,7 @@ class ConnectPlan(
         // that happens, then we will have buffered bytes that are needed by the SSLSocket!
         // This check is imperfect: it doesn't tell us whether a handshake will succeed, just
         // that it will almost certainly fail because the proxy has sent unexpected data.
-        if (!source.buffer.exhausted() || !sink.buffer.exhausted()) {
+        if (!socket.source.buffer.exhausted() || !socket.sink.buffer.exhausted()) {
           throw IOException("TLS tunnel buffered too many bytes!")
         }
 
@@ -210,7 +204,7 @@ class ConnectPlan(
         connectTls(sslSocket, connectionSpec)
         user.secureConnectEnd(handshake)
       } else {
-        socket = rawSocket
+        javaNetSocket = rawSocket
         protocol =
           when {
             Protocol.H2_PRIOR_KNOWLEDGE in route.address.protocols -> Protocol.H2_PRIOR_KNOWLEDGE
@@ -224,11 +218,10 @@ class ConnectPlan(
           connectionPool = connectionPool,
           route = route,
           rawSocket = rawSocket,
-          socket = socket!!,
+          javaNetSocket = javaNetSocket!!,
           handshake = handshake,
           protocol = protocol!!,
-          source = source,
-          sink = sink,
+          socket = socket,
           pingIntervalMillis = pingIntervalMillis,
           connectionListener = connectionPool.connectionListener,
         )
@@ -254,7 +247,7 @@ class ConnectPlan(
     } finally {
       user.removePlanToCancel(this)
       if (!success) {
-        socket?.closeQuietly()
+        javaNetSocket?.closeQuietly()
         rawSocket.closeQuietly()
       }
     }
@@ -266,7 +259,7 @@ class ConnectPlan(
     val rawSocket =
       when (route.proxy.type()) {
         Proxy.Type.DIRECT, Proxy.Type.HTTP -> route.address.socketFactory.createSocket()!!
-        else -> Socket(route.proxy)
+        else -> JavaNetSocket(route.proxy)
       }
     this.rawSocket = rawSocket
 
@@ -289,8 +282,7 @@ class ConnectPlan(
     // https://github.com/square/okhttp/issues/3245
     // https://android-review.googlesource.com/#/c/271775/
     try {
-      source = rawSocket.source().buffer()
-      sink = rawSocket.sink().buffer()
+      this.socket = rawSocket.asBufferedSocket()
     } catch (npe: NullPointerException) {
       if (npe.message == NPE_THROW_WITH_NULL) {
         throw IOException(npe)
@@ -404,9 +396,8 @@ class ConnectPlan(
         } else {
           null
         }
-      socket = sslSocket
-      source = sslSocket.source().buffer()
-      sink = sslSocket.sink().buffer()
+      javaNetSocket = sslSocket
+      socket = sslSocket.asBufferedSocket()
       protocol = if (maybeProtocol != null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1
       success = true
     } finally {
@@ -433,11 +424,10 @@ class ConnectPlan(
           // No client for CONNECT tunnels:
           client = null,
           carrier = this,
-          source = source,
-          sink = sink,
+          socket = socket,
         )
-      source.timeout().timeout(readTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
-      sink.timeout().timeout(writeTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
+      socket.source.timeout().timeout(readTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
+      socket.sink.timeout().timeout(writeTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
       tunnelCodec.writeRequest(nextRequest.headers, requestLine)
       tunnelCodec.finishRequest()
       val response =
@@ -559,7 +549,7 @@ class ConnectPlan(
     )
 
   fun closeQuietly() {
-    socket?.closeQuietly()
+    javaNetSocket?.closeQuietly()
   }
 
   companion object {
