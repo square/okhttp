@@ -214,6 +214,36 @@ $ ./gradlew okcurl:nativeImage
 $ ./okcurl/build/graal/okcurl https://httpbin.org/get
 ```
 
+Java Modules
+------------
+
+OkHttp (5.3+) implements Java 9 Modules.
+
+With this in place Java builds should fail if apps attempt to use internal packages.
+
+```
+error: package okhttp3.internal.platform is not visible
+    okhttp3.internal.platform.Platform.get();
+                    ^
+  (package okhttp3.internal.platform is declared in module okhttp3,
+    which does not export it to module i.am.bad.and.i.should.feel.bad)
+```
+
+The stable public API is based on the list of defined modules:
+
+- okhttp3
+- okhttp3.brotli
+- okhttp3.coroutines
+- okhttp3.dnsoverhttps
+- okhttp3.java.net.cookiejar
+- okhttp3.logging
+- okhttp3.sse
+- okhttp3.tls
+- okhttp3.urlconnection
+- mockwebserver3
+- mockwebserver3.junit4
+- mockwebserver3.junit5
+
 License
 -------
 

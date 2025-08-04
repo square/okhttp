@@ -8,12 +8,9 @@ plugins {
   id("binary-compatibility-validator")
 }
 
+project.applyJavaModules("mockwebserver3.junit5")
+
 tasks {
-  jar {
-    manifest {
-      attributes("Automatic-Module-Name" to "mockwebserver3.junit5")
-    }
-  }
   test {
     useJUnitPlatform()
   }
