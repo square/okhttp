@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Square, Inc.
+ * Copyright (C) 2025 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import okio.IOException
  * attempt to mutate the event parameters, or be reentrant back into the client.
  * Any IO - writing to files or network should be done asynchronously.
  */
-@ExperimentalOkHttpApi
 abstract class ConnectionListener {
   /**
    * Invoked as soon as a call causes a connection to be started.
@@ -78,7 +77,6 @@ abstract class ConnectionListener {
    */
   open fun noNewExchanges(connection: Connection) {}
 
-  @ExperimentalOkHttpApi
   companion object {
     val NONE: ConnectionListener = object : ConnectionListener() {}
   }

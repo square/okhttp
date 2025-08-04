@@ -83,7 +83,6 @@ class ConnectionPool internal constructor(
   )
 
   // Public API
-  @ExperimentalOkHttpApi
   constructor(
     maxIdleConnections: Int = 5,
     keepAliveDuration: Long = 5,
