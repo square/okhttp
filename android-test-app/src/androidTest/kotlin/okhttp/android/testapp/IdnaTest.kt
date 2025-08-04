@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Block, Inc.
+ * Copyright (c) 2025 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,25 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
-package mockwebserver3.internal
+package okhttp3.android
 
-import java.io.InterruptedIOException
-import java.net.Socket
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
-/** Sleeps [nanos], throwing if the socket is closed before that period has elapsed. */
-internal fun Socket.sleepWhileOpen(nanos: Long) {
-  var ms = nanos / 1_000_000L
-  val ns = nanos - (ms * 1_000_000L)
-
-  while (ms > 100) {
-    Thread.sleep(100)
-    if (isClosed) throw InterruptedIOException("socket closed")
-    ms -= 100L
-  }
-
-  if (ms > 0L || ns > 0) {
-    Thread.sleep(ms, ns.toInt())
+class IdnaTest {
+  @Test
+  fun testHostnameFunction() {
+    assertEquals("xn--n3h.net", "https://☃.net/robots.txt".toHttpUrl().host)
   }
 }

@@ -80,6 +80,13 @@ class Request internal constructor(
       ),
   )
 
+  init {
+    val connectionHeader = headers["Connection"]
+    require(body == null || !"upgrade".equals(connectionHeader, ignoreCase = true)) {
+      "expected a null request body with 'Connection: upgrade'"
+    }
+  }
+
   fun header(name: String): String? = headers[name]
 
   fun headers(name: String): List<String> = headers.values(name)

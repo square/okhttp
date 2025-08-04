@@ -22,6 +22,7 @@ import okhttp3.Response
 import okhttp3.Route
 import okhttp3.internal.connection.RealCall
 import okio.Sink
+import okio.Socket
 import okio.Source
 
 /** Encodes HTTP requests and decodes HTTP responses. */
@@ -31,6 +32,9 @@ interface ExchangeCodec {
 
   /** Returns true if the response body and (possibly empty) trailers have been received. */
   val isResponseComplete: Boolean
+
+  /** The socket that carries this exchange. */
+  val socket: Socket
 
   /** Returns an output stream where the request body can be streamed. */
   @Throws(IOException::class)
@@ -66,9 +70,9 @@ interface ExchangeCodec {
   @Throws(IOException::class)
   fun openResponseBodySource(response: Response): Source
 
-  /** Returns the trailers after the HTTP response. May be empty. */
+  /** Returns the trailers after the HTTP response if they're ready. May be empty. */
   @Throws(IOException::class)
-  fun trailers(): Headers
+  fun peekTrailers(): Headers?
 
   /**
    * Cancel this stream. Resources held by this stream will be cleaned up, though not synchronously.

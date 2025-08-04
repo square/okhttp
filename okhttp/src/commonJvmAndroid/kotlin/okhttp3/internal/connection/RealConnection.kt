@@ -19,7 +19,7 @@ package okhttp3.internal.connection
 import java.io.IOException
 import java.lang.ref.Reference
 import java.net.Proxy
-import java.net.Socket
+import java.net.Socket as JavaNetSocket
 import java.net.SocketException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit.MILLISECONDS
@@ -51,14 +51,7 @@ import okhttp3.internal.http2.Settings
 import okhttp3.internal.http2.StreamResetException
 import okhttp3.internal.isHealthy
 import okhttp3.internal.tls.OkHostnameVerifier
-import okhttp3.internal.ws.RealWebSocket
 import okio.Buffer
-import okio.BufferedSink
-import okio.BufferedSource
-import okio.Sink
-import okio.Source
-import okio.Timeout
-import okio.buffer
 
 /**
  * A connection to a remote web server capable of carrying 1 or more concurrent streams.
@@ -71,16 +64,15 @@ class RealConnection internal constructor(
   val connectionPool: RealConnectionPool,
   override val route: Route,
   /** The low-level TCP socket. */
-  private val rawSocket: Socket,
+  private val rawSocket: JavaNetSocket,
   /**
    * The application layer socket. Either an [SSLSocket] layered over [rawSocket], or [rawSocket]
    * itself if this connection does not use SSL.
    */
-  private val socket: Socket,
+  private val javaNetSocket: JavaNetSocket,
   private val handshake: Handshake?,
   private val protocol: Protocol,
-  private val source: BufferedSource,
-  private val sink: BufferedSink,
+  private val socket: BufferedSocket,
   private val pingIntervalMillis: Int,
   internal val connectionListener: ConnectionListener,
 ) : Http2Connection.Listener(),
@@ -167,12 +159,12 @@ class RealConnection internal constructor(
 
   @Throws(IOException::class)
   private fun startHttp2() {
-    socket.soTimeout = 0 // HTTP/2 connection timeouts are set per-stream.
+    javaNetSocket.soTimeout = 0 // HTTP/2 connection timeouts are set per-stream.
     val flowControlListener = connectionListener as? FlowControlListener ?: FlowControlListener.None
     val http2Connection =
       Http2Connection
         .Builder(client = true, taskRunner)
-        .socket(socket, route.address.url.host, source, sink)
+        .socket(socket, route.address.url.host)
         .listener(this)
         .pingIntervalMillis(pingIntervalMillis)
         .flowControlListener(flowControlListener)
@@ -218,7 +210,7 @@ class RealConnection internal constructor(
     // 2. The routes must share an IP address.
     if (routes == null || !routeMatchesAny(routes)) return false
 
-    // 3. This connection's server certificate's must cover the new host.
+    // 3. This connection's server certificates must cover the new host.
     if (address.hostnameVerifier !== OkHostnameVerifier) return false
     if (!supportsUrl(address.url)) return false
 
@@ -277,39 +269,22 @@ class RealConnection internal constructor(
     client: OkHttpClient,
     chain: RealInterceptorChain,
   ): ExchangeCodec {
-    val socket = this.socket
-    val source = this.source
-    val sink = this.sink
+    val okHttpSocket = this.socket
     val http2Connection = this.http2Connection
 
     return if (http2Connection != null) {
       Http2ExchangeCodec(client, this, chain, http2Connection)
     } else {
-      socket.soTimeout = chain.readTimeoutMillis()
-      source.timeout().timeout(chain.readTimeoutMillis.toLong(), MILLISECONDS)
-      sink.timeout().timeout(chain.writeTimeoutMillis.toLong(), MILLISECONDS)
-      Http1ExchangeCodec(client, this, source, sink)
+      javaNetSocket.soTimeout = chain.readTimeoutMillis()
+      okHttpSocket.source.timeout().timeout(chain.readTimeoutMillis.toLong(), MILLISECONDS)
+      okHttpSocket.sink.timeout().timeout(chain.writeTimeoutMillis.toLong(), MILLISECONDS)
+      Http1ExchangeCodec(client, this, okHttpSocket)
     }
   }
 
-  @Throws(SocketException::class)
-  internal fun newWebSocketStreams(exchange: Exchange): RealWebSocket.Streams {
-    socket.soTimeout = 0
+  internal fun useAsSocket() {
+    javaNetSocket.soTimeout = 0
     noNewExchanges()
-    return object : RealWebSocket.Streams(true, source, sink) {
-      override fun close() {
-        exchange.bodyComplete<IOException?>(
-          bytesRead = -1L,
-          responseDone = true,
-          requestDone = true,
-          e = null,
-        )
-      }
-
-      override fun cancel() {
-        exchange.cancel()
-      }
-    }
   }
 
   override fun route(): Route = route
@@ -319,7 +294,7 @@ class RealConnection internal constructor(
     rawSocket.closeQuietly()
   }
 
-  override fun socket(): Socket = socket
+  override fun socket(): JavaNetSocket = javaNetSocket
 
   /** Returns true if this connection is ready to host new streams. */
   fun isHealthy(doExtensiveChecks: Boolean): Boolean {
@@ -328,9 +303,9 @@ class RealConnection internal constructor(
     val nowNs = System.nanoTime()
 
     if (rawSocket.isClosed ||
-      socket.isClosed ||
-      socket.isInputShutdown ||
-      socket.isOutputShutdown
+      javaNetSocket.isClosed ||
+      javaNetSocket.isInputShutdown ||
+      javaNetSocket.isOutputShutdown
     ) {
       return false
     }
@@ -342,7 +317,7 @@ class RealConnection internal constructor(
 
     val idleDurationNs = withLock { nowNs - idleAtNs }
     if (idleDurationNs >= IDLE_CONNECTION_HEALTHY_NS && doExtensiveChecks) {
-      return socket.isHealthy(source)
+      return javaNetSocket.isHealthy(socket.source)
     }
 
     return true
@@ -464,44 +439,30 @@ class RealConnection internal constructor(
       taskRunner: TaskRunner,
       connectionPool: RealConnectionPool,
       route: Route,
-      socket: Socket,
+      socket: JavaNetSocket,
       idleAtNs: Long,
     ): RealConnection {
+      val bufferedSocket =
+        object : BufferedSocket {
+          override val sink = Buffer()
+          override val source = Buffer()
+
+          override fun cancel() {
+          }
+        }
+
       val result =
         RealConnection(
           taskRunner = taskRunner,
           connectionPool = connectionPool,
           route = route,
-          rawSocket = Socket(),
-          socket = socket,
+          rawSocket = JavaNetSocket(),
+          javaNetSocket = socket,
           handshake = null,
           protocol = Protocol.HTTP_2,
-          source =
-            object : Source {
-              override fun close() = Unit
-
-              override fun read(
-                sink: Buffer,
-                byteCount: Long,
-              ): Long = throw UnsupportedOperationException()
-
-              override fun timeout(): Timeout = Timeout.NONE
-            }.buffer(),
-          sink =
-            object : Sink {
-              override fun close() = Unit
-
-              override fun flush() = Unit
-
-              override fun timeout(): Timeout = Timeout.NONE
-
-              override fun write(
-                source: Buffer,
-                byteCount: Long,
-              ): Unit = throw UnsupportedOperationException()
-            }.buffer(),
+          socket = bufferedSocket,
           pingIntervalMillis = 0,
-          ConnectionListener.NONE,
+          connectionListener = ConnectionListener.NONE,
         )
       result.idleAtNs = idleAtNs
       return result

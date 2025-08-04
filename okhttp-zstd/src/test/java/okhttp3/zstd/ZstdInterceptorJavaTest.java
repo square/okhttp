@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Square, Inc.
+ * Copyright (c) 2025 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.nativeimage
+package okhttp3.zstd;
 
-import org.graalvm.nativeimage.hosted.Feature
+import okhttp3.CompressionInterceptor;
+import okhttp3.Gzip;
+import okhttp3.brotli.Brotli;
+import org.junit.jupiter.api.Test;
 
-class TestRegistration : Feature {
-  override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess) {
+class ZstdInterceptorJavaTest {
+  @Test
+  public void testConstructor() {
+    CompressionInterceptor interceptor = new CompressionInterceptor(
+      Zstd.INSTANCE,
+      Gzip.INSTANCE,
+      Brotli.INSTANCE
+    );
   }
 }

@@ -326,6 +326,17 @@ public final class okhttp3/CipherSuite$Companion {
 	public final fun forJavaName (Ljava/lang/String;)Lokhttp3/CipherSuite;
 }
 
+public class okhttp3/CompressionInterceptor : okhttp3/Interceptor {
+	public fun <init> ([Lokhttp3/CompressionInterceptor$DecompressionAlgorithm;)V
+	public final fun getAlgorithms ()[Lokhttp3/CompressionInterceptor$DecompressionAlgorithm;
+	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
+}
+
+public abstract interface class okhttp3/CompressionInterceptor$DecompressionAlgorithm {
+	public abstract fun decompress (Lokio/BufferedSource;)Lokio/Source;
+	public abstract fun getEncoding ()Ljava/lang/String;
+}
+
 public abstract interface class okhttp3/Connection {
 	public abstract fun handshake ()Lokhttp3/Handshake;
 	public abstract fun protocol ()Lokhttp3/Protocol;
@@ -536,6 +547,12 @@ public final class okhttp3/FormBody$Builder {
 }
 
 public final class okhttp3/FormBody$Companion {
+}
+
+public final class okhttp3/Gzip : okhttp3/CompressionInterceptor$DecompressionAlgorithm {
+	public static final field INSTANCE Lokhttp3/Gzip;
+	public fun decompress (Lokio/BufferedSource;)Lokio/Source;
+	public fun getEncoding ()Ljava/lang/String;
 }
 
 public final class okhttp3/Handshake {
@@ -1115,11 +1132,13 @@ public final class okhttp3/Response : java/io/Closeable {
 	public final fun networkResponse ()Lokhttp3/Response;
 	public final fun newBuilder ()Lokhttp3/Response$Builder;
 	public final fun peekBody (J)Lokhttp3/ResponseBody;
+	public final fun peekTrailers ()Lokhttp3/Headers;
 	public final fun priorResponse ()Lokhttp3/Response;
 	public final fun protocol ()Lokhttp3/Protocol;
 	public final fun receivedResponseAtMillis ()J
 	public final fun request ()Lokhttp3/Request;
 	public final fun sentRequestAtMillis ()J
+	public final fun socket ()Lokio/Socket;
 	public fun toString ()Ljava/lang/String;
 	public final fun trailers ()Lokhttp3/Headers;
 }
@@ -1142,6 +1161,7 @@ public class okhttp3/Response$Builder {
 	public fun removeHeader (Ljava/lang/String;)Lokhttp3/Response$Builder;
 	public fun request (Lokhttp3/Request;)Lokhttp3/Response$Builder;
 	public fun sentRequestAtMillis (J)Lokhttp3/Response$Builder;
+	public fun socket (Lokio/Socket;)Lokhttp3/Response$Builder;
 	public fun trailers (Lokhttp3/TrailersSource;)Lokhttp3/Response$Builder;
 }
 
@@ -1220,9 +1240,14 @@ public abstract interface class okhttp3/TrailersSource {
 	public static final field Companion Lokhttp3/TrailersSource$Companion;
 	public static final field EMPTY Lokhttp3/TrailersSource;
 	public abstract fun get ()Lokhttp3/Headers;
+	public fun peek ()Lokhttp3/Headers;
 }
 
 public final class okhttp3/TrailersSource$Companion {
+}
+
+public final class okhttp3/TrailersSource$DefaultImpls {
+	public static fun peek (Lokhttp3/TrailersSource;)Lokhttp3/Headers;
 }
 
 public abstract interface class okhttp3/WebSocket {

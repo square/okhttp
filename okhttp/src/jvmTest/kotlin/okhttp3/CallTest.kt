@@ -2823,7 +2823,9 @@ open class CallTest {
     call.enqueue(callback)
     call.cancel()
     latch.countDown()
-    callback.await(server.url("/a")).assertFailure("Canceled", "Socket closed", "Socket is closed")
+    callback
+      .await(server.url("/a"))
+      .assertFailure("canceled", "Canceled", "Socket closed", "Socket is closed")
   }
 
   @Test
@@ -2831,7 +2833,9 @@ open class CallTest {
     val call = client.newCall(Request(server.url("/")))
     call.enqueue(callback)
     client.dispatcher.cancelAll()
-    callback.await(server.url("/")).assertFailure("Canceled", "Socket closed", "Socket is closed")
+    callback
+      .await(server.url("/"))
+      .assertFailure("canceled", "Canceled", "Socket closed", "Socket is closed")
   }
 
   @Test
@@ -2942,7 +2946,9 @@ open class CallTest {
     assertThat(server.takeRequest().url.encodedPath).isEqualTo("/a")
     callback.await(requestA.url).assertBody("A")
     // At this point we know the callback is ready, and that it will receive a cancel failure.
-    callback.await(requestB.url).assertFailure("Canceled", "Socket closed")
+    callback
+      .await(requestB.url)
+      .assertFailure("canceled", "Canceled", "Socket closed", "Socket is closed")
   }
 
   @Test
@@ -2974,6 +2980,7 @@ open class CallTest {
       "Canceled",
       "stream was reset: CANCEL",
       "Socket closed",
+      "Socket is closed",
     )
   }
 
@@ -4714,7 +4721,7 @@ open class CallTest {
         .build()
     executeSynchronously("/")
       .assertFailure(IOException::class.java)
-      .assertFailure("Socket closed", "Socket is closed")
+      .assertFailure("canceled", "Canceled", "Socket closed", "Socket is closed")
   }
 
   @Test
@@ -4804,7 +4811,8 @@ open class CallTest {
               .build()
           },
         ).build()
-    executeSynchronously("/").assertFailure("Canceled")
+    executeSynchronously("/")
+      .assertFailure("canceled", "Canceled", "Socket closed", "Socket is closed")
     assertThat(closed.get()).isTrue()
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (C) 2025 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.curl
+package okhttp3.zstd
 
-import com.github.ajalt.clikt.core.main
-import kotlin.test.Test
+import com.squareup.zstd.okio.zstdDecompress
+import okhttp3.CompressionInterceptor
+import okio.BufferedSource
+import okio.Source
 
-class OkcurlTest {
-  @Test
-  fun simple() {
-    Main().main(listOf("--help"))
-  }
+/**
+ * Support for Zstandard encoding. Use via the [CompressionInterceptor].
+ */
+object Zstd : CompressionInterceptor.DecompressionAlgorithm {
+  override val encoding: String get() = "zstd"
+
+  override fun decompress(compressedSource: BufferedSource): Source = compressedSource.zstdDecompress()
 }
