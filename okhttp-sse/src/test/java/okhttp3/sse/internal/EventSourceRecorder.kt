@@ -78,10 +78,9 @@ class EventSourceRecorder : EventSourceListener() {
     }
   }
 
-  private fun nextEvent(): Any {
-    return events.poll(10, TimeUnit.SECONDS)
+  private fun nextEvent(): Any =
+    events.poll(10, TimeUnit.SECONDS)
       ?: throw AssertionError("Timed out waiting for event.")
-  }
 
   fun assertExhausted() {
     assertThat(events).isEmpty()

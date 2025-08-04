@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+  implementation(projects.okhttp)
   implementation(projects.mockwebserver)
   implementation(libs.squareup.moshi)
 }

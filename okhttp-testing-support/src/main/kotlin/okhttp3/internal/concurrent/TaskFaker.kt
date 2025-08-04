@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+
+@file:Suppress(
+  "CANNOT_OVERRIDE_INVISIBLE_MEMBER",
+  "INVISIBLE_MEMBER",
+  "INVISIBLE_REFERENCE",
+)
 
 package okhttp3.internal.concurrent
 
@@ -25,9 +30,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
-import okhttp3.OkHttpClient
 import okhttp3.TestUtil.threadFactory
-import okhttp3.internal.connection.Locks.withLock
 
 /**
  * Runs a [TaskRunner] in a controlled environment so that everything is sequential and
@@ -44,20 +47,6 @@ import okhttp3.internal.connection.Locks.withLock
  *  * By completing.
  */
 class TaskFaker : Closeable {
-  @Suppress("NOTHING_TO_INLINE")
-  internal inline fun Any.assertThreadHoldsLock() {
-    if (assertionsEnabled && !taskRunner.lock.isHeldByCurrentThread) {
-      throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
-    }
-  }
-
-  @Suppress("NOTHING_TO_INLINE")
-  internal inline fun Any.assertThreadDoesntHoldLock() {
-    if (assertionsEnabled && taskRunner.lock.isHeldByCurrentThread) {
-      throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
-    }
-  }
-
   val logger = Logger.getLogger("TaskFaker." + instance++)
 
   /** Though this executor service may hold many threads, they are not executed concurrently. */
@@ -65,32 +54,32 @@ class TaskFaker : Closeable {
 
   /**
    * True if this task faker has ever had multiple tasks scheduled to run concurrently. Guarded by
-   * [TaskRunner.lock].
+   * `this`.
    */
   var isParallel = false
 
-  /** Number of calls to [TaskRunner.Backend.execute]. Guarded by [TaskRunner.lock]. */
+  /** Number of calls to [TaskRunner.Backend.execute]. Guarded by `this`. */
   var executeCallCount = 0
 
   /** Guarded by [taskRunner]. */
   var nanoTime = 0L
     private set
 
-  /** Backlog of tasks to run. Only one task runs at a time. Guarded by [TaskRunner.lock]. */
+  /** Backlog of tasks to run. Only one task runs at a time. Guarded by `this`. */
   private val serialTaskQueue = ArrayDeque<SerialTask>()
 
-  /** The task that's currently executing. Guarded by [TaskRunner.lock]. */
+  /** The task that's currently executing. Guarded by `this`. */
   private var currentTask: SerialTask = TestThreadSerialTask
 
-  /** The coordinator task if it's waiting, and how it will resume. Guarded by [TaskRunner.lock]. */
+  /** The coordinator task if it's waiting, and how it will resume. Guarded by `this`. */
   private var waitingCoordinatorTask: SerialTask? = null
   private var waitingCoordinatorInterrupted = false
   private var waitingCoordinatorNotified = false
 
-  /** How many times a new task has been started. Guarded by [TaskRunner.lock]. */
+  /** How many times a new task has been started. Guarded by `this`. */
   private var contextSwitchCount = 0
 
-  /** Guarded by [TaskRunner.lock]. */
+  /** Guarded by `this`. */
   private var activeThreads = 0
 
   /** A task runner that posts tasks to this fake. Tasks won't be executed until requested. */
@@ -101,7 +90,7 @@ class TaskFaker : Closeable {
           taskRunner: TaskRunner,
           runnable: Runnable,
         ) {
-          taskRunner.assertThreadHoldsLock()
+          taskRunner.assertLockHeld()
 
           val queuedTask = RunnableSerialTask(runnable)
           serialTaskQueue += queuedTask
@@ -112,19 +101,19 @@ class TaskFaker : Closeable {
         override fun nanoTime() = nanoTime
 
         override fun coordinatorNotify(taskRunner: TaskRunner) {
-          taskRunner.assertThreadHoldsLock()
+          taskRunner.assertLockHeld()
           check(waitingCoordinatorTask != null)
 
           // Queue a task to resume the waiting coordinator.
           serialTaskQueue +=
             object : SerialTask {
               override fun start() {
-                taskRunner.assertThreadHoldsLock()
+                taskRunner.assertLockHeld()
                 val coordinatorTask = waitingCoordinatorTask
                 if (coordinatorTask != null) {
                   waitingCoordinatorNotified = true
                   currentTask = coordinatorTask
-                  taskRunner.condition.signalAll()
+                  taskRunner.notifyAll()
                 } else {
                   startNextTask()
                 }
@@ -136,7 +125,7 @@ class TaskFaker : Closeable {
           taskRunner: TaskRunner,
           nanos: Long,
         ) {
-          taskRunner.assertThreadHoldsLock()
+          taskRunner.assertLockHeld()
           check(waitingCoordinatorTask == null)
           if (nanos == 0L) return
 
@@ -170,7 +159,7 @@ class TaskFaker : Closeable {
 
   /** Advance the simulated clock, then runs tasks that are ready. Used by the test thread only. */
   fun advanceUntil(newTime: Long) {
-    taskRunner.assertThreadDoesntHoldLock()
+    taskRunner.assertLockNotHeld()
 
     taskRunner.withLock {
       check(currentTask == TestThreadSerialTask)
@@ -181,7 +170,7 @@ class TaskFaker : Closeable {
 
   /** Confirm all tasks have completed. Used by the test thread only. */
   fun assertNoMoreTasks() {
-    taskRunner.assertThreadDoesntHoldLock()
+    taskRunner.assertLockNotHeld()
 
     taskRunner.withLock {
       assertThat(activeThreads).isEqualTo(0)
@@ -190,18 +179,18 @@ class TaskFaker : Closeable {
 
   /** Unblock a waiting task thread. Used by the test thread only. */
   fun interruptCoordinatorThread() {
-    taskRunner.assertThreadDoesntHoldLock()
+    taskRunner.assertLockNotHeld()
     require(currentTask == TestThreadSerialTask)
 
     // Queue a task to interrupt the waiting coordinator.
     serialTaskQueue +=
       object : SerialTask {
         override fun start() {
-          taskRunner.assertThreadHoldsLock()
+          taskRunner.assertLockHeld()
           waitingCoordinatorInterrupted = true
           val coordinatorTask = waitingCoordinatorTask ?: error("no coordinator waiting")
           currentTask = coordinatorTask
-          taskRunner.condition.signalAll()
+          taskRunner.notifyAll()
         }
       }
 
@@ -211,7 +200,7 @@ class TaskFaker : Closeable {
 
   /** Ask a single task to proceed. Used by the test thread only. */
   fun runNextTask() {
-    taskRunner.assertThreadDoesntHoldLock()
+    taskRunner.assertLockNotHeld()
 
     taskRunner.withLock {
       val contextSwitchCountBefore = contextSwitchCount
@@ -234,7 +223,7 @@ class TaskFaker : Closeable {
    * simulate races in tasks that doesn't have a deterministic sequence.
    */
   fun yield() {
-    taskRunner.assertThreadDoesntHoldLock()
+    taskRunner.assertLockNotHeld()
     taskRunner.withLock {
       yieldUntil()
     }
@@ -245,7 +234,7 @@ class TaskFaker : Closeable {
     strategy: ResumePriority = ResumePriority.AfterEnqueuedTasks,
     condition: () -> Boolean = { true },
   ) {
-    taskRunner.assertThreadHoldsLock()
+    taskRunner.assertLockHeld()
     val self = currentTask
 
     val yieldCompleteTask =
@@ -253,9 +242,9 @@ class TaskFaker : Closeable {
         override fun isReady() = condition()
 
         override fun start() {
-          taskRunner.assertThreadHoldsLock()
+          taskRunner.assertLockHeld()
           currentTask = self
-          taskRunner.condition.signalAll()
+          taskRunner.notifyAll()
         }
       }
 
@@ -270,7 +259,7 @@ class TaskFaker : Closeable {
 
     try {
       while (currentTask != self) {
-        taskRunner.condition.await()
+        taskRunner.wait()
       }
     } finally {
       serialTaskQueue.remove(yieldCompleteTask)
@@ -295,7 +284,7 @@ class TaskFaker : Closeable {
 
   /** Returns the task that was started, or null if there were no tasks to start. */
   private fun startNextTask(): SerialTask? {
-    taskRunner.assertThreadHoldsLock()
+    taskRunner.assertLockHeld()
 
     val index = serialTaskQueue.indexOfFirst { it.isReady() }
     if (index == -1) return null
@@ -323,12 +312,12 @@ class TaskFaker : Closeable {
     private val runnable: Runnable,
   ) : SerialTask {
     override fun start() {
-      taskRunner.assertThreadHoldsLock()
+      taskRunner.assertLockHeld()
       require(currentTask == this)
       activeThreads++
 
       tasksExecutor.execute {
-        taskRunner.assertThreadDoesntHoldLock()
+        taskRunner.assertLockNotHeld()
         require(currentTask == this)
         try {
           runnable.run()
@@ -349,7 +338,8 @@ class TaskFaker : Closeable {
    */
   private inner class TaskFakerBlockingQueue<T>(
     val delegate: BlockingQueue<T>,
-  ) : AbstractQueue<T>(), BlockingQueue<T> {
+  ) : AbstractQueue<T>(),
+    BlockingQueue<T> {
     override val size: Int = delegate.size
 
     private var editCount = 0
@@ -360,15 +350,17 @@ class TaskFaker : Closeable {
       timeout: Long,
       unit: TimeUnit,
     ): T? {
-      taskRunner.withLock {
+      return taskRunner.withLock {
         val waitUntil = nanoTime + unit.toNanos(timeout)
         while (true) {
           val result = poll()
-          if (result != null) return result
-          if (nanoTime >= waitUntil) return null
+          if (result != null) return@withLock result
+          if (nanoTime >= waitUntil) return@withLock null
           val editCountBefore = editCount
           yieldUntil { nanoTime >= waitUntil || editCount > editCountBefore }
         }
+        // TODO report compiler bug
+        TODO("Can't get here")
       }
     }
 
@@ -412,8 +404,5 @@ class TaskFaker : Closeable {
 
   companion object {
     var instance = 0
-
-    @JvmField
-    val assertionsEnabled: Boolean = OkHttpClient::class.java.desiredAssertionStatus()
   }
 }

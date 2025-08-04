@@ -20,7 +20,8 @@ import okhttp3.Request
 
 fun main() {
   val client =
-    OkHttpClient.Builder()
+    OkHttpClient
+      .Builder()
       .addInterceptor(BrotliInterceptor)
       .build()
 

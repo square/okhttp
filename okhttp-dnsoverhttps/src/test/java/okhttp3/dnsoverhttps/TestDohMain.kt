@@ -74,7 +74,8 @@ fun main() {
     val url = "https://dns.cloudflare.com/.not-so-well-known/run-dmc-query".toHttpUrl()
     val badProviders =
       listOf(
-        DnsOverHttps.Builder()
+        DnsOverHttps
+          .Builder()
           .client(bootstrapClient)
           .url(url)
           .post(true)
@@ -84,7 +85,8 @@ fun main() {
     println("cached first run\n****************\n")
     names = listOf("google.com", "graph.facebook.com")
     bootstrapClient =
-      bootstrapClient.newBuilder()
+      bootstrapClient
+        .newBuilder()
         .cache(dnsCache)
         .build()
     dnsProviders =

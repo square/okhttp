@@ -42,9 +42,7 @@ internal object CertificateAdapters {
    */
   internal val time: DerAdapter<Long> =
     object : DerAdapter<Long> {
-      override fun matches(header: DerHeader): Boolean {
-        return Adapters.UTC_TIME.matches(header) || Adapters.GENERALIZED_TIME.matches(header)
-      }
+      override fun matches(header: DerHeader): Boolean = Adapters.UTC_TIME.matches(header) || Adapters.GENERALIZED_TIME.matches(header)
 
       override fun fromDer(reader: DerReader): Long {
         val peekHeader =
@@ -215,17 +213,18 @@ internal object CertificateAdapters {
    * that follows.
    */
   private val extensionValue: BasicDerAdapter<Any?> =
-    Adapters.usingTypeHint { typeHint ->
-      when (typeHint) {
-        ObjectIdentifiers.SUBJECT_ALTERNATIVE_NAME -> subjectAlternativeName
-        ObjectIdentifiers.BASIC_CONSTRAINTS -> basicConstraints
-        else -> null
-      }
-    }.withExplicitBox(
-      tagClass = Adapters.OCTET_STRING.tagClass,
-      tag = Adapters.OCTET_STRING.tag,
-      forceConstructed = false,
-    )
+    Adapters
+      .usingTypeHint { typeHint ->
+        when (typeHint) {
+          ObjectIdentifiers.SUBJECT_ALTERNATIVE_NAME -> subjectAlternativeName
+          ObjectIdentifiers.BASIC_CONSTRAINTS -> basicConstraints
+          else -> null
+        }
+      }.withExplicitBox(
+        tagClass = Adapters.OCTET_STRING.tagClass,
+        tag = Adapters.OCTET_STRING.tag,
+        forceConstructed = false,
+      )
 
   /**
    * ```

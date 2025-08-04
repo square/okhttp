@@ -15,8 +15,7 @@ project.applyOsgi(
 )
 
 dependencies {
-  api(projects.okhttp)
-  compileOnly(libs.findbugs.jsr305)
+  "friendsApi"(projects.okhttp)
   compileOnly(libs.animalsniffer.annotations)
 }
 

@@ -23,7 +23,5 @@ object PlatformVersion {
     }
   }
 
-  fun getJvmSpecVersion(): String {
-    return System.getProperty("java.specification.version", "unknown")
-  }
+  fun getJvmSpecVersion(): String = System.getProperty("java.specification.version", "unknown")
 }

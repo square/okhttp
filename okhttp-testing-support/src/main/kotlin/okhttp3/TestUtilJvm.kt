@@ -36,9 +36,7 @@ object TestUtil {
   @JvmStatic val isGraalVmImage = System.getProperty("org.graalvm.nativeimage.imagecode") != null
 
   @JvmStatic
-  fun headerEntries(vararg elements: String?): List<Header> {
-    return List(elements.size / 2) { Header(elements[it * 2]!!, elements[it * 2 + 1]!!) }
-  }
+  fun headerEntries(vararg elements: String?): List<Header> = List(elements.size / 2) { Header(elements[it * 2]!!, elements[it * 2 + 1]!!) }
 
   @JvmStatic
   fun repeat(
@@ -125,15 +123,12 @@ object TestUtil {
   }
 
   @JvmStatic
-  fun threadFactory(name: String): ThreadFactory {
-    return object : ThreadFactory {
+  fun threadFactory(name: String): ThreadFactory =
+    object : ThreadFactory {
       private var nextId = 1
 
-      override fun newThread(runnable: Runnable): Thread {
-        return Thread(runnable, "$name-${nextId++}")
-      }
+      override fun newThread(runnable: Runnable): Thread = Thread(runnable, "$name-${nextId++}")
     }
-  }
 }
 
 fun getEnv(name: String) = System.getenv(name)

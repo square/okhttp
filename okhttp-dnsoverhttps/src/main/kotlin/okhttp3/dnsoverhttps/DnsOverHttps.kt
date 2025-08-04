@@ -202,23 +202,28 @@ class DnsOverHttps internal constructor(
     hostname: String,
     type: Int,
   ): Request =
-    Request.Builder().header("Accept", DNS_MESSAGE.toString()).apply {
-      val query = DnsRecordCodec.encodeQuery(hostname, type)
+    Request
+      .Builder()
+      .header("Accept", DNS_MESSAGE.toString())
+      .apply {
+        val query = DnsRecordCodec.encodeQuery(hostname, type)
 
-      if (post) {
-        url(url)
-          .cacheUrlOverride(
-            url.newBuilder()
-              .addQueryParameter("hostname", hostname).build(),
-          )
-          .post(query.toRequestBody(DNS_MESSAGE))
-      } else {
-        val encoded = query.base64Url().replace("=", "")
-        val requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build()
+        val dnsUrl: HttpUrl = this@DnsOverHttps.url
+        if (post) {
+          url(dnsUrl)
+            .cacheUrlOverride(
+              dnsUrl
+                .newBuilder()
+                .addQueryParameter("hostname", hostname)
+                .build(),
+            ).post(query.toRequestBody(DNS_MESSAGE))
+        } else {
+          val encoded = query.base64Url().replace("=", "")
+          val requestUrl = dnsUrl.newBuilder().addQueryParameter("dns", encoded).build()
 
-        url(requestUrl)
-      }
-    }.build()
+          url(requestUrl)
+        }
+      }.build()
 
   class Builder {
     internal var client: OkHttpClient? = null
@@ -299,8 +304,6 @@ class DnsOverHttps internal constructor(
       }
     }
 
-    internal fun isPrivateHost(host: String): Boolean {
-      return PublicSuffixDatabase.get().getEffectiveTldPlusOne(host) == null
-    }
+    internal fun isPrivateHost(host: String): Boolean = PublicSuffixDatabase.get().getEffectiveTldPlusOne(host) == null
   }
 }

@@ -28,7 +28,9 @@ import okhttp3.sse.EventSourceListener
 internal class RealEventSource(
   private val request: Request,
   private val listener: EventSourceListener,
-) : EventSource, ServerSentEventReader.Callback, Callback {
+) : EventSource,
+  ServerSentEventReader.Callback,
+  Callback {
   private var call: Call? = null
 
   @Volatile private var canceled = false

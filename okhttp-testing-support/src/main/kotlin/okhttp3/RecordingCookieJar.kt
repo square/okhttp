@@ -28,9 +28,7 @@ class RecordingCookieJar : CookieJar {
     requestCookies.add(cookies.toList())
   }
 
-  fun takeResponseCookies(): List<Cookie> {
-    return responseCookies.removeFirst()
-  }
+  fun takeResponseCookies(): List<Cookie> = responseCookies.removeFirst()
 
   fun assertResponseCookies(vararg cookies: String?) {
     assertThat(takeResponseCookies().map(Cookie::toString)).containsExactly(*cookies)
@@ -43,7 +41,5 @@ class RecordingCookieJar : CookieJar {
     responseCookies.add(cookies)
   }
 
-  override fun loadForRequest(url: HttpUrl): List<Cookie> {
-    return if (requestCookies.isEmpty()) emptyList() else requestCookies.removeFirst()
-  }
+  override fun loadForRequest(url: HttpUrl): List<Cookie> = if (requestCookies.isEmpty()) emptyList() else requestCookies.removeFirst()
 }

@@ -1,0 +1,6 @@
+public final class okhttp3/zstd/Zstd : okhttp3/CompressionInterceptor$DecompressionAlgorithm {
+	public static final field INSTANCE Lokhttp3/zstd/Zstd;
+	public fun decompress (Lokio/BufferedSource;)Lokio/Source;
+	public fun getEncoding ()Ljava/lang/String;
+}
+

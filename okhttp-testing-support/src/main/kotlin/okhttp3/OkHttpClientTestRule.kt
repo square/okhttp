@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@file:Suppress(
+  "CANNOT_OVERRIDE_INVISIBLE_MEMBER",
+  "INVISIBLE_MEMBER",
+  "INVISIBLE_REFERENCE",
+)
 
 package okhttp3
 
@@ -27,7 +31,7 @@ import java.util.logging.LogRecord
 import java.util.logging.Logger
 import okhttp3.internal.buildConnectionPool
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.connection.Locks.withLock
+import okhttp3.internal.concurrent.withLock
 import okhttp3.internal.connection.RealConnectionPool
 import okhttp3.internal.http2.Http2
 import okhttp3.internal.taskRunnerInternal
@@ -47,14 +51,16 @@ import org.junit.jupiter.api.extension.ExtensionContext
  * Use [newClient] as a factory for a OkHttpClient instances. These instances are specifically
  * configured for testing.
  */
-class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
+class OkHttpClientTestRule :
+  BeforeEachCallback,
+  AfterEachCallback {
   private val clientEventsList = mutableListOf<String>()
   private var testClient: OkHttpClient? = null
   private var uncaughtException: Throwable? = null
   private lateinit var testName: String
   private var defaultUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
   private var taskQueuesWereIdle: Boolean = false
-  val connectionListener = RecordingConnectionListener()
+  private val connectionListener = RecordingConnectionListener()
 
   var logger: Logger? = null
 
@@ -160,35 +166,33 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
       val backend = TaskRunner.RealBackend(loomThreadFactory())
       val taskRunner = TaskRunner(backend)
 
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .connectionPool(
           buildConnectionPool(
             connectionListener = connectionListener,
             taskRunner = taskRunner,
           ),
-        )
-        .dispatcher(Dispatcher(backend.executor))
+        ).dispatcher(Dispatcher(backend.executor))
         .taskRunnerInternal(taskRunner)
     } else {
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .connectionPool(ConnectionPool(connectionListener = connectionListener))
     }
 
   private fun loomThreadFactory(): ThreadFactory {
     val ofVirtual = Thread::class.java.getMethod("ofVirtual").invoke(null)
 
-    return Class.forName("java.lang.Thread\$Builder")
+    return Class
+      .forName("java.lang.Thread\$Builder")
       .getMethod("factory")
       .invoke(ofVirtual) as ThreadFactory
   }
 
-  private fun isLoom(): Boolean {
-    return getPlatformSystemProperty() == LOOM_PROPERTY
-  }
+  private fun isLoom(): Boolean = getPlatformSystemProperty() == LOOM_PROPERTY
 
-  fun newClientBuilder(): OkHttpClient.Builder {
-    return newClient().newBuilder()
-  }
+  fun newClientBuilder(): OkHttpClient.Builder = newClient().newBuilder()
 
   @Synchronized private fun addEvent(event: String) {
     if (recordEvents) {
@@ -302,10 +306,9 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   }
 
   @SuppressLint("NewApi")
-  private fun ExtensionContext.isFlaky(): Boolean {
-    return (testMethod.orElseGet { null }?.isAnnotationPresent(Flaky::class.java) == true) ||
+  private fun ExtensionContext.isFlaky(): Boolean =
+    (testMethod.orElseGet { null }?.isAnnotationPresent(Flaky::class.java) == true) ||
       (testClass.orElseGet { null }?.isAnnotationPresent(Flaky::class.java) == true)
-  }
 
   @Synchronized private fun logEvents() {
     // Will be ineffective if test overrides the listener
@@ -318,9 +321,7 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
     }
   }
 
-  fun recordedConnectionEventTypes(): List<String> {
-    return connectionListener.recordedEventTypes()
-  }
+  fun recordedConnectionEventTypes(): List<String> = connectionListener.recordedEventTypes()
 
   companion object {
     /**

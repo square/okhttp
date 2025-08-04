@@ -2,14 +2,15 @@
 
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
-import com.vanniktech.maven.publish.SonatypeHost
-import java.net.URI
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
+import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
+import java.net.URI
 
 buildscript {
   dependencies {
@@ -18,7 +19,6 @@ buildscript {
     classpath(libs.gradlePlugin.kotlinSerialization)
     classpath(libs.gradlePlugin.androidJunit5)
     classpath(libs.gradlePlugin.android)
-    classpath(libs.gradlePlugin.graal)
     classpath(libs.gradlePlugin.bnd)
     classpath(libs.gradlePlugin.shadow)
     classpath(libs.gradlePlugin.animalsniffer)
@@ -27,6 +27,8 @@ buildscript {
     classpath(libs.gradlePlugin.mavenPublish)
     classpath(libs.gradlePlugin.binaryCompatibilityValidator)
     classpath(libs.gradlePlugin.mavenSympathy)
+    classpath(libs.gradlePlugin.graalvmBuildTools)
+    classpath(libs.gradlePlugin.ksp)
   }
 
   repositories {
@@ -49,14 +51,14 @@ configure<SpotlessExtension> {
 
 allprojects {
   group = "com.squareup.okhttp3"
-  version = "5.0.0-SNAPSHOT"
+  version = "5.2.0-SNAPSHOT"
 
   repositories {
     mavenCentral()
     google()
   }
 
-  tasks.create("downloadDependencies") {
+  tasks.register("downloadDependencies") {
     description = "Download all dependencies to the Gradle cache"
     doLast {
       for (configuration in configurations) {
@@ -76,6 +78,9 @@ allprojects {
   }
 }
 
+val platform = System.getProperty("okhttp.platform", "jdk9")
+val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
+
 /** Configure building for Java+Kotlin projects. */
 subprojects {
   val project = this@subprojects
@@ -89,16 +94,34 @@ subprojects {
 
   apply(plugin = "checkstyle")
   apply(plugin = "ru.vyarus.animalsniffer")
-  apply(plugin = "biz.aQute.bnd.builder")
-  apply(plugin = "io.github.usefulness.maven-sympathy")
+
+  // The 'java' plugin has been applied, but it is not compatible with the Android plugins.
+  // These are applied inside the okhttp module for that case specifically
+  if (project.name != "okhttp") {
+    apply(plugin = "biz.aQute.bnd.builder")
+    if (project.name != "okhttp-testing-support") {
+      apply(plugin = "io.github.usefulness.maven-sympathy")
+    }
+  }
+
+  // Skip samples parent
+  if (project.buildFile.exists() && project.name != "okhttp") {
+    apply(plugin = "com.android.lint")
+
+    dependencies {
+      "lintChecks"(rootProject.libs.androidx.lint.gradle)
+    }
+  }
 
   tasks.withType<JavaCompile> {
     options.encoding = Charsets.UTF_8.toString()
   }
 
-  configure<JavaPluginExtension> {
-    toolchain {
-      languageVersion.set(JavaLanguageVersion.of(17))
+  if (plugins.hasPlugin(JavaBasePlugin::class.java)) {
+    extensions.configure<JavaPluginExtension> {
+      toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+      }
     }
   }
 
@@ -113,38 +136,59 @@ subprojects {
     }
   }
 
-  configure<CheckstyleExtension> {
-    config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
-    toolVersion = rootProject.libs.versions.checkStyle.get()
-    sourceSets = listOf(project.sourceSets["main"])
+  val androidSignature by configurations.creating
+  val jvmSignature by configurations.creating
+
+  // Handled in :okhttp directly
+  if (project.name != "okhttp") {
+    configure<CheckstyleExtension> {
+      config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
+      toolVersion = rootProject.libs.versions.checkStyle.get()
+      sourceSets = listOf(project.sourceSets["main"])
+    }
+
+    // Animal Sniffer confirms we generally don't use APIs not on Java 8.
+    configure<AnimalSnifferExtension> {
+      annotation = "okhttp3.internal.SuppressSignatureCheck"
+      sourceSets = listOf(project.sourceSets["main"])
+      signatures = androidSignature + jvmSignature
+      failWithoutSignatures = false
+    }
   }
 
-  // Animal Sniffer confirms we generally don't use APIs not on Java 8.
-  configure<AnimalSnifferExtension> {
-    annotation = "okhttp3.internal.SuppressSignatureCheck"
-    sourceSets = listOf(project.sourceSets["main"])
-  }
-
-  val signature: Configuration by configurations.getting
   dependencies {
     // No dependency requirements for testing-support.
     if (project.name == "okhttp-testing-support") return@dependencies
 
+    // okhttp configured specifically.
+    if (project.name == "okhttp") return@dependencies
+
     if (project.name == "mockwebserver3-junit5") {
       // JUnit 5's APIs need java.util.function.Function and java.util.Optional from API 24.
-      signature(rootProject.libs.signature.android.apilevel24) { artifact { type = "signature" } }
+      androidSignature(rootProject.libs.signature.android.apilevel24) { artifact { type = "signature" } }
     } else {
       // Everything else requires Android API 21+.
-      signature(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
+      androidSignature(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
     }
 
     // OkHttp requires Java 8+.
-    signature(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
+    jvmSignature(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
   }
 
+  val javaVersionSetting =
+    if (testJavaVersion > 8 && (project.name == "okcurl" || project.name == "native-image-tests")) {
+      // Depends on native-image-tools which is 17+, but avoids on Java 8 tests
+      "17"
+    } else {
+      "1.8"
+    }
+
+  val projectJvmTarget = JvmTarget.fromTarget(javaVersionSetting)
+  val projectJavaVersion = JavaVersion.toVersion(javaVersionSetting)
+
   tasks.withType<KotlinCompile> {
-    kotlinOptions {
-      jvmTarget = JavaVersion.VERSION_1_8.toString()
+    compilerOptions {
+      jvmTarget.set(projectJvmTarget)
       freeCompilerArgs = listOf(
         "-Xjvm-default=all",
       )
@@ -154,10 +198,14 @@ subprojects {
   val platform = System.getProperty("okhttp.platform", "jdk9")
   val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
 
-  val testRuntimeOnly: Configuration by configurations.getting
-  dependencies {
-    testRuntimeOnly(rootProject.libs.junit.jupiter.engine)
-    testRuntimeOnly(rootProject.libs.junit.vintage.engine)
+  if (project.name != "okhttp") {
+    val testRuntimeOnly: Configuration by configurations.getting
+    dependencies {
+      // https://junit.org/junit5/docs/current/user-guide/#running-tests-build-gradle-bom
+      testRuntimeOnly(rootProject.libs.junit.jupiter.engine)
+      testRuntimeOnly(rootProject.libs.junit.vintage.engine)
+      testRuntimeOnly(rootProject.libs.junit.platform.launcher)
+    }
   }
 
   tasks.withType<Test> {
@@ -190,46 +238,61 @@ subprojects {
   tasks.withType<Test>().configureEach {
     environment("OKHTTP_ROOT", rootDir)
   }
-
-  if (platform == "jdk8alpn") {
-    // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
-    val alpnBootVersion = alpnBootVersion()
-    if (alpnBootVersion != null) {
-      val alpnBootJar = configurations.detachedConfiguration(
-        dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")
-      ).singleFile
-      tasks.withType<Test> {
-        jvmArgs("-Xbootclasspath/p:${alpnBootJar}")
-      }
-    }
-  } else if (platform == "conscrypt") {
-    dependencies {
-      testRuntimeOnly(rootProject.libs.conscrypt.openjdk)
-    }
-  } else if (platform == "openjsse") {
-    dependencies {
-      testRuntimeOnly(rootProject.libs.openjsse)
-    }
+  tasks.withType<KotlinJvmTest>().configureEach {
+    environment("OKHTTP_ROOT", rootDir)
   }
 
   tasks.withType<JavaCompile> {
-    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-    targetCompatibility = JavaVersion.VERSION_1_8.toString()
+    sourceCompatibility = projectJavaVersion.toString()
+    targetCompatibility = projectJavaVersion.toString()
   }
 }
 
-// Opt-in to @ExperimentalOkHttpApi everywhere.
 subprojects {
-  plugins.withId("org.jetbrains.kotlin.jvm") {
-    kotlinExtension.sourceSets.configureEach {
-      languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
+  // From https://www.liutikas.net/2025/01/12/Kotlin-Library-Friends.html
+
+    // Create configurations we can use to track friend libraries
+  configurations {
+    val friendsApi = register("friendsApi") {
+      isCanBeResolved = true
+      isCanBeConsumed = false
+      isTransitive = true
+    }
+    val friendsImplementation = register("friendsImplementation") {
+      isCanBeResolved = true
+      isCanBeConsumed = false
+      isTransitive = false
+    }
+    val friendsTestImplementation = register("friendsTestImplementation") {
+      isCanBeResolved = true
+      isCanBeConsumed = false
+      isTransitive = false
+    }
+    configurations.configureEach {
+      if (name == "implementation") {
+        extendsFrom(friendsApi.get(), friendsImplementation.get())
+      }
+      if (name == "api") {
+        extendsFrom(friendsApi.get())
+      }
+      if (name == "testImplementation") {
+        extendsFrom(friendsTestImplementation.get())
+      }
     }
   }
-  plugins.withId("org.jetbrains.kotlin.android") {
-    kotlinExtension.sourceSets.configureEach {
-      languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
+
+    // Make these libraries friends :)
+    tasks.withType<KotlinCompile>().configureEach {
+      configurations.findByName("friendsApi")?.let {
+        friendPaths.from(it.incoming.artifactView { }.files)
+      }
+      configurations.findByName("friendsImplementation")?.let {
+        friendPaths.from(it.incoming.artifactView { }.files)
+      }
+      configurations.findByName("friendsTestImplementation")?.let {
+        friendPaths.from(it.incoming.artifactView { }.files)
+      }
     }
-  }
 }
 
 /** Configure publishing and signing for published Java and JavaPlatform subprojects. */
@@ -254,9 +317,8 @@ subprojects {
   }
 
   plugins.withId("com.vanniktech.maven.publish.base") {
-    val publishingExtension = extensions.getByType(PublishingExtension::class.java)
     configure<MavenPublishBaseExtension> {
-      publishToMavenCentral(SonatypeHost.S01, automaticRelease = true)
+      publishToMavenCentral(automaticRelease = true)
       signAllPublications()
       pom {
         name.set(project.name)
@@ -293,6 +355,14 @@ subprojects {
       ignoredPackages += "okhttp3.sse.internal"
       ignoredPackages += "okhttp3.tls.internal"
     }
+  }
+}
+
+plugins.withId("org.jetbrains.kotlin.jvm") {
+  val test = tasks.named("test")
+  tasks.register("jvmTest") {
+    description = "Get 'gradlew jvmTest' to run the tests of JVM-only modules"
+    dependsOn(test)
   }
 }
 
