@@ -60,7 +60,7 @@ class OkHttpClientTestRule :
   private lateinit var testName: String
   private var defaultUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
   private var taskQueuesWereIdle: Boolean = false
-  private val connectionListener = RecordingConnectionListener()
+  val connectionListener = RecordingConnectionListener()
 
   var logger: Logger? = null
 
