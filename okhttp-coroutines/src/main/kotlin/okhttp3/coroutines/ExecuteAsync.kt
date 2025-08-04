@@ -18,7 +18,6 @@
 package okhttp3.coroutines
 
 import kotlin.coroutines.resumeWithException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Call
 import okhttp3.Callback
@@ -26,7 +25,6 @@ import okhttp3.Response
 import okhttp3.internal.closeQuietly
 import okio.IOException
 
-@ExperimentalCoroutinesApi // resume with a resource cleanup.
 suspend fun Call.executeAsync(): Response =
   suspendCancellableCoroutine { continuation ->
     continuation.invokeOnCancellation {
@@ -45,8 +43,8 @@ suspend fun Call.executeAsync(): Response =
           call: Call,
           response: Response,
         ) {
-          continuation.resume(response) {
-            response.closeQuietly()
+          continuation.resume(response) { _, value, _ ->
+            value.closeQuietly()
           }
         }
       },

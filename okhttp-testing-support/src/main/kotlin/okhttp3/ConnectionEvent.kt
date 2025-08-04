@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@file:Suppress(
+  "CANNOT_OVERRIDE_INVISIBLE_MEMBER",
+  "INVISIBLE_MEMBER",
+  "INVISIBLE_REFERENCE",
+)
 
 package okhttp3
 

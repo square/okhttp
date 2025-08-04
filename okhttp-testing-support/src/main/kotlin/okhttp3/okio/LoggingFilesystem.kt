@@ -21,7 +21,9 @@ import okio.Path
 import okio.Sink
 import okio.Source
 
-class LoggingFilesystem(fileSystem: FileSystem) : ForwardingFileSystem(fileSystem) {
+class LoggingFilesystem(
+  fileSystem: FileSystem,
+) : ForwardingFileSystem(fileSystem) {
   fun log(line: String) {
     println(line)
   }

@@ -33,7 +33,11 @@ class MockWebServerRuleTest {
         object : Statement() {
           override fun evaluate() {
             called.set(true)
-            rule.server.url("/").toUrl().openConnection().connect()
+            rule.server
+              .url("/")
+              .toUrl()
+              .openConnection()
+              .connect()
           }
         },
         Description.EMPTY,
@@ -41,7 +45,11 @@ class MockWebServerRuleTest {
     statement.evaluate()
     assertThat(called.get()).isTrue()
     try {
-      rule.server.url("/").toUrl().openConnection().connect()
+      rule.server
+        .url("/")
+        .toUrl()
+        .openConnection()
+        .connect()
       fail()
     } catch (expected: ConnectException) {
     }

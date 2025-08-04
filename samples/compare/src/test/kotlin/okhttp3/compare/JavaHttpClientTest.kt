@@ -26,6 +26,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
 import org.junit.jupiter.api.Test
@@ -42,23 +43,29 @@ class JavaHttpClientTest {
   @JvmField @RegisterExtension
   val platform = PlatformRule()
 
-  @Test fun get(server: MockWebServer) {
+  @StartStop
+  private val server = MockWebServer()
+
+  @Test fun get() {
     // Not available
     platform.expectFailureOnJdkVersion(8)
 
     val httpClient =
-      HttpClient.newBuilder()
+      HttpClient
+        .newBuilder()
         .followRedirects(NORMAL)
         .build()
 
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("hello, Java HTTP Client")
         .build(),
     )
 
     val request =
-      HttpRequest.newBuilder(server.url("/").toUri())
+      HttpRequest
+        .newBuilder(server.url("/").toUri())
         .header("Accept", "text/plain")
         .build()
 

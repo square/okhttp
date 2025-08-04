@@ -30,7 +30,8 @@ suspend fun main() {
   val includeConscrypt = false
 
   val client =
-    OkHttpClient.Builder()
+    OkHttpClient
+      .Builder()
       .cache(Cache(FileSystem.SYSTEM, "build/okhttp_cache".toPath(), 100_000_000))
       .build()
 

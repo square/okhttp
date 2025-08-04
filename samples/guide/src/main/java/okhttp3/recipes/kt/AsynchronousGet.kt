@@ -27,7 +27,8 @@ class AsynchronousGet {
 
   fun run() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("http://publicobject.com/helloworld.txt")
         .build()
 

@@ -40,7 +40,8 @@ import org.junit.jupiter.api.Test
 @Tag("Remote")
 class SniOverrideTest {
   var client =
-    OkHttpClient.Builder()
+    OkHttpClient
+      .Builder()
       .build()
 
   @Test
@@ -64,7 +65,8 @@ class SniOverrideTest {
     }
 
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .sslSocketFactory(CustomSSLSocketFactory(client.sslSocketFactory), client.x509TrustManager!!)
         .hostnameVerifier { hostname, session ->
           val s = "hostname: $hostname peerHost:${session.peerHost}"
@@ -80,11 +82,11 @@ class SniOverrideTest {
           } catch (e: Exception) {
             false
           }
-        }
-        .build()
+        }.build()
 
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://sni.cloudflaressl.com/cdn-cgi/trace")
         .header("Host", "cloudflare-dns.com")
         .build()
@@ -99,14 +101,15 @@ class SniOverrideTest {
   @Test
   fun getWithDns() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .dns {
           Dns.SYSTEM.lookup("sni.cloudflaressl.com")
-        }
-        .build()
+        }.build()
 
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://cloudflare-dns.com/cdn-cgi/trace")
         .build()
     client.newCall(request).execute().use { response ->

@@ -9,7 +9,7 @@ plugins {
 val androidBuild = property("androidBuild").toString().toBoolean()
 
 android {
-  compileSdk = 34
+  compileSdk = 35
 
   namespace = "okhttp.android.test"
 
@@ -41,6 +41,7 @@ android {
 
   testOptions {
     targetSdk = 34
+    unitTests.isIncludeAndroidResources = true
   }
 
   kotlinOptions {
@@ -60,8 +61,23 @@ android {
 dependencies {
   implementation(libs.kotlin.reflect)
   implementation(libs.playservices.safetynet)
-  implementation(projects.okhttp)
-  implementation(projects.okhttpAndroid)
+  "friendsImplementation"(projects.okhttp)
+  "friendsImplementation"(projects.okhttpDnsoverhttps)
+
+  testImplementation(projects.okhttp)
+  testImplementation(libs.junit)
+  testImplementation(libs.junit.ktx)
+  testImplementation(libs.assertk)
+  testImplementation(projects.okhttpTls)
+  "friendsTestImplementation"(projects.loggingInterceptor)
+  testImplementation(libs.androidx.test.runner)
+  testImplementation(libs.robolectric)
+  testImplementation(libs.androidx.espresso.core)
+  testImplementation(libs.squareup.okio.fakefilesystem)
+  testImplementation(projects.okhttpTestingSupport)
+  testImplementation(rootProject.libs.conscrypt.openjdk)
+  testImplementation(rootProject.libs.junit.jupiter.engine)
+  testImplementation(rootProject.libs.junit.vintage.engine)
 
   androidTestImplementation(projects.okhttpTestingSupport) {
     exclude("org.openjsse", "openjsse")
@@ -72,13 +88,14 @@ dependencies {
   androidTestImplementation(libs.bouncycastle.bcprov)
   androidTestImplementation(libs.bouncycastle.bctls)
   androidTestImplementation(libs.conscrypt.android)
+  androidTestImplementation(projects.mockwebserver3Junit4)
   androidTestImplementation(projects.mockwebserver3Junit5)
   androidTestImplementation(projects.okhttpBrotli)
+  androidTestImplementation(projects.okhttpZstd)
   androidTestImplementation(projects.okhttpDnsoverhttps)
   androidTestImplementation(projects.loggingInterceptor)
   androidTestImplementation(projects.okhttpSse)
   androidTestImplementation(projects.okhttpTls)
-  androidTestImplementation(projects.okhttpAndroid)
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(libs.httpClient5)

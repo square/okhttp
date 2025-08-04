@@ -9,6 +9,8 @@ dependencies {
   testImplementation(libs.assertk)
   testImplementation(libs.junit.jupiter.api)
   testImplementation(libs.junit.jupiter.params)
+
+  testImplementation(rootProject.libs.junit.jupiter.engine)
 }
 
 animalsniffer {

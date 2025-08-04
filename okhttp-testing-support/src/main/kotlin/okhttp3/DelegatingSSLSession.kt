@@ -23,30 +23,22 @@ import javax.net.ssl.SSLSessionContext
 import javax.security.cert.X509Certificate
 
 /** An [SSLSession] that delegates all calls.  */
-abstract class DelegatingSSLSession(protected val delegate: SSLSession?) : SSLSession {
-  override fun getId(): ByteArray {
-    return delegate!!.id
-  }
+abstract class DelegatingSSLSession(
+  protected val delegate: SSLSession?,
+) : SSLSession {
+  override fun getId(): ByteArray = delegate!!.id
 
-  override fun getSessionContext(): SSLSessionContext {
-    return delegate!!.sessionContext
-  }
+  override fun getSessionContext(): SSLSessionContext = delegate!!.sessionContext
 
-  override fun getCreationTime(): Long {
-    return delegate!!.creationTime
-  }
+  override fun getCreationTime(): Long = delegate!!.creationTime
 
-  override fun getLastAccessedTime(): Long {
-    return delegate!!.lastAccessedTime
-  }
+  override fun getLastAccessedTime(): Long = delegate!!.lastAccessedTime
 
   override fun invalidate() {
     delegate!!.invalidate()
   }
 
-  override fun isValid(): Boolean {
-    return delegate!!.isValid
-  }
+  override fun isValid(): Boolean = delegate!!.isValid
 
   override fun putValue(
     s: String,
@@ -55,62 +47,36 @@ abstract class DelegatingSSLSession(protected val delegate: SSLSession?) : SSLSe
     delegate!!.putValue(s, o)
   }
 
-  override fun getValue(s: String): Any {
-    return delegate!!.getValue(s)
-  }
+  override fun getValue(s: String): Any = delegate!!.getValue(s)
 
   override fun removeValue(s: String) {
     delegate!!.removeValue(s)
   }
 
-  override fun getValueNames(): Array<String> {
-    return delegate!!.valueNames
-  }
+  override fun getValueNames(): Array<String> = delegate!!.valueNames
 
   @Throws(SSLPeerUnverifiedException::class)
-  override fun getPeerCertificates(): Array<Certificate>? {
-    return delegate!!.peerCertificates
-  }
+  override fun getPeerCertificates(): Array<Certificate>? = delegate!!.peerCertificates
 
-  override fun getLocalCertificates(): Array<Certificate>? {
-    return delegate!!.localCertificates
-  }
+  override fun getLocalCertificates(): Array<Certificate>? = delegate!!.localCertificates
 
   @Throws(SSLPeerUnverifiedException::class)
-  override fun getPeerCertificateChain(): Array<X509Certificate> {
-    return delegate!!.peerCertificateChain
-  }
+  override fun getPeerCertificateChain(): Array<X509Certificate> = delegate!!.peerCertificateChain
 
   @Throws(SSLPeerUnverifiedException::class)
-  override fun getPeerPrincipal(): Principal {
-    return delegate!!.peerPrincipal
-  }
+  override fun getPeerPrincipal(): Principal = delegate!!.peerPrincipal
 
-  override fun getLocalPrincipal(): Principal {
-    return delegate!!.localPrincipal
-  }
+  override fun getLocalPrincipal(): Principal = delegate!!.localPrincipal
 
-  override fun getCipherSuite(): String {
-    return delegate!!.cipherSuite
-  }
+  override fun getCipherSuite(): String = delegate!!.cipherSuite
 
-  override fun getProtocol(): String {
-    return delegate!!.protocol
-  }
+  override fun getProtocol(): String = delegate!!.protocol
 
-  override fun getPeerHost(): String {
-    return delegate!!.peerHost
-  }
+  override fun getPeerHost(): String = delegate!!.peerHost
 
-  override fun getPeerPort(): Int {
-    return delegate!!.peerPort
-  }
+  override fun getPeerPort(): Int = delegate!!.peerPort
 
-  override fun getPacketBufferSize(): Int {
-    return delegate!!.packetBufferSize
-  }
+  override fun getPacketBufferSize(): Int = delegate!!.packetBufferSize
 
-  override fun getApplicationBufferSize(): Int {
-    return delegate!!.applicationBufferSize
-  }
+  override fun getApplicationBufferSize(): Int = delegate!!.applicationBufferSize
 }

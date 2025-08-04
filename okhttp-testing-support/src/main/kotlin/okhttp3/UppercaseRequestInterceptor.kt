@@ -26,9 +26,7 @@ import okio.buffer
 /** Rewrites the request body sent to the server to be all uppercase.  */
 class UppercaseRequestInterceptor : Interceptor {
   @Throws(IOException::class)
-  override fun intercept(chain: Chain): Response {
-    return chain.proceed(uppercaseRequest(chain.request()))
-  }
+  override fun intercept(chain: Chain): Response = chain.proceed(uppercaseRequest(chain.request()))
 
   /** Returns a request that transforms `request` to be all uppercase.  */
   private fun uppercaseRequest(request: Request): Request {
@@ -39,13 +37,14 @@ class UppercaseRequestInterceptor : Interceptor {
           delegate().writeTo(uppercaseSink(sink).buffer())
         }
       }
-    return request.newBuilder()
+    return request
+      .newBuilder()
       .method(request.method, uppercaseBody)
       .build()
   }
 
-  private fun uppercaseSink(sink: Sink): Sink {
-    return object : ForwardingSink(sink) {
+  private fun uppercaseSink(sink: Sink): Sink =
+    object : ForwardingSink(sink) {
       @Throws(IOException::class)
       override fun write(
         source: Buffer,
@@ -59,5 +58,4 @@ class UppercaseRequestInterceptor : Interceptor {
         )
       }
     }
-  }
 }

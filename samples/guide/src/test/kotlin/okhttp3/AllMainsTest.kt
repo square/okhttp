@@ -33,21 +33,27 @@ private fun mainFiles(): List<File> {
     ).map { File(it) }
 
   return directories.flatMap {
-    it.listFiles().orEmpty().filter { f -> f.isFile }.toList()
+    it
+      .listFiles()
+      .orEmpty()
+      .filter { f -> f.isFile }
+      .toList()
   }
 }
 
 internal class MainTestProvider : SimpleProvider() {
   override fun arguments(): List<Any> {
     val mainFiles = mainFiles()
-    return mainFiles.map {
-      val suffix = it.path.replace("${prefix}samples/guide/src/main/java/", "")
-      suffix.replace("(.*)\\.java".toRegex()) { mr ->
-        mr.groupValues[1].replace('/', '.')
-      }.replace("(.*)\\.kt".toRegex()) { mr ->
-        mr.groupValues[1].replace('/', '.') + "Kt"
-      }
-    }.sorted()
+    return mainFiles
+      .map {
+        val suffix = it.path.replace("${prefix}samples/guide/src/main/java/", "")
+        suffix
+          .replace("(.*)\\.java".toRegex()) { mr ->
+            mr.groupValues[1].replace('/', '.')
+          }.replace("(.*)\\.kt".toRegex()) { mr ->
+            mr.groupValues[1].replace('/', '.') + "Kt"
+          }
+      }.sorted()
   }
 }
 
@@ -58,8 +64,10 @@ class AllMainsTest {
   @ArgumentsSource(MainTestProvider::class)
   fun runMain(className: String) {
     val mainMethod =
-      Class.forName(className)
-        .methods.find { it.name == "main" }
+      Class
+        .forName(className)
+        .methods
+        .find { it.name == "main" }
     try {
       if (mainMethod != null) {
         if (mainMethod.parameters.isEmpty()) {
@@ -81,11 +89,10 @@ class AllMainsTest {
   private fun expectedFailure(
     className: String,
     cause: Throwable,
-  ): Boolean {
-    return when (className) {
+  ): Boolean =
+    when (className) {
       "okhttp3.recipes.CheckHandshake" -> true // by design
       "okhttp3.recipes.RequestBodyCompression" -> true // expired token
       else -> false
     }
-  }
 }

@@ -56,20 +56,22 @@ class SocksProxyTest {
     MockServerClient(mockServer.host, mockServer.serverPort).use { mockServerClient ->
       mockServerClient
         .`when`(
-          request().withPath("/person")
+          request()
+            .withPath("/person")
             .withQueryStringParameter("name", "peter"),
-        )
-        .respond(response().withBody("Peter the person!"))
+        ).respond(response().withBody("Peter the person!"))
 
       val client =
-        OkHttpClient.Builder()
+        OkHttpClient
+          .Builder()
           .proxy(Proxy(SOCKS, InetSocketAddress(socks5Proxy.host, socks5Proxy.firstMappedPort)))
           .build()
 
       val response =
-        client.newCall(
-          Request("http://mockserver:1080/person?name=peter".toHttpUrl()),
-        ).execute()
+        client
+          .newCall(
+            Request("http://mockserver:1080/person?name=peter".toHttpUrl()),
+          ).execute()
 
       assertThat(response.body.string()).contains("Peter the person")
     }

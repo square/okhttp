@@ -25,8 +25,8 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 import org.conscrypt.Conscrypt
 
-fun currentOkHttp(ianaSuites: IanaSuites): Client {
-  return Client(
+fun currentOkHttp(ianaSuites: IanaSuites): Client =
+  Client(
     userAgent = "OkHttp",
     version = OkHttp.VERSION,
     enabled =
@@ -38,7 +38,6 @@ fun currentOkHttp(ianaSuites: IanaSuites): Client {
         ianaSuites.fromJavaName(it.javaName)
       },
   )
-}
 
 fun historicOkHttp(version: String): Client {
   val enabled =
@@ -54,13 +53,12 @@ fun historicOkHttp(version: String): Client {
   )
 }
 
-fun currentVm(ianaSuites: IanaSuites): Client {
-  return systemDefault(
+fun currentVm(ianaSuites: IanaSuites): Client =
+  systemDefault(
     name = System.getProperty("java.vm.name"),
     version = System.getProperty("java.version"),
     ianaSuites = ianaSuites,
   )
-}
 
 fun conscrypt(ianaSuites: IanaSuites): Client {
   val version = Conscrypt.version()

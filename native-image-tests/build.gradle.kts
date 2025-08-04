@@ -1,62 +1,44 @@
-import org.apache.tools.ant.taskdefs.condition.Os
-
 plugins {
-  id("com.palantir.graal")
+  id("org.graalvm.buildtools.native")
   kotlin("jvm")
-}
-
-dependencies {
-  implementation(libs.junit.jupiter.api)
-  implementation(libs.junit.jupiter.engine)
-  implementation(libs.junit.platform.console)
-  implementation(libs.squareup.okio.fakefilesystem)
-
-  implementation(projects.okhttp)
-  implementation(projects.okhttpBrotli)
-  implementation(projects.okhttpDnsoverhttps)
-  implementation(projects.loggingInterceptor)
-  implementation(projects.okhttpSse)
-  implementation(projects.okhttpTestingSupport)
-  implementation(projects.okhttpTls)
-  implementation(projects.mockwebserver3)
-  implementation(projects.mockwebserver)
-  implementation(projects.okhttpJavaNetCookiejar)
-  implementation(projects.mockwebserver3Junit4)
-  implementation(projects.mockwebserver3Junit5)
-  implementation(libs.aqute.resolve)
-  implementation(libs.junit.jupiter.api)
-  implementation(libs.junit.jupiter.params)
-  implementation(libs.assertk)
-  implementation(libs.kotlin.test.common)
-  implementation(libs.kotlin.test.junit)
-
-  implementation(libs.nativeImageSvm)
-
-  compileOnly(libs.findbugs.jsr305)
 }
 
 animalsniffer {
   isIgnoreFailures = true
 }
 
-sourceSets {
-  main {
-    java.srcDirs(
-      "../okhttp-brotli/src/test/java",
-      "../okhttp-dnsoverhttps/src/test/java",
-      "../okhttp-logging-interceptor/src/test/java",
-      "../okhttp-sse/src/test/java",
-    )
-  }
+// TODO reenable other tests
+// https://github.com/square/okhttp/issues/8901
+//sourceSets {
+//  test {
+//    java.srcDirs(
+//      "../okhttp-brotli/src/test/java",
+//      "../okhttp-dnsoverhttps/src/test/java",
+//      "../okhttp-logging-interceptor/src/test/java",
+//      "../okhttp-sse/src/test/java",
+//    )
+//  }
+//}
+
+dependencies {
+  implementation(projects.okhttp)
+
+  testImplementation(projects.mockwebserver3Junit5)
+  testImplementation(libs.assertk)
+  testRuntimeOnly(libs.junit.jupiter.engine)
+  testImplementation(libs.kotlin.junit5)
+  testImplementation(libs.junit.jupiter.params)
 }
 
-graal {
-  mainClass("okhttp3.RunTestsKt")
-  outputName("ConsoleLauncher")
-  graalVersion(libs.versions.graalvm.get())
-  javaVersion("11")
+graalvmNative {
+  testSupport = true
 
-  option("--no-fallback")
-  option("--report-unsupported-elements-at-runtime")
-  option("-H:+ReportExceptionStackTraces")
+  binaries {
+    named("test") {
+      buildArgs.add("--strict-image-heap")
+
+      // speed up development testing
+      buildArgs.add("-Ob")
+    }
+  }
 }

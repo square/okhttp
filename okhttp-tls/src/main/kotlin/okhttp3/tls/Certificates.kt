@@ -66,13 +66,12 @@ fun String.decodeCertificatePem(): X509Certificate {
  *
  * [rfc_7468]: https://tools.ietf.org/html/rfc7468
  */
-fun X509Certificate.certificatePem(): String {
-  return buildString {
+fun X509Certificate.certificatePem(): String =
+  buildString {
     append("-----BEGIN CERTIFICATE-----\n")
     encodeBase64Lines(encoded.toByteString())
     append("-----END CERTIFICATE-----\n")
   }
-}
 
 internal fun StringBuilder.encodeBase64Lines(data: ByteString) {
   val base64 = data.base64()

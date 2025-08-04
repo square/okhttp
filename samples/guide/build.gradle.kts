@@ -1,17 +1,17 @@
 plugins {
   kotlin("jvm")
-  kotlin("kapt")
+  id("com.google.devtools.ksp")
 }
 
 dependencies {
-  implementation(projects.okhttp)
+  "friendsImplementation"(projects.okhttp)
   implementation(projects.mockwebserver)
   implementation(projects.okhttpTestingSupport)
   implementation(projects.okhttpTls)
   implementation(libs.animalsniffer.annotations)
   implementation(libs.squareup.moshi)
   implementation(libs.squareup.okio.fakefilesystem)
-  kapt(libs.squareup.moshi.compiler)
+  ksp(libs.squareup.moshi.compiler)
 }
 
 java {

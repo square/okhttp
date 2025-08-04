@@ -24,6 +24,7 @@ import okio.Sink
  * this permits any interval to be used.
  */
 internal class ThrottledSink(
+  private val socket: MockWebServerSocket,
   private val delegate: Sink,
   private val bytesPerPeriod: Long,
   private val periodDelayNanos: Long,
@@ -39,7 +40,7 @@ internal class ThrottledSink(
     while (bytesLeft > 0) {
       if (bytesWrittenSinceLastDelay == bytesPerPeriod) {
         flush()
-        sleepNanos(periodDelayNanos)
+        socket.sleepWhileOpen(periodDelayNanos)
         bytesWrittenSinceLastDelay = 0
       }
 

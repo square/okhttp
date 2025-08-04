@@ -45,9 +45,7 @@ class FakeDns : Dns {
   fun lookup(
     hostname: String,
     index: Int,
-  ): InetAddress {
-    return hostAddresses[hostname]!![index]
-  }
+  ): InetAddress = hostAddresses[hostname]!![index]
 
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {

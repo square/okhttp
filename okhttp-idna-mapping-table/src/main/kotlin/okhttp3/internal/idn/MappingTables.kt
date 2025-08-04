@@ -110,7 +110,11 @@ fun buildIdnaMappingTableData(table: SimpleIdnaMappingTable): IdnaMappingTableDa
 internal fun inlineDeltaOrNull(mapping: Mapping): MappedRange.InlineDelta? {
   if (mapping.hasSingleSourceCodePoint) {
     val sourceCodePoint = mapping.sourceCodePoint0
-    val mappedCodePoints = mapping.mappedTo.utf8().codePoints().toList()
+    val mappedCodePoints =
+      mapping.mappedTo
+        .utf8()
+        .codePoints()
+        .toList()
     if (mappedCodePoints.size == 1) {
       val codePointDelta = mappedCodePoints.single() - sourceCodePoint
       if (MappedRange.InlineDelta.MAX_VALUE >= abs(codePointDelta)) {
@@ -262,8 +266,8 @@ internal fun mergeAdjacentRanges(mappings: List<Mapping>): List<Mapping> {
   return result
 }
 
-internal fun canonicalizeType(type: Int): Int {
-  return when (type) {
+internal fun canonicalizeType(type: Int): Int =
+  when (type) {
     TYPE_IGNORED -> TYPE_IGNORED
 
     TYPE_MAPPED,
@@ -279,7 +283,6 @@ internal fun canonicalizeType(type: Int): Int {
 
     else -> error("unexpected type: $type")
   }
-}
 
 internal infix fun Byte.and(mask: Int): Int = toInt() and mask
 

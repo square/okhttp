@@ -10,6 +10,8 @@ dependencies {
         api(subproject)
       }
     }
+    api("com.squareup.okhttp3:okhttp-jvm:${project.version}")
+    api("com.squareup.okhttp3:okhttp-android:${project.version}")
   }
 }
 

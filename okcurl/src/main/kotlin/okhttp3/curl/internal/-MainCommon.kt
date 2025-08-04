@@ -68,9 +68,7 @@ private fun Main.mediaType(): MediaType? {
   return mimeType.toMediaTypeOrNull()
 }
 
-private fun isSpecialHeader(s: String): Boolean {
-  return s.equals("Content-Type", ignoreCase = true)
-}
+private fun isSpecialHeader(s: String): Boolean = s.equals("Content-Type", ignoreCase = true)
 
 fun Main.commonRun() {
   client = createClient()

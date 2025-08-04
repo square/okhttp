@@ -159,13 +159,12 @@ class HeldCertificate(
    * [rfc_5208]: https://tools.ietf.org/html/rfc5208
    * [rfc_7468]: https://tools.ietf.org/html/rfc7468
    */
-  fun privateKeyPkcs8Pem(): String {
-    return buildString {
+  fun privateKeyPkcs8Pem(): String =
+    buildString {
       append("-----BEGIN PRIVATE KEY-----\n")
       encodeBase64Lines(keyPair.private.encoded.toByteString())
       append("-----END PRIVATE KEY-----\n")
     }
-  }
 
   /**
    * Returns the RSA private key encoded in [PKCS #1][rfc_8017] [PEM format][rfc_7468].
@@ -358,7 +357,9 @@ class HeldCertificate(
         issuerKeyPair = signedBy!!.keyPair
         issuer =
           CertificateAdapters.rdnSequence.fromDer(
-            signedBy!!.certificate.subjectX500Principal.encoded.toByteString(),
+            signedBy!!
+              .certificate.subjectX500Principal.encoded
+              .toByteString(),
           )
       } else {
         issuerKeyPair = subjectKeyPair
@@ -477,8 +478,8 @@ class HeldCertificate(
       return result
     }
 
-    private fun signatureAlgorithm(signedByKeyPair: KeyPair): AlgorithmIdentifier {
-      return when (signedByKeyPair.private) {
+    private fun signatureAlgorithm(signedByKeyPair: KeyPair): AlgorithmIdentifier =
+      when (signedByKeyPair.private) {
         is RSAPrivateKey ->
           AlgorithmIdentifier(
             algorithm = SHA256_WITH_RSA_ENCRYPTION,
@@ -490,14 +491,12 @@ class HeldCertificate(
             parameters = ByteString.EMPTY,
           )
       }
-    }
 
-    private fun generateKeyPair(): KeyPair {
-      return KeyPairGenerator.getInstance(keyAlgorithm).run {
+    private fun generateKeyPair(): KeyPair =
+      KeyPairGenerator.getInstance(keyAlgorithm).run {
         initialize(keySize, SecureRandom())
         generateKeyPair()
       }
-    }
 
     companion object {
       private const val DEFAULT_DURATION_MILLIS = 1000L * 60 * 60 * 24 // 24 hours.

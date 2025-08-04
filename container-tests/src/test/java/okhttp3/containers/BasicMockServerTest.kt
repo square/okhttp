@@ -40,7 +40,8 @@ class BasicMockServerTest {
   val mockServer: MockServerContainer = MockServerContainer(MOCKSERVER_IMAGE)
 
   val client =
-    OkHttpClient.Builder()
+    OkHttpClient
+      .Builder()
       .trustMockServer()
       .build()
 
@@ -49,10 +50,10 @@ class BasicMockServerTest {
     MockServerClient(mockServer.host, mockServer.serverPort).use { mockServerClient ->
       mockServerClient
         .`when`(
-          request().withPath("/person")
+          request()
+            .withPath("/person")
             .withQueryStringParameter("name", "peter"),
-        )
-        .respond(response().withBody("Peter the person!"))
+        ).respond(response().withBody("Peter the person!"))
 
       val response = client.newCall(Request((mockServer.endpoint + "/person?name=peter").toHttpUrl())).execute()
 
@@ -65,10 +66,10 @@ class BasicMockServerTest {
     MockServerClient(mockServer.host, mockServer.serverPort).use { mockServerClient ->
       mockServerClient
         .`when`(
-          request().withPath("/person")
+          request()
+            .withPath("/person")
             .withQueryStringParameter("name", "peter"),
-        )
-        .respond(response().withBody("Peter the person!"))
+        ).respond(response().withBody("Peter the person!"))
 
       val response = client.newCall(Request((mockServer.secureEndpoint + "/person?name=peter").toHttpUrl())).execute()
 

@@ -25,13 +25,15 @@ class PerCallSettings {
 
   fun run() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("http://httpbin.org/delay/1") // This URL is served with a 1 second delay.
         .build()
 
     // Copy to customize OkHttp for this request.
     val client1 =
-      client.newBuilder()
+      client
+        .newBuilder()
         .readTimeout(500, TimeUnit.MILLISECONDS)
         .build()
     try {
@@ -44,7 +46,8 @@ class PerCallSettings {
 
     // Copy to customize OkHttp for this request.
     val client2 =
-      client.newBuilder()
+      client
+        .newBuilder()
         .readTimeout(3000, TimeUnit.MILLISECONDS)
         .build()
     try {

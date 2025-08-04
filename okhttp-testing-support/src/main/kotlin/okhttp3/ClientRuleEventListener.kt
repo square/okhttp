@@ -274,6 +274,26 @@ class ClientRuleEventListener(
     delegate.cacheConditionalHit(call, cachedResponse)
   }
 
+  override fun retryDecision(
+    call: Call,
+    exception: IOException,
+    retry: Boolean,
+  ) {
+    logWithTime("retryDecision")
+
+    delegate.retryDecision(call, exception, retry)
+  }
+
+  override fun followUpDecision(
+    call: Call,
+    networkResponse: Response,
+    nextRequest: Request?,
+  ) {
+    logWithTime("followUpDecision")
+
+    delegate.followUpDecision(call, networkResponse, nextRequest)
+  }
+
   private fun logWithTime(message: String) {
     val startNs = startNs
     val timeMs =

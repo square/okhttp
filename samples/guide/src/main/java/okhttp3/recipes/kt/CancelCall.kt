@@ -27,7 +27,8 @@ class CancelCall {
 
   fun run() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("http://httpbin.org/delay/2") // This URL is served with a 2 second delay.
         .build()
 

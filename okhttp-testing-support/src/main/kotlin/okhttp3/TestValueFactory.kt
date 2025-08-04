@@ -34,9 +34,10 @@ import javax.net.ssl.SSLSocketFactory
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.concurrent.withLock
 import okhttp3.internal.connection.CallConnectionUser
+import okhttp3.internal.connection.ConnectionListener
 import okhttp3.internal.connection.FastFallbackExchangeFinder
-import okhttp3.internal.connection.Locks.withLock
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RealConnectionPool
@@ -102,8 +103,8 @@ class TestValueFactory : Closeable {
     taskRunner: TaskRunner = this.taskRunner,
     maxIdleConnections: Int = Int.MAX_VALUE,
     routePlanner: RoutePlanner? = null,
-  ): RealConnectionPool {
-    return RealConnectionPool(
+  ): RealConnectionPool =
+    RealConnectionPool(
       taskRunner = taskRunner,
       maxIdleConnections = maxIdleConnections,
       keepAliveDuration = 100L,
@@ -129,7 +130,6 @@ class TestValueFactory : Closeable {
         )
       },
     )
-  }
 
   /** Returns an address that's without an SSL socket factory or hostname verifier.  */
   fun newAddress(
@@ -137,8 +137,8 @@ class TestValueFactory : Closeable {
     uriPort: Int = this.uriPort,
     proxy: Proxy? = null,
     proxySelector: ProxySelector = this.proxySelector,
-  ): Address {
-    return Address(
+  ): Address =
+    Address(
       uriHost = uriHost,
       uriPort = uriPort,
       dns = dns,
@@ -152,7 +152,6 @@ class TestValueFactory : Closeable {
       connectionSpecs = connectionSpecs,
       proxySelector = proxySelector,
     )
-  }
 
   fun newHttpsAddress(
     uriHost: String = this.uriHost,
@@ -161,8 +160,8 @@ class TestValueFactory : Closeable {
     proxySelector: ProxySelector = this.proxySelector,
     sslSocketFactory: SSLSocketFactory? = this.sslSocketFactory,
     hostnameVerifier: HostnameVerifier? = this.hostnameVerifier,
-  ): Address {
-    return Address(
+  ): Address =
+    Address(
       uriHost = uriHost,
       uriPort = uriPort,
       dns = dns,
@@ -176,22 +175,20 @@ class TestValueFactory : Closeable {
       connectionSpecs = connectionSpecs,
       proxySelector = proxySelector,
     )
-  }
 
   fun newRoute(
     address: Address = newAddress(),
     proxy: Proxy = this.proxy,
     socketAddress: InetSocketAddress = InetSocketAddress.createUnresolved(uriHost, uriPort),
-  ): Route {
-    return Route(
+  ): Route =
+    Route(
       address = address,
       proxy = proxy,
       socketAddress = socketAddress,
     )
-  }
 
-  fun newChain(call: RealCall): RealInterceptorChain {
-    return RealInterceptorChain(
+  fun newChain(call: RealCall): RealInterceptorChain =
+    RealInterceptorChain(
       call = call,
       interceptors = listOf(),
       index = 0,
@@ -201,7 +198,6 @@ class TestValueFactory : Closeable {
       readTimeoutMillis = 10_000,
       writeTimeoutMillis = 10_000,
     )
-  }
 
   fun newRoutePlanner(
     client: OkHttpClient,

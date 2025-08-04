@@ -37,11 +37,10 @@ class IanaSuites(
   val name: String,
   val suites: List<SuiteId>,
 ) {
-  fun fromJavaName(javaName: String): SuiteId {
-    return suites.firstOrNull {
+  fun fromJavaName(javaName: String): SuiteId =
+    suites.firstOrNull {
       it.name == javaName || it.name == "TLS_${javaName.drop(4)}"
     } ?: throw IllegalArgumentException("No such suite: $javaName")
-  }
 }
 
 suspend fun fetchIanaSuites(okHttpClient: OkHttpClient): IanaSuites {
@@ -54,7 +53,9 @@ suspend fun fetchIanaSuites(okHttpClient: OkHttpClient): IanaSuites {
       if (!it.isSuccessful) {
         throw IOException("Failed ${it.code} ${it.message}")
       }
-      it.body.string().lines()
+      it.body
+        .string()
+        .lines()
         .mapNotNull { parseIanaCsvRow(it) }
     }
 

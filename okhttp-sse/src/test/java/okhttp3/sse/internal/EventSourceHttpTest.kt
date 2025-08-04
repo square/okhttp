@@ -21,6 +21,7 @@ import assertk.assertions.isEqualTo
 import java.util.concurrent.TimeUnit
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.OkHttpClientTestRule
 import okhttp3.RecordingEventListener
 import okhttp3.Request
@@ -28,7 +29,6 @@ import okhttp3.sse.EventSource
 import okhttp3.sse.EventSources.createFactory
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -38,21 +38,19 @@ import org.junitpioneer.jupiter.RetryingTest
 class EventSourceHttpTest {
   @RegisterExtension
   val platform = PlatformRule()
-  private lateinit var server: MockWebServer
+
+  @StartStop
+  private val server = MockWebServer()
 
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
   private val eventListener = RecordingEventListener()
   private val listener = EventSourceRecorder()
   private var client =
-    clientTestRule.newClientBuilder()
+    clientTestRule
+      .newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(eventListener))
       .build()
-
-  @BeforeEach
-  fun before(server: MockWebServer) {
-    this.server = server
-  }
 
   @AfterEach
   fun after() {
@@ -62,7 +60,8 @@ class EventSourceHttpTest {
   @Test
   fun event() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
@@ -82,7 +81,8 @@ class EventSourceHttpTest {
   @RetryingTest(5)
   fun cancelInEventShortCircuits() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
@@ -101,7 +101,8 @@ class EventSourceHttpTest {
   @Test
   fun badContentType() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
@@ -118,15 +119,15 @@ class EventSourceHttpTest {
   @Test
   fun badResponseCode() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
           |
           |
           """.trimMargin(),
-        )
-        .setHeader("content-type", "text/event-stream")
+        ).setHeader("content-type", "text/event-stream")
         .code(401)
         .build(),
     )
@@ -137,11 +138,13 @@ class EventSourceHttpTest {
   @Test
   fun fullCallTimeoutDoesNotApplyOnceConnected() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .callTimeout(250, TimeUnit.MILLISECONDS)
         .build()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .bodyDelay(500, TimeUnit.MILLISECONDS)
         .setHeader("content-type", "text/event-stream")
         .body("data: hey\n\n")
@@ -157,11 +160,13 @@ class EventSourceHttpTest {
   @Test
   fun fullCallTimeoutAppliesToSetup() {
     client =
-      client.newBuilder()
+      client
+        .newBuilder()
         .callTimeout(250, TimeUnit.MILLISECONDS)
         .build()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .headersDelay(500, TimeUnit.MILLISECONDS)
         .setHeader("content-type", "text/event-stream")
         .body("data: hey\n\n")
@@ -174,15 +179,15 @@ class EventSourceHttpTest {
   @Test
   fun retainsAccept() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
           |
           |
           """.trimMargin(),
-        )
-        .setHeader("content-type", "text/event-stream")
+        ).setHeader("content-type", "text/event-stream")
         .build(),
     )
     newEventSource("text/plain")
@@ -195,7 +200,8 @@ class EventSourceHttpTest {
   @Test
   fun setsMissingAccept() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
@@ -216,7 +222,8 @@ class EventSourceHttpTest {
   @Test
   fun eventListenerEvents() {
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body(
           """
           |data: hey
@@ -244,6 +251,7 @@ class EventSourceHttpTest {
       "RequestHeadersEnd",
       "ResponseHeadersStart",
       "ResponseHeadersEnd",
+      "FollowUpDecision",
       "ResponseBodyStart",
       "ResponseBodyEnd",
       "ConnectionReleased",
@@ -253,7 +261,8 @@ class EventSourceHttpTest {
 
   private fun newEventSource(accept: String? = null): EventSource {
     val builder =
-      Request.Builder()
+      Request
+        .Builder()
         .url(server.url("/"))
     if (accept != null) {
       builder.header("Accept", accept)

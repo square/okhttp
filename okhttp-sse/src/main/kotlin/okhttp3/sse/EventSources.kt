@@ -29,8 +29,8 @@ object EventSources {
   fun createFactory(client: OkHttpClient) = createFactory(client as Call.Factory)
 
   @JvmStatic
-  fun createFactory(callFactory: Call.Factory): EventSource.Factory {
-    return EventSource.Factory { request, listener ->
+  fun createFactory(callFactory: Call.Factory): EventSource.Factory =
+    EventSource.Factory { request, listener ->
       val actualRequest =
         if (request.header("Accept") == null) {
           request.newBuilder().addHeader("Accept", "text/event-stream").build()
@@ -42,7 +42,6 @@ object EventSources {
         connect(callFactory)
       }
     }
-  }
 
   @JvmStatic
   fun processResponse(

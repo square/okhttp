@@ -56,31 +56,32 @@ class AndroidHttpEngineTest {
       it.mkdirs()
     }
   val engine =
-    HttpEngine.Builder(context)
+    HttpEngine
+      .Builder(context)
       .setEnableBrotli(true)
       .setStoragePath(cacheDir.path)
       .setEnableHttpCache(HttpEngine.Builder.HTTP_CACHE_DISK, 10_000_000)
       .setConnectionMigrationOptions(
-        ConnectionMigrationOptions.Builder()
+        ConnectionMigrationOptions
+          .Builder()
           .setDefaultNetworkMigration(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
           .setPathDegradationMigration(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
           .setAllowNonDefaultNetworkUsage(ConnectionMigrationOptions.MIGRATION_OPTION_ENABLED)
           .build(),
-      )
-      .setDnsOptions(
-        DnsOptions.Builder()
+      ).setDnsOptions(
+        DnsOptions
+          .Builder()
           .setUseHttpStackDnsResolver(DnsOptions.DNS_OPTION_ENABLED)
           .setStaleDns(DnsOptions.DNS_OPTION_ENABLED)
           .setPersistHostCache(DnsOptions.DNS_OPTION_ENABLED)
           .build(),
-      )
-      .setQuicOptions(
-        QuicOptions.Builder()
+      ).setQuicOptions(
+        QuicOptions
+          .Builder()
           .addAllowedQuicHost("google.com")
           .addAllowedQuicHost("www.google.com")
           .build(),
-      )
-      .addQuicHint("google.com", 443, 443)
+      ).addQuicHint("google.com", 443, 443)
       .addQuicHint("www.google.com", 443, 443)
       .build()
 
@@ -122,65 +123,65 @@ class AndroidHttpEngineTest {
     val buffer = Buffer()
 
     val req =
-      engine.newUrlRequestBuilder(
-        url,
-        executor,
-        object : Callback {
-          override fun onRedirectReceived(
-            request: UrlRequest,
-            info: UrlResponseInfo,
-            newLocationUrl: String,
-          ) {
-            println("request " + info.httpStatusCode + " " + newLocationUrl)
-            request.followRedirect()
-          }
+      engine
+        .newUrlRequestBuilder(
+          url,
+          executor,
+          object : Callback {
+            override fun onRedirectReceived(
+              request: UrlRequest,
+              info: UrlResponseInfo,
+              newLocationUrl: String,
+            ) {
+              println("request " + info.httpStatusCode + " " + newLocationUrl)
+              request.followRedirect()
+            }
 
-          override fun onResponseStarted(
-            request: UrlRequest,
-            info: UrlResponseInfo,
-          ) {
-            println("onResponseStarted ${info.headers.asMap} ${info.negotiatedProtocol}")
-            request.read(ByteBuffer.allocateDirect(4096 * 8))
-          }
+            override fun onResponseStarted(
+              request: UrlRequest,
+              info: UrlResponseInfo,
+            ) {
+              println("onResponseStarted ${info.headers.asMap} ${info.negotiatedProtocol}")
+              request.read(ByteBuffer.allocateDirect(4096 * 8))
+            }
 
-          override fun onReadCompleted(
-            request: UrlRequest,
-            info: UrlResponseInfo,
-            byteBuffer: ByteBuffer,
-          ) {
-            println("onReadCompleted ${info.headers.asMap}")
-            byteBuffer.flip()
-            buffer.write(byteBuffer)
-            byteBuffer.clear()
-            request.read(byteBuffer)
-          }
+            override fun onReadCompleted(
+              request: UrlRequest,
+              info: UrlResponseInfo,
+              byteBuffer: ByteBuffer,
+            ) {
+              println("onReadCompleted ${info.headers.asMap}")
+              byteBuffer.flip()
+              buffer.write(byteBuffer)
+              byteBuffer.clear()
+              request.read(byteBuffer)
+            }
 
-          override fun onSucceeded(
-            request: UrlRequest,
-            info: UrlResponseInfo,
-          ) {
-            println("onSucceeded ${info.headers.asMap}")
-            completableFuture.complete(Response(info.httpStatusCode, info.negotiatedProtocol, buffer.readUtf8()))
-          }
+            override fun onSucceeded(
+              request: UrlRequest,
+              info: UrlResponseInfo,
+            ) {
+              println("onSucceeded ${info.headers.asMap}")
+              completableFuture.complete(Response(info.httpStatusCode, info.negotiatedProtocol, buffer.readUtf8()))
+            }
 
-          override fun onFailed(
-            request: UrlRequest,
-            info: UrlResponseInfo?,
-            error: HttpException,
-          ) {
-            println("onSucceeded ${info?.headers?.asMap}")
-            completableFuture.completeExceptionally(error)
-          }
+            override fun onFailed(
+              request: UrlRequest,
+              info: UrlResponseInfo?,
+              error: HttpException,
+            ) {
+              println("onSucceeded ${info?.headers?.asMap}")
+              completableFuture.completeExceptionally(error)
+            }
 
-          override fun onCanceled(
-            request: UrlRequest,
-            info: UrlResponseInfo?,
-          ) {
-            completableFuture.completeExceptionally(CancellationException())
-          }
-        },
-      )
-        .setPriority(REQUEST_PRIORITY_MEDIUM)
+            override fun onCanceled(
+              request: UrlRequest,
+              info: UrlResponseInfo?,
+            ) {
+              completableFuture.completeExceptionally(CancellationException())
+            }
+          },
+        ).setPriority(REQUEST_PRIORITY_MEDIUM)
         .setDirectExecutorAllowed(true)
         .setTrafficStatsTag(101)
         .build()

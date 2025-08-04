@@ -2,6 +2,7 @@
           xmlns:tools="http://schemas.android.com/tools" package="okhttp.android.test">
 
   <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
   <application android:usesCleartextTraffic="true" tools:targetApi="m"/>
 

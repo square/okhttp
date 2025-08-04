@@ -46,7 +46,8 @@ class RecordingOkAuthenticator(
         407 -> "Proxy-Authorization"
         else -> "Authorization"
       }
-    return response.request.newBuilder()
+    return response.request
+      .newBuilder()
       .addHeader(header, credential)
       .build()
   }

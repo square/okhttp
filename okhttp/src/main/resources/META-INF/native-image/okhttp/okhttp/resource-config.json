@@ -1,5 +1,0 @@
-{
-  "resources": [
-    {"pattern": "okhttp3/internal/publicsuffix/publicsuffixes.gz"}
-  ]
-}

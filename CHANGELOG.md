@@ -5,6 +5,211 @@ Change Log
 
 See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
 
+## Version 5.1.0
+
+_2025-07-07_
+
+ *  New: `Response.peekTrailers()`. When we changed `Response.trailers()` to block instead of
+    throwing in 5.0.0, we inadvertently removed the ability for callers to peek the trailers
+    (by catching the `IllegalStateException` if they weren't available). This new API restores that
+    capability.
+
+ *  Fix: Don't crash on `trailers()` if the response doesn't have a body. We broke [Retrofit] users
+    who read the trailers on the `raw()` OkHttp response, after its body was decoded.
+
+
+## Version 5.0.0
+
+_2025-07-02_
+
+This is our first stable release of OkHttp since 2023. Here's the highlights if you're upgrading
+from OkHttp 4.x:
+
+**OkHttp is now packaged as separate JVM and Android artifacts.** This allows us to offer
+platform-specific features and optimizations. If your build system handles [Gradle module metadata],
+this change should be automatic.
+
+**MockWebServer has a new coordinate and package name.** We didn’t like that our old artifact
+depends on JUnit 4 so the new one doesn’t. It also has a better API built on immutable values. (We
+intend to continue publishing the old `okhttp3.mockwebserver` artifact so there’s no urgency to
+migrate.)
+
+| Coordinate                                       | Package Name          | Description                       |
+|:-------------------------------------------------| :-------------------- | :-------------------------------- |
+| com.squareup.okhttp3:mockwebserver3:5.0.0        | mockwebserver3        | Core module. No JUnit dependency! |
+| com.squareup.okhttp3:mockwebserver3-junit4:5.0.0 | mockwebserver3.junit4 | Optional JUnit 4 integration.     |
+| com.squareup.okhttp3:mockwebserver3-junit5:5.0.0 | mockwebserver3.junit5 | Optional JUnit 5 integration.     |
+| com.squareup.okhttp3:mockwebserver:5.0.0         | okhttp3.mockwebserver | Obsolete. Depends on JUnit 4.     |
+
+**OkHttp now supports Happy Eyeballs ([RFC 8305][rfc_8305]) for IPv4+IPv6 networks.** It attempts
+both IPv6 and IPv4 connections concurrently, keeping whichever connects first.
+
+**We’ve improved our Kotlin APIs.** You can skip the builder:
+
+```kotlin
+val request = Request(
+  url = "https://cash.app/".toHttpUrl(),
+)
+```
+
+**OkHttp now supports [GraalVM].**
+
+Here’s what has changed since 5.0.0-alpha.17:
+
+ *  Upgrade: [Okio 3.15.0][okio_3_15_0].
+ *  Upgrade: [Kotlin 2.2.0][kotlin_2_2_0].
+ *  Fix: Don't crash with a `NoSuchMethodError` when using OkHttp with the Sentry SDK.
+ *  Fix: Retain the query data in the old `okhttp3.mockwebserver.RecordedRequest.path` property. We
+    inadvertently changed this behavior when we introduced the `mockwebserver3` API.
+
+
+## Version 5.0.0-alpha.17
+
+_2025-06-29_
+
+This release stabilizes many APIs for the imminent OkHttp 5.0.0 release.
+
+ *  New: `TrailersSource`, a public API for HTTP trailers. Production callers shouldn't need this
+    as the API to read response trailers is unchanged. Testers may use this new stable API to
+    supply trailers for a `Response`.
+
+ *  New: `Path.asRequestBody()` is now a non-experimental API.
+
+ *  New: `FileDescriptor.toRequestBody()` is now a non-experimental API.
+
+ *  New: Stop using experimental coroutines APIs in our `okhttp-coroutines` artifact.
+
+ *  Breaking: Move `gzip` from `RequestBody` to `Request.Builder`. This new API handles both
+    compressing the request body and also adding the corresponding `Content-Encoding` header. Note
+    that this function is sensitive to when it is called: the response body must be supplied before
+    it can be compressed.
+
+ *  Breaking: Remove `AddressPolicy`, `AsyncDns`, and `ConnectionListener` from the public API. We
+    intend to ship a public API for these features, but we don't want to hold OkHttp 5.0.0 until
+    those APIs are stable.
+
+ *  Fix: Change `MockWebServer.close()` to cancel ongoing calls that are blocked on a delay.
+
+ *  Upgrade: [Okio 3.13.0][okio_3_13_0].
+
+This release also stabilizes many APIs in the `mockwebserver3` artifact that's new in 5.0.
+
+ *  Breaking: `RecordedRequest.body` is now nullable. Null is used when the request does not have a
+    body.
+
+ *  Breaking: `RecordedRequest.chunkSizes` is now nullable. Null is used when the request does not
+    use chunked encoding. This is different from an empty list - that indicates the request is
+    chunked but has no data.
+
+ *  Breaking: Replace `SocketPolicy` with a new type, `SocketEffect`. It splits triggers (request
+    start, response body, etc.) from effects (closing the socket, closing the stream, etc.).
+
+ *  Breaking: Rename `RecordedRequest.sequenceNumber` to `exchangeIndex` and introduce
+    `connectionIndex` on that type. These properties may be useful when testing features like
+    connection reuse.
+
+ *  Breaking: Replace our parameters-based JUnit 5 extension with a new annotation, `@StartStop`.
+    Put this annotation on a `MockWebServer` property and the extension will start it before your
+    test executes and stop it after it completes. No further configuration is required.
+
+    ```kotlin
+    @StartStop val server = MockWebServer()
+    ```
+
+ *  Breaking: Don't automatically start `MockWebServer` after calls to accessors like `port`. Now
+    these accessors will throw an `IllegalStateException` if the service has not yet been started.
+
+ *  Breaking: Rename `RecordedRequest.path` to `RecordedRequest.target`. (This property is
+    _sometimes_ a path, but it can also be a path and query, or a full URL.)
+
+ *  Breaking: Decompose the `RecordedRequest.requestLine` into three properties, `method`, `target`,
+    and `version`. This better suits HTTP/2 where the request line had to be synthesized from
+    component headers.
+
+ *  Breaking: Change `RecordedRequest.body` from a mutable `Buffer` to an immutable `ByteString`.
+
+ *  Breaking: Adopt Okio's new `Socket` interface for `MockResponse.socketHandler`.
+
+Note that any _Breaking_ changes above impact only APIs introduced in earlier 5.0.0-alpha releasees.
+We don't break binary compatibility with non-alpha APIs.
+
+
+## Version 5.0.0-alpha.16
+
+_2025-05-29_
+
+ *  Fix: The previous release would crash when running on Robolectric. We didn't anticipate
+    running our Android artifact on the JVM platform!
+
+
+## Version 5.0.0-alpha.15
+
+_2025-05-28_
+
+**This release introduces separate JVM and Android artifacts.** Until now, we've distributed OkHttp
+as a JVM library that _detects_ Android capabilities at runtime, but that doesn't offer
+Android-specific APIs. With this release we're starting to publish OkHttp as an AAR for Android
+users in addition to our existing JAR for JVM users.
+
+This first Android-specific artifact adopts Android's `assets` mechanism to embed the public suffix
+data. We will build more Android integration in future releases.
+
+The okhttp-android artifact first introduced in `5.0.0-alpha.7` is no longer available:
+
+ *  The `AndroidAsyncDns` class moved to the `okhttp` artifact.
+ *  The `AndroidLogging` class is no longer necessary. `LoggingEventListener` and
+    `HttpLoggingInterceptor` write to logcat by default.
+
+The rest of this release is our highest-quality release yet. Though we continue to use the word
+_alpha_ in the version name, the only unstable thing in it is some non-final APIs tagged
+`@ExperimentalOkHttpApi`. You can safely use this release in production.
+
+ *  Fix: Attempt to read the response even if sending the request failed. This makes it possible
+    to handle response statuses like `HTTP/1.1 431 "Request Header Fields Too Large`.
+
+ *  Fix: Handle multiple 1xx responses.
+
+ *  Fix: Address a performance bug in our internal task runner. We had a race condition that could
+    result in it OkHttp starting a thread for each queued task, even when a single thread could run
+    all of them.
+
+ *  Fix: Address a performance bug in `MultipartReader`. We were scanning the entire input stream
+    for a delimiter when we only needed to scan enough to return a result.
+
+ *  Fix: Don't double-compress the public suffix database. OkHttp is usually distributed in a
+    compressed file (like a JAR or APK), so compressing its internal data was redundant.
+
+ *  Fix: Call `ProxySelector.connectFailed()` when a connection's initial TCP handshake fails.
+
+ *  Fix: Change the signature of `Dispatcher` to accept a nullable `ExecutorService`. Changing this
+    parameter to be non-null was an unintended signature change in OkHttp 4.0.
+
+ *  New: `EventListener.retryDecision()` is called each time a request fails with an `IOException`.
+    It notifies your listener if OkHttp will retry.
+
+ *  New: `EventListener.followUpDecision()` is called each time a response is received. It notifies
+    your listener if OkHttp has decided to make a follow-up request. Some common follow-ups are
+    authentication challenges and redirects.
+
+ *  New: Handy constants for `Headers.EMPTY`, `RequestBody.EMPTY`, and `ResponseBody.EMPTY`.
+
+ *  New: OkHttp now calls `StrictMode.noteSlowCall()` when initializing TLS on Android. Use
+    `StrictMode` to detect if your `OkHttpClient` is being initialized on the main thread.
+
+ *  Upgrade: [Okio 3.12.0][okio_3_12_0].
+
+ *  Upgrade: [Kotlin 2.1.21][kotlin_2_1_21].
+
+ *  Upgrade: [kotlinx.coroutines 1.10.2][coroutines_1_10_2]. This is used by the optional
+    `okhttp-coroutines` artifact.
+
+ *  Upgrade: [AndroidX Startup 1.2.0][startup_1_2_0]. The Android variant of the `okhttp` artifact
+    now depends on this. This is a new dependency.
+
+ *  Upgrade: [AndroidX Annotation 1.9.1][annotation_1_9_1]. As above, the Android variant of the
+    `okhttp` artifact now depends on this. This is also a new dependency.
+
+
 ## Version 5.0.0-alpha.14
 
 _2024-04-17_
@@ -435,8 +640,13 @@ Note that this was originally released on 2020-10-06 as 4.10.0-RC1. The only cha
 release is the version name.
 
 
+[GraalVM]: https://www.graalvm.org/
+[Gradle module metadata]: https://docs.gradle.org/current/userguide/publishing_gradle_module_metadata.html
 [Ktor]: https://ktor.io/
+[Retrofit]: https://square.github.io/retrofit/
+[annotation_1_9_1]: https://developer.android.com/jetpack/androidx/releases/annotation#annotation-1.9.1
 [assertk]: https://github.com/willowtreeapps/assertk
+[coroutines_1_10_2]: https://github.com/Kotlin/kotlinx.coroutines/releases/tag/1.10.2
 [graalvm]: https://www.graalvm.org/
 [graalvm_21]: https://www.graalvm.org/release-notes/21_0/
 [graalvm_22]: https://www.graalvm.org/release-notes/22_2/
@@ -448,12 +658,18 @@ release is the version name.
 [kotlin_1_7_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.7.10
 [kotlin_1_9_21]: https://github.com/JetBrains/kotlin/releases/tag/v1.9.21
 [kotlin_1_9_23]: https://github.com/JetBrains/kotlin/releases/tag/v1.9.23
+[kotlin_2_1_21]: https://github.com/JetBrains/kotlin/releases/tag/v2.1.21
+[kotlin_2_2_0]: https://github.com/JetBrains/kotlin/releases/tag/v2.2.0
 [loom]: https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html
 [okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
 [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
+[okio_3_12_0]: https://square.github.io/okio/changelog/#version-3120
+[okio_3_13_0]: https://square.github.io/okio/changelog/#version-3130
+[okio_3_15_0]: https://square.github.io/okio/changelog/#version-3150
 [okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
 [okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
 [okio_3_7_0]: https://square.github.io/okio/changelog/#version-370
 [okio_3_9_0]: https://square.github.io/okio/changelog/#version-390
 [rfc_8305]: https://tools.ietf.org/html/rfc8305
+[startup_1_2_0]: https://developer.android.com/jetpack/androidx/releases/startup#1.2.0
 [uts46]: https://www.unicode.org/reports/tr46

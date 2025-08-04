@@ -22,7 +22,7 @@ import java.net.UnknownHostException
 import java.util.Arrays
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.FailHandshake
+import mockwebserver3.junit5.StartStop
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -45,7 +45,10 @@ class LoggingEventListenerTest {
 
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
-  private lateinit var server: MockWebServer
+
+  @StartStop
+  private val server = MockWebServer()
+
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private val logRecorder =
     HttpLoggingInterceptorTest.LogRecorder(
@@ -56,16 +59,15 @@ class LoggingEventListenerTest {
   private lateinit var url: HttpUrl
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
+  fun setUp() {
     client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .eventListenerFactory(loggingEventListenerFactory)
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .retryOnConnectionFailure(false)
+        ).retryOnConnectionFailure(false)
         .build()
     url = server.url("/")
   }
@@ -74,7 +76,8 @@ class LoggingEventListenerTest {
   fun get() {
     assumeNotWindows()
     server.enqueue(
-      MockResponse.Builder()
+      MockResponse
+        .Builder()
         .body("Hello!")
         .setHeader("Content-Type", PLAIN)
         .build(),
@@ -94,8 +97,7 @@ class LoggingEventListenerTest {
         Regex(
           """connectionAcquired: Connection\{${url.host}:\d+, proxy=DIRECT hostAddress=${url.host}/.+ cipherSuite=none protocol=http/1\.1\}""",
         ),
-      )
-      .assertLogMatch(Regex("""requestHeadersStart"""))
+      ).assertLogMatch(Regex("""requestHeadersStart"""))
       .assertLogMatch(Regex("""requestHeadersEnd"""))
       .assertLogMatch(Regex("""responseHeadersStart"""))
       .assertLogMatch(Regex("""responseHeadersEnd: Response\{protocol=http/1\.1, code=200, message=OK, url=$url\}"""))
@@ -123,8 +125,7 @@ class LoggingEventListenerTest {
         Regex(
           """connectionAcquired: Connection\{${url.host}:\d+, proxy=DIRECT hostAddress=${url.host}/.+ cipherSuite=none protocol=http/1\.1\}""",
         ),
-      )
-      .assertLogMatch(Regex("""requestHeadersStart"""))
+      ).assertLogMatch(Regex("""requestHeadersStart"""))
       .assertLogMatch(Regex("""requestHeadersEnd"""))
       .assertLogMatch(Regex("""requestBodyStart"""))
       .assertLogMatch(Regex("""requestBodyEnd: byteCount=6"""))
@@ -159,12 +160,10 @@ class LoggingEventListenerTest {
         Regex(
           """secureConnectEnd: Handshake\{tlsVersion=TLS_1_[23] cipherSuite=TLS_.* peerCertificates=\[CN=localhost] localCertificates=\[]\}""",
         ),
-      )
-      .assertLogMatch(Regex("""connectEnd: h2"""))
+      ).assertLogMatch(Regex("""connectEnd: h2"""))
       .assertLogMatch(
         Regex("""connectionAcquired: Connection\{${url.host}:\d+, proxy=DIRECT hostAddress=${url.host}/.+ cipherSuite=.+ protocol=h2\}"""),
-      )
-      .assertLogMatch(Regex("""requestHeadersStart"""))
+      ).assertLogMatch(Regex("""requestHeadersStart"""))
       .assertLogMatch(Regex("""requestHeadersEnd"""))
       .assertLogMatch(Regex("""responseHeadersStart"""))
       .assertLogMatch(Regex("""responseHeadersEnd: Response\{protocol=h2, code=200, message=, url=$url\}"""))
@@ -178,7 +177,8 @@ class LoggingEventListenerTest {
   @Test
   fun dnsFail() {
     client =
-      OkHttpClient.Builder()
+      OkHttpClient
+        .Builder()
         .dns { _ -> throw UnknownHostException("reason") }
         .eventListenerFactory(loggingEventListenerFactory)
         .build()
@@ -202,8 +202,9 @@ class LoggingEventListenerTest {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.protocols = Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
     server.enqueue(
-      MockResponse.Builder()
-        .socketPolicy(FailHandshake)
+      MockResponse
+        .Builder()
+        .failHandshake()
         .build(),
     )
     url = server.url("/")
@@ -222,15 +223,13 @@ class LoggingEventListenerTest {
       .assertLogMatch(Regex("""secureConnectStart"""))
       .assertLogMatch(
         Regex(
-          """connectFailed: null \S+(?:SSLProtocolException|SSLHandshakeException|TlsFatalAlert): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed|unexpected_message\(10\)).*""",
+          """connectFailed: null \S+(?:SSLProtocolException|SSLHandshakeException|TlsFatalAlert): .*(?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed|unexpected_message\(10\)).*""",
         ),
-      )
-      .assertLogMatch(
+      ).assertLogMatch(
         Regex(
-          """callFailed: \S+(?:SSLProtocolException|SSLHandshakeException|TlsFatalAlert): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed|unexpected_message\(10\)).*""",
+          """callFailed: \S+(?:SSLProtocolException|SSLHandshakeException|TlsFatalAlert): .*(?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed|unexpected_message\(10\)).*""",
         ),
-      )
-      .assertNoMoreLogs()
+      ).assertNoMoreLogs()
   }
 
   @Test
@@ -238,7 +237,12 @@ class LoggingEventListenerTest {
     val request = Request.Builder().url(url).build()
     val call = client.newCall(request)
     val response =
-      Response.Builder().request(request).code(200).message("").protocol(Protocol.HTTP_2)
+      Response
+        .Builder()
+        .request(request)
+        .code(200)
+        .message("")
+        .protocol(Protocol.HTTP_2)
         .build()
     val listener = loggingEventListenerFactory.create(call)
     listener.cacheConditionalHit(call, response)
@@ -253,9 +257,7 @@ class LoggingEventListenerTest {
       .assertNoMoreLogs()
   }
 
-  private fun request(): Request.Builder {
-    return Request.Builder().url(url)
-  }
+  private fun request(): Request.Builder = Request.Builder().url(url)
 
   companion object {
     private val PLAIN = "text/plain".toMediaType()

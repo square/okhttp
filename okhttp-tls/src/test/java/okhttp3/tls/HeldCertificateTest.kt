@@ -60,7 +60,8 @@ class HeldCertificateTest {
   fun customInterval() {
     // 5 seconds starting on 1970-01-01.
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .validityInterval(5000L, 10000L)
         .build()
     val certificate = heldCertificate.certificate
@@ -72,7 +73,8 @@ class HeldCertificateTest {
   fun customDuration() {
     val now = System.currentTimeMillis()
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .duration(5, TimeUnit.SECONDS)
         .build()
     val certificate = heldCertificate.certificate
@@ -87,7 +89,8 @@ class HeldCertificateTest {
   @Test
   fun subjectAlternativeNames() {
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .addSubjectAlternativeName("1.1.1.1")
         .addSubjectAlternativeName("cash.app")
         .build()
@@ -101,7 +104,8 @@ class HeldCertificateTest {
   @Test
   fun commonName() {
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .commonName("cash.app")
         .build()
     val certificate = heldCertificate.certificate
@@ -111,7 +115,8 @@ class HeldCertificateTest {
   @Test
   fun organizationalUnit() {
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .commonName("cash.app")
         .organizationalUnit("cash")
         .build()
@@ -130,8 +135,7 @@ class HeldCertificateTest {
         "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCApFHhtrLan28q+oMolZuaTfWBA0V5aM" +
           "Ivq32BsloQu6LlvX1wJ4YEoUCjDlPOtpht7XLbUmBnbIzN89XK4UJVM6Sqp3K88Km8z7gMrdrfTom/274wL25fICR+" +
           "yDEQ5fUVYBmJAKXZF1aoI0mIoEx0xFsQhIJ637v2MxJDupd61wIDAQAB"
-      )
-        .decodeBase64()!!
+      ).decodeBase64()!!
     val publicKey =
       keyFactory.generatePublic(
         X509EncodedKeySpec(publicKeyBytes.toByteArray()),
@@ -154,7 +158,8 @@ class HeldCertificateTest {
         PKCS8EncodedKeySpec(privateKeyBytes.toByteArray()),
       )
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .keyPair(publicKey, privateKey)
         .commonName("cash.app")
         .validityInterval(0L, 1000L)
@@ -222,12 +227,14 @@ class HeldCertificateTest {
   @Test
   fun ecdsaSignedByRsa() {
     val root =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .rsa2048()
         .build()
     val leaf =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .ecdsa256()
         .signedBy(root)
@@ -239,12 +246,14 @@ class HeldCertificateTest {
   @Test
   fun rsaSignedByEcdsa() {
     val root =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .ecdsa256()
         .build()
     val leaf =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .certificateAuthority(0)
         .rsa2048()
         .signedBy(root)

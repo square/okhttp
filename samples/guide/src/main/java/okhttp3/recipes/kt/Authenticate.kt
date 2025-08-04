@@ -25,7 +25,8 @@ import okhttp3.Route
 
 class Authenticate {
   private val client =
-    OkHttpClient.Builder()
+    OkHttpClient
+      .Builder()
       .authenticator(
         object : Authenticator {
           @Throws(IOException::class)
@@ -40,17 +41,18 @@ class Authenticate {
             println("Authenticating for response: $response")
             println("Challenges: ${response.challenges()}")
             val credential = Credentials.basic("jesse", "password1")
-            return response.request.newBuilder()
+            return response.request
+              .newBuilder()
               .header("Authorization", credential)
               .build()
           }
         },
-      )
-      .build()
+      ).build()
 
   fun run() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("http://publicobject.com/secrets/hellosecret.txt")
         .build()
 

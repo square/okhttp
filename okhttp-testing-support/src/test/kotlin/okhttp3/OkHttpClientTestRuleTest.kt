@@ -38,9 +38,7 @@ class OkHttpClientTestRuleTest {
 
     val thread =
       object : Thread() {
-        override fun run() {
-          throw RuntimeException("boom!")
-        }
+        override fun run(): Unit = throw RuntimeException("boom!")
       }
     thread.start()
     thread.join()

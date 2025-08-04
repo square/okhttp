@@ -5,7 +5,8 @@ plugins {
 
 dependencies {
   api(libs.squareup.okio)
-  api(projects.okhttp)
+  api(projects.mockwebserver3)
+  "friendsApi"(projects.okhttp)
   api(projects.okhttpTls)
   api(libs.assertk)
   api(libs.bouncycastle.bcprov)
@@ -13,6 +14,8 @@ dependencies {
   implementation(libs.bouncycastle.bctls)
   api(libs.conscrypt.openjdk)
   api(libs.openjsse)
+
+  api(rootProject.libs.junit.jupiter.engine)
 
   api(variantOf(libs.amazonCorretto) {
     classifier("linux-x86_64")
@@ -24,7 +27,6 @@ dependencies {
 
   api(libs.junit.pioneer)
 
-  compileOnly(libs.findbugs.jsr305)
   compileOnly(libs.robolectric.android)
 
   testImplementation(libs.kotlin.test.common)

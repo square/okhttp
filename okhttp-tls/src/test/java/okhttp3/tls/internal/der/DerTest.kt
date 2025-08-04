@@ -974,10 +974,9 @@ internal class DerTest {
     }
   }
 
-  private fun date(s: String): Date {
-    return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").run {
+  private fun date(s: String): Date =
+    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").run {
       timeZone = TimeZone.getTimeZone("GMT")
       parse(s)
     }
-  }
 }

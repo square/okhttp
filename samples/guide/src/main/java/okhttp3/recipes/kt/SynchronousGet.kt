@@ -24,7 +24,8 @@ class SynchronousGet {
 
   fun run() {
     val request =
-      Request.Builder()
+      Request
+        .Builder()
         .url("https://publicobject.com/helloworld.txt")
         .build()
 

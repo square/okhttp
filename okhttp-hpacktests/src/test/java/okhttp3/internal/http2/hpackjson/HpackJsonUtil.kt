@@ -36,23 +36,21 @@ import okio.source
 object HpackJsonUtil {
   @Suppress("unused")
   private val MOSHI =
-    Moshi.Builder()
+    Moshi
+      .Builder()
       .add(
         object : Any() {
           @ToJson fun byteStringToJson(byteString: ByteString) = byteString.hex()
 
           @FromJson fun byteStringFromJson(json: String) = json.decodeHex()
         },
-      )
-      .add(KotlinJsonAdapterFactory())
+      ).add(KotlinJsonAdapterFactory())
       .build()
   private val STORY_JSON_ADAPTER = MOSHI.adapter(Story::class.java)
 
   private val fileSystem = FileSystem.SYSTEM
 
-  private fun readStory(source: BufferedSource): Story {
-    return STORY_JSON_ADAPTER.fromJson(source)!!
-  }
+  private fun readStory(source: BufferedSource): Story = STORY_JSON_ADAPTER.fromJson(source)!!
 
   private fun readStory(file: Path): Story {
     fileSystem.read(file) {

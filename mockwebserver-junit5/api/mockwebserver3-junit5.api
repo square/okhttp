@@ -1,0 +1,3 @@
+public abstract interface annotation class mockwebserver3/junit5/StartStop : java/lang/annotation/Annotation {
+}
+

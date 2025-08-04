@@ -23,6 +23,7 @@ Here’s some libraries that work nicely with OkHttp.
  * [OkHttp Profiler](https://plugins.jetbrains.com/plugin/11249-okhttp-profiler): An IntelliJ plugin for monitoring OkHttp calls.
  * [OkReplay](https://github.com/airbnb/okreplay): Record and replay OkHttp network interaction in your tests.
  * [okhttp-signpost](https://github.com/pakerfeldt/okhttp-signpost): OAuth signing with signpost and OkHttp.
+ * [okhttp-spring-boot](https://github.com/freefair/okhttp-spring-boot): Spring Boot starters for OkHttp
  * [okhttp-staleiferror-interceptor](https://github.com/PeelTechnologies/okhttp-staleiferror-interceptor/): serve stale responses when the server isn’t reachable.
  * [okhttp-stats](https://github.com/flipkart-incubator/okhttp-stats): Get stats like average network speed.
  * [okhttp-system-keystore](https://github.com/charleskorn/okhttp-system-keystore): Use trusted certificates from the operating system keystore (Keychain on macOS, Certificate Store on Windows).

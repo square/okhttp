@@ -36,9 +36,7 @@ class AsyncRequestBody : RequestBody() {
   override fun isDuplex(): Boolean = true
 
   @Throws(InterruptedException::class)
-  fun takeSink(): BufferedSink {
-    return requestBodySinks.poll(5, SECONDS) ?: throw AssertionError("no sink to take")
-  }
+  fun takeSink(): BufferedSink = requestBodySinks.poll(5, SECONDS) ?: throw AssertionError("no sink to take")
 
   fun assertNoMoreSinks() {
     assertTrue(requestBodySinks.isEmpty())

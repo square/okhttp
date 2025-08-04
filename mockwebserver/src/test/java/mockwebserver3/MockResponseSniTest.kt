@@ -20,6 +20,7 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
+import mockwebserver3.junit5.StartStop
 import okhttp3.Dns
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -29,7 +30,6 @@ import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -40,12 +40,8 @@ class MockResponseSniTest {
   @RegisterExtension
   val platform = PlatformRule()
 
-  private lateinit var server: MockWebServer
-
-  @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
-  }
+  @StartStop
+  private val server = MockWebServer()
 
   @Test
   fun clientSendsServerNameAndServerReceivesIt() {
@@ -61,23 +57,31 @@ class MockResponseSniTest {
       }
 
     val client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .dns(dns)
+        ).dns(dns)
         .build()
 
     server.enqueue(MockResponse())
 
-    val url = server.url("/").newBuilder().host("localhost.localdomain").build()
+    val url =
+      server
+        .url("/")
+        .newBuilder()
+        .host("localhost.localdomain")
+        .build()
     val call = client.newCall(Request(url = url))
     val response = call.execute()
     assertThat(response.isSuccessful).isTrue()
 
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.handshakeServerNames).containsExactly(url.host)
+    // https://github.com/bcgit/bc-java/issues/1773
+    if (!platform.isBouncyCastle()) {
+      assertThat(recordedRequest.handshakeServerNames).containsExactly(url.host)
+    }
   }
 
   /**
@@ -87,12 +91,14 @@ class MockResponseSniTest {
   @Test
   fun domainFronting() {
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .commonName("server name")
         .addSubjectAlternativeName("url-host.com")
         .build()
     val handshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .heldCertificate(heldCertificate)
         .addTrustedCertificate(heldCertificate.certificate)
         .build()
@@ -104,12 +110,12 @@ class MockResponseSniTest {
       }
 
     val client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .dns(dns)
+        ).dns(dns)
         .build()
 
     server.enqueue(MockResponse())
@@ -125,15 +131,19 @@ class MockResponseSniTest {
     assertThat(response.isSuccessful).isTrue()
 
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.requestUrl!!.host).isEqualTo("header-host")
-    assertThat(recordedRequest.handshakeServerNames).containsExactly("url-host.com")
+    assertThat(recordedRequest.url.host).isEqualTo("header-host")
+
+    // https://github.com/bcgit/bc-java/issues/1773
+    if (!platform.isBouncyCastle()) {
+      assertThat(recordedRequest.handshakeServerNames).containsExactly("url-host.com")
+    }
   }
 
   /** No SNI for literal IPv6 addresses. */
   @Test
   fun ipv6() {
     val recordedRequest = requestToHostnameViaProxy("2607:f8b0:400b:804::200e")
-    assertThat(recordedRequest.requestUrl!!.host).isEqualTo("2607:f8b0:400b:804::200e")
+    assertThat(recordedRequest.url.host).isEqualTo("2607:f8b0:400b:804::200e")
     assertThat(recordedRequest.handshakeServerNames).isEmpty()
   }
 
@@ -141,15 +151,18 @@ class MockResponseSniTest {
   @Test
   fun ipv4() {
     val recordedRequest = requestToHostnameViaProxy("76.223.91.57")
-    assertThat(recordedRequest.requestUrl!!.host).isEqualTo("76.223.91.57")
+    assertThat(recordedRequest.url.host).isEqualTo("76.223.91.57")
     assertThat(recordedRequest.handshakeServerNames).isEmpty()
   }
 
   @Test
   fun regularHostname() {
     val recordedRequest = requestToHostnameViaProxy("cash.app")
-    assertThat(recordedRequest.requestUrl!!.host).isEqualTo("cash.app")
-    assertThat(recordedRequest.handshakeServerNames).containsExactly("cash.app")
+    assertThat(recordedRequest.url.host).isEqualTo("cash.app")
+    // https://github.com/bcgit/bc-java/issues/1773
+    if (!platform.isBouncyCastle()) {
+      assertThat(recordedRequest.handshakeServerNames).containsExactly("cash.app")
+    }
   }
 
   /**
@@ -158,34 +171,43 @@ class MockResponseSniTest {
    */
   private fun requestToHostnameViaProxy(hostnameOrIpAddress: String): RecordedRequest {
     val heldCertificate =
-      HeldCertificate.Builder()
+      HeldCertificate
+        .Builder()
         .commonName("server name")
         .addSubjectAlternativeName(hostnameOrIpAddress)
         .build()
     val handshakeCertificates =
-      HandshakeCertificates.Builder()
+      HandshakeCertificates
+        .Builder()
         .heldCertificate(heldCertificate)
         .addTrustedCertificate(heldCertificate.certificate)
         .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
 
     val client =
-      clientTestRule.newClientBuilder()
+      clientTestRule
+        .newClientBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        )
-        .proxy(server.toProxyAddress())
+        ).proxy(server.proxyAddress)
         .build()
 
-    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .inTunnel()
+        .build(),
+    )
     server.enqueue(MockResponse())
 
     val call =
       client.newCall(
         Request(
           url =
-            server.url("/").newBuilder()
+            server
+              .url("/")
+              .newBuilder()
               .host(hostnameOrIpAddress)
               .build(),
         ),

@@ -24,7 +24,9 @@ import javax.net.SocketFactory
  * A [SocketFactory] that delegates calls. Sockets can be configured after creation by
  * overriding [.configureSocket].
  */
-open class DelegatingSocketFactory(private val delegate: SocketFactory) : SocketFactory() {
+open class DelegatingSocketFactory(
+  private val delegate: SocketFactory,
+) : SocketFactory() {
   @Throws(IOException::class)
   override fun createSocket(): Socket {
     val socket = delegate.createSocket()

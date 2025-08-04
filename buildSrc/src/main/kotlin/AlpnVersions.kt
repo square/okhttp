@@ -15,8 +15,8 @@
  */
 
 // https://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions
-private fun alpnBootVersionForPatchVersion(patchVersion: Int): String? {
-  return when (patchVersion) {
+private fun alpnBootVersionForPatchVersion(patchVersion: Int): String? =
+  when (patchVersion) {
     in 0..24 -> "8.1.0.v20141016"
     in 25..30 -> "8.1.2.v20141202"
     in 31..50 -> "8.1.3.v20150130"
@@ -32,7 +32,6 @@ private fun alpnBootVersionForPatchVersion(patchVersion: Int): String? {
     in 191..242 -> "8.1.13.v20181017"
     else -> null
   }
-}
 
 /**
  * Returns the alpn-boot version specific to this OpenJDK 8 JVM, or null if this is not a Java 8 VM.

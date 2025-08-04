@@ -15,10 +15,12 @@ tasks.jar {
 }
 
 dependencies {
+  api(projects.okhttp)
   api(projects.mockwebserver3)
   api(libs.junit)
 
   testImplementation(libs.assertk)
+  testImplementation(libs.junit.vintage.engine)
 }
 
 mavenPublishing {

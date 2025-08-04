@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-  compileSdk = 34
+  compileSdk = 36
 
   namespace = "okhttp.android.testapp"
 
@@ -14,7 +14,7 @@ android {
 
   defaultConfig {
     minSdk = 21
-    targetSdk = 34
+    targetSdk = 36
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
@@ -36,12 +36,15 @@ android {
       testProguardFiles("test-proguard-rules.pro")
     }
   }
+
+  lint {
+    abortOnError = true
+  }
 }
 
 dependencies {
   implementation(libs.playservices.safetynet)
   implementation(projects.okhttp)
-  implementation(projects.okhttpAndroid)
   implementation(libs.androidx.activity)
 
   androidTestImplementation(libs.androidx.junit)
