@@ -23,8 +23,9 @@ import javax.net.ssl.SSLException
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.DisconnectAfterRequest
-import mockwebserver3.SocketPolicy.DisconnectAtEnd
+import mockwebserver3.SocketEffect.CloseSocket
+import mockwebserver3.SocketEffect.ShutdownConnection
+import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -33,7 +34,6 @@ import okhttp3.internal.closeQuietly
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import org.bouncycastle.tls.TlsFatalAlert
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -48,14 +48,11 @@ class ConnectionReuseTest {
   @RegisterExtension
   val clientTestRule: OkHttpClientTestRule = OkHttpClientTestRule()
 
-  private lateinit var server: MockWebServer
+  @StartStop
+  private val server = MockWebServer()
+
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client: OkHttpClient = clientTestRule.newClient()
-
-  @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
-  }
 
   @Test
   fun connectionsAreReused() {
@@ -121,7 +118,7 @@ class ConnectionReuseTest {
         .Builder()
         .body("a")
         .clearHeaders()
-        .socketPolicy(DisconnectAtEnd)
+        .onResponseEnd(ShutdownConnection)
         .build(),
     )
     server.enqueue(MockResponse(body = "b"))
@@ -160,8 +157,8 @@ class ConnectionReuseTest {
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("b")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @Test
@@ -184,23 +181,23 @@ class ConnectionReuseTest {
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("b")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   @Test
   fun silentRetryWhenIdempotentRequestFailsOnReusedConnection() {
     server.enqueue(MockResponse(body = "a"))
-    server.enqueue(MockResponse(socketPolicy = DisconnectAfterRequest))
+    server.enqueue(MockResponse.Builder().onResponseStart(CloseSocket()).build())
     server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     val responseA = client.newCall(request).execute()
     assertThat(responseA.body.string()).isEqualTo("a")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     val responseB = client.newCall(request).execute()
     assertThat(responseB.body.string()).isEqualTo("b")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   @Test
@@ -213,8 +210,8 @@ class ConnectionReuseTest {
     val response2 = client.newCall(request).execute()
     response1.body.string() // Discard the response body.
     response2.body.string() // Discard the response body.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
   @Test
@@ -234,8 +231,8 @@ class ConnectionReuseTest {
     Thread.sleep(500)
     val response2 = client.newCall(request).execute()
     assertThat(response2.body.string()).isEqualTo("b")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   @Test
@@ -285,8 +282,8 @@ class ConnectionReuseTest {
         .build()
     val response2 = anotherClient.newCall(request).execute()
     response2.body.close()
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
   }
 
   /**
@@ -339,9 +336,9 @@ class ConnectionReuseTest {
         response.body.string(),
       ).isEqualTo("unrelated response body!")
     }
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     // No connection reuse.
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     for (response in responsesNotClosed) {
       response!!.closeQuietly()
     }
@@ -374,7 +371,7 @@ class ConnectionReuseTest {
     for (i in requests.indices) {
       val response = client.newCall(requests[i]!!).execute()
       response.body.string() // Discard the response body.
-      assertThat(server.takeRequest().sequenceNumber).isEqualTo(i)
+      assertThat(server.takeRequest().exchangeIndex).isEqualTo(i)
     }
   }
 
@@ -382,7 +379,7 @@ class ConnectionReuseTest {
     for (request in requests) {
       val response = client.newCall(request!!).execute()
       response.body.string() // Discard the response body.
-      assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+      assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
     }
   }
 }

@@ -19,7 +19,8 @@ import java.io.File
 import java.io.IOException
 import java.io.RandomAccessFile
 import okhttp3.internal.closeQuietly
-import okhttp3.internal.notifyAll
+import okhttp3.internal.concurrent.Lockable
+import okhttp3.internal.concurrent.notifyAll
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
@@ -63,7 +64,7 @@ class Relay private constructor(
   private val metadata: ByteString,
   /** The maximum size of [buffer]. */
   val bufferMaxSize: Long,
-) {
+) : Lockable {
   /** The thread that currently has access to upstream. Possibly null. Guarded by this. */
   var upstreamReader: Thread? = null
 

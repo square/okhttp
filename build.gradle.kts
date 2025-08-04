@@ -2,7 +2,6 @@
 
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
-import com.vanniktech.maven.publish.SonatypeHost
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
@@ -10,7 +9,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.gradle.utils.addExtendsFromRelation
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 import java.net.URI
 
@@ -30,6 +28,7 @@ buildscript {
     classpath(libs.gradlePlugin.binaryCompatibilityValidator)
     classpath(libs.gradlePlugin.mavenSympathy)
     classpath(libs.gradlePlugin.graalvmBuildTools)
+    classpath(libs.gradlePlugin.ksp)
   }
 
   repositories {
@@ -52,7 +51,7 @@ configure<SpotlessExtension> {
 
 allprojects {
   group = "com.squareup.okhttp3"
-  version = "5.0.0-SNAPSHOT"
+  version = "5.2.0-SNAPSHOT"
 
   repositories {
     mavenCentral()
@@ -100,7 +99,9 @@ subprojects {
   // These are applied inside the okhttp module for that case specifically
   if (project.name != "okhttp") {
     apply(plugin = "biz.aQute.bnd.builder")
-    apply(plugin = "io.github.usefulness.maven-sympathy")
+    if (project.name != "okhttp-testing-support") {
+      apply(plugin = "io.github.usefulness.maven-sympathy")
+    }
   }
 
   // Skip samples parent
@@ -176,8 +177,8 @@ subprojects {
 
   val javaVersionSetting =
     if (testJavaVersion > 8 && (project.name == "okcurl" || project.name == "native-image-tests")) {
-      // Depends on native-image-tools which is 11+, but avoids on Java 8 tests
-      "11"
+      // Depends on native-image-tools which is 17+, but avoids on Java 8 tests
+      "17"
     } else {
       "1.8"
     }
@@ -241,53 +242,13 @@ subprojects {
     environment("OKHTTP_ROOT", rootDir)
   }
 
-  if (project.name != "okhttp") {
-    if (platform == "jdk8alpn") {
-      // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
-      val alpnBootVersion = alpnBootVersion()
-      if (alpnBootVersion != null) {
-        val alpnBootJar = configurations.detachedConfiguration(
-          dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")
-        ).singleFile
-        tasks.withType<Test> {
-          jvmArgs("-Xbootclasspath/p:${alpnBootJar}")
-        }
-      }
-    } else if (platform == "conscrypt") {
-      dependencies {
-//      testRuntimeOnly(rootProject.libs.conscrypt.openjdk)
-      }
-    } else if (platform == "openjsse") {
-      dependencies {
-//      testRuntimeOnly(rootProject.libs.openjsse)
-      }
-    }
-  }
-
   tasks.withType<JavaCompile> {
     sourceCompatibility = projectJavaVersion.toString()
     targetCompatibility = projectJavaVersion.toString()
   }
 }
 
-// Opt-in to @ExperimentalOkHttpApi everywhere.
 subprojects {
-  plugins.withId("org.jetbrains.kotlin.jvm") {
-    kotlinExtension.sourceSets.configureEach {
-      languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
-    }
-  }
-  plugins.withId("org.jetbrains.kotlin.multiplatform") {
-    kotlinExtension.sourceSets.configureEach {
-      languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
-    }
-  }
-  plugins.withId("org.jetbrains.kotlin.android") {
-    kotlinExtension.sourceSets.configureEach {
-      languageSettings.optIn("okhttp3.ExperimentalOkHttpApi")
-    }
-  }
-
   // From https://www.liutikas.net/2025/01/12/Kotlin-Library-Friends.html
 
     // Create configurations we can use to track friend libraries
@@ -357,7 +318,7 @@ subprojects {
 
   plugins.withId("com.vanniktech.maven.publish.base") {
     configure<MavenPublishBaseExtension> {
-      publishToMavenCentral(SonatypeHost.S01, automaticRelease = true)
+      publishToMavenCentral(automaticRelease = true)
       signAllPublications()
       pom {
         name.set(project.name)

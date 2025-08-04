@@ -3,7 +3,7 @@ import java.util.Properties
 rootProject.name = "okhttp-parent"
 
 plugins {
-  id("org.gradle.toolchains.foojay-resolver-convention") version("0.10.0")
+  id("org.gradle.toolchains.foojay-resolver-convention") version("1.0.0")
 }
 
 include(":mockwebserver")
@@ -42,6 +42,7 @@ include(":okhttp-sse")
 include(":okhttp-testing-support")
 include(":okhttp-tls")
 include(":okhttp-urlconnection")
+include(":okhttp-zstd")
 include(":samples:compare")
 include(":samples:crawler")
 include(":samples:guide")

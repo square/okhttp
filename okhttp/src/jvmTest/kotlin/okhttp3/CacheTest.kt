@@ -40,8 +40,8 @@ import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
-import mockwebserver3.SocketPolicy.DisconnectAtEnd
-import mockwebserver3.junit5.internal.MockWebServerInstance
+import mockwebserver3.SocketEffect.ShutdownConnection
+import mockwebserver3.junit5.StartStop
 import okhttp3.Cache.Companion.key
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
@@ -75,8 +75,13 @@ class CacheTest {
 
   @RegisterExtension
   val platform = PlatformRule()
-  private lateinit var server: MockWebServer
-  private lateinit var server2: MockWebServer
+
+  @StartStop
+  private val server = MockWebServer()
+
+  @StartStop
+  private val server2 = MockWebServer()
+
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private lateinit var client: OkHttpClient
   private lateinit var cache: Cache
@@ -84,12 +89,7 @@ class CacheTest {
   private val cachePath = "/cache-CacheTest".toPath()
 
   @BeforeEach
-  fun setUp(
-    @MockWebServerInstance(name = "1") server: MockWebServer,
-    @MockWebServerInstance(name = "2") server2: MockWebServer,
-  ) {
-    this.server = server
-    this.server2 = server2
+  fun setUp() {
     platform.assumeNotOpenJSSE()
     server.protocolNegotiationEnabled = false
     fileSystem.emulateUnix()
@@ -177,7 +177,7 @@ class CacheTest {
     responseCode: Int,
   ) {
     var expectedResponseCode = responseCode
-    server = MockWebServer()
+    val server = MockWebServer()
     val builder =
       MockResponse
         .Builder()
@@ -231,14 +231,14 @@ class CacheTest {
     } else {
       assertThat(cached).isNull()
     }
-    server.shutdown() // tearDown() isn't sufficient; this test starts multiple servers
+    server.close() // tearDown() isn't sufficient; this test starts multiple servers
   }
 
   private fun assertSubsequentResponseCached(
     initialResponseCode: Int,
     finalResponseCode: Int,
   ) {
-    server = MockWebServer()
+    val server = MockWebServer()
     val builder =
       MockResponse
         .Builder()
@@ -262,7 +262,7 @@ class CacheTest {
     val cached = cacheGet(cache, request)
     assertThat(cached).isNotNull()
     cached!!.body.close()
-    server.shutdown() // tearDown() isn't sufficient; this test starts multiple servers
+    server.close() // tearDown() isn't sufficient; this test starts multiple servers
   }
 
   @Test
@@ -481,13 +481,15 @@ class CacheTest {
     assertThat(response1.body.string()).isEqualTo("ABC")
     val recordedRequest1 = server.takeRequest()
     assertThat(recordedRequest1.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(recordedRequest1.sequenceNumber).isEqualTo(0)
+    assertThat(recordedRequest1.connectionIndex).isEqualTo(0)
+    assertThat(recordedRequest1.exchangeIndex).isEqualTo(0)
     val request2 = Request.Builder().url(server.url("/bar")).build()
     val response2 = client.newCall(request2).execute()
     assertThat(response2.body.string()).isEqualTo("ABC")
     val recordedRequest2 = server.takeRequest()
     assertThat(recordedRequest2.requestLine).isEqualTo("GET /bar HTTP/1.1")
-    assertThat(recordedRequest2.sequenceNumber).isEqualTo(1)
+    assertThat(recordedRequest2.connectionIndex).isEqualTo(0)
+    assertThat(recordedRequest2.exchangeIndex).isEqualTo(1)
 
     // an unrelated request should reuse the pooled connection
     val request3 = Request.Builder().url(server.url("/baz")).build()
@@ -495,7 +497,8 @@ class CacheTest {
     assertThat(response3.body.string()).isEqualTo("DEF")
     val recordedRequest3 = server.takeRequest()
     assertThat(recordedRequest3.requestLine).isEqualTo("GET /baz HTTP/1.1")
-    assertThat(recordedRequest3.sequenceNumber).isEqualTo(2)
+    assertThat(recordedRequest3.connectionIndex).isEqualTo(0)
+    assertThat(recordedRequest3.exchangeIndex).isEqualTo(2)
   }
 
   @Test
@@ -2162,9 +2165,15 @@ class CacheTest {
     assertThat(get(server.url("/a")).body.string()).isEqualTo("A")
     assertThat(get(server.url("/a")).body.string()).isEqualTo("A")
     assertThat(get(server.url("/b")).body.string()).isEqualTo("B")
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
-    assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
+    val c0e0 = server.takeRequest()
+    assertThat(c0e0.connectionIndex).isEqualTo(0)
+    assertThat(c0e0.exchangeIndex).isEqualTo(0)
+    val c0e1 = server.takeRequest()
+    assertThat(c0e1.connectionIndex).isEqualTo(0)
+    assertThat(c0e1.exchangeIndex).isEqualTo(1)
+    val c0e2 = server.takeRequest()
+    assertThat(c0e2.connectionIndex).isEqualTo(0)
+    assertThat(c0e2.exchangeIndex).isEqualTo(2)
   }
 
   @Test
@@ -3836,7 +3845,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     numBytesToKeep: Int,
   ): MockResponse.Builder {
     val response = builder.build()
-    builder.socketPolicy(DisconnectAtEnd)
+    builder.onResponseEnd(ShutdownConnection)
     val headers = response.headers
     val fullBody = Buffer()
     response.body!!.writeTo(fullBody)
@@ -3873,7 +3882,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         chunkSize: Int,
       ) {
         response.body(content)
-        response.socketPolicy(DisconnectAtEnd)
+        response.onResponseEnd(ShutdownConnection)
         response.removeHeader("Content-Length")
       }
     }, ;

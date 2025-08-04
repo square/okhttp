@@ -35,11 +35,17 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.TestUtil.repeat
 import okhttp3.internal.concurrent.TaskFaker
+import okhttp3.internal.connection.BufferedSocket
 import okhttp3.internal.ws.WebSocketExtensions.Companion.parse
+import okio.BufferedSink
+import okio.BufferedSource
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
-import okio.Pipe
+import okio.ForwardingSink
+import okio.ForwardingSource
+import okio.Socket
 import okio.buffer
+import okio.inMemorySocketPair
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
@@ -51,11 +57,10 @@ class RealWebSocketTest {
   // zero effect on the behavior of the WebSocket API which is why tests are only written once
   // from the perspective of a single peer.
   private val random = Random(0)
-  private val client2Server = Pipe(8192L)
-  private val server2client = Pipe(8192L)
   private val taskFaker = TaskFaker()
-  private val client = TestStreams(true, taskFaker, server2client, client2Server)
-  private val server = TestStreams(false, taskFaker, client2Server, server2client)
+  private val sockets = inMemorySocketPair(8192L)
+  private val client = TestStreams(taskFaker, sockets[0], client = true)
+  private val server = TestStreams(taskFaker, sockets[1], client = false)
 
   @BeforeEach
   fun setUp() {
@@ -110,7 +115,7 @@ class RealWebSocketTest {
 
   @Test
   fun afterSocketClosedPingFailsWebSocket() {
-    client2Server.source.close()
+    server.source.close()
     client.webSocket!!.pong("Ping!".encodeUtf8())
     taskFaker.runTasks()
     client.listener.assertFailure(IOException::class.java, "source is closed")
@@ -119,7 +124,7 @@ class RealWebSocketTest {
 
   @Test
   fun socketClosedDuringMessageKillsWebSocket() {
-    client2Server.source.close()
+    server.source.close()
     assertThat(client.webSocket!!.send("Hello!")).isTrue()
     taskFaker.runTasks()
     client.listener.assertFailure(IOException::class.java, "source is closed")
@@ -188,6 +193,7 @@ class RealWebSocketTest {
     taskFaker.runTasks()
     client.listener.assertClosing(1000, "Goodbye!")
     client.webSocket!!.finishReader()
+    taskFaker.runTasks()
     assertThat(client.closed).isTrue()
 
     // Server and client both finished closing, connection is closed.
@@ -305,6 +311,7 @@ class RealWebSocketTest {
     server.sink.write("888760b420bb635c68de0cd84f".decodeHex()).emit()
     client.processNextFrame() // Detects error, disconnects immediately since close already sent.
     client.webSocket!!.finishReader()
+    taskFaker.runTasks()
     assertThat(client.closed).isTrue()
     client.listener.assertFailure(
       ProtocolException::class.java,
@@ -344,7 +351,7 @@ class RealWebSocketTest {
 
   @Test
   fun closeThrowingFailsConnection() {
-    client2Server.source.close()
+    server.source.close()
     client.webSocket!!.close(1000, null)
     taskFaker.runTasks()
     client.listener.assertFailure(IOException::class.java, "source is closed")
@@ -457,16 +464,34 @@ class RealWebSocketTest {
 
   /** One peer's streams, listener, and web socket in the test.  */
   private class TestStreams(
-    client: Boolean,
     private val taskFaker: TaskFaker,
-    private val sourcePipe: Pipe,
-    private val sinkPipe: Pipe,
-  ) : RealWebSocket.Streams(client, sourcePipe.source.buffer(), sinkPipe.sink.buffer()) {
+    private val delegate: Socket,
+    private val client: Boolean,
+  ) : BufferedSocket {
     private val name = if (client) "client" else "server"
     val listener = WebSocketRecorder(name)
     var webSocket: RealWebSocket? = null
-    var closed = false
+    var sourceClosed = false
+    var sinkClosed = false
+    val closed: Boolean
+      get() = sourceClosed && sinkClosed
     var canceled = false
+
+    override val source: BufferedSource =
+      object : ForwardingSource(delegate.source) {
+        override fun close() {
+          sourceClosed = true
+          super.close()
+        }
+      }.buffer()
+
+    override val sink: BufferedSink =
+      object : ForwardingSink(delegate.sink) {
+        override fun close() {
+          sinkClosed = true
+          super.close()
+        }
+      }.buffer()
 
     fun initWebSocket(
       random: Random?,
@@ -506,7 +531,7 @@ class RealWebSocketTest {
               }
           }
         }
-      webSocket!!.initReaderAndWriter(name, this)
+      webSocket!!.initReaderAndWriter(name, this, client)
     }
 
     /**
@@ -523,25 +548,9 @@ class RealWebSocketTest {
       return webSocket!!.processNextFrame()
     }
 
-    override fun close() {
-      if (closed) {
-        throw AssertionError("Already closed")
-      }
-      try {
-        source.close()
-      } catch (ignored: IOException) {
-      }
-      try {
-        sink.close()
-      } catch (ignored: IOException) {
-      }
-      closed = true
-    }
-
     override fun cancel() {
       canceled = true
-      sourcePipe.cancel()
-      sinkPipe.cancel()
+      delegate.cancel()
     }
   }
 

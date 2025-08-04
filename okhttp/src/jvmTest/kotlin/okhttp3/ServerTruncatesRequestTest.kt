@@ -24,11 +24,10 @@ import javax.net.ssl.SSLSocket
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy.DoNotReadRequestBody
+import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.internal.duplex.AsyncRequestBody
-import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.PlatformRule
 import okio.BufferedSink
 import okio.IOException
@@ -60,11 +59,11 @@ class ServerTruncatesRequestTest {
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build()
 
-  private lateinit var server: MockWebServer
+  @StartStop
+  private val server = MockWebServer()
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
+  fun setUp() {
     platform.assumeNotOpenJSSE()
     platform.assumeHttp2Support()
   }
@@ -85,10 +84,11 @@ class ServerTruncatesRequestTest {
 
   private fun serverTruncatesRequestOnLongPost(https: Boolean) {
     server.enqueue(
-      MockResponse(
-        body = "abc",
-        socketPolicy = DoNotReadRequestBody(ErrorCode.NO_ERROR.httpCode),
-      ),
+      MockResponse
+        .Builder()
+        .body("abc")
+        .doNotReadRequestBody()
+        .build(),
     )
 
     val call =
@@ -124,6 +124,7 @@ class ServerTruncatesRequestTest {
     expectedEvents += "RequestFailed"
     expectedEvents += "ResponseHeadersStart"
     expectedEvents += "ResponseHeadersEnd"
+    expectedEvents += "FollowUpDecision"
     expectedEvents += "ResponseBodyStart"
     expectedEvents += "ResponseBodyEnd"
     expectedEvents += "ConnectionReleased"
@@ -143,10 +144,11 @@ class ServerTruncatesRequestTest {
     enableProtocol(Protocol.HTTP_2)
 
     server.enqueue(
-      MockResponse(
-        body = "abc",
-        socketPolicy = DoNotReadRequestBody(ErrorCode.NO_ERROR.httpCode),
-      ),
+      MockResponse
+        .Builder()
+        .body("abc")
+        .doNotReadRequestBody()
+        .build(),
     )
 
     val requestBody = AsyncRequestBody()
@@ -192,7 +194,7 @@ class ServerTruncatesRequestTest {
     val mockResponse =
       MockResponse
         .Builder()
-        .socketPolicy(DoNotReadRequestBody(ErrorCode.NO_ERROR.httpCode))
+        .doNotReadRequestBody()
         .trailers(headersOf("caboose", "xyz"))
 
     // Trailers always work for HTTP/2, but only for chunked bodies in HTTP/1.

@@ -43,6 +43,7 @@ import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME
 import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME_UTF8
 import okhttp3.internal.immutableListOf
 import okio.Sink
+import okio.Socket
 import okio.Source
 
 /** Encode requests and responses using HTTP/2 frames. */
@@ -64,10 +65,16 @@ class Http2ExchangeCodec(
   @Volatile
   private var canceled = false
 
+  override val isResponseComplete: Boolean
+    get() = stream?.isSourceComplete == true
+
+  override val socket: Socket
+    get() = stream!!
+
   override fun createRequestBody(
     request: Request,
     contentLength: Long,
-  ): Sink = stream!!.getSink()
+  ): Sink = stream!!.sink
 
   override fun writeRequestHeaders(request: Request) {
     if (stream != null) return
@@ -90,7 +97,7 @@ class Http2ExchangeCodec(
   }
 
   override fun finishRequest() {
-    stream!!.getSink().close()
+    stream!!.sink.close()
   }
 
   override fun readResponseHeaders(expectContinue: Boolean): Response.Builder? {
@@ -112,7 +119,7 @@ class Http2ExchangeCodec(
 
   override fun openResponseBodySource(response: Response): Source = stream!!.source
 
-  override fun trailers(): Headers = stream!!.trailers()
+  override fun peekTrailers(): Headers? = stream!!.peekTrailers()
 
   override fun cancel() {
     canceled = true
@@ -205,7 +212,6 @@ class Http2ExchangeCodec(
         .code(statusLine.code)
         .message(statusLine.message)
         .headers(headersBuilder.build())
-        .trailers { error("trailers not available") }
     }
   }
 }

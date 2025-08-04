@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(ExperimentalCoroutinesApi::class)
-
 package okhttp3.internal.publicsuffix
 
 import java.util.SortedSet
 import java.util.TreeSet
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -34,7 +31,6 @@ import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
 import okio.buffer
-import okio.gzip
 
 /**
  * Downloads the public suffix list from https://publicsuffix.org/list/public_suffix_list.dat and
@@ -133,8 +129,8 @@ class PublicSuffixListGenerator(
 
   private suspend fun writeOutputFile(importResults: ImportResults) =
     withContext(Dispatchers.IO) {
-      fileSystem.sink(outputFile).gzip().buffer().use { sink ->
-        importResults.writeOut(sink)
+      fileSystem.write(outputFile) {
+        importResults.writeOut(this)
       }
     }
 

@@ -17,7 +17,6 @@ package okhttp3.internal.connection
 
 import java.io.IOException
 import java.net.ProtocolException
-import java.net.SocketException
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.Request
@@ -25,11 +24,11 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RealResponseBody
-import okhttp3.internal.ws.RealWebSocket
 import okio.Buffer
 import okio.ForwardingSink
 import okio.ForwardingSource
 import okio.Sink
+import okio.Socket
 import okio.Source
 import okio.buffer
 
@@ -141,16 +140,22 @@ class Exchange(
   }
 
   @Throws(IOException::class)
-  fun trailers(): Headers = codec.trailers()
+  fun peekTrailers(): Headers? = codec.peekTrailers()
 
-  @Throws(SocketException::class)
-  fun newWebSocketStreams(): RealWebSocket.Streams {
+  fun upgradeToSocket(): Socket {
     call.timeoutEarlyExit()
-    return (codec.carrier as RealConnection).newWebSocketStreams(this)
-  }
+    (codec.carrier as RealConnection).useAsSocket()
 
-  fun webSocketUpgradeFailed() {
-    bodyComplete(-1L, responseDone = true, requestDone = true, e = null)
+    eventListener.requestBodyStart(call)
+
+    return object : Socket {
+      override fun cancel() {
+        this@Exchange.cancel()
+      }
+
+      override val sink = RequestBodySink(codec.socket.sink, -1L)
+      override val source = ResponseBodySource(codec.socket.source, -1L)
+    }
   }
 
   fun noNewExchangesOnConnection() {
@@ -167,7 +172,12 @@ class Exchange(
    */
   fun detachWithViolence() {
     codec.cancel()
-    call.messageDone(this, requestDone = true, responseDone = true, e = null)
+    call.messageDone(
+      exchange = this,
+      requestDone = true,
+      responseDone = true,
+      e = null,
+    )
   }
 
   private fun trackFailure(e: IOException) {
@@ -175,12 +185,13 @@ class Exchange(
     codec.carrier.trackFailure(call, e)
   }
 
-  fun <E : IOException?> bodyComplete(
-    bytesRead: Long,
-    responseDone: Boolean,
-    requestDone: Boolean,
-    e: E,
-  ): E {
+  /** If [e] is non-null, this will return a non-null value. */
+  fun bodyComplete(
+    bytesRead: Long = -1L,
+    responseDone: Boolean = false,
+    requestDone: Boolean = false,
+    e: IOException?,
+  ): IOException? {
     if (e != null) {
       trackFailure(e)
     }
@@ -198,11 +209,20 @@ class Exchange(
         eventListener.responseBodyEnd(call, bytesRead)
       }
     }
-    return call.messageDone(this, requestDone, responseDone, e)
+    return call.messageDone(
+      exchange = this,
+      requestDone = requestDone,
+      responseDone = responseDone,
+      e = e,
+    )
   }
 
   fun noRequestBody() {
-    call.messageDone(this, requestDone = true, responseDone = false, e = null)
+    call.messageDone(
+      exchange = this,
+      requestDone = true,
+      e = null,
+    )
   }
 
   /** A request body that fires events when it completes. */
@@ -230,7 +250,7 @@ class Exchange(
         super.write(source, byteCount)
         this.bytesReceived += byteCount
       } catch (e: IOException) {
-        throw complete(e)
+        throw complete(e)!!
       }
     }
 
@@ -239,7 +259,7 @@ class Exchange(
       try {
         super.flush()
       } catch (e: IOException) {
-        throw complete(e)
+        throw complete(e)!!
       }
     }
 
@@ -254,14 +274,19 @@ class Exchange(
         super.close()
         complete(null)
       } catch (e: IOException) {
-        throw complete(e)
+        throw complete(e)!!
       }
     }
 
-    private fun <E : IOException?> complete(e: E): E {
+    /** If [e] is non-null, this will return a non-null value. */
+    private fun complete(e: IOException?): IOException? {
       if (completed) return e
       completed = true
-      return bodyComplete(bytesReceived, responseDone = false, requestDone = true, e = e)
+      return bodyComplete(
+        bytesRead = bytesReceived,
+        requestDone = true,
+        e = e,
+      )
     }
   }
 
@@ -306,13 +331,13 @@ class Exchange(
         }
 
         bytesReceived = newBytesReceived
-        if (newBytesReceived == contentLength) {
+        if (codec.isResponseComplete) {
           complete(null)
         }
 
         return read
       } catch (e: IOException) {
-        throw complete(e)
+        throw complete(e)!!
       }
     }
 
@@ -324,11 +349,12 @@ class Exchange(
         super.close()
         complete(null)
       } catch (e: IOException) {
-        throw complete(e)
+        throw complete(e)!!
       }
     }
 
-    fun <E : IOException?> complete(e: E): E {
+    /** If [e] is non-null, this will return a non-null value. */
+    fun complete(e: IOException?): IOException? {
       if (completed) return e
       completed = true
       // If the body is closed without reading any bytes send a responseBodyStart() now.
@@ -336,7 +362,11 @@ class Exchange(
         invokeStartEvent = false
         eventListener.responseBodyStart(call)
       }
-      return bodyComplete(bytesReceived, responseDone = true, requestDone = false, e = e)
+      return bodyComplete(
+        bytesRead = bytesReceived,
+        responseDone = true,
+        e = e,
+      )
     }
   }
 }

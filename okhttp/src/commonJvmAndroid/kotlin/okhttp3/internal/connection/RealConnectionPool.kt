@@ -22,21 +22,20 @@ import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import okhttp3.Address
-import okhttp3.ConnectionListener
 import okhttp3.ConnectionPool
 import okhttp3.Route
-import okhttp3.internal.assertHeld
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskQueue
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.connection.Locks.withLock
+import okhttp3.internal.concurrent.assertLockHeld
+import okhttp3.internal.concurrent.withLock
 import okhttp3.internal.connection.RealCall.CallReference
 import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 import okio.IOException
 
-class RealConnectionPool(
+class RealConnectionPool internal constructor(
   private val taskRunner: TaskRunner,
   /**
    * The maximum number of idle connections across all addresses.
@@ -143,7 +142,7 @@ class RealConnectionPool(
   }
 
   fun put(connection: RealConnection) {
-    connection.lock.assertHeld()
+    connection.assertLockHeld()
 
     connections.add(connection)
 //    connection.queueEvent { connectionListener.connectEnd(connection) }
@@ -155,7 +154,7 @@ class RealConnectionPool(
    * removed from the pool and should be closed.
    */
   fun connectionBecameIdle(connection: RealConnection): Boolean {
-    connection.lock.assertHeld()
+    connection.assertLockHeld()
 
     return if (connection.noNewExchanges || maxIdleConnections == 0) {
       connection.noNewExchanges = true
@@ -334,7 +333,7 @@ class RealConnectionPool(
     connection: RealConnection,
     now: Long,
   ): Int {
-    connection.lock.assertHeld()
+    connection.assertLockHeld()
 
     val references = connection.calls
     var i = 0
@@ -371,7 +370,7 @@ class RealConnectionPool(
    */
   fun setPolicy(
     address: Address,
-    policy: ConnectionPool.AddressPolicy,
+    policy: AddressPolicy,
   ) {
     val state = AddressState(address, taskRunner.newQueue(), policy)
     val newConnectionsNeeded: Int
@@ -443,7 +442,7 @@ class RealConnectionPool(
   class AddressState(
     val address: Address,
     val queue: TaskQueue,
-    var policy: ConnectionPool.AddressPolicy,
+    var policy: AddressPolicy,
   ) {
     /**
      * How many calls the pool can carry without opening new connections. This field must only be

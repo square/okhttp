@@ -19,12 +19,12 @@ import java.io.Closeable
 import java.io.EOFException
 import java.io.Flushable
 import java.io.IOException
-import okhttp3.internal.assertThreadHoldsLock
-import okhttp3.internal.cache.CacheLock.openLock
 import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.Lockable
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.concurrent.assertLockHeld
 import okhttp3.internal.deleteContents
 import okhttp3.internal.deleteIfExists
 import okhttp3.internal.isCivilized
@@ -97,6 +97,7 @@ class DiskLruCache(
   taskRunner: TaskRunner,
   private val useCacheLock: Boolean,
 ) : Closeable,
+  Lockable,
   Flushable {
   lateinit var cacheLock: Closeable
 
@@ -229,7 +230,7 @@ class DiskLruCache(
   @Synchronized
   @Throws(IOException::class)
   fun initialize() {
-    this.assertThreadHoldsLock()
+    assertLockHeld()
 
     if (initialized) {
       return // Already initialized.
@@ -332,7 +333,7 @@ class DiskLruCache(
     val fileSink = fileSystem.appendingSink(journalFile)
     val faultHidingSink =
       FaultHidingSink(fileSink) {
-        this@DiskLruCache.assertThreadHoldsLock()
+        assertLockHeld()
         hasJournalErrors = true
       }
     return faultHidingSink.buffer()
@@ -1055,7 +1056,7 @@ class DiskLruCache(
      * different edits.
      */
     internal fun snapshot(): Snapshot? {
-      this@DiskLruCache.assertThreadHoldsLock()
+      assertLockHeld()
 
       if (!readable) return null
       if (!civilizedFileSystem && (currentEditor != null || zombie)) return null

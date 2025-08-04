@@ -18,6 +18,7 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.StartStop
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.BeforeEach
@@ -31,11 +32,12 @@ class BouncyCastleTest {
   @JvmField @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
   var client = clientTestRule.newClient()
-  private lateinit var server: MockWebServer
+
+  @StartStop
+  private val server = MockWebServer()
 
   @BeforeEach
-  fun setUp(server: MockWebServer) {
-    this.server = server
+  fun setUp() {
     OkHttpDebugLogging.enable("org.bouncycastle.jsse")
     platform.assumeBouncyCastle()
   }

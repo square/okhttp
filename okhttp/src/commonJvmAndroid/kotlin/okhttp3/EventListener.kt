@@ -18,6 +18,7 @@ package okhttp3
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.net.ProtocolException
 import java.net.Proxy
 
 /**
@@ -454,14 +455,58 @@ abstract class EventListener {
   }
 
   /**
-   * Invoked when a failed call is considered for retry.
+   * Invoked when OkHttp decides whether to retry after a connectivity failure.
    *
-   * This event won't be emitted when a call isSuccessful.
+   * OkHttp won't retry when it is configured not to:
+   *
+   *  * If retries are forbidden with [OkHttpClient.retryOnConnectionFailure]. (OkHttp's defaults
+   *    permit retries.)
+   *  * If OkHttp already attempted to transmit the request body, and [RequestBody.isOneShot] is
+   *    true.
+   *
+   * It won't retry if the exception is a bug or a configuration problem, such as:
+   *
+   *  * If the remote peer is untrusted: [exception] is an [SSLPeerUnverifiedException].
+   *  * If received data is unexpected: [exception] is a [ProtocolException].
+   *
+   * Each call is made on either a reused [Connection] from a pool, or on a new connection
+   * established from a planned [Route]. OkHttp won't retry if it's already attempted all
+   * available routes.
+   *
+   * @param retry true if OkHttp will make another attempt
    */
   open fun retryDecision(
     call: Call,
-    shouldRetry: Boolean,
-    reason: String,
+    exception: IOException,
+    retry: Boolean,
+  ) {
+  }
+
+  /**
+   * Invoked when OkHttp decides whether to perform a follow-up request.
+   *
+   * The network response's status code is most influential when deciding how to follow up:
+   *
+   *  * For redirects (301: Moved Permanently, 302: Temporary Redirect, etc.)
+   *  * For auth challenges (401: Unauthorized, 407: Proxy Authentication Required.)
+   *  * For client timeouts (408: Request Time-Out.)
+   *  * For server failures (503: Service Unavailable.)
+   *
+   * Response header values like `Location` and `Retry-After` are also considered.
+   *
+   * Client configuration may be used to make follow-up decisions, such as:
+   *
+   *  * [OkHttpClient.followRedirects] must be true to follow redirects.
+   *  * [OkHttpClient.followSslRedirects] must be true to follow redirects that add or remove HTTPS.
+   *  * [OkHttpClient.authenticator] must respond to an authorization challenge.
+   *
+   * @param networkResponse the intermediate response that may require a follow-up request.
+   * @param nextRequest the follow-up request that will be made. Null if no follow-up will be made.
+   */
+  open fun followUpDecision(
+    call: Call,
+    networkResponse: Response,
+    nextRequest: Request?,
   ) {
   }
 

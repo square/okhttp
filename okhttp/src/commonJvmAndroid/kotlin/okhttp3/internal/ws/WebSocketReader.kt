@@ -20,6 +20,7 @@ import java.io.IOException
 import java.net.ProtocolException
 import java.util.concurrent.TimeUnit
 import okhttp3.internal.and
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.toHexString
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_RSV1
@@ -302,6 +303,7 @@ class WebSocketReader(
 
   @Throws(IOException::class)
   override fun close() {
-    messageInflater?.close()
+    messageInflater?.closeQuietly()
+    source.closeQuietly()
   }
 }

@@ -17,31 +17,19 @@ package okhttp3
 
 import java.io.Closeable
 import java.io.IOException
+import java.net.HttpURLConnection.HTTP_MOVED_PERM
+import java.net.HttpURLConnection.HTTP_MOVED_TEMP
+import java.net.HttpURLConnection.HTTP_MULT_CHOICE
 import java.net.HttpURLConnection.HTTP_PROXY_AUTH
+import java.net.HttpURLConnection.HTTP_SEE_OTHER
 import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
 import okhttp3.ResponseBody.Companion.asResponseBody
-import okhttp3.internal.commonAddHeader
-import okhttp3.internal.commonBody
-import okhttp3.internal.commonCacheControl
-import okhttp3.internal.commonCacheResponse
-import okhttp3.internal.commonClose
-import okhttp3.internal.commonCode
-import okhttp3.internal.commonHeader
-import okhttp3.internal.commonHeaders
-import okhttp3.internal.commonIsRedirect
-import okhttp3.internal.commonIsSuccessful
-import okhttp3.internal.commonMessage
-import okhttp3.internal.commonNetworkResponse
-import okhttp3.internal.commonNewBuilder
-import okhttp3.internal.commonPriorResponse
-import okhttp3.internal.commonProtocol
-import okhttp3.internal.commonRemoveHeader
-import okhttp3.internal.commonRequest
-import okhttp3.internal.commonToString
-import okhttp3.internal.commonTrailers
 import okhttp3.internal.connection.Exchange
+import okhttp3.internal.http.HTTP_PERM_REDIRECT
+import okhttp3.internal.http.HTTP_TEMP_REDIRECT
 import okhttp3.internal.http.parseChallenges
 import okio.Buffer
+import okio.Socket
 
 /**
  * An HTTP response. Instances of this class are not immutable: the response body is a one-shot
@@ -79,14 +67,21 @@ class Response internal constructor(
   /** Returns the HTTP headers. */
   @get:JvmName("headers") val headers: Headers,
   /**
-   * Returns a non-null value if this response was passed to [Callback.onResponse] or returned
-   * from [Call.execute]. Response bodies must be [closed][ResponseBody] and may
-   * be consumed only once.
+   * Returns a non-null stream with the server's response. The returned value must be
+   * [closed][ResponseBody] and may be consumed only once.
    *
-   * This always returns an unreadable [ResponseBody], which may implement [ResponseBody.contentType] and [ResponseBody.contentLength], on responses returned from [cacheResponse], [networkResponse],
-   * and [priorResponse].
+   * If this is a [cacheResponse], [networkResponse], or [priorResponse], the server's response body
+   * is not available, and it is always an error to attempt read its streamed content. Reading from
+   * [ResponseBody.source] always throws on such instances.
+   *
+   * It is safe and supported to call [ResponseBody.contentType] and [ResponseBody.contentLength] on
+   * all instances of [ResponseBody].
    */
   @get:JvmName("body") val body: ResponseBody,
+  /**
+   * Non-null if this response is a successful upgrade ...
+   */
+  @get:JvmName("socket") val socket: Socket?,
   /**
    * Returns the raw response received from the network. Will be null if this response didn't use
    * the network, such as when the response is fully cached. The body of the returned response
@@ -119,7 +114,7 @@ class Response internal constructor(
    */
   @get:JvmName("receivedResponseAtMillis") val receivedResponseAtMillis: Long,
   @get:JvmName("exchange") internal val exchange: Exchange?,
-  private var trailersFn: (() -> Headers),
+  private var trailersSource: TrailersSource,
 ) : Closeable {
   internal var lazyCacheControl: CacheControl? = null
 
@@ -151,7 +146,7 @@ class Response internal constructor(
    * Returns true if the code is in [200..300), which means the request was successfully received,
    * understood, and accepted.
    */
-  val isSuccessful: Boolean = commonIsSuccessful
+  val isSuccessful: Boolean = code in 200..299
 
   @JvmName("-deprecated_message")
   @Deprecated(
@@ -169,13 +164,13 @@ class Response internal constructor(
   )
   fun handshake(): Handshake? = handshake
 
-  fun headers(name: String): List<String> = commonHeaders(name)
+  fun headers(name: String): List<String> = headers.values(name)
 
   @JvmOverloads
   fun header(
     name: String,
     defaultValue: String? = null,
-  ): String? = commonHeader(name, defaultValue)
+  ): String? = headers[name] ?: defaultValue
 
   @JvmName("-deprecated_headers")
   @Deprecated(
@@ -186,11 +181,41 @@ class Response internal constructor(
   fun headers(): Headers = headers
 
   /**
-   * Returns the trailers after the HTTP response, which may be empty. It is an error to call this
-   * before the entire HTTP response body has been consumed.
+   * Returns the trailers after the HTTP response, which may be empty. This blocks until the
+   * trailers are available to read.
+   *
+   * It is not safe to call this concurrently with code that is processing the response body. If you
+   * call this without consuming the complete response body, any remaining bytes in the response
+   * body will be discarded before trailers are returned.
+   *
+   * If [Call.cancel] is called while this is blocking, this call will immediately throw.
+   *
+   * @throws IllegalStateException if the response is closed.
+   * @throws IOException if the trailers cannot be loaded, such as if the network connection is
+   *     dropped.
    */
   @Throws(IOException::class)
-  fun trailers(): Headers = trailersFn()
+  fun trailers(): Headers = trailersSource.get()
+
+  /**
+   * Returns the trailers after the HTTP response, if they are available to read immediately. Unlike
+   * [trailers], this doesn't block if the trailers are not immediately available, and instead
+   * returns null.
+   *
+   * This will typically return null until [ResponseBody.source] has buffered the last byte of the
+   * response body. Call `body.source().request(1024 * 1024)` to block until either that's done, or
+   * 1 MiB of response data is loaded into memory. (You could use any size here, though large values
+   * risk exhausting memory.)
+   *
+   * This returns an empty value if the trailers are available, but have no data.
+   *
+   * It is not safe to call this concurrently with code that is processing the response body.
+   *
+   * @throws IOException if the trailers cannot be loaded, such as if the network connection is
+   *     dropped.
+   */
+  @Throws(IOException::class)
+  fun peekTrailers(): Headers? = trailersSource.peek()
 
   /**
    * Peeks up to [byteCount] bytes from the response body and returns them as a new response
@@ -220,10 +245,14 @@ class Response internal constructor(
   )
   fun body() = body
 
-  fun newBuilder(): Builder = commonNewBuilder()
+  fun newBuilder(): Builder = Builder(this)
 
   /** Returns true if this response redirects to another resource. */
-  val isRedirect: Boolean = commonIsRedirect
+  val isRedirect: Boolean =
+    when (code) {
+      HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> true
+      else -> false
+    }
 
   @JvmName("-deprecated_networkResponse")
   @Deprecated(
@@ -276,7 +305,14 @@ class Response internal constructor(
    */
   @get:JvmName("cacheControl")
   val cacheControl: CacheControl
-    get() = commonCacheControl
+    get() {
+      var result = lazyCacheControl
+      if (result == null) {
+        result = CacheControl.parse(headers)
+        lazyCacheControl = result
+      }
+      return result
+    }
 
   @JvmName("-deprecated_cacheControl")
   @Deprecated(
@@ -308,9 +344,11 @@ class Response internal constructor(
    * Prior to OkHttp 5.0, it was an error to close a response that is not eligible for a body. This
    * includes the responses returned from [cacheResponse], [networkResponse], and [priorResponse].
    */
-  override fun close() = commonClose()
+  override fun close() {
+    body.close()
+  }
 
-  override fun toString(): String = commonToString()
+  override fun toString(): String = "Response{protocol=$protocol, code=$code, message=$message, url=${request.url}}"
 
   open class Builder {
     internal var request: Request? = null
@@ -319,14 +357,15 @@ class Response internal constructor(
     internal var message: String? = null
     internal var handshake: Handshake? = null
     internal var headers: Headers.Builder
-    internal var body: ResponseBody = ResponseBody.Empty
+    internal var body: ResponseBody = ResponseBody.EMPTY
+    internal var socket: Socket? = null
     internal var networkResponse: Response? = null
     internal var cacheResponse: Response? = null
     internal var priorResponse: Response? = null
     internal var sentRequestAtMillis: Long = 0
     internal var receivedResponseAtMillis: Long = 0
     internal var exchange: Exchange? = null
-    internal var trailersFn: (() -> Headers) = { Headers.headersOf() }
+    internal var trailersSource: TrailersSource = TrailersSource.EMPTY
 
     constructor() {
       headers = Headers.Builder()
@@ -340,22 +379,35 @@ class Response internal constructor(
       this.handshake = response.handshake
       this.headers = response.headers.newBuilder()
       this.body = response.body
+      this.socket = response.socket
       this.networkResponse = response.networkResponse
       this.cacheResponse = response.cacheResponse
       this.priorResponse = response.priorResponse
       this.sentRequestAtMillis = response.sentRequestAtMillis
       this.receivedResponseAtMillis = response.receivedResponseAtMillis
       this.exchange = response.exchange
-      this.trailersFn = response.trailersFn
+      this.trailersSource = response.trailersSource
     }
 
-    open fun request(request: Request) = commonRequest(request)
+    open fun request(request: Request) =
+      apply {
+        this.request = request
+      }
 
-    open fun protocol(protocol: Protocol) = commonProtocol(protocol)
+    open fun protocol(protocol: Protocol) =
+      apply {
+        this.protocol = protocol
+      }
 
-    open fun code(code: Int) = commonCode(code)
+    open fun code(code: Int) =
+      apply {
+        this.code = code
+      }
 
-    open fun message(message: String) = commonMessage(message)
+    open fun message(message: String) =
+      apply {
+        this.message = message
+      }
 
     open fun handshake(handshake: Handshake?) =
       apply {
@@ -369,7 +421,9 @@ class Response internal constructor(
     open fun header(
       name: String,
       value: String,
-    ) = commonHeader(name, value)
+    ) = apply {
+      headers[name] = value
+    }
 
     /**
      * Adds a header with [name] to [value]. Prefer this method for multiply-valued
@@ -378,24 +432,64 @@ class Response internal constructor(
     open fun addHeader(
       name: String,
       value: String,
-    ) = commonAddHeader(name, value)
+    ) = apply {
+      headers.add(name, value)
+    }
 
     /** Removes all headers named [name] on this builder. */
-    open fun removeHeader(name: String) = commonRemoveHeader(name)
+    open fun removeHeader(name: String) =
+      apply {
+        headers.removeAll(name)
+      }
 
     /** Removes all headers on this builder and adds [headers]. */
-    open fun headers(headers: Headers) = commonHeaders(headers)
+    open fun headers(headers: Headers) =
+      apply {
+        this.headers = headers.newBuilder()
+      }
 
-    open fun body(body: ResponseBody) = commonBody(body)
+    open fun body(body: ResponseBody) =
+      apply {
+        this.body = body
+      }
 
-    open fun networkResponse(networkResponse: Response?) = commonNetworkResponse(networkResponse)
+    open fun socket(socket: Socket) =
+      apply {
+        this.socket = socket
+      }
 
-    open fun cacheResponse(cacheResponse: Response?) = commonCacheResponse(cacheResponse)
+    open fun networkResponse(networkResponse: Response?) =
+      apply {
+        checkSupportResponse("networkResponse", networkResponse)
+        this.networkResponse = networkResponse
+      }
 
-    open fun priorResponse(priorResponse: Response?) = commonPriorResponse(priorResponse)
+    open fun cacheResponse(cacheResponse: Response?) =
+      apply {
+        checkSupportResponse("cacheResponse", cacheResponse)
+        this.cacheResponse = cacheResponse
+      }
 
-    @ExperimentalOkHttpApi
-    open fun trailers(trailersFn: (() -> Headers)): Builder = commonTrailers(trailersFn)
+    private fun checkSupportResponse(
+      name: String,
+      response: Response?,
+    ) {
+      response?.apply {
+        require(networkResponse == null) { "$name.networkResponse != null" }
+        require(cacheResponse == null) { "$name.cacheResponse != null" }
+        require(priorResponse == null) { "$name.priorResponse != null" }
+      }
+    }
+
+    open fun priorResponse(priorResponse: Response?) =
+      apply {
+        this.priorResponse = priorResponse
+      }
+
+    open fun trailers(trailersSource: TrailersSource): Builder =
+      apply {
+        this.trailersSource = trailersSource
+      }
 
     open fun sentRequestAtMillis(sentRequestAtMillis: Long) =
       apply {
@@ -409,7 +503,6 @@ class Response internal constructor(
 
     internal fun initExchange(exchange: Exchange) {
       this.exchange = exchange
-      this.trailersFn = { exchange.trailers() }
     }
 
     open fun build(): Response {
@@ -422,13 +515,14 @@ class Response internal constructor(
         handshake,
         headers.build(),
         body,
+        socket,
         networkResponse,
         cacheResponse,
         priorResponse,
         sentRequestAtMillis,
         receivedResponseAtMillis,
         exchange,
-        trailersFn,
+        trailersSource,
       )
     }
   }
