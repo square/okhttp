@@ -43,6 +43,8 @@ class MainActivity : ComponentActivity() {
       println(url.topPrivateDomain())
     }
 
+    println("https://☃.net/robots.txt".toHttpUrl().host)
+
     client.newCall(Request(url)).enqueue(
       object : Callback {
         override fun onFailure(
