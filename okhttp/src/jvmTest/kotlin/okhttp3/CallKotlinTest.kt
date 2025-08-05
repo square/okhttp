@@ -16,6 +16,7 @@
 package okhttp3
 
 import assertk.assertThat
+import assertk.assertions.contains
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotSameAs
@@ -23,6 +24,7 @@ import java.io.IOException
 import java.net.Proxy
 import java.security.cert.X509Certificate
 import java.time.Duration
+import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -30,7 +32,6 @@ import mockwebserver3.SocketEffect.CloseSocket
 import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.TestUtil.assertSuppressed
 import okhttp3.internal.DoubleInetAddressDns
 import okhttp3.internal.connection.RealConnection
@@ -43,6 +44,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.junitpioneer.jupiter.RetryingTest
 
 @Timeout(30)
@@ -183,13 +186,16 @@ class CallKotlinTest {
     }
   }
 
-  @Test
-  fun staleConnectionNotReusedForNonIdempotentRequest() {
+  /** OneShot requests cannot be retried, so it is important to healthcheck the connection first */
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun staleConnectionNotReusedForOneShotRequests(isOneShot: Boolean) {
     // Capture the connection so that we can later make it stale.
     var connection: RealConnection? = null
     client =
       client
         .newBuilder()
+        .retryOnConnectionFailure(false)
         .addNetworkInterceptor(
           Interceptor { chain ->
             connection = chain.connection() as RealConnection
@@ -223,11 +229,31 @@ class CallKotlinTest {
     val requestB =
       Request(
         url = server.url("/"),
-        body = "b".toRequestBody("text/plain".toMediaType()),
+        body =
+          object : RequestBody() {
+            override fun contentType(): MediaType? = "text/plain".toMediaType()
+
+            override fun writeTo(sink: BufferedSink) {
+              sink.write("b".toByteArray())
+            }
+
+            override fun isOneShot(): Boolean = isOneShot
+          },
       )
-    val responseB = client.newCall(requestB).execute()
-    assertThat(responseB.body.string()).isEqualTo("b")
-    assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    if (isOneShot) {
+      // extensiveHealthcheck on the stale connection will create a new connection
+      val responseB = client.newCall(requestB).execute()
+      assertThat(responseB.body.string()).isEqualTo("b")
+      assertThat(server.takeRequest().exchangeIndex).isEqualTo(0)
+    } else {
+      // extensiveHealthcheck is skipped because this request could be retried
+      // However the exception is thrown because retryOnConnectionFailure=false
+      val throwable =
+        assertFails {
+          client.newCall(requestB).execute()
+        }
+      assertThat(throwable.message!!).contains("unexpected end of stream")
+    }
   }
 
   /** Confirm suppressed exceptions that occur while connecting are returned. */
