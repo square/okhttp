@@ -1,1 +1,3 @@
--dontwarn **
+-dontwarn javax.**
+-dontwarn assertk.**
+

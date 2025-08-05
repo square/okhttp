@@ -32,7 +32,7 @@ android {
       isShrinkResources = true
       isMinifyEnabled = true
       signingConfig = signingConfigs.getByName("debug")
-      setProguardFiles(listOf(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"))
+      setProguardFiles(listOf(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"))
       testProguardFiles("test-proguard-rules.pro")
     }
   }
@@ -46,6 +46,7 @@ dependencies {
   implementation(libs.playservices.safetynet)
   implementation(projects.okhttp)
   implementation(libs.androidx.activity)
+  implementation("androidx.tracing:tracing:1.3.0")
 
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)

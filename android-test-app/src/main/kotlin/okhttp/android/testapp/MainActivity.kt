@@ -17,6 +17,7 @@ package okhttp.android.testapp
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.tracing.trace
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -36,7 +37,11 @@ class MainActivity : ComponentActivity() {
     println(AndroidPlatform.isSupported)
 
     val url = "https://github.com/square/okhttp".toHttpUrl()
-    println(url.topPrivateDomain())
+
+    // Needed or tests fail with CNFE
+    trace("a") {
+      println(url.topPrivateDomain())
+    }
 
     client.newCall(Request(url)).enqueue(
       object : Callback {

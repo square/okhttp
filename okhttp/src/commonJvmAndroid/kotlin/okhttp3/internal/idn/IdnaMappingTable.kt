@@ -16,6 +16,7 @@
 package okhttp3.internal.idn
 
 import okio.BufferedSink
+//import androidx.annotation.Keep
 
 /**
  * An IDNA mapping table optimized for small code and data size.
@@ -105,6 +106,7 @@ import okio.BufferedSink
  *
  * The mappings data contains non-ASCII characters.
  */
+//@Keep
 internal class IdnaMappingTable internal constructor(
   val sections: String,
   val ranges: String,

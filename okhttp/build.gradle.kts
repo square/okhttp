@@ -71,6 +71,7 @@ kotlin {
         api(libs.kotlin.stdlib)
 
         compileOnly(libs.animalsniffer.annotations)
+        implementation(libs.androidx.annotation)
       }
     }
 
