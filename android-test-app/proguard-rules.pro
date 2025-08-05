@@ -4,12 +4,12 @@
   *;
 }
 
--keep class androidx.tracing.Trace {
-  *;
-}
--keep public class kotlin.** {
-  *;
-}
--keep public class okhttp3.** {
-  *;
-}
+#-keep class androidx.tracing.Trace {
+#  *;
+#}
+#-keep public class kotlin.** {
+#  *;
+#}
+#-keep public class okhttp3.** {
+#  *;
+#}
