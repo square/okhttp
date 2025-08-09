@@ -244,6 +244,15 @@ class RequestTest {
         .build()
     assertThat(patch.method).isEqualTo("PATCH")
     assertThat(patch.body).isEqualTo(body)
+
+    val query =
+      Request
+        .Builder()
+        .url("http://localhost/api")
+        .query(body)
+        .build()
+    assertThat(query.method).isEqualTo("QUERY")
+    assertThat(query.body).isEqualTo(body)
   }
 
   @Test

@@ -1039,6 +1039,7 @@ public class okhttp3/Request$Builder {
 	public fun patch (Lokhttp3/RequestBody;)Lokhttp3/Request$Builder;
 	public fun post (Lokhttp3/RequestBody;)Lokhttp3/Request$Builder;
 	public fun put (Lokhttp3/RequestBody;)Lokhttp3/Request$Builder;
+	public fun query (Lokhttp3/RequestBody;)Lokhttp3/Request$Builder;
 	public fun removeHeader (Ljava/lang/String;)Lokhttp3/Request$Builder;
 	public fun tag (Ljava/lang/Class;Ljava/lang/Object;)Lokhttp3/Request$Builder;
 	public fun tag (Ljava/lang/Object;)Lokhttp3/Request$Builder;
