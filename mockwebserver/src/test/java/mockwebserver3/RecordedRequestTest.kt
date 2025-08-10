@@ -26,6 +26,7 @@ import mockwebserver3.internal.RecordedRequest
 import mockwebserver3.internal.decodeRequestLine
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
+import okio.Buffer
 import okio.ByteString
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -149,6 +150,10 @@ class RecordedRequestTest {
     private val remoteAddress: InetAddress = localAddress,
     private val remotePort: Int = 1234,
   ) : Socket() {
+    override fun getInputStream() = Buffer().inputStream()
+
+    override fun getOutputStream() = Buffer().outputStream()
+
     override fun getInetAddress() = remoteAddress
 
     override fun getLocalAddress() = localAddress
