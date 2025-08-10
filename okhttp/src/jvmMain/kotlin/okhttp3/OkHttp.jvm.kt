@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Block, Inc.
+ * Copyright (C) 2025 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.publicsuffix
+package okhttp3
 
-import androidx.test.core.app.ApplicationProvider
-import okhttp3.internal.platform.PlatformRegistry
-import org.robolectric.RobolectricTestRunner
+import okhttp3.internal.CONST_VERSION
 
-actual typealias PublicSuffixTestRunner = RobolectricTestRunner
-
-actual fun beforePublicSuffixTest() {
-  PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext()
+actual object OkHttp {
+  @JvmField
+  actual val VERSION: String = CONST_VERSION
 }

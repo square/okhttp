@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Block, Inc.
+ * Copyright (c) 2025 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,25 +12,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
-package mockwebserver3.internal
+package okhttp3.zstd;
 
-import java.io.InterruptedIOException
-import java.net.Socket
+import okhttp3.CompressionInterceptor;
+import okhttp3.Gzip;
+import okhttp3.brotli.Brotli;
+import org.junit.jupiter.api.Test;
 
-/** Sleeps [nanos], throwing if the socket is closed before that period has elapsed. */
-internal fun Socket.sleepWhileOpen(nanos: Long) {
-  var ms = nanos / 1_000_000L
-  val ns = nanos - (ms * 1_000_000L)
-
-  while (ms > 100) {
-    Thread.sleep(100)
-    if (isClosed) throw InterruptedIOException("socket closed")
-    ms -= 100L
-  }
-
-  if (ms > 0L || ns > 0) {
-    Thread.sleep(ms, ns.toInt())
+class ZstdInterceptorJavaTest {
+  @Test
+  public void testConstructor() {
+    CompressionInterceptor interceptor = new CompressionInterceptor(
+      Zstd.INSTANCE,
+      Gzip.INSTANCE,
+      Brotli.INSTANCE
+    );
   }
 }

@@ -15,6 +15,7 @@
  */
 package okhttp3.zstd
 
+import okhttp3.CompressionInterceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
@@ -22,7 +23,7 @@ fun main() {
   val client =
     OkHttpClient
       .Builder()
-      .addInterceptor(ZstdInterceptor)
+      .addInterceptor(CompressionInterceptor(Zstd))
       .build()
 
   sendRequest("https://developers.facebook.com/docs/", client)

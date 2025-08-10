@@ -19,7 +19,6 @@ import java.io.IOException
 import java.io.InterruptedIOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
-import okhttp3.internal.platform.Platform
 import okio.ByteString
 import okio.Source
 import okio.buffer
@@ -37,6 +36,8 @@ internal abstract class BasePublicSuffixList : PublicSuffixList {
   // Guarded by this.
   override lateinit var bytes: ByteString
   override lateinit var exceptionBytes: ByteString
+
+  private var readFailure: IOException? = null
 
   @Throws(IOException::class)
   private fun readTheList() {
@@ -74,9 +75,11 @@ internal abstract class BasePublicSuffixList : PublicSuffixList {
       }
     }
 
-    check(::bytes.isInitialized) {
+    if (!::bytes.isInitialized) {
       // May have failed with an IOException
-      "Unable to load $path resource."
+      throw IllegalStateException("Unable to load $path resource.").apply {
+        initCause(readFailure)
+      }
     }
   }
 
@@ -98,7 +101,7 @@ internal abstract class BasePublicSuffixList : PublicSuffixList {
           Thread.interrupted() // Temporarily clear the interrupted state.
           interrupted = true
         } catch (e: IOException) {
-          Platform.get().log("Failed to read public suffix list", Platform.Companion.WARN, e)
+          readFailure = e
           return
         }
       }

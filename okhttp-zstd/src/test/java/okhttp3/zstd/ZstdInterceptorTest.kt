@@ -23,12 +23,13 @@ import assertk.assertions.isNull
 import com.squareup.zstd.okio.zstdCompress
 import java.io.IOException
 import kotlin.test.assertFailsWith
+import okhttp3.CompressionInterceptor
+import okhttp3.Gzip
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
-import okhttp3.zstd.ZstdInterceptor.decompress
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.EMPTY
@@ -39,6 +40,8 @@ import okio.gzip
 import org.junit.jupiter.api.Test
 
 class ZstdInterceptorTest {
+  val zstdInterceptor = CompressionInterceptor(Zstd, Gzip)
+
   @Test
   fun testDecompressZstd() {
     val s = "hello zstd world".encodeUtf8().zstdCompress()
@@ -48,7 +51,7 @@ class ZstdInterceptorTest {
         header("Content-Encoding", "zstd")
       }
 
-    val decompressed = decompress(response)
+    val decompressed = zstdInterceptor.decompress(response)
     assertThat(decompressed.header("Content-Encoding")).isNull()
 
     val responseString = decompressed.body.string()
@@ -64,7 +67,7 @@ class ZstdInterceptorTest {
         header("Content-Encoding", "gzip")
       }
 
-    val decompressed = decompress(response)
+    val decompressed = zstdInterceptor.decompress(response)
     assertThat(decompressed.header("Content-Encoding")).isNull()
 
     val responseString = decompressed.body.string()
@@ -77,7 +80,7 @@ class ZstdInterceptorTest {
 
     val response = response("https://example.com/", s)
 
-    val decompressed = decompress(response)
+    val decompressed = zstdInterceptor.decompress(response)
     assertThat(decompressed.header("Content-Encoding")).isNull()
 
     val responseString = decompressed.body.string()
@@ -93,7 +96,7 @@ class ZstdInterceptorTest {
         header("Content-Encoding", "deflate")
       }
 
-    val decompressed = decompress(response)
+    val decompressed = zstdInterceptor.decompress(response)
     assertThat(decompressed.header("Content-Encoding")).isEqualTo("deflate")
 
     val responseString = decompressed.body.string()
@@ -109,7 +112,7 @@ class ZstdInterceptorTest {
         header("Content-Encoding", "zstd")
       }
 
-    val decompressed = decompress(response)
+    val decompressed = zstdInterceptor.decompress(response)
     assertThat(decompressed.header("Content-Encoding")).isNull()
 
     assertFailsWith<IOException> {
@@ -128,7 +131,7 @@ class ZstdInterceptorTest {
         message("NO CONTENT")
       }
 
-    val same = decompress(response)
+    val same = zstdInterceptor.decompress(response)
 
     val responseString = same.body.string()
     assertThat(responseString).isEmpty()

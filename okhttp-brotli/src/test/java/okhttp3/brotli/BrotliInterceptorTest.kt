@@ -22,12 +22,13 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import java.io.IOException
 import kotlin.test.assertFailsWith
+import okhttp3.CompressionInterceptor
+import okhttp3.Gzip
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
-import okhttp3.brotli.internal.uncompress
 import okio.ByteString
 import okio.ByteString.Companion.EMPTY
 import okio.ByteString.Companion.decodeHex
@@ -35,6 +36,8 @@ import okio.ByteString.Companion.encodeUtf8
 import org.junit.jupiter.api.Test
 
 class BrotliInterceptorTest {
+  val brotliInterceptor = CompressionInterceptor(Brotli, Gzip)
+
   @Test
   fun testUncompressBrotli() {
     val s =
@@ -48,7 +51,7 @@ class BrotliInterceptorTest {
         header("Content-Encoding", "br")
       }
 
-    val uncompressed = uncompress(response)
+    val uncompressed = brotliInterceptor.decompress(response)
 
     val responseString = uncompressed.body.string()
     assertThat(responseString).contains("\"brotli\": true,")
@@ -69,7 +72,7 @@ class BrotliInterceptorTest {
         header("Content-Encoding", "gzip")
       }
 
-    val uncompressed = uncompress(response)
+    val uncompressed = brotliInterceptor.decompress(response)
 
     val responseString = uncompressed.body.string()
     assertThat(responseString).contains("\"gzipped\": true,")
@@ -80,7 +83,7 @@ class BrotliInterceptorTest {
   fun testNoUncompress() {
     val response = response("https://httpbin.org/brotli", "XXXX".encodeUtf8())
 
-    val same = uncompress(response)
+    val same = brotliInterceptor.decompress(response)
 
     val responseString = same.body.string()
     assertThat(responseString).isEqualTo("XXXX")
@@ -94,7 +97,7 @@ class BrotliInterceptorTest {
       }
 
     assertFailsWith<IOException> {
-      val failingResponse = uncompress(response)
+      val failingResponse = brotliInterceptor.decompress(response)
       failingResponse.body.string()
     }.also { ioe ->
       assertThat(ioe).hasMessage("Brotli stream decoding failed")
@@ -111,7 +114,7 @@ class BrotliInterceptorTest {
         message("NO CONTENT")
       }
 
-    val same = uncompress(response)
+    val same = brotliInterceptor.decompress(response)
 
     val responseString = same.body.string()
     assertThat(responseString).isEmpty()

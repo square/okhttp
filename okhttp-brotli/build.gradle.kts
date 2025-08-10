@@ -16,7 +16,7 @@ project.applyOsgi(
 project.applyJavaModules("okhttp3.brotli")
 
 dependencies {
-  api(projects.okhttp)
+  "friendsApi"(projects.okhttp)
   api(libs.brotli.dec)
 
   testImplementation(projects.okhttpTestingSupport)

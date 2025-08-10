@@ -19,7 +19,6 @@ package okhttp3.internal
 
 import java.io.IOException
 import java.io.InterruptedIOException
-import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketTimeoutException
@@ -196,11 +195,6 @@ internal fun Source.discard(
   } catch (_: IOException) {
     false
   }
-
-internal fun Socket.peerName(): String {
-  val address = remoteSocketAddress
-  return if (address is InetSocketAddress) address.hostName else address.toString()
-}
 
 /**
  * Returns true if new reads and writes should be attempted on this.

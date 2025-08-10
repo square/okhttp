@@ -70,6 +70,6 @@ dependencies {
 val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
 tasks.withType<Test> {
   onlyIf("Tests require JDK 17") {
-    testJavaVersion > 17
+    testJavaVersion >= 17
   }
 }

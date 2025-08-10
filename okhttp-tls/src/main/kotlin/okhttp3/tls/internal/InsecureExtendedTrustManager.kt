@@ -16,12 +16,12 @@
 
 package okhttp3.tls.internal
 
+import java.net.InetSocketAddress
 import java.net.Socket
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.X509ExtendedTrustManager
-import okhttp3.internal.peerName
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 /**
@@ -78,4 +78,9 @@ internal class InsecureExtendedTrustManager(
     authType: String,
     socket: Socket?,
   ) = throw CertificateException("Unsupported operation")
+
+  private fun Socket.peerName(): String {
+    val address = remoteSocketAddress
+    return if (address is InetSocketAddress) address.hostName else address.toString()
+  }
 }

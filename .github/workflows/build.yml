@@ -89,7 +89,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run Checks
-        run: ./gradlew check -PgraalBuild=true
+        run: ./gradlew check -PgraalBuild=true -x jvmTest -x test
 
   testopenjdk11:
     permissions:
@@ -573,6 +573,15 @@ jobs:
 
       - name: Build Release App
         run: ./gradlew android-test-app:lint android-test-app:assembleRelease
+
+      - name: Run Release Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
+          script: ./gradlew :android-test-app:connectedReleaseAndroidTest
+        env:
+          API_LEVEL: ${{ matrix.api-level }}
 
   testloom:
     runs-on: ubuntu-latest

@@ -189,7 +189,7 @@ class RealCall(
     if (!forWebSocket) {
       interceptors += client.networkInterceptors
     }
-    interceptors += CallServerInterceptor(forWebSocket)
+    interceptors += CallServerInterceptor
 
     val chain =
       RealInterceptorChain(

@@ -43,6 +43,7 @@ import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME
 import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME_UTF8
 import okhttp3.internal.immutableListOf
 import okio.Sink
+import okio.Socket
 import okio.Source
 
 /** Encode requests and responses using HTTP/2 frames. */
@@ -66,6 +67,9 @@ class Http2ExchangeCodec(
 
   override val isResponseComplete: Boolean
     get() = stream?.isSourceComplete == true
+
+  override val socket: Socket
+    get() = stream!!
 
   override fun createRequestBody(
     request: Request,
