@@ -42,6 +42,10 @@ interface EventSource {
     ): EventSource
 
     companion object {
+
+      /**
+       * Wraps a [Call.Factory] into [EventSource.Factory].
+       */
       @JvmStatic
       @JvmName("create")
       fun Call.Factory.asEventSourceFactory(): Factory =
@@ -69,7 +73,7 @@ interface EventSource {
     }
 
     /**
-     * Creates a new [EventSource] from the [Response].
+     * Creates a new [EventSource] from the existing [Response].
      */
     @JvmStatic
     @JvmName("create")
