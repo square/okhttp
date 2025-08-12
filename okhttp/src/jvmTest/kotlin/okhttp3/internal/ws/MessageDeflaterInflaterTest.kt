@@ -19,12 +19,15 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isLessThan
 import java.io.EOFException
+import java.util.zip.Deflater
 import kotlin.test.assertFailsWith
 import okhttp3.TestUtil.fragmentBuffer
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
+import okio.DeflaterSink
+import okio.use
 import org.junit.jupiter.api.Test
 
 internal class MessageDeflaterInflaterTest {
@@ -134,6 +137,41 @@ internal class MessageDeflaterInflaterTest {
     val buffer = fragmentBuffer(Buffer().write("f248cdc9c957c8cc4bcb492cc9cccf530400".decodeHex()))
     inflater.inflate(buffer)
     assertThat(buffer.readUtf8()).isEqualTo("Hello inflation!")
+  }
+
+  /**
+   * It's possible a self-terminating deflated message will contain trailing data that won't be
+   * processed during inflation. If this happens, we need to either reject the message or discard
+   * the unreachable data. We choose to discard it!
+   *
+   * In practice this could happen if the encoder doesn't strip the [0x00, 0x00, 0xff, 0xff] suffix
+   * and that ends up repeated.
+   *
+   * https://github.com/square/okhttp/issues/8551
+   */
+  @Test
+  fun `deflated data has too many bytes`() {
+    val inflater = MessageInflater(true)
+    val buffer = Buffer()
+
+    val message1 = "hello".encodeUtf8()
+    val message2 = "hello 2".encodeUtf8()
+
+    DeflaterSink(buffer, Deflater(Deflater.DEFAULT_COMPRESSION, true)).use { sink ->
+      sink.write(Buffer().write(message1), message1.size.toLong())
+    }
+    buffer.writeByte(0x00)
+    // Trailing data. We use the Okio segment size to make sure it's still in the input buffer.
+    buffer.write(ByteArray(8192))
+    inflater.inflate(buffer)
+    assertThat(buffer.readByteString()).isEqualTo(message1)
+
+    DeflaterSink(buffer, Deflater(Deflater.DEFAULT_COMPRESSION, true)).use { sink ->
+      sink.write(Buffer().write(message2), message2.size.toLong())
+    }
+    buffer.writeByte(0x00)
+    inflater.inflate(buffer)
+    assertThat(buffer.readByteString()).isEqualTo(message2)
   }
 
   private fun MessageDeflater.deflate(byteString: ByteString): ByteString {
