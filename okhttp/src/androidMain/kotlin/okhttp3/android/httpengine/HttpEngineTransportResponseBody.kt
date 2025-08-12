@@ -13,43 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package okhttp3.android.httpengine
 
-package okhttp3.android.httpengine;
+import android.os.Build
+import androidx.annotation.RequiresExtension
+import okhttp3.MediaType
+import okhttp3.ResponseBody
+import okio.BufferedSource
 
-import androidx.annotation.Nullable;
-import okhttp3.MediaType;
-import okhttp3.ResponseBody;
-import okio.BufferedSource;
-
-abstract class CronetTransportResponseBody extends ResponseBody {
-
-  private final ResponseBody delegate;
-
-  protected CronetTransportResponseBody(ResponseBody delegate) {
-    this.delegate = delegate;
+@RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
+internal abstract class HttpEngineTransportResponseBody protected constructor(private val delegate: ResponseBody) :
+  ResponseBody() {
+  override fun contentType(): MediaType? {
+    return delegate.contentType()
   }
 
-  @Nullable
-  @Override
-  public final MediaType contentType() {
-    return delegate.contentType();
+  override fun contentLength(): Long {
+    return delegate.contentLength()
   }
 
-  @Override
-  public final long contentLength() {
-    return delegate.contentLength();
+  override fun source(): BufferedSource {
+    return delegate.source()
   }
 
-  @Override
-  public final BufferedSource source() {
-    return delegate.source();
+  override fun close() {
+    delegate.close()
+    customCloseHook()
   }
 
-  @Override
-  public final void close() {
-    delegate.close();
-    customCloseHook();
-  }
-
-  abstract void customCloseHook();
+  abstract fun customCloseHook()
 }

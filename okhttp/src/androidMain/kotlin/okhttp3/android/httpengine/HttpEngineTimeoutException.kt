@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package okhttp3.android.httpengine
 
-package okhttp3.android.httpengine;
+import java.io.IOException
 
-import java.io.IOException;
-
-public class CronetTimeoutException extends IOException {}
+class HttpEngineTimeoutException : IOException()

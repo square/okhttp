@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package okhttp3.android.httpengine
 
-package okhttp3.android.httpengine;
+import android.net.http.UploadDataProvider
+import okhttp3.RequestBody
 
-import okhttp3.RequestBody;
-import android.net.http.UploadDataProvider;
-
-import java.io.IOException;
-
-/** An interface for classes converting from OkHttp to Cronet request bodies. */
-interface RequestBodyConverter {
-  UploadDataProvider convertRequestBody(RequestBody requestBody, int writeTimeoutMillis)
-      throws IOException;
+/** An interface for classes converting from OkHttp to Cronet request bodies.  */
+internal interface RequestBodyConverter {
+  fun convertRequestBody(requestBody: RequestBody, writeTimeoutMillis: Int): UploadDataProvider
 }

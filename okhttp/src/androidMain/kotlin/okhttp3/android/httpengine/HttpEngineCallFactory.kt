@@ -13,206 +13,184 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package okhttp3.android.httpengine
 
-package okhttp3.android.httpengine;
+import android.net.http.HttpEngine
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresExtension
+import com.google.common.util.concurrent.FutureCallback
+import com.google.common.util.concurrent.Futures
+import java.io.IOException
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.android.httpengine.RequestResponseConverter.CronetRequestAndOkHttpResponse
+import okio.AsyncTimeout
+import okio.Timeout
 
-import android.util.Log;
-import com.google.net.cronet.okhttptransport.RequestResponseConverter.CronetRequestAndOkHttpResponse;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Request;
-import okhttp3.Response;
-import okio.AsyncTimeout;
-import okio.Timeout;
-import android.net.http.HttpEngine;
+/** A [Call.Factory] implementation using Cronet as the transport layer.  */
+@RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
+class HttpEngineCallFactory private constructor(
+  converter: RequestResponseConverter,
+  responseCallbackExecutor: ExecutorService,
+  readTimeoutMillis: Int,
+  writeTimeoutMillis: Int,
+  callTimeoutMillis: Int
+) : Call.Factory {
+  private val converter: RequestResponseConverter
+  private val responseCallbackExecutor: ExecutorService
+  private val readTimeoutMillis: Int
+  private val writeTimeoutMillis: Int
+  private val callTimeoutMillis: Int
 
-import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+  init {
+    check(readTimeoutMillis >= 0) { "Read timeout mustn't be negative!" }
+    check(writeTimeoutMillis >= 0) { "Write timeout mustn't be negative!" }
+    check(callTimeoutMillis >= 0) { "Call timeout mustn't be negative!" }
 
-import static com.google.common.base.Preconditions.*;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
-/** A {@link Call.Factory} implementation using Cronet as the transport layer. */
-public final class CronetCallFactory implements Call.Factory {
-
-  private static final String TAG = "CronetCallFactory";
-
-  private final RequestResponseConverter converter;
-  private final ExecutorService responseCallbackExecutor;
-  private final int readTimeoutMillis;
-  private final int writeTimeoutMillis;
-  private final int callTimeoutMillis;
-
-  private CronetCallFactory(
-      RequestResponseConverter converter,
-      ExecutorService responseCallbackExecutor,
-      int readTimeoutMillis,
-      int writeTimeoutMillis,
-      int callTimeoutMillis) {
-    checkArgument(readTimeoutMillis >= 0, "Read timeout mustn't be negative!");
-    checkArgument(writeTimeoutMillis >= 0, "Write timeout mustn't be negative!");
-    checkArgument(callTimeoutMillis >= 0, "Call timeout mustn't be negative!");
-
-    this.converter = converter;
-    this.responseCallbackExecutor = responseCallbackExecutor;
-    this.readTimeoutMillis = readTimeoutMillis;
-    this.writeTimeoutMillis = writeTimeoutMillis;
-    this.callTimeoutMillis = callTimeoutMillis;
+    this.converter = converter
+    this.responseCallbackExecutor = responseCallbackExecutor
+    this.readTimeoutMillis = readTimeoutMillis
+    this.writeTimeoutMillis = writeTimeoutMillis
+    this.callTimeoutMillis = callTimeoutMillis
   }
 
-  public static Builder newBuilder(HttpEngine HttpEngine) {
-    return new Builder(HttpEngine);
+  override fun newCall(request: Request): Call {
+    return CronetCall(request, this, converter, responseCallbackExecutor)
   }
 
-  @Override
-  public Call newCall(Request request) {
-    return new CronetCall(request, this, converter, responseCallbackExecutor);
-  }
+  private class CronetCall(
+    private val okHttpRequest: Request,
+    private val motherFactory: HttpEngineCallFactory,
+    private val converter: RequestResponseConverter,
+    private val responseCallbackExecutor: ExecutorService
+  ) : Call {
+    private val executed = AtomicBoolean()
+    private val canceled = AtomicBoolean()
+    private val convertedRequestAndResponse: AtomicReference<CronetRequestAndOkHttpResponse> =
+      AtomicReference<CronetRequestAndOkHttpResponse>()
+    internal val timeout: AsyncTimeout
 
-  private static class CronetCall implements Call {
-
-    private final Request okHttpRequest;
-    private final CronetCallFactory motherFactory;
-    private final RequestResponseConverter converter;
-    private final ExecutorService responseCallbackExecutor;
-
-    private final AtomicBoolean executed = new AtomicBoolean();
-    private final AtomicBoolean canceled = new AtomicBoolean();
-    private final AtomicReference<CronetRequestAndOkHttpResponse> convertedRequestAndResponse =
-        new AtomicReference<>();
-    private final AsyncTimeout timeout;
-
-    private CronetCall(
-        Request okHttpRequest,
-        CronetCallFactory motherFactory,
-        RequestResponseConverter converter,
-        ExecutorService responseCallbackExecutor) {
-      this.okHttpRequest = okHttpRequest;
-      this.motherFactory = motherFactory;
-      this.converter = converter;
-      this.responseCallbackExecutor = responseCallbackExecutor;
-
+    init {
       this.timeout =
-          new AsyncTimeout() {
-            @Override
-            protected void timedOut() {
-              CronetCall.this.cancel(); // Timeout has its own method named cancel
-            }
-          };
-      timeout.timeout(motherFactory.callTimeoutMillis, MILLISECONDS);
+        object : AsyncTimeout() {
+          override fun timedOut() {
+            this@CronetCall.cancel() // Timeout has its own method named cancel
+          }
+        }
+      timeout.timeout(motherFactory.callTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
     }
 
-    @Override
-    public Request request() {
-      return okHttpRequest;
+    override fun request(): Request {
+      return okHttpRequest
     }
 
-    @Override
-    public Response execute() throws IOException {
-      evaluateExecutionPreconditions();
+    @Throws(IOException::class)
+    override fun execute(): Response {
+      evaluateExecutionPreconditions()
       try {
-        timeout.enter();
-        CronetRequestAndOkHttpResponse requestAndOkHttpResponse =
-            converter.convert(
-                request(), motherFactory.readTimeoutMillis, motherFactory.writeTimeoutMillis);
-        convertedRequestAndResponse.set(requestAndOkHttpResponse);
+        timeout.enter()
+        val requestAndOkHttpResponse: CronetRequestAndOkHttpResponse =
+          converter.convert(
+            request(), motherFactory.readTimeoutMillis, motherFactory.writeTimeoutMillis
+          )
+        convertedRequestAndResponse.set(requestAndOkHttpResponse)
 
-        startRequestIfNotCanceled();
+        startRequestIfNotCanceled()
 
-        return toCronetCallFactoryResponse(this, requestAndOkHttpResponse.getResponse());
-      } catch (RuntimeException | IOException e) {
+        return toCronetCallFactoryResponse(this, requestAndOkHttpResponse.response)
+      } catch (e: RuntimeException) {
         // If the request finished successfully don't exit the timeout yet. Reading the body also
         // needs to be considered and the body object will take care of exiting it. See
         // toCronetCallFactoryResponse() for details.
-        timeout.exit();
-        throw e;
+        timeout.exit()
+        throw e
+      } catch (e: IOException) {
+        timeout.exit()
+        throw e
       }
     }
 
-    @Override
-    public void enqueue(Callback responseCallback) {
+    override fun enqueue(responseCallback: Callback) {
       try {
-        timeout.enter();
-        evaluateExecutionPreconditions();
-        CronetRequestAndOkHttpResponse requestAndOkHttpResponse =
-            converter.convert(
-                request(), motherFactory.readTimeoutMillis, motherFactory.writeTimeoutMillis);
-        convertedRequestAndResponse.set(requestAndOkHttpResponse);
-        CronetCall call = this;
+        timeout.enter()
+        evaluateExecutionPreconditions()
+        val requestAndOkHttpResponse: CronetRequestAndOkHttpResponse =
+          converter.convert(
+            request(), motherFactory.readTimeoutMillis, motherFactory.writeTimeoutMillis
+          )
+        convertedRequestAndResponse.set(requestAndOkHttpResponse)
+        val call = this
 
         Futures.addCallback(
-            requestAndOkHttpResponse.getResponseAsync(),
-            new FutureCallback<Response>() {
-              @Override
-              public void onSuccess(Response result) {
-                try {
-                  responseCallback.onResponse(call, toCronetCallFactoryResponse(call, result));
-                } catch (IOException e) {
-                  // The call factory doesn't really mind this - the application code
-                  // threw an exception while handling the response, they should have taken care
-                  // of it. Just logging the error is consistent with plain OkHttp implementation.
-                  Log.i(TAG, "Callback failure for " + toLoggableString(), e);
-                }
+          requestAndOkHttpResponse.responseAsync,
+          object : FutureCallback<Response> {
+            public override fun onSuccess(result: Response) {
+              try {
+                responseCallback.onResponse(call, toCronetCallFactoryResponse(call, result))
+              } catch (e: IOException) {
+                // The call factory doesn't really mind this - the application code
+                // threw an exception while handling the response, they should have taken care
+                // of it. Just logging the error is consistent with plain OkHttp implementation.
+                Log.i(TAG, "Callback failure for " + toLoggableString(), e)
               }
+            }
 
-              @Override
-              public void onFailure(Throwable t) {
-                if (t instanceof IOException) {
-                  responseCallback.onFailure(call, (IOException) t);
-                } else {
-                  responseCallback.onFailure(call, new IOException(t));
-                }
+            public override fun onFailure(t: Throwable) {
+              if (t is IOException) {
+                responseCallback.onFailure(call, t)
+              } else {
+                responseCallback.onFailure(call, IOException(t))
               }
-            },
-            responseCallbackExecutor);
+            }
+          },
+          responseCallbackExecutor
+        )
 
-        startRequestIfNotCanceled();
-      } catch (IOException e) {
+        startRequestIfNotCanceled()
+      } catch (e: IOException) {
         // If the request finished successfully don't exit the timeout yet. Reading the body also
         // needs to be considered and the body object will take care of exiting it. See
         // toCronetCallFactoryResponse() for details.
-        timeout.exit();
-        responseCallback.onFailure(this, e);
+        timeout.exit()
+        responseCallback.onFailure(this, e)
       }
     }
 
-    @Override
-    public Call clone() {
-      return motherFactory.newCall(request());
+    override fun clone(): Call {
+      return motherFactory.newCall(request())
     }
 
-    @Override
-    public void cancel() {
+    override fun cancel() {
       if (canceled.getAndSet(true)) {
         // already canceled
-        return;
+        return
       }
-      CronetRequestAndOkHttpResponse localConverted = convertedRequestAndResponse.get();
-      if (localConverted != null) {
-        localConverted.getRequest().cancel();
-      } // else the cancel signal will be picked up by the execute() / enqueue() methods.
+      val localConverted: CronetRequestAndOkHttpResponse? = convertedRequestAndResponse.get()
+      localConverted?.request?.cancel() // else the cancel signal will be picked up by the execute() / enqueue() methods.
     }
 
-    @Override
-    public boolean isExecuted() {
-      return executed.get();
+    override fun isExecuted(): Boolean {
+      return executed.get()
     }
 
-    @Override
-    public boolean isCanceled() {
-      return canceled.get();
+    override fun isCanceled(): Boolean {
+      return canceled.get()
     }
 
-    @Override
-    public Timeout timeout() {
-      return timeout;
+    override fun timeout(): Timeout {
+      return timeout
     }
 
-    private String toLoggableString() {
-      return "call to " + request().url().redact();
+    fun toLoggableString(): String {
+      return "call to " + request().url.redact()
     }
 
     /**
@@ -221,16 +199,17 @@ public final class CronetCallFactory implements Call.Factory {
      * @throws IllegalStateException if the request has already been executed.
      * @throws IOException if the request was canceled
      */
-    private void evaluateExecutionPreconditions() throws IOException {
+    @Throws(IOException::class)
+    fun evaluateExecutionPreconditions() {
       if (canceled.get()) {
-        throw new IOException("Can't execute canceled requests");
+        throw IOException("Can't execute canceled requests")
       }
-      checkState(!executed.getAndSet(true), "Already Executed");
+      check(!executed.getAndSet(true)) { "Already Executed" }
     }
 
-    private void startRequestIfNotCanceled() {
-      CronetRequestAndOkHttpResponse requestAndOkHttpResponse = convertedRequestAndResponse.get();
-      checkState(requestAndOkHttpResponse != null, "convertedRequestAndResponse must be set!");
+    fun startRequestIfNotCanceled() {
+      val requestAndOkHttpResponse: CronetRequestAndOkHttpResponse? = convertedRequestAndResponse.get()
+      check(requestAndOkHttpResponse != null) { "convertedRequestAndResponse must be set!" }
 
       // There might be a race between the execution and cancellation
       // evaluateExecutionPreconditions check didn't capture and cancel() might have missed that
@@ -245,82 +224,84 @@ public final class CronetCallFactory implements Call.Factory {
       // convertedRequest?.cancel()         | convertedRequest = convert(request)
       //                                    | if (canceled) convertedRequest.cancel()
       if (canceled.get()) {
-        requestAndOkHttpResponse.getRequest().cancel();
+        requestAndOkHttpResponse.request.cancel()
       } else {
-        requestAndOkHttpResponse.getRequest().start();
+        requestAndOkHttpResponse.request.start()
       }
     }
   }
 
-  private static Response toCronetCallFactoryResponse(CronetCall call, Response response) {
-    checkNotNull(response.body());
+  class Builder
+  internal constructor(httpEngine: HttpEngine) :
+    RequestResponseConverterBasedBuilder<Builder, HttpEngineCallFactory>(httpEngine) {
+    private var readTimeoutMillis: Int = DEFAULT_READ_WRITE_TIMEOUT_MILLIS
+    private var writeTimeoutMillis: Int = DEFAULT_READ_WRITE_TIMEOUT_MILLIS
+    private var callTimeoutMillis = 0 // No timeout
+    private var callbackExecutorService: ExecutorService? = null
 
-    return response
+    fun setReadTimeoutMillis(readTimeoutMillis: Int): Builder {
+      check(readTimeoutMillis >= 0) { "Read timeout mustn't be negative!" }
+      this.readTimeoutMillis = readTimeoutMillis
+      return this
+    }
+
+    fun setWriteTimeoutMillis(writeTimeoutMillis: Int): Builder {
+      check(writeTimeoutMillis >= 0) { "Write timeout mustn't be negative!" }
+      this.writeTimeoutMillis = writeTimeoutMillis
+      return this
+    }
+
+    fun setCallbackExecutorService(callbackExecutorService: ExecutorService?): Builder {
+      checkNotNull(callbackExecutorService)
+      this.callbackExecutorService = callbackExecutorService
+      return this
+    }
+
+    fun setCallTimeoutMillis(callTimeoutMillis: Int): Builder {
+      check(callTimeoutMillis >= 0) { "Call timeout mustn't be negative!" }
+      this.callTimeoutMillis = callTimeoutMillis
+
+      return this
+    }
+
+    override fun build(converter: RequestResponseConverter): HttpEngineCallFactory {
+      val localCallbackExecutorService = callbackExecutorService ?:
+        // Consistent with OkHttp impl
+        Executors.newCachedThreadPool()
+
+      return HttpEngineCallFactory(
+        converter,
+        localCallbackExecutorService,
+        readTimeoutMillis,
+        writeTimeoutMillis,
+        callTimeoutMillis
+      )
+    }
+
+    companion object {
+      private const val DEFAULT_READ_WRITE_TIMEOUT_MILLIS = 10000
+    }
+  }
+
+  companion object {
+    private const val TAG = "CronetCallFactory"
+
+    fun newBuilder(httpEngine: HttpEngine): Builder {
+      return Builder(httpEngine)
+    }
+
+    private fun toCronetCallFactoryResponse(call: CronetCall, response: Response): Response {
+      checkNotNull(response.body)
+
+      return response
         .newBuilder()
         .body(
-            new CronetTransportResponseBody(response.body()) {
-              @Override
-              void customCloseHook() {
-                call.timeout.exit();
-              }
-            })
-        .build();
-  }
-
-  public static final class Builder
-      extends RequestResponseConverterBasedBuilder<Builder, CronetCallFactory> {
-    private static final int DEFAULT_READ_WRITE_TIMEOUT_MILLIS = 10000;
-
-    private int readTimeoutMillis = DEFAULT_READ_WRITE_TIMEOUT_MILLIS;
-    private int writeTimeoutMillis = DEFAULT_READ_WRITE_TIMEOUT_MILLIS;
-    private int callTimeoutMillis = 0; // No timeout
-    private ExecutorService callbackExecutorService = null;
-
-    Builder(HttpEngine HttpEngine) {
-      super(HttpEngine, Builder.class);
-    }
-
-    public Builder setReadTimeoutMillis(int readTimeoutMillis) {
-      checkArgument(readTimeoutMillis >= 0, "Read timeout mustn't be negative!");
-      this.readTimeoutMillis = readTimeoutMillis;
-      return this;
-    }
-
-    public Builder setWriteTimeoutMillis(int writeTimeoutMillis) {
-      checkArgument(writeTimeoutMillis >= 0, "Write timeout mustn't be negative!");
-      this.writeTimeoutMillis = writeTimeoutMillis;
-      return this;
-    }
-
-    public Builder setCallbackExecutorService(ExecutorService callbackExecutorService) {
-      checkNotNull(callbackExecutorService);
-      this.callbackExecutorService = callbackExecutorService;
-      return this;
-    }
-
-    public Builder setCallTimeoutMillis(int callTimeoutMillis) {
-      checkArgument(callTimeoutMillis >= 0, "Call timeout mustn't be negative!");
-      this.callTimeoutMillis = callTimeoutMillis;
-
-      return this;
-    }
-
-    @Override
-    CronetCallFactory build(RequestResponseConverter converter) {
-      ExecutorService localCallbackExecutorService;
-      if (callbackExecutorService == null) {
-        // Consistent with OkHttp impl
-        localCallbackExecutorService = Executors.newCachedThreadPool();
-      } else {
-        localCallbackExecutorService = callbackExecutorService;
-      }
-
-      return new CronetCallFactory(
-          converter,
-          localCallbackExecutorService,
-          readTimeoutMillis,
-          writeTimeoutMillis,
-          callTimeoutMillis);
+          object : HttpEngineTransportResponseBody(response.body) {
+            override fun customCloseHook() {
+              call.timeout.exit()
+            }
+          })
+        .build()
     }
   }
 }

@@ -13,77 +13,65 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package okhttp3.android.httpengine
 
-package okhttp3.android.httpengine;
-
-/** Defines a redirect strategy for the Cronet OkHttp transport layer. */
-public abstract class RedirectStrategy {
-
-  /** The default number of redirects to follow. Should be less than the Chromium wide safeguard. */
-  private static final int DEFAULT_REDIRECTS = 16;
-
+/** Defines a redirect strategy for the Cronet OkHttp transport layer.  */
+abstract class RedirectStrategy private constructor() {
   /**
    * Returns whether redirects should be followed at all. If set to false, the redirect response
    * will be returned.
    */
-  abstract boolean followRedirects();
+  abstract fun followRedirects(): Boolean
 
   /**
    * Returns the maximum number of redirects to follow. If more redirects are attempted an exception
-   * should be thrown by the component handling the request. Shouldn't be called at all if {@link
-   * #followRedirects()} return false.
+   * should be thrown by the component handling the request. Shouldn't be called at all if [ ][.followRedirects] return false.
    */
-  abstract int numberOfRedirectsToFollow();
+  abstract fun numberOfRedirectsToFollow(): Int
 
-  /**
-   * Returns a strategy which will not follow redirects.
-   *
-   * <p>Note that because of Cronet's limitations
-   * (https://developer.android.com/guide/topics/connectivity/cronet/lifecycle#overview) it is
-   * impossible to retrieve the body of a redirect response. As a result, a dummy empty body will
-   * always be provided.
-   */
-  public static RedirectStrategy withoutRedirects() {
-    return WithoutRedirectsHolder.INSTANCE;
+  internal object WithoutRedirectsHolder : RedirectStrategy() {
+    override fun followRedirects(): Boolean {
+      return false
+    }
+
+    override fun numberOfRedirectsToFollow(): Int {
+      throw UnsupportedOperationException()
+    }
   }
 
-  /**
-   * Returns a strategy which will follow redirects up to {@link #DEFAULT_REDIRECTS} times. If more
-   * redirects are attempted an exception is thrown.
-   */
-  public static RedirectStrategy defaultStrategy() {
-    return DefaultRedirectsHolder.INSTANCE;
+  internal object DefaultRedirectsHolder : RedirectStrategy() {
+    override fun followRedirects(): Boolean {
+      return true
+    }
+
+    override fun numberOfRedirectsToFollow(): Int {
+      return DEFAULT_REDIRECTS
+    }
   }
 
-  private static class WithoutRedirectsHolder {
-    private static final RedirectStrategy INSTANCE =
-        new RedirectStrategy() {
-          @Override
-          boolean followRedirects() {
-            return false;
-          }
+  companion object {
+    /** The default number of redirects to follow. Should be less than the Chromium wide safeguard.  */
+    private const val DEFAULT_REDIRECTS = 16
 
-          @Override
-          int numberOfRedirectsToFollow() {
-            throw new UnsupportedOperationException();
-          }
-        };
+    /**
+     * Returns a strategy which will not follow redirects.
+     *
+     *
+     * Note that because of Cronet's limitations
+     * (https://developer.android.com/guide/topics/connectivity/cronet/lifecycle#overview) it is
+     * impossible to retrieve the body of a redirect response. As a result, a dummy empty body will
+     * always be provided.
+     */
+    fun withoutRedirects(): RedirectStrategy {
+      return WithoutRedirectsHolder
+    }
+
+    /**
+     * Returns a strategy which will follow redirects up to [.DEFAULT_REDIRECTS] times. If more
+     * redirects are attempted an exception is thrown.
+     */
+    fun defaultStrategy(): RedirectStrategy {
+      return DefaultRedirectsHolder
+    }
   }
-
-  private static class DefaultRedirectsHolder {
-    private static final RedirectStrategy INSTANCE =
-        new RedirectStrategy() {
-          @Override
-          boolean followRedirects() {
-            return true;
-          }
-
-          @Override
-          int numberOfRedirectsToFollow() {
-            return DEFAULT_REDIRECTS;
-          }
-        };
-  }
-
-  private RedirectStrategy() {}
 }

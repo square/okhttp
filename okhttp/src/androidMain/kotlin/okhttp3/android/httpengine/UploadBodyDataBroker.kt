@@ -13,165 +13,158 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package okhttp3.android.httpengine
 
-package okhttp3.android.httpengine;
+import android.os.Build
+import androidx.annotation.RequiresExtension
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.SettableFuture
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.min
+import okio.Buffer
+import okio.Sink
+import okio.Timeout
 
-import android.util.Pair;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.SettableFuture;
-import okio.Buffer;
-import okio.Sink;
-import okio.Timeout;
-import android.net.http.UploadDataSink;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static com.google.common.base.Preconditions.checkState;
-
-final class UploadBodyDataBroker implements Sink {
-
+@RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
+internal class UploadBodyDataBroker : Sink {
   /**
-   * The read request calls to {@link android.net.http.UploadDataProvider#read(UploadDataSink,
-   * ByteBuffer)} associated with this broker that we haven't started handling.
+   * The read request calls to [android.net.http.UploadDataProvider.read] associated with this broker that we haven't started handling.
    *
-   * <p>We don't expect more than one parallel read call for a single request body provider.
+   *
+   * We don't expect more than one parallel read call for a single request body provider.
    */
-  private final BlockingQueue<Pair<ByteBuffer, SettableFuture<ReadResult>>> pendingRead =
-      new ArrayBlockingQueue<>(1);
+  private val pendingRead: BlockingQueue<Pair<ByteBuffer, SettableFuture<ReadResult>>> =
+    ArrayBlockingQueue<Pair<ByteBuffer, SettableFuture<ReadResult>>>(1)
 
   /**
    * Whether the sink has been closed.
    *
-   * <p>Calling close() has no practical use but we check that nobody tries to write to the sink
+   *
+   * Calling close() has no practical use but we check that nobody tries to write to the sink
    * after closing it, which is an indication of misuse.
    */
-  private final AtomicBoolean isClosed = new AtomicBoolean();
+  private val isClosed = AtomicBoolean()
 
   /**
    * The exception thrown by the body reading background thread, if any. The exception will be
    * rethrown every time someone attempts to continue reading the body.
    */
-  private final AtomicReference<Throwable> backgroundReadThrowable = new AtomicReference<>();
+  private val backgroundReadThrowable = AtomicReference<Throwable?>()
 
   /**
    * Indicates that Cronet is ready to receive another body part.
    *
-   * <p>This method is executed by Cronet's upload data provider.
+   *
+   * This method is executed by Cronet's upload data provider.
    */
-  Future<ReadResult> enqueueBodyRead(ByteBuffer readBuffer) {
-    Throwable backgroundThrowable = backgroundReadThrowable.get();
-    if (backgroundThrowable != null) {
-      return Futures.immediateFailedFuture(backgroundThrowable);
+  fun enqueueBodyRead(readBuffer: ByteBuffer): Future<ReadResult> {
+    backgroundReadThrowable.get()?.let {
+      return Futures.immediateFailedFuture(it)
     }
-    SettableFuture<ReadResult> future = SettableFuture.create();
-    pendingRead.add(Pair.create(readBuffer, future));
+    val future: SettableFuture<ReadResult> = SettableFuture.create()
+    pendingRead.add(Pair(readBuffer, future))
 
     // Properly handle interleaving handleBackgroundReadError / enqueueBodyRead calls.
-    if ((backgroundThrowable = backgroundReadThrowable.get()) != null) {
-      future.setException(backgroundThrowable);
+    backgroundReadThrowable.get()?.let {
+      future.setException(it)
     }
-    return future;
+    return future
   }
 
   /**
    * Signals that reading the OkHttp body failed with the given throwable.
    *
-   * <p>This method is executed by the background OkHttp body reading thread.
+   * This method is executed by the background OkHttp body reading thread.
    */
-  void setBackgroundReadError(Throwable t) {
-    backgroundReadThrowable.set(t);
-    Pair<ByteBuffer, SettableFuture<ReadResult>> read = pendingRead.poll();
-    if (read != null) {
-      read.second.setException(t);
-    }
+  fun setBackgroundReadError(t: Throwable) {
+    backgroundReadThrowable.set(t)
+    pendingRead.poll()?.second?.setException(t)
   }
 
   /**
    * Signals that reading the body has ended and no future bytes will be sent.
    *
-   * <p>This method is executed by the background OkHttp body reading thread.
+   *
+   * This method is executed by the background OkHttp body reading thread.
    */
-  void handleEndOfStreamSignal() throws IOException {
-    if (isClosed.getAndSet(true)) {
-      throw new IllegalStateException("Already closed");
-    }
+  @Throws(IOException::class)
+  fun handleEndOfStreamSignal() {
+    check(!isClosed.getAndSet(true)) { "Already closed" }
 
-    getPendingCronetRead().second.set(ReadResult.END_OF_BODY);
+    this.pendingCronetRead.second.set(ReadResult.END_OF_BODY)
   }
 
   /**
    * {@inheritDoc}
    *
-   * <p>This method is executed by the background OkHttp body reading thread.
+   * This method is executed by the background OkHttp body reading thread.
    */
-  @Override
-  public void write(Buffer source, long byteCount) throws IOException {
+  override fun write(source: Buffer, byteCount: Long) {
     // This is just a safeguard, close() is a no-op if the body length contract is honored.
-    checkState(!isClosed.get());
+    check(!isClosed.get())
 
-    long bytesRemaining = byteCount;
+    var bytesRemaining = byteCount
 
-    while (bytesRemaining != 0) {
-      Pair<ByteBuffer, SettableFuture<ReadResult>> payload = getPendingCronetRead();
+    while (bytesRemaining != 0L) {
+      val payload: Pair<ByteBuffer, SettableFuture<ReadResult>> =
+        this.pendingCronetRead
 
-      ByteBuffer readBuffer = payload.first;
-      SettableFuture<ReadResult> future = payload.second;
+      val readBuffer = payload.first
+      val future: SettableFuture<ReadResult> = payload.second
 
-      int originalBufferLimit = readBuffer.limit();
-      int bytesToDrain = (int) Math.min(originalBufferLimit, bytesRemaining);
+      val originalBufferLimit = readBuffer.limit()
+      val bytesToDrain = min(originalBufferLimit.toLong(), bytesRemaining).toInt()
 
-      readBuffer.limit(bytesToDrain);
+      readBuffer.limit(bytesToDrain)
 
       try {
-        long bytesRead = source.read(readBuffer);
-        if (bytesRead == -1) {
-          IOException e = new IOException("The source has been exhausted but we expected more!");
-          future.setException(e);
-          throw e;
+        val bytesRead = source.read(readBuffer).toLong()
+        if (bytesRead == -1L) {
+          val e = IOException("The source has been exhausted but we expected more!")
+          future.setException(e)
+          throw e
         }
-        bytesRemaining -= bytesRead;
-        readBuffer.limit(originalBufferLimit);
-        future.set(ReadResult.SUCCESS);
-      } catch (IOException e) {
-        future.setException(e);
-        throw e;
+        bytesRemaining -= bytesRead
+        readBuffer.limit(originalBufferLimit)
+        future.set(ReadResult.SUCCESS)
+      } catch (e: IOException) {
+        future.setException(e)
+        throw e
       }
     }
   }
 
-  private Pair<ByteBuffer, SettableFuture<ReadResult>> getPendingCronetRead() throws IOException {
-    try {
-      return pendingRead.take();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted while waiting for a read to finish!");
+  private val pendingCronetRead: Pair<ByteBuffer, SettableFuture<ReadResult>>
+    get() {
+      try {
+        return pendingRead.take()
+      } catch (e: InterruptedException) {
+        Thread.currentThread().interrupt()
+        throw IOException("Interrupted while waiting for a read to finish!")
+      }
     }
+
+  override fun close() {
+    isClosed.set(true)
   }
 
-  @Override
-  public void close() {
-    isClosed.set(true);
-  }
-
-  @Override
-  public void flush() {
+  override fun flush() {
     // Not necessary, we "flush" by sending the data to Cronet straight away when write() is called.
     // Note that this class is wrapped with a okio buffer so writes to the outer layer won't be
     // seen by this class immediately.
   }
 
-  @Override
-  public Timeout timeout() {
-    return Timeout.NONE;
+  override fun timeout(): Timeout {
+    return Timeout.NONE
   }
 
-  enum ReadResult {
+  internal enum class ReadResult {
     SUCCESS,
     END_OF_BODY
   }
