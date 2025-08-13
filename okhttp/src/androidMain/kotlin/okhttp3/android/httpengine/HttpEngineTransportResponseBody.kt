@@ -22,19 +22,14 @@ import okhttp3.ResponseBody
 import okio.BufferedSource
 
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
-internal abstract class HttpEngineTransportResponseBody protected constructor(private val delegate: ResponseBody) :
-  ResponseBody() {
-  override fun contentType(): MediaType? {
-    return delegate.contentType()
-  }
+internal abstract class HttpEngineTransportResponseBody protected constructor(
+  private val delegate: ResponseBody,
+) : ResponseBody() {
+  override fun contentType(): MediaType? = delegate.contentType()
 
-  override fun contentLength(): Long {
-    return delegate.contentLength()
-  }
+  override fun contentLength(): Long = delegate.contentLength()
 
-  override fun source(): BufferedSource {
-    return delegate.source()
-  }
+  override fun source(): BufferedSource = delegate.source()
 
   override fun close() {
     delegate.close()

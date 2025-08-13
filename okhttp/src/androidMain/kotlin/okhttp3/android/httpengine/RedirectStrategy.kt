@@ -30,23 +30,15 @@ abstract class RedirectStrategy private constructor() {
   abstract fun numberOfRedirectsToFollow(): Int
 
   internal object WithoutRedirectsHolder : RedirectStrategy() {
-    override fun followRedirects(): Boolean {
-      return false
-    }
+    override fun followRedirects(): Boolean = false
 
-    override fun numberOfRedirectsToFollow(): Int {
-      throw UnsupportedOperationException()
-    }
+    override fun numberOfRedirectsToFollow(): Int = throw UnsupportedOperationException()
   }
 
   internal object DefaultRedirectsHolder : RedirectStrategy() {
-    override fun followRedirects(): Boolean {
-      return true
-    }
+    override fun followRedirects(): Boolean = true
 
-    override fun numberOfRedirectsToFollow(): Int {
-      return DEFAULT_REDIRECTS
-    }
+    override fun numberOfRedirectsToFollow(): Int = DEFAULT_REDIRECTS
   }
 
   companion object {
@@ -62,16 +54,12 @@ abstract class RedirectStrategy private constructor() {
      * impossible to retrieve the body of a redirect response. As a result, a dummy empty body will
      * always be provided.
      */
-    fun withoutRedirects(): RedirectStrategy {
-      return WithoutRedirectsHolder
-    }
+    fun withoutRedirects(): RedirectStrategy = WithoutRedirectsHolder
 
     /**
      * Returns a strategy which will follow redirects up to [.DEFAULT_REDIRECTS] times. If more
      * redirects are attempted an exception is thrown.
      */
-    fun defaultStrategy(): RedirectStrategy {
-      return DefaultRedirectsHolder
-    }
+    fun defaultStrategy(): RedirectStrategy = DefaultRedirectsHolder
   }
 }

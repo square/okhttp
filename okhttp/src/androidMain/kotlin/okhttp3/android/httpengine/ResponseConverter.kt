@@ -53,7 +53,10 @@ internal class ResponseConverter {
    * the result's [Response.body] methods might block further.
    */
   @Throws(IOException::class)
-  fun toResponse(request: Request, callback: OkHttpBridgeRequestCallback): Response {
+  fun toResponse(
+    request: Request,
+    callback: OkHttpBridgeRequestCallback,
+  ): Response {
     val cronetResponseInfo: UrlResponseInfo =
       getFutureValue<UrlResponseInfo>(callback.urlResponseInfo)
     val responseBuilder: Response.Builder =
@@ -64,7 +67,7 @@ internal class ResponseConverter {
 
     if (!redirectResponseInfos.isEmpty()) {
       check(
-        urlChain.size == redirectResponseInfos.size + 1
+        urlChain.size == redirectResponseInfos.size + 1,
       ) {
         "The number of redirects should be consistent across URLs and headers!"
       }
@@ -87,11 +90,12 @@ internal class ResponseConverter {
   }
 
   fun toResponseAsync(
-    request: Request, callback: OkHttpBridgeRequestCallback
-  ): ListenableFuture<Response> {
-    return Futures.whenAllComplete(callback.urlResponseInfo, callback.bodySource)
+    request: Request,
+    callback: OkHttpBridgeRequestCallback,
+  ): ListenableFuture<Response> =
+    Futures
+      .whenAllComplete(callback.urlResponseInfo, callback.bodySource)
       .call({ toResponse(request, callback) }, MoreExecutors.directExecutor())
-  }
 
   companion object {
     private const val CONTENT_LENGTH_HEADER_NAME = "Content-Length"
@@ -106,7 +110,9 @@ internal class ResponseConverter {
 
     @Throws(IOException::class)
     private fun createResponse(
-      request: Request, cronetResponseInfo: UrlResponseInfo, bodySource: Source?
+      request: Request,
+      cronetResponseInfo: UrlResponseInfo,
+      bodySource: Source?,
     ): Response.Builder {
       val responseBuilder = Response.Builder()
 
@@ -120,16 +126,17 @@ internal class ResponseConverter {
 
       // Theoretically, the content encodings can be scattered across multiple comma separated
       // Content-Encoding headers. This list contains individual encodings.
-      val contentEncodingItems: List<String> = buildList {
-        val headerMap = cronetResponseInfo.headers.asMap
-        headerMap[CONTENT_ENCODING_HEADER_NAME]?.forEach {
-          addAll(COMMA_SPLITTER.split(it))
+      val contentEncodingItems: List<String> =
+        buildList {
+          val headerMap = cronetResponseInfo.headers.asMap
+          headerMap[CONTENT_ENCODING_HEADER_NAME]?.forEach {
+            addAll(COMMA_SPLITTER.split(it))
+          }
         }
-      }
 
       val keepEncodingAffectedHeaders =
-        contentEncodingItems.isEmpty()
-          || !ENCODINGS_HANDLED_BY_CRONET.containsAll(contentEncodingItems)
+        contentEncodingItems.isEmpty() ||
+          !ENCODINGS_HANDLED_BY_CRONET.containsAll(contentEncodingItems)
 
       if (keepEncodingAffectedHeaders) {
         contentLengthString = getLastHeaderValue(CONTENT_LENGTH_HEADER_NAME, cronetResponseInfo)
@@ -143,7 +150,7 @@ internal class ResponseConverter {
             cronetResponseInfo.httpStatusCode,
             contentType,
             contentLengthString,
-            bodySource
+            bodySource,
           )
       }
 
@@ -161,8 +168,8 @@ internal class ResponseConverter {
       for (header in cronetResponseInfo.headers.asList) {
         var copyHeader = true
         if (!keepEncodingAffectedHeaders) {
-          if (Ascii.equalsIgnoreCase(header.key, CONTENT_LENGTH_HEADER_NAME)
-            || Ascii.equalsIgnoreCase(header.key, CONTENT_ENCODING_HEADER_NAME)
+          if (Ascii.equalsIgnoreCase(header.key, CONTENT_LENGTH_HEADER_NAME) ||
+            Ascii.equalsIgnoreCase(header.key, CONTENT_ENCODING_HEADER_NAME)
           ) {
             copyHeader = false
           }
@@ -189,31 +196,33 @@ internal class ResponseConverter {
       httpStatusCode: Int,
       contentType: String?,
       contentLengthString: String?,
-      bodySource: Source
+      bodySource: Source,
     ): ResponseBody {
       // Ignore content-length header for HEAD requests (consistency with OkHttp)
-      val contentLength: Long = if (request.method == "HEAD") {
-        0
-      } else {
-        try {
-          contentLengthString?.toLong() ?: -1
-        } catch (e: NumberFormatException) {
-          // TODO(danstahr): add logging
-          -1
+      val contentLength: Long =
+        if (request.method == "HEAD") {
+          0
+        } else {
+          try {
+            contentLengthString?.toLong() ?: -1
+          } catch (e: NumberFormatException) {
+            // TODO(danstahr): add logging
+            -1
+          }
         }
-      }
 
       // Check for absence of body in No Content / Reset Content responses (OkHttp consistency)
       if ((httpStatusCode == 204 || httpStatusCode == 205) && contentLength > 0) {
         throw ProtocolException(
-          "HTTP $httpStatusCode had non-zero Content-Length: $contentLengthString"
+          "HTTP $httpStatusCode had non-zero Content-Length: $contentLengthString",
         )
       }
 
-      return bodySource.buffer()
+      return bodySource
+        .buffer()
         .asResponseBody(
           contentType?.toMediaTypeOrNull(),
-          contentLength
+          contentLength,
         )
     }
 
@@ -238,7 +247,10 @@ internal class ResponseConverter {
     }
 
     /** Returns the last header value for the given name, or null if the header isn't present.  */
-    private fun getLastHeaderValue(name: String?, responseInfo: UrlResponseInfo): String? {
+    private fun getLastHeaderValue(
+      name: String?,
+      responseInfo: UrlResponseInfo,
+    ): String? {
       val headers = responseInfo.headers.asMap[name]
       if (headers == null || headers.isEmpty()) {
         return null

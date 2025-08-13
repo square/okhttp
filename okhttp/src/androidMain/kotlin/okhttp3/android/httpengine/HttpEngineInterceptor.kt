@@ -51,7 +51,10 @@ import okhttp3.ResponseBody
  *
  */
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
-class HttpEngineInterceptor private constructor(converter: RequestResponseConverter?) : Interceptor, AutoCloseable {
+class HttpEngineInterceptor private constructor(
+  converter: RequestResponseConverter?,
+) : Interceptor,
+  AutoCloseable {
   private val converter: RequestResponseConverter = checkNotNull(converter)
   private val activeCalls: MutableMap<Call, UrlRequest> = ConcurrentHashMap<Call, UrlRequest>()
   private val scheduledExecutor: ScheduledExecutorService = ScheduledThreadPoolExecutor(1)
@@ -79,7 +82,7 @@ class HttpEngineInterceptor private constructor(converter: RequestResponseConver
         },
         CANCELLATION_CHECK_INTERVAL_MILLIS.toLong(),
         CANCELLATION_CHECK_INTERVAL_MILLIS.toLong(),
-        TimeUnit.MILLISECONDS
+        TimeUnit.MILLISECONDS,
       )
   }
 
@@ -116,15 +119,17 @@ class HttpEngineInterceptor private constructor(converter: RequestResponseConver
 
   /** A builder for [HttpEngineInterceptor].  */
   class Builder
-  internal constructor(httpEngine: HttpEngine) :
-    RequestResponseConverterBasedBuilder<Builder, HttpEngineInterceptor>(httpEngine) {
-    /** Builds the interceptor. The same builder can be used to build multiple interceptors.  */
-    override fun build(converter: RequestResponseConverter): HttpEngineInterceptor {
-      return HttpEngineInterceptor(converter)
+    internal constructor(
+      httpEngine: HttpEngine,
+    ) : RequestResponseConverterBasedBuilder<Builder, HttpEngineInterceptor>(httpEngine) {
+      /** Builds the interceptor. The same builder can be used to build multiple interceptors.  */
+      override fun build(converter: RequestResponseConverter): HttpEngineInterceptor = HttpEngineInterceptor(converter)
     }
-  }
 
-  private fun toInterceptorResponse(response: Response, call: Call): Response {
+  private fun toInterceptorResponse(
+    response: Response,
+    call: Call,
+  ): Response {
     checkNotNull(response.body)
 
     if (response.body is HttpEngineInterceptorResponseBody) {
@@ -137,8 +142,10 @@ class HttpEngineInterceptor private constructor(converter: RequestResponseConver
       .build()
   }
 
-  private inner class HttpEngineInterceptorResponseBody(delegate: ResponseBody, private val call: Call) :
-    HttpEngineTransportResponseBody(delegate) {
+  private inner class HttpEngineInterceptorResponseBody(
+    delegate: ResponseBody,
+    private val call: Call,
+  ) : HttpEngineTransportResponseBody(delegate) {
     override fun customCloseHook() {
       activeCalls.remove(call)
     }
@@ -150,8 +157,6 @@ class HttpEngineInterceptor private constructor(converter: RequestResponseConver
     private const val CANCELLATION_CHECK_INTERVAL_MILLIS = 500
 
     /** Creates a [HttpEngineInterceptor] builder.  */
-    fun newBuilder(httpEngine: HttpEngine): Builder {
-      return Builder(httpEngine)
-    }
+    fun newBuilder(httpEngine: HttpEngine): Builder = Builder(httpEngine)
   }
 }

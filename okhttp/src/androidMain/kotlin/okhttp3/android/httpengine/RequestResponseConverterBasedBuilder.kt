@@ -23,7 +23,7 @@ import java.util.concurrent.Executors
 
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
 abstract class RequestResponseConverterBasedBuilder<B : RequestResponseConverterBasedBuilder<B, out T>, T>(
-  private val httpEngine: HttpEngine
+  private val httpEngine: HttpEngine,
 ) {
   private var uploadDataProviderExecutorSize: Int = DEFAULT_THREAD_POOL_SIZE
 
@@ -66,7 +66,7 @@ abstract class RequestResponseConverterBasedBuilder<B : RequestResponseConverter
         // otherwise deadlocks can occur.
         RequestBodyConverterImpl.create(Executors.newCachedThreadPool()),
         ResponseConverter(),
-        redirectStrategy
+        redirectStrategy,
       )
 
     return build(converter)

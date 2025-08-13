@@ -42,7 +42,7 @@ class HttpEngineCallFactory private constructor(
   responseCallbackExecutor: ExecutorService,
   readTimeoutMillis: Int,
   writeTimeoutMillis: Int,
-  callTimeoutMillis: Int
+  callTimeoutMillis: Int,
 ) : Call.Factory {
   private val converter: RequestResponseConverter
   private val responseCallbackExecutor: ExecutorService
@@ -62,15 +62,13 @@ class HttpEngineCallFactory private constructor(
     this.callTimeoutMillis = callTimeoutMillis
   }
 
-  override fun newCall(request: Request): Call {
-    return CronetCall(request, this, converter, responseCallbackExecutor)
-  }
+  override fun newCall(request: Request): Call = CronetCall(request, this, converter, responseCallbackExecutor)
 
   private class CronetCall(
     private val okHttpRequest: Request,
     private val motherFactory: HttpEngineCallFactory,
     private val converter: RequestResponseConverter,
-    private val responseCallbackExecutor: ExecutorService
+    private val responseCallbackExecutor: ExecutorService,
   ) : Call {
     private val executed = AtomicBoolean()
     private val canceled = AtomicBoolean()
@@ -88,9 +86,7 @@ class HttpEngineCallFactory private constructor(
       timeout.timeout(motherFactory.callTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
     }
 
-    override fun request(): Request {
-      return okHttpRequest
-    }
+    override fun request(): Request = okHttpRequest
 
     @Throws(IOException::class)
     override fun execute(): Response {
@@ -99,7 +95,9 @@ class HttpEngineCallFactory private constructor(
         timeout.enter()
         val requestAndOkHttpResponse: CronetRequestAndOkHttpResponse =
           converter.convert(
-            request(), motherFactory.readTimeoutMillis, motherFactory.writeTimeoutMillis
+            request(),
+            motherFactory.readTimeoutMillis,
+            motherFactory.writeTimeoutMillis,
           )
         convertedRequestAndResponse.set(requestAndOkHttpResponse)
 
@@ -124,7 +122,9 @@ class HttpEngineCallFactory private constructor(
         evaluateExecutionPreconditions()
         val requestAndOkHttpResponse: CronetRequestAndOkHttpResponse =
           converter.convert(
-            request(), motherFactory.readTimeoutMillis, motherFactory.writeTimeoutMillis
+            request(),
+            motherFactory.readTimeoutMillis,
+            motherFactory.writeTimeoutMillis,
           )
         convertedRequestAndResponse.set(requestAndOkHttpResponse)
         val call = this
@@ -151,7 +151,7 @@ class HttpEngineCallFactory private constructor(
               }
             }
           },
-          responseCallbackExecutor
+          responseCallbackExecutor,
         )
 
         startRequestIfNotCanceled()
@@ -164,9 +164,7 @@ class HttpEngineCallFactory private constructor(
       }
     }
 
-    override fun clone(): Call {
-      return motherFactory.newCall(request())
-    }
+    override fun clone(): Call = motherFactory.newCall(request())
 
     override fun cancel() {
       if (canceled.getAndSet(true)) {
@@ -177,21 +175,13 @@ class HttpEngineCallFactory private constructor(
       localConverted?.request?.cancel() // else the cancel signal will be picked up by the execute() / enqueue() methods.
     }
 
-    override fun isExecuted(): Boolean {
-      return executed.get()
-    }
+    override fun isExecuted(): Boolean = executed.get()
 
-    override fun isCanceled(): Boolean {
-      return canceled.get()
-    }
+    override fun isCanceled(): Boolean = canceled.get()
 
-    override fun timeout(): Timeout {
-      return timeout
-    }
+    override fun timeout(): Timeout = timeout
 
-    fun toLoggableString(): String {
-      return "call to " + request().url.redact()
-    }
+    fun toLoggableString(): String = "call to " + request().url.redact()
 
     /**
      * Verifies that the call can be executed and sets the state of the call to "being executed".
@@ -232,65 +222,68 @@ class HttpEngineCallFactory private constructor(
   }
 
   class Builder
-  internal constructor(httpEngine: HttpEngine) :
-    RequestResponseConverterBasedBuilder<Builder, HttpEngineCallFactory>(httpEngine) {
-    private var readTimeoutMillis: Int = DEFAULT_READ_WRITE_TIMEOUT_MILLIS
-    private var writeTimeoutMillis: Int = DEFAULT_READ_WRITE_TIMEOUT_MILLIS
-    private var callTimeoutMillis = 0 // No timeout
-    private var callbackExecutorService: ExecutorService? = null
+    internal constructor(
+      httpEngine: HttpEngine,
+    ) : RequestResponseConverterBasedBuilder<Builder, HttpEngineCallFactory>(httpEngine) {
+      private var readTimeoutMillis: Int = DEFAULT_READ_WRITE_TIMEOUT_MILLIS
+      private var writeTimeoutMillis: Int = DEFAULT_READ_WRITE_TIMEOUT_MILLIS
+      private var callTimeoutMillis = 0 // No timeout
+      private var callbackExecutorService: ExecutorService? = null
 
-    fun setReadTimeoutMillis(readTimeoutMillis: Int): Builder {
-      check(readTimeoutMillis >= 0) { "Read timeout mustn't be negative!" }
-      this.readTimeoutMillis = readTimeoutMillis
-      return this
+      fun setReadTimeoutMillis(readTimeoutMillis: Int): Builder {
+        check(readTimeoutMillis >= 0) { "Read timeout mustn't be negative!" }
+        this.readTimeoutMillis = readTimeoutMillis
+        return this
+      }
+
+      fun setWriteTimeoutMillis(writeTimeoutMillis: Int): Builder {
+        check(writeTimeoutMillis >= 0) { "Write timeout mustn't be negative!" }
+        this.writeTimeoutMillis = writeTimeoutMillis
+        return this
+      }
+
+      fun setCallbackExecutorService(callbackExecutorService: ExecutorService?): Builder {
+        checkNotNull(callbackExecutorService)
+        this.callbackExecutorService = callbackExecutorService
+        return this
+      }
+
+      fun setCallTimeoutMillis(callTimeoutMillis: Int): Builder {
+        check(callTimeoutMillis >= 0) { "Call timeout mustn't be negative!" }
+        this.callTimeoutMillis = callTimeoutMillis
+
+        return this
+      }
+
+      override fun build(converter: RequestResponseConverter): HttpEngineCallFactory {
+        val localCallbackExecutorService =
+          callbackExecutorService
+            ?: // Consistent with OkHttp impl
+            Executors.newCachedThreadPool()
+
+        return HttpEngineCallFactory(
+          converter,
+          localCallbackExecutorService,
+          readTimeoutMillis,
+          writeTimeoutMillis,
+          callTimeoutMillis,
+        )
+      }
+
+      companion object {
+        private const val DEFAULT_READ_WRITE_TIMEOUT_MILLIS = 10000
+      }
     }
-
-    fun setWriteTimeoutMillis(writeTimeoutMillis: Int): Builder {
-      check(writeTimeoutMillis >= 0) { "Write timeout mustn't be negative!" }
-      this.writeTimeoutMillis = writeTimeoutMillis
-      return this
-    }
-
-    fun setCallbackExecutorService(callbackExecutorService: ExecutorService?): Builder {
-      checkNotNull(callbackExecutorService)
-      this.callbackExecutorService = callbackExecutorService
-      return this
-    }
-
-    fun setCallTimeoutMillis(callTimeoutMillis: Int): Builder {
-      check(callTimeoutMillis >= 0) { "Call timeout mustn't be negative!" }
-      this.callTimeoutMillis = callTimeoutMillis
-
-      return this
-    }
-
-    override fun build(converter: RequestResponseConverter): HttpEngineCallFactory {
-      val localCallbackExecutorService = callbackExecutorService ?:
-        // Consistent with OkHttp impl
-        Executors.newCachedThreadPool()
-
-      return HttpEngineCallFactory(
-        converter,
-        localCallbackExecutorService,
-        readTimeoutMillis,
-        writeTimeoutMillis,
-        callTimeoutMillis
-      )
-    }
-
-    companion object {
-      private const val DEFAULT_READ_WRITE_TIMEOUT_MILLIS = 10000
-    }
-  }
 
   companion object {
     private const val TAG = "CronetCallFactory"
 
-    fun newBuilder(httpEngine: HttpEngine): Builder {
-      return Builder(httpEngine)
-    }
+    fun newBuilder(httpEngine: HttpEngine): Builder = Builder(httpEngine)
 
-    private fun toCronetCallFactoryResponse(call: CronetCall, response: Response): Response {
+    private fun toCronetCallFactoryResponse(
+      call: CronetCall,
+      response: Response,
+    ): Response {
       checkNotNull(response.body)
 
       return response
@@ -300,8 +293,8 @@ class HttpEngineCallFactory private constructor(
             override fun customCloseHook() {
               call.timeout.exit()
             }
-          })
-        .build()
+          },
+        ).build()
     }
   }
 }

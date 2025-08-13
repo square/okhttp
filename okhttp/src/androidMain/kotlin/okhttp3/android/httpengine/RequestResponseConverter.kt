@@ -33,7 +33,7 @@ internal class RequestResponseConverter(
   private val uploadDataProviderExecutor: Executor,
   private val requestBodyConverter: RequestBodyConverter,
   private val responseConverter: ResponseConverter,
-  private val redirectStrategy: RedirectStrategy
+  private val redirectStrategy: RedirectStrategy,
 ) {
   /**
    * Converts OkHttp's [Request] to a corresponding Cronet's [UrlRequest].
@@ -52,12 +52,14 @@ internal class RequestResponseConverter(
    * Response okHttpResponse = reqResp.getResponse();
    *
    * // use OkHttp Response as usual
-  </pre> *
+   </pre> *
    */
   @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
   @Throws(IOException::class)
   fun convert(
-    okHttpRequest: Request, readTimeoutMillis: Int, writeTimeoutMillis: Int
+    okHttpRequest: Request,
+    readTimeoutMillis: Int,
+    writeTimeoutMillis: Int,
   ): CronetRequestAndOkHttpResponse {
     val callback =
       OkHttpBridgeRequestCallback(readTimeoutMillis.toLong(), redirectStrategy)
@@ -67,9 +69,10 @@ internal class RequestResponseConverter(
     val builder: UrlRequest.Builder =
       httpEngine
         .newUrlRequestBuilder(
-          okHttpRequest.url.toString(), MoreExecutors.directExecutor(), callback
-        )
-        .setDirectExecutorAllowed(true)
+          okHttpRequest.url.toString(),
+          MoreExecutors.directExecutor(),
+          callback,
+        ).setDirectExecutorAllowed(true)
 
     builder.setHttpMethod(okHttpRequest.method)
 
@@ -93,33 +96,33 @@ internal class RequestResponseConverter(
           builder.addHeader(CONTENT_TYPE_HEADER_NAME, CONTENT_TYPE_HEADER_DEFAULT_VALUE)
         } // else use the header
 
-
         builder.setUploadDataProvider(
           requestBodyConverter.convertRequestBody(body, writeTimeoutMillis),
-          uploadDataProviderExecutor
+          uploadDataProviderExecutor,
         )
       }
     }
 
     return CronetRequestAndOkHttpResponse(
-      builder.build(), createResponseSupplier(okHttpRequest, callback)
+      builder.build(),
+      createResponseSupplier(okHttpRequest, callback),
     )
   }
 
   private fun createResponseSupplier(
-    request: Request, callback: OkHttpBridgeRequestCallback
-  ): ResponseSupplier {
-    return object : ResponseSupplier {
+    request: Request,
+    callback: OkHttpBridgeRequestCallback,
+  ): ResponseSupplier =
+    object : ResponseSupplier {
       override val response: Response by lazy { responseConverter.toResponse(request, callback) }
 
       override val responseFuture: ListenableFuture<Response> by lazy {
         responseConverter.toResponseAsync(
           request,
-          callback
+          callback,
         )
       }
     }
-  }
 
   /** A [Future] like holder for OkHttp's [Response].  */
   internal interface ResponseSupplier {
@@ -132,7 +135,7 @@ internal class RequestResponseConverter(
   /** A simple data class for bundling Cronet request and OkHttp response.  */
   internal class CronetRequestAndOkHttpResponse(
     val request: UrlRequest,
-    private val responseSupplier: ResponseSupplier
+    private val responseSupplier: ResponseSupplier,
   ) {
     val response: Response
       get() = responseSupplier.response

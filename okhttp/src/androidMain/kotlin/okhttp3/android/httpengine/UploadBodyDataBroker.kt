@@ -105,7 +105,10 @@ internal class UploadBodyDataBroker : Sink {
    *
    * This method is executed by the background OkHttp body reading thread.
    */
-  override fun write(source: Buffer, byteCount: Long) {
+  override fun write(
+    source: Buffer,
+    byteCount: Long,
+  ) {
     // This is just a safeguard, close() is a no-op if the body length contract is honored.
     check(!isClosed.get())
 
@@ -160,12 +163,10 @@ internal class UploadBodyDataBroker : Sink {
     // seen by this class immediately.
   }
 
-  override fun timeout(): Timeout {
-    return Timeout.NONE
-  }
+  override fun timeout(): Timeout = Timeout.NONE
 
   internal enum class ReadResult {
     SUCCESS,
-    END_OF_BODY
+    END_OF_BODY,
   }
 }

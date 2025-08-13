@@ -35,54 +35,71 @@ import org.junit.Test
 @SdkSuppress(minSdkVersion = 34)
 class HttpEngineBridgeTest {
   @Test
-  fun testNewCall() = runTest {
-    val context = ApplicationProvider.getApplicationContext<Context>()
+  fun testNewCall() =
+    runTest {
+      val context = ApplicationProvider.getApplicationContext<Context>()
 
-    val httpEngine = HttpEngine.Builder(context)
-      .setStoragePath(context.filesDir.resolve("httpEngine").apply {
-        mkdirs()
-      }.path)
-      .setConnectionMigrationOptions(ConnectionMigrationOptions.Builder()
-        .setAllowNonDefaultNetworkUsage(MIGRATION_OPTION_ENABLED)
-        .setDefaultNetworkMigration(MIGRATION_OPTION_ENABLED)
-        .setPathDegradationMigration(MIGRATION_OPTION_ENABLED)
-        .build())
-      .addQuicHint("www.google.com", 443, 443)
-      .addQuicHint("google.com", 443, 443)
-      .setDnsOptions(DnsOptions.Builder()
-        .setPersistHostCache(DNS_OPTION_ENABLED)
-        .setPreestablishConnectionsToStaleDnsResults(DNS_OPTION_ENABLED)
-        .setUseHttpStackDnsResolver(DNS_OPTION_ENABLED)
-        .setStaleDnsOptions(DnsOptions.StaleDnsOptions.Builder()
-          .setUseStaleOnNameNotResolved(DNS_OPTION_ENABLED)
-          .build())
-        .build())
-      .setEnableQuic(true)
-      .setQuicOptions(QuicOptions.Builder()
-        .addAllowedQuicHost("www.google.com")
-        .addAllowedQuicHost("google.com")
-        .build())
-      .build()
+      val httpEngine =
+        HttpEngine
+          .Builder(context)
+          .setStoragePath(
+            context.filesDir
+              .resolve("httpEngine")
+              .apply {
+                mkdirs()
+              }.path,
+          ).setConnectionMigrationOptions(
+            ConnectionMigrationOptions
+              .Builder()
+              .setAllowNonDefaultNetworkUsage(MIGRATION_OPTION_ENABLED)
+              .setDefaultNetworkMigration(MIGRATION_OPTION_ENABLED)
+              .setPathDegradationMigration(MIGRATION_OPTION_ENABLED)
+              .build(),
+          ).addQuicHint("www.google.com", 443, 443)
+          .addQuicHint("google.com", 443, 443)
+          .setDnsOptions(
+            DnsOptions
+              .Builder()
+              .setPersistHostCache(DNS_OPTION_ENABLED)
+              .setPreestablishConnectionsToStaleDnsResults(DNS_OPTION_ENABLED)
+              .setUseHttpStackDnsResolver(DNS_OPTION_ENABLED)
+              .setStaleDnsOptions(
+                DnsOptions.StaleDnsOptions
+                  .Builder()
+                  .setUseStaleOnNameNotResolved(DNS_OPTION_ENABLED)
+                  .build(),
+              ).build(),
+          ).setEnableQuic(true)
+          .setQuicOptions(
+            QuicOptions
+              .Builder()
+              .addAllowedQuicHost("www.google.com")
+              .addAllowedQuicHost("google.com")
+              .build(),
+          ).build()
 
-    val httpEngineInterceptor = HttpEngineInterceptor
-      .newBuilder(httpEngine = httpEngine)
-      .build()
+      val httpEngineInterceptor =
+        HttpEngineInterceptor
+          .newBuilder(httpEngine = httpEngine)
+          .build()
 
-    val client = OkHttpClient.Builder()
-      .addInterceptor(httpEngineInterceptor)
-      .build()
+      val client =
+        OkHttpClient
+          .Builder()
+          .addInterceptor(httpEngineInterceptor)
+          .build()
 
-    val call = client.newCall(Request("https://google.com/robots.txt".toHttpUrl()))
+      val call = client.newCall(Request("https://google.com/robots.txt".toHttpUrl()))
 
-    val response = call.executeAsync()
+      val response = call.executeAsync()
 
-    println(response.body.string().take(40))
+      println(response.body.string().take(40))
 
-    val call2 = client.newCall(Request("https://google.com/robots.txt".toHttpUrl()))
+      val call2 = client.newCall(Request("https://google.com/robots.txt".toHttpUrl()))
 
-    val response2 = call2.executeAsync()
+      val response2 = call2.executeAsync()
 
-    println(response2.body.string().take(40))
-    println(response2.protocol)
-  }
+      println(response2.body.string().take(40))
+      println(response2.protocol)
+    }
 }

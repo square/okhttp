@@ -20,5 +20,8 @@ import okhttp3.RequestBody
 
 /** An interface for classes converting from OkHttp to Cronet request bodies.  */
 internal interface RequestBodyConverter {
-  fun convertRequestBody(requestBody: RequestBody, writeTimeoutMillis: Int): UploadDataProvider
+  fun convertRequestBody(
+    requestBody: RequestBody,
+    writeTimeoutMillis: Int,
+  ): UploadDataProvider
 }
