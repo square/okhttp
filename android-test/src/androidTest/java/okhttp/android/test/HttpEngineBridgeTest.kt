@@ -34,7 +34,7 @@ import org.junit.Test
 
 @SdkSuppress(minSdkVersion = 34)
 class HttpEngineBridgeTest {
-  val imageUrls: List<String> = listOf(
+  val imageUrls = listOf(
       "https://storage.googleapis.com/cronet/sun.jpg",
       "https://storage.googleapis.com/cronet/flower.jpg",
       "https://storage.googleapis.com/cronet/chair.jpg",
