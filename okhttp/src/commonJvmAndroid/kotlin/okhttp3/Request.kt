@@ -443,11 +443,18 @@ class Request internal constructor(
    * curl -X POST -H "Authorization: Bearer token" --data "{\"key\":\"value\"}" "https://example.com/api"
    * ```
    *
+   * **Note:** This method will write the body
+   * to a temporary [okio.Buffer] in memory. This may have side effects if the [RequestBody] is streaming
+   * or can be consumed only once. Calling this method might prevent re-sending the request body later.
+   *
+   * @param binaryFileName default file name to use when dumping binary body data to a file (default: `"request_body.bin"`)
+   * @param binaryMode default mode to use when writing binary body data (default: `"BinaryMode.STDIN"`)
    * @return a cURL command string representing this request.
    */
+  @JvmOverloads
   fun toCurl(
     binaryMode: BinaryMode = BinaryMode.STDIN,
-    binaryFileName: String? = null,
+    binaryFileName: String? = "request_body.bin",
   ): String {
     val curl = StringBuilder("curl")
 
@@ -487,8 +494,7 @@ class Request internal constructor(
             curl.append("\"")
           }
           BinaryMode.FILE -> {
-            val fileName = binaryFileName ?: "request_body.bin"
-            curl.append(" --data-binary @").append(fileName)
+            curl.append(" --data-binary @").append(binaryFileName)
           }
           BinaryMode.STDIN -> {
             curl.append(" --data-binary @-")
@@ -513,14 +519,14 @@ class Request internal constructor(
   /**
    * Detects binary data by checking for non-printable characters in a buffer.
    */
-  private fun isBinaryData(buffer: Buffer): Boolean {
-    val peekBuffer = buffer.clone()
+  private fun isBinaryData(peekBuffer: Buffer): Boolean {
     var totalBytes = 0
     var binaryCount = 0
+    val textSafeBytes = intArrayOf(0x09, 0x0A, 0x0D) // tab, LF, CR
 
     while (!peekBuffer.exhausted() && totalBytes < 4096) { // limit to first 4KB for performance
       val b = peekBuffer.readByte().toInt() and 0xFF
-      if ((b < 0x20 && b !in listOf(0x09, 0x0A, 0x0D)) || b > 0x7E) {
+      if ((b < 0x20 && b !in textSafeBytes) || b > 0x7E) {
         binaryCount++
       }
       totalBytes++
