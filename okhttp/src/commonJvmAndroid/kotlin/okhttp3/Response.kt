@@ -143,7 +143,7 @@ class Response internal constructor(
   fun code(): Int = code
 
   /**
-   * Returns true if the code is in [200..300), which means the request was successfully received,
+   * Returns true if the code is in `200..299`, which means the request was successfully received,
    * understood, and accepted.
    */
   val isSuccessful: Boolean = code in 200..299
