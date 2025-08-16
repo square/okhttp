@@ -32,7 +32,6 @@ internal class RealEventSource private constructor(
 ) : EventSource,
   ServerSentEventReader.Callback,
   Callback {
-
   constructor(call: Call, listener: EventSourceListener) : this(call, call.request(), listener)
 
   constructor(response: Response, listener: EventSourceListener) : this(null, response.request, listener) {

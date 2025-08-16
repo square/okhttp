@@ -39,8 +39,7 @@ object EventSources {
     level = DeprecationLevel.WARNING,
   )
   @JvmStatic
-  fun createFactory(callFactory: Call.Factory): EventSource.Factory =
-    callFactory.asEventSourceFactory()
+  fun createFactory(callFactory: Call.Factory): EventSource.Factory = callFactory.asEventSourceFactory()
 
   @Deprecated(
     message = "Moved to extension function.",

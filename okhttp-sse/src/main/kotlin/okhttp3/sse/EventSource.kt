@@ -42,7 +42,6 @@ interface EventSource {
     ): EventSource
 
     companion object {
-
       /**
        * Wraps a [Call.Factory] into [EventSource.Factory].
        */
@@ -68,17 +67,13 @@ interface EventSource {
      */
     @JvmStatic
     @JvmName("create")
-    fun Call.toEventSource(listener: EventSourceListener): EventSource {
-      return RealEventSource(this, listener).also(this::enqueue)
-    }
+    fun Call.toEventSource(listener: EventSourceListener): EventSource = RealEventSource(this, listener).also(this::enqueue)
 
     /**
      * Creates a new [EventSource] from the existing [Response].
      */
     @JvmStatic
     @JvmName("create")
-    fun Response.toEventSource(listener: EventSourceListener): EventSource {
-      return RealEventSource(this, listener)
-    }
+    fun Response.toEventSource(listener: EventSourceListener): EventSource = RealEventSource(this, listener)
   }
 }
