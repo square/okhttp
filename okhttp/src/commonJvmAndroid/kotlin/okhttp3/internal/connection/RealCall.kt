@@ -543,7 +543,11 @@ class RealCall(
             canceledException.addSuppressed(t)
             responseCallback.onFailure(this@RealCall, canceledException)
           }
-          throw t
+          if (t is InterruptedException) {
+            Thread.currentThread().interrupt()
+          } else {
+            throw t
+          }
         } finally {
           client.dispatcher.finished(this)
         }
