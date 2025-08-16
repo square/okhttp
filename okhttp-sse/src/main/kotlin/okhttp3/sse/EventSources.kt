@@ -18,8 +18,8 @@ package okhttp3.sse
 import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.Response
+import okhttp3.sse.EventSource.Companion.toEventSource
 import okhttp3.sse.EventSource.Factory.Companion.asEventSourceFactory
-import okhttp3.sse.internal.RealEventSource
 
 object EventSources {
   @Deprecated(
@@ -56,6 +56,6 @@ object EventSources {
     response: Response,
     listener: EventSourceListener,
   ) {
-    RealEventSource(response, listener)
+    response.toEventSource(listener)
   }
 }
