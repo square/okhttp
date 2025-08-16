@@ -70,10 +70,10 @@ interface EventSource {
     fun Call.toEventSource(listener: EventSourceListener): EventSource = RealEventSource(this, listener).also(this::enqueue)
 
     /**
-     * Creates a new [EventSource] from the existing [Response].
+     * Processes the existing response with [listener].
      */
     @JvmStatic
-    @JvmName("create")
-    fun Response.toEventSource(listener: EventSourceListener): EventSource = RealEventSource(this, listener)
+    @JvmName("process")
+    fun Response.processAsEventSource(listener: EventSourceListener) = RealEventSource(this, listener).processResponse(this)
   }
 }

@@ -18,7 +18,7 @@ package okhttp3.sse
 import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.Response
-import okhttp3.sse.EventSource.Companion.toEventSource
+import okhttp3.sse.EventSource.Companion.processAsEventSource
 import okhttp3.sse.EventSource.Factory.Companion.asEventSourceFactory
 
 object EventSources {
@@ -54,7 +54,5 @@ object EventSources {
   fun processResponse(
     response: Response,
     listener: EventSourceListener,
-  ) {
-    response.toEventSource(listener)
-  }
+  ): Unit = response.processAsEventSource(listener)
 }

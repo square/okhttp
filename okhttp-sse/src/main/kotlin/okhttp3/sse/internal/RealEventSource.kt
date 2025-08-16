@@ -34,9 +34,7 @@ internal class RealEventSource private constructor(
   Callback {
   constructor(call: Call, listener: EventSourceListener) : this(call, call.request(), listener)
 
-  constructor(response: Response, listener: EventSourceListener) : this(null, response.request, listener) {
-    this.processResponse(response)
-  }
+  constructor(response: Response, listener: EventSourceListener) : this(null, response.request, listener)
 
   @Volatile private var canceled = false
 
@@ -47,7 +45,7 @@ internal class RealEventSource private constructor(
     processResponse(response)
   }
 
-  private fun processResponse(response: Response) {
+  internal fun processResponse(response: Response) {
     response.use {
       if (!response.isSuccessful) {
         listener.onFailure(this, null, response)

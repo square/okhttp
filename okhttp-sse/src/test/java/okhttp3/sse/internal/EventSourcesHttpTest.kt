@@ -20,7 +20,7 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
-import okhttp3.sse.EventSource.Companion.toEventSource
+import okhttp3.sse.EventSource.Companion.processAsEventSource
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Tag
@@ -66,7 +66,7 @@ class EventSourcesHttpTest {
         .url(server.url("/"))
         .build()
     val response = client.newCall(request).execute()
-    response.toEventSource(listener)
+    response.processAsEventSource(listener)
     listener.assertOpen()
     listener.assertEvent(null, null, "hey")
     listener.assertClose()
@@ -93,7 +93,7 @@ class EventSourcesHttpTest {
         .url(server.url("/"))
         .build()
     val response = client.newCall(request).execute()
-    response.toEventSource(listener)
+    response.processAsEventSource(listener)
     listener.assertOpen()
     listener.assertFailure("canceled")
   }
