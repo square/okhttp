@@ -15,18 +15,13 @@
  */
 package okhttp3.android.httpengine
 
-import android.net.http.HttpEngine
 import android.net.http.UrlRequest
 import android.os.Build
 import androidx.annotation.RequiresExtension
 import java.io.IOException
-import java.lang.AutoCloseable
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledThreadPoolExecutor
 import okhttp3.Call
 import okhttp3.Interceptor
-import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.ResponseBody
 
@@ -47,13 +42,10 @@ import okhttp3.ResponseBody
  */
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
 internal class HttpEngineInterceptor(
-  httpEngine: HttpEngine,
-  client: OkHttpClient,
-) : Interceptor,
-  AutoCloseable {
-  private val converter: RequestResponseConverter = RequestResponseConverter.build(httpEngine, client)
+  httpEngineDecorator: HttpEngineCallDecorator,
+) : Interceptor {
+  private val converter: RequestResponseConverter = RequestResponseConverter.build(httpEngineDecorator)
   private val activeCalls: MutableMap<Call, UrlRequest> = ConcurrentHashMap<Call, UrlRequest>()
-  private val scheduledExecutor: ScheduledExecutorService = ScheduledThreadPoolExecutor(1)
 
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
@@ -80,10 +72,6 @@ internal class HttpEngineInterceptor(
       activeCalls.remove(chain.call())
       throw e
     }
-  }
-
-  override fun close() {
-    scheduledExecutor.shutdown()
   }
 
   private fun toInterceptorResponse(

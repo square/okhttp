@@ -31,7 +31,6 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.concurrent.Volatile
@@ -78,7 +77,7 @@ internal class RequestBodyConverterImpl(
    */
   @VisibleForTesting
   internal class StreamingRequestBodyConverter(
-    private val readerExecutor: ExecutorService,
+    private val httpEngineCallDecorator: HttpEngineCallDecorator,
   ) : RequestBodyConverter {
     @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
     override fun convertRequestBody(
@@ -88,7 +87,7 @@ internal class RequestBodyConverterImpl(
       StreamingUploadDataProvider(
         requestBody,
         UploadBodyDataBroker(),
-        readerExecutor,
+        httpEngineCallDecorator,
         writeTimeoutMillis.toLong(),
       )
 
@@ -96,11 +95,12 @@ internal class RequestBodyConverterImpl(
     private class StreamingUploadDataProvider(
       private val okHttpRequestBody: RequestBody,
       private val broker: UploadBodyDataBroker,
-      readTaskExecutor: ExecutorService,
+      httpEngineCallDecorator: HttpEngineCallDecorator,
       writeTimeoutMillis: Long,
     ) : UploadDataProvider() {
-      private val readTaskExecutor: ListeningExecutorService =
-        readTaskExecutor as? ListeningExecutorService ?: MoreExecutors.listeningDecorator(readTaskExecutor)
+      private val readTaskExecutor: ListeningExecutorService by lazy {
+        MoreExecutors.listeningDecorator(httpEngineCallDecorator.client.dispatcher.executorService)
+      }
 
       // So that we don't have to special case infinity. Int.MAX_VALUE is ~infinity for all
       // practical use cases.
@@ -338,10 +338,10 @@ internal class RequestBodyConverterImpl(
   companion object {
     private val IN_MEMORY_BODY_LENGTH_THRESHOLD_BYTES = (1024 * 1024).toLong()
 
-    fun create(bodyReaderExecutor: ExecutorService): RequestBodyConverterImpl =
+    fun create(httpEngineCallDecorator: HttpEngineCallDecorator): RequestBodyConverterImpl =
       RequestBodyConverterImpl(
         InMemoryRequestBodyConverter(),
-        StreamingRequestBodyConverter(bodyReaderExecutor),
+        StreamingRequestBodyConverter(httpEngineCallDecorator),
       )
   }
 }

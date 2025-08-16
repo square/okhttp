@@ -14,13 +14,14 @@ import okhttp3.internal.http.BridgeInterceptor
 import okhttp3.internal.http.RetryAndFollowUpInterceptor
 
 class HttpEngineCallDecorator(
-  private val httpEngine: HttpEngine,
+  internal val httpEngine: HttpEngine,
   private val useHttpEngine: (Request) -> Boolean = { isHttpEngineSupported() },
 ) : Call.Decorator {
-  private lateinit var client: OkHttpClient
+  // TODO make this work with forked clients
+  internal lateinit var client: OkHttpClient
 
   @SuppressLint("NewApi")
-  private val httpEngineInterceptor = HttpEngineInterceptor(httpEngine, client)
+  private val httpEngineInterceptor = HttpEngineInterceptor(this)
 
   override fun newCall(chain: Call.Chain): Call {
     val call = httpEngineCall(chain)

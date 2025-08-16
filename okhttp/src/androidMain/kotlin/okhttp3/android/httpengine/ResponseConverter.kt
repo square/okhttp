@@ -30,12 +30,15 @@ import java.io.IOException
 import java.net.ProtocolException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
+import okhttp3.CipherSuite
+import okhttp3.Handshake
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.asResponseBody
+import okhttp3.TlsVersion
 import okio.Source
 import okio.buffer
 
@@ -159,7 +162,10 @@ internal class ResponseConverter {
         .code(cronetResponseInfo.httpStatusCode)
         .message(cronetResponseInfo.httpStatusText)
         .protocol(convertProtocol(cronetResponseInfo.negotiatedProtocol))
-        .apply {
+        // TODO don't fake this
+        .handshake(
+          Handshake(TlsVersion.TLS_1_3, CipherSuite.TLS_AES_128_CCM_8_SHA256, listOf(), { listOf() }),
+        ).apply {
           if (responseBody != null) {
             body(responseBody)
           }

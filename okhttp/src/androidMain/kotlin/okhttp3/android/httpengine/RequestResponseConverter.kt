@@ -15,28 +15,24 @@
  */
 package okhttp3.android.httpengine
 
-import android.net.http.HttpEngine
 import android.net.http.UrlRequest
 import android.os.Build
 import androidx.annotation.RequiresExtension
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import java.io.IOException
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 
 /** Converts OkHttp requests to Cronet requests.  */
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
 internal class RequestResponseConverter(
-  private val httpEngine: HttpEngine,
-  private val uploadDataProviderExecutor: Executor,
+  private val httpEngineDecorator: HttpEngineCallDecorator,
   private val requestBodyConverter: RequestBodyConverter,
   private val responseConverter: ResponseConverter,
-  private val client: OkHttpClient,
 ) {
+  private val executor = httpEngineDecorator.client.dispatcher.executorService
+
   /**
    * Converts OkHttp's [Request] to a corresponding Cronet's [UrlRequest].
    *
@@ -60,12 +56,12 @@ internal class RequestResponseConverter(
   @Throws(IOException::class)
   fun convert(okHttpRequest: Request): CronetRequestAndOkHttpResponse {
     val callback =
-      OkHttpBridgeRequestCallback(client)
+      OkHttpBridgeRequestCallback(httpEngineDecorator.client)
 
     // The OkHttp request callback methods are lightweight, the heavy lifting is done by OkHttp /
     // app owned threads. Use a direct executor to avoid extra thread hops.
     val builder: UrlRequest.Builder =
-      httpEngine
+      httpEngineDecorator.httpEngine
         .newUrlRequestBuilder(
           okHttpRequest.url.toString(),
           MoreExecutors.directExecutor(),
@@ -95,7 +91,7 @@ internal class RequestResponseConverter(
         } // else use the header
 
         builder.setUploadDataProvider(
-          requestBodyConverter.convertRequestBody(body, client.writeTimeoutMillis),
+          requestBodyConverter.convertRequestBody(body, httpEngineDecorator.client.writeTimeoutMillis),
           uploadDataProviderExecutor,
         )
       }
@@ -147,21 +143,13 @@ internal class RequestResponseConverter(
     private const val CONTENT_TYPE_HEADER_NAME = "Content-Type"
     private const val CONTENT_TYPE_HEADER_DEFAULT_VALUE = "application/octet-stream"
 
-    fun build(
-      httpEngine: HttpEngine,
-      client: OkHttpClient,
-    ): RequestResponseConverter {
-      val executor = Executors.newCachedThreadPool()
-
-      return RequestResponseConverter(
-        httpEngine,
-        executor,
+    fun build(httpEngineDecorator: HttpEngineCallDecorator): RequestResponseConverter =
+      RequestResponseConverter(
+        httpEngineDecorator,
         // There must always be enough executors to blocking-read the OkHttp request bodies
         // otherwise deadlocks can occur.
-        RequestBodyConverterImpl.create(executor),
+        RequestBodyConverterImpl.create(httpEngineDecorator),
         ResponseConverter(),
-        client,
       )
-    }
   }
 }
