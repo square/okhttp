@@ -31,7 +31,9 @@ internal class RequestResponseConverter(
   private val requestBodyConverter: RequestBodyConverter,
   private val responseConverter: ResponseConverter,
 ) {
-  private val executor = httpEngineDecorator.client.dispatcher.executorService
+  private val executor by lazy {
+    httpEngineDecorator.client.dispatcher.executorService
+  }
 
   /**
    * Converts OkHttp's [Request] to a corresponding Cronet's [UrlRequest].
@@ -92,7 +94,7 @@ internal class RequestResponseConverter(
 
         builder.setUploadDataProvider(
           requestBodyConverter.convertRequestBody(body, httpEngineDecorator.client.writeTimeoutMillis),
-          uploadDataProviderExecutor,
+          executor,
         )
       }
     }
