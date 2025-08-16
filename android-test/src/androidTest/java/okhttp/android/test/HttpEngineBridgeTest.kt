@@ -28,19 +28,20 @@ import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.android.httpengine.HttpEngineInterceptor
+import okhttp3.android.httpengine.HttpEngineCallDecorator.Companion.callDecorator
 import okhttp3.coroutines.executeAsync
 import org.junit.Test
 
 @SdkSuppress(minSdkVersion = 34)
 class HttpEngineBridgeTest {
-  val imageUrls = listOf(
+  val imageUrls =
+    listOf(
       "https://storage.googleapis.com/cronet/sun.jpg",
       "https://storage.googleapis.com/cronet/flower.jpg",
       "https://storage.googleapis.com/cronet/chair.jpg",
       "https://storage.googleapis.com/cronet/white.jpg",
       "https://storage.googleapis.com/cronet/moka.jpg",
-      "https://storage.googleapis.com/cronet/walnut.jpg"
+      "https://storage.googleapis.com/cronet/walnut.jpg",
     )
 
   @Test
@@ -87,15 +88,10 @@ class HttpEngineBridgeTest {
               .build(),
           ).build()
 
-      val httpEngineInterceptor =
-        HttpEngineInterceptor
-          .newBuilder(httpEngine = httpEngine)
-          .build()
-
       val client =
         OkHttpClient
           .Builder()
-          .addInterceptor(httpEngineInterceptor)
+          .addCallDecorator(httpEngine.callDecorator)
           .build()
 
       val call = client.newCall(Request("https://google.com/robots.txt".toHttpUrl()))

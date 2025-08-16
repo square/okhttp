@@ -23,6 +23,8 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import java.io.IOException
 import java.util.concurrent.Executor
+import java.util.concurrent.Executors
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 
@@ -33,7 +35,7 @@ internal class RequestResponseConverter(
   private val uploadDataProviderExecutor: Executor,
   private val requestBodyConverter: RequestBodyConverter,
   private val responseConverter: ResponseConverter,
-  private val redirectStrategy: RedirectStrategy,
+  private val client: OkHttpClient,
 ) {
   /**
    * Converts OkHttp's [Request] to a corresponding Cronet's [UrlRequest].
@@ -56,13 +58,9 @@ internal class RequestResponseConverter(
    */
   @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
   @Throws(IOException::class)
-  fun convert(
-    okHttpRequest: Request,
-    readTimeoutMillis: Int,
-    writeTimeoutMillis: Int,
-  ): CronetRequestAndOkHttpResponse {
+  fun convert(okHttpRequest: Request): CronetRequestAndOkHttpResponse {
     val callback =
-      OkHttpBridgeRequestCallback(readTimeoutMillis.toLong(), redirectStrategy)
+      OkHttpBridgeRequestCallback(client)
 
     // The OkHttp request callback methods are lightweight, the heavy lifting is done by OkHttp /
     // app owned threads. Use a direct executor to avoid extra thread hops.
@@ -97,7 +95,7 @@ internal class RequestResponseConverter(
         } // else use the header
 
         builder.setUploadDataProvider(
-          requestBodyConverter.convertRequestBody(body, writeTimeoutMillis),
+          requestBodyConverter.convertRequestBody(body, client.writeTimeoutMillis),
           uploadDataProviderExecutor,
         )
       }
@@ -148,5 +146,22 @@ internal class RequestResponseConverter(
     private const val CONTENT_LENGTH_HEADER_NAME = "Content-Length"
     private const val CONTENT_TYPE_HEADER_NAME = "Content-Type"
     private const val CONTENT_TYPE_HEADER_DEFAULT_VALUE = "application/octet-stream"
+
+    fun build(
+      httpEngine: HttpEngine,
+      client: OkHttpClient,
+    ): RequestResponseConverter {
+      val executor = Executors.newCachedThreadPool()
+
+      return RequestResponseConverter(
+        httpEngine,
+        executor,
+        // There must always be enough executors to blocking-read the OkHttp request bodies
+        // otherwise deadlocks can occur.
+        RequestBodyConverterImpl.create(executor),
+        ResponseConverter(),
+        client,
+      )
+    }
   }
 }

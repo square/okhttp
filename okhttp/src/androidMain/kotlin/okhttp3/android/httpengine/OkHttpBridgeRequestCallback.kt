@@ -23,14 +23,14 @@ import androidx.annotation.RequiresExtension
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
 import java.io.IOException
-import java.net.ProtocolException
 import java.nio.ByteBuffer
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.Volatile
+import okhttp3.OkHttpClient
 import okio.Buffer
 import okio.Source
 import okio.Timeout
@@ -51,8 +51,9 @@ import okio.Timeout
  * scheduling, especially when handling cancellations.
  */
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
-internal class OkHttpBridgeRequestCallback(readTimeoutMillis: Long, redirectStrategy: RedirectStrategy) :
-  UrlRequest.Callback {
+internal class OkHttpBridgeRequestCallback(
+  private val client: OkHttpClient,
+) : UrlRequest.Callback {
   /** A bridge between Cronet's asynchronous callbacks and OkHttp's blocking stream-like reads.  */
   private val bodySourceFuture: SettableFuture<Source> = SettableFuture.create()
 
@@ -74,30 +75,12 @@ internal class OkHttpBridgeRequestCallback(readTimeoutMillis: Long, redirectStra
   /** The response headers.  */
   private val headersFuture: SettableFuture<UrlResponseInfo> = SettableFuture.create()
 
-  /** The read timeout as specified by OkHttp. *  */
-  private val readTimeoutMillis: Long
-
   /** The previous responses as reported to [.onRedirectReceived], from oldest to newest. *  */
   private val urlResponseInfoChain: MutableList<UrlResponseInfo> = ArrayList<UrlResponseInfo>()
-
-  private val redirectStrategy: RedirectStrategy
 
   /** The request being processed. Set when the request is first seen by the callback.  */
   @Volatile
   private var request: UrlRequest? = null
-
-  init {
-    check(readTimeoutMillis >= 0)
-
-    // So that we don't have to special case infinity. Int.MAX_VALUE is ~infinity for all practical
-    // use cases.
-    if (readTimeoutMillis == 0L) {
-      this.readTimeoutMillis = Int.MAX_VALUE.toLong()
-    } else {
-      this.readTimeoutMillis = readTimeoutMillis
-    }
-    this.redirectStrategy = redirectStrategy
-  }
 
   val urlResponseInfo: ListenableFuture<UrlResponseInfo>
     /** Returns the [UrlResponseInfo] for the request associated with this callback.  */
@@ -112,42 +95,24 @@ internal class OkHttpBridgeRequestCallback(readTimeoutMillis: Long, redirectStra
      */
     get() = bodySourceFuture
 
-  fun getUrlResponseInfoChain(): MutableList<UrlResponseInfo> {
-    return Collections.unmodifiableList(urlResponseInfoChain)
-  }
+  fun getUrlResponseInfoChain(): MutableList<UrlResponseInfo> = Collections.unmodifiableList(urlResponseInfoChain)
 
   override fun onRedirectReceived(
-    urlRequest: UrlRequest, urlResponseInfo: UrlResponseInfo, nextUrl: String
+    urlRequest: UrlRequest,
+    urlResponseInfo: UrlResponseInfo,
+    nextUrl: String,
   ) {
-    // We shouldn't follow redirects - pass the given UrlResponseInfo as the ultimate result
-    if (!redirectStrategy.followRedirects()) {
-      check(headersFuture.set(urlResponseInfo))
-      // Note: This might not match the content length headers but we have no way of accessing
-      // the actual body with current Cronet's APIs (see RedirectStrategy).
-      check(bodySourceFuture.set(Buffer()))
-      urlRequest.cancel()
-      return
-    }
-
-    // We should follow redirects and we haven't hit the cap yet
-    urlResponseInfoChain.add(urlResponseInfo)
-    if (urlResponseInfo.urlChain.size <= redirectStrategy.numberOfRedirectsToFollow()) {
-      urlRequest.followRedirect()
-      return
-    }
-
-    // Cap reached - cancel the request and fail. Exception crafted to match OkHttp.
+    check(headersFuture.set(urlResponseInfo))
+    // Note: This might not match the content length headers but we have no way of accessing
+    // the actual body with current Cronet's APIs (see RedirectStrategy).
+    check(bodySourceFuture.set(Buffer()))
     urlRequest.cancel()
-
-    val e: IOException =
-      ProtocolException(
-        "Too many follow-up requests: " + (redirectStrategy.numberOfRedirectsToFollow() + 1)
-      )
-    headersFuture.setException(e)
-    bodySourceFuture.setException(e)
   }
 
-  override fun onResponseStarted(urlRequest: UrlRequest, urlResponseInfo: UrlResponseInfo) {
+  override fun onResponseStarted(
+    urlRequest: UrlRequest,
+    urlResponseInfo: UrlResponseInfo,
+  ) {
     request = urlRequest
 
     check(headersFuture.set(urlResponseInfo))
@@ -155,16 +120,25 @@ internal class OkHttpBridgeRequestCallback(readTimeoutMillis: Long, redirectStra
   }
 
   override fun onReadCompleted(
-    urlRequest: UrlRequest, urlResponseInfo: UrlResponseInfo, byteBuffer: ByteBuffer
+    urlRequest: UrlRequest,
+    urlResponseInfo: UrlResponseInfo,
+    byteBuffer: ByteBuffer,
   ) {
     callbackResults.add(CallbackResult(CallbackStep.ON_READ_COMPLETED, byteBuffer, null))
   }
 
-  override fun onSucceeded(urlRequest: UrlRequest, urlResponseInfo: UrlResponseInfo) {
+  override fun onSucceeded(
+    urlRequest: UrlRequest,
+    urlResponseInfo: UrlResponseInfo,
+  ) {
     callbackResults.add(CallbackResult(CallbackStep.ON_SUCCESS, null, null))
   }
 
-  override fun onFailed(urlRequest: UrlRequest, urlResponseInfo: UrlResponseInfo?, e: HttpException) {
+  override fun onFailed(
+    urlRequest: UrlRequest,
+    urlResponseInfo: UrlResponseInfo?,
+    e: HttpException,
+  ) {
     // If this was called before we start reading the body, the exception will
     // propagate in the future providing headers and the body wrapper.
     if (headersFuture.setException(e) && bodySourceFuture.setException(e)) {
@@ -176,7 +150,10 @@ internal class OkHttpBridgeRequestCallback(readTimeoutMillis: Long, redirectStra
     callbackResults.add(CallbackResult(CallbackStep.ON_FAILED, null, e))
   }
 
-  override fun onCanceled(urlRequest: UrlRequest, responseInfo: UrlResponseInfo?) {
+  override fun onCanceled(
+    urlRequest: UrlRequest,
+    responseInfo: UrlResponseInfo?,
+  ) {
     canceled.set(true)
     callbackResults.add(CallbackResult(CallbackStep.ON_CANCELED, null, null))
 
@@ -197,7 +174,10 @@ internal class OkHttpBridgeRequestCallback(readTimeoutMillis: Long, redirectStra
     private var closed = false
 
     @Throws(IOException::class)
-    override fun read(sink: Buffer, byteCount: Long): Long {
+    override fun read(
+      sink: Buffer,
+      byteCount: Long,
+    ): Long {
       if (canceled.get()) {
         throw IOException("The request was canceled!")
       }
@@ -218,7 +198,7 @@ internal class OkHttpBridgeRequestCallback(readTimeoutMillis: Long, redirectStra
 
       var result: CallbackResult?
       try {
-        result = callbackResults.poll(readTimeoutMillis, TimeUnit.MILLISECONDS)
+        result = callbackResults.poll(client.readTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
       } catch (e: InterruptedException) {
         Thread.currentThread().interrupt()
         result = null
@@ -279,14 +259,14 @@ internal class OkHttpBridgeRequestCallback(readTimeoutMillis: Long, redirectStra
   private class CallbackResult(
     val callbackStep: CallbackStep,
     val buffer: ByteBuffer?,
-    val exception: HttpException?
+    val exception: HttpException?,
   )
 
   private enum class CallbackStep {
     ON_READ_COMPLETED,
     ON_SUCCESS,
     ON_FAILED,
-    ON_CANCELED
+    ON_CANCELED,
   }
 
   companion object {

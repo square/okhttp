@@ -21,10 +21,19 @@ import android.os.Build
 import androidx.annotation.RequiresExtension
 import androidx.annotation.VisibleForTesting
 import com.google.common.base.Verify
-import com.google.common.util.concurrent.*
+import com.google.common.util.concurrent.FutureCallback
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.ListeningExecutorService
+import com.google.common.util.concurrent.MoreExecutors
+import com.google.common.util.concurrent.Uninterruptibles
 import java.io.IOException
 import java.nio.ByteBuffer
-import java.util.concurrent.*
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.concurrent.Volatile
 import okhttp3.RequestBody
 import okhttp3.android.httpengine.UploadBodyDataBroker.ReadResult
@@ -35,10 +44,13 @@ import okio.buffer
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
 internal class RequestBodyConverterImpl(
   private val inMemoryRequestBodyConverter: InMemoryRequestBodyConverter,
-  private val streamingRequestBodyConverter: StreamingRequestBodyConverter
+  private val streamingRequestBodyConverter: StreamingRequestBodyConverter,
 ) : RequestBodyConverter {
   @Throws(IOException::class)
-  override fun convertRequestBody(requestBody: RequestBody, writeTimeoutMillis: Int): UploadDataProvider {
+  override fun convertRequestBody(
+    requestBody: RequestBody,
+    writeTimeoutMillis: Int,
+  ): UploadDataProvider {
     val contentLength = requestBody.contentLength()
     if (contentLength == -1L || contentLength > IN_MEMORY_BODY_LENGTH_THRESHOLD_BYTES) {
       return streamingRequestBodyConverter.convertRequestBody(requestBody, writeTimeoutMillis)
@@ -65,20 +77,27 @@ internal class RequestBodyConverterImpl(
    * This is repeated until the entire body has been read.
    */
   @VisibleForTesting
-  internal class StreamingRequestBodyConverter(private val readerExecutor: ExecutorService) : RequestBodyConverter {
+  internal class StreamingRequestBodyConverter(
+    private val readerExecutor: ExecutorService,
+  ) : RequestBodyConverter {
     @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
-    override fun convertRequestBody(requestBody: RequestBody, writeTimeoutMillis: Int): UploadDataProvider {
-      return StreamingUploadDataProvider(
-        requestBody, UploadBodyDataBroker(), readerExecutor, writeTimeoutMillis.toLong()
+    override fun convertRequestBody(
+      requestBody: RequestBody,
+      writeTimeoutMillis: Int,
+    ): UploadDataProvider =
+      StreamingUploadDataProvider(
+        requestBody,
+        UploadBodyDataBroker(),
+        readerExecutor,
+        writeTimeoutMillis.toLong(),
       )
-    }
 
     @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
     private class StreamingUploadDataProvider(
       private val okHttpRequestBody: RequestBody,
       private val broker: UploadBodyDataBroker,
       readTaskExecutor: ExecutorService,
-      writeTimeoutMillis: Long
+      writeTimeoutMillis: Long,
     ) : UploadDataProvider() {
       private val readTaskExecutor: ListeningExecutorService =
         readTaskExecutor as? ListeningExecutorService ?: MoreExecutors.listeningDecorator(readTaskExecutor)
@@ -95,12 +114,13 @@ internal class RequestBodyConverterImpl(
       private var totalBytesReadFromOkHttp: Long = 0
 
       @Throws(IOException::class)
-      override fun getLength(): Long {
-        return okHttpRequestBody.contentLength()
-      }
+      override fun getLength(): Long = okHttpRequestBody.contentLength()
 
       @Throws(IOException::class)
-      override fun read(uploadDataSink: UploadDataSink, byteBuffer: ByteBuffer) {
+      override fun read(
+        uploadDataSink: UploadDataSink,
+        byteBuffer: ByteBuffer,
+      ) {
         ensureReadTaskStarted()
 
         if (length == -1L) {
@@ -111,7 +131,10 @@ internal class RequestBodyConverterImpl(
       }
 
       @Throws(IOException::class)
-      fun readKnownBodyLength(uploadDataSink: UploadDataSink, byteBuffer: ByteBuffer) {
+      fun readKnownBodyLength(
+        uploadDataSink: UploadDataSink,
+        byteBuffer: ByteBuffer,
+      ) {
         try {
           val readResult: ReadResult = readFromOkHttp(byteBuffer)
 
@@ -143,8 +166,10 @@ internal class RequestBodyConverterImpl(
        * result, when we read the advertised number of bytes, we need to make sure that the stream
        * is indeed finished.
        */
-      @Throws(IOException::class, TimeoutException::class, ExecutionException::class)
-      fun handleLastBodyRead(uploadDataSink: UploadDataSink, filledByteBuffer: ByteBuffer) {
+      fun handleLastBodyRead(
+        uploadDataSink: UploadDataSink,
+        filledByteBuffer: ByteBuffer,
+      ) {
         // We reuse the same buffer for the END_OF_DATA read (it should be non-destructive and if
         // it overwrites what's in there we don't mind as that's an error anyway). We just need
         // to make sure we restore the original position afterwards. We don't use mark() / reset()
@@ -160,7 +185,7 @@ internal class RequestBodyConverterImpl(
 
         Verify.verify(
           filledByteBuffer.position() == 0,
-          "END_OF_BODY reads shouldn't write anything to the buffer"
+          "END_OF_BODY reads shouldn't write anything to the buffer",
         )
 
         // revert the position change
@@ -169,7 +194,10 @@ internal class RequestBodyConverterImpl(
         uploadDataSink.onReadSucceeded(false)
       }
 
-      fun readUnknownBodyLength(uploadDataSink: UploadDataSink, byteBuffer: ByteBuffer) {
+      fun readUnknownBodyLength(
+        uploadDataSink: UploadDataSink,
+        byteBuffer: ByteBuffer,
+      ) {
         try {
           val readResult: ReadResult = readFromOkHttp(byteBuffer)
           uploadDataSink.onReadSucceeded(readResult == ReadResult.END_OF_BODY)
@@ -192,7 +220,8 @@ internal class RequestBodyConverterImpl(
                 okHttpRequestBody.writeTo(bufferedSink)
                 bufferedSink.flush()
                 broker.handleEndOfStreamSignal()
-              })
+              },
+            )
 
           Futures.addCallback(
             readTaskFuture!!,
@@ -203,7 +232,7 @@ internal class RequestBodyConverterImpl(
                 broker.setBackgroundReadError(t)
               }
             },
-            MoreExecutors.directExecutor()
+            MoreExecutors.directExecutor(),
           )
         }
       }
@@ -213,7 +242,9 @@ internal class RequestBodyConverterImpl(
         val positionBeforeRead = byteBuffer.position()
         val readResult: ReadResult =
           Uninterruptibles.getUninterruptibly(
-            broker.enqueueBodyRead(byteBuffer), writeTimeoutMillis, TimeUnit.MILLISECONDS
+            broker.enqueueBodyRead(byteBuffer),
+            writeTimeoutMillis,
+            TimeUnit.MILLISECONDS,
           )
         val bytesRead = byteBuffer.position() - positionBeforeRead
         totalBytesReadFromOkHttp += bytesRead.toLong()
@@ -227,12 +258,12 @@ internal class RequestBodyConverterImpl(
 
       companion object {
         private fun prepareBodyTooLongException(
-          expectedLength: Long, minActualLength: Long
-        ): IOException {
-          return IOException(
-            "Expected " + expectedLength + " bytes but got at least " + minActualLength
+          expectedLength: Long,
+          minActualLength: Long,
+        ): IOException =
+          IOException(
+            "Expected " + expectedLength + " bytes but got at least " + minActualLength,
           )
-        }
       }
     }
   }
@@ -249,16 +280,21 @@ internal class RequestBodyConverterImpl(
   @VisibleForTesting
   internal class InMemoryRequestBodyConverter : RequestBodyConverter {
     @Throws(IOException::class)
-    override fun convertRequestBody(requestBody: RequestBody, writeTimeoutMillis: Int): UploadDataProvider {
+    override fun convertRequestBody(
+      requestBody: RequestBody,
+      writeTimeoutMillis: Int,
+    ): UploadDataProvider {
       // content length is immutable by contract
 
       val length = requestBody.contentLength()
       if (length < 0 || length > IN_MEMORY_BODY_LENGTH_THRESHOLD_BYTES) {
         throw IOException(
-          ("Expected definite length less than "
-            + IN_MEMORY_BODY_LENGTH_THRESHOLD_BYTES
-            + "but got "
-            + length)
+          (
+            "Expected definite length less than " +
+              IN_MEMORY_BODY_LENGTH_THRESHOLD_BYTES +
+              "but got " +
+              length
+          ),
         )
       }
 
@@ -267,12 +303,13 @@ internal class RequestBodyConverterImpl(
         private var isMaterialized = false
         private val materializedBody = Buffer()
 
-        override fun getLength(): Long {
-          return length
-        }
+        override fun getLength(): Long = length
 
         @Throws(IOException::class)
-        override fun read(uploadDataSink: UploadDataSink, byteBuffer: ByteBuffer) {
+        override fun read(
+          uploadDataSink: UploadDataSink,
+          byteBuffer: ByteBuffer,
+        ) {
           // We're not expecting any concurrent calls here so a simple flag should be sufficient.
           if (!isMaterialized) {
             requestBody.writeTo(materializedBody)
@@ -282,7 +319,7 @@ internal class RequestBodyConverterImpl(
             val actualLength = materializedBody.size
             if (actualLength != reportedLength) {
               throw IOException(
-                "Expected " + reportedLength + " bytes but got " + actualLength
+                "Expected " + reportedLength + " bytes but got " + actualLength,
               )
             }
           }
@@ -301,10 +338,10 @@ internal class RequestBodyConverterImpl(
   companion object {
     private val IN_MEMORY_BODY_LENGTH_THRESHOLD_BYTES = (1024 * 1024).toLong()
 
-    fun create(bodyReaderExecutor: ExecutorService): RequestBodyConverterImpl {
-      return RequestBodyConverterImpl(
-        InMemoryRequestBodyConverter(), StreamingRequestBodyConverter(bodyReaderExecutor)
+    fun create(bodyReaderExecutor: ExecutorService): RequestBodyConverterImpl =
+      RequestBodyConverterImpl(
+        InMemoryRequestBodyConverter(),
+        StreamingRequestBodyConverter(bodyReaderExecutor),
       )
-    }
   }
 }

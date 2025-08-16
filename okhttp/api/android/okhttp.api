@@ -1285,66 +1285,33 @@ public abstract class okhttp3/WebSocketListener {
 	public fun onOpen (Lokhttp3/WebSocket;Lokhttp3/Response;)V
 }
 
-public final class okhttp3/android/httpengine/HttpEngineCallFactory : okhttp3/Call$Factory {
-	public static final field Companion Lokhttp3/android/httpengine/HttpEngineCallFactory$Companion;
-	public synthetic fun <init> (Lokhttp3/android/httpengine/RequestResponseConverter;Ljava/util/concurrent/ExecutorService;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun newCall (Lokhttp3/Request;)Lokhttp3/Call;
+public final class okhttp3/android/httpengine/HttpEngineCallDecorator : okhttp3/Call$Decorator {
+	public static final field Companion Lokhttp3/android/httpengine/HttpEngineCallDecorator$Companion;
+	public fun <init> (Landroid/net/http/HttpEngine;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Landroid/net/http/HttpEngine;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun newCall (Lokhttp3/Call$Chain;)Lokhttp3/Call;
 }
 
-public final class okhttp3/android/httpengine/HttpEngineCallFactory$Builder : okhttp3/android/httpengine/RequestResponseConverterBasedBuilder {
-	public static final field Companion Lokhttp3/android/httpengine/HttpEngineCallFactory$Builder$Companion;
-	public synthetic fun build$okhttp (Lokhttp3/android/httpengine/RequestResponseConverter;)Ljava/lang/Object;
-	public final fun setCallTimeoutMillis (I)Lokhttp3/android/httpengine/HttpEngineCallFactory$Builder;
-	public final fun setCallbackExecutorService (Ljava/util/concurrent/ExecutorService;)Lokhttp3/android/httpengine/HttpEngineCallFactory$Builder;
-	public final fun setReadTimeoutMillis (I)Lokhttp3/android/httpengine/HttpEngineCallFactory$Builder;
-	public final fun setWriteTimeoutMillis (I)Lokhttp3/android/httpengine/HttpEngineCallFactory$Builder;
+public final class okhttp3/android/httpengine/HttpEngineCallDecorator$Companion {
+	public final fun getCallDecorator (Landroid/net/http/HttpEngine;)Lokhttp3/android/httpengine/HttpEngineCallDecorator;
 }
 
-public final class okhttp3/android/httpengine/HttpEngineCallFactory$Builder$Companion {
-}
-
-public final class okhttp3/android/httpengine/HttpEngineCallFactory$Companion {
-	public final fun newBuilder (Landroid/net/http/HttpEngine;)Lokhttp3/android/httpengine/HttpEngineCallFactory$Builder;
-}
-
-public final class okhttp3/android/httpengine/HttpEngineInterceptor : java/lang/AutoCloseable, okhttp3/Interceptor {
-	public static final field Companion Lokhttp3/android/httpengine/HttpEngineInterceptor$Companion;
-	public synthetic fun <init> (Lokhttp3/android/httpengine/RequestResponseConverter;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun close ()V
-	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
-}
-
-public final class okhttp3/android/httpengine/HttpEngineInterceptor$Builder : okhttp3/android/httpengine/RequestResponseConverterBasedBuilder {
-	public synthetic fun build$okhttp (Lokhttp3/android/httpengine/RequestResponseConverter;)Ljava/lang/Object;
-}
-
-public final class okhttp3/android/httpengine/HttpEngineInterceptor$Companion {
-	public final fun newBuilder (Landroid/net/http/HttpEngine;)Lokhttp3/android/httpengine/HttpEngineInterceptor$Builder;
+public final class okhttp3/android/httpengine/HttpEngineCallDecorator$HttpEngineCall : okhttp3/Call {
+	public fun <init> (Lokhttp3/android/httpengine/HttpEngineCallDecorator;Lokhttp3/Call;)V
+	public fun cancel ()V
+	public synthetic fun clone ()Ljava/lang/Object;
+	public fun clone ()Lokhttp3/Call;
+	public fun enqueue (Lokhttp3/Callback;)V
+	public fun execute ()Lokhttp3/Response;
+	public final fun getHttpEngine ()Landroid/net/http/HttpEngine;
+	public final fun getRealCall ()Lokhttp3/Call;
+	public fun isCanceled ()Z
+	public fun isExecuted ()Z
+	public fun request ()Lokhttp3/Request;
+	public fun timeout ()Lokio/Timeout;
 }
 
 public final class okhttp3/android/httpengine/HttpEngineTimeoutException : java/io/IOException {
 	public fun <init> ()V
-}
-
-public abstract class okhttp3/android/httpengine/RedirectStrategy {
-	public static final field Companion Lokhttp3/android/httpengine/RedirectStrategy$Companion;
-	public abstract fun followRedirects ()Z
-	public abstract fun numberOfRedirectsToFollow ()I
-}
-
-public final class okhttp3/android/httpengine/RedirectStrategy$Companion {
-	public final fun defaultStrategy ()Lokhttp3/android/httpengine/RedirectStrategy;
-	public final fun withoutRedirects ()Lokhttp3/android/httpengine/RedirectStrategy;
-}
-
-public abstract class okhttp3/android/httpengine/RequestResponseConverterBasedBuilder {
-	public static final field Companion Lokhttp3/android/httpengine/RequestResponseConverterBasedBuilder$Companion;
-	public fun <init> (Landroid/net/http/HttpEngine;)V
-	public final fun build ()Ljava/lang/Object;
-	public final fun setRedirectStrategy (Lokhttp3/android/httpengine/RedirectStrategy;)Lokhttp3/android/httpengine/RequestResponseConverterBasedBuilder;
-	public final fun setUploadDataProviderExecutorSize (I)Lokhttp3/android/httpengine/RequestResponseConverterBasedBuilder;
-}
-
-public final class okhttp3/android/httpengine/RequestResponseConverterBasedBuilder$Companion {
 }
 
