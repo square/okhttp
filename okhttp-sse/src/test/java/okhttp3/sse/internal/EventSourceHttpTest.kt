@@ -26,7 +26,7 @@ import okhttp3.OkHttpClientTestRule
 import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.sse.EventSource
-import okhttp3.sse.EventSources.createFactory
+import okhttp3.sse.EventSource.Factory.Companion.asEventSourceFactory
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Tag
@@ -268,7 +268,7 @@ class EventSourceHttpTest {
       builder.header("Accept", accept)
     }
     val request = builder.build()
-    val factory = createFactory(client)
+    val factory = client.asEventSourceFactory()
     return factory.newEventSource(request, listener)
   }
 }

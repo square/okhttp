@@ -1,10 +1,24 @@
 public abstract interface class okhttp3/sse/EventSource {
+	public static final field Companion Lokhttp3/sse/EventSource$Companion;
 	public abstract fun cancel ()V
+	public static fun create (Lokhttp3/Call;Lokhttp3/sse/EventSourceListener;)Lokhttp3/sse/EventSource;
+	public static fun create (Lokhttp3/Response;Lokhttp3/sse/EventSourceListener;)Lokhttp3/sse/EventSource;
 	public abstract fun request ()Lokhttp3/Request;
 }
 
+public final class okhttp3/sse/EventSource$Companion {
+	public final fun create (Lokhttp3/Call;Lokhttp3/sse/EventSourceListener;)Lokhttp3/sse/EventSource;
+	public final fun create (Lokhttp3/Response;Lokhttp3/sse/EventSourceListener;)Lokhttp3/sse/EventSource;
+}
+
 public abstract interface class okhttp3/sse/EventSource$Factory {
+	public static final field Companion Lokhttp3/sse/EventSource$Factory$Companion;
+	public static fun create (Lokhttp3/Call$Factory;)Lokhttp3/sse/EventSource$Factory;
 	public abstract fun newEventSource (Lokhttp3/Request;Lokhttp3/sse/EventSourceListener;)Lokhttp3/sse/EventSource;
+}
+
+public final class okhttp3/sse/EventSource$Factory$Companion {
+	public final fun create (Lokhttp3/Call$Factory;)Lokhttp3/sse/EventSource$Factory;
 }
 
 public abstract class okhttp3/sse/EventSourceListener {

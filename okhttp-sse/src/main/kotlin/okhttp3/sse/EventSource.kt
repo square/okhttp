@@ -15,7 +15,10 @@
  */
 package okhttp3.sse
 
+import okhttp3.Call
 import okhttp3.Request
+import okhttp3.Response
+import okhttp3.sse.internal.RealEventSource
 
 interface EventSource {
   /** Returns the original request that initiated this event source. */
@@ -37,5 +40,40 @@ interface EventSource {
       request: Request,
       listener: EventSourceListener,
     ): EventSource
+
+    companion object {
+      /**
+       * Wraps a [Call.Factory] into [EventSource.Factory].
+       */
+      @JvmStatic
+      @JvmName("create")
+      fun Call.Factory.asEventSourceFactory(): Factory =
+        Factory { request, listener ->
+          val actualRequest =
+            if (request.header("Accept") == null) {
+              request.newBuilder().addHeader("Accept", "text/event-stream").build()
+            } else {
+              request
+            }
+
+          this.newCall(actualRequest).toEventSource(listener)
+        }
+    }
+  }
+
+  companion object {
+    /**
+     * Creates a new [EventSource] from the [Call] and immediately enqueue it.
+     */
+    @JvmStatic
+    @JvmName("create")
+    fun Call.toEventSource(listener: EventSourceListener): EventSource = RealEventSource(this, listener).also(this::enqueue)
+
+    /**
+     * Creates a new [EventSource] from the existing [Response].
+     */
+    @JvmStatic
+    @JvmName("create")
+    fun Response.toEventSource(listener: EventSourceListener): EventSource = RealEventSource(this, listener)
   }
 }
