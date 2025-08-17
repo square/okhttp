@@ -27,10 +27,12 @@ import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.min
+import okhttp3.internal.SuppressSignatureCheck
 import okio.Buffer
 import okio.Sink
 import okio.Timeout
 
+@SuppressSignatureCheck
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
 internal class UploadBodyDataBroker : Sink {
   /**

@@ -24,6 +24,7 @@ import okhttp3.Call
 import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.ResponseBody
+import okhttp3.internal.SuppressSignatureCheck
 
 /**
  * An OkHttp interceptor that redirects HTTP traffic to use Cronet instead of using the OkHttp
@@ -40,6 +41,7 @@ import okhttp3.ResponseBody
  *  2. Some response fields are not being populated due to mismatches between Cronet's and
  * OkHttp's architecture.
  */
+@SuppressSignatureCheck
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
 internal class HttpEngineInterceptor(
   httpEngineDecorator: HttpEngineCallDecorator,

@@ -19,8 +19,10 @@ import android.os.Build
 import androidx.annotation.RequiresExtension
 import okhttp3.MediaType
 import okhttp3.ResponseBody
+import okhttp3.internal.SuppressSignatureCheck
 import okio.BufferedSource
 
+@SuppressSignatureCheck
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
 internal abstract class HttpEngineTransportResponseBody protected constructor(
   private val delegate: ResponseBody,

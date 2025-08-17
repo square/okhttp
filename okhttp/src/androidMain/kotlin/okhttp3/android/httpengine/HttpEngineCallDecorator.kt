@@ -9,10 +9,12 @@ import okhttp3.Call
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.cache.CacheInterceptor
 import okhttp3.internal.http.BridgeInterceptor
 import okhttp3.internal.http.RetryAndFollowUpInterceptor
 
+@SuppressSignatureCheck
 class HttpEngineCallDecorator(
   internal val httpEngine: HttpEngine,
   private val useHttpEngine: (Request) -> Boolean = { isHttpEngineSupported() },

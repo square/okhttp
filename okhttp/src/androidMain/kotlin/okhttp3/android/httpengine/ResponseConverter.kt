@@ -39,12 +39,14 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.asResponseBody
 import okhttp3.TlsVersion
+import okhttp3.internal.SuppressSignatureCheck
 import okio.Source
 import okio.buffer
 
 /**
  * Converts Cronet's responses (or, more precisely, its chunks as they come from Cronet's [ ]), to OkHttp's [Response].
  */
+@SuppressSignatureCheck
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
 internal class ResponseConverter {
   /**

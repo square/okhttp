@@ -36,10 +36,12 @@ import java.util.concurrent.TimeoutException
 import kotlin.concurrent.Volatile
 import okhttp3.RequestBody
 import okhttp3.android.httpengine.UploadBodyDataBroker.ReadResult
+import okhttp3.internal.SuppressSignatureCheck
 import okio.Buffer
 import okio.BufferedSink
 import okio.buffer
 
+@SuppressSignatureCheck
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
 internal class RequestBodyConverterImpl(
   private val inMemoryRequestBodyConverter: InMemoryRequestBodyConverter,

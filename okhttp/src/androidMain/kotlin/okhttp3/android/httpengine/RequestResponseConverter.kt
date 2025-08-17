@@ -23,7 +23,9 @@ import com.google.common.util.concurrent.MoreExecutors
 import java.io.IOException
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.internal.SuppressSignatureCheck
 
+@SuppressSignatureCheck
 /** Converts OkHttp requests to Cronet requests.  */
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
 internal class RequestResponseConverter(

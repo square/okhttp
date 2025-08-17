@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.Volatile
 import okhttp3.OkHttpClient
+import okhttp3.internal.SuppressSignatureCheck
 import okio.Buffer
 import okio.Source
 import okio.Timeout
@@ -50,6 +51,7 @@ import okio.Timeout
  * request in flight (which is safe to assume), and relies on reasonable fairness of thread
  * scheduling, especially when handling cancellations.
  */
+@SuppressSignatureCheck
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
 internal class OkHttpBridgeRequestCallback(
   private val client: OkHttpClient,

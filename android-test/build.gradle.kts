@@ -9,7 +9,7 @@ plugins {
 val androidBuild = property("androidBuild").toString().toBoolean()
 
 android {
-  compileSdk = 35
+  compileSdk = 36
 
   namespace = "okhttp.android.test"
 
@@ -20,7 +20,7 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     testInstrumentationRunnerArguments += mapOf(
       "runnerBuilder" to "de.mannodermaus.junit5.AndroidJUnit5Builder",
-      "notPackage" to "org.bouncycastle",
+      "notPackage" to "org.bouncycastle,com.google.common",
       "configurationParameters" to "junit.jupiter.extensions.autodetection.enabled=true"
     )
   }
@@ -40,7 +40,7 @@ android {
   }
 
   testOptions {
-    targetSdk = 34
+    targetSdk = 36
     unitTests.isIncludeAndroidResources = true
   }
 
