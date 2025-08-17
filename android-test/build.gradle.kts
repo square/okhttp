@@ -9,7 +9,7 @@ plugins {
 val androidBuild = property("androidBuild").toString().toBoolean()
 
 android {
-  compileSdk = 36
+  compileSdk = 35
 
   namespace = "okhttp.android.test"
 
@@ -40,7 +40,7 @@ android {
   }
 
   testOptions {
-    targetSdk = 36
+    targetSdk = 34
     unitTests.isIncludeAndroidResources = true
   }
 
