@@ -20,7 +20,6 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.fail
 import java.io.IOException
-import java.io.InterruptedIOException
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
@@ -150,9 +149,11 @@ class ThreadInterruptTest {
 
   @Test
   fun forciblyStopDispatcher() {
-    client = client.newBuilder()
-      .fastFallback(true)
-      .build()
+    client =
+      client
+        .newBuilder()
+        .fastFallback(true)
+        .build()
 
     val callFailure = CompletableFuture<Exception>()
 
@@ -168,14 +169,22 @@ class ThreadInterruptTest {
           .url(server.url("/"))
           .build(),
       )
-    call.enqueue(object : Callback {
-      override fun onFailure(call: Call, e: okio.IOException) {
-        callFailure.complete(e)
-      }
+    call.enqueue(
+      object : Callback {
+        override fun onFailure(
+          call: Call,
+          e: okio.IOException,
+        ) {
+          callFailure.complete(e)
+        }
 
-      override fun onResponse(call: Call, response: Response) {
-      }
-    })
+        override fun onResponse(
+          call: Call,
+          response: Response,
+        ) {
+        }
+      },
+    )
 
     // This should fail the Call, but not throw an Unhandled Exception
     client.dispatcher.executorService.shutdownNow()
