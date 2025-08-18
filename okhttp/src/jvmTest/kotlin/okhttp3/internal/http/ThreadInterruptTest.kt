@@ -15,21 +15,30 @@
  */
 package okhttp3.internal.http
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
 import assertk.fail
 import java.io.IOException
+import java.io.InterruptedIOException
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertFailsWith
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.DelegatingServerSocketFactory
 import okhttp3.DelegatingSocketFactory
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.Response
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.SocketPolicy
 import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.BufferedSink
@@ -137,6 +146,43 @@ class ThreadInterruptTest {
       }
     }
     responseBody.close()
+  }
+
+  @Test
+  fun forciblyStopDispatcher() {
+    client = client.newBuilder()
+      .fastFallback(true)
+      .build()
+
+    val callFailure = CompletableFuture<Exception>()
+
+    server.enqueue(
+      MockResponse()
+        .setSocketPolicy(SocketPolicy.STALL_SOCKET_AT_START),
+    )
+    server.start()
+    val call =
+      client.newCall(
+        Request
+          .Builder()
+          .url(server.url("/"))
+          .build(),
+      )
+    call.enqueue(object : Callback {
+      override fun onFailure(call: Call, e: okio.IOException) {
+        callFailure.complete(e)
+      }
+
+      override fun onResponse(call: Call, response: Response) {
+      }
+    })
+
+    // This should fail the Call, but not throw an Unhandled Exception
+    client.dispatcher.executorService.shutdownNow()
+
+    val exception = callFailure.get(5, TimeUnit.SECONDS)
+    assertThat(exception.message).isEqualTo("canceled due to java.lang.InterruptedException")
+    assertThat(exception).isInstanceOf<IOException>()
   }
 
   private fun sleep(delayMillis: Int) {
