@@ -18,7 +18,7 @@ package okhttp3.sse
 import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.Response
-import okhttp3.sse.EventSource.Companion.processAsEventSource
+import okhttp3.sse.EventSource.Companion.processEventSource
 import okhttp3.sse.EventSource.Factory.Companion.asEventSourceFactory
 
 object EventSources {
@@ -45,8 +45,8 @@ object EventSources {
     message = "Moved to extension function.",
     replaceWith =
       ReplaceWith(
-        expression = "response.toEventSource(listener)",
-        imports = ["okhttp3.sse.EventSource.Companion.toEventSource"],
+        expression = "response.processEventSource(listener)",
+        imports = ["okhttp3.sse.EventSource.Companion.processEventSource"],
       ),
     level = DeprecationLevel.WARNING,
   )
@@ -54,5 +54,5 @@ object EventSources {
   fun processResponse(
     response: Response,
     listener: EventSourceListener,
-  ): Unit = response.processAsEventSource(listener)
+  ): Unit = response.processEventSource(listener)
 }

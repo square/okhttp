@@ -56,24 +56,24 @@ interface EventSource {
               request
             }
 
-          this.newCall(actualRequest).toEventSource(listener)
+          this.newCall(actualRequest).enqueueEventSource(listener)
         }
     }
   }
 
   companion object {
     /**
-     * Creates a new [EventSource] from the [Call] and immediately enqueue it.
+     * Enqueues a [Call] and process it as [EventSource] with [listener].
      */
     @JvmStatic
-    @JvmName("create")
-    fun Call.toEventSource(listener: EventSourceListener): EventSource = RealEventSource(this, listener).also(this::enqueue)
+    @JvmName("enqueue")
+    fun Call.enqueueEventSource(listener: EventSourceListener): EventSource = RealEventSource(this, listener).also(this::enqueue)
 
     /**
      * Processes the existing response with [listener].
      */
     @JvmStatic
     @JvmName("process")
-    fun Response.processAsEventSource(listener: EventSourceListener) = RealEventSource(this, listener).processResponse(this)
+    fun Response.processEventSource(listener: EventSourceListener) = RealEventSource(this, listener).processResponse(this)
   }
 }
