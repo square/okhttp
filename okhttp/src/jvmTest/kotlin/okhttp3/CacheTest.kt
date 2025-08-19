@@ -578,6 +578,54 @@ class CacheTest {
   }
 
   @Test
+  fun queryRequestsCacheTheBody() {
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("ABC")
+        .build(),
+    )
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("DEF")
+        .build(),
+    )
+
+    val url = server.url("/same")
+
+    // First QUERY request with body "foo"
+    val request1 =
+      Request
+        .Builder()
+        .url(url)
+        .query("foo".toRequestBody())
+        .build()
+    val response1 = client.newCall(request1).execute()
+    assertThat(response1.body.string()).isEqualTo("ABC")
+
+    // Second QUERY request with body "bar"
+    val request2 =
+      Request
+        .Builder()
+        .url(url)
+        .query("bar".toRequestBody())
+        .build()
+    val response2 = client.newCall(request2).execute()
+    assertThat(response2.body.string()).isEqualTo("DEF")
+
+    // Third QUERY request with body "foo" again, should be cached and return "ABC"
+    val response3 = client.newCall(request1).execute()
+    assertThat(response3.body.string()).isEqualTo("ABC")
+
+    // Fourth QUERY request with body "bar" again, should be cached and return "DEF"
+    val response4 = client.newCall(request2).execute()
+    assertThat(response4.body.string()).isEqualTo("DEF")
+  }
+
+  @Test
   fun secureResponseCachingAndRedirects() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(

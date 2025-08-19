@@ -26,6 +26,7 @@ import java.security.cert.CertificateFactory
 import java.util.TreeSet
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.cache.CacheRequest
 import okhttp3.internal.cache.CacheStrategy
 import okhttp3.internal.cache.DiskLruCache
@@ -191,7 +192,7 @@ class Cache internal constructor(
     get() = cache.isClosed()
 
   internal fun get(request: Request): Response? {
-    val key = key(request.url)
+    val key = key(request)
     val snapshot: DiskLruCache.Snapshot =
       try {
         cache[key] ?: return null
@@ -242,7 +243,7 @@ class Cache internal constructor(
     val entry = Entry(response)
     var editor: DiskLruCache.Editor? = null
     try {
-      editor = cache.edit(key(response.request.url)) ?: return null
+      editor = cache.edit(key(response.request)) ?: return null
       entry.writeTo(editor)
       return RealCacheRequest(editor)
     } catch (_: IOException) {
@@ -253,7 +254,7 @@ class Cache internal constructor(
 
   @Throws(IOException::class)
   internal fun remove(request: Request) {
-    cache.remove(key(request.url))
+    cache.remove(key(request))
   }
 
   internal fun update(
@@ -464,6 +465,7 @@ class Cache internal constructor(
 
   private class Entry {
     private val url: HttpUrl
+    private val body : RequestBody?
     private val varyHeaders: Headers
     private val requestMethod: String
     private val protocol: Protocol
@@ -543,6 +545,21 @@ class Cache internal constructor(
         }
         varyHeaders = varyHeadersBuilder.build()
 
+        val bodyLength = source.readDecimalLong()
+        body = when (bodyLength) {
+            -1L -> {
+              null
+            }
+            0L -> {
+              RequestBody.EMPTY
+            }
+            else -> {
+              source.readByteArray(bodyLength).toRequestBody()
+            }
+        }
+
+        source.readByte() // Read the trailing '\n' after the body.
+
         val statusLine = StatusLine.parse(source.readUtf8LineStrict())
         protocol = statusLine.protocol
         code = statusLine.code
@@ -584,6 +601,7 @@ class Cache internal constructor(
 
     constructor(response: Response) {
       this.url = response.request.url
+      this.body = response.request.body
       this.varyHeaders = response.varyHeaders()
       this.requestMethod = response.request.method
       this.protocol = response.protocol
@@ -609,6 +627,20 @@ class Cache internal constructor(
             .writeByte('\n'.code)
         }
 
+        if (requestMethod == "QUERY") {
+          // Write the body of a QUERY request.
+          if (body == null) {
+            sink.writeDecimalLong(-1L).writeByte('\n'.code)
+          } else {
+
+            sink.writeDecimalLong(body.contentLength())
+            body.writeTo(sink)
+            sink.writeByte('\n'.code)
+          }
+        } else {
+          // Write the body of a GET request.
+          sink.writeDecimalLong(0L).writeByte('\n'.code)
+        }
         sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.code)
         sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.code)
         for (i in 0 until responseHeaders.size) {
@@ -688,7 +720,7 @@ class Cache internal constructor(
     fun response(snapshot: DiskLruCache.Snapshot): Response {
       val contentType = responseHeaders["Content-Type"]
       val contentLength = responseHeaders["Content-Length"]
-      val cacheRequest = Request(url, varyHeaders, requestMethod)
+      val cacheRequest = Request(url, varyHeaders, requestMethod, body)
       return Response
         .Builder()
         .request(cacheRequest)
@@ -751,6 +783,18 @@ class Cache internal constructor(
         .encodeUtf8()
         .md5()
         .hex()
+
+    internal fun key(request: Request): String =
+      if (
+        request.method == "QUERY" &&
+        request.body != null &&
+        !request.body.isOneShot()
+      ) {
+        key(request.url) + "_" + Buffer().also { request.body.writeTo(it) }.md5().hex()
+      } else {
+        // Reading this kind of body would consume it, so we can't cache it.
+        key(request.url)
+      }
 
     @Throws(IOException::class)
     internal fun readInt(source: BufferedSource): Int {
