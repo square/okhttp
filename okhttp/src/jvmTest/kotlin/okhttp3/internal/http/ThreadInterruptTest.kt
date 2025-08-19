@@ -18,6 +18,7 @@ package okhttp3.internal.http
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
+import assertk.assertions.isNotNull
 import assertk.fail
 import java.io.IOException
 import java.net.ServerSocket
@@ -186,12 +187,15 @@ class ThreadInterruptTest {
       },
     )
 
-    // This should fail the Call, but not throw an Unhandled Exception
+    // This should fail the Call, but not cause an unhandled Exception bubbling up
     client.dispatcher.executorService.shutdownNow()
 
     val exception = callFailure.get(5, TimeUnit.SECONDS)
     assertThat(exception.message).isEqualTo("canceled due to java.lang.InterruptedException")
     assertThat(exception).isInstanceOf<IOException>()
+    assertThat(exception.cause)
+      .isNotNull()
+      .isInstanceOf<InterruptedException>()
   }
 
   private fun sleep(delayMillis: Int) {

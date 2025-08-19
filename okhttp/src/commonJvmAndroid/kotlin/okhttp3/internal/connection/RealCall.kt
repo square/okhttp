@@ -540,7 +540,7 @@ class RealCall(
           cancel()
           if (!signalledCallback) {
             val canceledException = IOException("canceled due to $t")
-            canceledException.addSuppressed(t)
+            canceledException.initCause(t)
             responseCallback.onFailure(this@RealCall, canceledException)
           }
           if (t is InterruptedException) {
