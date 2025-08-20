@@ -465,7 +465,7 @@ class Cache internal constructor(
 
   private class Entry {
     private val url: HttpUrl
-    private val body : RequestBody?
+    private val body: RequestBody?
     private val varyHeaders: Headers
     private val requestMethod: String
     private val protocol: Protocol
@@ -546,7 +546,8 @@ class Cache internal constructor(
         varyHeaders = varyHeadersBuilder.build()
 
         val bodyLength = source.readDecimalLong()
-        body = when (bodyLength) {
+        body =
+          when (bodyLength) {
             -1L -> {
               null
             }
@@ -556,7 +557,7 @@ class Cache internal constructor(
             else -> {
               source.readByteArray(bodyLength).toRequestBody()
             }
-        }
+          }
 
         source.readByte() // Read the trailing '\n' after the body.
 
@@ -630,16 +631,16 @@ class Cache internal constructor(
         if (requestMethod == "QUERY") {
           // Write the body of a QUERY request.
           if (body == null) {
+            // Should not happen, but if it does, write a -1 to indicate no body.
             sink.writeDecimalLong(-1L).writeByte('\n'.code)
           } else {
-
             sink.writeDecimalLong(body.contentLength())
             body.writeTo(sink)
             sink.writeByte('\n'.code)
           }
         } else {
           // Write the body of a GET request.
-          sink.writeDecimalLong(0L).writeByte('\n'.code)
+          sink.writeDecimalLong(-1L).writeByte('\n'.code)
         }
         sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.code)
         sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.code)
