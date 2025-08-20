@@ -192,6 +192,11 @@ class Cache internal constructor(
     get() = cache.isClosed()
 
   internal fun get(request: Request): Response? {
+    if (request.body != null && request.body.isOneShot() && request.method == "QUERY") {
+      // Don't cache one-shot QUERY requests, since we need to cache by using the body,
+      // and we can't consume the body twice
+      return null
+    }
     val key = key(request)
     val snapshot: DiskLruCache.Snapshot =
       try {
@@ -788,12 +793,10 @@ class Cache internal constructor(
     internal fun key(request: Request): String =
       if (
         request.method == "QUERY" &&
-        request.body != null &&
-        !request.body.isOneShot()
+        request.body != null
       ) {
         key(request.url) + "_" + Buffer().also { request.body.writeTo(it) }.md5().hex()
       } else {
-        // Reading this kind of body would consume it, so we can't cache it.
         key(request.url)
       }
 
