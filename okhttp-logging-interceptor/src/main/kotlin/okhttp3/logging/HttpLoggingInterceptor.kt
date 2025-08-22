@@ -227,11 +227,17 @@ class HttpLoggingInterceptor
       }
 
       val startNs = System.nanoTime()
-      var response: Response
+      val response: Response
       try {
         response = chain.proceed(request)
       } catch (e: Exception) {
-        logger.log("<-- HTTP FAILED: $e")
+        val tookMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
+        logger.log(
+          buildString {
+            append("<-- HTTP FAILED: $e.")
+            append(" ${redactUrl(request.url)} (${tookMs}ms)")
+          },
+        )
         throw e
       }
 
