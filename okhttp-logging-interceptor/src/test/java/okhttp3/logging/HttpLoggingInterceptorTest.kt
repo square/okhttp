@@ -837,7 +837,7 @@ class HttpLoggingInterceptorTest {
     }
     applicationLogs
       .assertLogEqual("--> GET $url")
-      .assertLogEqual("<-- HTTP FAILED: java.net.UnknownHostException: reason")
+      .assertLogMatch(Regex("""<-- HTTP FAILED: java.net.UnknownHostException: reason. $url \(\d+ms\)"""))
       .assertNoMoreLogs()
   }
 
