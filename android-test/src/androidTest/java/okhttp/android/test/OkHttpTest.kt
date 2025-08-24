@@ -969,6 +969,7 @@ class OkHttpTest {
     assertEquals(setOf(OkHttpTest::class.java.name), testHandler.calls.keys)
   }
 
+  @Test
   fun testCachedRequest() {
     enableTls()
 
