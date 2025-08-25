@@ -29,110 +29,110 @@ import java.io.File;
 import java.io.IOException;
 
 public final class UploadProgress {
-	private static final String IMGUR_CLIENT_ID = "9199fdef135c122";
-	private static final MediaType MEDIA_TYPE_PNG = MediaType.get("image/png");
+  private static final String IMGUR_CLIENT_ID = "9199fdef135c122";
+  private static final MediaType MEDIA_TYPE_PNG = MediaType.get("image/png");
 
-	private final OkHttpClient client = new OkHttpClient();
+  private final OkHttpClient client = new OkHttpClient();
 
-	public void run() throws Exception {
-		// Use the imgur image upload API as documented at https://api.imgur.com/endpoints/image
-		final ProgressListener progressListener = new ProgressListener() {
-			boolean firstUpdate = true;
+  public void run() throws Exception {
+    // Use the imgur image upload API as documented at https://api.imgur.com/endpoints/image
+    final ProgressListener progressListener = new ProgressListener() {
+      boolean firstUpdate = true;
 
-			@Override public void update(long bytesWritten, long contentLength, boolean done) {
-				if (done) {
-					System.out.println("completed");
-				} else {
-					if (firstUpdate) {
-						firstUpdate = false;
-						if (contentLength == -1) {
-							System.out.println("content-length: unknown");
-						} else {
-							System.out.format("content-length: %d\n", contentLength);
-						}
-					}
+      @Override public void update(long bytesWritten, long contentLength, boolean done) {
+        if (done) {
+          System.out.println("completed");
+        } else {
+          if (firstUpdate) {
+            firstUpdate = false;
+            if (contentLength == -1) {
+              System.out.println("content-length: unknown");
+            } else {
+              System.out.format("content-length: %d\n", contentLength);
+            }
+          }
 
-					System.out.println(bytesWritten);
+          System.out.println(bytesWritten);
 
-					if (contentLength != -1) {
-						System.out.format("%d%% done\n", (100 * bytesWritten) / contentLength);
-					}
-				}
-			}
-		};
+          if (contentLength != -1) {
+            System.out.format("%d%% done\n", (100 * bytesWritten) / contentLength);
+          }
+        }
+      }
+    };
 
-		RequestBody requestBody = RequestBody.create(
-			new File("docs/images/logo-square.png"),
-			MEDIA_TYPE_PNG);
+    RequestBody requestBody = RequestBody.create(
+      new File("docs/images/logo-square.png"),
+      MEDIA_TYPE_PNG);
 
-		Request request = new Request.Builder()
-			.header("Authorization", "Client-ID " + IMGUR_CLIENT_ID)
-			.url("https://api.imgur.com/3/image")
-			.post(new ProgressRequestBody(requestBody, progressListener))
-			.build();
+    Request request = new Request.Builder()
+      .header("Authorization", "Client-ID " + IMGUR_CLIENT_ID)
+      .url("https://api.imgur.com/3/image")
+      .post(new ProgressRequestBody(requestBody, progressListener))
+      .build();
 
-		Response response = client.newCall(request).execute();
-		if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+    Response response = client.newCall(request).execute();
+    if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 
-		System.out.println(response.body().string());
-	}
+    System.out.println(response.body().string());
+  }
 
-	public static void main(String... args) throws Exception {
-		new UploadProgress().run();
-	}
+  public static void main(String... args) throws Exception {
+    new UploadProgress().run();
+  }
 
-	private static class ProgressRequestBody extends RequestBody {
+  private static class ProgressRequestBody extends RequestBody {
 
-		private final ProgressListener progressListener;
-		private final RequestBody delegate;
+    private final ProgressListener progressListener;
+    private final RequestBody delegate;
 
-		public ProgressRequestBody(RequestBody delegate, ProgressListener progressListener) {
-			this.delegate = delegate;
-			this.progressListener = progressListener;
-		}
+    public ProgressRequestBody(RequestBody delegate, ProgressListener progressListener) {
+      this.delegate = delegate;
+      this.progressListener = progressListener;
+    }
 
-		@Override
-		public MediaType contentType() {
-			return delegate.contentType();
-		}
+    @Override
+    public MediaType contentType() {
+      return delegate.contentType();
+    }
 
-		@Override
-		public long contentLength() throws IOException {
-			return delegate.contentLength();
-		}
+    @Override
+    public long contentLength() throws IOException {
+      return delegate.contentLength();
+    }
 
-		@Override
-		public void writeTo(BufferedSink sink) throws IOException {
-			BufferedSink bufferedSink = Okio.buffer(sink(sink));
-			delegate.writeTo(bufferedSink);
-			bufferedSink.flush();
-		}
+    @Override
+    public void writeTo(BufferedSink sink) throws IOException {
+      BufferedSink bufferedSink = Okio.buffer(sink(sink));
+      delegate.writeTo(bufferedSink);
+      bufferedSink.flush();
+    }
 
-		public Sink sink(Sink sink) {
-			return new ForwardingSink(sink) {
-				private long totalBytesWritten = 0L;
-				private boolean completed = false;
+    public Sink sink(Sink sink) {
+      return new ForwardingSink(sink) {
+        private long totalBytesWritten = 0L;
+        private boolean completed = false;
 
-				@Override
-				public void write(Buffer source, long byteCount) throws IOException {
-					super.write(source, byteCount);
-					totalBytesWritten += byteCount;
-					progressListener.update(totalBytesWritten, contentLength(), completed);
-				}
+        @Override
+        public void write(Buffer source, long byteCount) throws IOException {
+          super.write(source, byteCount);
+          totalBytesWritten += byteCount;
+          progressListener.update(totalBytesWritten, contentLength(), completed);
+        }
 
-				@Override
-				public void close() throws IOException {
-					super.close();
-					if (!completed) {
-						completed = true;
-						progressListener.update(totalBytesWritten, contentLength(), completed);
-					}
-				}
-			};
-		}
-	}
+        @Override
+        public void close() throws IOException {
+          super.close();
+          if (!completed) {
+            completed = true;
+            progressListener.update(totalBytesWritten, contentLength(), completed);
+          }
+        }
+      };
+    }
+  }
 
-	interface ProgressListener {
-		void update(long bytesWritten, long contentLength, boolean done);
-	}
+  interface ProgressListener {
+    void update(long bytesWritten, long contentLength, boolean done);
+  }
 }
