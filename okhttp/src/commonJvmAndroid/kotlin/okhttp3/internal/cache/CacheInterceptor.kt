@@ -299,12 +299,24 @@ class CacheInterceptor(
 private fun Request.requestForCache(): Request {
   val cacheUrlOverride = cacheUrlOverride
 
-  return if (cacheUrlOverride != null && (method == "GET" || method == "POST")) {
-    newBuilder()
-      .get()
-      .url(cacheUrlOverride)
-      .cacheUrlOverride(null)
-      .build()
+  return if (cacheUrlOverride != null) {
+    when (method) {
+      "GET", "POST" -> {
+        newBuilder()
+          .get()
+          .url(cacheUrlOverride)
+          .cacheUrlOverride(null)
+          .build()
+      }
+      "QUERY" -> {
+        newBuilder()
+          .query(body!!)
+          .url(cacheUrlOverride)
+          .cacheUrlOverride(null)
+          .build()
+      }
+      else -> this
+    }
   } else {
     this
   }

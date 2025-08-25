@@ -35,6 +35,7 @@ import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import java.util.stream.Stream
 import javax.net.ssl.HostnameVerifier
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
@@ -45,6 +46,7 @@ import mockwebserver3.junit5.StartStop
 import okhttp3.Cache.Companion.key
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.cacheGet
@@ -52,6 +54,7 @@ import okhttp3.internal.platform.Platform.Companion.get
 import okhttp3.java.net.cookiejar.JavaNetCookieJar
 import okhttp3.testing.PlatformRule
 import okio.Buffer
+import okio.BufferedSink
 import okio.FileSystem
 import okio.ForwardingFileSystem
 import okio.GzipSink
@@ -575,6 +578,100 @@ class CacheTest {
     assertThat(response4.body.string()).isEqualTo("DEF")
     val recordedRequest4 = server.takeRequest()
     assertThat(recordedRequest4.requestLine).isEqualTo("QUERY /bar HTTP/1.1")
+  }
+
+  @Test
+  fun queryRequestsCacheTheBody() {
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("ABC")
+        .build(),
+    )
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("DEF")
+        .build(),
+    )
+
+    val url = server.url("/same")
+
+    // First QUERY request with body "foo"
+    val request1 =
+      Request
+        .Builder()
+        .url(url)
+        .query("foo".toRequestBody())
+        .build()
+    val response1 = client.newCall(request1).execute()
+    assertThat(response1.body.string()).isEqualTo("ABC")
+
+    // Second QUERY request with body "bar"
+    val request2 =
+      Request
+        .Builder()
+        .url(url)
+        .query("bar".toRequestBody())
+        .build()
+    val response2 = client.newCall(request2).execute()
+    assertThat(response2.body.string()).isEqualTo("DEF")
+
+    // Third QUERY request with body "foo" again, should be cached and return "ABC"
+    val response3 = client.newCall(request1).execute()
+    assertThat(response3.body.string()).isEqualTo("ABC")
+
+    // Fourth QUERY request with body "bar" again, should be cached and return "DEF"
+    val response4 = client.newCall(request2).execute()
+    assertThat(response4.body.string()).isEqualTo("DEF")
+  }
+
+  @Test
+  fun oneshotBodyIsNotCachedForQueryRequest() {
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("ABC")
+        .build(),
+    )
+
+    val url = server.url("/same")
+
+    // QUERY request with body "foo"
+    val oneshotRequest =
+      object : RequestBody() {
+        val internalBody = Stream.of("foo")
+
+        override fun isOneShot(): Boolean = true
+
+        override fun contentType(): MediaType? = "application/text-plain".toMediaTypeOrNull()
+
+        override fun writeTo(sink: BufferedSink) {
+          internalBody.forEach { item ->
+            sink.writeUtf8(item)
+          }
+        }
+      }
+
+    val request1 =
+      Request
+        .Builder()
+        .url(url)
+        .query(oneshotRequest)
+        .build()
+    val response1 = client.newCall(request1).execute()
+    assertThat(response1.body.string()).isEqualTo("ABC")
+
+    // QUERY request with body "foo" again, should not be cached
+    val response2 = client.newCall(request1).execute()
+    assertThat(response2.body.string()).isEqualTo("ABC")
+
+    // Check that the cache did not store the response
+    assertThat(cache.requestCount()).isEqualTo(2)
+    assertThat(cache.hitCount()).isEqualTo(0)
   }
 
   @Test
@@ -1131,6 +1228,16 @@ class CacheTest {
   @Test
   fun requestMethodGetIsCached() {
     testRequestMethod("GET", true)
+  }
+
+  @Test
+  fun requestMethodQueryIsCached() {
+    testRequestMethod("QUERY", true)
+  }
+
+  @Test
+  fun requestMethodQueryIsCachedWithOverride() {
+    testRequestMethod("QUERY", true, withOverride = true)
   }
 
   @Test

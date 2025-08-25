@@ -35,6 +35,7 @@ object HttpMethod {
         method == "PUT" ||
         method == "PATCH" ||
         method == "PROPPATCH" ||
+        method == "QUERY" ||
         // WebDAV
         method == "REPORT"
     )
