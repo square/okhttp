@@ -23,7 +23,9 @@ import com.github.ajalt.clikt.core.parse
 import java.io.IOException
 import kotlin.test.Test
 import okhttp3.RequestBody
+import okhttp3.TestUtil
 import okio.Buffer
+import org.junit.jupiter.api.BeforeAll
 
 class MainTest {
   @Test
@@ -136,5 +138,13 @@ class MainTest {
       } catch (e: IOException) {
         throw RuntimeException(e)
       }
+    }
+
+    @JvmStatic
+    @BeforeAll
+    fun beforeAll() {
+//    https://github.com/square/okhttp/issues/8342
+      TestUtil.assumeNotWindows()
+    }
   }
 }
