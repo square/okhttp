@@ -35,7 +35,7 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(
-  sdk = [21, 26, 30, 33, 35],
+  sdk = [23, 26, 30, 33, 35],
 )
 class DisabledInitialiserTest {
   @Before
