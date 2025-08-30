@@ -25,7 +25,7 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(
-  sdk = [23, 26, 30, 33, 35],
+  sdk = [23, 26, 30, 33, 36],
 )
 class RobolectricOkHttpClientTest : BaseOkHttpClientUnitTest() {
   @Before
