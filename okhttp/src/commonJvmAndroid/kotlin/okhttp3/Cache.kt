@@ -46,10 +46,12 @@ import okio.ByteString.Companion.toByteString
 import okio.FileSystem
 import okio.ForwardingSink
 import okio.ForwardingSource
+import okio.HashingSink
 import okio.Path
 import okio.Path.Companion.toOkioPath
 import okio.Sink
 import okio.Source
+import okio.blackholeSink
 import okio.buffer
 
 /**
@@ -700,12 +702,13 @@ class Cache internal constructor(
     fun response(snapshot: DiskLruCache.Snapshot): Response {
       val contentType = responseHeaders["Content-Type"]
       val contentLength = responseHeaders["Content-Length"]
-      val cacheRequest = Request(
-        url = url,
-        headers = varyHeaders,
-        method = requestMethod,
-        body = if (HttpMethod.requiresRequestBody(requestMethod)) UnreadableRequestBody() else null
-      )
+      val cacheRequest =
+        Request(
+          url = url,
+          headers = varyHeaders,
+          method = requestMethod,
+          body = if (HttpMethod.requiresRequestBody(requestMethod)) UnreadableRequestBody() else null,
+        )
       return Response
         .Builder()
         .request(cacheRequest)
@@ -772,11 +775,13 @@ class Cache internal constructor(
         HttpMethod.permitsRequestBody(request.method) &&
         request.body != null
       ) {
-        return Buffer().apply {
-          writeUtf8(request.method)
-          writeUtf8(request.url.toString())
-          request.body.writeTo(this)
-        }.md5().hex()
+        val hashingSink = HashingSink.md5(blackholeSink())
+        hashingSink.buffer().use {
+          it.writeUtf8(request.method)
+          it.writeUtf8(request.url.toString())
+          request.body.writeTo(it)
+        }
+        return hashingSink.hash.hex()
       }
 
       return request.url

@@ -47,7 +47,5 @@ object HttpMethod {
 
   fun redirectsToGet(method: String): Boolean = method != "PROPFIND"
 
-  fun isCacheable(requestMethod: String): Boolean {
-    return requestMethod == "GET" || requestMethod == "QUERY"
-  }
+  fun isCacheable(requestMethod: String): Boolean = requestMethod == "GET" || requestMethod == "QUERY"
 }

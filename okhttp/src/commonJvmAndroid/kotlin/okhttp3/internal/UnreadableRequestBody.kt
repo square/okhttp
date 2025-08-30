@@ -21,7 +21,8 @@ import okio.BufferedSink
 import okio.Source
 import okio.Timeout
 
-internal class UnreadableRequestBody() : RequestBody(),
+internal class UnreadableRequestBody :
+  RequestBody(),
   Source {
   override fun contentType() = failUnsupported()
 
@@ -34,14 +35,13 @@ internal class UnreadableRequestBody() : RequestBody(),
     byteCount: Long,
   ): Long = failUnsupported()
 
-  private fun failUnsupported(): Nothing {
+  private fun failUnsupported(): Nothing =
     throw IllegalStateException(
       """
         |Unreadable RequestBody! These Request objects have bodies that are stripped:
         | * Response.cacheResponse.request
-        """.trimMargin(),
-      )
-  }
+      """.trimMargin(),
+    )
 
   override fun timeout() = Timeout.NONE
 

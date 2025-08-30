@@ -641,19 +641,20 @@ class CacheTest {
     assertThat(cache.hitCount()).isEqualTo(0)
   }
 
-  private fun String.toOneShotRequestBody(): RequestBody = object : RequestBody() {
-    val internalBody = Stream.of(this)
+  private fun String.toOneShotRequestBody(): RequestBody =
+    object : RequestBody() {
+      val internalBody = Stream.of(this)
 
-    override fun isOneShot(): Boolean = true
+      override fun isOneShot(): Boolean = true
 
-    override fun contentType(): MediaType? = "application/text-plain".toMediaTypeOrNull()
+      override fun contentType(): MediaType? = "application/text-plain".toMediaTypeOrNull()
 
-    override fun writeTo(sink: BufferedSink) {
-      internalBody.forEach { item ->
-        sink.writeUtf8(this@toOneShotRequestBody)
+      override fun writeTo(sink: BufferedSink) {
+        internalBody.forEach { item ->
+          sink.writeUtf8(this@toOneShotRequestBody)
+        }
       }
     }
-  }
 
   @Test
   fun secureResponseCachingAndRedirects() {
@@ -1303,7 +1304,14 @@ class CacheTest {
   }
 
   private fun requestBodyOrNull(requestMethod: String): RequestBody? =
-    if (requestMethod == "POST" || requestMethod == "PUT" || requestMethod == "QUERY") "foo".toRequestBody("text/plain".toMediaType()) else null
+    if (requestMethod == "POST" ||
+      requestMethod == "PUT" ||
+      requestMethod == "QUERY"
+    ) {
+      "foo".toRequestBody("text/plain".toMediaType())
+    } else {
+      null
+    }
 
   @Test
   fun postInvalidatesCache() {
