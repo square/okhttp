@@ -26,7 +26,7 @@ import java.security.cert.CertificateFactory
 import java.util.TreeSet
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.internal.UnreadableRequestBody
 import okhttp3.internal.cache.CacheRequest
 import okhttp3.internal.cache.CacheStrategy
 import okhttp3.internal.cache.DiskLruCache
@@ -192,7 +192,7 @@ class Cache internal constructor(
     get() = cache.isClosed()
 
   internal fun get(request: Request): Response? {
-    if (request.body != null && request.body.isOneShot() && request.method == "QUERY") {
+    if (request.body != null && request.body.isOneShot()) {
       // Don't cache one-shot QUERY requests, since we need to cache by using the body,
       // and we can't consume the body twice
       return null
@@ -234,10 +234,16 @@ class Cache internal constructor(
       return null
     }
 
-    if (requestMethod != "GET" && requestMethod != "QUERY") {
+    if (!HttpMethod.isCacheable(requestMethod)) {
       // Don't cache non-GET and non-QUERY responses. We're technically allowed to cache HEAD
       // requests and some POST requests, but the complexity of doing so is high and the benefit
       // is low.
+      return null
+    }
+
+    if (response.request.body != null && response.request.body.isOneShot()) {
+      // Don't cache one-shot QUERY requests, since we need to cache by using the body,
+      // and we can't consume the body twice
       return null
     }
 
@@ -470,7 +476,6 @@ class Cache internal constructor(
 
   private class Entry {
     private val url: HttpUrl
-    private val body: RequestBody?
     private val varyHeaders: Headers
     private val requestMethod: String
     private val protocol: Protocol
@@ -550,22 +555,6 @@ class Cache internal constructor(
         }
         varyHeaders = varyHeadersBuilder.build()
 
-        val bodyLength = source.readDecimalLong()
-        body =
-          when (bodyLength) {
-            -1L -> {
-              null
-            }
-            0L -> {
-              RequestBody.EMPTY
-            }
-            else -> {
-              source.readByteArray(bodyLength).toRequestBody()
-            }
-          }
-
-        source.readByte() // Read the trailing '\n' after the body.
-
         val statusLine = StatusLine.parse(source.readUtf8LineStrict())
         protocol = statusLine.protocol
         code = statusLine.code
@@ -607,7 +596,6 @@ class Cache internal constructor(
 
     constructor(response: Response) {
       this.url = response.request.url
-      this.body = response.request.body
       this.varyHeaders = response.varyHeaders()
       this.requestMethod = response.request.method
       this.protocol = response.protocol
@@ -633,20 +621,6 @@ class Cache internal constructor(
             .writeByte('\n'.code)
         }
 
-        if (requestMethod == "QUERY") {
-          // Write the body of a QUERY request.
-          if (body == null) {
-            // Should not happen, but if it does, write a -1 to indicate no body.
-            sink.writeDecimalLong(-1L).writeByte('\n'.code)
-          } else {
-            sink.writeDecimalLong(body.contentLength())
-            body.writeTo(sink)
-            sink.writeByte('\n'.code)
-          }
-        } else {
-          // Write the body of a GET request.
-          sink.writeDecimalLong(-1L).writeByte('\n'.code)
-        }
         sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.code)
         sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.code)
         for (i in 0 until responseHeaders.size) {
@@ -726,7 +700,12 @@ class Cache internal constructor(
     fun response(snapshot: DiskLruCache.Snapshot): Response {
       val contentType = responseHeaders["Content-Type"]
       val contentLength = responseHeaders["Content-Length"]
-      val cacheRequest = Request(url, varyHeaders, requestMethod, body)
+      val cacheRequest = Request(
+        url = url,
+        headers = varyHeaders,
+        method = requestMethod,
+        body = if (HttpMethod.requiresRequestBody(requestMethod)) UnreadableRequestBody() else null
+      )
       return Response
         .Builder()
         .request(cacheRequest)
@@ -782,23 +761,36 @@ class Cache internal constructor(
     private const val ENTRY_BODY = 1
     private const val ENTRY_COUNT = 2
 
-    @JvmStatic
-    fun key(url: HttpUrl): String =
-      url
+    internal fun key(request: Request): String {
+      return key2(request).also {
+        println("request key $it")
+      }
+    }
+
+    /** Returns the cache key for a request */
+    internal fun key2(request: Request): String {
+      if (
+        // Request such as PUT, DELETE that invalidates a GET
+        !HttpMethod.invalidatesCache(request.method) &&
+
+        // QUERY request that considers the request body in the cache key
+        HttpMethod.isCacheable(request.method) &&
+        HttpMethod.permitsRequestBody(request.method) &&
+        request.body != null
+      ) {
+        return Buffer().apply {
+          writeUtf8(request.method)
+          writeUtf8(request.url.toString())
+          request.body.writeTo(this)
+        }.md5().hex()
+      }
+
+      return request.url
         .toString()
         .encodeUtf8()
         .md5()
         .hex()
-
-    internal fun key(request: Request): String =
-      if (
-        request.method == "QUERY" &&
-        request.body != null
-      ) {
-        key(request.url) + "_" + Buffer().also { request.body.writeTo(it) }.md5().hex()
-      } else {
-        key(request.url)
-      }
+    }
 
     @Throws(IOException::class)
     internal fun readInt(source: BufferedSource): Int {

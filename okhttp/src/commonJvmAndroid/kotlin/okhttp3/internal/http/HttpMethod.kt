@@ -46,4 +46,8 @@ object HttpMethod {
   fun redirectsWithBody(method: String): Boolean = method == "PROPFIND"
 
   fun redirectsToGet(method: String): Boolean = method != "PROPFIND"
+
+  fun isCacheable(requestMethod: String): Boolean {
+    return requestMethod == "GET" || requestMethod == "QUERY"
+  }
 }

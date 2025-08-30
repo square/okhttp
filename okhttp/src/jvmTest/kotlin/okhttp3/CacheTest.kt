@@ -55,6 +55,7 @@ import okhttp3.java.net.cookiejar.JavaNetCookieJar
 import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.BufferedSink
+import okio.ByteString.Companion.encodeUtf8
 import okio.FileSystem
 import okio.ForwardingFileSystem
 import okio.GzipSink
@@ -514,13 +515,6 @@ class CacheTest {
         .body("ABC")
         .build(),
     )
-    server.enqueue(
-      MockResponse
-        .Builder()
-        .code(HttpURLConnection.HTTP_MOVED_PERM)
-        .addHeader("Location: /foo")
-        .build(),
-    )
     // QUERY responses
     server.enqueue(
       MockResponse
@@ -529,55 +523,28 @@ class CacheTest {
         .body("DEF")
         .build(),
     )
-    server.enqueue(
-      MockResponse
-        .Builder()
-        .code(HttpURLConnection.HTTP_MOVED_PERM)
-        .addHeader("Location: /baz")
-        .build(),
-    )
 
-    val request1 =
+    val requestGet1 =
       Request
         .Builder()
         .url(server.url("/foo"))
         .get()
         .build()
-    val response1 = client.newCall(request1).execute()
+    val response1 = client.newCall(requestGet1).execute()
     assertThat(response1.body.string()).isEqualTo("ABC")
     val recordedRequest1 = server.takeRequest()
     assertThat(recordedRequest1.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    val request2 =
-      Request
-        .Builder()
-        .url(server.url("/bar"))
-        .get()
-        .build()
-    val response2 = client.newCall(request2).execute()
-    assertThat(response2.body.string()).isEqualTo("ABC")
-    val recordedRequest2 = server.takeRequest()
-    assertThat(recordedRequest2.requestLine).isEqualTo("GET /bar HTTP/1.1")
 
-    val request3 =
+    val requestQuery1 =
       Request
         .Builder()
-        .url(server.url("/baz"))
+        .url(server.url("/foo"))
         .query(RequestBody.EMPTY)
         .build()
-    val response3 = client.newCall(request3).execute()
-    assertThat(response3.body.string()).isEqualTo("DEF")
-    val recordedRequest3 = server.takeRequest()
-    assertThat(recordedRequest3.requestLine).isEqualTo("QUERY /baz HTTP/1.1")
-    val request4 =
-      Request
-        .Builder()
-        .url(server.url("/bar"))
-        .query(RequestBody.EMPTY)
-        .build()
-    val response4 = client.newCall(request4).execute()
-    assertThat(response4.body.string()).isEqualTo("DEF")
-    val recordedRequest4 = server.takeRequest()
-    assertThat(recordedRequest4.requestLine).isEqualTo("QUERY /bar HTTP/1.1")
+    val response2 = client.newCall(requestQuery1).execute()
+    assertThat(response2.body.string()).isEqualTo("DEF")
+    val recordedRequest2 = server.takeRequest()
+    assertThat(recordedRequest2.requestLine).isEqualTo("QUERY /foo HTTP/1.1")
   }
 
   @Test
@@ -634,44 +601,58 @@ class CacheTest {
       MockResponse
         .Builder()
         .addHeader("Cache-Control: max-age=60")
-        .body("ABC")
+        .body("ABC1")
+        .build(),
+    )
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("ABC2")
         .build(),
     )
 
     val url = server.url("/same")
 
     // QUERY request with body "foo"
-    val oneshotRequest =
-      object : RequestBody() {
-        val internalBody = Stream.of("foo")
-
-        override fun isOneShot(): Boolean = true
-
-        override fun contentType(): MediaType? = "application/text-plain".toMediaTypeOrNull()
-
-        override fun writeTo(sink: BufferedSink) {
-          internalBody.forEach { item ->
-            sink.writeUtf8(item)
-          }
-        }
-      }
+    val body = "foo"
 
     val request1 =
       Request
         .Builder()
         .url(url)
-        .query(oneshotRequest)
+        .query(body.toOneShotRequestBody())
         .build()
     val response1 = client.newCall(request1).execute()
-    assertThat(response1.body.string()).isEqualTo("ABC")
+    assertThat(response1.body.string()).isEqualTo("ABC1")
 
     // QUERY request with body "foo" again, should not be cached
-    val response2 = client.newCall(request1).execute()
-    assertThat(response2.body.string()).isEqualTo("ABC")
+    val request2 =
+      Request
+        .Builder()
+        .url(url)
+        .query(body.toOneShotRequestBody())
+        .build()
+    val response2 = client.newCall(request2).execute()
+    assertThat(response2.body.string()).isEqualTo("ABC2")
 
     // Check that the cache did not store the response
     assertThat(cache.requestCount()).isEqualTo(2)
     assertThat(cache.hitCount()).isEqualTo(0)
+  }
+
+  private fun String.toOneShotRequestBody(): RequestBody = object : RequestBody() {
+    val internalBody = Stream.of(this)
+
+    override fun isOneShot(): Boolean = true
+
+    override fun contentType(): MediaType? = "application/text-plain".toMediaTypeOrNull()
+
+    override fun writeTo(sink: BufferedSink) {
+      internalBody.forEach { item ->
+        sink.writeUtf8(this@toOneShotRequestBody)
+      }
+    }
   }
 
   @Test
@@ -1312,7 +1293,7 @@ class CacheTest {
     val response1 = client.newCall(request).execute()
     response1.body.close()
     assertThat(response1.header("X-Response-ID")).isEqualTo("1")
-    val response2 = get(url)
+    val response2 = client.newCall(request).execute()
     response2.body.close()
     if (expectCached) {
       assertThat(response2.header("X-Response-ID")).isEqualTo("1")
@@ -1322,7 +1303,7 @@ class CacheTest {
   }
 
   private fun requestBodyOrNull(requestMethod: String): RequestBody? =
-    if (requestMethod == "POST" || requestMethod == "PUT") "foo".toRequestBody("text/plain".toMediaType()) else null
+    if (requestMethod == "POST" || requestMethod == "PUT" || requestMethod == "QUERY") "foo".toRequestBody("text/plain".toMediaType()) else null
 
   @Test
   fun postInvalidatesCache() {
@@ -3134,6 +3115,14 @@ class CacheTest {
     assertThat(response.header("")).isEqualTo("A")
     assertThat(response.body.string()).isEqualTo("body")
   }
+
+  fun key(url: HttpUrl): String =
+    url
+      .toString()
+      .encodeUtf8()
+      .md5()
+      .hex()
+      .also { println("url key $it") }
 
   /**
    * Old implementations of OkHttp's response cache wrote header fields like ":status: 200 OK". This
