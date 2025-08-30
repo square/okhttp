@@ -22,10 +22,12 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import okio.*
+import okio.Buffer
+import okio.BufferedSink
+import okio.ForwardingSink
+import okio.buffer
 
 class UploadProgress {
-
   companion object {
     private const val IMGUR_CLIENT_ID = "9199fdef135c122"
     private val MEDIA_TYPE_PNG = "image/png".toMediaType()
@@ -35,36 +37,44 @@ class UploadProgress {
 
   @Throws(Exception::class)
   fun run() {
-    val progressListener = object : ProgressListener {
-      private var firstUpdate = true
+    val progressListener =
+      object : ProgressListener {
+        private var firstUpdate = true
 
-      override fun update(bytesWritten: Long, contentLength: Long, done: Boolean) {
-        if (done) {
-          println("completed")
-        } else {
-          if (firstUpdate) {
-            firstUpdate = false
-            if (contentLength == -1L) {
-              println("content-length: unknown")
-            } else {
-              println("content-length: $contentLength")
+        override fun update(
+          bytesWritten: Long,
+          contentLength: Long,
+          done: Boolean,
+        ) {
+          if (done) {
+            println("completed")
+          } else {
+            if (firstUpdate) {
+              firstUpdate = false
+              if (contentLength == -1L) {
+                println("content-length: unknown")
+              } else {
+                println("content-length: $contentLength")
+              }
             }
-          }
-          println(bytesWritten)
-          if (contentLength != -1L) {
-            println("${100 * bytesWritten / contentLength}% done")
+            println(bytesWritten)
+            if (contentLength != -1L) {
+              println("${100 * bytesWritten / contentLength}% done")
+            }
           }
         }
       }
-    }
 
     val file = File("docs/images/logo-square.png")
     val requestBody: RequestBody = file.asRequestBody(MEDIA_TYPE_PNG)
 
     val request =
-      Request.Builder().header("Authorization", "Client-ID $IMGUR_CLIENT_ID")
+      Request
+        .Builder()
+        .header("Authorization", "Client-ID $IMGUR_CLIENT_ID")
         .url("https://api.imgur.com/3/image")
-        .post(ProgressRequestBody(requestBody, progressListener)).build()
+        .post(ProgressRequestBody(requestBody, progressListener))
+        .build()
 
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")
@@ -73,9 +83,9 @@ class UploadProgress {
   }
 
   private class ProgressRequestBody(
-    private val delegate: RequestBody, private val progressListener: ProgressListener
+    private val delegate: RequestBody,
+    private val progressListener: ProgressListener,
   ) : RequestBody() {
-
     override fun contentType() = delegate.contentType()
 
     @Throws(IOException::class)
@@ -83,24 +93,28 @@ class UploadProgress {
 
     @Throws(IOException::class)
     override fun writeTo(sink: BufferedSink) {
-      val forwardingSink = object : ForwardingSink(sink) {
-        private var totalBytesWritten: Long = 0
-        private var completed = false
+      val forwardingSink =
+        object : ForwardingSink(sink) {
+          private var totalBytesWritten: Long = 0
+          private var completed = false
 
-        override fun write(source: Buffer, byteCount: Long) {
-          super.write(source, byteCount)
-          totalBytesWritten += byteCount
-          progressListener.update(totalBytesWritten, contentLength(), completed)
-        }
-
-        override fun close() {
-          super.close()
-          if (!completed) {
-            completed = true
+          override fun write(
+            source: Buffer,
+            byteCount: Long,
+          ) {
+            super.write(source, byteCount)
+            totalBytesWritten += byteCount
             progressListener.update(totalBytesWritten, contentLength(), completed)
           }
+
+          override fun close() {
+            super.close()
+            if (!completed) {
+              completed = true
+              progressListener.update(totalBytesWritten, contentLength(), completed)
+            }
+          }
         }
-      }
 
       val bufferedSink = forwardingSink.buffer()
       delegate.writeTo(bufferedSink)
@@ -109,7 +123,11 @@ class UploadProgress {
   }
 
   fun interface ProgressListener {
-    fun update(bytesWritten: Long, contentLength: Long, done: Boolean)
+    fun update(
+      bytesWritten: Long,
+      contentLength: Long,
+      done: Boolean,
+    )
   }
 }
 
