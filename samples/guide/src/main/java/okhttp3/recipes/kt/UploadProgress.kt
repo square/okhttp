@@ -29,11 +29,6 @@ class UploadProgress {
   companion object {
     private const val IMGUR_CLIENT_ID = "9199fdef135c122"
     private val MEDIA_TYPE_PNG = "image/png".toMediaType()
-
-    @JvmStatic
-    fun main(args: Array<String>) {
-      UploadProgress().run()
-    }
   }
 
   private val client = OkHttpClient()
@@ -116,4 +111,8 @@ class UploadProgress {
   fun interface ProgressListener {
     fun update(bytesWritten: Long, contentLength: Long, done: Boolean)
   }
+}
+
+fun main() {
+  UploadProgress().run()
 }
