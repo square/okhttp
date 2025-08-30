@@ -761,14 +761,8 @@ class Cache internal constructor(
     private const val ENTRY_BODY = 1
     private const val ENTRY_COUNT = 2
 
-    internal fun key(request: Request): String {
-      return key2(request).also {
-        println("request key $it")
-      }
-    }
-
     /** Returns the cache key for a request */
-    internal fun key2(request: Request): String {
+    internal fun key(request: Request): String {
       if (
         // Request such as PUT, DELETE that invalidates a GET
         !HttpMethod.invalidatesCache(request.method) &&
