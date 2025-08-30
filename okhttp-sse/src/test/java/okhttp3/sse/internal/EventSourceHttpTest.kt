@@ -28,7 +28,6 @@ import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSources.createFactory
-import okhttp3.sse.EventSources.processResponse
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Tag
@@ -263,29 +262,32 @@ class EventSourceHttpTest {
 
   @Test
   fun sseReauths() {
-    client = client.newBuilder()
-      .authenticator { route, response ->
-        response.request.newBuilder()
-          .header("Authorization", "XYZ")
-          .build()
-      }
-      .build()
+    client =
+      client
+        .newBuilder()
+        .authenticator { route, response ->
+          response.request
+            .newBuilder()
+            .header("Authorization", "XYZ")
+            .build()
+        }.build()
     server.enqueue(
       MockResponse(
         code = 401,
         body = "{\"error\":{\"message\":\"No auth credentials found\",\"code\":401}}",
-        headers = Headers.headersOf("content-type", "application/json")
-      )
+        headers = Headers.headersOf("content-type", "application/json"),
+      ),
     )
     server.enqueue(
       MockResponse(
-        body = """
+        body =
+          """
           |data: hey
           |
           |
           """.trimMargin(),
-        headers = Headers.headersOf("content-type", "text/event-stream")
-      )
+        headers = Headers.headersOf("content-type", "text/event-stream"),
+      ),
     )
     val source = newEventSource()
     assertThat(source.request().url.encodedPath).isEqualTo("/")
@@ -300,8 +302,8 @@ class EventSourceHttpTest {
       MockResponse(
         code = 401,
         body = "{\"error\":{\"message\":\"No auth credentials found\",\"code\":401}}",
-        headers = Headers.headersOf("content-type", "application/json")
-      )
+        headers = Headers.headersOf("content-type", "application/json"),
+      ),
     )
     val source = newEventSource()
     assertThat(source.request().url.encodedPath).isEqualTo("/")

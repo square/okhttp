@@ -103,7 +103,10 @@ class EventSourceRecorder : EventSourceListener() {
     nextEvent() as Closed
   }
 
-  fun assertFailure(message: String?, code: Int? = null) {
+  fun assertFailure(
+    message: String?,
+    code: Int? = null,
+  ) {
     val event = nextEvent() as Failure
     if (code != null) {
       assertThat(event.response?.code).isEqualTo(code)

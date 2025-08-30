@@ -52,13 +52,16 @@ class EventSourcesHttpTest {
   @Test
   fun processResponse() {
     server.enqueue(
-      MockResponse.Builder().body(
+      MockResponse
+        .Builder()
+        .body(
           """
           |data: hey
           |
           |
           """.trimMargin(),
-        ).setHeader("content-type", "text/event-stream").build(),
+        ).setHeader("content-type", "text/event-stream")
+        .build(),
     )
     val request = Request.Builder().url(server.url("/")).build()
     val response = client.newCall(request).execute()
@@ -71,13 +74,16 @@ class EventSourcesHttpTest {
   @Test
   fun cancelShortCircuits() {
     server.enqueue(
-      MockResponse.Builder().body(
+      MockResponse
+        .Builder()
+        .body(
           """
           |data: hey
           |
           |
           """.trimMargin(),
-        ).setHeader("content-type", "text/event-stream").build(),
+        ).setHeader("content-type", "text/event-stream")
+        .build(),
     )
     listener.enqueueCancel() // Will cancel in onOpen().
     val request = Request.Builder().url(server.url("/")).build()
@@ -93,17 +99,19 @@ class EventSourcesHttpTest {
       MockResponse(
         code = 401,
         body = "{\"error\":{\"message\":\"No auth credentials found\",\"code\":401}}",
-        headers = Headers.headersOf("content-type", "application/json")
-      )
+        headers = Headers.headersOf("content-type", "application/json"),
+      ),
     )
     server.enqueue(
       MockResponse(
-        body = """
+        body =
+          """
           |data: hey
           |
           |
-          """.trimMargin(), headers = Headers.headersOf("content-type", "text/event-stream")
-      )
+          """.trimMargin(),
+        headers = Headers.headersOf("content-type", "text/event-stream"),
+      ),
     )
     var request = Request.Builder().url(server.url("/")).build()
     repeat(2) {
