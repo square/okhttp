@@ -23,7 +23,7 @@ import mockwebserver3.junit5.StartStop
 import okhttp3.Headers
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
-import okhttp3.sse.EventSources.processResponse
+import okhttp3.sse.EventSource.Companion.processEventSource
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Tag
@@ -65,7 +65,7 @@ class EventSourcesHttpTest {
     )
     val request = Request.Builder().url(server.url("/")).build()
     val response = client.newCall(request).execute()
-    processResponse(response, listener)
+    response.processEventSource(listener)
     listener.assertOpen()
     listener.assertEvent(null, null, "hey")
     listener.assertClose()
@@ -88,7 +88,7 @@ class EventSourcesHttpTest {
     listener.enqueueCancel() // Will cancel in onOpen().
     val request = Request.Builder().url(server.url("/")).build()
     val response = client.newCall(request).execute()
-    processResponse(response, listener)
+    response.processEventSource(listener)
     listener.assertOpen()
     listener.assertFailure("canceled")
   }
