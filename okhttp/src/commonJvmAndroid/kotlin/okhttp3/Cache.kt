@@ -764,6 +764,14 @@ class Cache internal constructor(
     private const val ENTRY_BODY = 1
     private const val ENTRY_COUNT = 2
 
+    @JvmStatic
+    fun key(url: HttpUrl): String =
+      url
+        .toString()
+        .encodeUtf8()
+        .md5()
+        .hex()
+
     /** Returns the cache key for a request */
     internal fun key(request: Request): String {
       if (

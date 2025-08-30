@@ -55,7 +55,6 @@ import okhttp3.java.net.cookiejar.JavaNetCookieJar
 import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.BufferedSink
-import okio.ByteString.Companion.encodeUtf8
 import okio.FileSystem
 import okio.ForwardingFileSystem
 import okio.GzipSink
@@ -3134,14 +3133,6 @@ class CacheTest {
     assertThat(response.header("")).isEqualTo("A")
     assertThat(response.body.string()).isEqualTo("body")
   }
-
-  fun key(url: HttpUrl): String =
-    url
-      .toString()
-      .encodeUtf8()
-      .md5()
-      .hex()
-      .also { println("url key $it") }
 
   /**
    * Old implementations of OkHttp's response cache wrote header fields like ":status: 200 OK". This
