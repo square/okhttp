@@ -20,7 +20,7 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     testInstrumentationRunnerArguments += mapOf(
       "runnerBuilder" to "de.mannodermaus.junit5.AndroidJUnit5Builder",
-      "notPackage" to "org.bouncycastle",
+      "notPackage" to "org.bouncycastle,com.google.common",
       "configurationParameters" to "junit.jupiter.extensions.autodetection.enabled=true"
     )
   }
@@ -65,6 +65,7 @@ dependencies {
   "friendsImplementation"(projects.okhttpDnsoverhttps)
 
   testImplementation(projects.okhttp)
+  testImplementation(projects.okhttpCoroutines)
   testImplementation(libs.junit)
   testImplementation(libs.junit.ktx)
   testImplementation(libs.assertk)
@@ -104,6 +105,8 @@ dependencies {
   androidTestImplementation(libs.squareup.moshi)
   androidTestImplementation(libs.squareup.moshi.kotlin)
   androidTestImplementation(libs.squareup.okio.fakefilesystem)
+  androidTestImplementation(libs.kotlinx.coroutines.test)
+  androidTestImplementation(projects.okhttpCoroutines)
 
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.junit.jupiter.api)
