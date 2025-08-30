@@ -121,7 +121,7 @@ class EventSourcesHttpTest {
         assertThat(response.body.string()).isEqualTo("{\"error\":{\"message\":\"No auth credentials found\",\"code\":401}}")
         request = request.newBuilder().header("Authorization", "XYZ").build()
       } else {
-        processResponse(response, listener)
+        response.processEventSource(listener)
         listener.assertOpen()
         listener.assertEvent(null, null, "hey")
         listener.assertClose()
