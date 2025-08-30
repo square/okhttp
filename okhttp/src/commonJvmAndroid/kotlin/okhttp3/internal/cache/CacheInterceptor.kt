@@ -299,7 +299,8 @@ class CacheInterceptor(
 private fun Request.requestForCache(): Request {
   val cacheUrlOverride = cacheUrlOverride
 
-  return if (cacheUrlOverride != null) {
+  // Allow POST caching only when there is a cacheUrlOverride
+  return if (cacheUrlOverride != null && (HttpMethod.isCacheable(method) || method == "POST")) {
     newBuilder()
       .get()
       .url(cacheUrlOverride)

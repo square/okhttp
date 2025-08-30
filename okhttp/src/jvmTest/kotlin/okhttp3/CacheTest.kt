@@ -1301,6 +1301,17 @@ class CacheTest {
     } else {
       assertThat(response2.header("X-Response-ID")).isEqualTo("2")
     }
+    if (!expectCached) {
+      server.enqueue(
+        MockResponse
+          .Builder()
+          .addHeader("X-Response-ID: 3")
+          .build(),
+      )
+      val response3 = get(url)
+      response3.body.close()
+      assertThat(response3.header("X-Response-ID")).isEqualTo("3")
+    }
   }
 
   private fun requestBodyOrNull(requestMethod: String): RequestBody? =
