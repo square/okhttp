@@ -778,7 +778,9 @@ class Cache internal constructor(
         val hashingSink = HashingSink.md5(blackholeSink())
         hashingSink.buffer().use {
           it.writeUtf8(request.method)
+          it.writeByte(0)
           it.writeUtf8(request.url.toString())
+          it.writeByte(0)
           request.body.writeTo(it)
         }
         return hashingSink.hash.hex()
