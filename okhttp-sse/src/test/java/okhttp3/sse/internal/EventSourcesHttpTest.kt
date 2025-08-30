@@ -15,9 +15,12 @@
  */
 package okhttp3.sse.internal
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
+import okhttp3.Headers
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
 import okhttp3.sse.EventSources.processResponse
@@ -49,22 +52,15 @@ class EventSourcesHttpTest {
   @Test
   fun processResponse() {
     server.enqueue(
-      MockResponse
-        .Builder()
-        .body(
+      MockResponse.Builder().body(
           """
           |data: hey
           |
           |
           """.trimMargin(),
-        ).setHeader("content-type", "text/event-stream")
-        .build(),
+        ).setHeader("content-type", "text/event-stream").build(),
     )
-    val request =
-      Request
-        .Builder()
-        .url(server.url("/"))
-        .build()
+    val request = Request.Builder().url(server.url("/")).build()
     val response = client.newCall(request).execute()
     processResponse(response, listener)
     listener.assertOpen()
@@ -75,26 +71,53 @@ class EventSourcesHttpTest {
   @Test
   fun cancelShortCircuits() {
     server.enqueue(
-      MockResponse
-        .Builder()
-        .body(
+      MockResponse.Builder().body(
           """
           |data: hey
           |
           |
           """.trimMargin(),
-        ).setHeader("content-type", "text/event-stream")
-        .build(),
+        ).setHeader("content-type", "text/event-stream").build(),
     )
     listener.enqueueCancel() // Will cancel in onOpen().
-    val request =
-      Request
-        .Builder()
-        .url(server.url("/"))
-        .build()
+    val request = Request.Builder().url(server.url("/")).build()
     val response = client.newCall(request).execute()
     processResponse(response, listener)
     listener.assertOpen()
     listener.assertFailure("canceled")
+  }
+
+  @Test
+  fun failureWith401IsReadable() {
+    server.enqueue(
+      MockResponse(
+        code = 401,
+        body = "{\"error\":{\"message\":\"No auth credentials found\",\"code\":401}}",
+        headers = Headers.headersOf("content-type", "application/json")
+      )
+    )
+    server.enqueue(
+      MockResponse(
+        body = """
+          |data: hey
+          |
+          |
+          """.trimMargin(), headers = Headers.headersOf("content-type", "text/event-stream")
+      )
+    )
+    var request = Request.Builder().url(server.url("/")).build()
+    repeat(2) {
+      val response = client.newCall(request).execute()
+
+      if (response.code == 401) {
+        assertThat(response.body.string()).isEqualTo("{\"error\":{\"message\":\"No auth credentials found\",\"code\":401}}")
+        request = request.newBuilder().header("Authorization", "XYZ").build()
+      } else {
+        processResponse(response, listener)
+        listener.assertOpen()
+        listener.assertEvent(null, null, "hey")
+        listener.assertClose()
+      }
+    }
   }
 }

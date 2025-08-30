@@ -22,11 +22,13 @@ import java.util.concurrent.TimeUnit
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
+import okhttp3.Headers
 import okhttp3.OkHttpClientTestRule
 import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSources.createFactory
+import okhttp3.sse.EventSources.processResponse
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Tag
@@ -257,6 +259,53 @@ class EventSourceHttpTest {
       "ConnectionReleased",
       "CallEnd",
     )
+  }
+
+  @Test
+  fun sseReauths() {
+    client = client.newBuilder()
+      .authenticator { route, response ->
+        response.request.newBuilder()
+          .header("Authorization", "XYZ")
+          .build()
+      }
+      .build()
+    server.enqueue(
+      MockResponse(
+        code = 401,
+        body = "{\"error\":{\"message\":\"No auth credentials found\",\"code\":401}}",
+        headers = Headers.headersOf("content-type", "application/json")
+      )
+    )
+    server.enqueue(
+      MockResponse(
+        body = """
+          |data: hey
+          |
+          |
+          """.trimMargin(),
+        headers = Headers.headersOf("content-type", "text/event-stream")
+      )
+    )
+    val source = newEventSource()
+    assertThat(source.request().url.encodedPath).isEqualTo("/")
+    listener.assertOpen()
+    listener.assertEvent(null, null, "hey")
+    listener.assertClose()
+  }
+
+  @Test
+  fun sseWithoutAuthenticator() {
+    server.enqueue(
+      MockResponse(
+        code = 401,
+        body = "{\"error\":{\"message\":\"No auth credentials found\",\"code\":401}}",
+        headers = Headers.headersOf("content-type", "application/json")
+      )
+    )
+    val source = newEventSource()
+    assertThat(source.request().url.encodedPath).isEqualTo("/")
+    listener.assertFailure(code = 401, message = "{\"error\":{\"message\":\"No auth credentials found\",\"code\":401}}")
   }
 
   private fun newEventSource(accept: String? = null): EventSource {
