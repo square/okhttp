@@ -195,6 +195,19 @@ subprojects {
     }
   }
 
+  // Configure all projects' source sets (jvm and kmp)
+  plugins.matching { it.javaClass.name.startsWith("org.jetbrains.kotlin") }.configureEach {
+    kotlinExtension.sourceSets {
+      // Exclude all test source sets (containing Test)
+      matching { !it.name.contains("Test", ignoreCase = true) }.all {
+        languageSettings {
+          apiVersion = "2.0"
+          languageVersion = "2.0"
+        }
+      }
+    }
+  }
+
   val platform = System.getProperty("okhttp.platform", "jdk9")
   val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
 
