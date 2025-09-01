@@ -317,6 +317,9 @@ class Request internal constructor(
 
     open fun patch(body: RequestBody): Builder = method("PATCH", body)
 
+    /**
+     * A QUERY request with a body. If `body.isOneShot()` is true, then caching will be disabled.
+     */
     open fun query(body: RequestBody): Builder = method("QUERY", body)
 
     open fun method(
