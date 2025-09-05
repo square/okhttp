@@ -293,3 +293,9 @@ apply(plugin = "io.github.usefulness.maven-sympathy")
 mavenPublishing {
   configure(KotlinMultiplatform(javadocJar = JavadocJar.Empty(), androidVariantsToPublish = listOf("release")))
 }
+
+tasks.register("printBuildInfo") {
+    doLast {
+        println("OkHttp build completed successfully by WengYee")
+    }
+}
