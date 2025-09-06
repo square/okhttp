@@ -81,6 +81,34 @@ allprojects {
 val platform = System.getProperty("okhttp.platform", "jdk9")
 val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
 
+plugins {
+  id("jacoco")
+}
+
+//JaCoCo setup
+subprojects {
+  plugins.withId("java") {
+    apply(plugin = "jacoco")
+
+    tasks.withType<Test>().configureEach {
+      useJUnitPlatform()
+    }
+
+    tasks.named<JacocoReport>("jacocoTestReport") {
+      dependsOn(tasks.withType<Test>())
+      reports {
+        xml.required.set(true)
+        html.required.set(true)
+
+        // Custom output inside build/custom-reports
+        val customReportDir = layout.buildDirectory.dir("custom-reports/jacoco")
+        html.outputLocation.set(customReportDir.map { it.dir("html") })
+        xml.outputLocation.set(customReportDir.map { it.file("jacoco.xml") })
+      }
+    }
+  }
+}
+
 /** Configure building for Java+Kotlin projects. */
 subprojects {
   val project = this@subprojects
@@ -226,8 +254,10 @@ subprojects {
     })
 
     maxParallelForks = Runtime.getRuntime().availableProcessors() * 2
-    testLogging {
-      exceptionFormat = TestExceptionFormat.FULL
+     testLogging {
+        events("passed", "skipped", "failed") // show details results
+        showStandardStreams = true
+        exceptionFormat = TestExceptionFormat.FULL
     }
 
     systemProperty("okhttp.platform", platform)
