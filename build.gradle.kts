@@ -255,10 +255,8 @@ subprojects {
 
     maxParallelForks = Runtime.getRuntime().availableProcessors() * 2
      testLogging {
-        events("passed", "skipped", "failed") // show details results
-        showStandardStreams = true
-        exceptionFormat = TestExceptionFormat.FULL
-    }
+      exceptionFormat = TestExceptionFormat.FULL
+     }
 
     systemProperty("okhttp.platform", platform)
     systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
