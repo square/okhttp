@@ -48,7 +48,7 @@ conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.r
 converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "retrofit" }
 eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.23.200"
 gradlePlugin-android = { module = "com.android.tools.build:gradle", version.ref = "agp" }
-gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.13.2.0"
+gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.13.3.0"
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:2.0.1"
 gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.18.1"
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
