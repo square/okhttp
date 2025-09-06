@@ -1,5 +1,5 @@
 [versions]
-agp = "8.12.2"
+agp = "8.13.0"
 biz-aQute-bnd = "7.1.0"
 checkStyle = "11.0.1"
 com-squareup-moshi = "1.15.2"
