@@ -1,5 +1,5 @@
 [versions]
-agp = "8.12.2"
+agp = "8.13.0"
 biz-aQute-bnd = "7.1.0"
 checkStyle = "11.0.1"
 com-squareup-moshi = "1.15.2"
@@ -46,9 +46,9 @@ codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
 converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "retrofit" }
-eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.23.100"
+eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.23.200"
 gradlePlugin-android = { module = "com.android.tools.build:gradle", version.ref = "agp" }
-gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.13.1.0"
+gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.13.3.0"
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:2.0.1"
 gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.18.1"
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
