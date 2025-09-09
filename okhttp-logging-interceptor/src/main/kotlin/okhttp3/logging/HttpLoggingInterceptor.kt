@@ -20,17 +20,31 @@ import java.io.IOException
 import java.nio.charset.Charset
 import java.util.TreeSet
 import java.util.concurrent.TimeUnit
+import okhttp3.CompressionInterceptor
+import okhttp3.CompressionInterceptor.DecompressionAlgorithm
+import okhttp3.Gzip
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
+import okhttp3.MediaType
 import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.Response
+import okhttp3.ResponseBody
 import okhttp3.internal.charsetOrUtf8
+import okhttp3.internal.connection.RealCall
 import okhttp3.internal.http.promisesBody
 import okhttp3.internal.platform.Platform
 import okhttp3.logging.internal.isProbablyUtf8
 import okio.Buffer
+import okio.BufferedSink
+import okio.BufferedSource
+import okio.ForwardingSink
+import okio.ForwardingSource
 import okio.GzipSource
+import okio.Source
+import okio.buffer
 
 /**
  * An OkHttp interceptor which logs request and response information. Can be applied as an
@@ -51,6 +65,8 @@ class HttpLoggingInterceptor
     @set:JvmName("level")
     @Volatile
     var level = Level.NONE
+
+    var requestLevel: (Request) -> Level = { level }
 
     enum class Level {
       /** No logs. */
@@ -109,6 +125,27 @@ class HttpLoggingInterceptor
        * ```
        */
       BODY,
+
+      /**
+       * Logs streaming request and response lines.
+       *
+       * Example:
+       * ```
+       * --> POST /greeting http/1.1
+       * <-- 200 OK (22ms, unknown-length body)
+       * > request A
+       *
+       * < response B
+       *
+       * > request C
+       *
+       * < response D
+       *
+       * --> END POST
+       * <-- END HTTP
+       * ```
+       */
+      STREAMING,
     }
 
     fun interface Logger {
@@ -163,83 +200,30 @@ class HttpLoggingInterceptor
 
     @Throws(IOException::class)
     override fun intercept(chain: Interceptor.Chain): Response {
-      val level = this.level
+      var request = chain.request()
 
-      val request = chain.request()
+      val level = this.requestLevel(request)
+
       if (level == Level.NONE) {
         return chain.proceed(request)
       }
 
-      val logBody = level == Level.BODY
-      val logHeaders = logBody || level == Level.HEADERS
+      val logHeaders = level == Level.BODY || level == Level.HEADERS
 
-      val requestBody = request.body
+      val decompressionAlgorithms = findCompressionAlgorithms(chain)
 
       val connection = chain.connection()
+
+      val requestBody = request.body
       var requestStartMessage =
         ("--> ${request.method} ${redactUrl(request.url)}${if (connection != null) " " + connection.protocol() else ""}")
-      if (!logHeaders && requestBody != null) {
+      if (!logHeaders && level != Level.STREAMING && requestBody != null) {
         requestStartMessage += " (${requestBody.contentLength()}-byte body)"
       }
       logger.log(requestStartMessage)
 
-      if (logHeaders) {
-        val headers = request.headers
-
-        if (requestBody != null) {
-          // Request body headers are only present when installed as a network interceptor. When not
-          // already present, force them to be included (if available) so their values are known.
-          requestBody.contentType()?.let {
-            if (headers["Content-Type"] == null) {
-              logger.log("Content-Type: $it")
-            }
-          }
-          if (requestBody.contentLength() != -1L) {
-            if (headers["Content-Length"] == null) {
-              logger.log("Content-Length: ${requestBody.contentLength()}")
-            }
-          }
-        }
-
-        for (i in 0 until headers.size) {
-          logHeader(headers, i)
-        }
-
-        if (!logBody || requestBody == null) {
-          logger.log("--> END ${request.method}")
-        } else if (bodyHasUnknownEncoding(request.headers)) {
-          logger.log("--> END ${request.method} (encoded body omitted)")
-        } else if (requestBody.isDuplex()) {
-          logger.log("--> END ${request.method} (duplex request body omitted)")
-        } else if (requestBody.isOneShot()) {
-          logger.log("--> END ${request.method} (one-shot body omitted)")
-        } else {
-          var buffer = Buffer()
-          requestBody.writeTo(buffer)
-
-          var gzippedLength: Long? = null
-          if ("gzip".equals(headers["Content-Encoding"], ignoreCase = true)) {
-            gzippedLength = buffer.size
-            GzipSource(buffer).use { gzippedResponseBody ->
-              buffer = Buffer()
-              buffer.writeAll(gzippedResponseBody)
-            }
-          }
-
-          val charset: Charset = requestBody.contentType().charsetOrUtf8()
-
-          logger.log("")
-          if (!buffer.isProbablyUtf8()) {
-            logger.log(
-              "--> END ${request.method} (binary ${requestBody.contentLength()}-byte body omitted)",
-            )
-          } else if (gzippedLength != null) {
-            logger.log("--> END ${request.method} (${buffer.size}-byte, $gzippedLength-gzipped-byte body)")
-          } else {
-            logger.log(buffer.readString(charset))
-            logger.log("--> END ${request.method} (${requestBody.contentLength()}-byte body)")
-          }
-        }
+      if (level != Level.BASIC) {
+        request = logRequest(request, level, decompressionAlgorithms)
       }
 
       val startNs = System.nanoTime()
@@ -259,7 +243,7 @@ class HttpLoggingInterceptor
 
       val tookMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
 
-      val responseBody = response.body!!
+      val responseBody = response.body
       val contentLength = responseBody.contentLength()
       val bodySize = if (contentLength != -1L) "$contentLength-byte" else "unknown-length"
       logger.log(
@@ -272,19 +256,135 @@ class HttpLoggingInterceptor
         },
       )
 
+      return if (level != Level.BASIC) {
+        logResponse(
+          response,
+          decompressionAlgorithms,
+          startNs,
+          contentLength,
+        )
+      } else {
+        response
+      }
+    }
+
+    private fun findCompressionAlgorithms(chain: Interceptor.Chain): List<DecompressionAlgorithm> {
+      val compressionInterceptor =
+        (chain.call() as? RealCall)?.client?.interceptors?.find { it is CompressionInterceptor } as? CompressionInterceptor
+
+      return compressionInterceptor?.algorithms?.toList() ?: listOf(Gzip)
+    }
+
+    private fun logRequest(
+      request: Request,
+      level: Level,
+      decompressionAlgorithms: List<DecompressionAlgorithm>,
+    ): Request {
+      val requestBody = request.body
+
+      if (level == Level.HEADERS || level == Level.BODY) {
+        val headers = request.headers
+        if (requestBody != null) {
+          // Request body headers are only present when installed as a network interceptor. When not
+          // already present, force them to be included (if available) so their values are known.
+          requestBody.contentType()?.let {
+            if (headers["Content-Type"] == null) {
+              logger.log("Content-Type: $it")
+            }
+          }
+          if (requestBody.contentLength() != -1L) {
+            if (headers["Content-Length"] == null) {
+              logger.log("Content-Length: ${requestBody.contentLength()}")
+            }
+          }
+        }
+
+        for (i in 0 until headers.size) {
+          logHeader(headers, i)
+        }
+      }
+
+      if (level == Level.HEADERS || requestBody == null) {
+        logger.log("--> END ${request.method}")
+      } else if (level == Level.STREAMING) {
+        return streamRequestBody(request)
+      } else if (level == Level.BODY) {
+        if (requestBody.isDuplex()) {
+          logger.log("--> END ${request.method} (duplex request body omitted)")
+        } else if (requestBody.isOneShot()) {
+          logger.log("--> END ${request.method} (one-shot body omitted)")
+        } else {
+          val decompressor = findCompressionAlgorithm(request.headers, decompressionAlgorithms)
+
+          if (decompressor == null) {
+            logger.log("--> END ${request.method} (unknown encoded body omitted)")
+            return request
+          }
+
+          var buffer = Buffer()
+          requestBody.writeTo(buffer)
+
+          var compressedLength: Long? = null
+          if (decompressor != Identity) {
+            compressedLength = buffer.size
+            decompressor.decompress(buffer).use { uncompressedResponseBody ->
+              buffer = Buffer()
+              buffer.writeAll(uncompressedResponseBody)
+            }
+          }
+
+          val charset: Charset = requestBody.contentType().charsetOrUtf8()
+
+          logger.log("")
+          if (!buffer.isProbablyUtf8()) {
+            logger.log(
+              "--> END ${request.method} (binary ${requestBody.contentLength()}-byte body omitted)",
+            )
+          } else if (compressedLength != null) {
+            logger.log("--> END ${request.method} (${buffer.size}-byte, $compressedLength-${decompressor.encoding}-byte body)")
+          } else {
+            logger.log(buffer.readString(charset))
+            logger.log("--> END ${request.method} (${requestBody.contentLength()}-byte body)")
+          }
+        }
+      }
+
+      return request
+    }
+
+    private fun logResponse(
+      response: Response,
+      decompressionAlgorithms: List<DecompressionAlgorithm>,
+      startNs: Long,
+      contentLength: Long,
+    ): Response {
+      val logBody = level == Level.BODY
+      val logStreamed = level == Level.STREAMING
+      val logHeaders = logBody || level == Level.HEADERS
+      val responseBody = response.body
+
       if (logHeaders) {
         val headers = response.headers
         for (i in 0 until headers.size) {
           logHeader(headers, i)
         }
+      }
 
-        if (!logBody || !response.promisesBody()) {
-          logger.log("<-- END HTTP")
-        } else if (bodyHasUnknownEncoding(response.headers)) {
-          logger.log("<-- END HTTP (encoded body omitted)")
-        } else if (bodyIsStreaming(response)) {
-          logger.log("<-- END HTTP (streaming)")
+      if (level == Level.HEADERS || !response.promisesBody()) {
+        logger.log("<-- END HTTP")
+      } else if (logStreamed) {
+        return streamResponseBody(response, decompressionAlgorithms)
+      } else if (logBody) {
+        if (bodyIsEventStream(response)) {
+          logger.log("<-- END HTTP (event-stream)")
         } else {
+          val decompressor = findCompressionAlgorithm(response.headers, decompressionAlgorithms)
+
+          if (decompressor == null) {
+            logger.log("<-- END HTTP (unknown encoded body omitted)")
+            return response
+          }
+
           val source = responseBody.source()
           source.request(Long.MAX_VALUE) // Buffer the entire body.
 
@@ -292,9 +392,9 @@ class HttpLoggingInterceptor
 
           var buffer = source.buffer
 
-          var gzippedLength: Long? = null
-          if ("gzip".equals(headers["Content-Encoding"], ignoreCase = true)) {
-            gzippedLength = buffer.size
+          var compressedLength: Long? = null
+          if (decompressor != Identity) {
+            compressedLength = buffer.size
             GzipSource(buffer.clone()).use { gzippedResponseBody ->
               buffer = Buffer()
               buffer.writeAll(gzippedResponseBody)
@@ -317,14 +417,38 @@ class HttpLoggingInterceptor
           logger.log(
             buildString {
               append("<-- END HTTP (${totalMs}ms, ${buffer.size}-byte")
-              if (gzippedLength != null) append(", $gzippedLength-gzipped-byte")
+              if (compressedLength != null) append(", $compressedLength-${decompressor.encoding}-byte")
               append(" body)")
             },
           )
         }
       }
+      return response
+    }
+
+    private fun streamRequestBody(request: Request): Request =
+      request
+        .newBuilder()
+        .method(request.method, StreamingRequestBody(request, logger))
+        .build()
+
+    private fun streamResponseBody(
+      response: Response,
+      decompressionAlgorithms: List<DecompressionAlgorithm>,
+    ): Response {
+      val decompressor = findCompressionAlgorithm(response.headers, decompressionAlgorithms)
+
+      if (decompressor == null) {
+        logger.log("--> END HTTP (encoded streaming body omitted)")
+        return response
+      }
 
       return response
+        .newBuilder()
+        .body(StreamingResponseBody(response, decompressor, logger))
+        .removeHeader("Content-Encoding")
+        .removeHeader("Content-Length")
+        .build()
     }
 
     internal fun redactUrl(url: HttpUrl): String {
@@ -352,16 +476,107 @@ class HttpLoggingInterceptor
       logger.log(headers.name(i) + ": " + value)
     }
 
-    private fun bodyHasUnknownEncoding(headers: Headers): Boolean {
-      val contentEncoding = headers["Content-Encoding"] ?: return false
-      return !contentEncoding.equals("identity", ignoreCase = true) &&
-        !contentEncoding.equals("gzip", ignoreCase = true)
+    private fun findCompressionAlgorithm(
+      headers: Headers,
+      decompressionAlgorithms: List<DecompressionAlgorithm>,
+    ): DecompressionAlgorithm? {
+      val contentEncoding = headers["Content-Encoding"] ?: return Identity
+
+      if (contentEncoding.equals("identity", ignoreCase = true)) return Identity
+
+      return decompressionAlgorithms.find { contentEncoding.equals(it.encoding, ignoreCase = true) }
     }
 
-    private fun bodyIsStreaming(response: Response): Boolean {
+    object Identity : DecompressionAlgorithm {
+      override val encoding: String
+        get() = "identity"
+
+      override fun decompress(compressedSource: BufferedSource): Source = compressedSource
+    }
+
+    private fun bodyIsEventStream(response: Response): Boolean {
       val contentType = response.body.contentType()
       return contentType != null && contentType.type == "text" && contentType.subtype == "event-stream"
     }
 
     companion object
   }
+
+private class StreamingRequestBody(
+  val request: Request,
+  val logger: HttpLoggingInterceptor.Logger,
+) : RequestBody() {
+  val body = request.body!!
+  val charset: Charset = body.contentType().charsetOrUtf8()
+
+  override fun contentType(): MediaType? = body.contentType()
+
+  override fun writeTo(sink: BufferedSink) {
+    val sink =
+      object : ForwardingSink(sink) {
+        override fun write(
+          source: Buffer,
+          byteCount: Long,
+        ) {
+          logger.log("> " + source.copy().readString(charset))
+          super.write(source, byteCount)
+        }
+
+        override fun close() {
+          super.close()
+          logger.log("--> END ${request.method} (streaming body)")
+        }
+      }.buffer()
+
+    body.writeTo(sink)
+  }
+
+  override fun contentLength(): Long = -1
+
+  override fun isDuplex(): Boolean = body.isDuplex()
+
+  override fun isOneShot(): Boolean = body.isOneShot()
+}
+
+private class StreamingResponseBody(
+  val response: Response,
+  val decompressor: DecompressionAlgorithm,
+  val logger: HttpLoggingInterceptor.Logger,
+) : ResponseBody() {
+  val buffer = Buffer()
+  val charset: Charset = response.body.contentType().charsetOrUtf8()
+
+  override fun contentType(): MediaType? = response.body.contentType()
+
+  override fun contentLength(): Long = -1
+
+  override fun source(): BufferedSource {
+    val decompressedSource = decompressor.decompress(response.body.source())
+
+    val source: Source =
+      object : ForwardingSource(decompressedSource) {
+        override fun read(
+          sink: Buffer,
+          byteCount: Long,
+        ): Long {
+          val count = super.read(buffer, byteCount)
+
+          if (count == -1L) {
+            logger.log("<-- END HTTP (streaming body)")
+          } else {
+            logger.log("< " + buffer.copy().readString(charset))
+            sink.write(buffer, count)
+          }
+
+          return count
+        }
+      }
+
+    return source.buffer()
+  }
+
+  override fun close() {
+    response.body.close()
+    buffer.clear()
+  }
+}
