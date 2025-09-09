@@ -159,6 +159,17 @@ class LoggingEventListener private constructor(
     logWithTime("requestFailed: $ioe")
   }
 
+  override fun socketSinkStart(call: Call) {
+    logWithTime("socketSinkStart")
+  }
+
+  override fun socketSinkEnd(
+    call: Call,
+    byteCount: Long,
+  ) {
+    logWithTime("socketSinkEnd: byteCount=$byteCount")
+  }
+
   override fun responseHeadersStart(call: Call) {
     logWithTime("responseHeadersStart")
   }
@@ -179,6 +190,17 @@ class LoggingEventListener private constructor(
     byteCount: Long,
   ) {
     logWithTime("responseBodyEnd: byteCount=$byteCount")
+  }
+
+  override fun socketSourceStart(call: Call) {
+    logWithTime("socketSourceStart")
+  }
+
+  override fun socketSourceEnd(
+    call: Call,
+    byteCount: Long,
+  ) {
+    logWithTime("socketSourceEnd: byteCount=$byteCount")
   }
 
   override fun responseFailed(
