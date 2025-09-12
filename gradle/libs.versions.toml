@@ -9,7 +9,7 @@ graalvm = "24.2.2"
 #noinspection UnusedVersionCatalogEntry
 junit-platform = "1.13.4"
 kotlinx-serialization = "1.9.0"
-ksp = "2.2.20-2.0.2"
+ksp = "2.2.20-2.0.3"
 lintGradle = "1.0.0-alpha05"
 mockserverClient = "5.15.0"
 org-bouncycastle = "1.81"
