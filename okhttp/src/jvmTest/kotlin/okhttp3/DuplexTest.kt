@@ -478,6 +478,9 @@ class DuplexTest {
    */
   @Test
   fun duplexWithAuthChallenge() {
+    // TODO https://github.com/square/okhttp/issues/8342
+    assumeNotWindows()
+
     enableProtocol(Protocol.HTTP_2)
     val credential = basic("jesse", "secret")
     client =

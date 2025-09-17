@@ -149,6 +149,7 @@ class Cache internal constructor(
   maxSize: Long,
   fileSystem: FileSystem,
   taskRunner: TaskRunner,
+  useCacheLock: Boolean,
 ) : Closeable,
   Flushable {
   /** Create a cache of at most [maxSize] bytes in [directory]. */
@@ -157,10 +158,11 @@ class Cache internal constructor(
     directory: Path,
     maxSize: Long,
   ) : this(
-    directory,
-    maxSize,
-    fileSystem,
-    TaskRunner.INSTANCE,
+    directory = directory,
+    maxSize = maxSize,
+    fileSystem = fileSystem,
+    taskRunner = TaskRunner.INSTANCE,
+    useCacheLock = true,
   )
 
   /** Create a cache of at most [maxSize] bytes in [directory]. */
@@ -178,6 +180,7 @@ class Cache internal constructor(
       valueCount = ENTRY_COUNT,
       maxSize = maxSize,
       taskRunner = taskRunner,
+      useCacheLock = useCacheLock,
     )
 
   // read and write statistics, all guarded by 'this'.

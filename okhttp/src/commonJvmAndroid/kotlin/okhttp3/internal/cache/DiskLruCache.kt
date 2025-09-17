@@ -95,9 +95,12 @@ class DiskLruCache(
   maxSize: Long,
   /** Used for asynchronous journal rebuilds. */
   taskRunner: TaskRunner,
+  private val useCacheLock: Boolean,
 ) : Closeable,
-  Flushable,
-  Lockable {
+  Lockable,
+  Flushable {
+  lateinit var cacheLock: Closeable
+
   internal val fileSystem: FileSystem =
     object : ForwardingFileSystem(fileSystem) {
       override fun sink(
@@ -245,33 +248,42 @@ class DiskLruCache(
 
     civilizedFileSystem = fileSystem.isCivilized(journalFileBackup)
 
-    // Prefer to pick up where we left off.
-    if (fileSystem.exists(journalFile)) {
-      try {
-        readJournal()
-        processJournal()
-        initialized = true
-        return
-      } catch (journalIsCorrupt: IOException) {
-        Platform.get().log(
-          "DiskLruCache $directory is corrupt: ${journalIsCorrupt.message}, removing",
-          WARN,
-          journalIsCorrupt,
-        )
+    cacheLock = if (useCacheLock) openLock(fileSystem, directory) else Closeable {}
+
+    try {
+      // Prefer to pick up where we left off.
+      if (fileSystem.exists(journalFile)) {
+        try {
+          readJournal()
+          processJournal()
+          initialized = true
+          return
+        } catch (journalIsCorrupt: IOException) {
+          Platform.get().log(
+            "DiskLruCache $directory is corrupt: ${journalIsCorrupt.message}, removing",
+            WARN,
+            journalIsCorrupt,
+          )
+        }
+
+        // The cache is corrupted, attempt to delete the contents of the directory. This can throw and
+        // we'll let that propagate out as it likely means there is a severe filesystem problem.
+        try {
+          delete()
+        } finally {
+          closed = false
+        }
       }
 
-      // The cache is corrupted, attempt to delete the contents of the directory. This can throw and
-      // we'll let that propagate out as it likely means there is a severe filesystem problem.
-      try {
-        delete()
-      } finally {
-        closed = false
+      rebuildJournal()
+
+      initialized = true
+    } finally {
+      // If anything failed, leave without a cache lock open
+      if (!initialized) {
+        cacheLock.close()
       }
     }
-
-    rebuildJournal()
-
-    initialized = true
   }
 
   @Throws(IOException::class)
@@ -710,6 +722,8 @@ class DiskLruCache(
       closed = true
       return
     }
+
+    cacheLock.close()
 
     // Copying for concurrent iteration.
     for (entry in lruEntries.values.toTypedArray()) {

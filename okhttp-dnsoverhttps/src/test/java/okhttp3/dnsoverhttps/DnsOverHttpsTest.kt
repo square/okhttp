@@ -177,7 +177,7 @@ class DnsOverHttpsTest {
   // 5. unsuccessful response
   @Test
   fun usesCache() {
-    val cache = Cache(cacheFs, "cache".toPath(), (100 * 1024).toLong())
+    val cache = Cache(cacheFs, "cache-usesCache".toPath(), (100 * 1024).toLong())
     val cachedClient = bootstrapClient.newBuilder().cache(cache).build()
     val cachedDns = buildLocalhost(cachedClient, false)
 
@@ -220,7 +220,7 @@ class DnsOverHttpsTest {
 
   @Test
   fun usesCacheEvenForPost() {
-    val cache = Cache(cacheFs, "cache".toPath(), (100 * 1024).toLong())
+    val cache = Cache(cacheFs, "cache-usesCacheEvenForPost".toPath(), (100 * 1024).toLong())
     val cachedClient = bootstrapClient.newBuilder().cache(cache).build()
     val cachedDns = buildLocalhost(cachedClient, false, post = true)
     repeat(2) {
@@ -258,6 +258,8 @@ class DnsOverHttpsTest {
       .isEqualTo("ct")
 
     assertThat(cacheEvents()).containsExactly("CacheMiss")
+
+    cache.close()
   }
 
   @Test
@@ -302,6 +304,8 @@ class DnsOverHttpsTest {
       .isEqualTo("ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ")
 
     assertThat(cacheEvents()).containsExactly("CacheMiss")
+
+    cache.close()
   }
 
   private fun cacheEvents(): List<String> =

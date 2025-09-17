@@ -86,13 +86,14 @@ class CacheTest {
   private lateinit var client: OkHttpClient
   private lateinit var cache: Cache
   private val cookieManager = CookieManager()
+  private val cachePath = "/cache-CacheTest".toPath()
 
   @BeforeEach
   fun setUp() {
     platform.assumeNotOpenJSSE()
     server.protocolNegotiationEnabled = false
     fileSystem.emulateUnix()
-    cache = Cache(fileSystem, "/cache/".toPath(), Long.MAX_VALUE)
+    cache = Cache(fileSystem, cachePath, Long.MAX_VALUE)
     client =
       clientTestRule
         .newClientBuilder()
@@ -104,6 +105,7 @@ class CacheTest {
   @AfterEach
   fun tearDown() {
     ResponseCache.setDefault(null)
+    cache.close()
     cache.delete()
   }
 
@@ -3080,7 +3082,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.0", entryMetadata)
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cachePath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3130,7 +3132,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cachePath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3184,7 +3186,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cachePath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3230,7 +3232,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cachePath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3859,6 +3861,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
   @Test
   fun testPublicPathConstructor() {
+    cache.close()
+
     val events: MutableList<String> = ArrayList()
     fileSystem.createDirectories(cache.directoryPath)
     fileSystem.createDirectories(cache.directoryPath)
@@ -3881,25 +3885,24 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
           return path
         }
       }
-    val path: Path = "/cache".toPath()
-    val c = Cache(loggingFileSystem, path, 100000L)
-    assertThat(c.directoryPath).isEqualTo(path)
-    c.size()
+    cache = Cache(loggingFileSystem, cachePath, 100000L)
+    assertThat(cache.directoryPath).isEqualTo(cachePath)
+    cache.size()
     assertThat(events).containsExactly(
-      "metadataOrNull:/cache/journal.bkp",
-      "metadataOrNull:/cache",
-      "sink:/cache/journal.bkp",
-      "delete:/cache/journal.bkp",
-      "metadataOrNull:/cache/journal",
-      "metadataOrNull:/cache",
-      "sink:/cache/journal.tmp",
-      "metadataOrNull:/cache/journal",
-      "atomicMove:/cache/journal.tmp",
-      "atomicMove:/cache/journal",
-      "appendingSink:/cache/journal",
+      "metadataOrNull:$cachePath/journal.bkp",
+      "metadataOrNull:$cachePath",
+      "sink:$cachePath/journal.bkp",
+      "delete:$cachePath/journal.bkp",
+      "metadataOrNull:$cachePath/journal",
+      "metadataOrNull:$cachePath",
+      "sink:$cachePath/journal.tmp",
+      "metadataOrNull:$cachePath/journal",
+      "atomicMove:$cachePath/journal.tmp",
+      "atomicMove:$cachePath/journal",
+      "appendingSink:$cachePath/journal",
     )
     events.clear()
-    c.size()
+    cache.size()
     assertThat(events).isEmpty()
   }
 

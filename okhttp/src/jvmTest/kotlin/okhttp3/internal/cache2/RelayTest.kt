@@ -39,11 +39,12 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.CleanupMode
 import org.junit.jupiter.api.io.TempDir
 
 @Tag("Slowish")
 class RelayTest {
-  @TempDir
+  @TempDir(cleanup = CleanupMode.ON_SUCCESS)
   var tempDir: File? = null
   private val executor = Executors.newCachedThreadPool(threadFactory("RelayTest"))
   private val metadata: ByteString = "great metadata!".encodeUtf8()

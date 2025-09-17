@@ -144,6 +144,7 @@ kotlin {
         implementation(libs.junit.jupiter.params)
         implementation(libs.kotlin.test.junit)
         implementation(libs.openjsse)
+        implementation(libs.kotlinx.coroutines.test)
 
         implementation(libs.junit.jupiter.engine)
         implementation(libs.junit.vintage.engine)
