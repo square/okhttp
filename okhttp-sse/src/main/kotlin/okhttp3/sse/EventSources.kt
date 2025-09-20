@@ -18,7 +18,8 @@ package okhttp3.sse
 import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.Response
-import okhttp3.sse.internal.RealEventSource
+import okhttp3.sse.EventSource.Companion.processEventSource
+import okhttp3.sse.EventSource.Factory.Companion.asEventSourceFactory
 
 object EventSources {
   @Deprecated(
@@ -26,29 +27,32 @@ object EventSources {
     level = DeprecationLevel.HIDDEN,
   )
   @JvmStatic
-  fun createFactory(client: OkHttpClient) = createFactory(client as Call.Factory)
+  fun createFactory(client: OkHttpClient) = client.asEventSourceFactory()
 
+  @Deprecated(
+    message = "Moved to extension function.",
+    replaceWith =
+      ReplaceWith(
+        expression = "callFactory.asEventSourceFactory()",
+        imports = ["okhttp3.sse.EventSource.Factory.Companion.asEventSourceFactory"],
+      ),
+    level = DeprecationLevel.WARNING,
+  )
   @JvmStatic
-  fun createFactory(callFactory: Call.Factory): EventSource.Factory =
-    EventSource.Factory { request, listener ->
-      val actualRequest =
-        if (request.header("Accept") == null) {
-          request.newBuilder().addHeader("Accept", "text/event-stream").build()
-        } else {
-          request
-        }
+  fun createFactory(callFactory: Call.Factory): EventSource.Factory = callFactory.asEventSourceFactory()
 
-      RealEventSource(actualRequest, listener).apply {
-        connect(callFactory)
-      }
-    }
-
+  @Deprecated(
+    message = "Moved to extension function.",
+    replaceWith =
+      ReplaceWith(
+        expression = "response.processEventSource(listener)",
+        imports = ["okhttp3.sse.EventSource.Companion.processEventSource"],
+      ),
+    level = DeprecationLevel.WARNING,
+  )
   @JvmStatic
   fun processResponse(
     response: Response,
     listener: EventSourceListener,
-  ) {
-    val eventSource = RealEventSource(response.request, listener)
-    eventSource.processResponse(response)
-  }
+  ): Unit = response.processEventSource(listener)
 }

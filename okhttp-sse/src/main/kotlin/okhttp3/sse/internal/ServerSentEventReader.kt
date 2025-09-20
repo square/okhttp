@@ -22,7 +22,7 @@ import okio.BufferedSource
 import okio.ByteString.Companion.encodeUtf8
 import okio.Options
 
-class ServerSentEventReader(
+internal class ServerSentEventReader(
   private val source: BufferedSource,
   private val callback: Callback,
 ) {
@@ -119,7 +119,7 @@ class ServerSentEventReader(
   }
 
   companion object {
-    val options =
+    private val options =
       Options.of(
         // 0
         "\r\n".encodeUtf8(),

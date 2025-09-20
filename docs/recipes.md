@@ -947,6 +947,210 @@ Use `Response.challenges()` to get the schemes and realms of any authentication 
       }
     ```
 
+### Upload Progress ([.kt][UploadProgressKotlin], [.java][UploadProgressJava])
+
+Upload a file to a server (for example, Imgur) and report progress as the request body is being written. You can implement a ProgressListener to receive updates and wrap the original request body with ProgressRequestBody. This allows you to monitor how many bytes have been uploaded and calculate the percentage of completion.
+
+=== ":material-language-kotlin: Kotlin"
+    ```kotlin
+      class UploadProgress {
+
+        companion object {
+          private const val IMGUR_CLIENT_ID = "9199fdef135c122"
+          private val MEDIA_TYPE_PNG = "image/png".toMediaType()
+
+          @JvmStatic
+          fun main(args: Array<String>) {
+            UploadProgress().run()
+          }
+        }
+
+        private val client = OkHttpClient()
+
+        @Throws(Exception::class)
+        fun run() {
+          val progressListener = object : ProgressListener {
+            private var firstUpdate = true
+
+            override fun update(bytesWritten: Long, contentLength: Long, done: Boolean) {
+              if (done) {
+                println("completed")
+              } else {
+                if (firstUpdate) {
+                  firstUpdate = false
+                  if (contentLength == -1L) {
+                    println("content-length: unknown")
+                  } else {
+                    println("content-length: $contentLength")
+                  }
+                }
+                println(bytesWritten)
+                if (contentLength != -1L) {
+                  println("${100 * bytesWritten / contentLength}% done")
+                }
+              }
+            }
+          }
+
+          val file = File("docs/images/logo-square.png")
+          val requestBody: RequestBody = file.asRequestBody(MEDIA_TYPE_PNG)
+
+          val request =
+            Request.Builder().header("Authorization", "Client-ID $IMGUR_CLIENT_ID")
+              .url("https://api.imgur.com/3/image")
+              .post(ProgressRequestBody(requestBody, progressListener)).build()
+
+          client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("Unexpected code $response")
+            println(response.body.string())
+          }
+        }
+
+        private class ProgressRequestBody(
+          private val delegate: RequestBody, private val progressListener: ProgressListener
+        ) : RequestBody() {
+
+          override fun contentType() = delegate.contentType()
+
+          @Throws(IOException::class)
+          override fun contentLength(): Long = delegate.contentLength()
+
+          @Throws(IOException::class)
+          override fun writeTo(sink: BufferedSink) {
+            val forwardingSink = object : ForwardingSink(sink) {
+              private var totalBytesWritten: Long = 0
+              private var completed = false
+
+              override fun write(source: Buffer, byteCount: Long) {
+                super.write(source, byteCount)
+                totalBytesWritten += byteCount
+                progressListener.update(totalBytesWritten, contentLength(), completed)
+              }
+
+              override fun close() {
+                super.close()
+                if (!completed) {
+                  completed = true
+                  progressListener.update(totalBytesWritten, contentLength(), completed)
+                }
+              }
+            }
+
+            val bufferedSink = forwardingSink.buffer()
+            delegate.writeTo(bufferedSink)
+            bufferedSink.flush()
+          }
+        }
+
+        fun interface ProgressListener {
+          fun update(bytesWritten: Long, contentLength: Long, done: Boolean)
+        }
+      }
+    ```
+
+=== ":material-language-java: Java"
+    ```java
+      public final class UploadProgress {
+        private static final String IMGUR_CLIENT_ID = "9199fdef135c122";
+        private static final MediaType MEDIA_TYPE_PNG = MediaType.get("image/png");
+
+        private final OkHttpClient client = new OkHttpClient();
+
+        public void run() throws Exception {
+          final ProgressListener progressListener = new ProgressListener() {
+            boolean firstUpdate = true;
+
+            @Override public void update(long bytesWritten, long contentLength, boolean done) {
+              if (done) {
+                System.out.println("completed");
+              } else {
+                if (firstUpdate) {
+                  firstUpdate = false;
+                  if (contentLength == -1) {
+                    System.out.println("content-length: unknown");
+                  } else {
+                    System.out.format("content-length: %d\n", contentLength);
+                  }
+                }
+                System.out.println(bytesWritten);
+                if (contentLength != -1) {
+                  System.out.format("%d%% done\n", (100 * bytesWritten) / contentLength);
+                }
+              }
+            }
+          };
+
+          RequestBody requestBody = RequestBody.create(
+              new File("docs/images/logo-square.png"),
+              MEDIA_TYPE_PNG);
+
+          Request request = new Request.Builder()
+              .header("Authorization", "Client-ID " + IMGUR_CLIENT_ID)
+              .url("https://api.imgur.com/3/image")
+              .post(new ProgressRequestBody(requestBody, progressListener))
+              .build();
+
+          Response response = client.newCall(request).execute();
+          if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+
+          System.out.println(response.body().string());
+        }
+
+        public static void main(String... args) throws Exception {
+          new UploadProgress().run();
+        }
+
+        private static class ProgressRequestBody extends RequestBody {
+          private final ProgressListener progressListener;
+          private final RequestBody delegate;
+
+          public ProgressRequestBody(RequestBody delegate, ProgressListener progressListener) {
+            this.delegate = delegate;
+            this.progressListener = progressListener;
+          }
+
+          @Override public MediaType contentType() {
+            return delegate.contentType();
+          }
+
+          @Override public long contentLength() throws IOException {
+            return delegate.contentLength();
+          }
+
+          @Override public void writeTo(BufferedSink sink) throws IOException {
+            BufferedSink bufferedSink = Okio.buffer(sink(sink));
+            delegate.writeTo(bufferedSink);
+            bufferedSink.flush();
+          }
+
+          public Sink sink(Sink sink) {
+            return new ForwardingSink(sink) {
+              private long totalBytesWritten = 0L;
+              private boolean completed = false;
+
+              @Override public void write(Buffer source, long byteCount) throws IOException {
+                super.write(source, byteCount);
+                totalBytesWritten += byteCount;
+                progressListener.update(totalBytesWritten, contentLength(), completed);
+              }
+
+              @Override public void close() throws IOException {
+                super.close();
+                if (!completed) {
+                  completed = true;
+                  progressListener.update(totalBytesWritten, contentLength(), completed);
+                }
+              }
+            };
+          }
+        }
+
+        interface ProgressListener {
+          void update(long bytesWritten, long contentLength, boolean done);
+        }
+      }
+    ```
+
  [SynchronousGetJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/SynchronousGet.java
  [SynchronousGetKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/SynchronousGet.kt
  [AsynchronousGetJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/AsynchronousGet.java
@@ -975,3 +1179,5 @@ Use `Response.challenges()` to get the schemes and realms of any authentication 
  [PerCallSettingsKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/PerCallSettings.kt
  [AuthenticateJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/Authenticate.java
  [AuthenticateKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/Authenticate.kt
+ [UploadProgressJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/UploadProgress.java
+ [UploadProgressKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/UploadProgress.kt
