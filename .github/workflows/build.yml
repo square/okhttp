@@ -704,3 +704,23 @@ jobs:
       - name: Run maven test
         working-directory: ./maven-tests
         run: ./mvnw -q verify
+
+  test_java_modules:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 24
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run with Jlink
+        run: ./gradlew module-tests:imageRun
+
