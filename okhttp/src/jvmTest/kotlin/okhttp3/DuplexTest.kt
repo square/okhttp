@@ -44,6 +44,8 @@ import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.duplex.AsyncRequestBody
 import okhttp3.internal.duplex.MockSocketHandler
+import okhttp3.logging.HttpLoggingInterceptor
+import okhttp3.logging.HttpLoggingInterceptor.Level
 import okhttp3.testing.PlatformRule
 import okio.BufferedSink
 import org.junit.jupiter.api.AfterEach
@@ -51,9 +53,10 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 @Timeout(30)
 @Tag("Slowish")
@@ -69,10 +72,17 @@ class DuplexTest {
 
   private var listener = RecordingEventListener()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
+  private val loggingInterceptor =
+    HttpLoggingInterceptor({
+      // Not testing output here, but making sure it doesn't fail
+    }).apply {
+      level = Level.NONE
+    }
   private var client =
     clientTestRule
       .newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(listener))
+      .addInterceptor(loggingInterceptor)
       .build()
   private val executorService = Executors.newScheduledThreadPool(1)
 
@@ -87,9 +97,17 @@ class DuplexTest {
     executorService.shutdown()
   }
 
-  @Test
+  fun setupLogging(logging: Boolean) {
+    if (logging) {
+      loggingInterceptor.level = Level.STREAMING
+    }
+  }
+
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
   @Throws(IOException::class)
-  fun http1DoesntSupportDuplex() {
+  fun http1DoesntSupportDuplex(logging: Boolean) {
+    setupLogging(logging)
     val call =
       client.newCall(
         Request
@@ -103,8 +121,10 @@ class DuplexTest {
     }
   }
 
-  @Test
-  fun trueDuplexClientWritesFirst() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun trueDuplexClientWritesFirst(logging: Boolean) {
+    setupLogging(logging)
     enableProtocol(Protocol.HTTP_2)
     val body =
       MockSocketHandler()
@@ -152,8 +172,10 @@ class DuplexTest {
     body.awaitSuccess()
   }
 
-  @Test
-  fun trueDuplexServerWritesFirst() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun trueDuplexServerWritesFirst(logging: Boolean) {
+    setupLogging(logging)
     enableProtocol(Protocol.HTTP_2)
     val body =
       MockSocketHandler()
@@ -201,8 +223,10 @@ class DuplexTest {
     body.awaitSuccess()
   }
 
-  @Test
-  fun clientReadsHeadersDataTrailers() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun clientReadsHeadersDataTrailers(logging: Boolean) {
+    setupLogging(logging)
     enableProtocol(Protocol.HTTP_2)
     val body =
       MockSocketHandler()
@@ -236,8 +260,10 @@ class DuplexTest {
     body.awaitSuccess()
   }
 
-  @Test
-  fun serverReadsHeadersData() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun serverReadsHeadersData(logging: Boolean) {
+    setupLogging(logging)
     assumeNotWindows()
     enableProtocol(Protocol.HTTP_2)
     val body =
@@ -271,8 +297,10 @@ class DuplexTest {
     body.awaitSuccess()
   }
 
-  @Test
-  fun requestBodyEndsAfterResponseBody() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun requestBodyEndsAfterResponseBody(logging: Boolean) {
+    setupLogging(logging)
     enableProtocol(Protocol.HTTP_2)
     val body =
       MockSocketHandler()
@@ -327,8 +355,10 @@ class DuplexTest {
     )
   }
 
-  @Test
-  fun duplexWith100Continue() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun duplexWith100Continue(logging: Boolean) {
+    setupLogging(logging)
     enableProtocol(Protocol.HTTP_2)
     val body =
       MockSocketHandler()
@@ -370,8 +400,10 @@ class DuplexTest {
    * already split off another thread to stream the request body. Because we permit at most one
    * exchange at a time we break the request stream out from under that writer.
    */
-  @Test
-  fun duplexWithRedirect() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun duplexWithRedirect(logging: Boolean) {
+    setupLogging(logging)
     enableProtocol(Protocol.HTTP_2)
     val duplexResponseSent = CountDownLatch(1)
     listener =
@@ -476,8 +508,10 @@ class DuplexTest {
    * Auth requires follow-ups. Unlike redirects, the auth follow-up also has a request body. This
    * test makes a single call with two duplex requests!
    */
-  @Test
-  fun duplexWithAuthChallenge() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun duplexWithAuthChallenge(logging: Boolean) {
+    setupLogging(logging)
     enableProtocol(Protocol.HTTP_2)
     val credential = basic("jesse", "secret")
     client =
@@ -546,8 +580,10 @@ class DuplexTest {
     (call.request().body as AsyncRequestBody?)!!.assertNoMoreSinks()
   }
 
-  @Test
-  fun fullCallTimeoutAppliesToSetup() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun fullCallTimeoutAppliesToSetup(logging: Boolean) {
+    setupLogging(logging)
     enableProtocol(Protocol.HTTP_2)
     server.enqueue(
       MockResponse
@@ -571,8 +607,10 @@ class DuplexTest {
     }
   }
 
-  @Test
-  fun fullCallTimeoutDoesNotApplyOnceConnected() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun fullCallTimeoutDoesNotApplyOnceConnected(logging: Boolean) {
+    setupLogging(logging)
     enableProtocol(Protocol.HTTP_2)
     val body =
       MockSocketHandler()
@@ -613,8 +651,10 @@ class DuplexTest {
     body.awaitSuccess()
   }
 
-  @Test
-  fun duplexWithRewriteInterceptors() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun duplexWithRewriteInterceptors(logging: Boolean) {
+    setupLogging(logging)
     enableProtocol(Protocol.HTTP_2)
     val body =
       MockSocketHandler()
@@ -665,8 +705,10 @@ class DuplexTest {
    * be readable after the request stream is canceled.
    */
   @Disabled
-  @Test
-  fun serverCancelsRequestBodyAndSendsResponseBody() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun serverCancelsRequestBodyAndSendsResponseBody(logging: Boolean) {
+    setupLogging(logging)
     client =
       client
         .newBuilder()
@@ -724,8 +766,10 @@ class DuplexTest {
    * We delay sending the last byte of the request body 1500 ms. The 1000 ms read timeout should
    * only elapse 1000 ms after the request body is sent.
    */
-  @Test
-  fun headersReadTimeoutDoesNotStartUntilLastRequestBodyByteFire() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun headersReadTimeoutDoesNotStartUntilLastRequestBodyByteFire(logging: Boolean) {
+    setupLogging(logging)
     enableProtocol(Protocol.HTTP_2)
     server.enqueue(
       MockResponse
@@ -753,8 +797,10 @@ class DuplexTest {
   }
 
   /** Same as the previous test, but the server stalls sending the response body.  */
-  @Test
-  fun bodyReadTimeoutDoesNotStartUntilLastRequestBodyByteFire() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun bodyReadTimeoutDoesNotStartUntilLastRequestBodyByteFire(logging: Boolean) {
+    setupLogging(logging)
     enableProtocol(Protocol.HTTP_2)
     server.enqueue(
       MockResponse
@@ -787,8 +833,10 @@ class DuplexTest {
    * We delay sending the last byte of the request body 1500 ms. The 1000 ms read timeout shouldn't
    * elapse because it shouldn't start until the request body is sent.
    */
-  @Test
-  fun headersReadTimeoutDoesNotStartUntilLastRequestBodyByteNoFire() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun headersReadTimeoutDoesNotStartUntilLastRequestBodyByteNoFire(logging: Boolean) {
+    setupLogging(logging)
     enableProtocol(Protocol.HTTP_2)
     server.enqueue(
       MockResponse
@@ -816,8 +864,10 @@ class DuplexTest {
    * We delay sending the last byte of the request body 1500 ms. The 1000 ms read timeout shouldn't
    * elapse because it shouldn't start until the request body is sent.
    */
-  @Test
-  fun bodyReadTimeoutDoesNotStartUntilLastRequestBodyByteNoFire() {
+  @ParameterizedTest(name = "logging = {0}")
+  @ValueSource(booleans = [false, true])
+  fun bodyReadTimeoutDoesNotStartUntilLastRequestBodyByteNoFire(logging: Boolean) {
+    setupLogging(logging)
     enableProtocol(Protocol.HTTP_2)
     server.enqueue(
       MockResponse
