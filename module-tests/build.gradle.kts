@@ -2,7 +2,7 @@ plugins {
   id("java")
   id("application")
   id("com.github.iherasymenko.jlink") version "0.7"
-  id("org.gradlex.extra-java-module-info") version "1.13"
+  id("org.gradlex.extra-java-module-info") version "1.13.1"
 }
 
 dependencies {
