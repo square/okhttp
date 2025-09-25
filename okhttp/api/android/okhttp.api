@@ -1241,7 +1241,7 @@ public abstract interface class okhttp3/TrailersSource {
 	public static final field Companion Lokhttp3/TrailersSource$Companion;
 	public static final field EMPTY Lokhttp3/TrailersSource;
 	public abstract fun get ()Lokhttp3/Headers;
-	public fun peek ()Lokhttp3/Headers;
+	public abstract fun peek ()Lokhttp3/Headers;
 }
 
 public final class okhttp3/TrailersSource$Companion {
