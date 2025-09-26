@@ -58,6 +58,10 @@ import okhttp3.CallEvent.RetryDecision
 import okhttp3.CallEvent.SatisfactionFailure
 import okhttp3.CallEvent.SecureConnectEnd
 import okhttp3.CallEvent.SecureConnectStart
+import okhttp3.CallEvent.SocketSinkEnd
+import okhttp3.CallEvent.SocketSinkStart
+import okhttp3.CallEvent.SocketSourceEnd
+import okhttp3.CallEvent.SocketSourceStart
 import org.junit.jupiter.api.Assertions.fail
 
 open class RecordingEventListener(
@@ -248,6 +252,13 @@ open class RecordingEventListener(
     ioe: IOException,
   ) = logEvent(RequestFailed(System.nanoTime(), call, ioe))
 
+  override fun socketSinkStart(call: Call) = logEvent(SocketSinkStart(System.nanoTime(), call))
+
+  override fun socketSinkEnd(
+    call: Call,
+    byteCount: Long,
+  ) = logEvent(SocketSinkEnd(System.nanoTime(), call, byteCount))
+
   override fun responseHeadersStart(call: Call) = logEvent(ResponseHeadersStart(System.nanoTime(), call))
 
   override fun responseHeadersEnd(
@@ -261,6 +272,13 @@ open class RecordingEventListener(
     call: Call,
     byteCount: Long,
   ) = logEvent(ResponseBodyEnd(System.nanoTime(), call, byteCount))
+
+  override fun socketSourceStart(call: Call) = logEvent(SocketSourceStart(System.nanoTime(), call))
+
+  override fun socketSourceEnd(
+    call: Call,
+    byteCount: Long,
+  ) = logEvent(SocketSourceEnd(System.nanoTime(), call, byteCount))
 
   override fun responseFailed(
     call: Call,
