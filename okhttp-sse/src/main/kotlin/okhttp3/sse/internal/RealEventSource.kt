@@ -16,6 +16,8 @@
 package okhttp3.sse.internal
 
 import java.io.IOException
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Request
@@ -24,6 +26,8 @@ import okhttp3.ResponseBody
 import okhttp3.internal.stripBody
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
+import okio.AsyncTimeout
+import okio.Timeout.Companion.timeout
 
 internal class RealEventSource private constructor(
   private val call: Call?,
@@ -37,6 +41,20 @@ internal class RealEventSource private constructor(
   constructor(response: Response, listener: EventSourceListener) : this(null, response.request, listener)
 
   @Volatile private var canceled = false
+
+  private fun updateTimeout(call: Call?, duration: Duration) {
+    val timeout = call?.timeout()
+    if (timeout is AsyncTimeout) {
+      timeout.apply {
+        // If a timeout is in process, we exit it before entering again
+        if (this.timeoutNanos() > 0L) {
+          exit()
+        }
+        timeout(duration)
+        enter()
+      }
+    }
+  }
 
   override fun onResponse(
     call: Call,
@@ -63,8 +81,11 @@ internal class RealEventSource private constructor(
         return
       }
 
-      // This is a long-lived response. Cancel full-call timeouts.
-      call?.timeout()?.cancel()
+      // This is a long-lived response. Cancel full-call timeouts if no timeout has been set
+      listener.idleTimeoutMillis?.let {
+        // We spend at most timeout seconds if set
+        updateTimeout(call, it.milliseconds)
+      } ?: call?.timeout()?.cancel()
 
       // Replace the body with a stripped one so the callbacks can't see real data.
       val response = response.stripBody()
@@ -74,6 +95,10 @@ internal class RealEventSource private constructor(
         if (!canceled) {
           listener.onOpen(this, response)
           while (!canceled && reader.processNextEvent()) {
+            listener.idleTimeoutMillis?.let {
+              // We spend at most timeout seconds if set
+              updateTimeout(call, it.milliseconds)
+            }
           }
         }
       } catch (e: Exception) {
