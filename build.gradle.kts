@@ -328,7 +328,7 @@ subprojects {
       signAllPublications()
       pom {
         name.set(project.name)
-        description.set("Square’s meticulous HTTP client for Java and Kotlin.")
+        description.set("Square's meticulous HTTP client for Java and Kotlin.")
         url.set("https://square.github.io/okhttp/")
         licenses {
           license {

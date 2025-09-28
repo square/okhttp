@@ -1,6 +1,6 @@
 plugins {
-  kotlin("jvm")
-  id("ru.vyarus.animalsniffer")
+  kotlin("jvm") version "1.9.22"
+  id("ru.vyarus.animalsniffer") version "1.7.0"
 }
 
 dependencies {

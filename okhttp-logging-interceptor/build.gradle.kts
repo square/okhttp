@@ -2,10 +2,10 @@ import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
 
 plugins {
-  kotlin("jvm")
-  id("org.jetbrains.dokka")
-  id("com.vanniktech.maven.publish.base")
-  id("binary-compatibility-validator")
+  kotlin("jvm") version "1.9.22"
+  id("org.jetbrains.dokka") version "1.9.10"
+  id("com.vanniktech.maven.publish.base") version "0.25.3"
+  id("binary-compatibility-validator") version "0.13.2"
 }
 
 project.applyOsgi(

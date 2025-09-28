@@ -1,6 +1,6 @@
 plugins {
-  id("org.graalvm.buildtools.native")
-  kotlin("jvm")
+  id("org.graalvm.buildtools.native") version "0.9.28"
+  kotlin("jvm") version "1.9.22"
 }
 
 animalsniffer {

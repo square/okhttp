@@ -1,5 +1,5 @@
 plugins {
-  kotlin("jvm")
+  kotlin("jvm") version "1.9.22"
 }
 
 val platform = System.getProperty("okhttp.platform", "jdk9")

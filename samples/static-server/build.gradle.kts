@@ -1,6 +1,6 @@
 plugins {
-  kotlin("jvm")
-  id("com.gradleup.shadow")
+  kotlin("jvm") version "1.9.22"
+  id("com.gradleup.shadow") version "8.1.1"
 }
 
 tasks.compileJava {

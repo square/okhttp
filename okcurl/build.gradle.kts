@@ -5,9 +5,9 @@ import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 plugins {
   kotlin("jvm")
-  id("org.jetbrains.dokka")
-  id("com.vanniktech.maven.publish.base")
-  id("com.gradleup.shadow")
+  id("org.jetbrains.dokka") version "1.9.10"
+  id("com.vanniktech.maven.publish.base") version "0.25.3"
+  id("com.gradleup.shadow") version "8.1.1"
 }
 
 val testJavaVersion = System.getProperty("test.java.version", "21").toInt()

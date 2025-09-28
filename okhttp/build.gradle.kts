@@ -9,12 +9,12 @@ import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  kotlin("multiplatform")
-  id("com.android.library")
-  kotlin("plugin.serialization")
-  id("org.jetbrains.dokka")
-  id("com.vanniktech.maven.publish.base")
-  id("binary-compatibility-validator")
+  kotlin("multiplatform") version "1.9.22"
+  id("com.android.library") version "8.2.2"
+  kotlin("plugin.serialization") version "1.9.22"
+  id("org.jetbrains.dokka") version "1.9.10"
+  id("com.vanniktech.maven.publish.base") version "0.28.0"
+  id("binary-compatibility-validator") version "0.14.0"
 }
 
 val platform = System.getProperty("okhttp.platform", "jdk9")

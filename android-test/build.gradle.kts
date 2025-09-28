@@ -49,14 +49,18 @@ android {
   }
 
   // issue merging due to conflict with httpclient and something else
-  packagingOptions.resources.excludes += setOf(
-    "META-INF/DEPENDENCIES",
-    "META-INF/LICENSE.md",
-    "META-INF/LICENSE-notice.md",
-    "README.txt",
-    "org/bouncycastle/LICENSE",
-    "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
-  )
+  packaging {
+    resources {
+      excludes += setOf(
+        "META-INF/DEPENDENCIES",
+        "META-INF/LICENSE.md",
+        "META-INF/LICENSE-notice.md",
+        "README.txt",
+        "org/bouncycastle/LICENSE",
+        "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
+      )
+    }
+  }
 }
 
 dependencies {
