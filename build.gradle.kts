@@ -50,6 +50,18 @@ configure<SpotlessExtension> {
 }
 
 allprojects {
+
+  configurations.all {
+    resolutionStrategy.eachDependency {
+      // Ensure Commons Lang 3-3.18.0 is used for all affected dependencies. Resolves CVE-2025-48924.
+      // Remove once upstream dependencies (Checkstyle/Doxia) are upgraded.
+      if (requested.group == "org.apache.commons" && requested.name == "commons-lang3") {
+        useVersion("3.18.0")
+        because("CVE-2025-48924 fix: update to >=3.18.0")
+      }
+    }
+  }
+
   group = "com.squareup.okhttp3"
   version = "5.2.0-SNAPSHOT"
 
