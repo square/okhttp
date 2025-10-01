@@ -18,7 +18,6 @@ package okhttp3
 
 import java.util.concurrent.TimeUnit
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.connection.ConnectionListener
 import okhttp3.internal.connection.FastFallbackExchangeFinder
 import okhttp3.internal.connection.ForceConnectRoutePlanner
 import okhttp3.internal.connection.RealConnectionPool
@@ -83,8 +82,8 @@ class ConnectionPool internal constructor(
     ),
   )
 
-  // Internal until we promote ConnectionListener to be a public API.
-  internal constructor(
+  // Public API
+  constructor(
     maxIdleConnections: Int = 5,
     keepAliveDuration: Long = 5,
     timeUnit: TimeUnit = TimeUnit.MINUTES,
