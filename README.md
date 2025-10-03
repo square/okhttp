@@ -171,8 +171,8 @@ Maven projects.
 <dependency>
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>okhttp-jvm</artifactId>
-  <!-- Remove after OkHttp 5.3.0 with updated BOM. -->
-  <version>5.2.0</version>
+  <!-- Remove after OkHttp 5.2.0 with updated BOM. -->
+  <version>5.1.0</version>
 </dependency>
 
 <dependency>
@@ -217,7 +217,7 @@ $ ./okcurl/build/graal/okcurl https://httpbin.org/get
 Java Modules
 ------------
 
-OkHttp (5.3+) implements Java 9 Modules.
+OkHttp (5.2+) implements Java 9 Modules.
 
 With this in place Java builds should fail if apps attempt to use internal packages.
 
@@ -226,7 +226,7 @@ error: package okhttp3.internal.platform is not visible
     okhttp3.internal.platform.Platform.get();
                     ^
   (package okhttp3.internal.platform is declared in module okhttp3,
-    which does not export it to module i.am.bad.and.i.should.feel.bad)
+    which does not export it to module com.bigco.sdk)
 ```
 
 The stable public API is based on the list of defined modules:
