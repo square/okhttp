@@ -82,8 +82,10 @@ class Request internal constructor(
 
   init {
     val connectionHeader = headers["Connection"]
-    require(body == null || !"upgrade".equals(connectionHeader, ignoreCase = true) || body.contentLength() == 0L) {
-      "expected a null or empty request body with 'Connection: upgrade'"
+    if ("upgrade".equals(connectionHeader, ignoreCase = true)) {
+      require(body == null || body.contentLength() == 0L) {
+        "expected a null or empty request body with 'Connection: upgrade'"
+      }
     }
   }
 
