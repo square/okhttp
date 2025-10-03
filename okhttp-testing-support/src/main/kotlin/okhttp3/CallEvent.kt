@@ -34,6 +34,20 @@ sealed class CallEvent {
   /** Returns if the event closes this event, or null if this is no open event. */
   open fun closes(event: CallEvent): Boolean? = null
 
+  data class DispatcherQueueStart(
+    override val timestampNs: Long,
+    override val call: Call,
+    val dispatcher: Dispatcher,
+  ) : CallEvent()
+
+  data class DispatcherQueueEnd(
+    override val timestampNs: Long,
+    override val call: Call,
+    val dispatcher: Dispatcher,
+  ) : CallEvent() {
+    override fun closes(event: CallEvent): Boolean = event is DispatcherQueueStart && call == event.call
+  }
+
   data class ProxySelectStart(
     override val timestampNs: Long,
     override val call: Call,
