@@ -31,6 +31,7 @@ import okhttp3.Protocol
 import okhttp3.RecordingEventListener
 import okhttp3.RecordingHostnameVerifier
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.duplex.MockSocketHandler
 import okhttp3.testing.PlatformRule
@@ -58,8 +59,7 @@ class HttpUpgradesTest {
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build()
 
-  @Test
-  fun upgrade() {
+  fun executeAndCheckUpgrade(request: Request) {
     val socketHandler =
       MockSocketHandler()
         .apply {
@@ -73,9 +73,8 @@ class HttpUpgradesTest {
     server.enqueue(socketHandler.upgradeResponse())
 
     client
-      .newCall(
-        upgradeRequest(),
-      ).execute()
+      .newCall(request)
+      .execute()
       .use { response ->
         assertThat(response.code).isEqualTo(HTTP_SWITCHING_PROTOCOLS)
         val socket = response.socket!!
@@ -96,6 +95,16 @@ class HttpUpgradesTest {
         }
         socketHandler.awaitSuccess()
       }
+  }
+
+  @Test
+  fun upgrade() {
+    executeAndCheckUpgrade(upgradeRequest())
+  }
+
+  @Test
+  fun upgradeWithRequestBody() {
+    executeAndCheckUpgrade(upgradeRequest().newBuilder().post(RequestBody.EMPTY).build())
   }
 
   @Test
@@ -183,7 +192,7 @@ class HttpUpgradesTest {
   }
 
   @Test
-  fun upgradeEvents() {
+  fun upgradeEventsWithoutRequestBody() {
     upgrade()
 
     assertThat(listener.recordedEventTypes()).containsExactly(
@@ -210,7 +219,36 @@ class HttpUpgradesTest {
   }
 
   @Test
-  fun upgradeRequestMustNotHaveABody() {
+  fun upgradeEventsWithRequestBody() {
+    upgradeWithRequestBody()
+
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "RequestBodyStart",
+      "RequestBodyEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "RequestBodyStart",
+      "FollowUpDecision",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd",
+      "RequestBodyEnd",
+    )
+  }
+
+  @Test
+  fun upgradeRequestMustHaveAnEmptyBody() {
     val e =
       assertFailsWith<IllegalArgumentException> {
         Request
@@ -220,7 +258,7 @@ class HttpUpgradesTest {
           .post("Hello".toRequestBody())
           .build()
       }
-    assertThat(e).hasMessage("expected a null request body with 'Connection: upgrade'")
+    assertThat(e).hasMessage("expected a null or empty request body with 'Connection: upgrade'")
   }
 
   private fun enableTls(vararg protocols: Protocol) {
