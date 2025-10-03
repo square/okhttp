@@ -22,6 +22,7 @@ import java.net.Proxy
 import java.util.concurrent.TimeUnit
 import okhttp3.Call
 import okhttp3.Connection
+import okhttp3.Dispatcher
 import okhttp3.EventListener
 import okhttp3.Handshake
 import okhttp3.HttpUrl
@@ -46,6 +47,20 @@ class LoggingEventListener private constructor(
     startNs = System.nanoTime()
 
     logWithTime("callStart: ${call.request()}")
+  }
+
+  override fun dispatcherQueueStart(
+    call: Call,
+    dispatcher: Dispatcher,
+  ) {
+    logWithTime("dispatcherQueueStart: $call queuedCallsCount=${dispatcher.queuedCallsCount()}")
+  }
+
+  override fun dispatcherQueueEnd(
+    call: Call,
+    dispatcher: Dispatcher,
+  ) {
+    logWithTime("dispatcherQueueEnd: $call queuedCallsCount=${dispatcher.queuedCallsCount()}")
   }
 
   override fun proxySelectStart(

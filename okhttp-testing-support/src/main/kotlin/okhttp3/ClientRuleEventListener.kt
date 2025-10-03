@@ -38,6 +38,24 @@ class ClientRuleEventListener(
     delegate.callStart(call)
   }
 
+  override fun dispatcherQueueStart(
+    call: Call,
+    dispatcher: Dispatcher,
+  ) {
+    logWithTime("dispatcherQueueStart: queuedCallsCount=${dispatcher.queuedCallsCount()}")
+
+    delegate.dispatcherQueueStart(call, dispatcher)
+  }
+
+  override fun dispatcherQueueEnd(
+    call: Call,
+    dispatcher: Dispatcher,
+  ) {
+    logWithTime("dispatcherQueueEnd: queuedCallsCount=${dispatcher.queuedCallsCount()}")
+
+    delegate.dispatcherQueueEnd(call, dispatcher)
+  }
+
   override fun proxySelectStart(
     call: Call,
     url: HttpUrl,

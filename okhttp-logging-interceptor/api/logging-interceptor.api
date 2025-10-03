@@ -58,6 +58,8 @@ public final class okhttp3/logging/LoggingEventListener : okhttp3/EventListener 
 	public fun connectStart (Lokhttp3/Call;Ljava/net/InetSocketAddress;Ljava/net/Proxy;)V
 	public fun connectionAcquired (Lokhttp3/Call;Lokhttp3/Connection;)V
 	public fun connectionReleased (Lokhttp3/Call;Lokhttp3/Connection;)V
+	public fun dispatcherQueueEnd (Lokhttp3/Call;Lokhttp3/Dispatcher;)V
+	public fun dispatcherQueueStart (Lokhttp3/Call;Lokhttp3/Dispatcher;)V
 	public fun dnsEnd (Lokhttp3/Call;Ljava/lang/String;Ljava/util/List;)V
 	public fun dnsStart (Lokhttp3/Call;Ljava/lang/String;)V
 	public fun proxySelectEnd (Lokhttp3/Call;Lokhttp3/HttpUrl;Ljava/util/List;)V
