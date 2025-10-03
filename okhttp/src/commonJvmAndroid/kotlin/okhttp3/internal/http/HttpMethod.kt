@@ -35,6 +35,7 @@ object HttpMethod {
         method == "PUT" ||
         method == "PATCH" ||
         method == "PROPPATCH" ||
+        method == "QUERY" ||
         // WebDAV
         method == "REPORT"
     )
@@ -45,4 +46,6 @@ object HttpMethod {
   fun redirectsWithBody(method: String): Boolean = method == "PROPFIND"
 
   fun redirectsToGet(method: String): Boolean = method != "PROPFIND"
+
+  fun isCacheable(requestMethod: String): Boolean = requestMethod == "GET" || requestMethod == "QUERY"
 }

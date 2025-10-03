@@ -229,7 +229,7 @@ class Cache internal constructor(
     }
 
     if (requestMethod != "GET") {
-      // Don't cache non-GET responses. We're technically allowed to cache HEAD requests and some
+      // Don't cache non-GET responses. We're technically allowed to cache HEAD, QUERY and some
       // POST requests, but the complexity of doing so is high and the benefit is low.
       return null
     }
