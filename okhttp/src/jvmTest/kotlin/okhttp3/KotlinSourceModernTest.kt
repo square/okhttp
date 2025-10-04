@@ -462,6 +462,16 @@ class KotlinSourceModernTest {
           byteCount: Long,
         ) = TODO()
 
+        override fun socketSinkStart(
+          call: Call,
+          connection: Connection,
+        ) = TODO()
+
+        override fun socketSinkEnd(
+          call: Call,
+          byteCount: Long,
+        ) = TODO()
+
         override fun requestFailed(
           call: Call,
           ioe: IOException,
@@ -477,6 +487,13 @@ class KotlinSourceModernTest {
         override fun responseBodyStart(call: Call) = TODO()
 
         override fun responseBodyEnd(
+          call: Call,
+          byteCount: Long,
+        ) = TODO()
+
+        override fun socketSourceStart(call: Call) = TODO()
+
+        override fun socketSourceEnd(
           call: Call,
           byteCount: Long,
         ) = TODO()
