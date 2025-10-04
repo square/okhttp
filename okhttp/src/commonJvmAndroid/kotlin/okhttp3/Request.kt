@@ -317,6 +317,30 @@ class Request internal constructor(
 
     open fun patch(body: RequestBody): Builder = method("PATCH", body)
 
+    /**
+     * Sets this request's method to `QUERY`.
+     *
+     * By default, `QUERY` requests are not cached. You can use [cacheUrlOverride] to specify
+     * how to cache them.
+     *
+     * A typical use case is to hash the request body:
+     *
+     * ```kotlin
+     *     val hashingSink = HashingSink.md5(blackholeSink())
+     *     hashingSink.buffer().use {
+     *       body.writeTo(it)
+     *     }
+     *     val hash = hashingSink.hash.hex()
+     *     val query = Request
+     *         .Builder()
+     *         .query(body)
+     *         .url("https://example.com/query")
+     *         .cacheUrlOverride("https://example.com/query/$hash".toHttpUrl())
+     *         .build()
+     * ```
+     *
+     * @see cacheUrlOverride
+     */
     open fun query(body: RequestBody): Builder = method("QUERY", body)
 
     open fun method(
