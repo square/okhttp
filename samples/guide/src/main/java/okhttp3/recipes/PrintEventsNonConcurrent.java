@@ -144,7 +144,7 @@ public final class PrintEventsNonConcurrent {
       printEvent("requestFailed");
     }
 
-    @Override public void socketSinkStart(Call call) {
+    @Override public void socketSinkStart(Call call, Connection connection) {
       printEvent("socketSinkStart");
     }
 

@@ -144,12 +144,16 @@ open class RecordingEventListener(
     }
   }
 
-  private fun logEvent(e: CallEvent) {
+  private fun logEvent(
+    e: CallEvent,
+    connection: Connection? = null,
+  ) {
     for (lock in forbiddenLocks) {
       assertThat(Thread.holdsLock(lock), lock.toString()).isFalse()
     }
 
     if (enforceOrder) {
+      checkForSameConnection(e, connection)
       checkForStartEvent(e)
     }
 
@@ -168,6 +172,22 @@ open class RecordingEventListener(
         }
       }
       fail<Any>("event $e without matching start event")
+    }
+  }
+
+  private fun checkForSameConnection(
+    e: CallEvent,
+    connection: Connection?,
+  ) {
+    if (eventSequence.isEmpty()) {
+      assertThat(e).matchesPredicate { it is ConnectionAcquired }
+    } else {
+      eventSequence.forEach loop@{
+        if (it is ConnectionAcquired && it.connection == connection) {
+          return // found related ConnectionAcquired event
+        }
+      }
+      fail<Any>("event $e without matching connection acquired event or different connection")
     }
   }
 
@@ -252,7 +272,10 @@ open class RecordingEventListener(
     ioe: IOException,
   ) = logEvent(RequestFailed(System.nanoTime(), call, ioe))
 
-  override fun socketSinkStart(call: Call) = logEvent(SocketSinkStart(System.nanoTime(), call))
+  override fun socketSinkStart(
+    call: Call,
+    connection: Connection,
+  ) = logEvent(SocketSinkStart(System.nanoTime(), call), connection)
 
   override fun socketSinkEnd(
     call: Call,

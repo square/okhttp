@@ -159,7 +159,10 @@ class LoggingEventListener private constructor(
     logWithTime("requestFailed: $ioe")
   }
 
-  override fun socketSinkStart(call: Call) {
+  override fun socketSinkStart(
+    call: Call,
+    connection: Connection,
+  ) {
     logWithTime("socketSinkStart")
   }
 

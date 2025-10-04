@@ -293,9 +293,12 @@ abstract class EventListener {
   /**
    * Invoked just prior to sending bytes on the socket. Will only be invoked for upgraded connections.
    *
-   * The connection is implicit, and will generally relate to the last [connectionAcquired] event.
+   * The connection will match the last [connectionAcquired] event.
    */
-  open fun socketSinkStart(call: Call) {
+  open fun socketSinkStart(
+    call: Call,
+    connection: Connection,
+  ) {
   }
 
   /**
@@ -376,13 +379,15 @@ abstract class EventListener {
   }
 
   /**
-   * TODO docs
+   * Invoked immediately after receiving bytes on the socket.
    */
   open fun socketSourceStart(call: Call) {
   }
 
   /**
-   * TODO docs
+   * Invoked immediately before closing the source.
+   *
+   * This method is always invoked after [socketSourceStart].
    */
   open fun socketSourceEnd(
     call: Call,

@@ -274,7 +274,7 @@ class Exchange(
       try {
         if (invokeStartEvent) {
           invokeStartEvent = false
-          eventListener.socketSinkStart(call)
+          eventListener.socketSinkStart(call, connection)
         }
         super.write(source, byteCount)
         this.bytesReceived += byteCount
