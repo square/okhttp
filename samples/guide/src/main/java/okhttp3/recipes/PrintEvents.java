@@ -169,7 +169,7 @@ public final class PrintEvents {
       printEvent("requestFailed");
     }
 
-    @Override public void socketSinkStart(Call call) {
+    @Override public void socketSinkStart(Call call, Connection connection) {
       printEvent("socketSinkStart");
     }
 
@@ -193,7 +193,7 @@ public final class PrintEvents {
       printEvent("responseBodyEnd");
     }
 
-    @Override public void socketSourceStart(Call call) {
+    @Override public void socketSourceStart(Call call, Connection connection) {
       printEvent("socketSourceStart");
     }
 
