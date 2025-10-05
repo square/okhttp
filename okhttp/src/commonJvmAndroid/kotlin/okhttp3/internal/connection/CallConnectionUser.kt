@@ -116,7 +116,7 @@ internal class CallConnectionUser(
     connection.connectionListener.noNewExchanges(connection)
   }
 
-  override fun doExtensiveHealthChecks(): Boolean = chain.request.method != "GET"
+  override fun doExtensiveHealthChecks(): Boolean = chain.request.body?.isOneShot() ?: false
 
   override fun isCanceled(): Boolean = call.isCanceled()
 
