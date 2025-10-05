@@ -49,7 +49,7 @@ class RealInterceptorChain constructor(
   internal val connectTimeoutMillis: Int,
   internal val readTimeoutMillis: Int,
   internal val writeTimeoutMillis: Int,
-  internal  val clientOverrides: ClientOverrides?
+  internal val clientOverrides: ClientOverrides?,
 ) : Interceptor.Chain {
   private var calls: Int = 0
 
@@ -108,17 +108,15 @@ class RealInterceptorChain constructor(
     return copy(writeTimeoutMillis = checkDuration("writeTimeout", timeout.toLong(), unit))
   }
 
-  override fun withDns(dns: Dns?): Interceptor.Chain {
-    return withClientOverrides {
+  override fun withDns(dns: Dns?): Interceptor.Chain =
+    withClientOverrides {
       copy(dns = dns)
     }
-  }
 
-  override fun withSocketFactory(socketFactory: SocketFactory?): Interceptor.Chain {
-    return withClientOverrides {
+  override fun withSocketFactory(socketFactory: SocketFactory?): Interceptor.Chain =
+    withClientOverrides {
       copy(socketFactory = socketFactory)
     }
-  }
 
   private fun withClientOverrides(overrides: ClientOverrides.() -> ClientOverrides): Interceptor.Chain {
     check(exchange == null) { "ClientOverrides can't be adjusted in a network interceptor" }
