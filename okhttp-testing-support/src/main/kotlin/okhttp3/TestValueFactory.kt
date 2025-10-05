@@ -197,6 +197,7 @@ class TestValueFactory : Closeable {
       connectTimeoutMillis = 10_000,
       readTimeoutMillis = 10_000,
       writeTimeoutMillis = 10_000,
+      clientOverrides = null,
     )
 
   fun newRoutePlanner(

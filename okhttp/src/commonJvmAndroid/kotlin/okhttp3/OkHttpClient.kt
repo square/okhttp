@@ -312,6 +312,7 @@ open class OkHttpClient internal constructor(
    * Creates an [Address] of out of the provided [HttpUrl]
    * that uses this client’s DNS, TLS, and proxy configuration.
    */
+  @Deprecated("Not intended to be public API on OkHttpClient")
   fun address(url: HttpUrl): Address {
     var useSslSocketFactory: SSLSocketFactory? = null
     var useHostnameVerifier: HostnameVerifier? = null

@@ -17,8 +17,15 @@ package okhttp3.internal.http
 
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import javax.net.SocketFactory
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSocketFactory
+import okhttp3.Address
 import okhttp3.Call
+import okhttp3.CertificatePinner
 import okhttp3.Connection
+import okhttp3.Dns
+import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
@@ -33,7 +40,7 @@ import okhttp3.internal.connection.RealCall
  * If the chain is for an application interceptor then [exchange] must be null. Otherwise it is for
  * a network interceptor and [exchange] must be non-null.
  */
-class RealInterceptorChain(
+class RealInterceptorChain constructor(
   internal val call: RealCall,
   private val interceptors: List<Interceptor>,
   private val index: Int,
@@ -42,6 +49,7 @@ class RealInterceptorChain(
   internal val connectTimeoutMillis: Int,
   internal val readTimeoutMillis: Int,
   internal val writeTimeoutMillis: Int,
+  internal  val clientOverrides: ClientOverrides?
 ) : Interceptor.Chain {
   private var calls: Int = 0
 
@@ -52,6 +60,7 @@ class RealInterceptorChain(
     connectTimeoutMillis: Int = this.connectTimeoutMillis,
     readTimeoutMillis: Int = this.readTimeoutMillis,
     writeTimeoutMillis: Int = this.writeTimeoutMillis,
+    clientOverrides: ClientOverrides? = this.clientOverrides,
   ) = RealInterceptorChain(
     call,
     interceptors,
@@ -61,6 +70,7 @@ class RealInterceptorChain(
     connectTimeoutMillis,
     readTimeoutMillis,
     writeTimeoutMillis,
+    clientOverrides,
   )
 
   override fun connection(): Connection? = exchange?.connection
@@ -96,6 +106,24 @@ class RealInterceptorChain(
     check(exchange == null) { "Timeouts can't be adjusted in a network interceptor" }
 
     return copy(writeTimeoutMillis = checkDuration("writeTimeout", timeout.toLong(), unit))
+  }
+
+  override fun withDns(dns: Dns?): Interceptor.Chain {
+    return withClientOverrides {
+      copy(dns = dns)
+    }
+  }
+
+  override fun withSocketFactory(socketFactory: SocketFactory?): Interceptor.Chain {
+    return withClientOverrides {
+      copy(socketFactory = socketFactory)
+    }
+  }
+
+  private fun withClientOverrides(overrides: ClientOverrides.() -> ClientOverrides): Interceptor.Chain {
+    check(exchange == null) { "ClientOverrides can't be adjusted in a network interceptor" }
+
+    return copy(clientOverrides = clientOverrides)
   }
 
   override fun call(): Call = call
@@ -135,4 +163,39 @@ class RealInterceptorChain(
 
     return response
   }
+
+  /**
+   * Creates an [Address] of out of the provided [HttpUrl]
+   * that uses this client’s DNS, TLS, and proxy configuration.
+   */
+  fun address(url: HttpUrl): Address {
+    var useSslSocketFactory: SSLSocketFactory? = null
+    var useHostnameVerifier: HostnameVerifier? = null
+    var useCertificatePinner: CertificatePinner? = null
+    if (url.isHttps) {
+      useSslSocketFactory = call.client.sslSocketFactory
+      useHostnameVerifier = call.client.hostnameVerifier
+      useCertificatePinner = call.client.certificatePinner
+    }
+
+    return Address(
+      uriHost = url.host,
+      uriPort = url.port,
+      dns = clientOverrides?.dns ?: call.client.dns,
+      socketFactory = clientOverrides?.socketFactory ?: call.client.socketFactory,
+      sslSocketFactory = useSslSocketFactory,
+      hostnameVerifier = useHostnameVerifier,
+      certificatePinner = useCertificatePinner,
+      proxyAuthenticator = call.client.proxyAuthenticator,
+      proxy = call.client.proxy,
+      protocols = call.client.protocols,
+      connectionSpecs = call.client.connectionSpecs,
+      proxySelector = call.client.proxySelector,
+    )
+  }
+
+  data class ClientOverrides(
+    val dns: Dns? = null,
+    val socketFactory: SocketFactory? = null,
+  )
 }

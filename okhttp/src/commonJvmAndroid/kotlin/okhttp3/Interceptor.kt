@@ -17,6 +17,7 @@ package okhttp3
 
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import javax.net.SocketFactory
 
 /**
  * Observes, modifies, and potentially short-circuits requests going out and the corresponding
@@ -108,5 +109,9 @@ fun interface Interceptor {
       timeout: Int,
       unit: TimeUnit,
     ): Chain
+
+    fun withDns(dns: Dns?): Chain
+
+    fun withSocketFactory(socketFactory: SocketFactory?): Chain
   }
 }

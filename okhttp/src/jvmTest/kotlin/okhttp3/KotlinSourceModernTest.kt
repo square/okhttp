@@ -1344,5 +1344,9 @@ class KotlinSourceModernTest {
         timeout: Int,
         unit: TimeUnit,
       ): Interceptor.Chain = TODO()
+
+      override fun withDns(dns: Dns?): Interceptor.Chain = TODO()
+
+      override fun withSocketFactory(socketFactory: SocketFactory?): Interceptor.Chain = TODO()
     }
 }
