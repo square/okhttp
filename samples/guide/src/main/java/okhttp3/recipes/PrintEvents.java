@@ -169,14 +169,6 @@ public final class PrintEvents {
       printEvent("requestFailed");
     }
 
-    @Override public void socketSinkStart(Call call, Connection connection) {
-      printEvent("socketSinkStart");
-    }
-
-    @Override public void socketSinkEnd(Call call, long byteCount) {
-      printEvent("socketSinkEnd");
-    }
-
     @Override public void responseHeadersStart(Call call) {
       printEvent("responseHeadersStart");
     }
@@ -191,14 +183,6 @@ public final class PrintEvents {
 
     @Override public void responseBodyEnd(Call call, long byteCount) {
       printEvent("responseBodyEnd");
-    }
-
-    @Override public void socketSourceStart(Call call, Connection connection) {
-      printEvent("socketSourceStart");
-    }
-
-    @Override public void socketSourceEnd(Call call, long byteCount) {
-      printEvent("socketSourceEnd");
     }
 
     @Override public void responseFailed(Call call, IOException ioe) {

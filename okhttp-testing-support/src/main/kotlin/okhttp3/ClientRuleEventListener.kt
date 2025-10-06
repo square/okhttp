@@ -199,24 +199,6 @@ class ClientRuleEventListener(
     delegate.requestFailed(call, ioe)
   }
 
-  override fun socketSinkStart(
-    call: Call,
-    connection: Connection,
-  ) {
-    logWithTime("socketSinkStart")
-
-    delegate.socketSinkStart(call, connection)
-  }
-
-  override fun socketSinkEnd(
-    call: Call,
-    byteCount: Long,
-  ) {
-    logWithTime("socketSinkEnd: byteCount=$byteCount")
-
-    delegate.socketSinkEnd(call, byteCount)
-  }
-
   override fun responseHeadersStart(call: Call) {
     logWithTime("responseHeadersStart")
 
@@ -245,24 +227,6 @@ class ClientRuleEventListener(
     logWithTime("responseBodyEnd: byteCount=$byteCount")
 
     delegate.responseBodyEnd(call, byteCount)
-  }
-
-  override fun socketSourceStart(
-    call: Call,
-    connection: Connection,
-  ) {
-    logWithTime("socketSourceStart")
-
-    delegate.socketSourceStart(call, connection)
-  }
-
-  override fun socketSourceEnd(
-    call: Call,
-    byteCount: Long,
-  ) {
-    logWithTime("socketSourceEnd: byteCount=$byteCount")
-
-    delegate.socketSourceEnd(call, byteCount)
   }
 
   override fun responseFailed(

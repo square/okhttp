@@ -205,22 +205,14 @@ class Exchange(
       if (e != null) {
         eventListener.requestFailed(call, e)
       } else {
-        if (isSocket) {
-          eventListener.socketSinkEnd(call, bytesRead)
-        } else {
-          eventListener.requestBodyEnd(call, bytesRead)
-        }
+        eventListener.requestBodyEnd(call, bytesRead)
       }
     }
     if (responseDone) {
       if (e != null) {
         eventListener.responseFailed(call, e)
       } else {
-        if (isSocket) {
-          eventListener.socketSourceEnd(call, bytesRead)
-        } else {
-          eventListener.responseBodyEnd(call, bytesRead)
-        }
+        eventListener.responseBodyEnd(call, bytesRead)
       }
     }
     return call.messageDone(
@@ -266,7 +258,7 @@ class Exchange(
       try {
         if (invokeStartEvent) {
           invokeStartEvent = false
-          eventListener.socketSinkStart(call, connection)
+          eventListener.requestBodyStart(call)
         }
         super.write(source, byteCount)
         this.bytesReceived += byteCount
@@ -338,11 +330,7 @@ class Exchange(
 
         if (invokeStartEvent) {
           invokeStartEvent = false
-          if (isSocket) {
-            eventListener.socketSourceStart(call, connection)
-          } else {
-            eventListener.responseBodyStart(call)
-          }
+          eventListener.responseBodyStart(call)
         }
 
         if (read == -1L) {
