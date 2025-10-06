@@ -759,7 +759,7 @@ class RequestTest {
         |  --data '{
         |  "user": {
         |    "id": 123,
-        |    "name": "Tim O\'Reilly"
+        |    "name": "Tim O'\''Reilly"
         |  },
         |  "roles": ["admin", "editor"],
         |  "active": true

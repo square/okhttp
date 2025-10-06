@@ -482,9 +482,7 @@ class Request internal constructor(
   @JvmOverloads
   fun toCurl(includeBody: Boolean = true): String =
     buildString {
-      append("curl '")
-      append(url)
-      append("'")
+      append("curl ${url.toString().shellEscape()}")
 
       // Add method if not the default.
       val defaultMethod =
@@ -493,18 +491,12 @@ class Request internal constructor(
           else -> "GET"
         }
       if (method != defaultMethod) {
-        append(" \\\n  -X '")
-        append(method)
-        append("'")
+        append(" \\\n  -X ${method.shellEscape()}")
       }
 
       // Append headers.
       for ((name, value) in headers) {
-        append(" \\\n  -H '")
-        append(name)
-        append(": ")
-        append(value)
-        append("'")
+        append(" \\\n  -H ${"$name: $value".shellEscape()}")
       }
 
       // Append body if present.
@@ -513,14 +505,12 @@ class Request internal constructor(
         body.writeTo(bodyBuffer)
 
         if (bodyBuffer.isProbablyUtf8()) {
-          append(" \\\n  --data '")
-          append(bodyBuffer.readUtf8().replace("'", "\\'"))
-          append("'")
+          append(" \\\n  --data ${bodyBuffer.readUtf8().shellEscape()}")
         } else {
-          append(" \\\n  --data-binary '")
-          append(bodyBuffer.readByteString().hex())
-          append("'")
+          append(" \\\n  --data-binary ${bodyBuffer.readByteString().hex().shellEscape()}")
         }
       }
     }
+
+  private fun String.shellEscape(): String = "'${replace("'", "'\\''")}'"
 }
