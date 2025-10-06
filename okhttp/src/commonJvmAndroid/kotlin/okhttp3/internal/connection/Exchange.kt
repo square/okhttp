@@ -202,30 +202,22 @@ class Exchange(
       trackFailure(e)
     }
     if (requestDone) {
-      if (isSocket) {
-        if (e != null) {
-          eventListener.requestFailed(call, e)
-        } else {
-          eventListener.socketSinkEnd(call, bytesRead)
-        }
+      if (e != null) {
+        eventListener.requestFailed(call, e)
       } else {
-        if (e != null) {
-          eventListener.requestFailed(call, e)
+        if (isSocket) {
+          eventListener.socketSinkEnd(call, bytesRead)
         } else {
           eventListener.requestBodyEnd(call, bytesRead)
         }
       }
     }
     if (responseDone) {
-      if (isSocket) {
-        if (e != null) {
-          eventListener.responseFailed(call, e)
-        } else {
-          eventListener.socketSourceEnd(call, bytesRead)
-        }
+      if (e != null) {
+        eventListener.responseFailed(call, e)
       } else {
-        if (e != null) {
-          eventListener.responseFailed(call, e)
+        if (isSocket) {
+          eventListener.socketSourceEnd(call, bytesRead)
         } else {
           eventListener.responseBodyEnd(call, bytesRead)
         }
