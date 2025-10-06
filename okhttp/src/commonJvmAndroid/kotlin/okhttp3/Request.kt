@@ -326,7 +326,7 @@ class Request internal constructor(
      * A typical use case is to hash the request body:
      *
      * ```kotlin
-     *     val hash = body.sha256()
+     *     val hash = body.sha256().hex()
      *     val query = Request
      *         .Builder()
      *         .query(body)

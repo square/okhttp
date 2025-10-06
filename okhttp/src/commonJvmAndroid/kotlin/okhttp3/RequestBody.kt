@@ -262,12 +262,12 @@ abstract class RequestBody {
 }
 
 /**
- * Returns the SHA256 hash of the [RequestBody], as an hexadecimal String.
+ * Returns the SHA-256 hash of the [RequestBody]
  */
-fun RequestBody.sha256(): String {
+fun RequestBody.sha256(): ByteString {
   val hashingSink = HashingSink.sha256(blackholeSink())
   hashingSink.buffer().use {
     this.writeTo(it)
   }
-  return hashingSink.hash.hex()
+  return hashingSink.hash
 }
