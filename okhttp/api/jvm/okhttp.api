@@ -1100,6 +1100,10 @@ public final class okhttp3/RequestBody$Companion {
 	public static synthetic fun create$default (Lokhttp3/RequestBody$Companion;[BLokhttp3/MediaType;IIILjava/lang/Object;)Lokhttp3/RequestBody;
 }
 
+public final class okhttp3/RequestBodyKt {
+	public static final fun sha256 (Lokhttp3/RequestBody;)Ljava/lang/String;
+}
+
 public final class okhttp3/Response : java/io/Closeable {
 	public final fun -deprecated_body ()Lokhttp3/ResponseBody;
 	public final fun -deprecated_cacheControl ()Lokhttp3/CacheControl;

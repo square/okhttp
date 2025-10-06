@@ -24,7 +24,10 @@ import okhttp3.internal.chooseCharset
 import okio.BufferedSink
 import okio.ByteString
 import okio.FileSystem
+import okio.HashingSink
 import okio.Path
+import okio.blackholeSink
+import okio.buffer
 import okio.source
 
 abstract class RequestBody {
@@ -256,4 +259,15 @@ abstract class RequestBody {
       file: File,
     ): RequestBody = file.asRequestBody(contentType)
   }
+}
+
+/**
+ * Returns the SHA256 hash of the [RequestBody], as an hexadecimal String.
+ */
+fun RequestBody.sha256(): String {
+  val hashingSink = HashingSink.sha256(blackholeSink())
+  hashingSink.buffer().use {
+    this.writeTo(it)
+  }
+  return hashingSink.hash.hex()
 }
