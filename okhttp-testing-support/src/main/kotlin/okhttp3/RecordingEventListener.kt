@@ -69,7 +69,11 @@ open class RecordingEventListener(
    */
   private val enforceOrder: Boolean = true,
 ) : EventListener() {
+  /** Events that haven't yet been removed. */
   val eventSequence: Deque<CallEvent> = ConcurrentLinkedDeque()
+
+  /** The full set of events, used to match starts with ends. */
+  private val eventsForMatching = ConcurrentLinkedDeque<CallEvent>()
 
   private val forbiddenLocks = mutableListOf<Any>()
 
@@ -151,14 +155,15 @@ open class RecordingEventListener(
       checkForStartEvent(e)
     }
 
+    eventsForMatching.offer(e)
     eventSequence.offer(e)
   }
 
   private fun checkForStartEvent(e: CallEvent) {
-    if (eventSequence.isEmpty()) {
+    if (eventsForMatching.isEmpty()) {
       assertThat(e).matchesPredicate { it is CallStart || it is Canceled }
     } else {
-      eventSequence.forEach loop@{
+      eventsForMatching.forEach loop@{
         when (e.closes(it)) {
           null -> return // no open event
           true -> return // found open event
