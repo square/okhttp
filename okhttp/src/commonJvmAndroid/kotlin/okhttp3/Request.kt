@@ -16,13 +16,13 @@
 package okhttp3
 
 import java.net.URL
-import java.nio.charset.StandardCharsets
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.http.GzipRequestBody
 import okhttp3.internal.http.HttpMethod
+import okhttp3.internal.isProbablyUtf8
 import okhttp3.internal.isSensitiveHeader
 import okio.Buffer
 
@@ -462,104 +462,65 @@ class Request internal constructor(
   }
 
   /**
-   * Returns a cURL command equivalent to this request, useful for debugging and reproducing requests.
+   * Returns a cURL command equivalent to this request, useful for debugging and reproducing
+   * requests.
    *
    * This includes the HTTP method, headers, request body (if present), and URL.
    *
    * Example:
+   *
    * ```
-   * curl -X POST -H "Authorization: Bearer token" --data "{\"key\":\"value\"}" "https://example.com/api"
+   * curl 'https://example.com/api' \
+   *   -X PUT \
+   *   -H 'Authorization: Bearer token' \
+   *   --data '{\"key\":\"value\"}'
    * ```
    *
-   * **Note:** This method will write the body
-   * to a temporary [okio.Buffer] in memory. This may have side effects if the [RequestBody] is streaming
-   * or can be consumed only once. Calling this method might prevent re-sending the request body later.
-   *
-   * @param binaryFileName default file name to use when dumping binary body data to a file (default: `"request_body.bin"`)
-   * @param binaryMode default mode to use when writing binary body data (default: `"BinaryMode.STDIN"`)
-   * @return a cURL command string representing this request.
+   * **Note:** This will consume the request body. This may have side effects if the [RequestBody]
+   * is streaming or can be consumed only once.
    */
   @JvmOverloads
-  fun toCurl(
-    binaryMode: BinaryMode = BinaryMode.STDIN,
-    binaryFileName: String? = "request_body.bin",
-  ): String {
-    val curl = StringBuilder("curl")
+  fun toCurl(includeBody: Boolean = true): String =
+    buildString {
+      append("curl '")
+      append(url)
+      append("'")
 
-    // Add method if not GET
-    if (method != "GET") {
-      curl.append(" -X ").append(method)
-    }
-
-    // Append headers
-    for ((name, value) in headers) {
-      curl
-        .append(" -H \"")
-        .append(name)
-        .append(": ")
-        .append(value)
-        .append("\"")
-    }
-
-    // Append body if present
-    body?.let { requestBody ->
-      val buffer = Buffer()
-      requestBody.writeTo(buffer)
-
-      // Clone so we can read multiple times without consuming
-      val peekBuffer = buffer.clone()
-      val isBinary = isBinaryData(peekBuffer)
-
-      if (isBinary) {
-        when (binaryMode) {
-          BinaryMode.HEX -> {
-            curl.append(" --data-binary \"")
-            val hexBuffer = buffer.clone()
-            while (!hexBuffer.exhausted()) {
-              val b = hexBuffer.readByte().toInt() and 0xFF
-              curl.append("%02x".format(b))
-            }
-            curl.append("\"")
-          }
-          BinaryMode.FILE -> {
-            curl.append(" --data-binary @").append(binaryFileName)
-          }
-          BinaryMode.STDIN -> {
-            curl.append(" --data-binary @-")
-          }
-          BinaryMode.OMIT -> {
-            curl.append(" --data-binary \"[binary body omitted]\"")
-          }
+      // Add method if not the default.
+      val defaultMethod =
+        when {
+          includeBody && body != null -> "POST"
+          else -> "GET"
         }
-      } else {
-        val bodyString = buffer.readString(StandardCharsets.UTF_8)
-        curl
-          .append(" --data \"")
-          .append(bodyString.replace("\"", "\\\""))
-          .append("\"")
+      if (method != defaultMethod) {
+        append(" \\\n  -X '")
+        append(method)
+        append("'")
+      }
+
+      // Append headers.
+      for ((name, value) in headers) {
+        append(" \\\n  -H '")
+        append(name)
+        append(": ")
+        append(value)
+        append("'")
+      }
+
+      // Append body if present.
+      if (includeBody && body != null) {
+        val bodyBuffer = Buffer()
+        body.writeTo(bodyBuffer)
+
+        if (bodyBuffer.isProbablyUtf8()) {
+          append(" \\\n  --data '")
+          append(bodyBuffer.readUtf8().replace("'", "\\'"))
+          append("'")
+        } else {
+          append(" \\\n  --data-binary '")
+          append(bodyBuffer.readByteString().hex())
+          append("'")
+        }
       }
     }
-
-    curl.append(" \"").append(url).append("\"")
-    return curl.toString()
-  }
-
-  /**
-   * Detects binary data by checking for non-printable characters in a buffer.
-   */
-  private fun isBinaryData(peekBuffer: Buffer): Boolean {
-    var totalBytes = 0
-    var binaryCount = 0
-    val textSafeBytes = intArrayOf(0x09, 0x0A, 0x0D) // tab, LF, CR
-
-    while (!peekBuffer.exhausted() && totalBytes < 4096) { // limit to first 4KB for performance
-      val b = peekBuffer.readByte().toInt() and 0xFF
-      if ((b < 0x20 && b !in textSafeBytes) || b > 0x7E) {
-        binaryCount++
-      }
-      totalBytes++
-    }
-
-    return totalBytes > 0 && binaryCount > totalBytes * 0.1
-  }
 }
