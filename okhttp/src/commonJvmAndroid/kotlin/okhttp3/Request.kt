@@ -484,6 +484,8 @@ class Request internal constructor(
     buildString {
       append("curl ${url.toString().shellEscape()}")
 
+      val contentType = body?.contentType()?.toString()
+
       // Add method if not the default.
       val defaultMethod =
         when {
@@ -496,7 +498,12 @@ class Request internal constructor(
 
       // Append headers.
       for ((name, value) in headers) {
+        if (contentType != null && name.equals("Content-Type", ignoreCase = true)) continue
         append(" \\\n  -H ${"$name: $value".shellEscape()}")
+      }
+
+      if (contentType != null) {
+        append(" \\\n  -H ${"Content-Type: $contentType".shellEscape()}")
       }
 
       // Append body if present.
