@@ -37,16 +37,6 @@ public abstract interface class okhttp3/Authenticator {
 public final class okhttp3/Authenticator$Companion {
 }
 
-public final class okhttp3/BinaryMode : java/lang/Enum {
-	public static final field FILE Lokhttp3/BinaryMode;
-	public static final field HEX Lokhttp3/BinaryMode;
-	public static final field OMIT Lokhttp3/BinaryMode;
-	public static final field STDIN Lokhttp3/BinaryMode;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lokhttp3/BinaryMode;
-	public static fun values ()[Lokhttp3/BinaryMode;
-}
-
 public final class okhttp3/Cache : java/io/Closeable, java/io/Flushable {
 	public static final field Companion Lokhttp3/Cache$Companion;
 	public final fun -deprecated_directory ()Ljava/io/File;
@@ -1030,9 +1020,8 @@ public final class okhttp3/Request {
 	public final fun tag (Ljava/lang/Class;)Ljava/lang/Object;
 	public final fun tag (Lkotlin/reflect/KClass;)Ljava/lang/Object;
 	public final fun toCurl ()Ljava/lang/String;
-	public final fun toCurl (Lokhttp3/BinaryMode;)Ljava/lang/String;
-	public final fun toCurl (Lokhttp3/BinaryMode;Ljava/lang/String;)Ljava/lang/String;
-	public static synthetic fun toCurl$default (Lokhttp3/Request;Lokhttp3/BinaryMode;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public final fun toCurl (Z)Ljava/lang/String;
+	public static synthetic fun toCurl$default (Lokhttp3/Request;ZILjava/lang/Object;)Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 	public final fun url ()Lokhttp3/HttpUrl;
 }

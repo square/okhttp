@@ -663,7 +663,12 @@ class RequestTest {
 
     val curl = request.toCurl()
     assertThat(curl)
-      .isEqualTo("curl -H \"Authorization: Bearer abc123\" \"https://example.com/\"")
+      .isEqualTo(
+        """
+        |curl 'https://example.com/' \
+        |  -H 'Authorization: Bearer abc123'
+        """.trimMargin(),
+      )
   }
 
   @Test
@@ -680,10 +685,41 @@ class RequestTest {
         .addHeader("Authorization", "Bearer abc123")
         .build()
 
-    val curl = request.toCurl()
-    assertThat(curl)
+    assertThat(request.toCurl())
       .isEqualTo(
-        "curl -X POST -H \"Content-Type: application/json\" -H \"Authorization: Bearer abc123\" --data \"{\\\"key\\\":\\\"value\\\"}\" \"https://api.example.com/data\"",
+        """
+        |curl 'https://api.example.com/data' \
+        |  -H 'Content-Type: application/json' \
+        |  -H 'Authorization: Bearer abc123' \
+        |  --data '{"key":"value"}'
+        """.trimMargin(),
+      )
+  }
+
+  /** Put is not the default method so `-X 'PUT'` is included. */
+  @Test
+  fun curlPutWithBody() {
+    val mediaType = "application/json".toMediaType()
+    val body = "{\"key\":\"value\"}".toRequestBody(mediaType)
+
+    val request =
+      Request
+        .Builder()
+        .url("https://api.example.com/data")
+        .put(body)
+        .addHeader("Content-Type", "application/json")
+        .addHeader("Authorization", "Bearer abc123")
+        .build()
+
+    assertThat(request.toCurl())
+      .isEqualTo(
+        """
+        |curl 'https://api.example.com/data' \
+        |  -X 'PUT' \
+        |  -H 'Content-Type: application/json' \
+        |  -H 'Authorization: Bearer abc123' \
+        |  --data '{"key":"value"}'
+        """.trimMargin(),
       )
   }
 
@@ -692,15 +728,16 @@ class RequestTest {
     val mediaType = "application/json".toMediaType()
     val jsonBody =
       """
-      {
-        "user": {
-          "id": 123,
-          "name": "John Doe"
-        },
-        "roles": ["admin", "editor"],
-        "active": true
-      }
-      """.trimIndent()
+      |{
+      |  "user": {
+      |    "id": 123,
+      |    "name": "Tim O'Reilly"
+      |  },
+      |  "roles": ["admin", "editor"],
+      |  "active": true
+      |}
+      |
+      """.trimMargin()
 
     val body = jsonBody.toRequestBody(mediaType)
 
@@ -713,88 +750,53 @@ class RequestTest {
         .addHeader("Authorization", "Bearer xyz789")
         .build()
 
+    assertThat(request.toCurl())
+      .isEqualTo(
+        """
+        |curl 'https://api.example.com/users' \
+        |  -H 'Content-Type: application/json' \
+        |  -H 'Authorization: Bearer xyz789' \
+        |  --data '{
+        |  "user": {
+        |    "id": 123,
+        |    "name": "Tim O'\''Reilly"
+        |  },
+        |  "roles": ["admin", "editor"],
+        |  "active": true
+        |}
+        |'
+        """.trimMargin(),
+      )
+  }
+
+  @Test
+  fun curlPostWithBinaryBody() {
+    val mediaType = "application/octet-stream".toMediaType()
+    val binaryData = byteArrayOf(0x00, 0x01, 0x02, 0x03)
+
+    val body = binaryData.toRequestBody(mediaType)
+
+    val request =
+      Request
+        .Builder()
+        .url("https://api.example.com/upload")
+        .post(body)
+        .addHeader("Content-Type", "application/octet-stream")
+        .build()
+
     val curl = request.toCurl()
     assertThat(curl)
       .isEqualTo(
-        "curl -X POST -H \"Content-Type: application/json\" -H \"Authorization: Bearer xyz789\" --data \"{\n" +
-          "  \\\"user\\\": {\n" +
-          "    \\\"id\\\": 123,\n" +
-          "    \\\"name\\\": \\\"John Doe\\\"\n" +
-          "  },\n" +
-          "  \\\"roles\\\": [\\\"admin\\\", \\\"editor\\\"],\n" +
-          "  \\\"active\\\": true\n" +
-          "}\" \"https://api.example.com/users\"",
+        """
+        |curl 'https://api.example.com/upload' \
+        |  -H 'Content-Type: application/octet-stream' \
+        |  --data-binary '00010203'
+        """.trimMargin(),
       )
   }
 
   @Test
-  fun curlPostWithBinaryBody_DefaultSTDIN() {
-    val mediaType = "application/octet-stream".toMediaType()
-    val binaryData = byteArrayOf(0x00, 0x01, 0x02, 0x03)
-
-    val body = binaryData.toRequestBody(mediaType)
-
-    val request =
-      Request
-        .Builder()
-        .url("https://api.example.com/upload")
-        .post(body)
-        .addHeader("Content-Type", "application/octet-stream")
-        .build()
-
-    val curl = request.toCurl() // default is BinaryMode.STDIN
-    assertThat(curl)
-      .isEqualTo(
-        "curl -X POST -H \"Content-Type: application/octet-stream\" --data-binary @- \"https://api.example.com/upload\"",
-      )
-  }
-
-  @Test
-  fun curlPostWithBinaryBody_HexMode() {
-    val mediaType = "application/octet-stream".toMediaType()
-    val binaryData = byteArrayOf(0x00, 0x01, 0x02, 0x03)
-
-    val body = binaryData.toRequestBody(mediaType)
-
-    val request =
-      Request
-        .Builder()
-        .url("https://api.example.com/upload")
-        .post(body)
-        .addHeader("Content-Type", "application/octet-stream")
-        .build()
-
-    val curl = request.toCurl(BinaryMode.HEX)
-    assertThat(curl)
-      .isEqualTo(
-        "curl -X POST -H \"Content-Type: application/octet-stream\" --data-binary \"00010203\" \"https://api.example.com/upload\"",
-      )
-  }
-
-  @Test
-  fun curlPostWithBinaryBody_FileMode() {
-    val mediaType = "application/octet-stream".toMediaType()
-    val binaryData = byteArrayOf(0xAA.toByte(), 0xBB.toByte())
-
-    val body = binaryData.toRequestBody(mediaType)
-
-    val request =
-      Request
-        .Builder()
-        .url("https://api.example.com/upload")
-        .post(body)
-        .addHeader("Content-Type", "application/octet-stream")
-        .build()
-
-    val curl = request.toCurl(BinaryMode.FILE, "mydata.bin")
-    assertThat(curl)
-      .isEqualTo(
-        "curl -X POST -H \"Content-Type: application/octet-stream\" --data-binary @mydata.bin \"https://api.example.com/upload\"",
-      )
-  }
-
-  @Test
-  fun curlPostWithBinaryBody_OmitMode() {
+  fun curlPostWithBinaryBodyOmitted() {
     val mediaType = "application/octet-stream".toMediaType()
     val binaryData = byteArrayOf(0x10, 0x20)
 
@@ -808,10 +810,14 @@ class RequestTest {
         .addHeader("Content-Type", "application/octet-stream")
         .build()
 
-    val curl = request.toCurl(BinaryMode.OMIT)
+    val curl = request.toCurl(includeBody = false)
     assertThat(curl)
       .isEqualTo(
-        "curl -X POST -H \"Content-Type: application/octet-stream\" --data-binary \"[binary body omitted]\" \"https://api.example.com/upload\"",
+        """
+        |curl 'https://api.example.com/upload' \
+        |  -X 'POST' \
+        |  -H 'Content-Type: application/octet-stream'
+        """.trimMargin(),
       )
   }
 
