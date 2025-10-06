@@ -40,9 +40,7 @@ object CallServerInterceptor : Interceptor {
     var responseBuilder: Response.Builder? = null
     var sendRequestException: IOException? = null
     val hasRequestBody = HttpMethod.permitsRequestBody(request.method) && requestBody != null
-    val isUpgradeRequest =
-      !hasRequestBody &&
-        "upgrade".equals(request.header("Connection"), ignoreCase = true)
+    val isUpgradeRequest = "upgrade".equals(request.header("Connection"), ignoreCase = true)
     try {
       exchange.writeRequestHeaders(request)
 
