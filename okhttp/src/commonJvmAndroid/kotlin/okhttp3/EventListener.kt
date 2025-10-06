@@ -33,6 +33,7 @@ import java.net.Proxy
  * Events are typically nested with this structure:
  *
  *  * call ([callStart], [callEnd], [callFailed])
+ *    * dispatcher queue ([dispatcherQueueStart], [dispatcherQueueEnd])
  *    * proxy selection ([proxySelectStart], [proxySelectEnd])
  *    * dns ([dnsStart], [dnsEnd])
  *    * connect ([connectStart], [connectEnd], [connectFailed])
@@ -68,6 +69,30 @@ abstract class EventListener {
    * will be handled within the boundaries of a single [callStart] and [callEnd]/[callFailed] pair.
    */
   open fun callStart(call: Call) {
+  }
+
+  /**
+   * Invoked for calls that were not executed immediately because resources weren't available. The
+   * call will remain in the queue until resources are available.
+   *
+   * Use [Dispatcher.maxRequests] and [Dispatcher.maxRequestsPerHost] to configure how many calls
+   * OkHttp performs concurrently.
+   */
+  open fun dispatcherQueueStart(
+    call: Call,
+    dispatcher: Dispatcher,
+  ) {
+  }
+
+  /**
+   * Invoked when [call] will be executed immediately.
+   *
+   * This method is invoked after [dispatcherQueueStart].
+   */
+  open fun dispatcherQueueEnd(
+    call: Call,
+    dispatcher: Dispatcher,
+  ) {
   }
 
   /**

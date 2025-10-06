@@ -39,6 +39,8 @@ import okhttp3.CallEvent.ConnectFailed
 import okhttp3.CallEvent.ConnectStart
 import okhttp3.CallEvent.ConnectionAcquired
 import okhttp3.CallEvent.ConnectionReleased
+import okhttp3.CallEvent.DispatcherQueueEnd
+import okhttp3.CallEvent.DispatcherQueueStart
 import okhttp3.CallEvent.DnsEnd
 import okhttp3.CallEvent.DnsStart
 import okhttp3.CallEvent.FollowUpDecision
@@ -166,6 +168,16 @@ open class RecordingEventListener(
       fail<Any>("event $e without matching start event")
     }
   }
+
+  override fun dispatcherQueueStart(
+    call: Call,
+    dispatcher: Dispatcher,
+  ) = logEvent(DispatcherQueueStart(System.nanoTime(), call, dispatcher))
+
+  override fun dispatcherQueueEnd(
+    call: Call,
+    dispatcher: Dispatcher,
+  ) = logEvent(DispatcherQueueEnd(System.nanoTime(), call, dispatcher))
 
   override fun proxySelectStart(
     call: Call,
