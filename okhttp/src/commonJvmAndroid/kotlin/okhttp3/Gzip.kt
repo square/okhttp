@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Square, Inc.
+ * Copyright (c) 2025 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.brotli
+package okhttp3
 
-import okhttp3.CompressionInterceptor
-import okhttp3.Gzip
+import okhttp3.CompressionInterceptor.DecompressionAlgorithm
+import okio.BufferedSource
+import okio.GzipSource
+import okio.Source
 
-/**
- * Transparent Brotli response support.
- *
- * Adds Accept-Encoding: br to request and checks (and strips) for Content-Encoding: br in
- * responses.  n.b. this replaces the transparent gzip compression in BridgeInterceptor.
- */
-object BrotliInterceptor : CompressionInterceptor(Brotli, Gzip)
+object Gzip : DecompressionAlgorithm {
+  override val encoding: String get() = "gzip"
+
+  override fun decompress(compressedSource: BufferedSource): Source = GzipSource(compressedSource)
+}
