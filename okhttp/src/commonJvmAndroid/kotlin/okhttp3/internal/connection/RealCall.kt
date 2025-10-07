@@ -133,7 +133,7 @@ class RealCall(
    * and response body streams; otherwise resources may be leaked.
    *
    * This method is safe to be called concurrently, but provides limited guarantees. If a transport
-   * layer connection has been established (such as a HTTP/2 stream) that is terminated. Otherwise
+   * layer connection has been established (such as a HTTP/2 stream) that is terminated. Otherwise,
    * if a socket connection is being established, that is terminated.
    */
   override fun cancel() {
@@ -257,8 +257,9 @@ class RealCall(
           retryOnConnectionFailure = client.retryOnConnectionFailure,
           fastFallback = client.fastFallback,
           address = client.address(request.url),
-          connectionUser = CallConnectionUser(this, connectionPool.connectionListener, chain),
           routeDatabase = client.routeDatabase,
+          call = this,
+          request = request,
         )
       this.exchangeFinder =
         when {
