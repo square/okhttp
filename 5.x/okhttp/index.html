@@ -41,11 +41,13 @@
             </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
-        <div class="library-version" id="library-version">5.2.0-SNAPSHOT
+        <div class="library-version" id="library-version">5.3.0-SNAPSHOT
         </div>
         <div class="navigation-controls">
         <div class="filter-section filter-section_loading" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/androidMain">android</button>
                 <button class="platform-tag platform-selector common-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/commonMain">common</button>
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button>
             <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
                 <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
                 <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox">
@@ -54,11 +56,25 @@
                             <i class="ui-kit-icon ui-kit-icon_cross"></i>
                         </button>
                     </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":okhttp:dokkaHtmlPartial/androidMain" data-filter=":okhttp:dokkaHtmlPartial/androidMain">
+                                <span class="checkbox--icon"></span>
+                                android
+                            </label>
+                        </li>
                         <li role="option" class="dropdown--option platform-selector-option common-like" tabindex="0">
                             <label class="checkbox">
                                 <input type="checkbox" class="checkbox--input" id=":okhttp:dokkaHtmlPartial/commonMain" data-filter=":okhttp:dokkaHtmlPartial/commonMain">
                                 <span class="checkbox--icon"></span>
                                 common
+                            </label>
+                        </li>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":okhttp:dokkaHtmlPartial/jvmMain" data-filter=":okhttp:dokkaHtmlPartial/jvmMain">
+                                <span class="checkbox--icon"></span>
+                                jvm
                             </label>
                         </li>
                 </ul>
@@ -90,25 +106,29 @@
                 </div>
             </div>
             <div id="main">
-<div class="main-content" id="content" pageids="okhttp::////PointingToDeclaration//985677359">
+<div class="main-content" id="content" pageids="okhttp::////PointingToDeclaration//625336043">
   <div class="breadcrumbs"></div>
   <div class="cover ">
     <h1 class="cover"><span><span>okhttp</span></span></h1>
-    <div class="platform-hinted UnderCoverText" data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><p class="paragraph">An HTTP+HTTP/2 client for Android and Java applications.</p></div></div>
+    <div class="platform-hinted UnderCoverText with-platform-tabs" data-platform-hinted="data-platform-hinted">
+      <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/androidMain" data-filterable-set=":okhttp:dokkaHtmlPartial/androidMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/androidMain">android</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/androidMain"><p class="paragraph">An HTTP+HTTP/2 client for Android and Java applications.</p></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><p class="paragraph">An HTTP+HTTP/2 client for Android and Java applications.</p></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><p class="paragraph">An HTTP+HTTP/2 client for Android and Java applications.</p></div>    </div>
   </div>
   <h2 class="">Packages</h2>
-  <div class="table"><a data-name="1361184881%2FPackages%2F985677359" anchor-label="okhttp3" id="1361184881%2FPackages%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
-    <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
+  <div class="table"><a data-name="1361184881%2FPackages%2F625336043" anchor-label="okhttp3" id="1361184881%2FPackages%2F625336043" data-filterable-set=":okhttp:dokkaHtmlPartial/androidMain,:okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain"></a>
+    <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/androidMain,:okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/androidMain,:okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain">
       <div>
         <div class="main-subrow ">
           <div class=""><span class="inline-flex">
               <div><a href="okhttp3/index.html">okhttp3</a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1361184881%2FPackages%2F985677359"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1361184881%2FPackages%2F625336043"></span>
                 <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
               </span></span></div>
           <div class="pull-right">
             <div class="platform-tags no-gutters">
+              <div class="platform-tag jvm-like">android</div>
               <div class="platform-tag common-like">common</div>
+              <div class="platform-tag jvm-like">jvm</div>
             </div>
           </div>
         </div>

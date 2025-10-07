@@ -41,7 +41,7 @@
             </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
-        <div class="library-version" id="library-version">5.2.0-SNAPSHOT
+        <div class="library-version" id="library-version">5.3.0-SNAPSHOT
         </div>
         <div class="navigation-controls">
         <div class="filter-section filter-section_loading" id="filter-section">
@@ -94,24 +94,43 @@
   <div class="breadcrumbs"><a href="../../index.html">okhttp-brotli</a><span class="delimiter">/</span><a href="../index.html">okhttp3.brotli</a><span class="delimiter">/</span><span class="current">BrotliInterceptor</span></div>
   <div class="cover ">
     <h1 class="cover"><span>Brotli</span><wbr><span><span>Interceptor</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp-brotli:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="index.html">BrotliInterceptor</a> : <a href="../../../okhttp/okhttp3/-interceptor/index.html">Interceptor</a></div><p class="paragraph">Transparent Brotli response support.</p><p class="paragraph">Adds Accept-Encoding: br to request and checks (and strips) for Content-Encoding: br in responses.  n.b. this replaces the transparent gzip compression in BridgeInterceptor.</p></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp-brotli:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="index.html">BrotliInterceptor</a> : <a href="../../../okhttp/okhttp3/-compression-interceptor/index.html">CompressionInterceptor</a></div><p class="paragraph">Transparent Brotli response support.</p><p class="paragraph">Adds Accept-Encoding: br to request and checks (and strips) for Content-Encoding: br in responses.  n.b. this replaces the transparent gzip compression in BridgeInterceptor.</p></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
     <div class="tabs-section-body">
-      <div data-togglable="FUNCTION">
-        <h2 class="">Functions</h2>
-        <div class="table"><a data-name="-1005808652%2FFunctions%2F2042378559" anchor-label="intercept" id="-1005808652%2FFunctions%2F2042378559" data-filterable-set=":okhttp-brotli:dokkaHtmlPartial/main"></a>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="1460654857%2FProperties%2F2042378559" anchor-label="algorithms" id="1460654857%2FProperties%2F2042378559" data-filterable-set=":okhttp-brotli:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-filterable-current=":okhttp-brotli:dokkaHtmlPartial/main" data-filterable-set=":okhttp-brotli:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
-                  <div><a href="intercept.html"><span><span>intercept</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1005808652%2FFunctions%2F2042378559"></span>
+                  <div><a href="index.html#1460654857%2FProperties%2F2042378559"><span><span>algorithms</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1460654857%2FProperties%2F2042378559"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp-brotli:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="intercept.html"><span class="token function">intercept</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">chain<span class="token operator">: </span><a href="../../../okhttp/okhttp3/-interceptor/-chain/index.html">Interceptor.Chain</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../../okhttp/okhttp3/-response/index.html">Response</a></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp-brotli:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="index.html#1460654857%2FProperties%2F2042378559">algorithms</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-array/index.html">Array</a><span class="token operator">&lt;</span><span class="token keyword">out </span><a href="../../../okhttp/okhttp3/-compression-interceptor/-decompression-algorithm/index.html">CompressionInterceptor.DecompressionAlgorithm</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-341504738%2FFunctions%2F2042378559" anchor-label="intercept" id="-341504738%2FFunctions%2F2042378559" data-filterable-set=":okhttp-brotli:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp-brotli:dokkaHtmlPartial/main" data-filterable-set=":okhttp-brotli:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-341504738%2FFunctions%2F2042378559"><span><span>intercept</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-341504738%2FFunctions%2F2042378559"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp-brotli:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="index.html#-341504738%2FFunctions%2F2042378559"><span class="token function">intercept</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">chain<span class="token operator">: </span><a href="../../../okhttp/okhttp3/-interceptor/-chain/index.html">Interceptor.Chain</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../../okhttp/okhttp3/-response/index.html">Response</a></div></div></div>
                 </div>
               </div>
             </div>

@@ -30,3 +30,5 @@ module:okhttp-tls
 okhttp3.tls
 module:okhttp-urlconnection
 okhttp3
+module:okhttp-zstd
+okhttp3.zstd

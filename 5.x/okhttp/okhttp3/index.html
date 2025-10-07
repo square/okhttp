@@ -41,11 +41,13 @@
             </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
-        <div class="library-version" id="library-version">5.2.0-SNAPSHOT
+        <div class="library-version" id="library-version">5.3.0-SNAPSHOT
         </div>
         <div class="navigation-controls">
         <div class="filter-section filter-section_loading" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/androidMain">android</button>
                 <button class="platform-tag platform-selector common-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/commonMain">common</button>
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button>
             <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
                 <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
                 <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox">
@@ -54,11 +56,25 @@
                             <i class="ui-kit-icon ui-kit-icon_cross"></i>
                         </button>
                     </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":okhttp:dokkaHtmlPartial/androidMain" data-filter=":okhttp:dokkaHtmlPartial/androidMain">
+                                <span class="checkbox--icon"></span>
+                                android
+                            </label>
+                        </li>
                         <li role="option" class="dropdown--option platform-selector-option common-like" tabindex="0">
                             <label class="checkbox">
                                 <input type="checkbox" class="checkbox--input" id=":okhttp:dokkaHtmlPartial/commonMain" data-filter=":okhttp:dokkaHtmlPartial/commonMain">
                                 <span class="checkbox--icon"></span>
                                 common
+                            </label>
+                        </li>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":okhttp:dokkaHtmlPartial/jvmMain" data-filter=":okhttp:dokkaHtmlPartial/jvmMain">
+                                <span class="checkbox--icon"></span>
+                                jvm
                             </label>
                         </li>
                 </ul>
@@ -90,7 +106,7 @@
                 </div>
             </div>
             <div id="main">
-<div class="main-content" data-page-type="package" id="content" pageids="okhttp::okhttp3////PointingToDeclaration//985677359">
+<div class="main-content" data-page-type="package" id="content" pageids="okhttp::okhttp3////PointingToDeclaration//625336043">
   <div class="breadcrumbs"><a href="../index.html">okhttp</a><span class="delimiter">/</span><span class="current">okhttp3</span></div>
   <div class="cover ">
     <h1 class="cover"><span><span>Package-level</span></span> <span><span>declarations</span></span></h1>
@@ -231,6 +247,21 @@
               <div>
                 <div class="title">
                   <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-cipher-suite/index.html">CipherSuite</a></div><div class="brief "><p class="paragraph"><a href="https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml">TLS cipher suites</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1127735378%2FClasslikes%2F985677359" anchor-label="CompressionInterceptor" id="1127735378%2FClasslikes%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-compression-interceptor/index.html"><span>Compression</span><wbr><span><span>Interceptor</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1127735378%2FClasslikes%2F985677359"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">class </span><a href="-compression-interceptor/index.html">CompressionInterceptor</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>algorithms<span class="token operator">: </span><a href="-compression-interceptor/-decompression-algorithm/index.html">CompressionInterceptor.DecompressionAlgorithm</a></span></span><span class="token punctuation">)</span> : <a href="-interceptor/index.html">Interceptor</a></div><div class="brief "><p class="paragraph">Transparent Compressed response support.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -385,6 +416,21 @@
               </div>
             </div>
           </div>
+<a data-name="932775991%2FClasslikes%2F985677359" anchor-label="Gzip" id="932775991%2FClasslikes%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-gzip/index.html"><span><span>Gzip</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="932775991%2FClasslikes%2F985677359"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">object </span><a href="-gzip/index.html">Gzip</a> : <a href="-compression-interceptor/-decompression-algorithm/index.html">CompressionInterceptor.DecompressionAlgorithm</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
 <a data-name="-137904134%2FClasslikes%2F985677359" anchor-label="Handshake" id="-137904134%2FClasslikes%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
           <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
             <div class="main-subrow keyValue ">
@@ -490,17 +536,19 @@
               </div>
             </div>
           </div>
-<a data-name="1537503309%2FClasslikes%2F985677359" anchor-label="OkHttp" id="1537503309%2FClasslikes%2F985677359" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain"></a>
-          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain">
+<a data-name="1537503309%2FClasslikes%2F625336043" anchor-label="OkHttp" id="1537503309%2FClasslikes%2F625336043" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/androidMain,:okhttp:dokkaHtmlPartial/jvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/androidMain,:okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/androidMain,:okhttp:dokkaHtmlPartial/jvmMain">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="-ok-http/index.html"><span>Ok</span><wbr><span><span>Http</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1537503309%2FClasslikes%2F985677359"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1537503309%2FClasslikes%2F625336043"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">object </span><a href="-ok-http/index.html">OkHttp</a></div></div></div>
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/androidMain" data-filterable-set=":okhttp:dokkaHtmlPartial/androidMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/androidMain">android</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/androidMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword">object </span><a href="-ok-http/index.html">OkHttp</a></div></div><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword">object </span><a href="-ok-http/index.html">OkHttp</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword">object </span><a href="-ok-http/index.html">OkHttp</a></div></div>                  </div>
                 </div>
               </div>
             </div>
