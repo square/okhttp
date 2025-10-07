@@ -188,9 +188,6 @@ class Exchange(
     codec.carrier.trackFailure(call, e)
   }
 
-  // TODO maybe rename, so that a socket use case (say: no body) would still make sense,
-  // or call a socket specific variant instead?
-
   /** If [e] is non-null, this will return a non-null value. */
   fun bodyComplete(
     bytesRead: Long = -1L,
