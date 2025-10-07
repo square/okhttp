@@ -19,11 +19,7 @@ package okhttp3
 import java.util.concurrent.TimeUnit
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.ConnectionListener
-import okhttp3.internal.connection.FastFallbackExchangeFinder
-import okhttp3.internal.connection.ForceConnectRoutePlanner
 import okhttp3.internal.connection.RealConnectionPool
-import okhttp3.internal.connection.RealRoutePlanner
-import okhttp3.internal.connection.RouteDatabase
 
 /**
  * Manages reuse of HTTP and HTTP/2 connections for reduced network latency. HTTP requests that
@@ -44,14 +40,6 @@ class ConnectionPool internal constructor(
     timeUnit: TimeUnit = TimeUnit.MINUTES,
     taskRunner: TaskRunner = TaskRunner.INSTANCE,
     connectionListener: ConnectionListener = ConnectionListener.NONE,
-    readTimeoutMillis: Int = 10_000,
-    writeTimeoutMillis: Int = 10_000,
-    socketConnectTimeoutMillis: Int = 10_000,
-    socketReadTimeoutMillis: Int = 10_000,
-    pingIntervalMillis: Int = 10_000,
-    retryOnConnectionFailure: Boolean = true,
-    fastFallback: Boolean = true,
-    routeDatabase: RouteDatabase = RouteDatabase(),
   ) : this(
     RealConnectionPool(
       taskRunner = taskRunner,
@@ -59,27 +47,6 @@ class ConnectionPool internal constructor(
       keepAliveDuration = keepAliveDuration,
       timeUnit = timeUnit,
       connectionListener = connectionListener,
-      exchangeFinderFactory = { pool, address, user ->
-        FastFallbackExchangeFinder(
-          ForceConnectRoutePlanner(
-            RealRoutePlanner(
-              taskRunner = taskRunner,
-              connectionPool = pool,
-              readTimeoutMillis = readTimeoutMillis,
-              writeTimeoutMillis = writeTimeoutMillis,
-              socketConnectTimeoutMillis = socketConnectTimeoutMillis,
-              socketReadTimeoutMillis = socketReadTimeoutMillis,
-              pingIntervalMillis = pingIntervalMillis,
-              retryOnConnectionFailure = retryOnConnectionFailure,
-              fastFallback = fastFallback,
-              address = address,
-              routeDatabase = routeDatabase,
-              connectionUser = user,
-            ),
-          ),
-          taskRunner,
-        )
-      },
     ),
   )
 

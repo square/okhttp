@@ -335,16 +335,7 @@ class RealConnection internal constructor(
     settings: Settings,
   ) {
     withLock {
-      val oldLimit = allocationLimit
       allocationLimit = settings.getMaxConcurrentStreams()
-
-      if (allocationLimit < oldLimit) {
-        // We might need new connections to keep policies satisfied
-        connectionPool.scheduleOpener(route.address)
-      } else if (allocationLimit > oldLimit) {
-        // We might no longer need some connections
-        connectionPool.scheduleCloser()
-      }
     }
   }
 
