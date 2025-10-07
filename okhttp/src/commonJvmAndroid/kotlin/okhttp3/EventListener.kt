@@ -535,6 +535,24 @@ abstract class EventListener {
   ) {
   }
 
+  /** Returns a new `EventListener` that publishes events to this and then `other`. */
+  operator fun plus(other: EventListener): EventListener {
+    val left =
+      when {
+        this === NONE -> return other
+        this is AggregateEventListener -> this.eventListeners
+        else -> arrayOf(this)
+      }
+    val right =
+      when {
+        other === NONE -> return this
+        other is AggregateEventListener -> other.eventListeners
+        else -> arrayOf(other)
+      }
+
+    return AggregateEventListener(left + right)
+  }
+
   fun interface Factory {
     /**
      * Creates an instance of the [EventListener] for a particular [Call]. The returned
@@ -553,5 +571,289 @@ abstract class EventListener {
     val NONE: EventListener =
       object : EventListener() {
       }
+  }
+
+  private class AggregateEventListener(
+    val eventListeners: Array<EventListener>,
+  ) : EventListener() {
+    override fun callStart(call: Call) {
+      for (delegate in eventListeners) {
+        delegate.callStart(call)
+      }
+    }
+
+    override fun dispatcherQueueStart(
+      call: Call,
+      dispatcher: Dispatcher,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.dispatcherQueueStart(call, dispatcher)
+      }
+    }
+
+    override fun dispatcherQueueEnd(
+      call: Call,
+      dispatcher: Dispatcher,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.dispatcherQueueEnd(call, dispatcher)
+      }
+    }
+
+    override fun proxySelectStart(
+      call: Call,
+      url: HttpUrl,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.proxySelectStart(call, url)
+      }
+    }
+
+    override fun proxySelectEnd(
+      call: Call,
+      url: HttpUrl,
+      proxies: List<@JvmSuppressWildcards Proxy>,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.proxySelectEnd(call, url, proxies)
+      }
+    }
+
+    override fun dnsStart(
+      call: Call,
+      domainName: String,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.dnsStart(call, domainName)
+      }
+    }
+
+    override fun dnsEnd(
+      call: Call,
+      domainName: String,
+      inetAddressList: List<@JvmSuppressWildcards InetAddress>,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.dnsEnd(call, domainName, inetAddressList)
+      }
+    }
+
+    override fun connectStart(
+      call: Call,
+      inetSocketAddress: InetSocketAddress,
+      proxy: Proxy,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.connectStart(call, inetSocketAddress, proxy)
+      }
+    }
+
+    override fun secureConnectStart(call: Call) {
+      for (delegate in eventListeners) {
+        delegate.secureConnectStart(call)
+      }
+    }
+
+    override fun secureConnectEnd(
+      call: Call,
+      handshake: Handshake?,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.secureConnectEnd(call, handshake)
+      }
+    }
+
+    override fun connectEnd(
+      call: Call,
+      inetSocketAddress: InetSocketAddress,
+      proxy: Proxy,
+      protocol: Protocol?,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.connectEnd(call, inetSocketAddress, proxy, protocol)
+      }
+    }
+
+    override fun connectFailed(
+      call: Call,
+      inetSocketAddress: InetSocketAddress,
+      proxy: Proxy,
+      protocol: Protocol?,
+      ioe: IOException,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.connectFailed(call, inetSocketAddress, proxy, protocol, ioe)
+      }
+    }
+
+    override fun connectionAcquired(
+      call: Call,
+      connection: Connection,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.connectionAcquired(call, connection)
+      }
+    }
+
+    override fun connectionReleased(
+      call: Call,
+      connection: Connection,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.connectionReleased(call, connection)
+      }
+    }
+
+    override fun requestHeadersStart(call: Call) {
+      for (delegate in eventListeners) {
+        delegate.requestHeadersStart(call)
+      }
+    }
+
+    override fun requestHeadersEnd(
+      call: Call,
+      request: Request,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.requestHeadersEnd(call, request)
+      }
+    }
+
+    override fun requestBodyStart(call: Call) {
+      for (delegate in eventListeners) {
+        delegate.requestBodyStart(call)
+      }
+    }
+
+    override fun requestBodyEnd(
+      call: Call,
+      byteCount: Long,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.requestBodyEnd(call, byteCount)
+      }
+    }
+
+    override fun requestFailed(
+      call: Call,
+      ioe: IOException,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.requestFailed(call, ioe)
+      }
+    }
+
+    override fun responseHeadersStart(call: Call) {
+      for (delegate in eventListeners) {
+        delegate.responseHeadersStart(call)
+      }
+    }
+
+    override fun responseHeadersEnd(
+      call: Call,
+      response: Response,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.responseHeadersEnd(call, response)
+      }
+    }
+
+    override fun responseBodyStart(call: Call) {
+      for (delegate in eventListeners) {
+        delegate.responseBodyStart(call)
+      }
+    }
+
+    override fun responseBodyEnd(
+      call: Call,
+      byteCount: Long,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.responseBodyEnd(call, byteCount)
+      }
+    }
+
+    override fun responseFailed(
+      call: Call,
+      ioe: IOException,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.responseFailed(call, ioe)
+      }
+    }
+
+    override fun callEnd(call: Call) {
+      for (delegate in eventListeners) {
+        delegate.callEnd(call)
+      }
+    }
+
+    override fun callFailed(
+      call: Call,
+      ioe: IOException,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.callFailed(call, ioe)
+      }
+    }
+
+    override fun canceled(call: Call) {
+      for (delegate in eventListeners) {
+        delegate.canceled(call)
+      }
+    }
+
+    override fun satisfactionFailure(
+      call: Call,
+      response: Response,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.satisfactionFailure(call, response)
+      }
+    }
+
+    override fun cacheHit(
+      call: Call,
+      response: Response,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.cacheHit(call, response)
+      }
+    }
+
+    override fun cacheMiss(call: Call) {
+      for (delegate in eventListeners) {
+        delegate.cacheMiss(call)
+      }
+    }
+
+    override fun cacheConditionalHit(
+      call: Call,
+      cachedResponse: Response,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.cacheConditionalHit(call, cachedResponse)
+      }
+    }
+
+    override fun retryDecision(
+      call: Call,
+      exception: IOException,
+      retry: Boolean,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.retryDecision(call, exception, retry)
+      }
+    }
+
+    override fun followUpDecision(
+      call: Call,
+      networkResponse: Response,
+      nextRequest: Request?,
+    ) {
+      for (delegate in eventListeners) {
+        delegate.followUpDecision(call, networkResponse, nextRequest)
+      }
+    }
   }
 }

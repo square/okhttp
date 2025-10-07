@@ -20,6 +20,7 @@ import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.containsExactly
 import assertk.assertions.doesNotContain
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isIn
@@ -75,6 +76,7 @@ import okhttp3.CallEvent.RetryDecision
 import okhttp3.CallEvent.SatisfactionFailure
 import okhttp3.CallEvent.SecureConnectEnd
 import okhttp3.CallEvent.SecureConnectStart
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -2294,6 +2296,128 @@ class EventListenerTest {
         FollowUpDecision::class,
         CallEnd::class,
       )
+  }
+
+  /** Make sure we didn't mess up our special case for [EventListener.NONE]. */
+  @Test
+  fun eventListenerPlusNoneAggregation() {
+    val a = RecordingEventListener(enforceOrder = false)
+    val aPlusNone = a + EventListener.NONE
+
+    aPlusNone.callStart(FailingCall())
+    assertThat(a.takeEvent()).isInstanceOf<CallStart>()
+    assertThat(a.eventSequence).isEmpty()
+  }
+
+  /** Make sure we didn't mess up our special case for [EventListener.NONE]. */
+  @Test
+  fun nonePlusEventListenerAggregation() {
+    val a = RecordingEventListener(enforceOrder = false)
+    val nonePlusA = EventListener.NONE + a
+
+    nonePlusA.callStart(FailingCall())
+    assertThat(a.takeEvent()).isInstanceOf<CallStart>()
+    assertThat(a.eventSequence).isEmpty()
+  }
+
+  /** Make sure we didn't mess up our special case for combining aggregates. */
+  @Test
+  fun moreThanTwoAggregation() {
+    val a = RecordingEventListener(enforceOrder = false)
+    val b = RecordingEventListener(enforceOrder = false)
+    val c = RecordingEventListener(enforceOrder = false)
+    val d = RecordingEventListener(enforceOrder = false)
+
+    val abcd = (a + b) + (c + d)
+    abcd.callStart(FailingCall())
+
+    assertThat(a.takeEvent()).isInstanceOf<CallStart>()
+    assertThat(a.eventSequence).isEmpty()
+    assertThat(b.takeEvent()).isInstanceOf<CallStart>()
+    assertThat(b.eventSequence).isEmpty()
+    assertThat(c.takeEvent()).isInstanceOf<CallStart>()
+    assertThat(c.eventSequence).isEmpty()
+    assertThat(d.takeEvent()).isInstanceOf<CallStart>()
+    assertThat(d.eventSequence).isEmpty()
+  }
+
+  /** Reflectively call every event function to confirm it is correctly forwarded. */
+  @Test
+  fun aggregateEventListenerIsComplete() {
+    val sampleValues = sampleValuesMap()
+
+    val solo = RecordingEventListener(enforceOrder = false)
+    val left = RecordingEventListener(enforceOrder = false)
+    val right = RecordingEventListener(enforceOrder = false)
+    val composite = left + right
+
+    for (method in EventListener::class.java.declaredMethods) {
+      if (method.name == "plus") continue
+
+      val args =
+        method.parameters
+          .map { sampleValues[it.type] ?: error("no sample value for ${it.type}") }
+          .toTypedArray()
+
+      method.invoke(solo, *args)
+      method.invoke(composite, *args)
+
+      val expectedEvent = solo.takeEvent()
+      assertThat(solo.eventSequence).isEmpty()
+
+      assertThat(left.takeEvent()::class).isEqualTo(expectedEvent::class)
+      assertThat(left.eventSequence).isEmpty()
+
+      assertThat(right.takeEvent()::class).isEqualTo(expectedEvent::class)
+      assertThat(right.eventSequence).isEmpty()
+    }
+  }
+
+  /**
+   * Returns a map with sample values for each possible parameter of an [EventListener] function
+   * parameter.
+   */
+  private fun sampleValuesMap(): Map<Class<*>, Any> {
+    TestValueFactory().use { factory ->
+      val address = factory.newAddress("a")
+      val route = factory.newRoute(address)
+      val pool = factory.newConnectionPool()
+      val url = "https://example.com/".toHttpUrl()
+      val request = Request(url = url)
+      val response =
+        Response
+          .Builder()
+          .request(request)
+          .protocol(Protocol.HTTP_1_1)
+          .code(200)
+          .message("OK")
+          .build()
+      val handshake =
+        Handshake.get(
+          tlsVersion = TlsVersion.TLS_1_3,
+          cipherSuite = CipherSuite.TLS_AES_128_GCM_SHA256,
+          peerCertificates = listOf(),
+          localCertificates = listOf(),
+        )
+
+      return mapOf(
+        Boolean::class.java to false,
+        Call::class.java to FailingCall(),
+        Connection::class.java to factory.newConnection(pool, route),
+        Dispatcher::class.java to Dispatcher(),
+        Handshake::class.java to handshake,
+        HttpUrl::class.java to url,
+        IOException::class.java to IOException("boom"),
+        InetSocketAddress::class.java to InetSocketAddress.createUnresolved("localhost", 80),
+        List::class.java to listOf<Any?>(),
+        Long::class.java to 123L,
+        Protocol::class.java to Protocol.HTTP_2,
+        Proxy::class.java to Proxy.NO_PROXY,
+        Request::class.java to request,
+        Response::class.java to response,
+        String::class.java to "hello",
+      )
+    }
   }
 
   private fun enableCache(): Cache? {
