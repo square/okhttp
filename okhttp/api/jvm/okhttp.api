@@ -1077,6 +1077,7 @@ public abstract class okhttp3/RequestBody {
 	public static final fun create ([BLokhttp3/MediaType;II)Lokhttp3/RequestBody;
 	public fun isDuplex ()Z
 	public fun isOneShot ()Z
+	public final fun sha256 ()Lokio/ByteString;
 	public abstract fun writeTo (Lokio/BufferedSink;)V
 }
 

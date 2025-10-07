@@ -119,6 +119,12 @@ class RequestBodyTest {
     }
   }
 
+  @Test
+  fun testSha256() {
+    val hash = "Hello".toRequestBody().sha256().hex()
+    assertThat(hash).isEqualTo("185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969")
+  }
+
   private inline fun <T> assertOnFileDescriptor(
     content: String? = null,
     fn: (FileDescriptor) -> T,

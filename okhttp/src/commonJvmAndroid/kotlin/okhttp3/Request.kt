@@ -330,11 +330,7 @@ class Request internal constructor(
      * A typical use case is to hash the request body:
      *
      * ```kotlin
-     *     val hashingSink = HashingSink.md5(blackholeSink())
-     *     hashingSink.buffer().use {
-     *       body.writeTo(it)
-     *     }
-     *     val hash = hashingSink.hash.hex()
+     *     val hash = body.sha256().hex()
      *     val query = Request
      *         .Builder()
      *         .query(body)
