@@ -29,10 +29,14 @@ import java.io.IOException
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
 import okhttp3.Cache
+import okhttp3.CallEvent
+import okhttp3.CallEvent.CacheHit
+import okhttp3.CallEvent.CacheMiss
 import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -200,13 +204,13 @@ class DnsOverHttpsTest {
     assertThat(recordedRequest.url.encodedQuery)
       .isEqualTo("ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ")
 
-    assertThat(cacheEvents()).containsExactly("CacheMiss")
+    assertThat(cacheEvents()).containsExactly(CacheMiss::class)
 
     result = cachedDns.lookup("google.com")
     assertThat(server.takeRequest(1, TimeUnit.MILLISECONDS)).isNull()
     assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
 
-    assertThat(cacheEvents()).containsExactly("CacheHit")
+    assertThat(cacheEvents()).containsExactly(CacheHit::class)
 
     result = cachedDns.lookup("www.google.com")
     assertThat(result).containsExactly(address("157.240.1.18"))
@@ -215,7 +219,7 @@ class DnsOverHttpsTest {
     assertThat(recordedRequest.url.encodedQuery)
       .isEqualTo("ct&dns=AAABAAABAAAAAAAAA3d3dwZnb29nbGUDY29tAAABAAE")
 
-    assertThat(cacheEvents()).containsExactly("CacheMiss")
+    assertThat(cacheEvents()).containsExactly(CacheMiss::class)
   }
 
   @Test
@@ -242,13 +246,13 @@ class DnsOverHttpsTest {
     assertThat(recordedRequest.url.encodedQuery)
       .isEqualTo("ct")
 
-    assertThat(cacheEvents()).containsExactly("CacheMiss")
+    assertThat(cacheEvents()).containsExactly(CacheMiss::class)
 
     result = cachedDns.lookup("google.com")
     assertThat(server.takeRequest(0, TimeUnit.MILLISECONDS)).isNull()
     assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
 
-    assertThat(cacheEvents()).containsExactly("CacheHit")
+    assertThat(cacheEvents()).containsExactly(CacheHit::class)
 
     result = cachedDns.lookup("www.google.com")
     assertThat(result).containsExactly(address("157.240.1.18"))
@@ -257,7 +261,7 @@ class DnsOverHttpsTest {
     assertThat(recordedRequest.url.encodedQuery)
       .isEqualTo("ct")
 
-    assertThat(cacheEvents()).containsExactly("CacheMiss")
+    assertThat(cacheEvents()).containsExactly(CacheMiss::class)
   }
 
   @Test
@@ -282,7 +286,7 @@ class DnsOverHttpsTest {
       "ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
     )
 
-    assertThat(cacheEvents()).containsExactly("CacheMiss")
+    assertThat(cacheEvents()).containsExactly(CacheMiss::class)
 
     Thread.sleep(2000)
     server.enqueue(
@@ -301,13 +305,14 @@ class DnsOverHttpsTest {
     assertThat(recordedRequest.url.encodedQuery)
       .isEqualTo("ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ")
 
-    assertThat(cacheEvents()).containsExactly("CacheMiss")
+    assertThat(cacheEvents()).containsExactly(CacheMiss::class)
   }
 
-  private fun cacheEvents(): List<String> =
-    eventListener.recordedEventTypes().filter { it.contains("Cache") }.also {
-      eventListener.clearAllEvents()
-    }
+  private fun cacheEvents(): List<KClass<out CallEvent>> =
+    eventListener
+      .recordedEventTypes()
+      .filter { "Cache" in it.simpleName!! }
+      .also { eventListener.clearAllEvents() }
 
   private fun dnsResponse(s: String): MockResponse =
     MockResponse
