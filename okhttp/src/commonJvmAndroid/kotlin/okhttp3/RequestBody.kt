@@ -101,6 +101,7 @@ abstract class RequestBody {
   /**
    * Returns the SHA-256 hash of this [RequestBody]
    */
+  @Throws(IOException::class)
   fun sha256(): ByteString {
     val hashingSink = HashingSink.sha256(blackholeSink())
     hashingSink.buffer().use {
