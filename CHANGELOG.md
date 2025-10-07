@@ -5,6 +5,44 @@ Change Log
 
 See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
 
+## Version 5.2.0
+
+_2025-10-07_
+
+ *  New: Support [HTTP 101] responses with `Response.socket`. This mechanism is only supported on
+    HTTP/1.1. We also reimplemented our websocket client to use this new mechanism.
+
+ *  New: The `okhttp-zstd` module negotiates [Zstandard (zstd)][zstd] compression with servers that
+    support it. It integrates a new (unstable) [ZSTD-KMP] library, also from Square. Enable it like
+    this:
+
+    ```kotlin
+    val client = OkHttpClient.Builder()
+      .addInterceptor(CompressionInterceptor(Zstd, Gzip))
+      .build()
+    ```
+
+ *  New: Support the `QUERY` HTTP method. You will need to set the `Request.cacheUrlOverride`
+    property to cache calls made with this method. The `RequestBody.sha256()` may be helpful here;
+    use it to compose a cache URL from the query body.
+
+ *  New: Publish events when calls must wait to execute. `EventListener.dispatcherQueueStart()`
+    is invoked when a call starts waiting, and `dispatcherQueueEnd()` is invoked when it's done.
+
+ *  New: `Request.toCurl()` returns a copy-pasteable [curl] command consistent with Chrome’s and
+    Firefox’s ‘copy as cURL’ features.
+
+ *  New: Support [JPMS]. We replaced our `Automatic-Module-Name` metadata with proper
+    `module-info.java` files.
+
+ *  Fix: Recover gracefully when worker threads are interrupted. When we introduced fast fallback in
+    OkHttp 5.0, we started using background threads while connecting. Sadly that code didn't handle
+    interruptions well. This is now fixed.
+
+ *  Upgrade: [Kotlin 2.2.20][kotlin_2_2_20].
+ *  Upgrade: [Okio 3.16.0][okio_3_16_0].
+
+
 ## Version 5.1.0
 
 _2025-07-07_
@@ -642,11 +680,16 @@ release is the version name.
 
 [GraalVM]: https://www.graalvm.org/
 [Gradle module metadata]: https://docs.gradle.org/current/userguide/publishing_gradle_module_metadata.html
+[HTTP 101]: https://httpwg.org/specs/rfc9110.html#status.101
+[JPMS]: https://openjdk.org/projects/jigsaw/spec/
 [Ktor]: https://ktor.io/
 [Retrofit]: https://square.github.io/retrofit/
+[ZSTD-KMP]: https://github.com/square/zstd-kmp
+[androidx_startup]: https://developer.android.com/jetpack/androidx/releases/startup
 [annotation_1_9_1]: https://developer.android.com/jetpack/androidx/releases/annotation#annotation-1.9.1
 [assertk]: https://github.com/willowtreeapps/assertk
 [coroutines_1_10_2]: https://github.com/Kotlin/kotlinx.coroutines/releases/tag/1.10.2
+[curl]: https://curl.se/
 [graalvm]: https://www.graalvm.org/
 [graalvm_21]: https://www.graalvm.org/release-notes/21_0/
 [graalvm_22]: https://www.graalvm.org/release-notes/22_2/
@@ -660,12 +703,14 @@ release is the version name.
 [kotlin_1_9_23]: https://github.com/JetBrains/kotlin/releases/tag/v1.9.23
 [kotlin_2_1_21]: https://github.com/JetBrains/kotlin/releases/tag/v2.1.21
 [kotlin_2_2_0]: https://github.com/JetBrains/kotlin/releases/tag/v2.2.0
+[kotlin_2_2_20]: https://github.com/JetBrains/kotlin/releases/tag/v2.2.20
 [loom]: https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html
 [okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
 [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
 [okio_3_12_0]: https://square.github.io/okio/changelog/#version-3120
 [okio_3_13_0]: https://square.github.io/okio/changelog/#version-3130
 [okio_3_15_0]: https://square.github.io/okio/changelog/#version-3150
+[okio_3_16_0]: https://square.github.io/okio/changelog/#version-3160
 [okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
 [okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
 [okio_3_7_0]: https://square.github.io/okio/changelog/#version-370
@@ -673,3 +718,4 @@ release is the version name.
 [rfc_8305]: https://tools.ietf.org/html/rfc8305
 [startup_1_2_0]: https://developer.android.com/jetpack/androidx/releases/startup#1.2.0
 [uts46]: https://www.unicode.org/reports/tr46
+[zstd]: https://github.com/facebook/zstd
