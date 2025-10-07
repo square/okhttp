@@ -5,22 +5,14 @@ public final class okhttp3/logging/HttpLoggingInterceptor : okhttp3/Interceptor 
 	public fun <init> (Lokhttp3/logging/HttpLoggingInterceptor$Logger;)V
 	public synthetic fun <init> (Lokhttp3/logging/HttpLoggingInterceptor$Logger;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getLevel ()Lokhttp3/logging/HttpLoggingInterceptor$Level;
-	public final fun getRequestLevel ()Lkotlin/jvm/functions/Function1;
 	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
 	public final fun level (Lokhttp3/logging/HttpLoggingInterceptor$Level;)V
 	public final fun redactHeader (Ljava/lang/String;)V
 	public final fun redactQueryParams ([Ljava/lang/String;)V
 	public final fun setLevel (Lokhttp3/logging/HttpLoggingInterceptor$Level;)Lokhttp3/logging/HttpLoggingInterceptor;
-	public final fun setRequestLevel (Lkotlin/jvm/functions/Function1;)V
 }
 
 public final class okhttp3/logging/HttpLoggingInterceptor$Companion {
-}
-
-public final class okhttp3/logging/HttpLoggingInterceptor$Identity : okhttp3/CompressionInterceptor$DecompressionAlgorithm {
-	public static final field INSTANCE Lokhttp3/logging/HttpLoggingInterceptor$Identity;
-	public fun decompress (Lokio/BufferedSource;)Lokio/Source;
-	public fun getEncoding ()Ljava/lang/String;
 }
 
 public final class okhttp3/logging/HttpLoggingInterceptor$Level : java/lang/Enum {
@@ -28,7 +20,6 @@ public final class okhttp3/logging/HttpLoggingInterceptor$Level : java/lang/Enum
 	public static final field BODY Lokhttp3/logging/HttpLoggingInterceptor$Level;
 	public static final field HEADERS Lokhttp3/logging/HttpLoggingInterceptor$Level;
 	public static final field NONE Lokhttp3/logging/HttpLoggingInterceptor$Level;
-	public static final field STREAMING Lokhttp3/logging/HttpLoggingInterceptor$Level;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lokhttp3/logging/HttpLoggingInterceptor$Level;
 	public static fun values ()[Lokhttp3/logging/HttpLoggingInterceptor$Level;
