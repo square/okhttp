@@ -238,6 +238,8 @@ class Dispatcher() {
     for (i in 0 until effects.callsToExecute.size) {
       val call = effects.callsToExecute[i]
 
+      // If the newly-enqueued call is already out, skip its dispatcher queue events. We only
+      // publish those events for calls that have to wait.
       if (call === enqueuedCall) {
         callDispatcherQueueStart = false
       } else {
