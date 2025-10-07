@@ -170,26 +170,20 @@ class Dispatcher() {
 
     // Actions to take outside the synchronized block.
     class Effects(
-      val callsToExecute: List<AsyncCall> = listOf(),
-      val callsToReject: List<AsyncCall> = listOf(),
+      val callsToExecute: List<AsyncCall>,
       val idleCallbackToRun: Runnable?,
     )
 
     val effects =
       synchronized(this) {
-        var becameIdle = false
         if (finishedCall != null) {
           check(runningSyncCalls.remove(finishedCall)) { "Call wasn't in-flight!" }
-          becameIdle = runningSyncCalls.isEmpty()
         }
 
         if (finishedAsyncCall != null) {
           finishedAsyncCall.callsPerHost.decrementAndGet()
           check(runningAsyncCalls.remove(finishedAsyncCall)) { "Call wasn't in-flight!" }
-          becameIdle = runningAsyncCalls.isEmpty()
         }
-
-        val idleCallbackToRun = if (becameIdle) idleCallback else null
 
         if (enqueuedCall != null) {
           readyAsyncCalls.add(enqueuedCall)
@@ -202,9 +196,15 @@ class Dispatcher() {
           }
         }
 
+        val becameIdle =
+          (finishedCall != null || finishedAsyncCall != null) &&
+            (executorIsShutdown || runningAsyncCalls.isEmpty()) &&
+            runningSyncCalls.isEmpty()
+        val idleCallbackToRun = if (becameIdle) idleCallback else null
+
         if (executorIsShutdown) {
           return@synchronized Effects(
-            callsToReject =
+            callsToExecute =
               readyAsyncCalls
                 .toList()
                 .also { readyAsyncCalls.clear() },
@@ -233,12 +233,28 @@ class Dispatcher() {
         )
       }
 
-    for (i in 0 until effects.callsToReject.size) {
-      effects.callsToReject[i].failRejected()
-    }
+    var callDispatcherQueueStart = true
 
     for (i in 0 until effects.callsToExecute.size) {
-      effects.callsToExecute[i].executeOn(executorService)
+      val call = effects.callsToExecute[i]
+
+      // If the newly-enqueued call is already out, skip its dispatcher queue events. We only
+      // publish those events for calls that have to wait.
+      if (call === enqueuedCall) {
+        callDispatcherQueueStart = false
+      } else {
+        call.call.eventListener.dispatcherQueueEnd(call.call, this)
+      }
+
+      if (executorIsShutdown) {
+        call.failRejected()
+      } else {
+        call.executeOn(executorService)
+      }
+    }
+
+    if (callDispatcherQueueStart && enqueuedCall != null) {
+      enqueuedCall.call.eventListener.dispatcherQueueStart(enqueuedCall.call, this)
     }
 
     effects.idleCallbackToRun?.run()
