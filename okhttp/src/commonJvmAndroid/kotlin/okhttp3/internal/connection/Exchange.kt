@@ -235,8 +235,6 @@ class Exchange(
     private val contentLength: Long,
   ) : ForwardingSink(delegate) {
     private var completed = false
-
-    // TODO bytesReceived or bytesWritten?
     private var bytesReceived = 0L
     private var invokeStartEvent = isSocket
     private var closed = false
