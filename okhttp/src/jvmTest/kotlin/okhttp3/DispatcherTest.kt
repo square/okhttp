@@ -31,6 +31,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.assertFailsWith
+import okhttp3.CallEvent.CallFailed
+import okhttp3.CallEvent.CallStart
 import okhttp3.CallEvent.DispatcherQueueEnd
 import okhttp3.CallEvent.DispatcherQueueStart
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -356,7 +358,7 @@ class DispatcherTest {
     client.newCall(request).enqueue(callback)
     callback.await(request.url).assertFailure(InterruptedIOException::class.java)
     assertThat(listener.recordedEventTypes())
-      .containsExactly("CallStart", "CallFailed")
+      .containsExactly(CallStart::class, CallFailed::class)
   }
 
   @Test
@@ -370,7 +372,7 @@ class DispatcherTest {
     dispatcher.maxRequests = 2 // Trigger promotion.
     callback.await(request2.url).assertFailure(InterruptedIOException::class.java)
     assertThat(listener.recordedEventTypes())
-      .containsExactly("CallStart", "CallStart", "CallFailed")
+      .containsExactly(CallStart::class, CallStart::class, CallFailed::class)
   }
 
   @Test
@@ -384,7 +386,7 @@ class DispatcherTest {
     dispatcher.maxRequestsPerHost = 2 // Trigger promotion.
     callback.await(request2.url).assertFailure(InterruptedIOException::class.java)
     assertThat(listener.recordedEventTypes())
-      .containsExactly("CallStart", "CallStart", "CallFailed")
+      .containsExactly(CallStart::class, CallStart::class, CallFailed::class)
   }
 
   @Test
@@ -398,7 +400,7 @@ class DispatcherTest {
     executor.finishJob("http://a/1") // Trigger promotion.
     callback.await(request2.url).assertFailure(InterruptedIOException::class.java)
     assertThat(listener.recordedEventTypes())
-      .containsExactly("CallStart", "CallStart", "CallFailed")
+      .containsExactly(CallStart::class, CallStart::class, CallFailed::class)
   }
 
   private fun makeSynchronousCall(call: Call): Thread {

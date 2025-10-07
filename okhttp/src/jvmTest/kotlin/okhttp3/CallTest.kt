@@ -76,10 +76,26 @@ import mockwebserver3.SocketEffect.ShutdownConnection
 import mockwebserver3.SocketEffect.Stall
 import mockwebserver3.junit5.StartStop
 import okhttp3.CallEvent.CallEnd
+import okhttp3.CallEvent.CallFailed
+import okhttp3.CallEvent.CallStart
+import okhttp3.CallEvent.ConnectEnd
 import okhttp3.CallEvent.ConnectStart
 import okhttp3.CallEvent.ConnectionAcquired
 import okhttp3.CallEvent.ConnectionReleased
+import okhttp3.CallEvent.DnsEnd
+import okhttp3.CallEvent.DnsStart
+import okhttp3.CallEvent.FollowUpDecision
+import okhttp3.CallEvent.ProxySelectEnd
+import okhttp3.CallEvent.ProxySelectStart
+import okhttp3.CallEvent.RequestBodyEnd
+import okhttp3.CallEvent.RequestBodyStart
+import okhttp3.CallEvent.RequestHeadersEnd
+import okhttp3.CallEvent.RequestHeadersStart
+import okhttp3.CallEvent.ResponseBodyEnd
+import okhttp3.CallEvent.ResponseBodyStart
 import okhttp3.CallEvent.ResponseFailed
+import okhttp3.CallEvent.ResponseHeadersEnd
+import okhttp3.CallEvent.ResponseHeadersStart
 import okhttp3.CallEvent.RetryDecision
 import okhttp3.CertificatePinner.Companion.pin
 import okhttp3.Credentials.basic
@@ -1716,16 +1732,16 @@ open class CallTest {
     }
 
     assertThat(listener.recordedEventTypes()).containsExactly(
-      "CallStart",
-      "ConnectionAcquired",
-      "RequestHeadersStart",
-      "RequestHeadersEnd",
-      "RequestBodyStart",
-      "RequestBodyEnd",
-      "ResponseFailed",
-      "RetryDecision",
-      "ConnectionReleased",
-      "CallFailed",
+      CallStart::class,
+      ConnectionAcquired::class,
+      RequestHeadersStart::class,
+      RequestHeadersEnd::class,
+      RequestBodyStart::class,
+      RequestBodyEnd::class,
+      ResponseFailed::class,
+      RetryDecision::class,
+      ConnectionReleased::class,
+      CallFailed::class,
     )
     assertThat(listener.findEvent<RetryDecision>()).all {
       prop(RetryDecision::retry).isFalse()
@@ -1736,23 +1752,23 @@ open class CallTest {
     assertThat(response3.body.string()).isEqualTo("abc")
 
     assertThat(listener.recordedEventTypes()).containsExactly(
-      "CallStart",
-      "ProxySelectStart",
-      "ProxySelectEnd",
-      "DnsStart",
-      "DnsEnd",
-      "ConnectStart",
-      "ConnectEnd",
-      "ConnectionAcquired",
-      "RequestHeadersStart",
-      "RequestHeadersEnd",
-      "ResponseHeadersStart",
-      "ResponseHeadersEnd",
-      "FollowUpDecision",
-      "ResponseBodyStart",
-      "ResponseBodyEnd",
-      "ConnectionReleased",
-      "CallEnd",
+      CallStart::class,
+      ProxySelectStart::class,
+      ProxySelectEnd::class,
+      DnsStart::class,
+      DnsEnd::class,
+      ConnectStart::class,
+      ConnectEnd::class,
+      ConnectionAcquired::class,
+      RequestHeadersStart::class,
+      RequestHeadersEnd::class,
+      ResponseHeadersStart::class,
+      ResponseHeadersEnd::class,
+      FollowUpDecision::class,
+      ResponseBodyStart::class,
+      ResponseBodyEnd::class,
+      ConnectionReleased::class,
+      CallEnd::class,
     )
 
     val get = server.takeRequest()
