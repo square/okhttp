@@ -68,9 +68,9 @@ class RealConnectionPool internal constructor(
   fun connectionCount(): Int = connections.size
 
   /**
-   * Attempts to acquire a recycled connection to [address] for [connectionUser]. Returns the connection if it
+   * Attempts to acquire a recycled connection to [address] for [call]. Returns the connection if it
    * was acquired, or null if no connection was acquired. The acquired connection will also be
-   * given to [connectionUser] who may (for example) assign it to a [RealCall.connection].
+   * given to [call] who may (for example) assign it to a [RealCall.connection].
    *
    * This confirms the returned connection is healthy before returning it. If this encounters any
    * unhealthy connections in its search, this will clean them up.
@@ -79,10 +79,10 @@ class RealConnectionPool internal constructor(
    * This is used to coalesce related domains to the same HTTP/2 connection, such as `square.com`
    * and `square.ca`.
    */
-  fun callAcquirePooledConnection(
+  internal fun callAcquirePooledConnection(
     doExtensiveHealthChecks: Boolean,
     address: Address,
-    connectionUser: ConnectionUser,
+    call: RealCall,
     routes: List<Route>?,
     requireMultiplexed: Boolean,
   ): RealConnection? {
@@ -94,7 +94,7 @@ class RealConnectionPool internal constructor(
             requireMultiplexed && !connection.isMultiplexed -> false
             !connection.isEligible(address, routes) -> false
             else -> {
-              connectionUser.acquireConnectionNoEvents(connection)
+              call.acquireConnectionNoEvents(connection)
               true
             }
           }
@@ -111,7 +111,7 @@ class RealConnectionPool internal constructor(
         connection.withLock {
           noNewExchangesEvent = !connection.noNewExchanges
           connection.noNewExchanges = true
-          connectionUser.releaseConnectionNoEvents()
+          call.releaseConnectionNoEvents()
         }
       if (toClose != null) {
         toClose.closeQuietly()
