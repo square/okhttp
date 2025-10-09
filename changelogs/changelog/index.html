@@ -1019,6 +1019,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#version-521" class="md-nav__link">
+    <span class="md-ellipsis">
+      Version 5.2.1
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-520" class="md-nav__link">
     <span class="md-ellipsis">
       Version 5.2.0
@@ -1505,6 +1514,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#version-521" class="md-nav__link">
+    <span class="md-ellipsis">
+      Version 5.2.1
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-520" class="md-nav__link">
     <span class="md-ellipsis">
       Version 5.2.0
@@ -1703,6 +1721,18 @@
 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
 <h2 id="version-4x">Version 4.x<a class="headerlink" href="#version-4x" title="Permanent link">&para;</a></h2>
 <p>See <a href="https://square.github.io/okhttp/changelogs/changelog_4x/">4.x Change log</a> for the stable version changelogs.</p>
+<h2 id="version-521">Version 5.2.1<a class="headerlink" href="#version-521" title="Permanent link">&para;</a></h2>
+<p><em>2025-10-09</em></p>
+<ul>
+<li>
+<p>Fix: Don&rsquo;t crash when calling <code>Socket.shutdownOutput()</code> or <code>shutdownInput()</code> on an <code>SSLSocket</code>
+    on Android API 21 through 23. This method throws an <code>UnsupportedOperationException</code>, so we now
+    catch that and close the underlying stream instead.</p>
+</li>
+<li>
+<p>Upgrade: [Okio 3.16.1][okio_3_16_1].</p>
+</li>
+</ul>
 <h2 id="version-520">Version 5.2.0<a class="headerlink" href="#version-520" title="Permanent link">&para;</a></h2>
 <p><em>2025-10-07</em></p>
 <ul>
