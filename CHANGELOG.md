@@ -722,6 +722,7 @@ release is the version name.
 [okio_3_13_0]: https://square.github.io/okio/changelog/#version-3130
 [okio_3_15_0]: https://square.github.io/okio/changelog/#version-3150
 [okio_3_16_0]: https://square.github.io/okio/changelog/#version-3160
+[okio_3_16_1]: https://square.github.io/okio/changelog/#version-3161
 [okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
 [okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
 [okio_3_7_0]: https://square.github.io/okio/changelog/#version-370
