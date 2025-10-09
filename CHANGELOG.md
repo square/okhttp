@@ -5,6 +5,17 @@ Change Log
 
 See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
 
+## Version 5.2.1
+
+_2025-10-09_
+
+ *  Fix: Don't crash when calling `Socket.shutdownOutput()` or `shutdownInput()` on an `SSLSocket`
+    on Android API 21 through 23. This method throws an `UnsupportedOperationException`, so we now
+    catch that and close the underlying stream instead.
+
+ *  Upgrade: [Okio 3.16.1][okio_3_16_1].
+
+
 ## Version 5.2.0
 
 _2025-10-07_
@@ -711,6 +722,7 @@ release is the version name.
 [okio_3_13_0]: https://square.github.io/okio/changelog/#version-3130
 [okio_3_15_0]: https://square.github.io/okio/changelog/#version-3150
 [okio_3_16_0]: https://square.github.io/okio/changelog/#version-3160
+[okio_3_16_1]: https://square.github.io/okio/changelog/#version-3161
 [okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
 [okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
 [okio_3_7_0]: https://square.github.io/okio/changelog/#version-370
