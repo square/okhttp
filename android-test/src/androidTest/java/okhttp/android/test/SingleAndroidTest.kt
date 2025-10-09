@@ -38,12 +38,26 @@ class SingleAndroidTest {
       ).build()
 
   private val server =
-    MockWebServer().apply {
-      useHttps(handshakeCertificates.sslSocketFactory())
-    }
+    MockWebServer()
 
   @Test
-  fun testRequest() {
+  fun testHttpsRequest() {
+    server.useHttps(handshakeCertificates.sslSocketFactory())
+
+    server.enqueue(MockResponse())
+    server.start()
+
+    val request = Request.Builder().url(server.url("/")).build()
+
+    val response = client.newCall(request).execute()
+
+    response.use {
+      assertEquals(200, response.code)
+    }
+  }
+
+  @Test
+  fun testHttpRequest() {
     server.enqueue(MockResponse())
     server.start()
 
