@@ -132,7 +132,7 @@ class AndroidPlatform :
     }
 
   override fun getHandshakeServerNames(sslSocket: SSLSocket): List<String> {
-    // The superclass implementation requires APIs not available until API 24+.
+    // The superclass implementation requires APIs not available until API 25+.
     if (Build.VERSION.SDK_INT <= 24) return listOf()
     return super.getHandshakeServerNames(sslSocket)
   }
