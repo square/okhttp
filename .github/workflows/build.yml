@@ -501,6 +501,7 @@ jobs:
       matrix:
         api-level:
           - 21
+          - 23
           - 29
           - 34
 
