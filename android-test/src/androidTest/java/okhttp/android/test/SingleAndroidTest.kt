@@ -27,18 +27,20 @@ import org.junit.Test
  * This single Junit 4 test is our Android test suite on API 21-25.
  */
 class SingleAndroidTest {
-
   private val handshakeCertificates = localhost()
 
-  private var client: OkHttpClient = OkHttpClient.Builder()
-    .sslSocketFactory(
-      handshakeCertificates.sslSocketFactory(),
-      handshakeCertificates.trustManager,
-    ).build()
+  private var client: OkHttpClient =
+    OkHttpClient
+      .Builder()
+      .sslSocketFactory(
+        handshakeCertificates.sslSocketFactory(),
+        handshakeCertificates.trustManager,
+      ).build()
 
-  private val server = MockWebServer().apply {
-    useHttps(handshakeCertificates.sslSocketFactory())
-  }
+  private val server =
+    MockWebServer().apply {
+      useHttps(handshakeCertificates.sslSocketFactory())
+    }
 
   @Test
   fun testRequest() {
