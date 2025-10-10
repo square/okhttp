@@ -15,9 +15,11 @@
  */
 package okhttp.android.test
 
+import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.tls.internal.TlsUtil.localhost
@@ -35,7 +37,9 @@ class SingleAndroidTest {
       .sslSocketFactory(
         handshakeCertificates.sslSocketFactory(),
         handshakeCertificates.trustManager,
-      ).build()
+      )
+      .connectionPool(ConnectionPool(0, 1, TimeUnit.SECONDS))
+      .build()
 
   private val server =
     MockWebServer()
@@ -54,6 +58,10 @@ class SingleAndroidTest {
     response.use {
       assertEquals(200, response.code)
     }
+
+    while (client.connectionPool.connectionCount() > 0) {
+      Thread.sleep(1000)
+    }
   }
 
   @Test
@@ -67,6 +75,10 @@ class SingleAndroidTest {
 
     response.use {
       assertEquals(200, response.code)
+    }
+
+    while (client.connectionPool.connectionCount() > 0) {
+      Thread.sleep(1000)
     }
   }
 }
