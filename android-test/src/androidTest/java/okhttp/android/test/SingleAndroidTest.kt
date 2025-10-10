@@ -37,8 +37,7 @@ class SingleAndroidTest {
       .sslSocketFactory(
         handshakeCertificates.sslSocketFactory(),
         handshakeCertificates.trustManager,
-      )
-      .connectionPool(ConnectionPool(0, 1, TimeUnit.SECONDS))
+      ).connectionPool(ConnectionPool(0, 1, TimeUnit.SECONDS))
       .build()
 
   private val server =
