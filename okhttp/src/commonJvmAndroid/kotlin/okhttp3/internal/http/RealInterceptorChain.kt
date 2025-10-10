@@ -16,22 +16,31 @@
 package okhttp3.internal.http
 
 import java.io.IOException
+import java.net.Proxy
+import java.net.ProxySelector
 import java.util.concurrent.TimeUnit
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509TrustManager
 import okhttp3.Address
+import okhttp3.Authenticator
+import okhttp3.Cache
 import okhttp3.Call
 import okhttp3.CertificatePinner
 import okhttp3.Connection
+import okhttp3.ConnectionPool
+import okhttp3.CookieJar
 import okhttp3.Dns
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.checkDuration
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
+import okhttp3.internal.tls.CertificateChainCleaner
 
 /**
  * A concrete interceptor chain that carries the entire interceptor chain: all application
@@ -40,7 +49,7 @@ import okhttp3.internal.connection.RealCall
  * If the chain is for an application interceptor then [exchange] must be null. Otherwise it is for
  * a network interceptor and [exchange] must be non-null.
  */
-class RealInterceptorChain constructor(
+class RealInterceptorChain(
   internal val call: RealCall,
   private val interceptors: List<Interceptor>,
   private val index: Int,
@@ -49,8 +58,55 @@ class RealInterceptorChain constructor(
   internal val connectTimeoutMillis: Int,
   internal val readTimeoutMillis: Int,
   internal val writeTimeoutMillis: Int,
-  internal val clientOverrides: ClientOverrides?,
+  override val authenticator: Authenticator,
+  override val cache: Cache?,
+  override val certificateChainCleaner: CertificateChainCleaner?,
+  override val certificatePinner: CertificatePinner,
+  override val connectionPool: ConnectionPool,
+  override val cookieJar: CookieJar,
+  override val dns: Dns,
+  override val hostnameVerifier: HostnameVerifier,
+  override val proxy: Proxy?,
+  override val proxyAuthenticator: Authenticator,
+  override val proxySelector: ProxySelector,
+  override val retryOnConnectionFailure: Boolean,
+  override val socketFactory: SocketFactory,
+  override val sslSocketFactory: SSLSocketFactory,
+  override val x509TrustManager: X509TrustManager?,
 ) : Interceptor.Chain {
+  internal constructor(
+    call: RealCall,
+    interceptors: List<Interceptor>,
+    index: Int,
+    exchange: Nothing?,
+    request: Request,
+    client: OkHttpClient,
+  ) : this(
+    call,
+    interceptors,
+    index,
+    exchange,
+    request,
+    client.connectTimeoutMillis,
+    client.readTimeoutMillis,
+    client.writeTimeoutMillis,
+    client.authenticator,
+    client.cache,
+    client.certificateChainCleaner,
+    client.certificatePinner,
+    client.connectionPool,
+    client.cookieJar,
+    client.dns,
+    client.hostnameVerifier,
+    client.proxy,
+    client.proxyAuthenticator,
+    client.proxySelector,
+    client.retryOnConnectionFailure,
+    client.socketFactory,
+    client.sslSocketFactory,
+    client.x509TrustManager,
+  )
+
   private var calls: Int = 0
 
   internal fun copy(
@@ -60,7 +116,21 @@ class RealInterceptorChain constructor(
     connectTimeoutMillis: Int = this.connectTimeoutMillis,
     readTimeoutMillis: Int = this.readTimeoutMillis,
     writeTimeoutMillis: Int = this.writeTimeoutMillis,
-    clientOverrides: ClientOverrides? = this.clientOverrides,
+    authenticator: Authenticator = this.authenticator,
+    cache: Cache? = this.cache,
+    certificateChainCleaner: CertificateChainCleaner? = this.certificateChainCleaner,
+    certificatePinner: CertificatePinner = this.certificatePinner,
+    connectionPool: ConnectionPool = this.connectionPool,
+    cookieJar: CookieJar = this.cookieJar,
+    dns: Dns = this.dns,
+    hostnameVerifier: HostnameVerifier = this.hostnameVerifier,
+    proxy: Proxy? = this.proxy,
+    proxyAuthenticator: Authenticator = this.proxyAuthenticator,
+    proxySelector: ProxySelector = this.proxySelector,
+    retryOnConnectionFailure: Boolean = this.retryOnConnectionFailure,
+    socketFactory: SocketFactory = this.socketFactory,
+    sslSocketFactory: SSLSocketFactory = this.sslSocketFactory,
+    x509TrustManager: X509TrustManager? = this.x509TrustManager,
   ) = RealInterceptorChain(
     call,
     interceptors,
@@ -70,7 +140,21 @@ class RealInterceptorChain constructor(
     connectTimeoutMillis,
     readTimeoutMillis,
     writeTimeoutMillis,
-    clientOverrides,
+    authenticator,
+    cache,
+    certificateChainCleaner,
+    certificatePinner,
+    connectionPool,
+    cookieJar,
+    dns,
+    hostnameVerifier,
+    proxy,
+    proxyAuthenticator,
+    proxySelector,
+    retryOnConnectionFailure,
+    socketFactory,
+    sslSocketFactory,
+    x509TrustManager,
   )
 
   override fun connection(): Connection? = exchange?.connection
@@ -108,20 +192,94 @@ class RealInterceptorChain constructor(
     return copy(writeTimeoutMillis = checkDuration("writeTimeout", timeout.toLong(), unit))
   }
 
-  override fun withDns(dns: Dns?): Interceptor.Chain =
-    withClientOverrides {
-      copy(dns = dns)
-    }
+  override fun withDns(dns: Dns): Interceptor.Chain {
+    check(exchange == null) { "dns can't be adjusted in a network interceptor" }
 
-  override fun withSocketFactory(socketFactory: SocketFactory?): Interceptor.Chain =
-    withClientOverrides {
-      copy(socketFactory = socketFactory)
-    }
+    return copy(dns = dns)
+  }
 
-  private fun withClientOverrides(overrides: ClientOverrides.() -> ClientOverrides): Interceptor.Chain {
-    check(exchange == null) { "ClientOverrides can't be adjusted in a network interceptor" }
+  override fun withSocketFactory(socketFactory: SocketFactory): Interceptor.Chain {
+    check(exchange == null) { "socketFactory can't be adjusted in a network interceptor" }
 
-    return copy(clientOverrides = clientOverrides)
+    return copy(socketFactory = socketFactory)
+  }
+
+  override fun withRetryOnConnectionFailure(retryOnConnectionFailure: Boolean): Interceptor.Chain {
+    check(exchange == null) { "retryOnConnectionFailure can't be adjusted in a network interceptor" }
+
+    return copy(retryOnConnectionFailure = retryOnConnectionFailure)
+  }
+
+  override fun withAuthenticator(authenticator: Authenticator): Interceptor.Chain {
+    check(exchange == null) { "authenticator can't be adjusted in a network interceptor" }
+
+    return copy(authenticator = authenticator)
+  }
+
+  override fun withCookieJar(cookieJar: CookieJar): Interceptor.Chain {
+    check(exchange == null) { "cookieJar can't be adjusted in a network interceptor" }
+
+    return copy(cookieJar = cookieJar)
+  }
+
+  override fun withCache(cache: Cache): Interceptor.Chain {
+    check(exchange == null) { "cache can't be adjusted in a network interceptor" }
+
+    return copy(cache = cache)
+  }
+
+  override fun withProxy(proxy: Proxy): Interceptor.Chain {
+    check(exchange == null) { "proxy can't be adjusted in a network interceptor" }
+
+    return copy(proxy = proxy)
+  }
+
+  override fun withProxySelector(proxySelector: ProxySelector): Interceptor.Chain {
+    check(exchange == null) { "proxySelector can't be adjusted in a network interceptor" }
+
+    return copy(proxySelector = proxySelector)
+  }
+
+  override fun withProxyAuthenticator(proxyAuthenticator: Authenticator): Interceptor.Chain {
+    check(exchange == null) { "proxyAuthenticator can't be adjusted in a network interceptor" }
+
+    return copy(proxyAuthenticator = proxyAuthenticator)
+  }
+
+  override fun withSslSocketFactory(sslSocketFactory: SSLSocketFactory): Interceptor.Chain {
+    check(exchange == null) { "sslSocketFactory can't be adjusted in a network interceptor" }
+
+    return copy(sslSocketFactory = sslSocketFactory)
+  }
+
+  override fun withX509TrustManager(x509TrustManager: X509TrustManager): Interceptor.Chain {
+    check(exchange == null) { "x509TrustManager can't be adjusted in a network interceptor" }
+
+    return copy(x509TrustManager = x509TrustManager)
+  }
+
+  override fun withHostnameVerifier(hostnameVerifier: HostnameVerifier): Interceptor.Chain {
+    check(exchange == null) { "hostnameVerifier can't be adjusted in a network interceptor" }
+
+    return copy(hostnameVerifier = hostnameVerifier)
+  }
+
+  override fun withCertificatePinner(certificatePinner: CertificatePinner): Interceptor.Chain {
+    check(exchange == null) { "certificatePinner can't be adjusted in a network interceptor" }
+
+    return copy(certificatePinner = certificatePinner)
+  }
+
+  override fun withCertificateChainCleaner(certificateChainCleaner: CertificateChainCleaner): Interceptor.Chain {
+    check(exchange == null) { "certificateChainCleaner can't be adjusted in a network interceptor" }
+
+    return copy(certificateChainCleaner = certificateChainCleaner)
+  }
+
+  override fun withConnectionPool(connectionPool: ConnectionPool): Interceptor.Chain {
+    check(exchange == null) { "connectionPool can't be adjusted in a network interceptor" }
+
+    return copy(connectionPool = connectionPool)
   }
 
   override fun call(): Call = call
@@ -171,29 +329,24 @@ class RealInterceptorChain constructor(
     var useHostnameVerifier: HostnameVerifier? = null
     var useCertificatePinner: CertificatePinner? = null
     if (url.isHttps) {
-      useSslSocketFactory = call.client.sslSocketFactory
-      useHostnameVerifier = call.client.hostnameVerifier
-      useCertificatePinner = call.client.certificatePinner
+      useSslSocketFactory = this.sslSocketFactory
+      useHostnameVerifier = this.hostnameVerifier
+      useCertificatePinner = this.certificatePinner
     }
 
     return Address(
       uriHost = url.host,
       uriPort = url.port,
-      dns = clientOverrides?.dns ?: call.client.dns,
-      socketFactory = clientOverrides?.socketFactory ?: call.client.socketFactory,
+      dns = dns,
+      socketFactory = socketFactory,
       sslSocketFactory = useSslSocketFactory,
       hostnameVerifier = useHostnameVerifier,
       certificatePinner = useCertificatePinner,
-      proxyAuthenticator = call.client.proxyAuthenticator,
-      proxy = call.client.proxy,
+      proxyAuthenticator = proxyAuthenticator,
+      proxy = proxy,
       protocols = call.client.protocols,
       connectionSpecs = call.client.connectionSpecs,
-      proxySelector = call.client.proxySelector,
+      proxySelector = proxySelector,
     )
   }
-
-  data class ClientOverrides(
-    val dns: Dns? = null,
-    val socketFactory: SocketFactory? = null,
-  )
 }

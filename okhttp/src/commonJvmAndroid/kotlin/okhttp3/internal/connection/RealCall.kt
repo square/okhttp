@@ -198,10 +198,7 @@ class RealCall(
         index = 0,
         exchange = null,
         request = originalRequest,
-        connectTimeoutMillis = client.connectTimeoutMillis,
-        readTimeoutMillis = client.readTimeoutMillis,
-        writeTimeoutMillis = client.writeTimeoutMillis,
-        clientOverrides = null,
+        client = client,
       )
 
     var calledNoMoreExchanges = false
@@ -257,7 +254,7 @@ class RealCall(
           pingIntervalMillis = client.pingIntervalMillis,
           retryOnConnectionFailure = client.retryOnConnectionFailure,
           fastFallback = client.fastFallback,
-          address = client.address(request.url),
+          address = chain.address(request.url),
           routeDatabase = client.routeDatabase,
           call = this,
           request = request,

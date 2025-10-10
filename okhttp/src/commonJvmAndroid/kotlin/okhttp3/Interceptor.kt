@@ -16,8 +16,14 @@
 package okhttp3
 
 import java.io.IOException
+import java.net.Proxy
+import java.net.ProxySelector
 import java.util.concurrent.TimeUnit
 import javax.net.SocketFactory
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509TrustManager
+import okhttp3.internal.tls.CertificateChainCleaner
 
 /**
  * Observes, modifies, and potentially short-circuits requests going out and the corresponding
@@ -110,8 +116,64 @@ fun interface Interceptor {
       unit: TimeUnit,
     ): Chain
 
-    fun withDns(dns: Dns?): Chain
+    val dns: Dns
 
-    fun withSocketFactory(socketFactory: SocketFactory?): Chain
+    fun withDns(dns: Dns): Chain
+
+    val socketFactory: SocketFactory
+
+    fun withSocketFactory(socketFactory: SocketFactory): Chain
+
+    val retryOnConnectionFailure: Boolean
+
+    fun withRetryOnConnectionFailure(retryOnConnectionFailure: Boolean): Chain
+
+    val authenticator: Authenticator
+
+    fun withAuthenticator(authenticator: Authenticator): Chain
+
+    val cookieJar: CookieJar
+
+    fun withCookieJar(cookieJar: CookieJar): Chain
+
+    val cache: Cache?
+
+    fun withCache(cache: Cache): Chain
+
+    val proxy: Proxy?
+
+    fun withProxy(proxy: Proxy): Chain
+
+    val proxySelector: ProxySelector
+
+    fun withProxySelector(proxySelector: ProxySelector): Chain
+
+    val proxyAuthenticator: Authenticator
+
+    fun withProxyAuthenticator(proxyAuthenticator: Authenticator): Chain
+
+    val sslSocketFactory: SSLSocketFactory
+
+    fun withSslSocketFactory(sslSocketFactory: SSLSocketFactory): Chain
+
+    val x509TrustManager: X509TrustManager?
+
+    fun withX509TrustManager(x509TrustManager: X509TrustManager): Chain
+
+    val hostnameVerifier: HostnameVerifier
+
+    fun withHostnameVerifier(hostnameVerifier: HostnameVerifier): Chain
+
+    val certificatePinner: CertificatePinner
+
+    fun withCertificatePinner(certificatePinner: CertificatePinner): Chain
+
+    val certificateChainCleaner: CertificateChainCleaner?
+
+    fun withCertificateChainCleaner(certificateChainCleaner: CertificateChainCleaner): Chain
+
+    val connectionPool: ConnectionPool
+
+    fun withConnectionPool(connectionPool: ConnectionPool): Chain
   }
 }
