@@ -25,12 +25,32 @@ import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
+import okhttp3.CallEvent.CallEnd
+import okhttp3.CallEvent.CallStart
+import okhttp3.CallEvent.ConnectEnd
+import okhttp3.CallEvent.ConnectStart
+import okhttp3.CallEvent.ConnectionAcquired
+import okhttp3.CallEvent.ConnectionReleased
+import okhttp3.CallEvent.DnsEnd
+import okhttp3.CallEvent.DnsStart
+import okhttp3.CallEvent.FollowUpDecision
+import okhttp3.CallEvent.ProxySelectEnd
+import okhttp3.CallEvent.ProxySelectStart
+import okhttp3.CallEvent.RequestBodyEnd
+import okhttp3.CallEvent.RequestBodyStart
+import okhttp3.CallEvent.RequestHeadersEnd
+import okhttp3.CallEvent.RequestHeadersStart
+import okhttp3.CallEvent.ResponseBodyEnd
+import okhttp3.CallEvent.ResponseBodyStart
+import okhttp3.CallEvent.ResponseHeadersEnd
+import okhttp3.CallEvent.ResponseHeadersStart
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Protocol
 import okhttp3.RecordingEventListener
 import okhttp3.RecordingHostnameVerifier
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.duplex.MockSocketHandler
 import okhttp3.testing.PlatformRule
@@ -58,8 +78,7 @@ class HttpUpgradesTest {
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build()
 
-  @Test
-  fun upgrade() {
+  fun executeAndCheckUpgrade(request: Request) {
     val socketHandler =
       MockSocketHandler()
         .apply {
@@ -73,9 +92,8 @@ class HttpUpgradesTest {
     server.enqueue(socketHandler.upgradeResponse())
 
     client
-      .newCall(
-        upgradeRequest(),
-      ).execute()
+      .newCall(request)
+      .execute()
       .use { response ->
         assertThat(response.code).isEqualTo(HTTP_SWITCHING_PROTOCOLS)
         val socket = response.socket!!
@@ -96,6 +114,16 @@ class HttpUpgradesTest {
         }
         socketHandler.awaitSuccess()
       }
+  }
+
+  @Test
+  fun upgrade() {
+    executeAndCheckUpgrade(upgradeRequest())
+  }
+
+  @Test
+  fun upgradeWithRequestBody() {
+    executeAndCheckUpgrade(upgradeRequest().newBuilder().post(RequestBody.EMPTY).build())
   }
 
   @Test
@@ -120,23 +148,23 @@ class HttpUpgradesTest {
     }
     // Confirm there's no RequestBodyStart/RequestBodyEnd on failed upgrades.
     assertThat(listener.recordedEventTypes()).containsExactly(
-      "CallStart",
-      "ProxySelectStart",
-      "ProxySelectEnd",
-      "DnsStart",
-      "DnsEnd",
-      "ConnectStart",
-      "ConnectEnd",
-      "ConnectionAcquired",
-      "RequestHeadersStart",
-      "RequestHeadersEnd",
-      "ResponseHeadersStart",
-      "ResponseHeadersEnd",
-      "FollowUpDecision",
-      "ResponseBodyStart",
-      "ResponseBodyEnd",
-      "ConnectionReleased",
-      "CallEnd",
+      CallStart::class,
+      ProxySelectStart::class,
+      ProxySelectEnd::class,
+      DnsStart::class,
+      DnsEnd::class,
+      ConnectStart::class,
+      ConnectEnd::class,
+      ConnectionAcquired::class,
+      RequestHeadersStart::class,
+      RequestHeadersEnd::class,
+      ResponseHeadersStart::class,
+      ResponseHeadersEnd::class,
+      FollowUpDecision::class,
+      ResponseBodyStart::class,
+      ResponseBodyEnd::class,
+      ConnectionReleased::class,
+      CallEnd::class,
     )
   }
 
@@ -183,34 +211,61 @@ class HttpUpgradesTest {
   }
 
   @Test
-  fun upgradeEvents() {
+  fun upgradeEventsWithoutRequestBody() {
     upgrade()
 
     assertThat(listener.recordedEventTypes()).containsExactly(
-      "CallStart",
-      "ProxySelectStart",
-      "ProxySelectEnd",
-      "DnsStart",
-      "DnsEnd",
-      "ConnectStart",
-      "ConnectEnd",
-      "ConnectionAcquired",
-      "RequestHeadersStart",
-      "RequestHeadersEnd",
-      "ResponseHeadersStart",
-      "ResponseHeadersEnd",
-      "RequestBodyStart",
-      "FollowUpDecision",
-      "ResponseBodyStart",
-      "ResponseBodyEnd",
-      "RequestBodyEnd",
-      "ConnectionReleased",
-      "CallEnd",
+      CallStart::class,
+      ProxySelectStart::class,
+      ProxySelectEnd::class,
+      DnsStart::class,
+      DnsEnd::class,
+      ConnectStart::class,
+      ConnectEnd::class,
+      ConnectionAcquired::class,
+      RequestHeadersStart::class,
+      RequestHeadersEnd::class,
+      ResponseHeadersStart::class,
+      ResponseHeadersEnd::class,
+      FollowUpDecision::class,
+      RequestBodyStart::class,
+      ResponseBodyStart::class,
+      ResponseBodyEnd::class,
+      RequestBodyEnd::class,
+      ConnectionReleased::class,
+      CallEnd::class,
     )
   }
 
   @Test
-  fun upgradeRequestMustNotHaveABody() {
+  fun upgradeEventsWithRequestBody() {
+    upgradeWithRequestBody()
+
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      CallStart::class,
+      ProxySelectStart::class,
+      ProxySelectEnd::class,
+      DnsStart::class,
+      DnsEnd::class,
+      ConnectStart::class,
+      ConnectEnd::class,
+      ConnectionAcquired::class,
+      RequestHeadersStart::class,
+      RequestHeadersEnd::class,
+      ResponseHeadersStart::class,
+      ResponseHeadersEnd::class,
+      FollowUpDecision::class,
+      RequestBodyStart::class,
+      ResponseBodyStart::class,
+      ResponseBodyEnd::class,
+      RequestBodyEnd::class,
+      ConnectionReleased::class,
+      CallEnd::class,
+    )
+  }
+
+  @Test
+  fun upgradeRequestMustHaveAnEmptyBody() {
     val e =
       assertFailsWith<IllegalArgumentException> {
         Request
@@ -220,7 +275,7 @@ class HttpUpgradesTest {
           .post("Hello".toRequestBody())
           .build()
       }
-    assertThat(e).hasMessage("expected a null request body with 'Connection: upgrade'")
+    assertThat(e).hasMessage("expected a null or empty request body with 'Connection: upgrade'")
   }
 
   private fun enableTls(vararg protocols: Protocol) {

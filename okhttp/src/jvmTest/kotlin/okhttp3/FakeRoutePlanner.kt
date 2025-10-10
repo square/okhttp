@@ -28,7 +28,7 @@ class FakeRoutePlanner(
   val taskFaker: TaskFaker = factory.taskFaker,
 ) : RoutePlanner,
   Closeable {
-  val pool = factory.newConnectionPool(routePlanner = this)
+  val pool = factory.newConnectionPool()
   val events = LinkedBlockingDeque<String>()
   var canceled = false
   var autoGeneratePlans = false

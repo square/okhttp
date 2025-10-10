@@ -14,7 +14,7 @@ OkHttpClient client = new OkHttpClient.Builder()
 ```
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp-zstd:0.0.0")
+implementation("com.squareup.okhttp3:okhttp-zstd:5.2.1")
 ```
 
  [1]: https://github.com/facebook/zstd

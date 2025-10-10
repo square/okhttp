@@ -46,6 +46,10 @@ class Exchange(
   internal var isDuplex: Boolean = false
     private set
 
+  /** True if the request body should not be used, but the socket, instead. */
+  internal var isSocket: Boolean = false
+    private set
+
   /** True if there was an exception on the connection to the peer. */
   internal var hasFailure: Boolean = false
     private set
@@ -143,10 +147,9 @@ class Exchange(
   fun peekTrailers(): Headers? = codec.peekTrailers()
 
   fun upgradeToSocket(): Socket {
+    isSocket = true
     call.timeoutEarlyExit()
     (codec.carrier as RealConnection).useAsSocket()
-
-    eventListener.requestBodyStart(call)
 
     return object : Socket {
       override fun cancel() {
@@ -233,6 +236,7 @@ class Exchange(
   ) : ForwardingSink(delegate) {
     private var completed = false
     private var bytesReceived = 0L
+    private var invokeStartEvent = isSocket
     private var closed = false
 
     @Throws(IOException::class)
@@ -247,6 +251,10 @@ class Exchange(
         )
       }
       try {
+        if (invokeStartEvent) {
+          invokeStartEvent = false
+          eventListener.requestBodyStart(call)
+        }
         super.write(source, byteCount)
         this.bytesReceived += byteCount
       } catch (e: IOException) {

@@ -496,9 +496,12 @@ public abstract class okhttp3/EventListener {
 	public fun connectStart (Lokhttp3/Call;Ljava/net/InetSocketAddress;Ljava/net/Proxy;)V
 	public fun connectionAcquired (Lokhttp3/Call;Lokhttp3/Connection;)V
 	public fun connectionReleased (Lokhttp3/Call;Lokhttp3/Connection;)V
+	public fun dispatcherQueueEnd (Lokhttp3/Call;Lokhttp3/Dispatcher;)V
+	public fun dispatcherQueueStart (Lokhttp3/Call;Lokhttp3/Dispatcher;)V
 	public fun dnsEnd (Lokhttp3/Call;Ljava/lang/String;Ljava/util/List;)V
 	public fun dnsStart (Lokhttp3/Call;Ljava/lang/String;)V
 	public fun followUpDecision (Lokhttp3/Call;Lokhttp3/Response;Lokhttp3/Request;)V
+	public final fun plus (Lokhttp3/EventListener;)Lokhttp3/EventListener;
 	public fun proxySelectEnd (Lokhttp3/Call;Lokhttp3/HttpUrl;Ljava/util/List;)V
 	public fun proxySelectStart (Lokhttp3/Call;Lokhttp3/HttpUrl;)V
 	public fun requestBodyEnd (Lokhttp3/Call;J)V
@@ -1018,6 +1021,9 @@ public final class okhttp3/Request {
 	public final fun tag ()Ljava/lang/Object;
 	public final fun tag (Ljava/lang/Class;)Ljava/lang/Object;
 	public final fun tag (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+	public final fun toCurl ()Ljava/lang/String;
+	public final fun toCurl (Z)Ljava/lang/String;
+	public static synthetic fun toCurl$default (Lokhttp3/Request;ZILjava/lang/Object;)Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 	public final fun url ()Lokhttp3/HttpUrl;
 }
@@ -1073,6 +1079,7 @@ public abstract class okhttp3/RequestBody {
 	public static final fun create ([BLokhttp3/MediaType;II)Lokhttp3/RequestBody;
 	public fun isDuplex ()Z
 	public fun isOneShot ()Z
+	public final fun sha256 ()Lokio/ByteString;
 	public abstract fun writeTo (Lokio/BufferedSink;)V
 }
 

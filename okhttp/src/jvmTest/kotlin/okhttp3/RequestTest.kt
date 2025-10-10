@@ -34,6 +34,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
+import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
 import okio.GzipSource
 import okio.buffer
@@ -650,6 +651,207 @@ class RequestTest {
     }.also {
       assertThat(it).hasMessage("Content-Encoding already set: gzip")
     }
+  }
+
+  @Test
+  fun curlGet() {
+    val request =
+      Request
+        .Builder()
+        .url("https://example.com")
+        .header("Authorization", "Bearer abc123")
+        .build()
+
+    val curl = request.toCurl()
+    assertThat(curl)
+      .isEqualTo(
+        """
+        |curl 'https://example.com/' \
+        |  -H 'Authorization: Bearer abc123'
+        """.trimMargin(),
+      )
+  }
+
+  @Test
+  fun curlPostWithBody() {
+    val body = "{\"key\":\"value\"}".toRequestBody("application/json".toMediaType())
+
+    val request =
+      Request
+        .Builder()
+        .url("https://api.example.com/data")
+        .post(body)
+        .addHeader("Authorization", "Bearer abc123")
+        .build()
+
+    assertThat(request.toCurl())
+      .isEqualTo(
+        """
+        |curl 'https://api.example.com/data' \
+        |  -H 'Authorization: Bearer abc123' \
+        |  -H 'Content-Type: application/json; charset=utf-8' \
+        |  --data '{"key":"value"}'
+        """.trimMargin(),
+      )
+  }
+
+  @Test
+  fun bodyContentTypeTakesPrecedence() {
+    val body = "{\"key\":\"value\"}".toRequestBody("application/json".toMediaType())
+
+    val request =
+      Request
+        .Builder()
+        .url("https://api.example.com/data")
+        .post(body)
+        .addHeader("Content-Type", "text/plain")
+        .build()
+
+    assertThat(request.toCurl())
+      .isEqualTo(
+        """
+        |curl 'https://api.example.com/data' \
+        |  -H 'Content-Type: application/json; charset=utf-8' \
+        |  --data '{"key":"value"}'
+        """.trimMargin(),
+      )
+  }
+
+  @Test
+  fun requestContentTypeIsFallback() {
+    val body = "{\"key\":\"value\"}".toRequestBody(contentType = null)
+
+    val request =
+      Request
+        .Builder()
+        .url("https://api.example.com/data")
+        .post(body)
+        .addHeader("Content-Type", "text/plain")
+        .build()
+
+    assertThat(request.toCurl())
+      .isEqualTo(
+        """
+        |curl 'https://api.example.com/data' \
+        |  -H 'Content-Type: text/plain' \
+        |  --data '{"key":"value"}'
+        """.trimMargin(),
+      )
+  }
+
+  /** Put is not the default method so `-X 'PUT'` is included. */
+  @Test
+  fun curlPutWithBody() {
+    val body = "{\"key\":\"value\"}".toRequestBody("application/json".toMediaType())
+
+    val request =
+      Request
+        .Builder()
+        .url("https://api.example.com/data")
+        .put(body)
+        .addHeader("Authorization", "Bearer abc123")
+        .build()
+
+    assertThat(request.toCurl())
+      .isEqualTo(
+        """
+        |curl 'https://api.example.com/data' \
+        |  -X 'PUT' \
+        |  -H 'Authorization: Bearer abc123' \
+        |  -H 'Content-Type: application/json; charset=utf-8' \
+        |  --data '{"key":"value"}'
+        """.trimMargin(),
+      )
+  }
+
+  @Test
+  fun curlPostWithComplexBody() {
+    val jsonBody =
+      """
+      |{
+      |  "user": {
+      |    "id": 123,
+      |    "name": "Tim O'Reilly"
+      |  },
+      |  "roles": ["admin", "editor"],
+      |  "active": true
+      |}
+      |
+      """.trimMargin()
+
+    val body = jsonBody.toRequestBody("application/json".toMediaType())
+
+    val request =
+      Request
+        .Builder()
+        .url("https://api.example.com/users")
+        .post(body)
+        .addHeader("Authorization", "Bearer xyz789")
+        .build()
+
+    assertThat(request.toCurl())
+      .isEqualTo(
+        """
+        |curl 'https://api.example.com/users' \
+        |  -H 'Authorization: Bearer xyz789' \
+        |  -H 'Content-Type: application/json; charset=utf-8' \
+        |  --data '{
+        |  "user": {
+        |    "id": 123,
+        |    "name": "Tim O'\''Reilly"
+        |  },
+        |  "roles": ["admin", "editor"],
+        |  "active": true
+        |}
+        |'
+        """.trimMargin(),
+      )
+  }
+
+  @Test
+  fun curlPostWithBinaryBody() {
+    val binaryData = "00010203".decodeHex()
+    val body = binaryData.toRequestBody("application/octet-stream".toMediaType())
+
+    val request =
+      Request
+        .Builder()
+        .url("https://api.example.com/upload")
+        .post(body)
+        .build()
+
+    val curl = request.toCurl()
+    assertThat(curl)
+      .isEqualTo(
+        """
+        |curl 'https://api.example.com/upload' \
+        |  -H 'Content-Type: application/octet-stream' \
+        |  --data-binary '00010203'
+        """.trimMargin(),
+      )
+  }
+
+  @Test
+  fun curlPostWithBinaryBodyOmitted() {
+    val binaryData = "1020".decodeHex()
+    val body = binaryData.toRequestBody("application/octet-stream".toMediaType())
+
+    val request =
+      Request
+        .Builder()
+        .url("https://api.example.com/upload")
+        .post(body)
+        .build()
+
+    val curl = request.toCurl(includeBody = false)
+    assertThat(curl)
+      .isEqualTo(
+        """
+        |curl 'https://api.example.com/upload' \
+        |  -X 'POST' \
+        |  -H 'Content-Type: application/octet-stream'
+        """.trimMargin(),
+      )
   }
 
   private fun bodyToHex(body: RequestBody): String {

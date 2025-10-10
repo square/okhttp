@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.logging.internal
+package okhttp3.internal
 
 import java.io.EOFException
-import okio.Buffer
+import okio.BufferedSource
 
 /**
- * Returns true if the body in question probably contains human readable text. Uses a small
- * sample of code points to detect unicode control characters commonly used in binary file
+ * Returns true if the body in question probably contains human-readable text. Uses a small
+ * sample of code points to detect Unicode control characters commonly used in binary file
  * signatures.
+ *
+ * @param codePointLimit the number of code points to read in order to make a decision.
  */
-fun Buffer.isProbablyUtf8(): Boolean {
+internal fun BufferedSource.isProbablyUtf8(codePointLimit: Long = Long.MAX_VALUE): Boolean {
   try {
-    val prefix = Buffer()
-    val byteCount = size.coerceAtMost(64)
-    copyTo(prefix, 0, byteCount)
-    for (i in 0 until 16) {
-      if (prefix.exhausted()) {
+    val peek = peek()
+    for (i in 0 until codePointLimit) {
+      if (peek.exhausted()) {
         break
       }
-      val codePoint = prefix.readUtf8CodePoint()
+      val codePoint = peek.readUtf8CodePoint()
       if (Character.isISOControl(codePoint) && !Character.isWhitespace(codePoint)) {
         return false
       }

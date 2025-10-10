@@ -16,7 +16,6 @@
 package okhttp3
 
 import java.util.ArrayDeque
-import java.util.Deque
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
@@ -122,17 +121,7 @@ class Dispatcher() {
   }
 
   internal fun enqueue(call: AsyncCall) {
-    synchronized(this) {
-      readyAsyncCalls.add(call)
-
-      // Mutate the AsyncCall so that it shares the AtomicInteger of an existing running call to
-      // the same host.
-      if (!call.call.forWebSocket) {
-        val existingCall = findExistingCallWithHost(call.host)
-        if (existingCall != null) call.reuseCallsPerHostFrom(existingCall)
-      }
-    }
-    promoteAndExecute()
+    promoteAndExecute(enqueuedCall = call)
   }
 
   private fun findExistingCallWithHost(host: String): AsyncCall? {
@@ -167,52 +156,108 @@ class Dispatcher() {
    * executor service. Must not be called with synchronization because executing calls can call
    * into user code.
    *
-   * @return true if the dispatcher is currently running calls.
+   * @param enqueuedCall a call to enqueue in the synchronized block
+   * @param finishedCall a call to finish in the synchronized block
+   * @param finishedAsyncCall an async call to finish in the synchronized block
    */
-  private fun promoteAndExecute(): Boolean {
+  private fun promoteAndExecute(
+    enqueuedCall: AsyncCall? = null,
+    finishedCall: RealCall? = null,
+    finishedAsyncCall: AsyncCall? = null,
+  ) {
     assertLockNotHeld()
+    val executorIsShutdown = executorService.isShutdown
 
-    val executableCalls = mutableListOf<AsyncCall>()
-    val isRunning: Boolean
-    synchronized(this) {
-      val i = readyAsyncCalls.iterator()
-      while (i.hasNext()) {
-        val asyncCall = i.next()
+    // Actions to take outside the synchronized block.
+    class Effects(
+      val callsToExecute: List<AsyncCall>,
+      val idleCallbackToRun: Runnable?,
+    )
 
-        if (runningAsyncCalls.size >= this.maxRequests) break // Max capacity.
-        if (asyncCall.callsPerHost.get() >= this.maxRequestsPerHost) continue // Host max capacity.
-
-        i.remove()
-        asyncCall.callsPerHost.incrementAndGet()
-        executableCalls.add(asyncCall)
-        runningAsyncCalls.add(asyncCall)
-      }
-      isRunning = runningCallsCount() > 0
-    }
-
-    // Avoid resubmitting if we can't logically progress
-    // particularly because RealCall handles a RejectedExecutionException
-    // by executing on the same thread.
-    if (executorService.isShutdown) {
-      for (i in 0 until executableCalls.size) {
-        val asyncCall = executableCalls[i]
-        asyncCall.callsPerHost.decrementAndGet()
-
-        synchronized(this) {
-          runningAsyncCalls.remove(asyncCall)
+    val effects =
+      synchronized(this) {
+        if (finishedCall != null) {
+          check(runningSyncCalls.remove(finishedCall)) { "Call wasn't in-flight!" }
         }
 
-        asyncCall.failRejected()
+        if (finishedAsyncCall != null) {
+          finishedAsyncCall.callsPerHost.decrementAndGet()
+          check(runningAsyncCalls.remove(finishedAsyncCall)) { "Call wasn't in-flight!" }
+        }
+
+        if (enqueuedCall != null) {
+          readyAsyncCalls.add(enqueuedCall)
+
+          // Mutate the AsyncCall so that it shares the AtomicInteger of an existing running call to
+          // the same host.
+          if (!enqueuedCall.call.forWebSocket) {
+            val existingCall = findExistingCallWithHost(enqueuedCall.host)
+            if (existingCall != null) enqueuedCall.reuseCallsPerHostFrom(existingCall)
+          }
+        }
+
+        val becameIdle =
+          (finishedCall != null || finishedAsyncCall != null) &&
+            (executorIsShutdown || runningAsyncCalls.isEmpty()) &&
+            runningSyncCalls.isEmpty()
+        val idleCallbackToRun = if (becameIdle) idleCallback else null
+
+        if (executorIsShutdown) {
+          return@synchronized Effects(
+            callsToExecute =
+              readyAsyncCalls
+                .toList()
+                .also { readyAsyncCalls.clear() },
+            idleCallbackToRun = idleCallbackToRun,
+          )
+        }
+
+        val callsToExecute = mutableListOf<AsyncCall>()
+        val i = readyAsyncCalls.iterator()
+        while (i.hasNext()) {
+          val asyncCall = i.next()
+
+          if (runningAsyncCalls.size >= this.maxRequests) break // Max capacity.
+          if (asyncCall.callsPerHost.get() >= this.maxRequestsPerHost) continue // Host max capacity.
+
+          i.remove()
+
+          asyncCall.callsPerHost.incrementAndGet()
+          callsToExecute.add(asyncCall)
+          runningAsyncCalls.add(asyncCall)
+        }
+
+        return@synchronized Effects(
+          callsToExecute = callsToExecute,
+          idleCallbackToRun = idleCallbackToRun,
+        )
       }
-      idleCallback?.run()
-    } else {
-      for (i in 0 until executableCalls.size) {
-        val asyncCall = executableCalls[i]
-        asyncCall.executeOn(executorService)
+
+    var callDispatcherQueueStart = true
+
+    for (i in 0 until effects.callsToExecute.size) {
+      val call = effects.callsToExecute[i]
+
+      // If the newly-enqueued call is already out, skip its dispatcher queue events. We only
+      // publish those events for calls that have to wait.
+      if (call === enqueuedCall) {
+        callDispatcherQueueStart = false
+      } else {
+        call.call.eventListener.dispatcherQueueEnd(call.call, this)
+      }
+
+      if (executorIsShutdown) {
+        call.failRejected()
+      } else {
+        call.executeOn(executorService)
       }
     }
 
-    return isRunning
+    if (callDispatcherQueueStart && enqueuedCall != null) {
+      enqueuedCall.call.eventListener.dispatcherQueueStart(enqueuedCall.call, this)
+    }
+
+    effects.idleCallbackToRun?.run()
   }
 
   /** Used by [Call.execute] to signal it is in-flight. */
@@ -221,30 +266,12 @@ class Dispatcher() {
 
   /** Used by [AsyncCall.run] to signal completion. */
   internal fun finished(call: AsyncCall) {
-    call.callsPerHost.decrementAndGet()
-    finished(runningAsyncCalls, call)
+    promoteAndExecute(finishedAsyncCall = call)
   }
 
   /** Used by [Call.execute] to signal completion. */
   internal fun finished(call: RealCall) {
-    finished(runningSyncCalls, call)
-  }
-
-  private fun <T> finished(
-    calls: Deque<T>,
-    call: T,
-  ) {
-    val idleCallback: Runnable?
-    synchronized(this) {
-      if (!calls.remove(call)) throw AssertionError("Call wasn't in-flight!")
-      idleCallback = this.idleCallback
-    }
-
-    val isRunning = promoteAndExecute()
-
-    if (!isRunning && idleCallback != null) {
-      idleCallback.run()
-    }
+    promoteAndExecute(finishedCall = call)
   }
 
   /** Returns a snapshot of the calls currently awaiting execution. */

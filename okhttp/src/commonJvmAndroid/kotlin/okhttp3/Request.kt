@@ -22,7 +22,9 @@ import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.http.GzipRequestBody
 import okhttp3.internal.http.HttpMethod
+import okhttp3.internal.isProbablyUtf8
 import okhttp3.internal.isSensitiveHeader
+import okio.Buffer
 
 /**
  * An HTTP request. Instances of this class are immutable if their [body] is null or itself
@@ -82,8 +84,10 @@ class Request internal constructor(
 
   init {
     val connectionHeader = headers["Connection"]
-    require(body == null || !"upgrade".equals(connectionHeader, ignoreCase = true)) {
-      "expected a null request body with 'Connection: upgrade'"
+    if ("upgrade".equals(connectionHeader, ignoreCase = true)) {
+      require(body == null || body.contentLength() == 0L) {
+        "expected a null or empty request body with 'Connection: upgrade'"
+      }
     }
   }
 
@@ -326,11 +330,7 @@ class Request internal constructor(
      * A typical use case is to hash the request body:
      *
      * ```kotlin
-     *     val hashingSink = HashingSink.md5(blackholeSink())
-     *     hashingSink.buffer().use {
-     *       body.writeTo(it)
-     *     }
-     *     val hash = hashingSink.hash.hex()
+     *     val hash = body.sha256().hex()
      *     val query = Request
      *         .Builder()
      *         .query(body)
@@ -456,4 +456,64 @@ class Request internal constructor(
 
     open fun build(): Request = Request(this)
   }
+
+  /**
+   * Returns a cURL command equivalent to this request, useful for debugging and reproducing
+   * requests.
+   *
+   * This includes the HTTP method, headers, request body (if present), and URL.
+   *
+   * Example:
+   *
+   * ```
+   * curl 'https://example.com/api' \
+   *   -X PUT \
+   *   -H 'Authorization: Bearer token' \
+   *   --data '{\"key\":\"value\"}'
+   * ```
+   *
+   * **Note:** This will consume the request body. This may have side effects if the [RequestBody]
+   * is streaming or can be consumed only once.
+   */
+  @JvmOverloads
+  fun toCurl(includeBody: Boolean = true): String =
+    buildString {
+      append("curl ${url.toString().shellEscape()}")
+
+      val contentType = body?.contentType()?.toString()
+
+      // Add method if not the default.
+      val defaultMethod =
+        when {
+          includeBody && body != null -> "POST"
+          else -> "GET"
+        }
+      if (method != defaultMethod) {
+        append(" \\\n  -X ${method.shellEscape()}")
+      }
+
+      // Append headers.
+      for ((name, value) in headers) {
+        if (contentType != null && name.equals("Content-Type", ignoreCase = true)) continue
+        append(" \\\n  -H ${"$name: $value".shellEscape()}")
+      }
+
+      if (contentType != null) {
+        append(" \\\n  -H ${"Content-Type: $contentType".shellEscape()}")
+      }
+
+      // Append body if present.
+      if (includeBody && body != null) {
+        val bodyBuffer = Buffer()
+        body.writeTo(bodyBuffer)
+
+        if (bodyBuffer.isProbablyUtf8()) {
+          append(" \\\n  --data ${bodyBuffer.readUtf8().shellEscape()}")
+        } else {
+          append(" \\\n  --data-binary ${bodyBuffer.readByteString().hex().shellEscape()}")
+        }
+      }
+    }
+
+  private fun String.shellEscape(): String = "'${replace("'", "'\\''")}'"
 }
