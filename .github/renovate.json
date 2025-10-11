@@ -10,6 +10,11 @@
   "labels": [
     "renovate"
   ],
+  "ignoreDeps": [
+    "com.squareup.okhttp3:okhttp",
+    "com.squareup.okhttp3:okhttp-tls",
+    "com.squareup.okhttp3:mockwebserver"
+  ],
   "packageRules": [
     {
       "groupName": "bnd",
@@ -40,11 +45,19 @@
       "extends": [
         "monorepo:junit5"
       ],
+      "allowedVersions": "<=6.0"
       "matchUpdateTypes": [
         "digest",
         "patch",
         "minor"
       ]
     },
+    {
+      "matchPackageNames": [
+        "org.junit-pioneer:junit-pioneer"
+      ],
+      "allowedVersions": "<2.0.0",
+      "description": "JDK 11 requirement"
+    }
   ]
 }
