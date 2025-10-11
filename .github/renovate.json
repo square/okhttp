@@ -40,11 +40,15 @@
       "description": "JDK 11 requirement"
     },
     {
-      "matchPackageNames": [
-        "org.junit-pioneer:junit-pioneer"
+      "extends": [
+        "monorepo:junit-framework"
       ],
-      "allowedVersions": "<2.0.0",
-      "description": "JDK 11 requirement"
-    }
+      "groupName": "junit-framework monorepo",
+      "matchUpdateTypes": [
+        "digest",
+        "patch",
+        "minor"
+      ]
+    },
   ]
 }
