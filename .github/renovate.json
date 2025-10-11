@@ -45,7 +45,6 @@
       "extends": [
         "monorepo:junit-framework"
       ],
-      "groupName": "junit-framework monorepo",
       "matchUpdateTypes": [
         "digest",
         "patch",
