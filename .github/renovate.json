@@ -2,16 +2,13 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
+    "group:monorepos",
+    "group:recommended",
     ":dependencyDashboard"
   ],
   "semanticCommits": "disabled",
   "labels": [
     "renovate"
-  ],
-  "ignoreDeps": [
-    "com.squareup.okhttp3:okhttp",
-    "com.squareup.okhttp3:okhttp-tls",
-    "com.squareup.okhttp3:mockwebserver"
   ],
   "packageRules": [
     {
@@ -33,18 +30,21 @@
       "allowedVersions": "<=2.6"
     },
     {
-      "matchPackageNames": [
-        "org.eclipse.jetty:jetty-client"
+      "extends": [
+        "monorepo:jetty"
       ],
       "allowedVersions": "<10.0",
       "description": "JDK 11 requirement"
     },
     {
-      "matchPackageNames": [
-        "org.junit-pioneer:junit-pioneer"
+      "extends": [
+        "monorepo:junit5"
       ],
-      "allowedVersions": "<2.0.0",
-      "description": "JDK 11 requirement"
-    }
+      "matchUpdateTypes": [
+        "digest",
+        "patch",
+        "minor"
+      ]
+    },
   ]
 }
