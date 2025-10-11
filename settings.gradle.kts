@@ -52,12 +52,13 @@ include(":samples:static-server")
 include(":samples:tlssurvey")
 include(":samples:unixdomainsockets")
 include(":container-tests")
+include(":module-tests")
 
 project(":okhttp-logging-interceptor").name = "logging-interceptor"
 
 val androidHome = System.getenv("ANDROID_HOME")
 val localProperties = Properties().apply {
-  val file = File("local.properties")
+  val file = rootProject.projectDir.resolve("local.properties")
   if (file.exists()) {
     load(file.inputStream())
   }

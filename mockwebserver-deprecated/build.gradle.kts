@@ -8,11 +8,7 @@ plugins {
   id("binary-compatibility-validator")
 }
 
-tasks.jar {
-  manifest {
-    attributes("Automatic-Module-Name" to "okhttp3.mockwebserver")
-  }
-}
+project.applyJavaModules("okhttp3.mockwebserver")
 
 dependencies {
   "friendsApi"(projects.okhttp)
