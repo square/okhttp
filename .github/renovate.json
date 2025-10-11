@@ -45,12 +45,7 @@
       "extends": [
         "monorepo:junit5"
       ],
-      "allowedVersions": "<=6.0",
-      "matchUpdateTypes": [
-        "digest",
-        "patch",
-        "minor"
-      ]
+      "allowedVersions": "<=5.14.0",
     },
     {
       "matchPackageNames": [
