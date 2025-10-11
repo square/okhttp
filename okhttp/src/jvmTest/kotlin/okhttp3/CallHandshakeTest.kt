@@ -17,6 +17,7 @@ package okhttp3
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
 import assertk.assertions.isIn
 import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
@@ -110,6 +111,7 @@ class CallHandshakeTest {
     assertThat(handshakeEnabledCipherSuites).containsExactly(
       *expectedConnectionCipherSuites(client).toTypedArray(),
     )
+    assertThat(handshake.tlsVersion).isEqualTo(TlsVersion.TLS_1_2)
   }
 
   @Test
@@ -140,6 +142,7 @@ class CallHandshakeTest {
     assertThat(handshakeEnabledCipherSuites).containsExactly(
       *expectedConnectionCipherSuites(client).toTypedArray(),
     )
+    assertThat(handshake.tlsVersion).isEqualTo(TlsVersion.TLS_1_2)
   }
 
   @Test
@@ -170,6 +173,7 @@ class CallHandshakeTest {
     assertThat(handshakeEnabledCipherSuites).containsExactly(
       *expectedConnectionCipherSuites(client).toTypedArray(),
     )
+    assertThat(handshake.tlsVersion).isEqualTo(TlsVersion.TLS_1_3)
   }
 
   @Test

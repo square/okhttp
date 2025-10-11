@@ -51,7 +51,7 @@ configure<SpotlessExtension> {
 
 allprojects {
   group = "com.squareup.okhttp3"
-  version = "5.2.0-SNAPSHOT"
+  version = "5.3.0-SNAPSHOT"
 
   repositories {
     mavenCentral()
@@ -91,6 +91,7 @@ subprojects {
   if (project.name == "regression-test") return@subprojects
   if (project.name == "android-test-app") return@subprojects
   if (project.name == "container-tests") return@subprojects
+  if (project.name == "module-tests") return@subprojects
 
   apply(plugin = "checkstyle")
   apply(plugin = "ru.vyarus.animalsniffer")
@@ -243,8 +244,13 @@ subprojects {
   }
 
   tasks.withType<JavaCompile> {
-    sourceCompatibility = projectJavaVersion.toString()
-    targetCompatibility = projectJavaVersion.toString()
+    if (name.contains("Java9")) {
+      sourceCompatibility = "9"
+      targetCompatibility = "9"
+    } else {
+      sourceCompatibility = projectJavaVersion.toString()
+      targetCompatibility = projectJavaVersion.toString()
+    }
   }
 }
 

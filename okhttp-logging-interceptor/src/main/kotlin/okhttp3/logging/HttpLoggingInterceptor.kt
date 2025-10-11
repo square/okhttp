@@ -27,8 +27,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.internal.charsetOrUtf8
 import okhttp3.internal.http.promisesBody
+import okhttp3.internal.isProbablyUtf8
 import okhttp3.internal.platform.Platform
-import okhttp3.logging.internal.isProbablyUtf8
 import okio.Buffer
 import okio.GzipSource
 
@@ -229,7 +229,7 @@ class HttpLoggingInterceptor
           val charset: Charset = requestBody.contentType().charsetOrUtf8()
 
           logger.log("")
-          if (!buffer.isProbablyUtf8()) {
+          if (!buffer.isProbablyUtf8(16L)) {
             logger.log(
               "--> END ${request.method} (binary ${requestBody.contentLength()}-byte body omitted)",
             )
@@ -303,7 +303,7 @@ class HttpLoggingInterceptor
 
           val charset: Charset = responseBody.contentType().charsetOrUtf8()
 
-          if (!buffer.isProbablyUtf8()) {
+          if (!buffer.isProbablyUtf8(16L)) {
             logger.log("")
             logger.log("<-- END HTTP (${totalMs}ms, binary ${buffer.size}-byte body omitted)")
             return response

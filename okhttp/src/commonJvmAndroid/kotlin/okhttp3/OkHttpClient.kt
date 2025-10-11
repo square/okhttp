@@ -296,16 +296,7 @@ open class OkHttpClient internal constructor(
 
   @get:JvmName("connectionPool")
   val connectionPool: ConnectionPool =
-    builder.connectionPool ?: ConnectionPool(
-      readTimeoutMillis = readTimeoutMillis,
-      writeTimeoutMillis = writeTimeoutMillis,
-      socketConnectTimeoutMillis = connectTimeoutMillis,
-      socketReadTimeoutMillis = readTimeoutMillis,
-      pingIntervalMillis = pingIntervalMillis,
-      retryOnConnectionFailure = retryOnConnectionFailure,
-      fastFallback = fastFallback,
-      routeDatabase = routeDatabase,
-    ).also {
+    builder.connectionPool ?: ConnectionPool().also {
       // Cache the pool in the builder so that it will be shared with other clients
       builder.connectionPool = it
     }
@@ -324,14 +315,14 @@ open class OkHttpClient internal constructor(
       this.x509TrustManager = builder.x509TrustManagerOrNull!!
       this.certificatePinner =
         builder.certificatePinner
-          .withCertificateChainCleaner(certificateChainCleaner!!)
+          .withCertificateChainCleaner(certificateChainCleaner)
     } else {
       this.x509TrustManager = Platform.get().platformTrustManager()
-      this.sslSocketFactoryOrNull = Platform.get().newSslSocketFactory(x509TrustManager!!)
-      this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
+      this.sslSocketFactoryOrNull = Platform.get().newSslSocketFactory(x509TrustManager)
+      this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager)
       this.certificatePinner =
         builder.certificatePinner
-          .withCertificateChainCleaner(certificateChainCleaner!!)
+          .withCertificateChainCleaner(certificateChainCleaner)
     }
 
     verifyClientState()

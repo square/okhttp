@@ -38,6 +38,13 @@ import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
+import okhttp3.CallEvent.CallStart
+import okhttp3.CallEvent.ConnectStart
+import okhttp3.CallEvent.DnsEnd
+import okhttp3.CallEvent.DnsStart
+import okhttp3.CallEvent.ProxySelectEnd
+import okhttp3.CallEvent.ProxySelectStart
+import okhttp3.CallEvent.SecureConnectStart
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
 import okhttp3.RecordingEventListener
@@ -348,13 +355,13 @@ class ClientAuthTest {
     // SecureConnectEnd, ConnectFailed, CallFailed
     val recordedEventTypes = listener.recordedEventTypes()
     assertThat(recordedEventTypes).startsWith(
-      "CallStart",
-      "ProxySelectStart",
-      "ProxySelectEnd",
-      "DnsStart",
-      "DnsEnd",
-      "ConnectStart",
-      "SecureConnectStart",
+      CallStart::class,
+      ProxySelectStart::class,
+      ProxySelectEnd::class,
+      DnsStart::class,
+      DnsEnd::class,
+      ConnectStart::class,
+      SecureConnectStart::class,
     )
     assertThat(recordedEventTypes).endsWith("CallFailed")
   }

@@ -39,6 +39,8 @@ import okhttp3.CallEvent.ConnectFailed
 import okhttp3.CallEvent.ConnectStart
 import okhttp3.CallEvent.ConnectionAcquired
 import okhttp3.CallEvent.ConnectionReleased
+import okhttp3.CallEvent.DispatcherQueueEnd
+import okhttp3.CallEvent.DispatcherQueueStart
 import okhttp3.CallEvent.DnsEnd
 import okhttp3.CallEvent.DnsStart
 import okhttp3.CallEvent.FollowUpDecision
@@ -67,7 +69,11 @@ open class RecordingEventListener(
    */
   private val enforceOrder: Boolean = true,
 ) : EventListener() {
+  /** Events that haven't yet been removed. */
   val eventSequence: Deque<CallEvent> = ConcurrentLinkedDeque()
+
+  /** The full set of events, used to match starts with ends. */
+  private val eventsForMatching = ConcurrentLinkedDeque<CallEvent>()
 
   private val forbiddenLocks = mutableListOf<Any>()
 
@@ -132,7 +138,7 @@ open class RecordingEventListener(
     return result
   }
 
-  fun recordedEventTypes() = eventSequence.map { it.name }
+  fun recordedEventTypes() = eventSequence.map { it::class }
 
   fun clearAllEvents() {
     while (eventSequence.isNotEmpty()) {
@@ -149,14 +155,15 @@ open class RecordingEventListener(
       checkForStartEvent(e)
     }
 
+    eventsForMatching.offer(e)
     eventSequence.offer(e)
   }
 
   private fun checkForStartEvent(e: CallEvent) {
-    if (eventSequence.isEmpty()) {
+    if (eventsForMatching.isEmpty()) {
       assertThat(e).matchesPredicate { it is CallStart || it is Canceled }
     } else {
-      eventSequence.forEach loop@{
+      eventsForMatching.forEach loop@{
         when (e.closes(it)) {
           null -> return // no open event
           true -> return // found open event
@@ -166,6 +173,16 @@ open class RecordingEventListener(
       fail<Any>("event $e without matching start event")
     }
   }
+
+  override fun dispatcherQueueStart(
+    call: Call,
+    dispatcher: Dispatcher,
+  ) = logEvent(DispatcherQueueStart(System.nanoTime(), call, dispatcher))
+
+  override fun dispatcherQueueEnd(
+    call: Call,
+    dispatcher: Dispatcher,
+  ) = logEvent(DispatcherQueueEnd(System.nanoTime(), call, dispatcher))
 
   override fun proxySelectStart(
     call: Call,
