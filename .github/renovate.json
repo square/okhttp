@@ -38,7 +38,7 @@
     },
     {
       "extends": [
-        "monorepo:junit-framework"
+        "monorepo:junit5"
       ],
       "matchUpdateTypes": [
         "digest",
