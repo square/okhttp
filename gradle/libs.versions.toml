@@ -80,7 +80,7 @@ junit-platform-console = { module = "org.junit.platform:junit-platform-console",
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
 junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine", version.ref = "org-junit-jupiter" }
 #noinspection NewerVersionAvailable
-junit-pioneer = "org.junit-pioneer:junit-pioneer:1.9.1"
+junit-pioneer = "org.junit-pioneer:junit-pioneer:2.3.0"
 junit5android-core = { module = "de.mannodermaus.junit5:android-test-core", version.ref = "de-mannodermaus-junit5" }
 junit5android-runner = { module = "de.mannodermaus.junit5:android-test-runner", version.ref = "de-mannodermaus-junit5" }
 kotlin-gradle-plugin-api = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin-api", version.ref = "org-jetbrains-kotlin" }
