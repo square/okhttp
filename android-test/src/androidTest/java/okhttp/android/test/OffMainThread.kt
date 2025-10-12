@@ -22,7 +22,7 @@ import okhttp3.Response
 /**
  * Sample of a Decorator that will fail any call on the Android Main thread.
  */
-object OffMainThread : Call.Decorator {
+object OffMainThread : Interceptor {
   override fun newCall(chain: Call.Chain): Call = StrictModeCall(chain.proceed(chain.request))
 
   private class StrictModeCall(

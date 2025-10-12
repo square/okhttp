@@ -18,15 +18,17 @@ package okhttp.android.test
 import android.os.Build
 import android.security.NetworkSecurityPolicy
 import okhttp3.Call
+import okhttp3.Interceptor
 import okhttp3.Request
+import okhttp3.Response
 
 class AlwaysHttps(
   policy: Policy,
-) : Call.Decorator {
+) : Interceptor {
   val hostPolicy: HostPolicy = policy.hostPolicy
 
-  override fun newCall(chain: Call.Chain): Call {
-    val request = chain.request
+  override fun intercept(chain: Interceptor.Chain): Response {
+    val request = chain.request()
 
     val updatedRequest =
       if (request.url.scheme == "http" && !hostPolicy.isCleartextTrafficPermitted(request)) {
