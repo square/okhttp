@@ -58,7 +58,8 @@ class AndroidNetworkPinningTest {
       .addInterceptor(pinning)
       .addInterceptor {
         it.proceed(
-          it.request()
+          it
+            .request()
             .newBuilder()
             .header("second-decorator", "true")
             .build(),

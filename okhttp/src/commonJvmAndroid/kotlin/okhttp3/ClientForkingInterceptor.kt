@@ -11,7 +11,8 @@ abstract class ClientForkingInterceptor<K : Any> : Interceptor {
   // TODO consider caching by client and cleaning up
   private val forkedClients = ConcurrentHashMap<K, OkHttpClient>()
 
-  // TODO consider whether we need to address lifecycle for cleanup of clients
+  // TODO consider whether we need to address lifecycle of clients
+  // If someone else forks this client, should we know that we need a different pool?
 //  override fun onNewClientInstance(client: OkHttpClient): Interceptor {
 //    return this
 //  }

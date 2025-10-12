@@ -33,7 +33,6 @@ import okhttp3.internal.SuppressSignatureCheck
 @RequiresApi(Build.VERSION_CODES.Q)
 @SuppressSignatureCheck
 class AndroidNetworkPinning : ClientForkingInterceptor<Network>() {
-
   /** ConnectivityManager.NetworkCallback that will clean up after networks are lost. */
   val networkCallback =
     object : ConnectivityManager.NetworkCallback() {
@@ -42,14 +41,13 @@ class AndroidNetworkPinning : ClientForkingInterceptor<Network>() {
       }
     }
 
-  override fun OkHttpClient.Builder.buildForKey(key: Network): OkHttpClient {
-    return dns(AndroidDns(key))
+  override fun OkHttpClient.Builder.buildForKey(key: Network): OkHttpClient =
+    dns(AndroidDns(key))
       .socketFactory(key.socketFactory)
       .apply {
         // Keep interceptors after this one in the new client
         interceptors.subList(interceptors.indexOf(this@AndroidNetworkPinning) + 1, interceptors.size).clear()
       }.build()
-  }
 
   override fun clientKey(request: Request): Network? = request.tag<Network>()
 }
