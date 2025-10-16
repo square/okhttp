@@ -54,7 +54,7 @@ gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compat
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
 gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:2.0.0"
 gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:4.3.0"
-gradlePlugin-graalvmBuildTools = "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin:0.11.1"
+gradlePlugin-graalvmBuildTools = "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin:0.11.2"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
