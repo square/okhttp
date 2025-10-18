@@ -236,15 +236,17 @@ class HttpUpgradesTest {
       ConnectionAcquired::class,
       RequestHeadersStart::class,
       RequestHeadersEnd::class,
+//      RequestBodyStart::class,
+//      RequestBodyEnd::class,
       ResponseHeadersStart::class,
       ResponseHeadersEnd::class,
       FollowUpDecision::class,
       RequestBodyStart::class,
       ResponseBodyStart::class,
       ResponseBodyEnd::class,
-      RequestBodyEnd::class,
       ConnectionReleased::class,
       CallEnd::class,
+      RequestBodyEnd::class,
     )
   }
 
@@ -263,15 +265,17 @@ class HttpUpgradesTest {
       ConnectionAcquired::class,
       RequestHeadersStart::class,
       RequestHeadersEnd::class,
+      RequestBodyStart::class,
+      RequestBodyEnd::class,
       ResponseHeadersStart::class,
       ResponseHeadersEnd::class,
       FollowUpDecision::class,
       RequestBodyStart::class,
       ResponseBodyStart::class,
       ResponseBodyEnd::class,
-      RequestBodyEnd::class,
       ConnectionReleased::class,
       CallEnd::class,
+      RequestBodyEnd::class,
     )
   }
 
@@ -302,20 +306,6 @@ class HttpUpgradesTest {
       CallEnd::class,
       RequestBodyEnd::class,
     )
-  }
-
-  @Test
-  fun upgradeRequestMustHaveAnEmptyBody() {
-    val e =
-      assertFailsWith<IllegalArgumentException> {
-        Request
-          .Builder()
-          .url(server.url("/"))
-          .header("Connection", "upgrade")
-          .post("Hello".toRequestBody())
-          .build()
-      }
-    assertThat(e).hasMessage("expected a null or empty request body with 'Connection: upgrade'")
   }
 
   private fun enableTls(vararg protocols: Protocol) {

@@ -82,20 +82,6 @@ class Request internal constructor(
       ),
   )
 
-  init {
-    val connectionHeader = headers["Connection"]
-    val readRequestBodyBeforeUpgrade = headers["ReadRequestBodyBeforeUpgrade"]
-    if ("upgrade".equals(connectionHeader, ignoreCase = true)) {
-      require(
-        body == null ||
-          body.contentLength() == 0L ||
-          "true".equals(readRequestBodyBeforeUpgrade, ignoreCase = true),
-      ) {
-        "expected a null or empty request body with 'Connection: upgrade'"
-      }
-    }
-  }
-
   fun header(name: String): String? = headers[name]
 
   fun headers(name: String): List<String> = headers.values(name)
