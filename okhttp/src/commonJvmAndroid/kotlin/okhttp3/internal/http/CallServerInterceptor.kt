@@ -41,10 +41,11 @@ object CallServerInterceptor : Interceptor {
     var sendRequestException: IOException? = null
     val hasRequestBody = HttpMethod.permitsRequestBody(request.method) && requestBody != null
     val isUpgradeRequest = "upgrade".equals(request.header("Connection"), ignoreCase = true)
+    val readRequestBodyBeforeUpgrade = "true".equals(request.header("ReadRequestBodyBeforeUpgrade"), ignoreCase = true)
     try {
       exchange.writeRequestHeaders(request)
 
-      if (!isUpgradeRequest) {
+      if (!isUpgradeRequest || readRequestBodyBeforeUpgrade) {
         if (hasRequestBody) {
           // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
           // Continue" response before transmitting the request body. If we don't get that, return

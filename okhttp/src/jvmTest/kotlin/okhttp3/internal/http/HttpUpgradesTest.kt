@@ -122,8 +122,19 @@ class HttpUpgradesTest {
   }
 
   @Test
-  fun upgradeWithRequestBody() {
+  fun upgradeWithEmptyRequestBody() {
     executeAndCheckUpgrade(upgradeRequest().newBuilder().post(RequestBody.EMPTY).build())
+  }
+
+  @Test
+  fun upgradeWithNonEmptyRequestBody() {
+    executeAndCheckUpgrade(
+      upgradeRequest()
+        .newBuilder()
+        .header("ReadRequestBodyBeforeUpgrade", "true")
+        .post("Hello".toRequestBody())
+        .build(),
+    )
   }
 
   @Test
@@ -238,8 +249,8 @@ class HttpUpgradesTest {
   }
 
   @Test
-  fun upgradeEventsWithRequestBody() {
-    upgradeWithRequestBody()
+  fun upgradeEventsWithEmptyRequestBody() {
+    upgradeWithEmptyRequestBody()
 
     assertThat(listener.recordedEventTypes()).containsExactly(
       CallStart::class,
@@ -261,6 +272,35 @@ class HttpUpgradesTest {
       RequestBodyEnd::class,
       ConnectionReleased::class,
       CallEnd::class,
+    )
+  }
+
+  @Test
+  fun upgradeEventsWithNonEmptyRequestBody() {
+    upgradeWithNonEmptyRequestBody()
+
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      CallStart::class,
+      ProxySelectStart::class,
+      ProxySelectEnd::class,
+      DnsStart::class,
+      DnsEnd::class,
+      ConnectStart::class,
+      ConnectEnd::class,
+      ConnectionAcquired::class,
+      RequestHeadersStart::class,
+      RequestHeadersEnd::class,
+      RequestBodyStart::class,
+      RequestBodyEnd::class,
+      ResponseHeadersStart::class,
+      ResponseHeadersEnd::class,
+      FollowUpDecision::class,
+      RequestBodyStart::class,
+      ResponseBodyStart::class,
+      ResponseBodyEnd::class,
+      ConnectionReleased::class,
+      CallEnd::class,
+      RequestBodyEnd::class,
     )
   }
 
