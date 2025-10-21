@@ -235,8 +235,6 @@ class HttpUpgradesTest {
       ConnectionAcquired::class,
       RequestHeadersStart::class,
       RequestHeadersEnd::class,
-//      RequestBodyStart::class,
-//      RequestBodyEnd::class,
       ResponseHeadersStart::class,
       ResponseHeadersEnd::class,
       FollowUpDecision::class,
