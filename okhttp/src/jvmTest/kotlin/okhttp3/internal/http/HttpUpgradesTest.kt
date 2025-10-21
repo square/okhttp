@@ -131,7 +131,6 @@ class HttpUpgradesTest {
     executeAndCheckUpgrade(
       upgradeRequest()
         .newBuilder()
-        .header("ReadRequestBodyBeforeUpgrade", "true")
         .post("Hello".toRequestBody())
         .build(),
     )
