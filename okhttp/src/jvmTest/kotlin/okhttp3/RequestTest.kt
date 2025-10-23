@@ -580,6 +580,23 @@ class RequestTest {
   }
 
   @Test
+  fun requestToStringIncludesTags() {
+    val request =
+      Request
+        .Builder()
+        .url("https://square.com/".toHttpUrl())
+        .tag<String>("hello")
+        .tag<Int>(5)
+        .build()
+    assertThat(request.toString()).isEqualTo(
+      "Request{method=GET, url=https://square.com/, tags={" +
+        "class kotlin.String=hello, " +
+        "class kotlin.Int=5" +
+        "}}",
+    )
+  }
+
+  @Test
   fun gzip() {
     val mediaType = "text/plain; charset=utf-8".toMediaType()
     val originalBody = "This is the original message".toRequestBody(mediaType)
