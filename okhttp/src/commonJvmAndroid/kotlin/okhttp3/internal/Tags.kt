@@ -33,9 +33,9 @@ internal sealed class Tags {
    * Returns a tags instance that maps [key] to [value]. If [value] is null, this returns a tags
    * instance that does not have any mapping for [key].
    */
-  abstract fun plus(
-    key: KClass<*>,
-    value: Any?,
+  abstract fun <T : Any> plus(
+    key: KClass<T>,
+    value: T?,
   ): Tags
 
   abstract operator fun <T : Any> get(key: KClass<T>): T?
@@ -43,9 +43,9 @@ internal sealed class Tags {
 
 /** An empty tags. This is always the tail of a [LinkedTags] chain. */
 internal object EmptyTags : Tags() {
-  override fun plus(
-    key: KClass<*>,
-    value: Any?,
+  override fun <T : Any> plus(
+    key: KClass<T>,
+    value: T?,
   ): Tags =
     when {
       value != null -> LinkedTags(key, value, this)
@@ -61,14 +61,14 @@ internal object EmptyTags : Tags() {
  * An invariant of this implementation is that [next] must not contain a mapping for [key].
  * Otherwise, we would have two values for the same key.
  */
-private class LinkedTags(
-  private val key: KClass<*>,
-  private val value: Any,
+private class LinkedTags<K : Any>(
+  private val key: KClass<K>,
+  private val value: K,
   private val next: Tags,
 ) : Tags() {
-  override fun plus(
-    key: KClass<*>,
-    value: Any?,
+  override fun <T : Any> plus(
+    key: KClass<T>,
+    value: T?,
   ): Tags {
     // Create a copy of this `LinkedTags` that doesn't have a mapping for `key`.
     val thisMinusKey =
@@ -99,7 +99,7 @@ private class LinkedTags(
 
   /** Returns a [toString] consistent with [Map], with elements in insertion order. */
   override fun toString(): String =
-    generateSequence(seed = this) { it.next as? LinkedTags }
+    generateSequence<LinkedTags<*>>(seed = this) { it.next as? LinkedTags<*> }
       .toList()
       .reversed()
       .joinToString(prefix = "{", postfix = "}") { "${it.key}=${it.value}" }

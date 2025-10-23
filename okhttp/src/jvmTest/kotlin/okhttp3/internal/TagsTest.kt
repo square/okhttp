@@ -38,7 +38,7 @@ class TagsTest {
     val tags =
       EmptyTags
         .plus(String::class, "hello")
-        .plus(Integer::class, 5)
+        .plus(Integer::class, 5 as Integer)
     assertThat(tags[String::class]).isEqualTo("hello")
     assertThat(tags[Integer::class]).isEqualTo(5)
   }
@@ -49,7 +49,7 @@ class TagsTest {
     val tags =
       EmptyTags
         .plus(String::class, "a")
-        .plus(Integer::class, 5)
+        .plus(Integer::class, 5 as Integer)
         .plus(Boolean::class, true)
         .plus(String::class, "b")
     assertThat(tags[String::class]).isEqualTo("b")
@@ -62,7 +62,7 @@ class TagsTest {
   fun replaceMiddleElement() {
     val tags =
       EmptyTags
-        .plus(Integer::class, 5)
+        .plus(Integer::class, 5 as Integer)
         .plus(String::class, "a")
         .plus(Boolean::class, true)
         .plus(String::class, "b")
@@ -76,7 +76,7 @@ class TagsTest {
   fun replaceLastElement() {
     val tags =
       EmptyTags
-        .plus(Integer::class, 5)
+        .plus(Integer::class, 5 as Integer)
         .plus(Boolean::class, true)
         .plus(String::class, "a")
         .plus(String::class, "b")
@@ -91,7 +91,7 @@ class TagsTest {
     val tags =
       EmptyTags
         .plus(String::class, "a")
-        .plus(Integer::class, 5)
+        .plus(Integer::class, 5 as Integer)
         .plus(Boolean::class, true)
         .plus(String::class, null)
     assertThat(tags[String::class]).isNull()
@@ -104,7 +104,7 @@ class TagsTest {
   fun removeMiddleElement() {
     val tags =
       EmptyTags
-        .plus(Integer::class, 5)
+        .plus(Integer::class, 5 as Integer)
         .plus(String::class, "a")
         .plus(Boolean::class, true)
         .plus(String::class, null)
@@ -118,7 +118,7 @@ class TagsTest {
   fun removeLastElement() {
     val tags =
       EmptyTags
-        .plus(Integer::class, 5)
+        .plus(Integer::class, 5 as Integer)
         .plus(Boolean::class, true)
         .plus(String::class, "a")
         .plus(String::class, null)
@@ -131,7 +131,7 @@ class TagsTest {
   fun removeUntilEmpty() {
     val tags =
       EmptyTags
-        .plus(Integer::class, 5)
+        .plus(Integer::class, 5 as Integer)
         .plus(Boolean::class, true)
         .plus(String::class, "a")
         .plus(String::class, null)
