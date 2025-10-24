@@ -15,6 +15,7 @@
  */
 package okhttp3.internal
 
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KClass
 
 /**
@@ -103,4 +104,29 @@ private class LinkedTags<K : Any>(
       .toList()
       .reversed()
       .joinToString(prefix = "{", postfix = "}") { "${it.key}=${it.value}" }
+}
+
+internal fun <T : Any> AtomicReference<Tags>.computeIfAbsent(
+  type: KClass<T>,
+  compute: () -> T,
+): T {
+  var computed: T? = null
+
+  while (true) {
+    val tags = get()
+
+    // If the element is already present. Return it.
+    val existing = tags[type]
+    if (existing != null) return existing
+
+    if (computed == null) {
+      computed = compute()
+    }
+
+    // If we successfully add the computed element, we're done.
+    val newTags = tags.plus(type, computed)
+    if (compareAndSet(tags, newTags)) return computed
+
+    // We lost the race. Possibly to other code that was putting a *different* key. Try again!
+  }
 }

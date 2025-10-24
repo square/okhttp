@@ -18,6 +18,7 @@ package okhttp3.internal
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
+import java.util.concurrent.atomic.AtomicReference
 import org.junit.jupiter.api.Test
 
 class TagsTest {
@@ -156,5 +157,68 @@ class TagsTest {
         .plus(Integer::class, null)
     assertThat(tags[String::class]).isEqualTo("a")
     assertThat(tags.toString()).isEqualTo("{class kotlin.String=a}")
+  }
+
+  @Test
+  fun computeIfAbsentWhenEmpty() {
+    val tags = EmptyTags
+    val atomicTags = AtomicReference<Tags>(tags)
+    assertThat(atomicTags.computeIfAbsent(String::class) { "a" }).isEqualTo("a")
+    assertThat(atomicTags.get()[String::class]).isEqualTo("a")
+  }
+
+  @Test
+  fun computeIfAbsentWhenPresent() {
+    val tags = EmptyTags.plus(String::class, "a")
+    val atomicTags = AtomicReference(tags)
+    assertThat(atomicTags.computeIfAbsent(String::class) { "b" }).isEqualTo("a")
+    assertThat(atomicTags.get()[String::class]).isEqualTo("a")
+  }
+
+  @Test
+  fun computeIfAbsentWhenDifferentKeyRaceLostDuringCompute() {
+    val tags = EmptyTags
+    val atomicTags = AtomicReference<Tags>(tags)
+    val result =
+      atomicTags.computeIfAbsent(String::class) {
+        // 'Race' by making another computeIfAbsent call. In practice this would be another thread.
+        assertThat(atomicTags.computeIfAbsent(Integer::class) { 5 as Integer }).isEqualTo(5)
+        "a"
+      }
+    assertThat(result).isEqualTo("a")
+    assertThat(atomicTags.get()[String::class]).isEqualTo("a")
+    assertThat(atomicTags.get()[Integer::class]).isEqualTo(5)
+  }
+
+  @Test
+  fun computeIfAbsentWhenSameKeyRaceLostDuringCompute() {
+    val tags = EmptyTags
+    val atomicTags = AtomicReference<Tags>(tags)
+    val result =
+      atomicTags.computeIfAbsent(String::class) {
+        // 'Race' by making another computeIfAbsent call. In practice this would be another thread.
+        assertThat(atomicTags.computeIfAbsent(String::class) { "b" }).isEqualTo("b")
+        "a"
+      }
+    assertThat(result).isEqualTo("b")
+    assertThat(atomicTags.get()[String::class]).isEqualTo("b")
+  }
+
+  @Test
+  fun computeIfAbsentOnlyComputesOnceAfterRaceLost() {
+    var computeCount = 0
+    val tags = EmptyTags
+    val atomicTags = AtomicReference<Tags>(tags)
+    val result =
+      atomicTags.computeIfAbsent(String::class) {
+        computeCount++
+        // 'Race' by making another computeIfAbsent call. In practice this would be another thread.
+        assertThat(atomicTags.computeIfAbsent(Integer::class) { 5 as Integer }).isEqualTo(5)
+        "a"
+      }
+    assertThat(result).isEqualTo("a")
+    assertThat(computeCount).isEqualTo(1)
+    assertThat(atomicTags.get()[Integer::class]).isEqualTo(5)
+    assertThat(atomicTags.get()[String::class]).isEqualTo("a")
   }
 }
