@@ -25,6 +25,8 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.reflect.KClass
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.EventListener
@@ -35,6 +37,7 @@ import okhttp3.Response
 import okhttp3.internal.assertLockNotHeld
 import okhttp3.internal.cache.CacheInterceptor
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.computeIfAbsent
 import okhttp3.internal.concurrent.Lockable
 import okhttp3.internal.concurrent.assertLockHeld
 import okhttp3.internal.concurrent.assertLockNotHeld
@@ -120,7 +123,23 @@ class RealCall(
   @Volatile private var exchange: Exchange? = null
   internal val plansToCancel = CopyOnWriteArrayList<RoutePlanner.Plan>()
 
+  private val tags = AtomicReference(originalRequest.tags)
+
   override fun timeout(): Timeout = timeout
+
+  override fun <T : Any> tag(type: KClass<T>): T? = type.java.cast(tags.get()[type])
+
+  override fun <T> tag(type: Class<out T>): T? = tag(type.kotlin)
+
+  override fun <T : Any> tag(
+    type: KClass<T>,
+    computeIfAbsent: () -> T,
+  ): T = tags.computeIfAbsent(type, computeIfAbsent)
+
+  override fun <T : Any> tag(
+    type: Class<T>,
+    computeIfAbsent: () -> T,
+  ): T = tags.computeIfAbsent(type.kotlin, computeIfAbsent)
 
   @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
   override fun clone(): Call = RealCall(client, originalRequest, forWebSocket)
