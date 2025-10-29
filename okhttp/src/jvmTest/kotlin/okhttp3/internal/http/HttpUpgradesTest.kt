@@ -17,8 +17,8 @@ package okhttp3.internal.http
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
-import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import kotlin.test.assertFailsWith
@@ -44,6 +44,8 @@ import okhttp3.CallEvent.ResponseBodyEnd
 import okhttp3.CallEvent.ResponseBodyStart
 import okhttp3.CallEvent.ResponseHeadersEnd
 import okhttp3.CallEvent.ResponseHeadersStart
+import okhttp3.CallEvent.SecureConnectEnd
+import okhttp3.CallEvent.SecureConnectStart
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Protocol
@@ -241,9 +243,9 @@ class HttpUpgradesTest {
       RequestBodyStart::class,
       ResponseBodyStart::class,
       ResponseBodyEnd::class,
+      RequestBodyEnd::class,
       ConnectionReleased::class,
       CallEnd::class,
-      RequestBodyEnd::class,
     )
   }
 
@@ -270,9 +272,9 @@ class HttpUpgradesTest {
       RequestBodyStart::class,
       ResponseBodyStart::class,
       ResponseBodyEnd::class,
+      RequestBodyEnd::class,
       ConnectionReleased::class,
       CallEnd::class,
-      RequestBodyEnd::class,
     )
   }
 
@@ -299,9 +301,9 @@ class HttpUpgradesTest {
       RequestBodyStart::class,
       ResponseBodyStart::class,
       ResponseBodyEnd::class,
+      RequestBodyEnd::class,
       ConnectionReleased::class,
       CallEnd::class,
-      RequestBodyEnd::class,
     )
   }
 

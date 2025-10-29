@@ -152,9 +152,6 @@ object CallServerInterceptor : Interceptor {
 
           // This is not an upgrade response.
           else -> {
-            if (isUpgradeRequest) {
-              exchange.noRequestBody() // Failed upgrade request has no outbound data.
-            }
             val responseBody = exchange.openResponseBody(response)
             response
               .newBuilder()

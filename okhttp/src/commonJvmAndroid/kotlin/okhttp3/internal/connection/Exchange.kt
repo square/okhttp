@@ -46,10 +46,6 @@ class Exchange(
   internal var isDuplex: Boolean = false
     private set
 
-  /** True if the request body should not be used, but the socket, instead. */
-  internal var isSocket: Boolean = false
-    private set
-
   /** True if there was an exception on the connection to the peer. */
   internal var hasFailure: Boolean = false
     private set
@@ -82,7 +78,11 @@ class Exchange(
     val contentLength = request.body!!.contentLength()
     eventListener.requestBodyStart(call)
     val rawRequestBody = codec.createRequestBody(request, contentLength)
-    return RequestBodySink(rawRequestBody, contentLength)
+    return RequestBodySink(
+      delegate = rawRequestBody,
+      contentLength = contentLength,
+      isSocket = false,
+    )
   }
 
   @Throws(IOException::class)
@@ -134,7 +134,12 @@ class Exchange(
       val contentType = response.header("Content-Type")
       val contentLength = codec.reportedContentLength(response)
       val rawSource = codec.openResponseBodySource(response)
-      val source = ResponseBodySource(rawSource, contentLength)
+      val source =
+        ResponseBodySource(
+          delegate = rawSource,
+          contentLength = contentLength,
+          isSocket = false,
+        )
       return RealResponseBody(contentType, contentLength, source.buffer())
     } catch (e: IOException) {
       eventListener.responseFailed(call, e)
@@ -147,8 +152,7 @@ class Exchange(
   fun peekTrailers(): Headers? = codec.peekTrailers()
 
   fun upgradeToSocket(): Socket {
-    isSocket = true
-    call.timeoutEarlyExit()
+    call.upgradeToSocket()
     (codec.carrier as RealConnection).useAsSocket()
 
     return object : Socket {
@@ -156,8 +160,18 @@ class Exchange(
         this@Exchange.cancel()
       }
 
-      override val sink = RequestBodySink(codec.socket.sink, -1L)
-      override val source = ResponseBodySource(codec.socket.source, -1L)
+      override val sink =
+        RequestBodySink(
+          delegate = codec.socket.sink,
+          contentLength = -1L,
+          isSocket = true,
+        )
+      override val source =
+        ResponseBodySource(
+          delegate = codec.socket.source,
+          contentLength = -1L,
+          isSocket = true,
+        )
     }
   }
 
@@ -179,6 +193,8 @@ class Exchange(
       exchange = this,
       requestDone = true,
       responseDone = true,
+      socketSinkDone = true,
+      socketSourceDone = true,
       e = null,
     )
   }
@@ -191,6 +207,7 @@ class Exchange(
   /** If [e] is non-null, this will return a non-null value. */
   fun bodyComplete(
     bytesRead: Long = -1L,
+    isSocket: Boolean,
     responseDone: Boolean = false,
     requestDone: Boolean = false,
     e: IOException?,
@@ -214,8 +231,10 @@ class Exchange(
     }
     return call.messageDone(
       exchange = this,
-      requestDone = requestDone,
-      responseDone = responseDone,
+      requestDone = requestDone && !isSocket,
+      responseDone = responseDone && !isSocket,
+      socketSinkDone = requestDone && isSocket,
+      socketSourceDone = responseDone && isSocket,
       e = e,
     )
   }
@@ -233,6 +252,7 @@ class Exchange(
     delegate: Sink,
     /** The exact number of bytes to be written, or -1L if that is unknown. */
     private val contentLength: Long,
+    private val isSocket: Boolean,
   ) : ForwardingSink(delegate) {
     private var completed = false
     private var bytesReceived = 0L
@@ -292,6 +312,7 @@ class Exchange(
       completed = true
       return bodyComplete(
         bytesRead = bytesReceived,
+        isSocket = isSocket,
         requestDone = true,
         e = e,
       )
@@ -302,6 +323,7 @@ class Exchange(
   internal inner class ResponseBodySource(
     delegate: Source,
     private val contentLength: Long,
+    private val isSocket: Boolean,
   ) : ForwardingSource(delegate) {
     private var bytesReceived = 0L
     private var invokeStartEvent = true
@@ -372,6 +394,7 @@ class Exchange(
       }
       return bodyComplete(
         bytesRead = bytesReceived,
+        isSocket = isSocket,
         responseDone = true,
         e = e,
       )
