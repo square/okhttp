@@ -41,7 +41,7 @@
             </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
-        <div class="library-version" id="library-version">5.3.0-SNAPSHOT
+        <div class="library-version" id="library-version">5.4.0-SNAPSHOT
         </div>
         <div class="navigation-controls">
         <div class="filter-section filter-section_loading" id="filter-section">
@@ -95,7 +95,7 @@
   <div class="cover ">
     <h1 class="cover"><span><span>clone</span></span></h1>
   </div>
-  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="clone.html"><span class="token function">clone</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">Call</a></div><p class="paragraph">Create a new, identical call to this one which can be enqueued or executed even if this call has already been.</p></div></div>
+  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="clone.html"><span class="token function">clone</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">Call</a></div><p class="paragraph">Create a new, identical call to this one which can be enqueued or executed even if this call has already been.</p><p class="paragraph">The tags on the returned call will equal the tags as on <a href="request.html">request</a>. Any tags that were computed for this call will not be included on the cloned call. If necessary you may manually copy over specific tags by re-computing them:</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">val copy = original.clone()<br><br>val myTag = original.tag(MyTag::class)<br>if (myTag != null) {<br>  copy.tag(MyTag::class) { myTag }<br>}</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><div class="sample-container"><pre><code class="block lang-java" theme="idea">Call copy = original.clone();<br><br>MyTag myTag = original.tag(MyTag.class);<br>if (myTag != null) {<br>  copy.tag(MyTag.class, () -&gt; myTag);<br>}</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
 </div>
     <div class="footer">
         <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
