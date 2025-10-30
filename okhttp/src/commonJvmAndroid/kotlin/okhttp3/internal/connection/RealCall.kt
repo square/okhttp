@@ -103,11 +103,10 @@ class RealCall(
   // These properties are guarded by `this`. They are typically only accessed by the thread executing
   // the call, but they may be accessed by other threads for duplex requests.
 
-  /** True if this call still has a request body open. */
   private var requestBodyOpen = false
-
-  /** True if this call still has a response body open. */
   private var responseBodyOpen = false
+  private var socketSinkOpen = false
+  private var socketSourceOpen = false
 
   /** True if there are more exchanges expected for this call. */
   private var expectMoreExchanges = true
@@ -241,7 +240,7 @@ class RealCall(
         "cannot make a new request because the previous response is still open: " +
           "please call response.close()"
       }
-      check(!requestBodyOpen)
+      check(!requestBodyOpen && !socketSourceOpen && !socketSinkOpen)
     }
 
     if (newRoutePlanner) {
@@ -273,8 +272,7 @@ class RealCall(
   internal fun initExchange(chain: RealInterceptorChain): Exchange {
     withLock {
       check(expectMoreExchanges) { "released" }
-      check(!responseBodyOpen)
-      check(!requestBodyOpen)
+      check(!responseBodyOpen && !requestBodyOpen && !socketSourceOpen && !socketSinkOpen)
     }
 
     val exchangeFinder = this.exchangeFinder!!
@@ -312,22 +310,34 @@ class RealCall(
     exchange: Exchange,
     requestDone: Boolean = false,
     responseDone: Boolean = false,
+    socketSourceDone: Boolean = false,
+    socketSinkDone: Boolean = false,
     e: IOException?,
   ): IOException? {
     if (exchange != this.exchange) return e // This exchange was detached violently!
 
-    var bothStreamsDone = false
+    var allStreamsDone = false
     var callDone = false
     withLock {
-      if (requestDone && requestBodyOpen || responseDone && responseBodyOpen) {
+      if (
+        requestDone && requestBodyOpen ||
+        responseDone && responseBodyOpen ||
+        socketSinkDone && socketSinkOpen ||
+        socketSourceDone && socketSourceOpen
+      ) {
         if (requestDone) requestBodyOpen = false
         if (responseDone) responseBodyOpen = false
-        bothStreamsDone = !requestBodyOpen && !responseBodyOpen
-        callDone = !requestBodyOpen && !responseBodyOpen && !expectMoreExchanges
+        if (socketSinkDone) socketSinkOpen = false
+        if (socketSourceDone) socketSourceOpen = false
+        allStreamsDone = !requestBodyOpen &&
+          !responseBodyOpen &&
+          !socketSinkOpen &&
+          !socketSourceOpen
+        callDone = allStreamsDone && !expectMoreExchanges
       }
     }
 
-    if (bothStreamsDone) {
+    if (allStreamsDone) {
       this.exchange = null
       this.connection?.incrementSuccessCount()
     }
@@ -344,7 +354,7 @@ class RealCall(
     withLock {
       if (expectMoreExchanges) {
         expectMoreExchanges = false
-        callDone = !requestBodyOpen && !responseBodyOpen
+        callDone = !requestBodyOpen && !responseBodyOpen && !socketSinkOpen && !socketSourceOpen
       }
     }
 
@@ -357,7 +367,8 @@ class RealCall(
 
   /**
    * Complete this call. This should be called once these properties are all false:
-   * [requestBodyOpen], [responseBodyOpen], and [expectMoreExchanges].
+   * [requestBodyOpen], [responseBodyOpen], [socketSinkOpen], [socketSourceOpen], and
+   * [expectMoreExchanges].
    *
    * This will release the connection if it is still held.
    *
@@ -441,6 +452,20 @@ class RealCall(
     check(!timeoutEarlyExit)
     timeoutEarlyExit = true
     timeout.exit()
+  }
+
+  fun upgradeToSocket() {
+    timeoutEarlyExit()
+
+    withLock {
+      check(exchange != null)
+      check(!socketSinkOpen && !socketSourceOpen)
+      check(!requestBodyOpen)
+      check(responseBodyOpen)
+      responseBodyOpen = false
+      socketSinkOpen = true
+      socketSourceOpen = true
+    }
   }
 
   /**
