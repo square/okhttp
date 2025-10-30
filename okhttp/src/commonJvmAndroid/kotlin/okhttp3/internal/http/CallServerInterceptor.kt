@@ -44,41 +44,39 @@ object CallServerInterceptor : Interceptor {
     try {
       exchange.writeRequestHeaders(request)
 
-      if (!isUpgradeRequest) {
-        if (hasRequestBody) {
-          // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
-          // Continue" response before transmitting the request body. If we don't get that, return
-          // what we did get (such as a 4xx response) without ever transmitting the request body.
-          if ("100-continue".equals(request.header("Expect"), ignoreCase = true)) {
+      if (hasRequestBody) {
+        // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
+        // Continue" response before transmitting the request body. If we don't get that, return
+        // what we did get (such as a 4xx response) without ever transmitting the request body.
+        if ("100-continue".equals(request.header("Expect"), ignoreCase = true)) {
+          exchange.flushRequest()
+          responseBuilder = exchange.readResponseHeaders(expectContinue = true)
+          exchange.responseHeadersStart()
+          invokeStartEvent = false
+        }
+        if (responseBuilder == null) {
+          if (requestBody.isDuplex()) {
+            // Prepare a duplex body so that the application can send a request body later.
             exchange.flushRequest()
-            responseBuilder = exchange.readResponseHeaders(expectContinue = true)
-            exchange.responseHeadersStart()
-            invokeStartEvent = false
-          }
-          if (responseBuilder == null) {
-            if (requestBody.isDuplex()) {
-              // Prepare a duplex body so that the application can send a request body later.
-              exchange.flushRequest()
-              val bufferedRequestBody = exchange.createRequestBody(request, true).buffer()
-              requestBody.writeTo(bufferedRequestBody)
-            } else {
-              // Write the request body if the "Expect: 100-continue" expectation was met.
-              val bufferedRequestBody = exchange.createRequestBody(request, false).buffer()
-              requestBody.writeTo(bufferedRequestBody)
-              bufferedRequestBody.close()
-            }
+            val bufferedRequestBody = exchange.createRequestBody(request, true).buffer()
+            requestBody.writeTo(bufferedRequestBody)
           } else {
-            exchange.noRequestBody()
-            if (!exchange.connection.isMultiplexed) {
-              // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
-              // from being reused. Otherwise we're still obligated to transmit the request body to
-              // leave the connection in a consistent state.
-              exchange.noNewExchangesOnConnection()
-            }
+            // Write the request body if the "Expect: 100-continue" expectation was met.
+            val bufferedRequestBody = exchange.createRequestBody(request, false).buffer()
+            requestBody.writeTo(bufferedRequestBody)
+            bufferedRequestBody.close()
           }
         } else {
           exchange.noRequestBody()
+          if (!exchange.connection.isMultiplexed) {
+            // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
+            // from being reused. Otherwise we're still obligated to transmit the request body to
+            // leave the connection in a consistent state.
+            exchange.noNewExchangesOnConnection()
+          }
         }
+      } else {
+        exchange.noRequestBody()
       }
 
       if (requestBody == null || !requestBody.isDuplex()) {
@@ -154,9 +152,6 @@ object CallServerInterceptor : Interceptor {
 
           // This is not an upgrade response.
           else -> {
-            if (isUpgradeRequest) {
-              exchange.noRequestBody() // Failed upgrade request has no outbound data.
-            }
             val responseBody = exchange.openResponseBody(response)
             response
               .newBuilder()
