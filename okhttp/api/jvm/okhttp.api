@@ -330,6 +330,14 @@ public final class okhttp3/CipherSuite$Companion {
 	public final fun forJavaName (Ljava/lang/String;)Lokhttp3/CipherSuite;
 }
 
+public abstract class okhttp3/ClientForkingInterceptor : okhttp3/Interceptor {
+	public fun <init> ()V
+	public abstract fun buildForKey (Lokhttp3/OkHttpClient$Builder;Ljava/lang/Object;)Lokhttp3/OkHttpClient;
+	public abstract fun clientKey (Lokhttp3/Request;)Ljava/lang/Object;
+	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
+	public final fun removeClient (Ljava/lang/Object;)V
+}
+
 public class okhttp3/CompressionInterceptor : okhttp3/Interceptor {
 	public fun <init> ([Lokhttp3/CompressionInterceptor$DecompressionAlgorithm;)V
 	public final fun getAlgorithms ()[Lokhttp3/CompressionInterceptor$DecompressionAlgorithm;
@@ -529,6 +537,9 @@ public final class okhttp3/EventListener$Companion {
 
 public abstract interface class okhttp3/EventListener$Factory {
 	public abstract fun create (Lokhttp3/Call;)Lokhttp3/EventListener;
+}
+
+public abstract interface annotation class okhttp3/ExperimentalOkHttpApi : java/lang/annotation/Annotation {
 }
 
 public final class okhttp3/FormBody : okhttp3/RequestBody {
