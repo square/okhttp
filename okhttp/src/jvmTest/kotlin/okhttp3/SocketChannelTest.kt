@@ -94,9 +94,7 @@ class SocketChannelTest {
   }
 
   @Test
-  fun testHttp(
-    socketMode: SocketMode = burstValues(Channel, Standard)
-  ) {
+  fun testHttp(socketMode: SocketMode = burstValues(Channel, Standard)) {
     testConnection(socketMode)
   }
 

@@ -615,9 +615,7 @@ class CookieTest {
   }
 
   @Test
-  fun builderSameSite(
-    sameSite: String = burstValues("Lax", "Strict", "UnrecognizedButValid"),
-  ) {
+  fun builderSameSite(sameSite: String = burstValues("Lax", "Strict", "UnrecognizedButValid")) {
     val cookie =
       Cookie
         .Builder()

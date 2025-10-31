@@ -50,7 +50,9 @@ import org.junit.jupiter.api.io.TempDir
 @Timeout(60)
 @Tag("Slow")
 @Burst
-class DiskLruCacheTest(subject: Subject = Subject.System) {
+class DiskLruCacheTest(
+  subject: Subject = Subject.System,
+) {
   private val baseFilesystem: FileSystem = subject.create()
   private val filesystem = FaultyFileSystem(baseFilesystem)
   private val windows = subject.windows
@@ -58,10 +60,11 @@ class DiskLruCacheTest(subject: Subject = Subject.System) {
   @TempDir
   lateinit var cacheDirFile: File
   private val cacheDir: Path
-    get() = when (baseFilesystem) {
-      is FakeFileSystem -> "/cache".toPath()
-      else -> cacheDirFile.path.toPath()
-    }
+    get() =
+      when (baseFilesystem) {
+        is FakeFileSystem -> "/cache".toPath()
+        else -> cacheDirFile.path.toPath()
+      }
   private val appVersion = 100
   private lateinit var journalFile: Path
   private lateinit var journalBkpFile: Path
@@ -2147,9 +2150,10 @@ class DiskLruCacheTest(subject: Subject = Subject.System) {
 
       override val windows: Boolean
         get() = true
-    };
+    }, ;
 
     abstract fun create(): FileSystem
+
     abstract val windows: Boolean
   }
 }
