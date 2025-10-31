@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.http
 
+import app.cash.burst.Burst
 import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.doesNotContain
@@ -61,20 +62,21 @@ import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.BufferedSink
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ArgumentsSource
 
 @Timeout(30)
 @Tag("Slow")
-class CancelTest {
+@Burst
+class CancelTest(
+  private val cancelMode: CancelMode = INTERRUPT,
+  private val connectionType: ConnectionType = H2,
+) {
   @JvmField @RegisterExtension
   val platform = PlatformRule()
-
-  lateinit var cancelMode: CancelMode
-  lateinit var connectionType: ConnectionType
 
   private var threadToCancel: Thread? = null
 
@@ -99,10 +101,8 @@ class CancelTest {
 
   val listener = RecordingEventListener()
 
-  fun setUp(mode: Pair<CancelMode, ConnectionType>) {
-    this.cancelMode = mode.first
-    this.connectionType = mode.second
-
+  @BeforeEach
+  fun setUp() {
     if (connectionType == H2) {
       platform.assumeHttp2Support()
     }
@@ -147,10 +147,8 @@ class CancelTest {
     threadToCancel = Thread.currentThread()
   }
 
-  @ParameterizedTest
-  @ArgumentsSource(CancelModelParamProvider::class)
-  fun cancelWritingRequestBody(mode: Pair<CancelMode, ConnectionType>) {
-    setUp(mode)
+  @Test
+  fun cancelWritingRequestBody() {
     server.enqueue(MockResponse())
     val call =
       client.newCall(
@@ -182,10 +180,8 @@ class CancelTest {
     }
   }
 
-  @ParameterizedTest
-  @ArgumentsSource(CancelModelParamProvider::class)
-  fun cancelReadingResponseBody(mode: Pair<CancelMode, ConnectionType>) {
-    setUp(mode)
+  @Test
+  fun cancelReadingResponseBody() {
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
       MockResponse
@@ -211,10 +207,8 @@ class CancelTest {
     assertEquals(if (connectionType == H2) 1 else 0, client.connectionPool.connectionCount())
   }
 
-  @ParameterizedTest
-  @ArgumentsSource(CancelModelParamProvider::class)
-  fun cancelAndFollowup(mode: Pair<CancelMode, ConnectionType>) {
-    setUp(mode)
+  @Test
+  fun cancelAndFollowup() {
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
       MockResponse
