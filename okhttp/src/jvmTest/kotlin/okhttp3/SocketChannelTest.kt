@@ -15,7 +15,7 @@
  */
 package okhttp3
 
-`import app.cash.burst.Burst
+import app.cash.burst.Burst
 import app.cash.burst.burstValues
 import assertk.assertThat
 import assertk.assertions.isEqualTo
