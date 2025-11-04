@@ -60,6 +60,7 @@ class WebSocketReader(
   private val noContextTakeover: Boolean,
 ) : Closeable {
   private var closed = false
+  private var receivedCloseFrame = false
 
   // Stateful data about the current frame.
   private var opcode = 0
@@ -105,6 +106,8 @@ class WebSocketReader(
    */
   @Throws(IOException::class)
   fun processNextFrame() {
+    check(!closed) { "closed" }
+
     readHeader()
     if (isControlFrame) {
       readControlFrame()
@@ -115,7 +118,7 @@ class WebSocketReader(
 
   @Throws(IOException::class, ProtocolException::class)
   private fun readHeader() {
-    if (closed) throw IOException("closed")
+    if (receivedCloseFrame) throw IOException("closed")
 
     // Disable the timeout to read the first byte of a new frame.
     val b0: Int
@@ -228,7 +231,7 @@ class WebSocketReader(
           if (codeExceptionMessage != null) throw ProtocolException(codeExceptionMessage)
         }
         frameCallback.onReadClose(code, reason)
-        closed = true
+        receivedCloseFrame = true
       }
       else -> {
         throw ProtocolException("Unknown control opcode: " + opcode.toHexString())
@@ -262,7 +265,7 @@ class WebSocketReader(
   /** Read headers and process any control frames until we reach a non-control frame. */
   @Throws(IOException::class)
   private fun readUntilNonControlFrame() {
-    while (!closed) {
+    while (!receivedCloseFrame) {
       readHeader()
       if (!isControlFrame) {
         break
@@ -279,7 +282,7 @@ class WebSocketReader(
   @Throws(IOException::class)
   private fun readMessage() {
     while (true) {
-      if (closed) throw IOException("closed")
+      if (receivedCloseFrame) throw IOException("closed")
 
       if (frameLength > 0L) {
         source.readFully(messageFrameBuffer, frameLength)
@@ -303,6 +306,8 @@ class WebSocketReader(
 
   @Throws(IOException::class)
   override fun close() {
+    if (closed) return
+    closed = true
     messageInflater?.closeQuietly()
     source.closeQuietly()
   }
