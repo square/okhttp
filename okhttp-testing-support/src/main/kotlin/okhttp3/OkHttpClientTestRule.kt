@@ -215,6 +215,10 @@ class OkHttpClientTestRule :
     }
   }
 
+  @Synchronized fun takeUncaughtException(): Throwable? =
+    uncaughtException
+      .also { uncaughtException = null }
+
   fun ensureAllConnectionsReleased() {
     testClient?.let {
       val connectionPool = it.connectionPool
