@@ -120,7 +120,7 @@ open class EventRecorder(
     }
   }
 
-  private fun logEvent(e: CallEvent) {
+  internal fun logEvent(e: CallEvent) {
     for (lock in forbiddenLocks) {
       assertThat(Thread.holdsLock(lock), lock.toString()).isFalse()
     }

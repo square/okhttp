@@ -70,7 +70,7 @@ class RealCall(
   Lockable {
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
 
-  internal val eventListener: EventListener = client.eventListenerFactory.create(this)
+  internal var eventListener: EventListener = client.eventListenerFactory.create(this)
 
   private val timeout =
     object : AsyncTimeout() {
@@ -125,6 +125,10 @@ class RealCall(
   private val tags = AtomicReference(originalRequest.tags)
 
   override fun timeout(): Timeout = timeout
+
+  override fun addEventListener(eventListener: EventListener) {
+    this.eventListener += eventListener
+  }
 
   override fun <T : Any> tag(type: KClass<T>): T? = type.java.cast(tags.get()[type])
 
@@ -202,7 +206,7 @@ class RealCall(
     interceptors += client.interceptors
     interceptors += RetryAndFollowUpInterceptor(client)
     interceptors += BridgeInterceptor(client.cookieJar)
-    interceptors += CacheInterceptor(client.cache)
+    interceptors += CacheInterceptor(this, client.cache)
     interceptors += ConnectInterceptor
     if (!forWebSocket) {
       interceptors += client.networkInterceptors
@@ -297,7 +301,7 @@ class RealCall(
     val exchangeFinder = this.exchangeFinder!!
     val connection = exchangeFinder.find()
     val codec = connection.newCodec(client, chain)
-    val result = Exchange(this, eventListener, exchangeFinder, codec)
+    val result = Exchange(this, exchangeFinder, codec)
     this.interceptorScopedExchange = result
     this.exchange = result
     withLock {

@@ -21,7 +21,6 @@ import java.net.HttpURLConnection.HTTP_GATEWAY_TIMEOUT
 import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import okhttp3.Cache
-import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Protocol
@@ -42,11 +41,11 @@ import okio.buffer
 
 /** Serves requests from the cache and writes responses to the cache. */
 class CacheInterceptor(
+  internal val call: RealCall,
   internal val cache: Cache?,
 ) : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
-    val call = chain.call()
     val cacheCandidate = cache?.get(chain.request().requestForCache())
 
     val now = System.currentTimeMillis()
@@ -56,7 +55,6 @@ class CacheInterceptor(
     val cacheResponse = strategy.cacheResponse
 
     cache?.trackResponse(strategy)
-    val listener = (call as? RealCall)?.eventListener ?: EventListener.NONE
 
     if (cacheCandidate != null && cacheResponse == null) {
       // The cache candidate wasn't applicable. Close it.
@@ -75,7 +73,7 @@ class CacheInterceptor(
         .receivedResponseAtMillis(System.currentTimeMillis())
         .build()
         .also {
-          listener.satisfactionFailure(call, it)
+          call.eventListener.satisfactionFailure(call, it)
         }
     }
 
@@ -86,14 +84,14 @@ class CacheInterceptor(
         .cacheResponse(cacheResponse.stripBody())
         .build()
         .also {
-          listener.cacheHit(call, it)
+          call.eventListener.cacheHit(call, it)
         }
     }
 
     if (cacheResponse != null) {
-      listener.cacheConditionalHit(call, cacheResponse)
+      call.eventListener.cacheConditionalHit(call, cacheResponse)
     } else if (cache != null) {
-      listener.cacheMiss(call)
+      call.eventListener.cacheMiss(call)
     }
 
     var networkResponse: Response? = null
@@ -126,7 +124,7 @@ class CacheInterceptor(
         cache!!.trackConditionalCacheHit()
         cache.update(cacheResponse, response)
         return response.also {
-          listener.cacheHit(call, it)
+          call.eventListener.cacheHit(call, it)
         }
       } else {
         cacheResponse.body.closeQuietly()
@@ -149,7 +147,7 @@ class CacheInterceptor(
         return cacheWritingResponse(cacheRequest, response).also {
           if (cacheResponse != null) {
             // This will log a conditional cache miss only.
-            listener.cacheMiss(call)
+            call.eventListener.cacheMiss(call)
           }
         }
       }
