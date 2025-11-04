@@ -119,6 +119,7 @@ public final class okhttp3/CacheControl$Companion {
 }
 
 public abstract interface class okhttp3/Call : java/lang/Cloneable {
+	public abstract fun addEventListener (Lokhttp3/EventListener;)V
 	public abstract fun cancel ()V
 	public abstract fun clone ()Lokhttp3/Call;
 	public abstract fun enqueue (Lokhttp3/Callback;)V
