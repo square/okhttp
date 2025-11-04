@@ -38,9 +38,9 @@ import okhttp3.CallEvent
 import okhttp3.CallEvent.CacheHit
 import okhttp3.CallEvent.CacheMiss
 import okhttp3.Dns
+import okhttp3.EventRecorder
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import okhttp3.RecordingEventListener
 import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
@@ -62,12 +62,12 @@ class DnsOverHttpsTest {
 
   private lateinit var dns: Dns
   private val cacheFs = FakeFileSystem()
-  private val eventListener = RecordingEventListener()
+  private val eventRecorder = EventRecorder()
   private val bootstrapClient =
     OkHttpClient
       .Builder()
       .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-      .eventListener(eventListener)
+      .eventListener(eventRecorder.eventListener)
       .build()
 
   @BeforeEach
@@ -309,10 +309,10 @@ class DnsOverHttpsTest {
   }
 
   private fun cacheEvents(): List<KClass<out CallEvent>> =
-    eventListener
+    eventRecorder
       .recordedEventTypes()
       .filter { "Cache" in it.simpleName!! }
-      .also { eventListener.clearAllEvents() }
+      .also { eventRecorder.clearAllEvents() }
 
   private fun dnsResponse(s: String): MockResponse =
     MockResponse

@@ -18,7 +18,6 @@ package okhttp3.internal.http
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
-import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import kotlin.test.assertFailsWith
@@ -44,12 +43,10 @@ import okhttp3.CallEvent.ResponseBodyEnd
 import okhttp3.CallEvent.ResponseBodyStart
 import okhttp3.CallEvent.ResponseHeadersEnd
 import okhttp3.CallEvent.ResponseHeadersStart
-import okhttp3.CallEvent.SecureConnectEnd
-import okhttp3.CallEvent.SecureConnectStart
+import okhttp3.EventRecorder
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Protocol
-import okhttp3.RecordingEventListener
 import okhttp3.RecordingHostnameVerifier
 import okhttp3.Request
 import okhttp3.RequestBody
@@ -72,12 +69,12 @@ class HttpUpgradesTest {
   @StartStop
   private val server = MockWebServer()
 
-  private var listener = RecordingEventListener()
+  private var eventRecorder = EventRecorder()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client =
     clientTestRule
       .newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(listener))
+      .eventListenerFactory(clientTestRule.wrap(eventRecorder))
       .build()
 
   fun executeAndCheckUpgrade(request: Request) {
@@ -159,7 +156,7 @@ class HttpUpgradesTest {
       assertThat(response.body.string()).isEqualTo("normal request")
     }
     // Confirm there's no RequestBodyStart/RequestBodyEnd on failed upgrades.
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -226,7 +223,7 @@ class HttpUpgradesTest {
   fun upgradeEventsWithoutRequestBody() {
     upgrade()
 
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -253,7 +250,7 @@ class HttpUpgradesTest {
   fun upgradeEventsWithEmptyRequestBody() {
     upgradeWithEmptyRequestBody()
 
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -282,7 +279,7 @@ class HttpUpgradesTest {
   fun upgradeEventsWithNonEmptyRequestBody() {
     upgradeWithNonEmptyRequestBody()
 
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,

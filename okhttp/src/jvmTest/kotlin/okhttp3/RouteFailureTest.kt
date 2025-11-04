@@ -53,7 +53,7 @@ class RouteFailureTest {
   @StartStop
   val server2 = MockWebServer()
 
-  private var listener = RecordingEventListener()
+  private var eventRecorder = EventRecorder()
 
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
@@ -78,7 +78,7 @@ class RouteFailureTest {
         .newClientBuilder()
         .dns(dns)
         .socketFactory(socketFactory)
-        .eventListenerFactory(clientTestRule.wrap(listener))
+        .eventListenerFactory(clientTestRule.wrap(eventRecorder))
         .build()
   }
 

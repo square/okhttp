@@ -51,20 +51,20 @@ class DispatcherTest {
     object : WebSocketListener() {
     }
   val dispatcher = Dispatcher(executor)
-  val listener = RecordingEventListener()
+  val eventRecorder = EventRecorder()
   var client =
     clientTestRule
       .newClientBuilder()
       .dns { throw UnknownHostException() }
       .dispatcher(dispatcher)
-      .eventListenerFactory(clientTestRule.wrap(listener))
+      .eventListenerFactory(clientTestRule.wrap(eventRecorder))
       .build()
 
   @BeforeEach
   fun setUp() {
     dispatcher.maxRequests = 20
     dispatcher.maxRequestsPerHost = 10
-    listener.forbidLock(dispatcher)
+    eventRecorder.forbidLock(dispatcher)
   }
 
   @Test
@@ -86,8 +86,8 @@ class DispatcherTest {
     client.newCall(newRequest("http://a/1")).enqueue(callback)
     executor.assertJobs("http://a/1")
 
-    assertThat(listener.eventSequence).none { it.isInstanceOf<DispatcherQueueStart>() }
-    assertThat(listener.eventSequence).none { it.isInstanceOf<DispatcherQueueEnd>() }
+    assertThat(eventRecorder.eventSequence).none { it.isInstanceOf<DispatcherQueueStart>() }
+    assertThat(eventRecorder.eventSequence).none { it.isInstanceOf<DispatcherQueueEnd>() }
   }
 
   @Test
@@ -99,9 +99,9 @@ class DispatcherTest {
     client.newCall(newRequest("http://b/2")).enqueue(callback)
     executor.assertJobs("http://a/1", "http://a/2", "http://b/1")
 
-    val dispatcherQueueStart = listener.removeUpToEvent<DispatcherQueueStart>()
+    val dispatcherQueueStart = eventRecorder.removeUpToEvent<DispatcherQueueStart>()
     assertThat(dispatcherQueueStart.call.request().url).isEqualTo("http://b/2".toHttpUrl())
-    assertThat(listener.eventSequence).none { it.isInstanceOf<DispatcherQueueEnd>() }
+    assertThat(eventRecorder.eventSequence).none { it.isInstanceOf<DispatcherQueueEnd>() }
   }
 
   @Test
@@ -112,9 +112,9 @@ class DispatcherTest {
     client.newCall(newRequest("http://a/3")).enqueue(callback)
     executor.assertJobs("http://a/1", "http://a/2")
 
-    val dispatcherQueueStart = listener.removeUpToEvent<DispatcherQueueStart>()
+    val dispatcherQueueStart = eventRecorder.removeUpToEvent<DispatcherQueueStart>()
     assertThat(dispatcherQueueStart.call.request().url).isEqualTo("http://a/3".toHttpUrl())
-    assertThat(listener.eventSequence).none { it.isInstanceOf<DispatcherQueueEnd>() }
+    assertThat(eventRecorder.eventSequence).none { it.isInstanceOf<DispatcherQueueEnd>() }
   }
 
   @Test
@@ -135,22 +135,22 @@ class DispatcherTest {
     client.newCall(newRequest("http://a/2")).enqueue(callback)
     client.newCall(newRequest("http://b/2")).enqueue(callback)
 
-    val dispatcherQueueStartC1 = listener.removeUpToEvent<DispatcherQueueStart>()
+    val dispatcherQueueStartC1 = eventRecorder.removeUpToEvent<DispatcherQueueStart>()
     assertThat(dispatcherQueueStartC1.call.request().url).isEqualTo("http://c/1".toHttpUrl())
-    val dispatcherQueueStartA2 = listener.removeUpToEvent<DispatcherQueueStart>()
+    val dispatcherQueueStartA2 = eventRecorder.removeUpToEvent<DispatcherQueueStart>()
     assertThat(dispatcherQueueStartA2.call.request().url).isEqualTo("http://a/2".toHttpUrl())
-    val dispatcherQueueStartB2 = listener.removeUpToEvent<DispatcherQueueStart>()
+    val dispatcherQueueStartB2 = eventRecorder.removeUpToEvent<DispatcherQueueStart>()
     assertThat(dispatcherQueueStartB2.call.request().url).isEqualTo("http://b/2".toHttpUrl())
-    assertThat(listener.eventSequence).none { it.isInstanceOf<DispatcherQueueEnd>() }
+    assertThat(eventRecorder.eventSequence).none { it.isInstanceOf<DispatcherQueueEnd>() }
 
     dispatcher.maxRequests = 4
     executor.assertJobs("http://a/1", "http://b/1", "http://c/1", "http://a/2")
 
-    val dispatcherQueueEndC1 = listener.removeUpToEvent<DispatcherQueueEnd>()
+    val dispatcherQueueEndC1 = eventRecorder.removeUpToEvent<DispatcherQueueEnd>()
     assertThat(dispatcherQueueEndC1.call.request().url).isEqualTo("http://c/1".toHttpUrl())
-    val dispatcherQueueEndA2 = listener.removeUpToEvent<DispatcherQueueEnd>()
+    val dispatcherQueueEndA2 = eventRecorder.removeUpToEvent<DispatcherQueueEnd>()
     assertThat(dispatcherQueueEndA2.call.request().url).isEqualTo("http://a/2".toHttpUrl())
-    assertThat(listener.eventSequence).none { it.isInstanceOf<DispatcherQueueEnd>() }
+    assertThat(eventRecorder.eventSequence).none { it.isInstanceOf<DispatcherQueueEnd>() }
   }
 
   @Test
@@ -162,22 +162,22 @@ class DispatcherTest {
     client.newCall(newRequest("http://a/4")).enqueue(callback)
     client.newCall(newRequest("http://a/5")).enqueue(callback)
 
-    val dispatcherQueueStartA3 = listener.removeUpToEvent<DispatcherQueueStart>()
+    val dispatcherQueueStartA3 = eventRecorder.removeUpToEvent<DispatcherQueueStart>()
     assertThat(dispatcherQueueStartA3.call.request().url).isEqualTo("http://a/3".toHttpUrl())
-    val dispatcherQueueStartA4 = listener.removeUpToEvent<DispatcherQueueStart>()
+    val dispatcherQueueStartA4 = eventRecorder.removeUpToEvent<DispatcherQueueStart>()
     assertThat(dispatcherQueueStartA4.call.request().url).isEqualTo("http://a/4".toHttpUrl())
-    val dispatcherQueueStartA5 = listener.removeUpToEvent<DispatcherQueueStart>()
+    val dispatcherQueueStartA5 = eventRecorder.removeUpToEvent<DispatcherQueueStart>()
     assertThat(dispatcherQueueStartA5.call.request().url).isEqualTo("http://a/5".toHttpUrl())
-    assertThat(listener.eventSequence).none { it.isInstanceOf<DispatcherQueueEnd>() }
+    assertThat(eventRecorder.eventSequence).none { it.isInstanceOf<DispatcherQueueEnd>() }
 
     dispatcher.maxRequestsPerHost = 4
     executor.assertJobs("http://a/1", "http://a/2", "http://a/3", "http://a/4")
 
-    val dispatcherQueueEndA3 = listener.removeUpToEvent<DispatcherQueueEnd>()
+    val dispatcherQueueEndA3 = eventRecorder.removeUpToEvent<DispatcherQueueEnd>()
     assertThat(dispatcherQueueEndA3.call.request().url).isEqualTo("http://a/3".toHttpUrl())
-    val dispatcherQueueEndA4 = listener.removeUpToEvent<DispatcherQueueEnd>()
+    val dispatcherQueueEndA4 = eventRecorder.removeUpToEvent<DispatcherQueueEnd>()
     assertThat(dispatcherQueueEndA4.call.request().url).isEqualTo("http://a/4".toHttpUrl())
-    assertThat(listener.eventSequence).none { it.isInstanceOf<DispatcherQueueEnd>() }
+    assertThat(eventRecorder.eventSequence).none { it.isInstanceOf<DispatcherQueueEnd>() }
   }
 
   @Test
@@ -357,7 +357,7 @@ class DispatcherTest {
     executor.shutdown()
     client.newCall(request).enqueue(callback)
     callback.await(request.url).assertFailure(InterruptedIOException::class.java)
-    assertThat(listener.recordedEventTypes())
+    assertThat(eventRecorder.recordedEventTypes())
       .containsExactly(CallStart::class, CallFailed::class)
   }
 
@@ -371,7 +371,7 @@ class DispatcherTest {
     client.newCall(request2).enqueue(callback)
     dispatcher.maxRequests = 2 // Trigger promotion.
     callback.await(request2.url).assertFailure(InterruptedIOException::class.java)
-    assertThat(listener.recordedEventTypes())
+    assertThat(eventRecorder.recordedEventTypes())
       .containsExactly(CallStart::class, CallStart::class, CallFailed::class)
   }
 
@@ -385,7 +385,7 @@ class DispatcherTest {
     client.newCall(request2).enqueue(callback)
     dispatcher.maxRequestsPerHost = 2 // Trigger promotion.
     callback.await(request2.url).assertFailure(InterruptedIOException::class.java)
-    assertThat(listener.recordedEventTypes())
+    assertThat(eventRecorder.recordedEventTypes())
       .containsExactly(CallStart::class, CallStart::class, CallFailed::class)
   }
 
@@ -399,7 +399,7 @@ class DispatcherTest {
     client.newCall(request2).enqueue(callback)
     executor.finishJob("http://a/1") // Trigger promotion.
     callback.await(request2.url).assertFailure(InterruptedIOException::class.java)
-    assertThat(listener.recordedEventTypes())
+    assertThat(eventRecorder.recordedEventTypes())
       .containsExactly(CallStart::class, CallStart::class, CallFailed::class)
   }
 

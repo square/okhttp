@@ -54,6 +54,7 @@ import okhttp3.CallEvent.CallFailed
 import okhttp3.CallEvent.CallStart
 import okhttp3.CallEvent.Canceled
 import okhttp3.CallEvent.ConnectEnd
+import okhttp3.CallEvent.ConnectFailed
 import okhttp3.CallEvent.ConnectStart
 import okhttp3.CallEvent.ConnectionAcquired
 import okhttp3.CallEvent.ConnectionReleased
@@ -114,12 +115,12 @@ class EventListenerTest {
   @StartStop
   private val server = MockWebServer()
 
-  private val listener: RecordingEventListener = RecordingEventListener()
+  private val eventRecorder = EventRecorder()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client =
     clientTestRule
       .newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(listener))
+      .eventListenerFactory(clientTestRule.wrap(eventRecorder))
       .build()
   private var socksProxy: SocksProxy? = null
   private var cache: Cache? = null
@@ -127,8 +128,8 @@ class EventListenerTest {
   @BeforeEach
   fun setUp() {
     platform.assumeNotOpenJSSE()
-    listener.forbidLock(get(client.connectionPool))
-    listener.forbidLock(client.dispatcher)
+    eventRecorder.forbidLock(get(client.connectionPool))
+    eventRecorder.forbidLock(client.dispatcher)
   }
 
   @AfterEach
@@ -160,7 +161,7 @@ class EventListenerTest {
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body.string()).isEqualTo("abc")
     response.body.close()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -206,7 +207,7 @@ class EventListenerTest {
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body.string()).isEqualTo("abc")
     response.body.close()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -260,7 +261,7 @@ class EventListenerTest {
       }
     call.enqueue(callback)
     completionLatch.await()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -306,7 +307,7 @@ class EventListenerTest {
     }.also { expected ->
       assertThat(expected.message).isIn("timeout", "Read timed out")
     }
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -322,7 +323,7 @@ class EventListenerTest {
       ConnectionReleased::class,
       CallFailed::class,
     )
-    assertThat(listener.findEvent<RetryDecision>()).all {
+    assertThat(eventRecorder.findEvent<RetryDecision>()).all {
       prop(RetryDecision::retry).isFalse()
     }
   }
@@ -356,7 +357,7 @@ class EventListenerTest {
     }.also { expected ->
       assertThat(expected.message).isEqualTo("unexpected end of stream")
     }
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -375,7 +376,7 @@ class EventListenerTest {
       ConnectionReleased::class,
       CallFailed::class,
     )
-    val responseFailed = listener.removeUpToEvent<ResponseFailed>()
+    val responseFailed = eventRecorder.removeUpToEvent<ResponseFailed>()
     assertThat(responseFailed.ioe.message).isEqualTo("unexpected end of stream")
   }
 
@@ -394,7 +395,7 @@ class EventListenerTest {
     }.also { expected ->
       assertThat(expected.message).isEqualTo("Canceled")
     }
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       Canceled::class,
       CallStart::class,
       CallFailed::class,
@@ -433,7 +434,7 @@ class EventListenerTest {
       },
     )
     call.cancel()
-    assertThat(listener.recordedEventTypes()).contains(Canceled::class)
+    assertThat(eventRecorder.recordedEventTypes()).contains(Canceled::class)
   }
 
   @Test
@@ -453,7 +454,7 @@ class EventListenerTest {
       )
     call.cancel()
     call.cancel()
-    assertThat(listener.recordedEventTypes()).containsExactly(Canceled::class)
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(Canceled::class)
   }
 
   private fun assertSuccessfulEventOrder(
@@ -509,7 +510,7 @@ class EventListenerTest {
         ConnectionReleased::class,
         CallEnd::class,
       )
-    assertThat(listener.recordedEventTypes()).isEqualTo(expectedEventTypes)
+    assertThat(eventRecorder.recordedEventTypes()).isEqualTo(expectedEventTypes)
   }
 
   @Test
@@ -526,7 +527,7 @@ class EventListenerTest {
           .build(),
       ).execute()
       .close()
-    listener.removeUpToEvent<CallEnd>()
+    eventRecorder.removeUpToEvent<CallEnd>()
     val call =
       client.newCall(
         Request
@@ -536,7 +537,7 @@ class EventListenerTest {
       )
     val response = call.execute()
     response.close()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ConnectionAcquired::class,
       RequestHeadersStart::class,
@@ -552,7 +553,7 @@ class EventListenerTest {
   }
 
   private fun assertBytesReadWritten(
-    listener: RecordingEventListener,
+    listener: EventRecorder,
     requestHeaderLength: Matcher<Long?>?,
     requestBodyBytes: Matcher<Long?>?,
     responseHeaderLength: Matcher<Long?>?,
@@ -628,7 +629,7 @@ class EventListenerTest {
     server.enqueue(MockResponse())
     assertSuccessfulEventOrder(matchesProtocol(Protocol.HTTP_2), emptyBody = true)
     assertBytesReadWritten(
-      listener,
+      eventRecorder,
       CoreMatchers.any(Long::class.java),
       null,
       greaterThan(0L),
@@ -648,7 +649,7 @@ class EventListenerTest {
     )
     assertSuccessfulEventOrder(anyResponse)
     assertBytesReadWritten(
-      listener,
+      eventRecorder,
       CoreMatchers.any(Long::class.java),
       null,
       greaterThan(0L),
@@ -669,7 +670,7 @@ class EventListenerTest {
     )
     assertSuccessfulEventOrder(anyResponse)
     assertBytesReadWritten(
-      listener,
+      eventRecorder,
       CoreMatchers.any(Long::class.java),
       null,
       greaterThan(0L),
@@ -690,7 +691,7 @@ class EventListenerTest {
     )
     assertSuccessfulEventOrder(matchesProtocol(Protocol.HTTP_2))
     assertBytesReadWritten(
-      listener,
+      eventRecorder,
       CoreMatchers.any(Long::class.java),
       null,
       CoreMatchers.equalTo(0L),
@@ -711,10 +712,10 @@ class EventListenerTest {
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.body.close()
-    val dnsStart: DnsStart = listener.removeUpToEvent<DnsStart>()
+    val dnsStart: DnsStart = eventRecorder.removeUpToEvent<DnsStart>()
     assertThat(dnsStart.call).isSameAs(call)
     assertThat(dnsStart.domainName).isEqualTo(server.hostName)
-    val dnsEnd: DnsEnd = listener.removeUpToEvent<DnsEnd>()
+    val dnsEnd: DnsEnd = eventRecorder.removeUpToEvent<DnsEnd>()
     assertThat(dnsEnd.call).isSameAs(call)
     assertThat(dnsEnd.domainName).isEqualTo(server.hostName)
     assertThat(dnsEnd.inetAddressList.size).isEqualTo(1)
@@ -736,7 +737,7 @@ class EventListenerTest {
     val response1 = call1.execute()
     assertThat(response1.code).isEqualTo(200)
     response1.body.close()
-    listener.clearAllEvents()
+    eventRecorder.clearAllEvents()
     val call2 =
       client.newCall(
         Request
@@ -747,7 +748,7 @@ class EventListenerTest {
     val response2 = call2.execute()
     assertThat(response2.code).isEqualTo(200)
     response2.body.close()
-    val recordedEvents = listener.recordedEventTypes()
+    val recordedEvents = eventRecorder.recordedEventTypes()
     assertThat(recordedEvents).doesNotContain(DnsStart::class)
     assertThat(recordedEvents).doesNotContain(DnsEnd::class)
   }
@@ -780,10 +781,10 @@ class EventListenerTest {
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.body.close()
-    listener.removeUpToEvent<DnsStart>()
-    listener.removeUpToEvent<DnsEnd>()
-    listener.removeUpToEvent<DnsStart>()
-    listener.removeUpToEvent<DnsEnd>()
+    eventRecorder.removeUpToEvent<DnsStart>()
+    eventRecorder.removeUpToEvent<DnsEnd>()
+    eventRecorder.removeUpToEvent<DnsStart>()
+    eventRecorder.removeUpToEvent<DnsEnd>()
   }
 
   @Test
@@ -803,8 +804,8 @@ class EventListenerTest {
     assertFailsWith<IOException> {
       call.execute()
     }
-    listener.removeUpToEvent<DnsStart>()
-    val callFailed: CallFailed = listener.removeUpToEvent<CallFailed>()
+    eventRecorder.removeUpToEvent<DnsStart>()
+    val callFailed: CallFailed = eventRecorder.removeUpToEvent<CallFailed>()
     assertThat(callFailed.call).isSameAs(call)
     assertThat(callFailed.ioe).isInstanceOf<UnknownHostException>()
   }
@@ -827,8 +828,8 @@ class EventListenerTest {
     assertFailsWith<IOException> {
       call.execute()
     }
-    listener.removeUpToEvent<DnsStart>()
-    val callFailed: CallFailed = listener.removeUpToEvent<CallFailed>()
+    eventRecorder.removeUpToEvent<DnsStart>()
+    val callFailed: CallFailed = eventRecorder.removeUpToEvent<CallFailed>()
     assertThat(callFailed.call).isSameAs(call)
     assertThat(callFailed.ioe).isInstanceOf(
       UnknownHostException::class.java,
@@ -850,11 +851,11 @@ class EventListenerTest {
     response.body.close()
     val address = client.dns.lookup(server.hostName)[0]
     val expectedAddress = InetSocketAddress(address, server.port)
-    val connectStart = listener.removeUpToEvent<ConnectStart>()
+    val connectStart = eventRecorder.removeUpToEvent<ConnectStart>()
     assertThat(connectStart.call).isSameAs(call)
     assertThat(connectStart.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectStart.proxy).isEqualTo(Proxy.NO_PROXY)
-    val connectEnd = listener.removeUpToEvent<CallEvent.ConnectEnd>()
+    val connectEnd = eventRecorder.removeUpToEvent<ConnectEnd>()
     assertThat(connectEnd.call).isSameAs(call)
     assertThat(connectEnd.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectEnd.protocol).isEqualTo(Protocol.HTTP_1_1)
@@ -881,11 +882,11 @@ class EventListenerTest {
     }
     val address = client.dns.lookup(server.hostName)[0]
     val expectedAddress = InetSocketAddress(address, server.port)
-    val connectStart = listener.removeUpToEvent<ConnectStart>()
+    val connectStart = eventRecorder.removeUpToEvent<ConnectStart>()
     assertThat(connectStart.call).isSameAs(call)
     assertThat(connectStart.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectStart.proxy).isEqualTo(Proxy.NO_PROXY)
-    val connectFailed = listener.removeUpToEvent<CallEvent.ConnectFailed>()
+    val connectFailed = eventRecorder.removeUpToEvent<ConnectFailed>()
     assertThat(connectFailed.call).isSameAs(call)
     assertThat(connectFailed.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectFailed.protocol).isNull()
@@ -917,10 +918,10 @@ class EventListenerTest {
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.body.close()
-    listener.removeUpToEvent<ConnectStart>()
-    listener.removeUpToEvent<CallEvent.ConnectFailed>()
-    listener.removeUpToEvent<ConnectStart>()
-    listener.removeUpToEvent<CallEvent.ConnectEnd>()
+    eventRecorder.removeUpToEvent<ConnectStart>()
+    eventRecorder.removeUpToEvent<ConnectFailed>()
+    eventRecorder.removeUpToEvent<ConnectStart>()
+    eventRecorder.removeUpToEvent<ConnectEnd>()
   }
 
   @Test
@@ -944,13 +945,13 @@ class EventListenerTest {
     val address = client.dns.lookup(server.hostName)[0]
     val expectedAddress = InetSocketAddress(address, server.port)
     val connectStart: ConnectStart =
-      listener.removeUpToEvent<ConnectStart>()
+      eventRecorder.removeUpToEvent<ConnectStart>()
     assertThat(connectStart.call).isSameAs(call)
     assertThat(connectStart.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectStart.proxy).isEqualTo(
       server.proxyAddress,
     )
-    val connectEnd = listener.removeUpToEvent<CallEvent.ConnectEnd>()
+    val connectEnd = eventRecorder.removeUpToEvent<ConnectEnd>()
     assertThat(connectEnd.call).isSameAs(call)
     assertThat(connectEnd.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectEnd.protocol).isEqualTo(Protocol.HTTP_1_1)
@@ -982,11 +983,11 @@ class EventListenerTest {
         SocksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS,
         server.port,
       )
-    val connectStart = listener.removeUpToEvent<ConnectStart>()
+    val connectStart = eventRecorder.removeUpToEvent<ConnectStart>()
     assertThat(connectStart.call).isSameAs(call)
     assertThat(connectStart.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectStart.proxy).isEqualTo(proxy)
-    val connectEnd = listener.removeUpToEvent<CallEvent.ConnectEnd>()
+    val connectEnd = eventRecorder.removeUpToEvent<ConnectEnd>()
     assertThat(connectEnd.call).isSameAs(call)
     assertThat(connectEnd.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectEnd.protocol).isEqualTo(Protocol.HTTP_1_1)
@@ -1027,11 +1028,11 @@ class EventListenerTest {
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.body.close()
-    listener.removeUpToEvent<ConnectStart>()
-    val connectEnd = listener.removeUpToEvent<CallEvent.ConnectEnd>()
+    eventRecorder.removeUpToEvent<ConnectStart>()
+    val connectEnd = eventRecorder.removeUpToEvent<ConnectEnd>()
     assertThat(connectEnd.protocol).isNull()
-    listener.removeUpToEvent<ConnectStart>()
-    listener.removeUpToEvent<CallEvent.ConnectEnd>()
+    eventRecorder.removeUpToEvent<ConnectStart>()
+    eventRecorder.removeUpToEvent<ConnectEnd>()
   }
 
   @Test
@@ -1048,9 +1049,9 @@ class EventListenerTest {
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.body.close()
-    val secureStart = listener.removeUpToEvent<SecureConnectStart>()
+    val secureStart = eventRecorder.removeUpToEvent<SecureConnectStart>()
     assertThat(secureStart.call).isSameAs(call)
-    val secureEnd = listener.removeUpToEvent<SecureConnectEnd>()
+    val secureEnd = eventRecorder.removeUpToEvent<SecureConnectEnd>()
     assertThat(secureEnd.call).isSameAs(call)
     assertThat(secureEnd.handshake).isNotNull()
   }
@@ -1074,9 +1075,9 @@ class EventListenerTest {
     assertFailsWith<IOException> {
       call.execute()
     }
-    val secureStart = listener.removeUpToEvent<SecureConnectStart>()
+    val secureStart = eventRecorder.removeUpToEvent<SecureConnectStart>()
     assertThat(secureStart.call).isSameAs(call)
-    val callFailed = listener.removeUpToEvent<CallFailed>()
+    val callFailed = eventRecorder.removeUpToEvent<CallFailed>()
     assertThat(callFailed.call).isSameAs(call)
     assertThat(callFailed.ioe).isNotNull()
   }
@@ -1106,9 +1107,9 @@ class EventListenerTest {
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.body.close()
-    val secureStart = listener.removeUpToEvent<SecureConnectStart>()
+    val secureStart = eventRecorder.removeUpToEvent<SecureConnectStart>()
     assertThat(secureStart.call).isSameAs(call)
-    val secureEnd = listener.removeUpToEvent<SecureConnectEnd>()
+    val secureEnd = eventRecorder.removeUpToEvent<SecureConnectEnd>()
     assertThat(secureEnd.call).isSameAs(call)
     assertThat(secureEnd.handshake).isNotNull()
   }
@@ -1138,10 +1139,10 @@ class EventListenerTest {
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.body.close()
-    listener.removeUpToEvent<SecureConnectStart>()
-    listener.removeUpToEvent<CallEvent.ConnectFailed>()
-    listener.removeUpToEvent<SecureConnectStart>()
-    listener.removeUpToEvent<SecureConnectEnd>()
+    eventRecorder.removeUpToEvent<SecureConnectStart>()
+    eventRecorder.removeUpToEvent<ConnectFailed>()
+    eventRecorder.removeUpToEvent<SecureConnectStart>()
+    eventRecorder.removeUpToEvent<SecureConnectEnd>()
   }
 
   @Test
@@ -1166,7 +1167,7 @@ class EventListenerTest {
     val response1 = call1.execute()
     assertThat(response1.code).isEqualTo(200)
     response1.body.close()
-    listener.clearAllEvents()
+    eventRecorder.clearAllEvents()
     val call2 =
       client.newCall(
         Request
@@ -1177,7 +1178,7 @@ class EventListenerTest {
     val response2 = call2.execute()
     assertThat(response2.code).isEqualTo(200)
     response2.body.close()
-    val recordedEvents = listener.recordedEventTypes()
+    val recordedEvents = eventRecorder.recordedEventTypes()
     assertThat(recordedEvents).doesNotContain(SecureConnectStart::class)
     assertThat(recordedEvents).doesNotContain(SecureConnectEnd::class)
   }
@@ -1195,7 +1196,7 @@ class EventListenerTest {
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.body.close()
-    val connectionAcquired = listener.removeUpToEvent<ConnectionAcquired>()
+    val connectionAcquired = eventRecorder.removeUpToEvent<ConnectionAcquired>()
     assertThat(connectionAcquired.call).isSameAs(call)
     assertThat(connectionAcquired.connection).isNotNull()
   }
@@ -1224,8 +1225,8 @@ class EventListenerTest {
       )
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("ABC")
-    listener.removeUpToEvent<ConnectionAcquired>()
-    val remainingEvents = listener.recordedEventTypes()
+    eventRecorder.removeUpToEvent<ConnectionAcquired>()
+    val remainingEvents = eventRecorder.recordedEventTypes()
     assertThat(remainingEvents).doesNotContain(ConnectionAcquired::class)
   }
 
@@ -1245,8 +1246,8 @@ class EventListenerTest {
     val response1 = call1.execute()
     assertThat(response1.code).isEqualTo(200)
     response1.body.close()
-    val connectionAcquired1 = listener.removeUpToEvent<ConnectionAcquired>()
-    listener.clearAllEvents()
+    val connectionAcquired1 = eventRecorder.removeUpToEvent<ConnectionAcquired>()
+    eventRecorder.clearAllEvents()
     val call2 =
       client.newCall(
         Request
@@ -1257,7 +1258,7 @@ class EventListenerTest {
     val response2 = call2.execute()
     assertThat(response2.code).isEqualTo(200)
     response2.body.close()
-    val connectionAcquired2 = listener.removeUpToEvent<ConnectionAcquired>()
+    val connectionAcquired2 = eventRecorder.removeUpToEvent<ConnectionAcquired>()
     assertThat(connectionAcquired2.connection).isSameAs(
       connectionAcquired1.connection,
     )
@@ -1288,8 +1289,8 @@ class EventListenerTest {
       )
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("ABC")
-    listener.removeUpToEvent<ConnectionAcquired>()
-    listener.removeUpToEvent<ConnectionAcquired>()
+    eventRecorder.removeUpToEvent<ConnectionAcquired>()
+    eventRecorder.removeUpToEvent<ConnectionAcquired>()
   }
 
   @Test
@@ -1338,7 +1339,7 @@ class EventListenerTest {
     assertFailsWith<IOException> {
       response.body.string()
     }
-    val callFailed = listener.removeUpToEvent<CallFailed>()
+    val callFailed = eventRecorder.removeUpToEvent<CallFailed>()
     assertThat(callFailed.ioe).isNotNull()
   }
 
@@ -1361,7 +1362,7 @@ class EventListenerTest {
       )
     val response = call.execute()
     response.body.close()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -1400,7 +1401,7 @@ class EventListenerTest {
       )
     val response = call.execute()
     response.body.close()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -1440,7 +1441,7 @@ class EventListenerTest {
       )
     val response = call.execute()
     response.body.close()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -1501,11 +1502,11 @@ class EventListenerTest {
       call.execute()
     }
     if (expectedProtocol != null) {
-      val connectionAcquired = listener.removeUpToEvent<ConnectionAcquired>()
+      val connectionAcquired = eventRecorder.removeUpToEvent<ConnectionAcquired>()
       assertThat(connectionAcquired.connection.protocol())
         .isEqualTo(expectedProtocol)
     }
-    val callFailed = listener.removeUpToEvent<CallFailed>()
+    val callFailed = eventRecorder.removeUpToEvent<CallFailed>()
     assertThat(callFailed.ioe).isNotNull()
     assertThat(request.ioe).isNotNull()
   }
@@ -1573,7 +1574,7 @@ class EventListenerTest {
     assertFailsWith<IOException> {
       call.execute()
     }
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -1674,7 +1675,7 @@ class EventListenerTest {
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body.string()).isEqualTo("abc")
     response.body.close()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -1718,7 +1719,7 @@ class EventListenerTest {
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("World!")
     assertBytesReadWritten(
-      listener,
+      eventRecorder,
       CoreMatchers.any(Long::class.java),
       requestBodyBytes,
       responseHeaderLength,
@@ -1767,7 +1768,7 @@ class EventListenerTest {
           .build(),
       )
     warmUpCall.execute().use { warmUpResponse -> warmUpResponse.body.string() }
-    listener.clearAllEvents()
+    eventRecorder.clearAllEvents()
 
     // Create a client with artificial delays.
     client =
@@ -1830,19 +1831,19 @@ class EventListenerTest {
     }
 
     // Confirm the events occur when expected.
-    listener.takeEvent(CallStart::class.java, 0L)
-    listener.takeEvent(ConnectionAcquired::class.java, applicationInterceptorDelay)
-    listener.takeEvent(RequestHeadersStart::class.java, networkInterceptorDelay)
-    listener.takeEvent(RequestHeadersEnd::class.java, 0L)
-    listener.takeEvent(RequestBodyStart::class.java, 0L)
-    listener.takeEvent(RequestBodyEnd::class.java, requestBodyDelay)
-    listener.takeEvent(ResponseHeadersStart::class.java, responseHeadersStartDelay)
-    listener.takeEvent(ResponseHeadersEnd::class.java, 0L)
-    listener.takeEvent(FollowUpDecision::class.java, 0L)
-    listener.takeEvent(ResponseBodyStart::class.java, responseBodyStartDelay)
-    listener.takeEvent(ResponseBodyEnd::class.java, responseBodyEndDelay)
-    listener.takeEvent(CallEvent.ConnectionReleased::class.java, 0L)
-    listener.takeEvent(CallEnd::class.java, 0L)
+    eventRecorder.takeEvent(CallStart::class.java, 0L)
+    eventRecorder.takeEvent(ConnectionAcquired::class.java, applicationInterceptorDelay)
+    eventRecorder.takeEvent(RequestHeadersStart::class.java, networkInterceptorDelay)
+    eventRecorder.takeEvent(RequestHeadersEnd::class.java, 0L)
+    eventRecorder.takeEvent(RequestBodyStart::class.java, 0L)
+    eventRecorder.takeEvent(RequestBodyEnd::class.java, requestBodyDelay)
+    eventRecorder.takeEvent(ResponseHeadersStart::class.java, responseHeadersStartDelay)
+    eventRecorder.takeEvent(ResponseHeadersEnd::class.java, 0L)
+    eventRecorder.takeEvent(FollowUpDecision::class.java, 0L)
+    eventRecorder.takeEvent(ResponseBodyStart::class.java, responseBodyStartDelay)
+    eventRecorder.takeEvent(ResponseBodyEnd::class.java, responseBodyEndDelay)
+    eventRecorder.takeEvent(ConnectionReleased::class.java, 0L)
+    eventRecorder.takeEvent(CallEnd::class.java, 0L)
   }
 
   private fun enableTlsWithTunnel() {
@@ -1869,7 +1870,7 @@ class EventListenerTest {
     server.enqueue(MockResponse())
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     call.execute()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -1895,7 +1896,7 @@ class EventListenerTest {
       ConnectionReleased::class,
       CallEnd::class,
     )
-    assertThat(listener.findEvent<FollowUpDecision>()).all {
+    assertThat(eventRecorder.findEvent<FollowUpDecision>()).all {
       prop(FollowUpDecision::nextRequest).isNotNull()
     }
   }
@@ -1914,7 +1915,7 @@ class EventListenerTest {
     otherServer.enqueue(MockResponse())
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     call.execute()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -1948,7 +1949,7 @@ class EventListenerTest {
       ConnectionReleased::class,
       CallEnd::class,
     )
-    assertThat(listener.findEvent<FollowUpDecision>()).all {
+    assertThat(eventRecorder.findEvent<FollowUpDecision>()).all {
       prop(FollowUpDecision::nextRequest).isNotNull()
     }
     otherServer.close()
@@ -1972,7 +1973,7 @@ class EventListenerTest {
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("b")
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -2022,7 +2023,7 @@ class EventListenerTest {
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("a")
-    assertThat(listener.recordedEventTypes())
+    assertThat(eventRecorder.recordedEventTypes())
       .containsExactly(CallStart::class, CallEnd::class)
   }
 
@@ -2044,7 +2045,7 @@ class EventListenerTest {
         .build()
     val call = client.newCall(request)
     call.execute()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -2088,10 +2089,10 @@ class EventListenerTest {
     call
       .execute()
       .use { response -> assertThat(response.body.string()).isEqualTo("") }
-    listener.removeUpToEvent<ResponseHeadersStart>()
-    listener.takeEvent(RequestBodyStart::class.java, 0L)
-    listener.takeEvent(RequestBodyEnd::class.java, 0L)
-    listener.takeEvent(ResponseHeadersEnd::class.java, responseHeadersStartDelay)
+    eventRecorder.removeUpToEvent<ResponseHeadersStart>()
+    eventRecorder.takeEvent(RequestBodyStart::class.java, 0L)
+    eventRecorder.takeEvent(RequestBodyEnd::class.java, 0L)
+    eventRecorder.takeEvent(ResponseHeadersEnd::class.java, responseHeadersStartDelay)
   }
 
   @Test
@@ -2114,7 +2115,7 @@ class EventListenerTest {
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body.string()).isEqualTo("abc")
     response.close()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       CacheMiss::class,
       ProxySelectStart::class,
@@ -2162,13 +2163,13 @@ class EventListenerTest {
     var response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.close()
-    listener.clearAllEvents()
+    eventRecorder.clearAllEvents()
     call = call.clone()
     response = call.execute()
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body.string()).isEqualTo("abc")
     response.close()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       CacheConditionalHit::class,
       ConnectionAcquired::class,
@@ -2213,13 +2214,13 @@ class EventListenerTest {
     var response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.close()
-    listener.clearAllEvents()
+    eventRecorder.clearAllEvents()
     call = call.clone()
     response = call.execute()
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body.string()).isEqualTo("abd")
     response.close()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       CacheConditionalHit::class,
       ConnectionAcquired::class,
@@ -2250,14 +2251,14 @@ class EventListenerTest {
     val response = call.execute()
     assertThat(response.code).isEqualTo(504)
     response.close()
-    assertThat(listener.recordedEventTypes())
+    assertThat(eventRecorder.recordedEventTypes())
       .containsExactly(
         CallStart::class,
         SatisfactionFailure::class,
         FollowUpDecision::class,
         CallEnd::class,
       )
-    assertThat(listener.findEvent<FollowUpDecision>()).all {
+    assertThat(eventRecorder.findEvent<FollowUpDecision>()).all {
       prop(FollowUpDecision::nextRequest).isNull()
     }
   }
@@ -2283,13 +2284,13 @@ class EventListenerTest {
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body.string()).isEqualTo("abc")
     response.close()
-    listener.clearAllEvents()
+    eventRecorder.clearAllEvents()
     call = call.clone()
     response = call.execute()
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body.string()).isEqualTo("abc")
     response.close()
-    assertThat(listener.recordedEventTypes())
+    assertThat(eventRecorder.recordedEventTypes())
       .containsExactly(
         CallStart::class,
         CacheHit::class,
@@ -2301,8 +2302,8 @@ class EventListenerTest {
   /** Make sure we didn't mess up our special case for [EventListener.NONE]. */
   @Test
   fun eventListenerPlusNoneAggregation() {
-    val a = RecordingEventListener(enforceOrder = false)
-    val aPlusNone = a + EventListener.NONE
+    val a = EventRecorder(enforceOrder = false)
+    val aPlusNone = a.eventListener + EventListener.NONE
 
     aPlusNone.callStart(FailingCall())
     assertThat(a.takeEvent()).isInstanceOf<CallStart>()
@@ -2312,8 +2313,8 @@ class EventListenerTest {
   /** Make sure we didn't mess up our special case for [EventListener.NONE]. */
   @Test
   fun nonePlusEventListenerAggregation() {
-    val a = RecordingEventListener(enforceOrder = false)
-    val nonePlusA = EventListener.NONE + a
+    val a = EventRecorder(enforceOrder = false)
+    val nonePlusA = EventListener.NONE + a.eventListener
 
     nonePlusA.callStart(FailingCall())
     assertThat(a.takeEvent()).isInstanceOf<CallStart>()
@@ -2323,12 +2324,12 @@ class EventListenerTest {
   /** Make sure we didn't mess up our special case for combining aggregates. */
   @Test
   fun moreThanTwoAggregation() {
-    val a = RecordingEventListener(enforceOrder = false)
-    val b = RecordingEventListener(enforceOrder = false)
-    val c = RecordingEventListener(enforceOrder = false)
-    val d = RecordingEventListener(enforceOrder = false)
+    val a = EventRecorder(enforceOrder = false)
+    val b = EventRecorder(enforceOrder = false)
+    val c = EventRecorder(enforceOrder = false)
+    val d = EventRecorder(enforceOrder = false)
 
-    val abcd = (a + b) + (c + d)
+    val abcd = (a.eventListener + b.eventListener) + (c.eventListener + d.eventListener)
     abcd.callStart(FailingCall())
 
     assertThat(a.takeEvent()).isInstanceOf<CallStart>()
@@ -2346,10 +2347,10 @@ class EventListenerTest {
   fun aggregateEventListenerIsComplete() {
     val sampleValues = sampleValuesMap()
 
-    val solo = RecordingEventListener(enforceOrder = false)
-    val left = RecordingEventListener(enforceOrder = false)
-    val right = RecordingEventListener(enforceOrder = false)
-    val composite = left + right
+    val solo = EventRecorder(enforceOrder = false)
+    val left = EventRecorder(enforceOrder = false)
+    val right = EventRecorder(enforceOrder = false)
+    val composite = left.eventListener + right.eventListener
 
     for (method in EventListener::class.java.declaredMethods) {
       if (method.name == "plus") continue
@@ -2359,7 +2360,7 @@ class EventListenerTest {
           .map { sampleValues[it.type] ?: error("no sample value for ${it.type}") }
           .toTypedArray()
 
-      method.invoke(solo, *args)
+      method.invoke(solo.eventListener, *args)
       method.invoke(composite, *args)
 
       val expectedEvent = solo.takeEvent()
