@@ -45,11 +45,11 @@ import okhttp3.CallEvent.RequestFailed
 import okhttp3.CallEvent.ResponseFailed
 import okhttp3.DelegatingServerSocketFactory
 import okhttp3.DelegatingSocketFactory
+import okhttp3.EventRecorder
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Protocol.HTTP_1_1
-import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.SimpleProvider
@@ -99,7 +99,7 @@ class CancelTest(
   private lateinit var server: MockWebServer
   private lateinit var client: OkHttpClient
 
-  val listener = RecordingEventListener()
+  val eventRecorder = EventRecorder()
 
   @BeforeEach
   fun setUp() {
@@ -138,7 +138,7 @@ class CancelTest(
         ).sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        ).eventListener(listener)
+        ).eventListener(eventRecorder.eventListener)
         .apply {
           if (connectionType == HTTPS) {
             protocols(listOf(HTTP_1_1))
@@ -237,8 +237,8 @@ class CancelTest(
 
     cancelLatch.await()
 
-    val events = listener.eventSequence.filter { isConnectionEvent(it) }.map { it.name }
-    listener.clearAllEvents()
+    val events = eventRecorder.eventSequence.filter { isConnectionEvent(it) }.map { it.name }
+    eventRecorder.clearAllEvents()
 
     assertThat(events).startsWith("CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired")
     if (cancelMode == CANCEL) {
@@ -254,7 +254,7 @@ class CancelTest(
       assertEquals(".", it.body.string())
     }
 
-    val events2 = listener.eventSequence.filter { isConnectionEvent(it) }.map { it.name }
+    val events2 = eventRecorder.eventSequence.filter { isConnectionEvent(it) }.map { it.name }
     val expectedEvents2 =
       mutableListOf<String>().apply {
         add("CallStart")

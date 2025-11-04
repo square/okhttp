@@ -71,13 +71,13 @@ class ServerTruncatesRequestTest {
   @JvmField
   var clientTestRule = OkHttpClientTestRule()
 
-  private val listener = RecordingEventListener()
+  private val eventRecorder = EventRecorder()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
   private var client =
     clientTestRule
       .newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(listener))
+      .eventListenerFactory(clientTestRule.wrap(eventRecorder))
       .build()
 
   @StartStop
@@ -147,7 +147,7 @@ class ServerTruncatesRequestTest {
     expectedEvents += ResponseBodyEnd::class
     expectedEvents += ConnectionReleased::class
     expectedEvents += CallEnd::class
-    assertThat(listener.recordedEventTypes()).isEqualTo(expectedEvents)
+    assertThat(eventRecorder.recordedEventTypes()).isEqualTo(expectedEvents)
 
     // Confirm that the connection pool was not corrupted by making another call.
     makeSimpleCall()

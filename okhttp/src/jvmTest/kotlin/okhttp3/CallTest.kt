@@ -159,12 +159,12 @@ open class CallTest {
   @StartStop
   private val server2 = MockWebServer()
 
-  private var listener = RecordingEventListener()
+  private var eventRecorder = EventRecorder()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client =
     clientTestRule
       .newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(listener))
+      .eventListenerFactory(clientTestRule.wrap(eventRecorder))
       .build()
   private val callback = RecordingCallback()
   private val cache =
@@ -1277,36 +1277,36 @@ open class CallTest {
     dispatcher.enqueue(MockResponse.Builder().onResponseStart(CloseSocket()).build())
     dispatcher.enqueue(MockResponse(body = "retry success"))
     server.dispatcher = dispatcher
-    listener =
-      object : RecordingEventListener() {
+    val requestFinishedListener =
+      object : EventListener() {
         override fun requestHeadersEnd(
           call: Call,
           request: Request,
         ) {
           requestFinished.countDown()
-          super.responseHeadersStart(call)
         }
       }
     client =
       client
         .newBuilder()
         .dns(DoubleInetAddressDns())
-        .eventListenerFactory(clientTestRule.wrap(listener))
-        .build()
+        .eventListenerFactory(
+          clientTestRule.wrap(eventRecorder.eventListener + requestFinishedListener),
+        ).build()
     assertThat(client.retryOnConnectionFailure).isTrue()
     executeSynchronously("/").assertBody("seed connection pool")
     executeSynchronously("/").assertBody("retry success")
 
     // The call that seeds the connection pool.
-    listener.removeUpToEvent(CallEnd::class.java)
+    eventRecorder.removeUpToEvent(CallEnd::class.java)
 
     // The ResponseFailed event is not necessarily fatal!
-    listener.removeUpToEvent(ConnectionAcquired::class.java)
-    listener.removeUpToEvent(ResponseFailed::class.java)
-    listener.removeUpToEvent(ConnectionReleased::class.java)
-    listener.removeUpToEvent(ConnectionAcquired::class.java)
-    listener.removeUpToEvent(ConnectionReleased::class.java)
-    listener.removeUpToEvent(CallEnd::class.java)
+    eventRecorder.removeUpToEvent(ConnectionAcquired::class.java)
+    eventRecorder.removeUpToEvent(ResponseFailed::class.java)
+    eventRecorder.removeUpToEvent(ConnectionReleased::class.java)
+    eventRecorder.removeUpToEvent(ConnectionAcquired::class.java)
+    eventRecorder.removeUpToEvent(ConnectionReleased::class.java)
+    eventRecorder.removeUpToEvent(CallEnd::class.java)
   }
 
   @Test
@@ -1718,7 +1718,7 @@ open class CallTest {
     val response1 = client.newCall(request1).execute()
     assertThat(response1.body.string()).isEqualTo("abc")
 
-    listener.clearAllEvents()
+    eventRecorder.clearAllEvents()
 
     val request2 =
       Request(
@@ -1731,7 +1731,7 @@ open class CallTest {
       assertThat(expected.message!!).startsWith("unexpected end of stream on http://")
     }
 
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ConnectionAcquired::class,
       RequestHeadersStart::class,
@@ -1743,15 +1743,15 @@ open class CallTest {
       ConnectionReleased::class,
       CallFailed::class,
     )
-    assertThat(listener.findEvent<RetryDecision>()).all {
+    assertThat(eventRecorder.findEvent<RetryDecision>()).all {
       prop(RetryDecision::retry).isFalse()
     }
-    listener.clearAllEvents()
+    eventRecorder.clearAllEvents()
 
     val response3 = client.newCall(request1).execute()
     assertThat(response3.body.string()).isEqualTo("abc")
 
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -3648,7 +3648,7 @@ open class CallTest {
     }
     if (!platform.isJdk8()) {
       val connectCount =
-        listener.eventSequence
+        eventRecorder.eventSequence
           .stream()
           .filter { event: CallEvent? -> event is ConnectStart }
           .count()

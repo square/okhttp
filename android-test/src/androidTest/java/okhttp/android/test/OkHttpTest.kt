@@ -72,13 +72,13 @@ import okhttp3.Connection
 import okhttp3.DelegatingSSLSocket
 import okhttp3.DelegatingSSLSocketFactory
 import okhttp3.EventListener
+import okhttp3.EventRecorder
 import okhttp3.Gzip
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Protocol
-import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.TlsVersion
 import okhttp3.brotli.Brotli
@@ -574,11 +574,15 @@ class OkHttpTest {
 
   @Test
   fun testEventListener() {
-    val eventListener = RecordingEventListener()
+    val eventRecorder = EventRecorder()
 
     enableTls()
 
-    client = client.newBuilder().eventListenerFactory(clientTestRule.wrap(eventListener)).build()
+    client =
+      client
+        .newBuilder()
+        .eventListenerFactory(clientTestRule.wrap(eventRecorder))
+        .build()
 
     server.enqueue(MockResponse(body = "abc1"))
     server.enqueue(MockResponse(body = "abc2"))
@@ -611,10 +615,10 @@ class OkHttpTest {
         ConnectionReleased::class,
         CallEnd::class,
       ),
-      eventListener.recordedEventTypes(),
+      eventRecorder.recordedEventTypes(),
     )
 
-    eventListener.clearAllEvents()
+    eventRecorder.clearAllEvents()
 
     client.newCall(request).execute().use { response ->
       assertEquals(200, response.code)
@@ -634,7 +638,7 @@ class OkHttpTest {
         ConnectionReleased::class,
         CallEnd::class,
       ),
-      eventListener.recordedEventTypes(),
+      eventRecorder.recordedEventTypes(),
     )
   }
 

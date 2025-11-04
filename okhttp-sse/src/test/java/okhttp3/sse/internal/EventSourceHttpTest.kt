@@ -39,9 +39,9 @@ import okhttp3.CallEvent.ResponseBodyEnd
 import okhttp3.CallEvent.ResponseBodyStart
 import okhttp3.CallEvent.ResponseHeadersEnd
 import okhttp3.CallEvent.ResponseHeadersStart
+import okhttp3.EventRecorder
 import okhttp3.Headers
 import okhttp3.OkHttpClientTestRule
-import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSources.createFactory
@@ -62,12 +62,12 @@ class EventSourceHttpTest {
 
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
-  private val eventListener = RecordingEventListener()
+  private val eventRecorder = EventRecorder()
   private val listener = EventSourceRecorder()
   private var client =
     clientTestRule
       .newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(eventListener))
+      .eventListenerFactory(clientTestRule.wrap(eventRecorder))
       .build()
 
   @AfterEach
@@ -256,7 +256,7 @@ class EventSourceHttpTest {
     listener.assertOpen()
     listener.assertEvent(null, null, "hey")
     listener.assertClose()
-    assertThat(eventListener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
