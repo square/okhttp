@@ -38,6 +38,7 @@ import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
+import okhttp3.CallEvent.CallFailed
 import okhttp3.CallEvent.CallStart
 import okhttp3.CallEvent.ConnectStart
 import okhttp3.CallEvent.DnsEnd
@@ -363,7 +364,7 @@ class ClientAuthTest {
       ConnectStart::class,
       SecureConnectStart::class,
     )
-    assertThat(recordedEventTypes).endsWith("CallFailed")
+    assertThat(recordedEventTypes).endsWith(CallFailed::class)
   }
 
   private fun buildClient(
