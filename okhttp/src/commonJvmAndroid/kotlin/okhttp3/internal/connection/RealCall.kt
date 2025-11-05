@@ -131,7 +131,7 @@ class RealCall(
   override fun addEventListener(eventListener: EventListener) {
     // Atomically replace the current eventListener with a composite one.
     do {
-      val previous = eventListener
+      val previous = this.eventListener
     } while (!eventListenerUpdater.compareAndSet(this, previous, previous + eventListener))
   }
 
