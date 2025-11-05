@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.reflect.KClass
 import okhttp3.Call
 import okhttp3.Callback
@@ -70,6 +71,7 @@ class RealCall(
   Lockable {
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
 
+  @Volatile
   internal var eventListener: EventListener = client.eventListenerFactory.create(this)
 
   private val timeout =
@@ -127,7 +129,10 @@ class RealCall(
   override fun timeout(): Timeout = timeout
 
   override fun addEventListener(eventListener: EventListener) {
-    this.eventListener += eventListener
+    // Atomically replace the current eventListener with a composite one.
+    do {
+      val previous = eventListener
+    } while (!eventListenerUpdater.compareAndSet(this, previous, previous + eventListener))
   }
 
   override fun <T : Any> tag(type: KClass<T>): T? = type.java.cast(tags.get()[type])
@@ -612,4 +617,13 @@ class RealCall(
      */
     val callStackTrace: Any?,
   ) : WeakReference<RealCall>(referent)
+
+  private companion object {
+    val eventListenerUpdater: AtomicReferenceFieldUpdater<RealCall, EventListener> =
+      AtomicReferenceFieldUpdater.newUpdater(
+        RealCall::class.java,
+        EventListener::class.java,
+        "eventListener",
+      )
+  }
 }
