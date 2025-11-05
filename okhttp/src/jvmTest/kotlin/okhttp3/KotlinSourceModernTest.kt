@@ -202,6 +202,8 @@ class KotlinSourceModernTest {
 
         override fun timeout(): Timeout = TODO()
 
+        override fun addEventListener(eventListener: EventListener) = TODO()
+
         override fun <T : Any> tag(type: KClass<T>): T? = TODO()
 
         override fun <T> tag(type: Class<out T>): T? = TODO()

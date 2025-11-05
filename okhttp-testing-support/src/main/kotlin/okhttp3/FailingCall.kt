@@ -33,6 +33,8 @@ open class FailingCall : Call {
 
   override fun timeout(): Timeout = error("unexpected")
 
+  override fun addEventListener(eventListener: EventListener) = error("unexpected")
+
   override fun <T : Any> tag(type: KClass<T>): T? = error("unexpected")
 
   override fun <T> tag(type: Class<out T>): T? = error("unexpected")

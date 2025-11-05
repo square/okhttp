@@ -89,6 +89,19 @@ interface Call : Cloneable {
   fun timeout(): Timeout
 
   /**
+   * Configure this call to publish all future events to [eventListener], in addition to the
+   * listeners configured by [OkHttpClient.Builder.eventListener] and other calls to this function.
+   *
+   * If this call is later [cloned][clone], [eventListener] will not be notified of its events.
+   *
+   * There is no mechanism to remove an event listener. Implementations should instead ignore events
+   * that they are not interested in.
+   *
+   * @see EventListener for semantics and restrictions on listener implementations.
+   */
+  fun addEventListener(eventListener: EventListener)
+
+  /**
    * Returns the tag attached with [type] as a key, or null if no tag is attached with that key.
    *
    * The tags on a call are seeded from the [request tags][Request.tag]. This set will grow if new
@@ -161,6 +174,9 @@ interface Call : Cloneable {
    *   copy.tag(MyTag.class, () -> myTag);
    * }
    * ```
+   *
+   * If any event listeners were installed on this call with [addEventListener], they will not be
+   * installed on this copy.
    */
   public override fun clone(): Call
 

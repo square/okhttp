@@ -38,7 +38,6 @@ import okio.buffer
  */
 class Exchange(
   internal val call: RealCall,
-  internal val eventListener: EventListener,
   internal val finder: ExchangeFinder,
   private val codec: ExchangeCodec,
 ) {
@@ -59,11 +58,11 @@ class Exchange(
   @Throws(IOException::class)
   fun writeRequestHeaders(request: Request) {
     try {
-      eventListener.requestHeadersStart(call)
+      call.eventListener.requestHeadersStart(call)
       codec.writeRequestHeaders(request)
-      eventListener.requestHeadersEnd(call, request)
+      call.eventListener.requestHeadersEnd(call, request)
     } catch (e: IOException) {
-      eventListener.requestFailed(call, e)
+      call.eventListener.requestFailed(call, e)
       trackFailure(e)
       throw e
     }
@@ -76,7 +75,7 @@ class Exchange(
   ): Sink {
     this.isDuplex = duplex
     val contentLength = request.body!!.contentLength()
-    eventListener.requestBodyStart(call)
+    call.eventListener.requestBodyStart(call)
     val rawRequestBody = codec.createRequestBody(request, contentLength)
     return RequestBodySink(
       delegate = rawRequestBody,
@@ -90,7 +89,7 @@ class Exchange(
     try {
       codec.flushRequest()
     } catch (e: IOException) {
-      eventListener.requestFailed(call, e)
+      call.eventListener.requestFailed(call, e)
       trackFailure(e)
       throw e
     }
@@ -101,14 +100,14 @@ class Exchange(
     try {
       codec.finishRequest()
     } catch (e: IOException) {
-      eventListener.requestFailed(call, e)
+      call.eventListener.requestFailed(call, e)
       trackFailure(e)
       throw e
     }
   }
 
   fun responseHeadersStart() {
-    eventListener.responseHeadersStart(call)
+    call.eventListener.responseHeadersStart(call)
   }
 
   @Throws(IOException::class)
@@ -118,14 +117,14 @@ class Exchange(
       result?.initExchange(this)
       return result
     } catch (e: IOException) {
-      eventListener.responseFailed(call, e)
+      call.eventListener.responseFailed(call, e)
       trackFailure(e)
       throw e
     }
   }
 
   fun responseHeadersEnd(response: Response) {
-    eventListener.responseHeadersEnd(call, response)
+    call.eventListener.responseHeadersEnd(call, response)
   }
 
   @Throws(IOException::class)
@@ -142,7 +141,7 @@ class Exchange(
         )
       return RealResponseBody(contentType, contentLength, source.buffer())
     } catch (e: IOException) {
-      eventListener.responseFailed(call, e)
+      call.eventListener.responseFailed(call, e)
       trackFailure(e)
       throw e
     }
@@ -217,16 +216,16 @@ class Exchange(
     }
     if (requestDone) {
       if (e != null) {
-        eventListener.requestFailed(call, e)
+        call.eventListener.requestFailed(call, e)
       } else {
-        eventListener.requestBodyEnd(call, bytesRead)
+        call.eventListener.requestBodyEnd(call, bytesRead)
       }
     }
     if (responseDone) {
       if (e != null) {
-        eventListener.responseFailed(call, e)
+        call.eventListener.responseFailed(call, e)
       } else {
-        eventListener.responseBodyEnd(call, bytesRead)
+        call.eventListener.responseBodyEnd(call, bytesRead)
       }
     }
     return call.messageDone(
@@ -273,7 +272,7 @@ class Exchange(
       try {
         if (invokeStartEvent) {
           invokeStartEvent = false
-          eventListener.requestBodyStart(call)
+          call.eventListener.requestBodyStart(call)
         }
         super.write(source, byteCount)
         this.bytesReceived += byteCount
@@ -347,7 +346,7 @@ class Exchange(
 
         if (invokeStartEvent) {
           invokeStartEvent = false
-          eventListener.responseBodyStart(call)
+          call.eventListener.responseBodyStart(call)
         }
 
         if (read == -1L) {
@@ -390,7 +389,7 @@ class Exchange(
       // If the body is closed without reading any bytes send a responseBodyStart() now.
       if (e == null && invokeStartEvent) {
         invokeStartEvent = false
-        eventListener.responseBodyStart(call)
+        call.eventListener.responseBodyStart(call)
       }
       return bodyComplete(
         bytesRead = bytesReceived,
