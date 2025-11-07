@@ -37,6 +37,7 @@ import mockwebserver3.junit5.StartStop
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.internal.http.ExchangeCodec.Companion.DISCARD_STREAM_TIMEOUT_MILLIS
 import okhttp3.internal.http2.Http2Connection.Companion.OKHTTP_CLIENT_WINDOW_SIZE
 import okhttp3.testing.PlatformRule
 import okio.BufferedSource
@@ -585,6 +586,15 @@ open class TrailersTest {
   /**
    * If the client closes the connection while it is consuming the response body, attempts to peek
    * or read the trailers should throw.
+   *
+   * This test needs to make two interventions to prevent OkHttp from reading the entire response
+   * body, which it will attempt to do otherwise:
+   *
+   *  * Don't cache the response. The cache will try to read the entire response body so that it
+   *    can successfully complete the cache entry.
+   *
+   *  * Throttle the response. The HTTP/1 connection pool will attempt to read the entire response
+   *    body so that it can pool the connection.
    */
   private fun trailersWithClientPrematureClose(protocol: Protocol) {
     val halfResponseBody = "a".repeat(OKHTTP_CLIENT_WINDOW_SIZE)
@@ -596,11 +606,14 @@ open class TrailersTest {
         .addHeader("h1", "v1")
         .trailers(headersOf("t1", "v2"))
         .body(protocol, halfResponseBody + halfResponseBody)
+        .throttleBody(
+          OKHTTP_CLIENT_WINDOW_SIZE.toLong(),
+          DISCARD_STREAM_TIMEOUT_MILLIS.toLong() + 1L,
+          TimeUnit.MILLISECONDS,
+        )
         .build(),
     )
 
-    // Don't cache the response, otherwise source.close() will cache the entire response, and we
-    // won't trigger the truncated response that we're trying to test.
     val call = client.newCall(
       Request(
         url = server.url("/"),
