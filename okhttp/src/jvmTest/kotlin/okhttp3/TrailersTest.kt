@@ -599,7 +599,14 @@ open class TrailersTest {
         .build(),
     )
 
-    val call = client.newCall(Request(server.url("/")))
+    // Don't cache the response, otherwise source.close() will cache the entire response, and we
+    // won't trigger the truncated response that we're trying to test.
+    val call = client.newCall(
+      Request(
+        url = server.url("/"),
+        headers = headersOf("Cache-Control", "no-store"),
+      )
+    )
     call.execute().use { response ->
       val source = response.body.source()
       assertThat(response.header("h1")).isEqualTo("v1")
