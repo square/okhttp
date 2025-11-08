@@ -610,16 +610,16 @@ open class TrailersTest {
           OKHTTP_CLIENT_WINDOW_SIZE.toLong(),
           DISCARD_STREAM_TIMEOUT_MILLIS.toLong() + 1L,
           TimeUnit.MILLISECONDS,
-        )
-        .build(),
+        ).build(),
     )
 
-    val call = client.newCall(
-      Request(
-        url = server.url("/"),
-        headers = headersOf("Cache-Control", "no-store"),
+    val call =
+      client.newCall(
+        Request(
+          url = server.url("/"),
+          headers = headersOf("Cache-Control", "no-store"),
+        ),
       )
-    )
     call.execute().use { response ->
       val source = response.body.source()
       assertThat(response.header("h1")).isEqualTo("v1")
