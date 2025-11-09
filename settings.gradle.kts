@@ -58,7 +58,7 @@ project(":okhttp-logging-interceptor").name = "logging-interceptor"
 
 val androidHome = System.getenv("ANDROID_HOME")
 val localProperties = Properties().apply {
-  val file = File("local.properties")
+  val file = rootProject.projectDir.resolve("local.properties")
   if (file.exists()) {
     load(file.inputStream())
   }

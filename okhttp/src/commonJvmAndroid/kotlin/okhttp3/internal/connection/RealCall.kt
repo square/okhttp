@@ -25,6 +25,9 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
+import kotlin.reflect.KClass
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.EventListener
@@ -35,6 +38,7 @@ import okhttp3.Response
 import okhttp3.internal.assertLockNotHeld
 import okhttp3.internal.cache.CacheInterceptor
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.computeIfAbsent
 import okhttp3.internal.concurrent.Lockable
 import okhttp3.internal.concurrent.assertLockHeld
 import okhttp3.internal.concurrent.assertLockNotHeld
@@ -67,7 +71,8 @@ class RealCall(
   Lockable {
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
 
-  internal val eventListener: EventListener = client.eventListenerFactory.create(this)
+  @Volatile
+  internal var eventListener: EventListener = client.eventListenerFactory.create(this)
 
   private val timeout =
     object : AsyncTimeout() {
@@ -103,11 +108,10 @@ class RealCall(
   // These properties are guarded by `this`. They are typically only accessed by the thread executing
   // the call, but they may be accessed by other threads for duplex requests.
 
-  /** True if this call still has a request body open. */
   private var requestBodyOpen = false
-
-  /** True if this call still has a response body open. */
   private var responseBodyOpen = false
+  private var socketSinkOpen = false
+  private var socketSourceOpen = false
 
   /** True if there are more exchanges expected for this call. */
   private var expectMoreExchanges = true
@@ -120,7 +124,30 @@ class RealCall(
   @Volatile private var exchange: Exchange? = null
   internal val plansToCancel = CopyOnWriteArrayList<RoutePlanner.Plan>()
 
+  private val tags = AtomicReference(originalRequest.tags)
+
   override fun timeout(): Timeout = timeout
+
+  override fun addEventListener(eventListener: EventListener) {
+    // Atomically replace the current eventListener with a composite one.
+    do {
+      val previous = this.eventListener
+    } while (!eventListenerUpdater.compareAndSet(this, previous, previous + eventListener))
+  }
+
+  override fun <T : Any> tag(type: KClass<T>): T? = type.java.cast(tags.get()[type])
+
+  override fun <T> tag(type: Class<out T>): T? = tag(type.kotlin)
+
+  override fun <T : Any> tag(
+    type: KClass<T>,
+    computeIfAbsent: () -> T,
+  ): T = tags.computeIfAbsent(type, computeIfAbsent)
+
+  override fun <T : Any> tag(
+    type: Class<T>,
+    computeIfAbsent: () -> T,
+  ): T = tags.computeIfAbsent(type.kotlin, computeIfAbsent)
 
   @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
   override fun clone(): Call = RealCall(client, originalRequest, forWebSocket)
@@ -184,7 +211,7 @@ class RealCall(
     interceptors += client.interceptors
     interceptors += RetryAndFollowUpInterceptor(client)
     interceptors += BridgeInterceptor(client.cookieJar)
-    interceptors += CacheInterceptor(client.cache)
+    interceptors += CacheInterceptor(this, client.cache)
     interceptors += ConnectInterceptor
     if (!forWebSocket) {
       interceptors += client.networkInterceptors
@@ -239,7 +266,7 @@ class RealCall(
         "cannot make a new request because the previous response is still open: " +
           "please call response.close()"
       }
-      check(!requestBodyOpen)
+      check(!requestBodyOpen && !socketSourceOpen && !socketSinkOpen)
     }
 
     if (newRoutePlanner) {
@@ -271,14 +298,13 @@ class RealCall(
   internal fun initExchange(chain: RealInterceptorChain): Exchange {
     withLock {
       check(expectMoreExchanges) { "released" }
-      check(!responseBodyOpen)
-      check(!requestBodyOpen)
+      check(!responseBodyOpen && !requestBodyOpen && !socketSourceOpen && !socketSinkOpen)
     }
 
     val exchangeFinder = this.exchangeFinder!!
     val connection = exchangeFinder.find()
     val codec = connection.newCodec(client, chain)
-    val result = Exchange(this, eventListener, exchangeFinder, codec)
+    val result = Exchange(this, exchangeFinder, codec)
     this.interceptorScopedExchange = result
     this.exchange = result
     withLock {
@@ -310,22 +336,34 @@ class RealCall(
     exchange: Exchange,
     requestDone: Boolean = false,
     responseDone: Boolean = false,
+    socketSourceDone: Boolean = false,
+    socketSinkDone: Boolean = false,
     e: IOException?,
   ): IOException? {
     if (exchange != this.exchange) return e // This exchange was detached violently!
 
-    var bothStreamsDone = false
+    var allStreamsDone = false
     var callDone = false
     withLock {
-      if (requestDone && requestBodyOpen || responseDone && responseBodyOpen) {
+      if (
+        requestDone && requestBodyOpen ||
+        responseDone && responseBodyOpen ||
+        socketSinkDone && socketSinkOpen ||
+        socketSourceDone && socketSourceOpen
+      ) {
         if (requestDone) requestBodyOpen = false
         if (responseDone) responseBodyOpen = false
-        bothStreamsDone = !requestBodyOpen && !responseBodyOpen
-        callDone = !requestBodyOpen && !responseBodyOpen && !expectMoreExchanges
+        if (socketSinkDone) socketSinkOpen = false
+        if (socketSourceDone) socketSourceOpen = false
+        allStreamsDone = !requestBodyOpen &&
+          !responseBodyOpen &&
+          !socketSinkOpen &&
+          !socketSourceOpen
+        callDone = allStreamsDone && !expectMoreExchanges
       }
     }
 
-    if (bothStreamsDone) {
+    if (allStreamsDone) {
       this.exchange = null
       this.connection?.incrementSuccessCount()
     }
@@ -342,7 +380,7 @@ class RealCall(
     withLock {
       if (expectMoreExchanges) {
         expectMoreExchanges = false
-        callDone = !requestBodyOpen && !responseBodyOpen
+        callDone = !requestBodyOpen && !responseBodyOpen && !socketSinkOpen && !socketSourceOpen
       }
     }
 
@@ -355,7 +393,8 @@ class RealCall(
 
   /**
    * Complete this call. This should be called once these properties are all false:
-   * [requestBodyOpen], [responseBodyOpen], and [expectMoreExchanges].
+   * [requestBodyOpen], [responseBodyOpen], [socketSinkOpen], [socketSourceOpen], and
+   * [expectMoreExchanges].
    *
    * This will release the connection if it is still held.
    *
@@ -439,6 +478,20 @@ class RealCall(
     check(!timeoutEarlyExit)
     timeoutEarlyExit = true
     timeout.exit()
+  }
+
+  fun upgradeToSocket() {
+    timeoutEarlyExit()
+
+    withLock {
+      check(exchange != null)
+      check(!socketSinkOpen && !socketSourceOpen)
+      check(!requestBodyOpen)
+      check(responseBodyOpen)
+      responseBodyOpen = false
+      socketSinkOpen = true
+      socketSourceOpen = true
+    }
   }
 
   /**
@@ -562,4 +615,13 @@ class RealCall(
      */
     val callStackTrace: Any?,
   ) : WeakReference<RealCall>(referent)
+
+  private companion object {
+    val eventListenerUpdater: AtomicReferenceFieldUpdater<RealCall, EventListener> =
+      AtomicReferenceFieldUpdater.newUpdater(
+        RealCall::class.java,
+        EventListener::class.java,
+        "eventListener",
+      )
+  }
 }

@@ -17,9 +17,10 @@ package okhttp3
 
 import java.net.URL
 import kotlin.reflect.KClass
-import kotlin.reflect.cast
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.internal.EmptyTags
+import okhttp3.internal.Tags
 import okhttp3.internal.http.GzipRequestBody
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.isProbablyUtf8
@@ -48,7 +49,7 @@ class Request internal constructor(
   @get:JvmName("cacheUrlOverride")
   val cacheUrlOverride: HttpUrl? = builder.cacheUrlOverride
 
-  internal val tags: Map<KClass<*>, Any> = builder.tags.toMap()
+  internal val tags = builder.tags
 
   private var lazyCacheControl: CacheControl? = null
 
@@ -81,15 +82,6 @@ class Request internal constructor(
         body,
       ),
   )
-
-  init {
-    val connectionHeader = headers["Connection"]
-    if ("upgrade".equals(connectionHeader, ignoreCase = true)) {
-      require(body == null || body.contentLength() == 0L) {
-        "expected a null or empty request body with 'Connection: upgrade'"
-      }
-    }
-  }
 
   fun header(name: String): String? = headers[name]
 
@@ -195,7 +187,7 @@ class Request internal constructor(
         }
         append(']')
       }
-      if (tags.isNotEmpty()) {
+      if (tags != EmptyTags) {
         append(", tags=")
         append(tags)
       }
@@ -208,9 +200,7 @@ class Request internal constructor(
     internal var headers: Headers.Builder
     internal var body: RequestBody? = null
     internal var cacheUrlOverride: HttpUrl? = null
-
-    /** A mutable map of tags, or an immutable empty map if we don't have any. */
-    internal var tags = mapOf<KClass<*>, Any>()
+    internal var tags: Tags = EmptyTags
 
     constructor() {
       this.method = "GET"
@@ -221,11 +211,7 @@ class Request internal constructor(
       this.url = request.url
       this.method = request.method
       this.body = request.body
-      this.tags =
-        when {
-          request.tags.isEmpty() -> mapOf()
-          else -> request.tags.toMutableMap()
-        }
+      this.tags = request.tags
       this.headers = request.headers.newBuilder()
       this.cacheUrlOverride = request.cacheUrlOverride
     }
@@ -386,18 +372,7 @@ class Request internal constructor(
       tag: T?,
     ): Builder =
       apply {
-        if (tag == null) {
-          if (tags.isNotEmpty()) {
-            (tags as MutableMap).remove(type)
-          }
-        } else {
-          val mutableTags =
-            when {
-              tags.isEmpty() -> mutableMapOf<KClass<*>, Any>().also { tags = it }
-              else -> tags as MutableMap<KClass<*>, Any>
-            }
-          mutableTags[type] = type.cast(tag)
-        }
+        tags = tags.plus(type, tag)
       }
 
     /** Attaches [tag] to the request using `Object.class` as a key. */

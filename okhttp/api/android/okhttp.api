@@ -119,6 +119,7 @@ public final class okhttp3/CacheControl$Companion {
 }
 
 public abstract interface class okhttp3/Call : java/lang/Cloneable {
+	public abstract fun addEventListener (Lokhttp3/EventListener;)V
 	public abstract fun cancel ()V
 	public abstract fun clone ()Lokhttp3/Call;
 	public abstract fun enqueue (Lokhttp3/Callback;)V
@@ -126,6 +127,10 @@ public abstract interface class okhttp3/Call : java/lang/Cloneable {
 	public abstract fun isCanceled ()Z
 	public abstract fun isExecuted ()Z
 	public abstract fun request ()Lokhttp3/Request;
+	public abstract fun tag (Ljava/lang/Class;)Ljava/lang/Object;
+	public abstract fun tag (Ljava/lang/Class;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public abstract fun tag (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+	public abstract fun tag (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public abstract fun timeout ()Lokio/Timeout;
 }
 

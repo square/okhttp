@@ -33,6 +33,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.internal.EmptyTags
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
@@ -59,7 +60,7 @@ class RequestTest {
     assertThat(request.headers).isEqualTo(headers)
     assertThat(request.method).isEqualTo(method)
     assertThat(request.body).isEqualTo(body)
-    assertThat(request.tags).isEmpty()
+    assertThat(request.tags).isEqualTo(EmptyTags)
   }
 
   @Test
@@ -75,7 +76,7 @@ class RequestTest {
     assertThat(request.headers).isEqualTo(headers)
     assertThat(request.method).isEqualTo("GET")
     assertThat(request.body).isNull()
-    assertThat(request.tags).isEmpty()
+    assertThat(request.tags).isEqualTo(EmptyTags)
   }
 
   @Test
@@ -93,7 +94,7 @@ class RequestTest {
     assertThat(request.headers).isEqualTo(headers)
     assertThat(request.method).isEqualTo("POST")
     assertThat(request.body).isEqualTo(body)
-    assertThat(request.tags).isEmpty()
+    assertThat(request.tags).isEqualTo(EmptyTags)
   }
 
   @Test
@@ -111,7 +112,7 @@ class RequestTest {
     assertThat(request.headers).isEqualTo(headers)
     assertThat(request.method).isEqualTo(method)
     assertThat(request.body).isNull()
-    assertThat(request.tags).isEmpty()
+    assertThat(request.tags).isEqualTo(EmptyTags)
   }
 
   @Test
@@ -576,6 +577,23 @@ class RequestTest {
         " set-cookie:██," +
         " user-agent:OkHttp" +
         "]}",
+    )
+  }
+
+  @Test
+  fun requestToStringIncludesTags() {
+    val request =
+      Request
+        .Builder()
+        .url("https://square.com/".toHttpUrl())
+        .tag<String>("hello")
+        .tag<Int>(5)
+        .build()
+    assertThat(request.toString()).isEqualTo(
+      "Request{method=GET, url=https://square.com/, tags={" +
+        "class kotlin.String=hello, " +
+        "class kotlin.Int=5" +
+        "}}",
     )
   }
 

@@ -5,6 +5,34 @@ Change Log
 
 See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
 
+## Version 5.3.0
+
+_2025-10-30_
+
+ *  New: Add tags to `Call`, including computable tags. Use this to attach application-specific
+    metadata to a `Call` in an `EventListener` or `Interceptor`. The tag can be read in any other
+    `EventListener` or `Interceptor`.
+
+    ```kotlin
+      override fun intercept(chain: Interceptor.Chain): Response {
+        chain.call().tag(MyAnalyticsTag::class) {
+          MyAnalyticsTag(...)
+        }
+
+        return chain.proceed(chain.request())
+      }
+    ```
+
+ *  New: Support request bodies on HTTP/1.1 connection upgrades.
+ *  New: `EventListener.plus()` makes it easier to observe events in multiple listeners.
+ *  Fix: Don't spam logs with _‘Method isLoggable in android.util.Log not mocked.’_ when using
+    OkHttp in Robolectric and Paparazzi tests.
+ *  Upgrade: [Kotlin 2.2.21][kotlin_2_2_21].
+ *  Upgrade: [Okio 3.16.2][okio_3_16_2].
+ *  Upgrade: [ZSTD-KMP 0.4.0][zstd_kmp_0_4_0]. This update fixes a bug that caused APKs to fail
+    [16 KB ELF alignment checks][elf_alignment].
+
+
 ## Version 5.2.1
 
 _2025-10-09_
@@ -701,6 +729,7 @@ release is the version name.
 [assertk]: https://github.com/willowtreeapps/assertk
 [coroutines_1_10_2]: https://github.com/Kotlin/kotlinx.coroutines/releases/tag/1.10.2
 [curl]: https://curl.se/
+[elf_alignment]: https://developer.android.com/guide/practices/page-sizes
 [graalvm]: https://www.graalvm.org/
 [graalvm_21]: https://www.graalvm.org/release-notes/21_0/
 [graalvm_22]: https://www.graalvm.org/release-notes/22_2/
@@ -715,6 +744,7 @@ release is the version name.
 [kotlin_2_1_21]: https://github.com/JetBrains/kotlin/releases/tag/v2.1.21
 [kotlin_2_2_0]: https://github.com/JetBrains/kotlin/releases/tag/v2.2.0
 [kotlin_2_2_20]: https://github.com/JetBrains/kotlin/releases/tag/v2.2.20
+[kotlin_2_2_21]: https://github.com/JetBrains/kotlin/releases/tag/v2.2.21
 [loom]: https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html
 [okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
 [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
@@ -723,6 +753,7 @@ release is the version name.
 [okio_3_15_0]: https://square.github.io/okio/changelog/#version-3150
 [okio_3_16_0]: https://square.github.io/okio/changelog/#version-3160
 [okio_3_16_1]: https://square.github.io/okio/changelog/#version-3161
+[okio_3_16_2]: https://square.github.io/okio/changelog/#version-3162
 [okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
 [okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
 [okio_3_7_0]: https://square.github.io/okio/changelog/#version-370
@@ -731,3 +762,4 @@ release is the version name.
 [startup_1_2_0]: https://developer.android.com/jetpack/androidx/releases/startup#1.2.0
 [uts46]: https://www.unicode.org/reports/tr46
 [zstd]: https://github.com/facebook/zstd
+[zstd_kmp_0_4_0]: https://github.com/square/zstd-kmp/blob/main/CHANGELOG.md#version-040

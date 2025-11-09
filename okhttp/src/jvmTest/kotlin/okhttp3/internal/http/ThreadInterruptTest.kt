@@ -17,14 +17,18 @@ package okhttp3.internal.http
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isIn
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotNull
+import assertk.assertions.matchesPredicate
+import assertk.assertions.startsWith
 import assertk.fail
 import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertFailsWith
 import okhttp3.Call
@@ -191,11 +195,15 @@ class ThreadInterruptTest {
     client.dispatcher.executorService.shutdownNow()
 
     val exception = callFailure.get(5, TimeUnit.SECONDS)
-    assertThat(exception.message).isEqualTo("canceled due to java.lang.InterruptedException")
+    assertThat(exception.message)
+      .isNotNull()
+      .startsWith("canceled due to")
     assertThat(exception).isInstanceOf<IOException>()
     assertThat(exception.cause)
       .isNotNull()
-      .isInstanceOf<InterruptedException>()
+      .matchesPredicate { it is InterruptedException || it is RejectedExecutionException }
+    assertThat(clientTestRule.takeUncaughtException())
+      .matchesPredicate { it == null || it is RejectedExecutionException }
   }
 
   private fun sleep(delayMillis: Int) {

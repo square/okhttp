@@ -2,15 +2,14 @@
 
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import java.net.URI
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
-import java.net.URI
 
 buildscript {
   dependencies {
@@ -20,6 +19,7 @@ buildscript {
     classpath(libs.gradlePlugin.androidJunit5)
     classpath(libs.gradlePlugin.android)
     classpath(libs.gradlePlugin.bnd)
+    classpath(libs.gradlePlugin.burst)
     classpath(libs.gradlePlugin.shadow)
     classpath(libs.gradlePlugin.animalsniffer)
     classpath(libs.gradlePlugin.errorprone)
@@ -51,7 +51,7 @@ configure<SpotlessExtension> {
 
 allprojects {
   group = "com.squareup.okhttp3"
-  version = "5.3.0-SNAPSHOT"
+  version = "5.4.0-SNAPSHOT"
 
   repositories {
     mavenCentral()

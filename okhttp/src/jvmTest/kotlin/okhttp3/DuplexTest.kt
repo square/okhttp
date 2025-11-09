@@ -88,12 +88,12 @@ class DuplexTest {
   @StartStop
   private val server = MockWebServer()
 
-  private var listener = RecordingEventListener()
+  private var eventRecorder = EventRecorder()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client =
     clientTestRule
       .newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(listener))
+      .eventListenerFactory(clientTestRule.wrap(eventRecorder))
       .build()
   private val executorService = Executors.newScheduledThreadPool(1)
 
@@ -323,7 +323,7 @@ class DuplexTest {
       requestBody.close()
     }
     body.awaitSuccess()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -395,26 +395,21 @@ class DuplexTest {
   fun duplexWithRedirect() {
     enableProtocol(Protocol.HTTP_2)
     val duplexResponseSent = CountDownLatch(1)
-    listener =
-      object : RecordingEventListener() {
-        override fun responseHeadersEnd(
+    val requestHeadersEndListener =
+      object : EventListener() {
+        override fun requestHeadersEnd(
           call: Call,
-          response: Response,
+          request: Request,
         ) {
-          try {
-            // Wait for the server to send the duplex response before acting on the 301 response
-            // and resetting the stream.
-            duplexResponseSent.await()
-          } catch (e: InterruptedException) {
-            throw AssertionError()
-          }
-          super.responseHeadersEnd(call, response)
+          // Wait for the server to send the duplex response before acting on the 301 response
+          // and resetting the stream.
+          duplexResponseSent.await()
         }
       }
     client =
       client
         .newBuilder()
-        .eventListener(listener)
+        .eventListener(eventRecorder.eventListener + requestHeadersEndListener)
         .build()
     val body =
       MockSocketHandler()
@@ -458,7 +453,7 @@ class DuplexTest {
         .isEqualTo("stream was reset: CANCEL")
     }
     body.awaitSuccess()
-    assertThat(listener.recordedEventTypes()).containsExactly(
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
       CallStart::class,
       ProxySelectStart::class,
       ProxySelectEnd::class,
@@ -488,7 +483,7 @@ class DuplexTest {
       CallEnd::class,
       RequestFailed::class,
     )
-    assertThat(listener.findEvent<FollowUpDecision>()).all {
+    assertThat(eventRecorder.findEvent<FollowUpDecision>()).all {
       prop(FollowUpDecision::nextRequest).isNotNull()
     }
   }

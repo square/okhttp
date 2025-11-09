@@ -137,6 +137,8 @@ class OkHttpClientTestRule :
       ClientRuleEventListener(::addEvent) + eventListener
     }
 
+  fun wrap(eventRecorder: EventRecorder) = wrap(eventRecorder.eventListener)
+
   fun wrap(eventListenerFactory: EventListener.Factory) =
     EventListener.Factory { call ->
       ClientRuleEventListener(::addEvent) + eventListenerFactory.create(call)
@@ -214,6 +216,10 @@ class OkHttpClientTestRule :
       uncaughtException = throwable
     }
   }
+
+  @Synchronized fun takeUncaughtException(): Throwable? =
+    uncaughtException
+      .also { uncaughtException = null }
 
   fun ensureAllConnectionsReleased() {
     testClient?.let {
