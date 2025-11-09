@@ -82,6 +82,9 @@ fun interface Interceptor {
   }
 
   interface Chain {
+    /**
+     * Returns the request being executed.
+     */
     fun request(): Request
 
     @Throws(IOException::class)
@@ -89,91 +92,218 @@ fun interface Interceptor {
 
     /**
      * Returns the connection the request will be executed on. This is only available in the chains
-     * of network interceptors; for application interceptors this is always null.
+     * of network interceptors. For application interceptors this is always null.
      */
     fun connection(): Connection?
 
+    /**
+     * Returns the `Call` to which this chain belongs.
+     */
     fun call(): Call
 
+    /**
+     * Returns the connect timeout in milliseconds.
+     */
     fun connectTimeoutMillis(): Int
 
+    /**
+     * Returns a new chain with the specified connect timeout.
+     */
     fun withConnectTimeout(
       timeout: Int,
       unit: TimeUnit,
     ): Chain
 
+    /**
+     * Returns the read timeout in milliseconds.
+     */
     fun readTimeoutMillis(): Int
 
+    /**
+     * Returns a new chain with the specified read timeout.
+     */
     fun withReadTimeout(
       timeout: Int,
       unit: TimeUnit,
     ): Chain
 
+    /**
+     * Returns the write timeout in milliseconds.
+     */
     fun writeTimeoutMillis(): Int
 
+    /**
+     * Returns a new chain with the specified write timeout.
+     */
     fun withWriteTimeout(
       timeout: Int,
       unit: TimeUnit,
     ): Chain
 
+    /**
+     * Get the [DNS] instance for the OkHttpClient, or an override from the Call.Chain.
+     */
     val dns: Dns
 
+    /**
+     * Override the [DNS] for the Call.Chain.
+     *
+     * @throws IllegalStateException if this is a Network Interceptor, since the override is too late.
+     */
     fun withDns(dns: Dns): Chain
 
+    /**
+     * Returns the [SocketFactory] for the OkHttpClient, or an override from the Call.Chain.
+     */
     val socketFactory: SocketFactory
 
+    /**
+     * Override the [SocketFactory] for the Call.Chain.
+     *
+     * @throws IllegalStateException if this is a Network Interceptor, since the override is too late.
+     */
     fun withSocketFactory(socketFactory: SocketFactory): Chain
 
+    /**
+     * Returns true if the call should retry on connection failures.
+     */
     val retryOnConnectionFailure: Boolean
 
+    /**
+     * Returns a new chain with the specified retry on connection failure setting.
+     */
     fun withRetryOnConnectionFailure(retryOnConnectionFailure: Boolean): Chain
 
+    /**
+     * Returns the [Authenticator] for the OkHttpClient, or an override from the Call.Chain.
+     */
     val authenticator: Authenticator
 
+    /**
+     * Override the [Authenticator] for the Call.Chain.
+     *
+     * @throws IllegalStateException if this is a Network Interceptor, since the override is too late.
+     */
     fun withAuthenticator(authenticator: Authenticator): Chain
 
+    /**
+     * Returns the [CookieJar] for the OkHttpClient, or an override from the Call.Chain.
+     */
     val cookieJar: CookieJar
 
+    /**
+     * Returns a new chain with the specified [CookieJar].
+     */
     fun withCookieJar(cookieJar: CookieJar): Chain
 
+    /**
+     * Returns the [Cache] for the OkHttpClient, or an override from the Call.Chain.
+     */
     val cache: Cache?
 
-    fun withCache(cache: Cache): Chain
+    /**
+     * Override the [Cache] for the Call.Chain.
+     *
+     * @throws IllegalStateException if this is a Network Interceptor, since the override is too late.
+     */
+    fun withCache(cache: Cache?): Chain
 
+    /**
+     * Returns the [Proxy] for the OkHttpClient, or an override from the Call.Chain.
+     */
     val proxy: Proxy?
 
-    fun withProxy(proxy: Proxy): Chain
+    /**
+     * Returns a new chain with the specified [Proxy].
+     */
+    fun withProxy(proxy: Proxy?): Chain
 
+    /**
+     * Returns the [ProxySelector] for the OkHttpClient, or an override from the Call.Chain.
+     */
     val proxySelector: ProxySelector
 
+    /**
+     * Override the [ProxySelector] for the Call.Chain.
+     *
+     * @throws IllegalStateException if this is a Network Interceptor, since the override is too late.
+     */
     fun withProxySelector(proxySelector: ProxySelector): Chain
 
+    /**
+     * Returns the proxy [Authenticator] for the OkHttpClient, or an override from the Call.Chain.
+     */
     val proxyAuthenticator: Authenticator
 
+    /**
+     * Returns a new chain with the specified proxy [Authenticator].
+     */
     fun withProxyAuthenticator(proxyAuthenticator: Authenticator): Chain
 
+    /**
+     * Returns the [SSLSocketFactory] for the OkHttpClient, or an override from the Call.Chain.
+     */
     val sslSocketFactory: SSLSocketFactory
 
+    /**
+     * Returns a new chain with the specified [SSLSocketFactory].
+     *
+     * @throws IllegalStateException if this is a Network Interceptor, since the override is too late.
+     */
     fun withSslSocketFactory(sslSocketFactory: SSLSocketFactory): Chain
 
+    /**
+     * Returns the [X509TrustManager] for the OkHttpClient, or an override from the Call.Chain.
+     */
     val x509TrustManager: X509TrustManager?
 
+    /**
+     * Returns a new chain with the specified [X509TrustManager].
+     */
     fun withX509TrustManager(x509TrustManager: X509TrustManager): Chain
 
+    /**
+     * Returns the [HostnameVerifier] for the OkHttpClient, or an override from the Call.Chain.
+     */
     val hostnameVerifier: HostnameVerifier
 
+    /**
+     * Override the [HostnameVerifier] for the Call.Chain.
+     *
+     * @throws IllegalStateException if this is a Network Interceptor, since the override is too late.
+     */
     fun withHostnameVerifier(hostnameVerifier: HostnameVerifier): Chain
 
+    /**
+     * Returns the [CertificatePinner] for the OkHttpClient, or an override from the Call.Chain.
+     */
     val certificatePinner: CertificatePinner
 
+    /**
+     * Returns a new chain with the specified [CertificatePinner].
+     */
     fun withCertificatePinner(certificatePinner: CertificatePinner): Chain
 
+    /**
+     * Returns the [CertificateChainCleaner] for the OkHttpClient, or an override from the Call.Chain.
+     */
     val certificateChainCleaner: CertificateChainCleaner?
 
+    /**
+     * Override the [CertificateChainCleaner] for the Call.Chain.
+     *
+     * @throws IllegalStateException if this is a Network Interceptor, since the override is too late.
+     */
     fun withCertificateChainCleaner(certificateChainCleaner: CertificateChainCleaner): Chain
 
+    /**
+     * Returns the [ConnectionPool] for the OkHttpClient, or an override from the Call.Chain.
+     */
     val connectionPool: ConnectionPool
 
+    /**
+     * Returns a new chain with the specified [ConnectionPool].
+     */
     fun withConnectionPool(connectionPool: ConnectionPool): Chain
   }
 }

@@ -222,13 +222,13 @@ class RealInterceptorChain(
     return copy(cookieJar = cookieJar)
   }
 
-  override fun withCache(cache: Cache): Interceptor.Chain {
+  override fun withCache(cache: Cache?): Interceptor.Chain {
     check(exchange == null) { "cache can't be adjusted in a network interceptor" }
 
     return copy(cache = cache)
   }
 
-  override fun withProxy(proxy: Proxy): Interceptor.Chain {
+  override fun withProxy(proxy: Proxy?): Interceptor.Chain {
     check(exchange == null) { "proxy can't be adjusted in a network interceptor" }
 
     return copy(proxy = proxy)
