@@ -71,7 +71,7 @@ class RealInterceptorChain(
   override val proxySelector: ProxySelector,
   override val retryOnConnectionFailure: Boolean,
   override val socketFactory: SocketFactory,
-  override val sslSocketFactory: SSLSocketFactory,
+  override val sslSocketFactory: SSLSocketFactory?,
   override val x509TrustManager: X509TrustManager?,
 ) : Interceptor.Chain {
   internal constructor(
@@ -103,7 +103,7 @@ class RealInterceptorChain(
     client.proxySelector,
     client.retryOnConnectionFailure,
     client.socketFactory,
-    client.sslSocketFactory,
+    client.sslSocketFactoryOrNull,
     client.x509TrustManager,
   )
 
@@ -129,7 +129,7 @@ class RealInterceptorChain(
     proxySelector: ProxySelector = this.proxySelector,
     retryOnConnectionFailure: Boolean = this.retryOnConnectionFailure,
     socketFactory: SocketFactory = this.socketFactory,
-    sslSocketFactory: SSLSocketFactory = this.sslSocketFactory,
+    sslSocketFactory: SSLSocketFactory? = this.sslSocketFactory,
     x509TrustManager: X509TrustManager? = this.x509TrustManager,
   ) = RealInterceptorChain(
     call,
@@ -246,7 +246,7 @@ class RealInterceptorChain(
     return copy(proxyAuthenticator = proxyAuthenticator)
   }
 
-  override fun withSslSocketFactory(sslSocketFactory: SSLSocketFactory): Interceptor.Chain {
+  override fun withSslSocketFactory(sslSocketFactory: SSLSocketFactory?): Interceptor.Chain {
     check(exchange == null) { "sslSocketFactory can't be adjusted in a network interceptor" }
 
     return copy(sslSocketFactory = sslSocketFactory)

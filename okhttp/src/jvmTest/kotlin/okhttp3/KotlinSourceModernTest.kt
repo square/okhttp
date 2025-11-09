@@ -1416,11 +1416,11 @@ class KotlinSourceModernTest {
         TODO()
       }
 
-      override fun withCache(cache: Cache): Interceptor.Chain {
+      override fun withCache(cache: Cache?): Interceptor.Chain {
         TODO()
       }
 
-      override fun withProxy(proxy: Proxy): Interceptor.Chain {
+      override fun withProxy(proxy: Proxy?): Interceptor.Chain {
         TODO()
       }
 
@@ -1432,7 +1432,7 @@ class KotlinSourceModernTest {
         TODO()
       }
 
-      override fun withSslSocketFactory(sslSocketFactory: SSLSocketFactory): Interceptor.Chain {
+      override fun withSslSocketFactory(sslSocketFactory: SSLSocketFactory?): Interceptor.Chain {
         TODO()
       }
 

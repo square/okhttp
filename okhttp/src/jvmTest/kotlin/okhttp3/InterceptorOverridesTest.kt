@@ -291,16 +291,16 @@ class InterceptorOverridesTest {
       override fun isDefaultValue(value: Authenticator): Boolean = value === Authenticator.NONE
     }
 
-    object SslSocketFactoryOverride : Override<SSLSocketFactory> {
-      override fun Interceptor.Chain.value(): SSLSocketFactory = sslSocketFactory
+    object SslSocketFactoryOverride : Override<SSLSocketFactory?> {
+      override fun Interceptor.Chain.value(): SSLSocketFactory? = sslSocketFactory
 
-      override fun Interceptor.Chain.withOverride(value: SSLSocketFactory): Interceptor.Chain = withSslSocketFactory(value)
+      override fun Interceptor.Chain.withOverride(value: SSLSocketFactory?): Interceptor.Chain = withSslSocketFactory(value)
 
       override val nonDefaultValue: SSLSocketFactory =
         object :
           DelegatingSSLSocketFactory(Platform.get().newSslSocketFactory(Platform.get().platformTrustManager())) {}
 
-      override fun isDefaultValue(value: SSLSocketFactory): Boolean = value !is DelegatingSSLSocketFactory
+      override fun isDefaultValue(value: SSLSocketFactory?): Boolean = value !is DelegatingSSLSocketFactory
     }
 
     object X509TrustManagerOverride : Override<X509TrustManager?> {

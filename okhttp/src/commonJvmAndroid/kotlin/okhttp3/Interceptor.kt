@@ -243,14 +243,14 @@ fun interface Interceptor {
     /**
      * Returns the [SSLSocketFactory] for the OkHttpClient, or an override from the Call.Chain.
      */
-    val sslSocketFactory: SSLSocketFactory
+    val sslSocketFactory: SSLSocketFactory?
 
     /**
      * Returns a new chain with the specified [SSLSocketFactory].
      *
      * @throws IllegalStateException if this is a Network Interceptor, since the override is too late.
      */
-    fun withSslSocketFactory(sslSocketFactory: SSLSocketFactory): Chain
+    fun withSslSocketFactory(sslSocketFactory: SSLSocketFactory?): Chain
 
     /**
      * Returns the [X509TrustManager] for the OkHttpClient, or an override from the Call.Chain.
