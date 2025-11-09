@@ -749,12 +749,42 @@ public abstract interface class okhttp3/Interceptor$Chain {
 	public abstract fun call ()Lokhttp3/Call;
 	public abstract fun connectTimeoutMillis ()I
 	public abstract fun connection ()Lokhttp3/Connection;
+	public abstract fun getAuthenticator ()Lokhttp3/Authenticator;
+	public abstract fun getCache ()Lokhttp3/Cache;
+	public abstract fun getCertificateChainCleaner ()Lokhttp3/internal/tls/CertificateChainCleaner;
+	public abstract fun getCertificatePinner ()Lokhttp3/CertificatePinner;
+	public abstract fun getConnectionPool ()Lokhttp3/ConnectionPool;
+	public abstract fun getCookieJar ()Lokhttp3/CookieJar;
+	public abstract fun getDns ()Lokhttp3/Dns;
+	public abstract fun getHostnameVerifier ()Ljavax/net/ssl/HostnameVerifier;
+	public abstract fun getProxy ()Ljava/net/Proxy;
+	public abstract fun getProxyAuthenticator ()Lokhttp3/Authenticator;
+	public abstract fun getProxySelector ()Ljava/net/ProxySelector;
+	public abstract fun getRetryOnConnectionFailure ()Z
+	public abstract fun getSocketFactory ()Ljavax/net/SocketFactory;
+	public abstract fun getSslSocketFactory ()Ljavax/net/ssl/SSLSocketFactory;
+	public abstract fun getX509TrustManager ()Ljavax/net/ssl/X509TrustManager;
 	public abstract fun proceed (Lokhttp3/Request;)Lokhttp3/Response;
 	public abstract fun readTimeoutMillis ()I
 	public abstract fun request ()Lokhttp3/Request;
+	public abstract fun withAuthenticator (Lokhttp3/Authenticator;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withCache (Lokhttp3/Cache;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withCertificateChainCleaner (Lokhttp3/internal/tls/CertificateChainCleaner;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withCertificatePinner (Lokhttp3/CertificatePinner;)Lokhttp3/Interceptor$Chain;
 	public abstract fun withConnectTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withConnectionPool (Lokhttp3/ConnectionPool;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withCookieJar (Lokhttp3/CookieJar;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withDns (Lokhttp3/Dns;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withHostnameVerifier (Ljavax/net/ssl/HostnameVerifier;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withProxy (Ljava/net/Proxy;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withProxyAuthenticator (Lokhttp3/Authenticator;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withProxySelector (Ljava/net/ProxySelector;)Lokhttp3/Interceptor$Chain;
 	public abstract fun withReadTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withRetryOnConnectionFailure (Z)Lokhttp3/Interceptor$Chain;
+	public abstract fun withSocketFactory (Ljavax/net/SocketFactory;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withSslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;)Lokhttp3/Interceptor$Chain;
 	public abstract fun withWriteTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withX509TrustManager (Ljavax/net/ssl/X509TrustManager;)Lokhttp3/Interceptor$Chain;
 	public abstract fun writeTimeoutMillis ()I
 }
 
