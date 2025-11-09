@@ -5,7 +5,6 @@ import app.cash.burst.burstValues
 import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.hasMessage
-import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotSameInstanceAs
 import assertk.assertions.isTrue
@@ -13,7 +12,6 @@ import java.net.ProxySelector
 import java.net.SocketAddress
 import java.net.URI
 import java.security.cert.X509Certificate
-import java.util.Locale
 import java.util.Locale.getDefault
 import java.util.concurrent.TimeUnit
 import javax.net.SocketFactory
