@@ -379,5 +379,21 @@ class ConnectionSpec internal constructor(
     /** Unencrypted, unauthenticated connections for `http:` URLs. */
     @JvmField
     val CLEARTEXT = Builder(false).build()
+
+   @JvmStatic
+    fun compatibleTlsSpec(): ConnectionSpec {
+        return if (Platform.isAndroidApi24Or25()) {
+            // Force TLS 1.2 for buggy Android 7.0/7.1
+            Builder(true)
+                .tlsVersions(TlsVersion.TLS_1_2)
+                .cipherSuites(*APPROVED_CIPHER_SUITES.toTypedArray())
+                .supportsTlsExtensions(true)
+                .build()
+        } else {
+            COMPATIBLE_TLS
+        }
+    }
+
   }
+
 }

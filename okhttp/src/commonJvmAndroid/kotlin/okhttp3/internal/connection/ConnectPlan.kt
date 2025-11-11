@@ -201,7 +201,11 @@ class ConnectPlan internal constructor(
 
         // Figure out the next connection spec in case we need a retry.
         retryTlsConnection = tlsEquipPlan.nextConnectionSpec(connectionSpecs, sslSocket)
-
+        val compatibleSpec = if (Platform.isAndroidApi24Or25()) {
+        ConnectionSpec.compatibleTlsSpec()
+        } else {
+        connectionSpec
+        }
         connectionSpec.apply(sslSocket, isFallback = tlsEquipPlan.isTlsFallback)
         connectTls(sslSocket, connectionSpec)
         call.eventListener.secureConnectEnd(call, handshake)
