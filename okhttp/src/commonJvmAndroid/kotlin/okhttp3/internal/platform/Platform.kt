@@ -236,5 +236,25 @@ open class Platform {
       }
       return result.readByteArray()
     }
+    @JvmStatic
+    fun isAndroidApi24Or25(): Boolean {
+    return when (platformName) {
+        "android" -> {
+            val sdkVersion = getAndroidSdkVersion()
+            sdkVersion == 24 || sdkVersion == 25
+        }
+        else -> false
+    }
+}
+
+private fun getAndroidSdkVersion(): Int {
+    return try {
+        Class.forName("android.os.Build\$VERSION")
+            .getField("SDK_INT")
+            .get(null) as Int
+    } catch (e: Exception) {
+        -1
+    }
+}
   }
 }
