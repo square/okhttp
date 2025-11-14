@@ -11,12 +11,15 @@ import java.net.ServerSocket
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.runBlocking
 import okhttp3.Call
 import okhttp3.Dns
 import okhttp3.EventListener
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okio.AsyncTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
@@ -29,9 +32,9 @@ class ReproduceOkHttpIssueTest {
   val proxyHost = "unresponsive-proxy-host"
 
   // 2. Set Timeouts
-  val callTimeout = Duration.ofSeconds(3)
-  val connectTimeout = Duration.ofSeconds(1)
-  val readTimeout = Duration.ofSeconds(2)
+  val callTimeout = Duration.ofSeconds(3 * 2)
+  val connectTimeout = Duration.ofSeconds(1 * 2)
+  val readTimeout = Duration.ofSeconds(2 * 2)
 
   // 3. Build the Client with the Custom Dns
   var client = OkHttpClient.Builder()
@@ -63,8 +66,13 @@ class ReproduceOkHttpIssueTest {
 
   @AfterEach
   fun close() {
-    executorService.shutdownNow()
-    stallingServer.stop()
+    Thread.interrupted()
+    try {
+      executorService.shutdownNow()
+      stallingServer.stop()
+    } catch (e: Exception) {
+      e.printStackTrace()
+    }
   }
 
   @Test
@@ -90,6 +98,165 @@ class ReproduceOkHttpIssueTest {
         runBlocking { client.newCall(request).executeAsync() }.use { response ->
           println("Call Succeeded unexpectedly.")
         }
+      }
+    } catch (e: Exception) {
+      val totalTime = Duration.between(startTime, Instant.now())
+      println("--- TEST RESULT ---")
+      println("Exception: " + e.javaClass.getName() + ": " + e.message)
+      println("Total Time: $totalTime")
+      println("Expected Time (Call Timeout): $callTimeout")
+      println("Observed Time (2 x Read Timeout): " + readTimeout.multipliedBy(2))
+      assertThat(totalTime).isLessThan(readTimeout.multipliedBy(2))
+    }
+  }
+
+  class TestTimeout(
+    val name: String,
+    val thread: Thread = Thread.currentThread(),
+  ) : AsyncTimeout() {
+    override fun timedOut() {
+      thread.interrupt()
+    }
+
+    override fun toString(): String {
+      return name
+    }
+  }
+
+  var recordingStart = 0L
+  val testStart = System.nanoTime()
+
+  fun sleepUntil(time: Long) {
+    val currentElapsed = (System.nanoTime() - testStart)
+    val targetElapsed = time - recordingStart
+
+    val nanos = targetElapsed - currentElapsed
+    val ms = nanos / 1_000_000L
+    val ns = nanos - (ms * 1_000_000L)
+    if (ms > 0L || nanos > 0) {
+      Thread.sleep(ms, ns.toInt())
+    }
+  }
+
+  /** Annoyingly this does what we want. */
+  @Test
+  @Throws(InterruptedException::class)
+  fun perfectTest() {
+    val T1 = TestTimeout("T1")
+    T1.timeout(3000000000, TimeUnit.NANOSECONDS)
+
+    val T2 = TestTimeout("T2")
+    T2.timeout(10000000000, TimeUnit.NANOSECONDS)
+
+    val T3 = TestTimeout("T3")
+    T3.timeout(2000000000, TimeUnit.NANOSECONDS)
+
+    val T4 = TestTimeout("T4")
+    T4.timeout(10000000000, TimeUnit.NANOSECONDS)
+
+    val T5 = TestTimeout("T5")
+    T5.timeout(2000000000, TimeUnit.NANOSECONDS)
+
+//    sleepUntil(0)
+    T1.enter()
+    sleepUntil(21_021_375)
+    T2.enter()
+    sleepUntil(43_177_042)
+    T2.exit()
+    sleepUntil(46_650_750)
+    T2.enter()
+    sleepUntil(50_056_459)
+    T2.exit()
+    sleepUntil(53_838_167)
+    T3.enter()
+    sleepUntil(81_087_334)
+    T3.exit()
+    sleepUntil(2_000_000_000)
+    T4.enter()
+    sleepUntil(2_169_520_000)
+    T4.exit()
+    sleepUntil(2_175_734_375)
+    T4.enter()
+    sleepUntil(2_182_283_250)
+    T4.exit()
+    sleepUntil(2_188_262_042)
+    T5.enter()
+    sleepUntil(2_195_482_917)
+    T5.exit()
+    assertFailsWith<InterruptedException> {
+      sleepUntil(3_500_000_000)
+    }
+    T1.exit()
+  }
+
+  /** Annoyingly this does what we want. */
+  @Test
+  @Throws(InterruptedException::class)
+  fun failingTest() {
+    val T1 = TestTimeout("T1")
+    T1.timeout(3000000000, TimeUnit.NANOSECONDS)
+
+    val T2 = TestTimeout("T2")
+    T2.timeout(10000000000, TimeUnit.NANOSECONDS)
+
+    val T3 = TestTimeout("T3")
+    T3.timeout(2000000000, TimeUnit.NANOSECONDS)
+
+    val T4 = TestTimeout("T4")
+    T4.timeout(10000000000, TimeUnit.NANOSECONDS)
+
+    val T5 = TestTimeout("T5")
+    T5.timeout(2000000000, TimeUnit.NANOSECONDS)
+
+    recordingStart = 48037384402166
+    sleepUntil(48037384402166)
+    T1.enter()
+    sleepUntil(48037410711791)
+    T2.enter()
+    sleepUntil(48037429544208)
+    T2.exit()
+    sleepUntil(48037432485375)
+    T2.enter()
+    sleepUntil(48037435469416)
+    T2.exit()
+    sleepUntil(48037438890625)
+    T3.enter()
+//calling timedOut 48037482781291 on null
+    sleepUntil(48037484109708)
+    T3.exit()
+    sleepUntil(48039554055708)
+    T4.enter()
+    sleepUntil(48039558740333)
+    T4.exit()
+    sleepUntil(48039562572583)
+    T4.enter()
+    sleepUntil(48039566864625)
+    T4.exit()
+    sleepUntil(48039570599375)
+    T5.enter()
+//calling timedOut 48039574546166 on null
+    sleepUntil(48039575464541)
+    T5.exit()
+//calling timedOut 48040398250541 on null
+//calling timedOut 48040401757166 on T1 // took too long?
+    assertFailsWith<InterruptedException> {
+      sleepUntil(1_000_000_000 + 48040415361958) // this should time out, but too late?
+    }
+    T1.exit()
+
+  }
+
+  @Test
+  @Throws(InterruptedException::class)
+  fun tff() {
+    executorService.submit { stallingServer.start(8080) }
+    Thread.sleep(2000)
+
+    val startTime = Instant.now()
+
+    try {
+      runBlocking { client.newCall(request).executeAsync() }.use { response ->
+        println("Call Succeeded unexpectedly.")
       }
     } catch (e: Exception) {
       val totalTime = Duration.between(startTime, Instant.now())

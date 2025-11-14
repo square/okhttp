@@ -70,3 +70,10 @@ if (androidHome != null || sdkDir != null) {
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+//includeBuild("/Users/jwilson/Development/okio") {
+//  dependencySubstitution {
+//    substitute(module("com.squareup.okio:okio"))
+//      .using(project(":okio"))
+//  }
+//}
