@@ -51,7 +51,7 @@ configure<SpotlessExtension> {
 
 allprojects {
   group = "com.squareup.okhttp3"
-  version = "5.3.1"
+  version = "5.3.2-SNAPSHOT"
 
   repositories {
     mavenCentral()
