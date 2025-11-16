@@ -3,7 +3,7 @@ name: build
 on:
   push:
     branches:
-      - master
+      - jwilson.1116.force_build
   pull_request:
     types: [opened, labeled, unlabeled, synchronize]
 
@@ -16,7 +16,7 @@ env:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+    if: github.repository == 'square/okhttp'
 
     steps:
       - name: Checkout
