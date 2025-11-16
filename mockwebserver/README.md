@@ -270,7 +270,7 @@ server.dispatcher = dispatcher
 ### Download
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver3:5.2.0")
+testImplementation("com.squareup.okhttp3:mockwebserver3:5.2.2")
 ```
 
 ### License
