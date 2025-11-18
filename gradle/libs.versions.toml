@@ -3,7 +3,7 @@ agp = "8.13.0"
 biz-aQute-bnd = "7.1.0"
 checkStyle = "11.1.0"
 com-squareup-moshi = "1.15.2"
-com-squareup-okio = "3.16.3"
+com-squareup-okio = "3.16.4"
 de-mannodermaus-junit5 = "1.8.0"
 graalvm = "25.0.0"
 #noinspection UnusedVersionCatalogEntry
