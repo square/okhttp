@@ -225,7 +225,7 @@ Download
 --------
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp-tls:5.2.2")
+implementation("com.squareup.okhttp3:okhttp-tls:5.2.3")
 ```
 
  [held_certificate]: https://square.github.io/okhttp/4.x/okhttp-tls/okhttp3.tls/-held-certificate/

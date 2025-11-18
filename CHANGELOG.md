@@ -5,12 +5,21 @@ Change Log
 
 See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
 
+## Version 5.2.3
+
+_2025-11-18_
+
+*  Fix: Don't delay triggering timeouts. In Okio 3.16.0 we introduced a regression that caused
+   timeouts to fire later than they were supposed to.
+
+*  Upgrade: [Okio 3.16.4][okio_3_16_4].
+
+
 ## Version 5.2.2
 
 _2025-11-16_
 
-*  Fix: Don't delay triggering timeouts. In Okio 3.16.0 we introduced a regression that caused
-   timeouts to fire later than they were supposed to.
+This release is the same as 5.3.0. Okio 3.16.3 didn't have a necessary fix!
 
 *  Upgrade: [Okio 3.16.3][okio_3_16_3].
 
