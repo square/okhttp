@@ -111,3 +111,9 @@ dependencies {
   androidTestImplementation(libs.junit5android.core)
   androidTestRuntimeOnly(libs.junit5android.runner)
 }
+
+junitPlatform {
+  filters {
+    excludeTags("Remote")
+  }
+}
