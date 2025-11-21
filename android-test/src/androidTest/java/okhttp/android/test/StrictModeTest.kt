@@ -27,8 +27,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.internal.platform.Platform
-import org.junit.After
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Isolated
 
 @Isolated
@@ -36,7 +36,7 @@ import org.junit.jupiter.api.parallel.Isolated
 class StrictModeTest {
   private val violations = mutableListOf<Violation>()
 
-  @After
+  @AfterEach
   fun cleanup() {
     StrictMode.setThreadPolicy(
       ThreadPolicy
