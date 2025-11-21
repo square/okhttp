@@ -201,7 +201,7 @@ open class OkHttpClient internal constructor(
   @get:JvmName("socketFactory")
   val socketFactory: SocketFactory = builder.socketFactory
 
-  private val sslSocketFactoryOrNull: SSLSocketFactory?
+  internal val sslSocketFactoryOrNull: SSLSocketFactory?
 
   @get:JvmName("sslSocketFactory")
   val sslSocketFactory: SSLSocketFactory
