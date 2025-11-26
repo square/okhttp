@@ -22,12 +22,29 @@ import java.util.concurrent.TimeUnit
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
+import okhttp3.CallEvent.CallEnd
+import okhttp3.CallEvent.CallStart
+import okhttp3.CallEvent.ConnectEnd
+import okhttp3.CallEvent.ConnectStart
+import okhttp3.CallEvent.ConnectionAcquired
+import okhttp3.CallEvent.ConnectionReleased
+import okhttp3.CallEvent.DnsEnd
+import okhttp3.CallEvent.DnsStart
+import okhttp3.CallEvent.FollowUpDecision
+import okhttp3.CallEvent.ProxySelectEnd
+import okhttp3.CallEvent.ProxySelectStart
+import okhttp3.CallEvent.RequestHeadersEnd
+import okhttp3.CallEvent.RequestHeadersStart
+import okhttp3.CallEvent.ResponseBodyEnd
+import okhttp3.CallEvent.ResponseBodyStart
+import okhttp3.CallEvent.ResponseHeadersEnd
+import okhttp3.CallEvent.ResponseHeadersStart
+import okhttp3.EventRecorder
 import okhttp3.Headers
 import okhttp3.OkHttpClientTestRule
-import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.sse.EventSource
-import okhttp3.sse.EventSource.Factory.Companion.asEventSourceFactory
+import okhttp3.sse.EventSources.createFactory
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Tag
@@ -45,12 +62,12 @@ class EventSourceHttpTest {
 
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
-  private val eventListener = RecordingEventListener()
+  private val eventRecorder = EventRecorder()
   private val listener = EventSourceRecorder()
   private var client =
     clientTestRule
       .newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(eventListener))
+      .eventListenerFactory(clientTestRule.wrap(eventRecorder))
       .build()
 
   @AfterEach
@@ -239,24 +256,24 @@ class EventSourceHttpTest {
     listener.assertOpen()
     listener.assertEvent(null, null, "hey")
     listener.assertClose()
-    assertThat(eventListener.recordedEventTypes()).containsExactly(
-      "CallStart",
-      "ProxySelectStart",
-      "ProxySelectEnd",
-      "DnsStart",
-      "DnsEnd",
-      "ConnectStart",
-      "ConnectEnd",
-      "ConnectionAcquired",
-      "RequestHeadersStart",
-      "RequestHeadersEnd",
-      "ResponseHeadersStart",
-      "ResponseHeadersEnd",
-      "FollowUpDecision",
-      "ResponseBodyStart",
-      "ResponseBodyEnd",
-      "ConnectionReleased",
-      "CallEnd",
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
+      CallStart::class,
+      ProxySelectStart::class,
+      ProxySelectEnd::class,
+      DnsStart::class,
+      DnsEnd::class,
+      ConnectStart::class,
+      ConnectEnd::class,
+      ConnectionAcquired::class,
+      RequestHeadersStart::class,
+      RequestHeadersEnd::class,
+      ResponseHeadersStart::class,
+      ResponseHeadersEnd::class,
+      FollowUpDecision::class,
+      ResponseBodyStart::class,
+      ResponseBodyEnd::class,
+      ConnectionReleased::class,
+      CallEnd::class,
     )
   }
 
@@ -319,7 +336,7 @@ class EventSourceHttpTest {
       builder.header("Accept", accept)
     }
     val request = builder.build()
-    val factory = client.asEventSourceFactory()
+    val factory = createFactory(client)
     return factory.newEventSource(request, listener)
   }
 }

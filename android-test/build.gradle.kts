@@ -54,7 +54,8 @@ android {
     "META-INF/LICENSE.md",
     "META-INF/LICENSE-notice.md",
     "README.txt",
-    "org/bouncycastle/LICENSE"
+    "org/bouncycastle/LICENSE",
+    "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
   )
 }
 
@@ -109,4 +110,10 @@ dependencies {
   androidTestImplementation(libs.junit.jupiter.api)
   androidTestImplementation(libs.junit5android.core)
   androidTestRuntimeOnly(libs.junit5android.runner)
+}
+
+junitPlatform {
+  filters {
+    excludeTags("Remote")
+  }
 }

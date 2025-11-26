@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Configure JDK
         uses: actions/setup-java@v5
@@ -30,7 +30,7 @@ jobs:
           distribution: 'zulu'
           java-version: 17
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.x
 
@@ -39,7 +39,7 @@ jobs:
       - name: Generate Docs
         run: ./test_docs.sh
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: docs
           path: site/

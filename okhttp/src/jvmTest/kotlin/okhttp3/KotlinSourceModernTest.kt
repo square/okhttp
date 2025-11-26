@@ -46,6 +46,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
+import kotlin.reflect.KClass
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Headers.Companion.toHeaders
@@ -200,6 +201,22 @@ class KotlinSourceModernTest {
         override fun isCanceled(): Boolean = TODO()
 
         override fun timeout(): Timeout = TODO()
+
+        override fun addEventListener(eventListener: EventListener) = TODO()
+
+        override fun <T : Any> tag(type: KClass<T>): T? = TODO()
+
+        override fun <T> tag(type: Class<out T>): T? = TODO()
+
+        override fun <T : Any> tag(
+          type: KClass<T>,
+          computeIfAbsent: () -> T,
+        ): T = TODO()
+
+        override fun <T : Any> tag(
+          type: Class<T>,
+          computeIfAbsent: () -> T,
+        ): T = TODO()
 
         override fun clone(): Call = TODO()
       }

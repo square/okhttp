@@ -54,7 +54,7 @@ import okhttp3.internal.toHostHeader
  * Each step may fail. If a retry is possible, a new instance is created with the next plan, which
  * will be configured differently.
  */
-class ConnectPlan(
+class ConnectPlan internal constructor(
   private val taskRunner: TaskRunner,
   private val connectionPool: RealConnectionPool,
   private val readTimeoutMillis: Int,
@@ -63,7 +63,7 @@ class ConnectPlan(
   private val socketReadTimeoutMillis: Int,
   private val pingIntervalMillis: Int,
   private val retryOnConnectionFailure: Boolean,
-  private val user: ConnectionUser,
+  private val call: RealCall,
   private val routePlanner: RealRoutePlanner,
   // Specifics to this plan.
   override val route: Route,
@@ -111,7 +111,7 @@ class ConnectPlan(
       socketReadTimeoutMillis = socketReadTimeoutMillis,
       pingIntervalMillis = pingIntervalMillis,
       retryOnConnectionFailure = retryOnConnectionFailure,
-      user = user,
+      call = call,
       routePlanner = routePlanner,
       route = route,
       routes = routes,
@@ -127,9 +127,10 @@ class ConnectPlan(
     var success = false
 
     // Tell the call about the connecting call so async cancels work.
-    user.addPlanToCancel(this)
+    call.plansToCancel += this
     try {
-      user.connectStart(route)
+      call.eventListener.connectStart(call, route.socketAddress, route.proxy)
+      connectionPool.connectionListener.connectStart(route, call)
 
       connectSocket()
       success = true
@@ -143,10 +144,11 @@ class ConnectPlan(
           e,
         )
       }
-      user.connectFailed(route, null, e)
+      call.eventListener.connectFailed(call, route.socketAddress, route.proxy, null, e)
+      connectionPool.connectionListener.connectFailed(route, call, e)
       return ConnectResult(plan = this, throwable = e)
     } finally {
-      user.removePlanToCancel(this)
+      call.plansToCancel -= this
       if (!success) {
         rawSocket?.closeQuietly()
       }
@@ -162,7 +164,7 @@ class ConnectPlan(
     var success = false
 
     // Tell the call about the connecting call so async cancels work.
-    user.addPlanToCancel(this)
+    call.plansToCancel += this
     try {
       if (tunnelRequest != null) {
         val tunnelResult = connectTunnel()
@@ -182,7 +184,7 @@ class ConnectPlan(
           throw IOException("TLS tunnel buffered too many bytes!")
         }
 
-        user.secureConnectStart()
+        call.eventListener.secureConnectStart(call)
 
         // Create the wrapper over the connected socket.
         val sslSocket =
@@ -202,7 +204,7 @@ class ConnectPlan(
 
         connectionSpec.apply(sslSocket, isFallback = tlsEquipPlan.isTlsFallback)
         connectTls(sslSocket, connectionSpec)
-        user.secureConnectEnd(handshake)
+        call.eventListener.secureConnectEnd(call, handshake)
       } else {
         javaNetSocket = rawSocket
         protocol =
@@ -229,11 +231,12 @@ class ConnectPlan(
       connection.start()
 
       // Success.
-      user.callConnectEnd(route, protocol)
+      call.eventListener.connectEnd(call, route.socketAddress, route.proxy, protocol)
       success = true
       return ConnectResult(plan = this)
     } catch (e: IOException) {
-      user.connectFailed(route, null, e)
+      call.eventListener.connectFailed(call, route.socketAddress, route.proxy, null, e)
+      connectionPool.connectionListener.connectFailed(route, call, e)
 
       if (!retryOnConnectionFailure || !retryTlsHandshake(e)) {
         retryTlsConnection = null
@@ -245,7 +248,7 @@ class ConnectPlan(
         throwable = e,
       )
     } finally {
-      user.removePlanToCancel(this)
+      call.plansToCancel -= this
       if (!success) {
         javaNetSocket?.closeQuietly()
         rawSocket.closeQuietly()
@@ -310,7 +313,7 @@ class ConnectPlan(
     val nextAttempt = attempt + 1
     return when {
       nextAttempt < MAX_TUNNEL_ATTEMPTS -> {
-        user.callConnectEnd(route, null)
+        call.eventListener.connectEnd(call, route.socketAddress, route.proxy, null)
         ConnectResult(
           plan = this,
           nextPlan =
@@ -325,7 +328,8 @@ class ConnectPlan(
           ProtocolException(
             "Too many tunnel connections attempted: $MAX_TUNNEL_ATTEMPTS",
           )
-        user.connectFailed(route, null, failure)
+        call.eventListener.connectFailed(call, route.socketAddress, route.proxy, null, failure)
+        connectionPool.connectionListener.connectFailed(route, call, failure)
         return ConnectResult(plan = this, throwable = failure)
       }
     }
@@ -491,10 +495,10 @@ class ConnectPlan(
 
   /** Returns the connection to use, which might be different from [connection]. */
   override fun handleSuccess(): RealConnection {
-    user.updateRouteDatabaseAfterSuccess(route)
+    call.client.routeDatabase.connected(route)
 
     val connection = this.connection!!
-    user.connectionConnectEnd(connection, route)
+    connection.connectionListener.connectEnd(connection, route, call)
 
     // If we raced another call connecting to this host, coalesce the connections. This makes for
     // 3 different lookups in the connection pool!
@@ -503,11 +507,11 @@ class ConnectPlan(
 
     connection.withLock {
       connectionPool.put(connection)
-      user.acquireConnectionNoEvents(connection)
+      call.acquireConnectionNoEvents(connection)
     }
 
-    user.connectionAcquired(connection)
-    user.connectionConnectionAcquired(connection)
+    call.eventListener.connectionAcquired(call, connection)
+    connection.connectionListener.connectionAcquired(connection, call)
     return connection
   }
 
@@ -538,7 +542,7 @@ class ConnectPlan(
       socketReadTimeoutMillis = socketReadTimeoutMillis,
       pingIntervalMillis = pingIntervalMillis,
       retryOnConnectionFailure = retryOnConnectionFailure,
-      user = user,
+      call = call,
       routePlanner = routePlanner,
       route = route,
       routes = routes,

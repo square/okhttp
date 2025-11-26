@@ -1,3 +1,4 @@
+import org.gradle.internal.os.OperatingSystem
 plugins {
   kotlin("jvm")
   id("ru.vyarus.animalsniffer")
@@ -17,8 +18,16 @@ dependencies {
 
   api(rootProject.libs.junit.jupiter.engine)
 
+  // This runs Corretto on macOS (aarch64) and Linux (x86_64). We don't test Corretto on other
+  // operating systems or architectures.
   api(variantOf(libs.amazonCorretto) {
-    classifier("linux-x86_64")
+    classifier(
+      when {
+        OperatingSystem.current().isMacOsX -> "osx-aarch_64"
+        OperatingSystem.current().isLinux -> "linux-x86_64"
+        else -> "linux-x86_64" // Code that references Corretto will build but not run.
+      }
+    )
   })
 
   api(libs.hamcrestLibrary)

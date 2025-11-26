@@ -27,6 +27,7 @@ import kotlin.test.assertFailsWith
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.internal.EmptyTags
 
 class RequestCommonTest {
   @Test
@@ -46,7 +47,7 @@ class RequestCommonTest {
     assertThat(request.headers).isEqualTo(headers)
     assertThat(request.method).isEqualTo(method)
     assertThat(request.body).isEqualTo(body)
-    assertThat(request.tags).isEmpty()
+    assertThat(request.tags).isEqualTo(EmptyTags)
   }
 
   @Test
@@ -62,7 +63,7 @@ class RequestCommonTest {
     assertThat(request.headers).isEqualTo(headers)
     assertThat(request.method).isEqualTo("GET")
     assertThat(request.body).isNull()
-    assertThat(request.tags).isEmpty()
+    assertThat(request.tags).isEqualTo(EmptyTags)
   }
 
   @Test
@@ -80,7 +81,7 @@ class RequestCommonTest {
     assertThat(request.headers).isEqualTo(headers)
     assertThat(request.method).isEqualTo("POST")
     assertThat(request.body).isEqualTo(body)
-    assertThat(request.tags).isEmpty()
+    assertThat(request.tags).isEqualTo(EmptyTags)
   }
 
   @Test
@@ -98,7 +99,7 @@ class RequestCommonTest {
     assertThat(request.headers).isEqualTo(headers)
     assertThat(request.method).isEqualTo(method)
     assertThat(request.body).isNull()
-    assertThat(request.tags).isEmpty()
+    assertThat(request.tags).isEqualTo(EmptyTags)
   }
 
   @Test

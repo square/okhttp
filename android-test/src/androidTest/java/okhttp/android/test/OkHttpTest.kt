@@ -47,19 +47,38 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
 import okhttp3.Cache
 import okhttp3.Call
+import okhttp3.CallEvent.CallEnd
+import okhttp3.CallEvent.CallStart
+import okhttp3.CallEvent.ConnectEnd
+import okhttp3.CallEvent.ConnectStart
+import okhttp3.CallEvent.ConnectionAcquired
+import okhttp3.CallEvent.ConnectionReleased
+import okhttp3.CallEvent.DnsEnd
+import okhttp3.CallEvent.DnsStart
+import okhttp3.CallEvent.FollowUpDecision
+import okhttp3.CallEvent.ProxySelectEnd
+import okhttp3.CallEvent.ProxySelectStart
+import okhttp3.CallEvent.RequestHeadersEnd
+import okhttp3.CallEvent.RequestHeadersStart
+import okhttp3.CallEvent.ResponseBodyEnd
+import okhttp3.CallEvent.ResponseBodyStart
+import okhttp3.CallEvent.ResponseHeadersEnd
+import okhttp3.CallEvent.ResponseHeadersStart
+import okhttp3.CallEvent.SecureConnectEnd
+import okhttp3.CallEvent.SecureConnectStart
 import okhttp3.CertificatePinner
 import okhttp3.CompressionInterceptor
 import okhttp3.Connection
 import okhttp3.DelegatingSSLSocket
 import okhttp3.DelegatingSSLSocketFactory
 import okhttp3.EventListener
+import okhttp3.EventRecorder
 import okhttp3.Gzip
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Protocol
-import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.TlsVersion
 import okhttp3.brotli.Brotli
@@ -555,11 +574,15 @@ class OkHttpTest {
 
   @Test
   fun testEventListener() {
-    val eventListener = RecordingEventListener()
+    val eventRecorder = EventRecorder()
 
     enableTls()
 
-    client = client.newBuilder().eventListenerFactory(clientTestRule.wrap(eventListener)).build()
+    client =
+      client
+        .newBuilder()
+        .eventListenerFactory(clientTestRule.wrap(eventRecorder))
+        .build()
 
     server.enqueue(MockResponse(body = "abc1"))
     server.enqueue(MockResponse(body = "abc2"))
@@ -572,30 +595,30 @@ class OkHttpTest {
 
     assertEquals(
       listOf(
-        "CallStart",
-        "ProxySelectStart",
-        "ProxySelectEnd",
-        "DnsStart",
-        "DnsEnd",
-        "ConnectStart",
-        "SecureConnectStart",
-        "SecureConnectEnd",
-        "ConnectEnd",
-        "ConnectionAcquired",
-        "RequestHeadersStart",
-        "RequestHeadersEnd",
-        "ResponseHeadersStart",
-        "ResponseHeadersEnd",
-        "FollowUpDecision",
-        "ResponseBodyStart",
-        "ResponseBodyEnd",
-        "ConnectionReleased",
-        "CallEnd",
+        CallStart::class,
+        ProxySelectStart::class,
+        ProxySelectEnd::class,
+        DnsStart::class,
+        DnsEnd::class,
+        ConnectStart::class,
+        SecureConnectStart::class,
+        SecureConnectEnd::class,
+        ConnectEnd::class,
+        ConnectionAcquired::class,
+        RequestHeadersStart::class,
+        RequestHeadersEnd::class,
+        ResponseHeadersStart::class,
+        ResponseHeadersEnd::class,
+        FollowUpDecision::class,
+        ResponseBodyStart::class,
+        ResponseBodyEnd::class,
+        ConnectionReleased::class,
+        CallEnd::class,
       ),
-      eventListener.recordedEventTypes(),
+      eventRecorder.recordedEventTypes(),
     )
 
-    eventListener.clearAllEvents()
+    eventRecorder.clearAllEvents()
 
     client.newCall(request).execute().use { response ->
       assertEquals(200, response.code)
@@ -603,19 +626,19 @@ class OkHttpTest {
 
     assertEquals(
       listOf(
-        "CallStart",
-        "ConnectionAcquired",
-        "RequestHeadersStart",
-        "RequestHeadersEnd",
-        "ResponseHeadersStart",
-        "ResponseHeadersEnd",
-        "FollowUpDecision",
-        "ResponseBodyStart",
-        "ResponseBodyEnd",
-        "ConnectionReleased",
-        "CallEnd",
+        CallStart::class,
+        ConnectionAcquired::class,
+        RequestHeadersStart::class,
+        RequestHeadersEnd::class,
+        ResponseHeadersStart::class,
+        ResponseHeadersEnd::class,
+        FollowUpDecision::class,
+        ResponseBodyStart::class,
+        ResponseBodyEnd::class,
+        ConnectionReleased::class,
+        CallEnd::class,
       ),
-      eventListener.recordedEventTypes(),
+      eventRecorder.recordedEventTypes(),
     )
   }
 

@@ -40,9 +40,7 @@ object CallServerInterceptor : Interceptor {
     var responseBuilder: Response.Builder? = null
     var sendRequestException: IOException? = null
     val hasRequestBody = HttpMethod.permitsRequestBody(request.method) && requestBody != null
-    val isUpgradeRequest =
-      !hasRequestBody &&
-        "upgrade".equals(request.header("Connection"), ignoreCase = true)
+    val isUpgradeRequest = "upgrade".equals(request.header("Connection"), ignoreCase = true)
     try {
       exchange.writeRequestHeaders(request)
 
@@ -77,7 +75,7 @@ object CallServerInterceptor : Interceptor {
             exchange.noNewExchangesOnConnection()
           }
         }
-      } else if (!isUpgradeRequest) {
+      } else {
         exchange.noRequestBody()
       }
 
@@ -154,9 +152,6 @@ object CallServerInterceptor : Interceptor {
 
           // This is not an upgrade response.
           else -> {
-            if (isUpgradeRequest) {
-              exchange.noRequestBody() // Failed upgrade request has no outbound data.
-            }
             val responseBody = exchange.openResponseBody(response)
             response
               .newBuilder()
