@@ -195,16 +195,14 @@ subprojects {
     }
   }
 
-  // Configure all projects' source sets (jvm and kmp)
-  plugins.matching { it.javaClass.name.startsWith("org.jetbrains.kotlin") }.configureEach {
-    kotlinExtension.sourceSets {
-      // Exclude all test source sets (containing Test)
-      matching { !it.name.contains("Test", ignoreCase = true) }.all {
-        languageSettings {
-          apiVersion = "2.0"
-          languageVersion = "2.0"
-        }
-      }
+  tasks.withType<KotlinCompile>().configureEach {
+    if (name.contains("test")) return@configureEach // Skip test source sets.
+  
+    compilerOptions {
+      // Pin language level to 2.0 to ensure compatibility with older Gradle versions and other libraries that depend on okhttp.
+      // https://docs.gradle.org/current/userguide/compatibility.html#kotlin
+      languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0
+      apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0
     }
   }
 
