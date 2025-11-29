@@ -133,7 +133,8 @@ internal fun Headers.Builder.commonGet(name: String): String? {
   return null
 }
 
-internal fun Headers.Builder.commonBuild(): Headers = Headers(namesAndValues.toTypedArray())
+internal fun Headers.Builder.commonBuild(): Headers =
+  if (namesAndValues.isEmpty()) Headers.EMPTY else Headers(namesAndValues.toTypedArray())
 
 internal fun headersCheckName(name: String) {
   require(name.isNotEmpty()) { "name is empty" }
@@ -170,6 +171,9 @@ private fun Char.charCode() =
 internal fun commonHeadersOf(vararg inputNamesAndValues: String): Headers {
   require(inputNamesAndValues.size % 2 == 0) { "Expected alternating header names and values" }
 
+  // Check for empty headers.
+  if (inputNamesAndValues.isEmpty()) return Headers.EMPTY
+
   // Make a defensive copy and clean it up.
   val namesAndValues: Array<String> = arrayOf(*inputNamesAndValues)
   for (i in namesAndValues.indices) {
@@ -189,7 +193,10 @@ internal fun commonHeadersOf(vararg inputNamesAndValues: String): Headers {
 }
 
 internal fun Map<String, String>.commonToHeaders(): Headers {
-  // Make a defensive copy and clean it up.
+  val size = this.size
+  // Check for empty headers.
+  if (size == 0) return Headers.EMPTY
+
   val namesAndValues = arrayOfNulls<String>(size * 2)
   var i = 0
   for ((k, v) in this) {
