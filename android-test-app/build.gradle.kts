@@ -23,10 +23,6 @@ android {
     sourceCompatibility(JavaVersion.VERSION_11)
   }
 
-  kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_11.toString()
-  }
-
   buildTypes {
     release {
       isShrinkResources = true

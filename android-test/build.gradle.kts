@@ -44,10 +44,6 @@ android {
     unitTests.isIncludeAndroidResources = true
   }
 
-  kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_11.toString()
-  }
-
   // issue merging due to conflict with httpclient and something else
   packagingOptions.resources.excludes += setOf(
     "META-INF/DEPENDENCIES",
