@@ -66,7 +66,7 @@ _2025-11-18_
 
 _2025-11-16_
 
-This release is the same as 5.3.0. Okio 3.16.3 didn't have a necessary fix!
+This release is the same as 5.2.1. Okio 3.16.3 didn't have a necessary fix!
 
  *  Upgrade: [Okio 3.16.3][okio_3_16_3].
 
