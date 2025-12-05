@@ -225,9 +225,7 @@ class RealCall(
         index = 0,
         exchange = null,
         request = originalRequest,
-        connectTimeoutMillis = client.connectTimeoutMillis,
-        readTimeoutMillis = client.readTimeoutMillis,
-        writeTimeoutMillis = client.writeTimeoutMillis,
+        client = client,
       )
 
     var calledNoMoreExchanges = false
@@ -276,14 +274,17 @@ class RealCall(
         RealRoutePlanner(
           taskRunner = client.taskRunner,
           connectionPool = connectionPool,
+          // TODO check if override should be used
           readTimeoutMillis = client.readTimeoutMillis,
+          // TODO check if override should be used
           writeTimeoutMillis = client.writeTimeoutMillis,
           socketConnectTimeoutMillis = chain.connectTimeoutMillis,
           socketReadTimeoutMillis = chain.readTimeoutMillis,
           pingIntervalMillis = client.pingIntervalMillis,
+          // TODO check if override should be used
           retryOnConnectionFailure = client.retryOnConnectionFailure,
           fastFallback = client.fastFallback,
-          address = client.address(request.url),
+          address = chain.address(request.url),
           routeDatabase = client.routeDatabase,
           call = this,
           request = request,
