@@ -196,6 +196,17 @@ subprojects {
     }
   }
 
+  tasks.withType<KotlinCompile>().configureEach {
+    if (name.contains("test")) return@configureEach // Skip test source sets.
+  
+    compilerOptions {
+      // Pin language level to 2.0 to ensure compatibility with older Gradle versions and other libraries that depend on okhttp.
+      // https://docs.gradle.org/current/userguide/compatibility.html#kotlin
+      languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0
+      apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0
+    }
+  }
+
   val platform = System.getProperty("okhttp.platform", "jdk9")
   val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
 
