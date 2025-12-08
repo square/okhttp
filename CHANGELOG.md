@@ -5,6 +5,25 @@ Change Log
 
 See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
 
+## Version 5.3.2
+
+_2025-11-18_
+
+ *  Fix: Don't delay triggering timeouts. In Okio 3.16.0 we introduced a regression that caused
+    timeouts to fire later than they were supposed to.
+
+ *  Upgrade: [Okio 3.16.4][okio_3_16_4].
+
+
+## Version 5.3.1
+
+_2025-11-16_
+
+This release is the same as 5.3.0. Okio 3.16.3 didn't have a necessary fix!
+
+*  Upgrade: [Okio 3.16.3][okio_3_16_3].
+
+
 ## Version 5.3.0
 
 _2025-10-30_
@@ -31,6 +50,25 @@ _2025-10-30_
  *  Upgrade: [Okio 3.16.2][okio_3_16_2].
  *  Upgrade: [ZSTD-KMP 0.4.0][zstd_kmp_0_4_0]. This update fixes a bug that caused APKs to fail
     [16 KB ELF alignment checks][elf_alignment].
+
+
+## Version 5.2.3
+
+_2025-11-18_
+
+ *  Fix: Don't delay triggering timeouts. In Okio 3.16.0 we introduced a regression that caused
+    timeouts to fire later than they were supposed to.
+
+ *  Upgrade: [Okio 3.16.4][okio_3_16_4].
+
+
+## Version 5.2.2
+
+_2025-11-16_
+
+This release is the same as 5.2.1. Okio 3.16.3 didn't have a necessary fix!
+
+ *  Upgrade: [Okio 3.16.3][okio_3_16_3].
 
 
 ## Version 5.2.1
@@ -754,6 +792,8 @@ release is the version name.
 [okio_3_16_0]: https://square.github.io/okio/changelog/#version-3160
 [okio_3_16_1]: https://square.github.io/okio/changelog/#version-3161
 [okio_3_16_2]: https://square.github.io/okio/changelog/#version-3162
+[okio_3_16_3]: https://square.github.io/okio/changelog/#version-3163
+[okio_3_16_4]: https://square.github.io/okio/changelog/#version-3164
 [okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
 [okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
 [okio_3_7_0]: https://square.github.io/okio/changelog/#version-370

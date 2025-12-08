@@ -23,7 +23,7 @@ import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.tls.internal.TlsUtil.localhost
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 /**
  * This single Junit 4 test is our Android test suite on API 21-25.
