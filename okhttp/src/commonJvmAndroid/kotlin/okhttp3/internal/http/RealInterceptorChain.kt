@@ -40,7 +40,6 @@ import okhttp3.Response
 import okhttp3.internal.checkDuration
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
-import okhttp3.internal.tls.CertificateChainCleaner
 
 /**
  * A concrete interceptor chain that carries the entire interceptor chain: all application
@@ -60,7 +59,6 @@ class RealInterceptorChain(
   internal val writeTimeoutMillis: Int,
   override val authenticator: Authenticator,
   override val cache: Cache?,
-  override val certificateChainCleaner: CertificateChainCleaner?,
   override val certificatePinner: CertificatePinner,
   override val connectionPool: ConnectionPool,
   override val cookieJar: CookieJar,
@@ -71,8 +69,8 @@ class RealInterceptorChain(
   override val proxySelector: ProxySelector,
   override val retryOnConnectionFailure: Boolean,
   override val socketFactory: SocketFactory,
-  override val sslSocketFactory: SSLSocketFactory?,
-  override val x509TrustManager: X509TrustManager?,
+  override val sslSocketFactoryOrNull: SSLSocketFactory?,
+  override val x509TrustManagerOrNull: X509TrustManager?,
 ) : Interceptor.Chain {
   internal constructor(
     call: RealCall,
@@ -92,7 +90,6 @@ class RealInterceptorChain(
     client.writeTimeoutMillis,
     client.authenticator,
     client.cache,
-    client.certificateChainCleaner,
     client.certificatePinner,
     client.connectionPool,
     client.cookieJar,
@@ -118,7 +115,6 @@ class RealInterceptorChain(
     writeTimeoutMillis: Int = this.writeTimeoutMillis,
     authenticator: Authenticator = this.authenticator,
     cache: Cache? = this.cache,
-    certificateChainCleaner: CertificateChainCleaner? = this.certificateChainCleaner,
     certificatePinner: CertificatePinner = this.certificatePinner,
     connectionPool: ConnectionPool = this.connectionPool,
     cookieJar: CookieJar = this.cookieJar,
@@ -129,8 +125,8 @@ class RealInterceptorChain(
     proxySelector: ProxySelector = this.proxySelector,
     retryOnConnectionFailure: Boolean = this.retryOnConnectionFailure,
     socketFactory: SocketFactory = this.socketFactory,
-    sslSocketFactory: SSLSocketFactory? = this.sslSocketFactory,
-    x509TrustManager: X509TrustManager? = this.x509TrustManager,
+    sslSocketFactory: SSLSocketFactory? = this.sslSocketFactoryOrNull,
+    x509TrustManager: X509TrustManager? = this.x509TrustManagerOrNull,
   ) = RealInterceptorChain(
     call,
     interceptors,
@@ -142,7 +138,6 @@ class RealInterceptorChain(
     writeTimeoutMillis,
     authenticator,
     cache,
-    certificateChainCleaner,
     certificatePinner,
     connectionPool,
     cookieJar,
@@ -162,7 +157,7 @@ class RealInterceptorChain(
   override fun connectTimeoutMillis(): Int = connectTimeoutMillis
 
   override fun withConnectTimeout(
-    timeout: Int,
+    timeout: Long,
     unit: TimeUnit,
   ): Interceptor.Chain {
     check(exchange == null) { "Timeouts can't be adjusted in a network interceptor" }
@@ -173,7 +168,7 @@ class RealInterceptorChain(
   override fun readTimeoutMillis(): Int = readTimeoutMillis
 
   override fun withReadTimeout(
-    timeout: Int,
+    timeout: Long,
     unit: TimeUnit,
   ): Interceptor.Chain {
     check(exchange == null) { "Timeouts can't be adjusted in a network interceptor" }
@@ -184,7 +179,7 @@ class RealInterceptorChain(
   override fun writeTimeoutMillis(): Int = writeTimeoutMillis
 
   override fun withWriteTimeout(
-    timeout: Int,
+    timeout: Long,
     unit: TimeUnit,
   ): Interceptor.Chain {
     check(exchange == null) { "Timeouts can't be adjusted in a network interceptor" }
@@ -246,16 +241,13 @@ class RealInterceptorChain(
     return copy(proxyAuthenticator = proxyAuthenticator)
   }
 
-  override fun withSslSocketFactory(sslSocketFactory: SSLSocketFactory?): Interceptor.Chain {
+  override fun withSslSocketFactory(
+    sslSocketFactory: SSLSocketFactory?,
+    x509TrustManager: X509TrustManager?
+  ): Interceptor.Chain {
     check(exchange == null) { "sslSocketFactory can't be adjusted in a network interceptor" }
 
-    return copy(sslSocketFactory = sslSocketFactory)
-  }
-
-  override fun withX509TrustManager(x509TrustManager: X509TrustManager): Interceptor.Chain {
-    check(exchange == null) { "x509TrustManager can't be adjusted in a network interceptor" }
-
-    return copy(x509TrustManager = x509TrustManager)
+    return copy(sslSocketFactory = sslSocketFactory, x509TrustManager = x509TrustManager)
   }
 
   override fun withHostnameVerifier(hostnameVerifier: HostnameVerifier): Interceptor.Chain {
@@ -268,12 +260,6 @@ class RealInterceptorChain(
     check(exchange == null) { "certificatePinner can't be adjusted in a network interceptor" }
 
     return copy(certificatePinner = certificatePinner)
-  }
-
-  override fun withCertificateChainCleaner(certificateChainCleaner: CertificateChainCleaner): Interceptor.Chain {
-    check(exchange == null) { "certificateChainCleaner can't be adjusted in a network interceptor" }
-
-    return copy(certificateChainCleaner = certificateChainCleaner)
   }
 
   override fun withConnectionPool(connectionPool: ConnectionPool): Interceptor.Chain {
@@ -329,7 +315,7 @@ class RealInterceptorChain(
     var useHostnameVerifier: HostnameVerifier? = null
     var useCertificatePinner: CertificatePinner? = null
     if (url.isHttps) {
-      useSslSocketFactory = this.sslSocketFactory
+      useSslSocketFactory = this.sslSocketFactoryOrNull
       useHostnameVerifier = this.hostnameVerifier
       useCertificatePinner = this.certificatePinner
     }

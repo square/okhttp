@@ -1345,21 +1345,21 @@ class KotlinSourceModernTest {
       override fun connectTimeoutMillis(): Int = TODO()
 
       override fun withConnectTimeout(
-        timeout: Int,
+        timeout: Long,
         unit: TimeUnit,
       ): Interceptor.Chain = TODO()
 
       override fun readTimeoutMillis(): Int = TODO()
 
       override fun withReadTimeout(
-        timeout: Int,
+        timeout: Long,
         unit: TimeUnit,
       ): Interceptor.Chain = TODO()
 
       override fun writeTimeoutMillis(): Int = TODO()
 
       override fun withWriteTimeout(
-        timeout: Int,
+        timeout: Long,
         unit: TimeUnit,
       ): Interceptor.Chain = TODO()
 
@@ -1383,15 +1383,13 @@ class KotlinSourceModernTest {
         get() = TODO()
       override val proxyAuthenticator: Authenticator
         get() = TODO()
-      override val sslSocketFactory: SSLSocketFactory
+      override val sslSocketFactoryOrNull: SSLSocketFactory
         get() = TODO()
-      override val x509TrustManager: X509TrustManager
+      override val x509TrustManagerOrNull: X509TrustManager
         get() = TODO()
       override val hostnameVerifier: HostnameVerifier
         get() = TODO()
       override val certificatePinner: CertificatePinner
-        get() = TODO()
-      override val certificateChainCleaner: CertificateChainCleaner
         get() = TODO()
       override val connectionPool: ConnectionPool
         get() = TODO()
@@ -1432,11 +1430,10 @@ class KotlinSourceModernTest {
         TODO()
       }
 
-      override fun withSslSocketFactory(sslSocketFactory: SSLSocketFactory?): Interceptor.Chain {
-        TODO()
-      }
-
-      override fun withX509TrustManager(x509TrustManager: X509TrustManager): Interceptor.Chain {
+      override fun withSslSocketFactory(
+        sslSocketFactory: SSLSocketFactory?,
+        x509TrustManager: X509TrustManager?
+      ): Interceptor.Chain {
         TODO()
       }
 
@@ -1445,10 +1442,6 @@ class KotlinSourceModernTest {
       }
 
       override fun withCertificatePinner(certificatePinner: CertificatePinner): Interceptor.Chain {
-        TODO()
-      }
-
-      override fun withCertificateChainCleaner(certificateChainCleaner: CertificateChainCleaner): Interceptor.Chain {
         TODO()
       }
 

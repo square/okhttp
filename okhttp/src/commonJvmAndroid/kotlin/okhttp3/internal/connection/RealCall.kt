@@ -274,15 +274,12 @@ class RealCall(
         RealRoutePlanner(
           taskRunner = client.taskRunner,
           connectionPool = connectionPool,
-          // TODO check if override should be used
-          readTimeoutMillis = client.readTimeoutMillis,
-          // TODO check if override should be used
-          writeTimeoutMillis = client.writeTimeoutMillis,
+          readTimeoutMillis = chain.readTimeoutMillis,
+          writeTimeoutMillis = chain.writeTimeoutMillis,
           socketConnectTimeoutMillis = chain.connectTimeoutMillis,
           socketReadTimeoutMillis = chain.readTimeoutMillis,
           pingIntervalMillis = client.pingIntervalMillis,
-          // TODO check if override should be used
-          retryOnConnectionFailure = client.retryOnConnectionFailure,
+          retryOnConnectionFailure = chain.retryOnConnectionFailure,
           fastFallback = client.fastFallback,
           address = chain.address(request.url),
           routeDatabase = client.routeDatabase,
