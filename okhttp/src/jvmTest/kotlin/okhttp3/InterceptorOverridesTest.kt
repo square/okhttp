@@ -197,11 +197,15 @@ class InterceptorOverridesTest {
             MockResponse.Builder().code(401).build(),
           )
         }
-      }.withOverride(badValue).addInterceptor { chain ->
-        chain
-          .withOverride(nonDefaultValue)
-          .proceed(chain.request())
-      }.build()
+      }
+        // Set the bad override directly on the client
+        .withOverride(badValue)
+        .addInterceptor { chain ->
+          // the only way to stop a bad override of a client is with a good override of an interceptor
+          chain
+            .withOverride(nonDefaultValue)
+            .proceed(chain.request())
+        }.build()
 
       server.enqueue(
         MockResponse(),
