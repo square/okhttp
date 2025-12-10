@@ -82,9 +82,6 @@ fun interface Interceptor {
   }
 
   interface Chain {
-    /**
-     * Returns the request being executed.
-     */
     fun request(): Request
 
     @Throws(IOException::class)

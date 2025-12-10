@@ -50,6 +50,10 @@ class InterceptorOverridesTest {
 
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
+  /**
+   * Test that we can override in a Application Interceptor, purely by seeing that the chain reports
+   * the override in a Network Interceptor.
+   */
   @Test
   fun testOverrideInApplicationInterceptor(
     override: OverrideParam = burstValues(
@@ -105,6 +109,9 @@ class InterceptorOverridesTest {
     }
   }
 
+  /**
+   * Test that we can't override in a Network Interceptor, which will throw an exception.
+   */
   @Test
   fun testOverrideInNetworkInterceptor(
     override: OverrideParam = burstValues(
@@ -148,6 +155,10 @@ class InterceptorOverridesTest {
     }
   }
 
+  /**
+   * Test that if we set a bad implementation on the OkHttpClient directly, that we can avoid the failure
+   * by setting a good override.
+   */
   @Test
   fun testOverrideBadImplementation(
     override: OverrideParam = burstValues(
