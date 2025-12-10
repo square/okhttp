@@ -42,10 +42,10 @@ import okio.buffer
 /** Serves requests from the cache and writes responses to the cache. */
 class CacheInterceptor(
   internal val call: RealCall,
-  internal val cache: Cache?,
 ) : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
+    val cache = chain.cache
     val cacheCandidate = cache?.get(chain.request().requestForCache())
 
     val now = System.currentTimeMillis()

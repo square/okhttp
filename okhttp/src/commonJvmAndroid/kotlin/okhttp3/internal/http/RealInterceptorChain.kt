@@ -243,7 +243,7 @@ class RealInterceptorChain(
 
   override fun withSslSocketFactory(
     sslSocketFactory: SSLSocketFactory?,
-    x509TrustManager: X509TrustManager?
+    x509TrustManager: X509TrustManager?,
   ): Interceptor.Chain {
     check(exchange == null) { "sslSocketFactory can't be adjusted in a network interceptor" }
 
@@ -260,12 +260,6 @@ class RealInterceptorChain(
     check(exchange == null) { "certificatePinner can't be adjusted in a network interceptor" }
 
     return copy(certificatePinner = certificatePinner)
-  }
-
-  override fun withConnectionPool(connectionPool: ConnectionPool): Interceptor.Chain {
-    check(exchange == null) { "connectionPool can't be adjusted in a network interceptor" }
-
-    return copy(connectionPool = connectionPool)
   }
 
   override fun call(): Call = call

@@ -92,7 +92,7 @@ class RetryAndFollowUpInterceptor(
             .build()
 
         val exchange = call.interceptorScopedExchange
-        val followUp = followUpRequest(response, exchange)
+        val followUp = followUpRequest(response, exchange, chain)
 
         if (followUp == null) {
           if (exchange != null && exchange.isDuplex) {
@@ -207,6 +207,7 @@ class RetryAndFollowUpInterceptor(
   private fun followUpRequest(
     userResponse: Response,
     exchange: Exchange?,
+    chain: Interceptor.Chain,
   ): Request? {
     val route = exchange?.connection?.route()
     val responseCode = userResponse.code
@@ -218,10 +219,10 @@ class RetryAndFollowUpInterceptor(
         if (selectedProxy.type() != Proxy.Type.HTTP) {
           throw ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy")
         }
-        return client.proxyAuthenticator.authenticate(route, userResponse)
+        return chain.proxyAuthenticator.authenticate(route, userResponse)
       }
 
-      HTTP_UNAUTHORIZED -> return client.authenticator.authenticate(route, userResponse)
+      HTTP_UNAUTHORIZED -> return chain.authenticator.authenticate(route, userResponse)
 
       HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> {
         return buildRedirectRequest(userResponse, method)
@@ -231,7 +232,7 @@ class RetryAndFollowUpInterceptor(
         // 408's are rare in practice, but some servers like HAProxy use this response code. The
         // spec says that we may repeat the request without modifications. Modern browsers also
         // repeat the request (even non-idempotent ones.)
-        if (!client.retryOnConnectionFailure) {
+        if (!chain.retryOnConnectionFailure) {
           // The application layer has directed us not to retry the request.
           return null
         }

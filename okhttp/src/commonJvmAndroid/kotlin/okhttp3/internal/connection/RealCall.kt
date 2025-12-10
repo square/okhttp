@@ -210,8 +210,8 @@ class RealCall(
     val interceptors = mutableListOf<Interceptor>()
     interceptors += client.interceptors
     interceptors += RetryAndFollowUpInterceptor(client)
-    interceptors += BridgeInterceptor(client.cookieJar)
-    interceptors += CacheInterceptor(this, client.cache)
+    interceptors += BridgeInterceptor()
+    interceptors += CacheInterceptor(this)
     interceptors += ConnectInterceptor
     if (!forWebSocket) {
       interceptors += client.networkInterceptors

@@ -1432,7 +1432,7 @@ class KotlinSourceModernTest {
 
       override fun withSslSocketFactory(
         sslSocketFactory: SSLSocketFactory?,
-        x509TrustManager: X509TrustManager?
+        x509TrustManager: X509TrustManager?,
       ): Interceptor.Chain {
         TODO()
       }
@@ -1442,10 +1442,6 @@ class KotlinSourceModernTest {
       }
 
       override fun withCertificatePinner(certificatePinner: CertificatePinner): Interceptor.Chain {
-        TODO()
-      }
-
-      override fun withConnectionPool(connectionPool: ConnectionPool): Interceptor.Chain {
         TODO()
       }
     }

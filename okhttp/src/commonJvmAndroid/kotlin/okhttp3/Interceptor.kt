@@ -247,7 +247,10 @@ fun interface Interceptor {
      *
      * @throws IllegalStateException if this is a Network Interceptor, since the override is too late.
      */
-    fun withSslSocketFactory(sslSocketFactory: SSLSocketFactory?, x509TrustManager: X509TrustManager?): Chain
+    fun withSslSocketFactory(
+      sslSocketFactory: SSLSocketFactory?,
+      x509TrustManager: X509TrustManager?,
+    ): Chain
 
     /**
      * Returns the [X509TrustManager] for the OkHttpClient, or an override from the Call.Chain.
@@ -280,10 +283,5 @@ fun interface Interceptor {
      * Returns the [ConnectionPool] for the OkHttpClient, or an override from the Call.Chain.
      */
     val connectionPool: ConnectionPool
-
-    /**
-     * Returns a new chain with the specified [ConnectionPool].
-     */
-    fun withConnectionPool(connectionPool: ConnectionPool): Chain
   }
 }
