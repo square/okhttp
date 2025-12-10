@@ -26,9 +26,9 @@ import kotlin.time.Duration.Companion.minutes
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
+import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.connection.ConnectionListener
 import okhttp3.internal.platform.Platform
-import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.testing.PlatformRule
 import okio.ForwardingFileSystem
 import okio.Path
@@ -48,28 +48,29 @@ class InterceptorOverridesTest {
   // Can't use test instance with overrides
   private var client = OkHttpClient()
 
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
+
   @Test
   fun testOverrideInApplicationInterceptor(
-    override: OverrideParam =
-      burstValues(
-        OverrideParam.Authenticator,
-        OverrideParam.Cache,
-        OverrideParam.CertificatePinner,
-        OverrideParam.ConnectTimeout,
-        OverrideParam.ConnectionPool,
-        OverrideParam.CookieJar,
-        OverrideParam.Dns,
-        OverrideParam.HostnameVerifier,
-        OverrideParam.Proxy,
-        OverrideParam.ProxyAuthenticator,
-        OverrideParam.ProxySelector,
-        OverrideParam.ReadTimeout,
-        OverrideParam.RetryOnConnectionFailure,
-        OverrideParam.SocketFactory,
-        OverrideParam.SslSocketFactory,
-        OverrideParam.WriteTimeout,
-        OverrideParam.X509TrustManager,
-      ),
+    override: OverrideParam = burstValues(
+      OverrideParam.Authenticator,
+      OverrideParam.Cache,
+      OverrideParam.CertificatePinner,
+      OverrideParam.ConnectTimeout,
+      OverrideParam.ConnectionPool,
+      OverrideParam.CookieJar,
+      OverrideParam.Dns,
+      OverrideParam.HostnameVerifier,
+      OverrideParam.Proxy,
+      OverrideParam.ProxyAuthenticator,
+      OverrideParam.ProxySelector,
+      OverrideParam.ReadTimeout,
+      OverrideParam.RetryOnConnectionFailure,
+      OverrideParam.SocketFactory,
+      OverrideParam.SslSocketFactory,
+      OverrideParam.WriteTimeout,
+      OverrideParam.X509TrustManager,
+    ),
     isDefault: Boolean,
   ) {
     fun <T> Override<T>.testApplicationInterceptor(chain: Interceptor.Chain): Response {
@@ -89,15 +90,12 @@ class InterceptorOverridesTest {
     }
 
     with(override.override) {
-      client =
-        client
-          .newBuilder()
-          .addInterceptor { chain ->
-            testApplicationInterceptor(chain)
-          }.addNetworkInterceptor { chain ->
-            assertThat(isDefaultValue(chain.value())).isFalse()
-            chain.proceed(chain.request())
-          }.build()
+      client = client.newBuilder().addInterceptor { chain ->
+        testApplicationInterceptor(chain)
+      }.addNetworkInterceptor { chain ->
+        assertThat(isDefaultValue(chain.value())).isFalse()
+        chain.proceed(chain.request())
+      }.build()
 
       server.enqueue(
         MockResponse(),
@@ -109,42 +107,38 @@ class InterceptorOverridesTest {
 
   @Test
   fun testOverrideInNetworkInterceptor(
-    override: OverrideParam =
-      burstValues(
-        OverrideParam.Authenticator,
-        OverrideParam.Cache,
-        OverrideParam.CertificatePinner,
-        OverrideParam.ConnectTimeout,
-        OverrideParam.ConnectionPool,
-        OverrideParam.CookieJar,
-        OverrideParam.Dns,
-        OverrideParam.HostnameVerifier,
-        OverrideParam.Proxy,
-        OverrideParam.ProxyAuthenticator,
-        OverrideParam.ProxySelector,
-        OverrideParam.ReadTimeout,
-        OverrideParam.RetryOnConnectionFailure,
-        OverrideParam.SocketFactory,
-        OverrideParam.SslSocketFactory,
-        OverrideParam.WriteTimeout,
-        OverrideParam.X509TrustManager,
-      ),
+    override: OverrideParam = burstValues(
+      OverrideParam.Authenticator,
+      OverrideParam.Cache,
+      OverrideParam.CertificatePinner,
+      OverrideParam.ConnectTimeout,
+      OverrideParam.ConnectionPool,
+      OverrideParam.CookieJar,
+      OverrideParam.Dns,
+      OverrideParam.HostnameVerifier,
+      OverrideParam.Proxy,
+      OverrideParam.ProxyAuthenticator,
+      OverrideParam.ProxySelector,
+      OverrideParam.ReadTimeout,
+      OverrideParam.RetryOnConnectionFailure,
+      OverrideParam.SocketFactory,
+      OverrideParam.SslSocketFactory,
+      OverrideParam.WriteTimeout,
+      OverrideParam.X509TrustManager,
+    ),
   ) {
     with(override.override) {
-      client =
-        client
-          .newBuilder()
-          .addNetworkInterceptor { chain ->
-            assertThat(isDefaultValue(chain.value())).isTrue()
+      client = client.newBuilder().addNetworkInterceptor { chain ->
+        assertThat(isDefaultValue(chain.value())).isTrue()
 
-            assertFailure {
-              chain.withOverride(
-                nonDefaultValue,
-              )
-            }.hasMessage("${override.paramName} can't be adjusted in a network interceptor")
+        assertFailure {
+          chain.withOverride(
+            nonDefaultValue,
+          )
+        }.hasMessage("${override.paramName} can't be adjusted in a network interceptor")
 
-            chain.proceed(chain.request())
-          }.build()
+        chain.proceed(chain.request())
+      }.build()
 
       server.enqueue(
         MockResponse(),
@@ -155,40 +149,83 @@ class InterceptorOverridesTest {
   }
 
   @Test
-  fun testCanOverrideBadImplementations() {
-    TODO()
+  fun testOverrideBadImplementation(
+    override: OverrideParam = burstValues(
+      OverrideParam.Authenticator,
+      OverrideParam.Cache,
+      OverrideParam.CertificatePinner,
+//        OverrideParam.ConnectTimeout,
+      OverrideParam.ConnectionPool,
+      OverrideParam.CookieJar,
+      OverrideParam.Dns,
+      OverrideParam.HostnameVerifier,
+      OverrideParam.Proxy,
+      OverrideParam.ProxyAuthenticator,
+      OverrideParam.ProxySelector,
+//        OverrideParam.ReadTimeout,
+      OverrideParam.RetryOnConnectionFailure,
+      OverrideParam.SocketFactory,
+      OverrideParam.SslSocketFactory,
+//        OverrideParam.WriteTimeout,
+      OverrideParam.X509TrustManager,
+    ),
+  ) {
+    enableTls()
+
+    with(override.override) {
+      client = client.newBuilder().apply {
+        if (override == OverrideParam.ProxyAuthenticator) {
+          proxy(server.proxyAddress)
+
+          server.enqueue(
+            MockResponse.Builder().code(407).headers(headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""))
+              .inTunnel().build(),
+          )
+        } else if (override == OverrideParam.Authenticator) {
+          server.enqueue(
+            MockResponse.Builder().code(401).build(),
+          )
+        }
+      }.withOverride(badValue).addInterceptor { chain ->
+        chain
+          .withOverride(nonDefaultValue)
+          .proceed(chain.request())
+      }.build()
+
+      server.enqueue(
+        MockResponse(),
+      )
+      val response = client.newCall(Request(server.url("/"))).execute()
+      response.close()
+    }
   }
 
   enum class OverrideParam(
     val override: Override<*>,
   ) {
-    Authenticator(Override.AuthenticatorOverride),
-    Cache(Override.CacheOverride),
-    CertificatePinner(Override.CertificatePinnerOverride),
-    ConnectTimeout(Override.ConnectTimeoutOverride) {
+    Authenticator(Override.AuthenticatorOverride), Cache(Override.CacheOverride), CertificatePinner(Override.CertificatePinnerOverride), ConnectTimeout(
+      Override.ConnectTimeoutOverride
+    ) {
       override val paramName: String
         get() = "Timeouts"
     },
-    ConnectionPool(Override.ConnectionPoolOverride),
-    CookieJar(Override.CookieJarOverride),
-    Dns(Override.DnsOverride),
-    HostnameVerifier(Override.HostnameVerifierOverride),
-    Proxy(Override.ProxyOverride),
-    ProxyAuthenticator(Override.ProxyAuthenticatorOverride),
-    ProxySelector(Override.ProxySelectorOverride),
-    ReadTimeout(Override.ReadTimeoutOverride) {
+    ConnectionPool(Override.ConnectionPoolOverride), CookieJar(Override.CookieJarOverride), Dns(Override.DnsOverride), HostnameVerifier(
+      Override.HostnameVerifierOverride
+    ),
+    Proxy(Override.ProxyOverride), ProxyAuthenticator(Override.ProxyAuthenticatorOverride), ProxySelector(Override.ProxySelectorOverride), ReadTimeout(
+      Override.ReadTimeoutOverride
+    ) {
       override val paramName: String
         get() = "Timeouts"
     },
-    RetryOnConnectionFailure(Override.RetryOnConnectionFailureOverride),
-    SocketFactory(Override.SocketFactoryOverride),
-    SslSocketFactory(Override.SslSocketFactoryOverride),
+    RetryOnConnectionFailure(Override.RetryOnConnectionFailureOverride), SocketFactory(Override.SocketFactoryOverride), SslSocketFactory(
+      Override.SslSocketFactoryOverride
+    ),
     WriteTimeout(Override.WriteTimeoutOverride) {
       override val paramName: String
         get() = "Timeouts"
     },
-    X509TrustManager(Override.X509TrustManagerOverride),
-    ;
+    X509TrustManager(Override.X509TrustManagerOverride), ;
 
     open val paramName: String
       get() = override.paramName ?: name.replaceFirstChar { it.lowercase(getDefault()) }
@@ -247,7 +284,7 @@ class InterceptorOverridesTest {
 
       override fun OkHttpClient.Builder.withOverride(value: Authenticator): OkHttpClient.Builder = authenticator(value)
 
-      override val nonDefaultValue: Authenticator = Authenticator { route, response -> null }
+      override val nonDefaultValue: Authenticator = Authenticator { route, response -> response.request }
 
       override val badValue: Authenticator = Authenticator { route, response -> TODO() }
 
@@ -261,27 +298,25 @@ class InterceptorOverridesTest {
 
       override fun OkHttpClient.Builder.withOverride(value: CookieJar): OkHttpClient.Builder = cookieJar(value)
 
-      override val nonDefaultValue: CookieJar =
-        object : CookieJar {
-          override fun saveFromResponse(
-            url: HttpUrl,
-            cookies: List<Cookie>,
-          ) {
-          }
-
-          override fun loadForRequest(url: HttpUrl): List<Cookie> = emptyList()
+      override val nonDefaultValue: CookieJar = object : CookieJar {
+        override fun saveFromResponse(
+          url: HttpUrl,
+          cookies: List<Cookie>,
+        ) {
         }
 
-      override val badValue: CookieJar =
-        object : CookieJar {
-          override fun saveFromResponse(
-            url: HttpUrl,
-            cookies: List<Cookie>,
-          ) {
-          }
+        override fun loadForRequest(url: HttpUrl): List<Cookie> = emptyList()
+      }
 
-          override fun loadForRequest(url: HttpUrl): List<Cookie> = TODO()
+      override val badValue: CookieJar = object : CookieJar {
+        override fun saveFromResponse(
+          url: HttpUrl,
+          cookies: List<Cookie>,
+        ) {
         }
+
+        override fun loadForRequest(url: HttpUrl): List<Cookie> = TODO()
+      }
 
       override fun isDefaultValue(value: CookieJar): Boolean = value === CookieJar.NO_COOKIES
     }
@@ -297,9 +332,7 @@ class InterceptorOverridesTest {
 
       override val badValue: Cache = Cache(object : ForwardingFileSystem(FakeFileSystem()) {
         override fun onPathParameter(
-          path: Path,
-          functionName: String,
-          parameterName: String
+          path: Path, functionName: String, parameterName: String
         ): Path = TODO()
       }, "/cash".toPath(), 1)
 
@@ -315,7 +348,8 @@ class InterceptorOverridesTest {
 
       override val nonDefaultValue: java.net.Proxy? = java.net.Proxy.NO_PROXY
 
-      override val badValue: java.net.Proxy? = java.net.Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003))
+      override val badValue: java.net.Proxy? =
+        java.net.Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003))
 
       override fun isDefaultValue(value: java.net.Proxy?): Boolean = value == null
     }
@@ -327,29 +361,27 @@ class InterceptorOverridesTest {
 
       override fun OkHttpClient.Builder.withOverride(value: ProxySelector): OkHttpClient.Builder = proxySelector(value)
 
-      override val nonDefaultValue: ProxySelector =
-        object : ProxySelector() {
-          override fun select(uri: URI?): MutableList<Proxy> = mutableListOf(java.net.Proxy.NO_PROXY)
+      override val nonDefaultValue: ProxySelector = object : ProxySelector() {
+        override fun select(uri: URI?): MutableList<Proxy> = mutableListOf(java.net.Proxy.NO_PROXY)
 
-          override fun connectFailed(
-            uri: URI?,
-            sa: SocketAddress?,
-            ioe: java.io.IOException?,
-          ) {
-          }
+        override fun connectFailed(
+          uri: URI?,
+          sa: SocketAddress?,
+          ioe: java.io.IOException?,
+        ) {
         }
+      }
 
-      override val badValue: ProxySelector =
-        object : ProxySelector() {
-          override fun select(uri: URI?): MutableList<Proxy> = TODO()
+      override val badValue: ProxySelector = object : ProxySelector() {
+        override fun select(uri: URI?): MutableList<Proxy> = TODO()
 
-          override fun connectFailed(
-            uri: URI?,
-            sa: SocketAddress?,
-            ioe: java.io.IOException?,
-          ) {
-          }
+        override fun connectFailed(
+          uri: URI?,
+          sa: SocketAddress?,
+          ioe: java.io.IOException?,
+        ) {
         }
+      }
 
       override fun isDefaultValue(value: ProxySelector): Boolean = value === ProxySelector.getDefault()
     }
@@ -357,11 +389,13 @@ class InterceptorOverridesTest {
     object ProxyAuthenticatorOverride : Override<Authenticator> {
       override fun Interceptor.Chain.value(): Authenticator = proxyAuthenticator
 
-      override fun Interceptor.Chain.withOverride(value: Authenticator): Interceptor.Chain = withProxyAuthenticator(value)
+      override fun Interceptor.Chain.withOverride(value: Authenticator): Interceptor.Chain =
+        withProxyAuthenticator(value)
 
-      override fun OkHttpClient.Builder.withOverride(value: Authenticator): OkHttpClient.Builder = proxyAuthenticator(value)
+      override fun OkHttpClient.Builder.withOverride(value: Authenticator): OkHttpClient.Builder =
+        proxyAuthenticator(value)
 
-      override val nonDefaultValue: Authenticator = Authenticator { route, response -> null }
+      override val nonDefaultValue: Authenticator = Authenticator { route, response -> response.request }
 
       override val badValue: Authenticator = Authenticator { route, response -> TODO() }
 
@@ -371,17 +405,17 @@ class InterceptorOverridesTest {
     object SslSocketFactoryOverride : Override<SSLSocketFactory?> {
       override fun Interceptor.Chain.value(): SSLSocketFactory? = sslSocketFactoryOrNull
 
-      override fun Interceptor.Chain.withOverride(value: SSLSocketFactory?): Interceptor.Chain = withSslSocketFactory(value, x509TrustManagerOrNull)
+      override fun Interceptor.Chain.withOverride(value: SSLSocketFactory?): Interceptor.Chain =
+        withSslSocketFactory(value, x509TrustManagerOrNull)
 
-      override fun OkHttpClient.Builder.withOverride(value: SSLSocketFactory?): OkHttpClient.Builder = sslSocketFactory(value!!, x509TrustManagerOrNull!!)
+      override fun OkHttpClient.Builder.withOverride(value: SSLSocketFactory?): OkHttpClient.Builder =
+        sslSocketFactory(value!!, x509TrustManagerOrNull!!)
 
-      override val nonDefaultValue: SSLSocketFactory =
-        object :
-          DelegatingSSLSocketFactory(Platform.get().newSslSocketFactory(Platform.get().platformTrustManager())) {}
+      override val nonDefaultValue: SSLSocketFactory = object :
+        DelegatingSSLSocketFactory(Platform.get().newSslSocketFactory(Platform.get().platformTrustManager())) {}
 
       override val badValue: SSLSocketFactory =
-        object :
-          DelegatingSSLSocketFactory(Platform.get().newSslSocketFactory(Platform.get().platformTrustManager())) {
+        object : DelegatingSSLSocketFactory(Platform.get().newSslSocketFactory(Platform.get().platformTrustManager())) {
           override fun configureSocket(sslSocket: SSLSocket): SSLSocket = TODO()
         }
 
@@ -393,58 +427,56 @@ class InterceptorOverridesTest {
 
       override fun Interceptor.Chain.value(): X509TrustManager? = x509TrustManagerOrNull
 
-      override fun Interceptor.Chain.withOverride(value: X509TrustManager?): Interceptor.Chain = withSslSocketFactory(sslSocketFactoryOrNull, value)
+      override fun Interceptor.Chain.withOverride(value: X509TrustManager?): Interceptor.Chain =
+        withSslSocketFactory(sslSocketFactoryOrNull, value)
 
-      override fun OkHttpClient.Builder.withOverride(value: X509TrustManager?): OkHttpClient.Builder = sslSocketFactory(sslSocketFactoryOrNull!!, value!!)
+      override fun OkHttpClient.Builder.withOverride(value: X509TrustManager?): OkHttpClient.Builder =
+        sslSocketFactory(sslSocketFactoryOrNull!!, value!!)
 
-      override val nonDefaultValue: X509TrustManager =
-        object : X509TrustManager {
-          override fun checkClientTrusted(
-            x509Certificates: Array<X509Certificate>,
-            s: String,
-          ) {
-          }
-
-          override fun checkServerTrusted(
-            x509Certificates: Array<X509Certificate>,
-            s: String,
-          ) {
-          }
-
-          override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+      override val nonDefaultValue: X509TrustManager = object : X509TrustManager {
+        override fun checkClientTrusted(
+          x509Certificates: Array<X509Certificate>,
+          s: String,
+        ) {
         }
 
-      override val badValue: X509TrustManager =
-        object : X509TrustManager {
-          override fun checkClientTrusted(
-            x509Certificates: Array<X509Certificate>,
-            s: String,
-          ) {
-          }
-
-          override fun checkServerTrusted(
-            x509Certificates: Array<X509Certificate>,
-            s: String,
-          ) {
-          }
-
-          override fun getAcceptedIssuers(): Array<X509Certificate> = TODO()
+        override fun checkServerTrusted(
+          x509Certificates: Array<X509Certificate>,
+          s: String,
+        ) {
         }
+
+        override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+      }
+
+      override val badValue: X509TrustManager = object : X509TrustManager {
+        override fun checkClientTrusted(
+          x509Certificates: Array<X509Certificate>,
+          s: String,
+        ) {
+        }
+
+        override fun checkServerTrusted(
+          x509Certificates: Array<X509Certificate>,
+          s: String,
+        ) {
+        }
+
+        override fun getAcceptedIssuers(): Array<X509Certificate> = TODO()
+      }
 
       override fun isDefaultValue(value: X509TrustManager?): Boolean =
-        !value
-          ?.javaClass
-          ?.name
-          .orEmpty()
-          .startsWith("okhttp")
+        !value?.javaClass?.name.orEmpty().startsWith("okhttp")
     }
 
     object HostnameVerifierOverride : Override<HostnameVerifier> {
       override fun Interceptor.Chain.value(): HostnameVerifier = hostnameVerifier
 
-      override fun Interceptor.Chain.withOverride(value: HostnameVerifier): Interceptor.Chain = withHostnameVerifier(value)
+      override fun Interceptor.Chain.withOverride(value: HostnameVerifier): Interceptor.Chain =
+        withHostnameVerifier(value)
 
-      override fun OkHttpClient.Builder.withOverride(value: HostnameVerifier): OkHttpClient.Builder = hostnameVerifier(value)
+      override fun OkHttpClient.Builder.withOverride(value: HostnameVerifier): OkHttpClient.Builder =
+        hostnameVerifier(value)
 
       override val nonDefaultValue: HostnameVerifier = HostnameVerifier { _, _ -> true }
 
@@ -456,21 +488,18 @@ class InterceptorOverridesTest {
     object CertificatePinnerOverride : Override<CertificatePinner> {
       override fun Interceptor.Chain.value(): CertificatePinner = certificatePinner
 
-      override fun Interceptor.Chain.withOverride(value: CertificatePinner): Interceptor.Chain = withCertificatePinner(value)
+      override fun Interceptor.Chain.withOverride(value: CertificatePinner): Interceptor.Chain =
+        withCertificatePinner(value)
 
-      override fun OkHttpClient.Builder.withOverride(value: CertificatePinner): OkHttpClient.Builder = certificatePinner(value)
+      override fun OkHttpClient.Builder.withOverride(value: CertificatePinner): OkHttpClient.Builder =
+        certificatePinner(value)
 
       override val nonDefaultValue: CertificatePinner =
-        CertificatePinner
-          .Builder()
-          .add("publicobject.com", "sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
+        CertificatePinner.Builder().add("publicobject.com", "sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
           .build()
 
       override val badValue: CertificatePinner =
-        CertificatePinner
-          .Builder()
-          .add("localhost", "sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
-          .build()
+        CertificatePinner.Builder().add("localhost", "sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=").build()
 
       override fun isDefaultValue(value: CertificatePinner): Boolean = value.pins.isEmpty()
     }
@@ -480,23 +509,28 @@ class InterceptorOverridesTest {
 
       override fun Interceptor.Chain.withOverride(value: ConnectionPool): Interceptor.Chain = withConnectionPool(value)
 
-      override fun OkHttpClient.Builder.withOverride(value: ConnectionPool): OkHttpClient.Builder = connectionPool(value)
+      override fun OkHttpClient.Builder.withOverride(value: ConnectionPool): OkHttpClient.Builder =
+        connectionPool(value)
 
       override val nonDefaultValue: ConnectionPool = ConnectionPool(keepAliveDuration = 1, timeUnit = TimeUnit.MINUTES)
 
-      override val badValue: ConnectionPool = ConnectionPool(keepAliveDuration = 1, timeUnit = TimeUnit.MINUTES, connectionListener = object : ConnectionListener() {
-        override fun connectStart(route: Route, call: Call): Unit = TODO()
-      })
+      override val badValue: ConnectionPool = ConnectionPool(
+        keepAliveDuration = 1, timeUnit = TimeUnit.MINUTES, connectionListener = object : ConnectionListener() {
+          override fun connectStart(route: Route, call: Call): Unit = TODO()
+        })
 
-      override fun isDefaultValue(value: ConnectionPool): Boolean = value.delegate.keepAliveDurationNs == 5.minutes.inWholeNanoseconds
+      override fun isDefaultValue(value: ConnectionPool): Boolean =
+        value.delegate.keepAliveDurationNs == 5.minutes.inWholeNanoseconds
     }
 
     object ConnectTimeoutOverride : Override<Int> {
       override fun Interceptor.Chain.value(): Int = connectTimeoutMillis()
 
-      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain = withConnectTimeout(value.toLong(), TimeUnit.MILLISECONDS)
+      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain =
+        withConnectTimeout(value.toLong(), TimeUnit.MILLISECONDS)
 
-      override fun OkHttpClient.Builder.withOverride(value: Int): OkHttpClient.Builder = connectTimeout(value.toLong(), TimeUnit.MILLISECONDS)
+      override fun OkHttpClient.Builder.withOverride(value: Int): OkHttpClient.Builder =
+        connectTimeout(value.toLong(), TimeUnit.MILLISECONDS)
 
       override val nonDefaultValue: Int = 5000
 
@@ -509,9 +543,11 @@ class InterceptorOverridesTest {
     object ReadTimeoutOverride : Override<Int> {
       override fun Interceptor.Chain.value(): Int = readTimeoutMillis()
 
-      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain = withReadTimeout(value.toLong(), TimeUnit.MILLISECONDS)
+      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain =
+        withReadTimeout(value.toLong(), TimeUnit.MILLISECONDS)
 
-      override fun OkHttpClient.Builder.withOverride(value: Int): OkHttpClient.Builder = readTimeout(value.toLong(), TimeUnit.MILLISECONDS)
+      override fun OkHttpClient.Builder.withOverride(value: Int): OkHttpClient.Builder =
+        readTimeout(value.toLong(), TimeUnit.MILLISECONDS)
 
       override val nonDefaultValue: Int = 5000
 
@@ -525,9 +561,11 @@ class InterceptorOverridesTest {
     object WriteTimeoutOverride : Override<Int> {
       override fun Interceptor.Chain.value(): Int = writeTimeoutMillis()
 
-      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain = withWriteTimeout(value.toLong(), TimeUnit.MILLISECONDS)
+      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain =
+        withWriteTimeout(value.toLong(), TimeUnit.MILLISECONDS)
 
-      override fun OkHttpClient.Builder.withOverride(value: Int): OkHttpClient.Builder = writeTimeout(value.toLong(), TimeUnit.MILLISECONDS)
+      override fun OkHttpClient.Builder.withOverride(value: Int): OkHttpClient.Builder =
+        writeTimeout(value.toLong(), TimeUnit.MILLISECONDS)
 
       override val nonDefaultValue: Int = 5000
 
@@ -541,9 +579,11 @@ class InterceptorOverridesTest {
     object RetryOnConnectionFailureOverride : Override<Boolean> {
       override fun Interceptor.Chain.value(): Boolean = retryOnConnectionFailure
 
-      override fun Interceptor.Chain.withOverride(value: Boolean): Interceptor.Chain = withRetryOnConnectionFailure(value)
+      override fun Interceptor.Chain.withOverride(value: Boolean): Interceptor.Chain =
+        withRetryOnConnectionFailure(value)
 
-      override fun OkHttpClient.Builder.withOverride(value: Boolean): OkHttpClient.Builder = retryOnConnectionFailure(value)
+      override fun OkHttpClient.Builder.withOverride(value: Boolean): OkHttpClient.Builder =
+        retryOnConnectionFailure(value)
 
       override val nonDefaultValue: Boolean = false
 
@@ -552,5 +592,13 @@ class InterceptorOverridesTest {
 
       override fun isDefaultValue(value: Boolean): Boolean = value
     }
+  }
+
+  private fun enableTls() {
+    client = client.newBuilder().sslSocketFactory(
+      handshakeCertificates.sslSocketFactory(),
+      handshakeCertificates.trustManager,
+    ).hostnameVerifier(RecordingHostnameVerifier()).build()
+    server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 }
