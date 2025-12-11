@@ -49,4 +49,9 @@ public sealed interface SocketEffect {
 
   /** Stop processing this. */
   public object Stall : SocketEffect
+
+  /** Delay before processing. */
+  public class Delay(
+    public val delayMs: Long,
+  ) : SocketEffect
 }

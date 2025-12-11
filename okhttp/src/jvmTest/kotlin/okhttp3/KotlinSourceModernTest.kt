@@ -1444,5 +1444,9 @@ class KotlinSourceModernTest {
       override fun withCertificatePinner(certificatePinner: CertificatePinner): Interceptor.Chain {
         TODO()
       }
+
+      override fun withConnectionPool(connectionPool: ConnectionPool): Interceptor.Chain {
+        TODO()
+      }
     }
 }

@@ -40,6 +40,7 @@ import okhttp3.Response
 import okhttp3.internal.checkDuration
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
+import okhttp3.internal.tls.CertificateChainCleaner
 
 /**
  * A concrete interceptor chain that carries the entire interceptor chain: all application
@@ -71,6 +72,7 @@ class RealInterceptorChain(
   override val socketFactory: SocketFactory,
   override val sslSocketFactoryOrNull: SSLSocketFactory?,
   override val x509TrustManagerOrNull: X509TrustManager?,
+  val certificateChainCleaner: CertificateChainCleaner?,
 ) : Interceptor.Chain {
   internal constructor(
     call: RealCall,
@@ -102,6 +104,7 @@ class RealInterceptorChain(
     client.socketFactory,
     client.sslSocketFactoryOrNull,
     client.x509TrustManager,
+    client.certificateChainCleaner,
   )
 
   private var calls: Int = 0
@@ -127,6 +130,7 @@ class RealInterceptorChain(
     socketFactory: SocketFactory = this.socketFactory,
     sslSocketFactory: SSLSocketFactory? = this.sslSocketFactoryOrNull,
     x509TrustManager: X509TrustManager? = this.x509TrustManagerOrNull,
+    certificateChainCleaner: CertificateChainCleaner? = this.certificateChainCleaner,
   ) = RealInterceptorChain(
     call,
     interceptors,
@@ -150,6 +154,7 @@ class RealInterceptorChain(
     socketFactory,
     sslSocketFactory,
     x509TrustManager,
+    certificateChainCleaner,
   )
 
   override fun connection(): Connection? = exchange?.connection
@@ -162,7 +167,7 @@ class RealInterceptorChain(
   ): Interceptor.Chain {
     check(exchange == null) { "Timeouts can't be adjusted in a network interceptor" }
 
-    return copy(connectTimeoutMillis = checkDuration("connectTimeout", timeout.toLong(), unit))
+    return copy(connectTimeoutMillis = checkDuration("connectTimeout", timeout, unit))
   }
 
   override fun readTimeoutMillis(): Int = readTimeoutMillis
@@ -173,7 +178,7 @@ class RealInterceptorChain(
   ): Interceptor.Chain {
     check(exchange == null) { "Timeouts can't be adjusted in a network interceptor" }
 
-    return copy(readTimeoutMillis = checkDuration("readTimeout", timeout.toLong(), unit))
+    return copy(readTimeoutMillis = checkDuration("readTimeout", timeout, unit))
   }
 
   override fun writeTimeoutMillis(): Int = writeTimeoutMillis
@@ -184,7 +189,7 @@ class RealInterceptorChain(
   ): Interceptor.Chain {
     check(exchange == null) { "Timeouts can't be adjusted in a network interceptor" }
 
-    return copy(writeTimeoutMillis = checkDuration("writeTimeout", timeout.toLong(), unit))
+    return copy(writeTimeoutMillis = checkDuration("writeTimeout", timeout, unit))
   }
 
   override fun withDns(dns: Dns): Interceptor.Chain {
@@ -247,7 +252,22 @@ class RealInterceptorChain(
   ): Interceptor.Chain {
     check(exchange == null) { "sslSocketFactory can't be adjusted in a network interceptor" }
 
-    return copy(sslSocketFactory = sslSocketFactory, x509TrustManager = x509TrustManager)
+    if (sslSocketFactory != null && x509TrustManager != null) {
+      val newCertificateChainCleaner = CertificateChainCleaner.get(x509TrustManager)
+      return copy(
+        sslSocketFactory = sslSocketFactory,
+        x509TrustManager = x509TrustManager,
+        certificateChainCleaner = newCertificateChainCleaner,
+        certificatePinner = certificatePinner.withCertificateChainCleaner(newCertificateChainCleaner)
+      )
+    } else {
+      return copy(
+        sslSocketFactory = null,
+        x509TrustManager = null,
+        certificateChainCleaner = null,
+      )
+    }
+
   }
 
   override fun withHostnameVerifier(hostnameVerifier: HostnameVerifier): Interceptor.Chain {
@@ -259,7 +279,19 @@ class RealInterceptorChain(
   override fun withCertificatePinner(certificatePinner: CertificatePinner): Interceptor.Chain {
     check(exchange == null) { "certificatePinner can't be adjusted in a network interceptor" }
 
-    return copy(certificatePinner = certificatePinner)
+    val newCertificatePinner = if (certificateChainCleaner != null) {
+      certificatePinner.withCertificateChainCleaner(certificateChainCleaner)
+    } else {
+      certificatePinner
+    }
+
+    return copy(certificatePinner = newCertificatePinner)
+  }
+
+  override fun withConnectionPool(connectionPool: ConnectionPool): Interceptor.Chain {
+    check(exchange == null) { "connectionPool can't be adjusted in a network interceptor" }
+
+    return copy(connectionPool = connectionPool)
   }
 
   override fun call(): Call = call

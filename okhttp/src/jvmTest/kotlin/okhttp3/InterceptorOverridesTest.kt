@@ -28,10 +28,11 @@ import javax.net.ssl.X509TrustManager
 import kotlin.time.Duration.Companion.minutes
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketHandler
+import mockwebserver3.SocketEffect
 import mockwebserver3.junit5.StartStop
 import okhttp3.CertificatePinner.Companion.pin
 import okhttp3.Headers.Companion.headersOf
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.connection.ConnectionListener
 import okhttp3.internal.platform.Platform
 import okhttp3.testing.PlatformRule
@@ -41,7 +42,6 @@ import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.opentest4j.AssertionFailedError
 
 @Burst
 class InterceptorOverridesTest {
@@ -71,6 +71,7 @@ class InterceptorOverridesTest {
         OverrideParam.Cache,
         OverrideParam.CertificatePinner,
         OverrideParam.ConnectTimeout,
+        OverrideParam.ConnectionPool,
         OverrideParam.CookieJar,
         OverrideParam.Dns,
         OverrideParam.HostnameVerifier,
@@ -132,6 +133,7 @@ class InterceptorOverridesTest {
         OverrideParam.Cache,
         OverrideParam.CertificatePinner,
         OverrideParam.ConnectTimeout,
+        OverrideParam.ConnectionPool,
         OverrideParam.CookieJar,
         OverrideParam.Dns,
         OverrideParam.HostnameVerifier,
@@ -182,6 +184,7 @@ class InterceptorOverridesTest {
         OverrideParam.Cache,
         OverrideParam.CertificatePinner,
         OverrideParam.ConnectTimeout,
+        OverrideParam.ConnectionPool,
         OverrideParam.CookieJar,
         OverrideParam.Dns,
         OverrideParam.HostnameVerifier,
@@ -257,9 +260,17 @@ class InterceptorOverridesTest {
         overrideBadImplementation(override = override.override, testItFails = testItFails)
       }
 
+      OverrideParam.WriteTimeout -> {
+        server.enqueue(
+          MockResponse.Builder().onRequestStart(SocketEffect.Delay(1000)).build(),
+        )
+
+        overrideBadImplementation(override = override.override, testItFails = testItFails, bodySize = 1024 * 256)
+      }
+
       OverrideParam.ReadTimeout -> {
         server.enqueue(
-          MockResponse.Builder().bodyDelay(1, TimeUnit.SECONDS).build(),
+          MockResponse.Builder().bodyDelay(1, TimeUnit.SECONDS).body("Hello").build(),
         )
 
         overrideBadImplementation(override = override.override, testItFails = testItFails)
@@ -288,6 +299,7 @@ class InterceptorOverridesTest {
     testItFails: Boolean,
     badValue: T = override.badValue,
     goodValue: T = override.nonDefaultValue,
+    bodySize: Int? = null
   ) {
     with(override) {
       client =
@@ -310,8 +322,8 @@ class InterceptorOverridesTest {
       server.enqueue(
         MockResponse(),
       )
-      val call = client.newCall(Request(server.url("/")))
-      val result = runCatching { call.execute().close() }
+      val call = client.newCall(Request(server.url("/"), body = bodySize?.let { ByteArray(bodySize).toRequestBody() }))
+      val result = runCatching { call.execute().body.bytes() }
 
       if (testItFails) {
         assertThat(result).isFailure()
@@ -333,6 +345,7 @@ class InterceptorOverridesTest {
       override val paramName: String
         get() = "Timeouts"
     },
+    ConnectionPool(Override.ConnectionPoolOverride),
     CookieJar(Override.CookieJarOverride),
     Dns(Override.DnsOverride),
     HostnameVerifier(
@@ -604,6 +617,7 @@ class InterceptorOverridesTest {
             x509Certificates: Array<X509Certificate>,
             s: String,
           ) {
+            TODO()
           }
 
           override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
@@ -648,6 +662,22 @@ class InterceptorOverridesTest {
         CertificatePinner.Builder().add("localhost", "sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=").build()
 
       override fun isDefaultValue(value: CertificatePinner): Boolean = value.pins.isEmpty()
+    }
+
+    object ConnectionPoolOverride : Override<ConnectionPool> {
+      override fun Interceptor.Chain.value(): ConnectionPool = connectionPool
+
+      override fun Interceptor.Chain.withOverride(value: ConnectionPool): Interceptor.Chain = withConnectionPool(value)
+
+      override fun OkHttpClient.Builder.withOverride(value: ConnectionPool): OkHttpClient.Builder = connectionPool(value)
+
+      override val nonDefaultValue: ConnectionPool = ConnectionPool(keepAliveDuration = 1, timeUnit = TimeUnit.MINUTES)
+
+      override val badValue: ConnectionPool = ConnectionPool(keepAliveDuration = 1, timeUnit = TimeUnit.MINUTES, connectionListener = object : ConnectionListener() {
+        override fun connectStart(route: Route, call: Call): Unit = TODO()
+      })
+
+      override fun isDefaultValue(value: ConnectionPool): Boolean = value.delegate.keepAliveDurationNs == 5.minutes.inWholeNanoseconds
     }
 
     object ConnectTimeoutOverride : Override<Int> {

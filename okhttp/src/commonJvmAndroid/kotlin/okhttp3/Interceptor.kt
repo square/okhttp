@@ -283,5 +283,10 @@ fun interface Interceptor {
      * Returns the [ConnectionPool] for the OkHttpClient, or an override from the Call.Chain.
      */
     val connectionPool: ConnectionPool
+
+    /**
+     * Returns a new chain with the specified [ConnectionPool].
+     */
+    fun withConnectionPool(connectionPool: ConnectionPool): Chain
   }
 }

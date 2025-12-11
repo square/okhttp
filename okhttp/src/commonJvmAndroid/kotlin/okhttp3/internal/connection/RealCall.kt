@@ -273,7 +273,7 @@ class RealCall(
       val routePlanner =
         RealRoutePlanner(
           taskRunner = client.taskRunner,
-          connectionPool = connectionPool,
+          connectionPool = chain.connectionPool.delegate,
           readTimeoutMillis = chain.readTimeoutMillis,
           writeTimeoutMillis = chain.writeTimeoutMillis,
           socketConnectTimeoutMillis = chain.connectTimeoutMillis,
