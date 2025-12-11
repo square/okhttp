@@ -392,10 +392,6 @@ public class MockWebServer : Closeable {
         )
         socket.close()
       } else {
-        if (peek.onRequestStart is SocketEffect.Delay) {
-          Thread.sleep(peek.onRequestStart.delayMs)
-        }
-
         openClientSockets.add(socket)
         serveConnection(nextConnectionIndex++, socket, peek)
       }
@@ -975,12 +971,6 @@ public class MockWebServer : Closeable {
         // Sleep until the socket is closed.
         socket.sleepWhileOpen(TimeUnit.MINUTES.toNanos(60))
         error("expected timeout")
-      }
-
-      is SocketEffect.Delay -> {
-        // Sleep for delay period.
-        socket.sleepWhileOpen(TimeUnit.MILLISECONDS.toNanos(effect.delayMs))
-        return false
       }
     }
 

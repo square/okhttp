@@ -11,6 +11,8 @@ import assertk.assertions.isNotSameInstanceAs
 import assertk.assertions.isSuccess
 import assertk.assertions.isTrue
 import assertk.fail
+import java.io.InputStream
+import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.ProxySelector
@@ -36,10 +38,16 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.connection.ConnectionListener
 import okhttp3.internal.platform.Platform
 import okhttp3.testing.PlatformRule
+import okio.Buffer
 import okio.ForwardingFileSystem
+import okio.ForwardingSink
+import okio.IOException
 import okio.Path
 import okio.Path.Companion.toPath
+import okio.buffer
 import okio.fakefilesystem.FakeFileSystem
+import okio.sink
+import okio.source
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -176,6 +184,7 @@ class InterceptorOverridesTest {
    * Test that if we set a bad implementation on the OkHttpClient directly, that we can avoid the failure
    * by setting a good override.
    */
+  // TODO consider replacing with individual methods
   @Test
   fun testOverrideBadImplementation(
     override: OverrideParam =
@@ -225,9 +234,22 @@ class InterceptorOverridesTest {
       }
 
       OverrideParam.RetryOnConnectionFailure -> {
-        server.enqueue(
-          MockResponse.Builder().failHandshake().build(),
-        )
+        var first = true
+        client = client.newBuilder()
+          .dns { host ->
+            val hosts = Dns.SYSTEM.lookup(host)
+            hosts + hosts
+          }
+          .socketFactory(DelayingSocketFactory(onConnect = {
+            if (first) {
+              println("fail")
+              first = false
+              throw IOException()
+            }
+
+            println("work")
+          }))
+          .build()
 
         overrideBadImplementation(
           override = Override.RetryOnConnectionFailureOverride,
@@ -242,7 +264,7 @@ class InterceptorOverridesTest {
         overrideBadImplementation(
           override = Override.SslSocketFactoryOverride,
           testItFails = testItFails,
-          goodValue = client.sslSocketFactory,
+          goodValue = handshakeCertificates.sslSocketFactory(),
         )
       }
 
@@ -251,7 +273,7 @@ class InterceptorOverridesTest {
         overrideBadImplementation(
           override = Override.X509TrustManagerOverride,
           testItFails = testItFails,
-          goodValue = client.x509TrustManager,
+          goodValue = handshakeCertificates.trustManager,
         )
       }
 
@@ -261,17 +283,19 @@ class InterceptorOverridesTest {
       }
 
       OverrideParam.WriteTimeout -> {
-        server.enqueue(
-          MockResponse.Builder().onRequestStart(SocketEffect.Delay(1000)).build(),
-        )
+        client = client.newBuilder().socketFactory(DelayingSocketFactory(onWrite = { Thread.sleep(100L) })).build()
 
-        overrideBadImplementation(override = override.override, testItFails = testItFails, bodySize = 1024 * 256)
+        overrideBadImplementation(override = override.override, testItFails = testItFails, bodySize = 100)
       }
 
       OverrideParam.ReadTimeout -> {
-        server.enqueue(
-          MockResponse.Builder().bodyDelay(1, TimeUnit.SECONDS).body("Hello").build(),
-        )
+        client = client.newBuilder().socketFactory(DelayingSocketFactory(onRead = { Thread.sleep(100L) })).build()
+
+        overrideBadImplementation(override = override.override, testItFails = testItFails)
+      }
+
+      OverrideParam.ConnectTimeout -> {
+        client = client.newBuilder().socketFactory(DelayingSocketFactory(onConnect = { Thread.sleep(100L) })).build()
 
         overrideBadImplementation(override = override.override, testItFails = testItFails)
       }
@@ -285,7 +309,11 @@ class InterceptorOverridesTest {
             .add(server.hostName, pin(handshakeCertificates.trustManager.acceptedIssuers.first()))
             .build()
 
-        overrideBadImplementation(override = Override.CertificatePinnerOverride, testItFails = testItFails, goodValue = pinner)
+        overrideBadImplementation(
+          override = Override.CertificatePinnerOverride,
+          testItFails = testItFails,
+          goodValue = pinner
+        )
       }
 
       else -> {
@@ -373,6 +401,41 @@ class InterceptorOverridesTest {
 
     open val paramName: String
       get() = override.paramName ?: name.replaceFirstChar { it.lowercase(getDefault()) }
+  }
+
+  class DelayingSocketFactory(
+    val onConnect: () -> Unit = {},
+    val onRead: () -> Unit = {},
+    val onWrite: () -> Unit = {},
+  ) : DelegatingSocketFactory(getDefault()) {
+    override fun createSocket(): Socket {
+      return object : Socket() {
+        override fun connect(endpoint: SocketAddress?, timeout: Int) {
+          onConnect()
+          super.connect(endpoint, timeout)
+        }
+
+        override fun getInputStream(): InputStream {
+          return object : ForwardingSource(super.getInputStream().source()) {
+            override fun read(sink: Buffer, byteCount: Long): Long {
+              onRead()
+
+              return super.read(sink, byteCount)
+            }
+          }.buffer().inputStream()
+        }
+
+        override fun getOutputStream(): OutputStream {
+          return object : ForwardingSink(super.getOutputStream().sink()) {
+            override fun write(source: Buffer, byteCount: Long) {
+              onWrite()
+
+              return super.write(source, byteCount)
+            }
+          }.buffer().outputStream()
+        }
+      }
+    }
   }
 
   sealed interface Override<T> {
@@ -545,9 +608,11 @@ class InterceptorOverridesTest {
     object ProxyAuthenticatorOverride : Override<Authenticator> {
       override fun Interceptor.Chain.value(): Authenticator = proxyAuthenticator
 
-      override fun Interceptor.Chain.withOverride(value: Authenticator): Interceptor.Chain = withProxyAuthenticator(value)
+      override fun Interceptor.Chain.withOverride(value: Authenticator): Interceptor.Chain =
+        withProxyAuthenticator(value)
 
-      override fun OkHttpClient.Builder.withOverride(value: Authenticator): OkHttpClient.Builder = proxyAuthenticator(value)
+      override fun OkHttpClient.Builder.withOverride(value: Authenticator): OkHttpClient.Builder =
+        proxyAuthenticator(value)
 
       override val nonDefaultValue: Authenticator = Authenticator { route, response -> response.request }
 
@@ -634,9 +699,11 @@ class InterceptorOverridesTest {
     object HostnameVerifierOverride : Override<HostnameVerifier> {
       override fun Interceptor.Chain.value(): HostnameVerifier = hostnameVerifier
 
-      override fun Interceptor.Chain.withOverride(value: HostnameVerifier): Interceptor.Chain = withHostnameVerifier(value)
+      override fun Interceptor.Chain.withOverride(value: HostnameVerifier): Interceptor.Chain =
+        withHostnameVerifier(value)
 
-      override fun OkHttpClient.Builder.withOverride(value: HostnameVerifier): OkHttpClient.Builder = hostnameVerifier(value)
+      override fun OkHttpClient.Builder.withOverride(value: HostnameVerifier): OkHttpClient.Builder =
+        hostnameVerifier(value)
 
       override val nonDefaultValue: HostnameVerifier = HostnameVerifier { _, _ -> true }
 
@@ -648,9 +715,11 @@ class InterceptorOverridesTest {
     object CertificatePinnerOverride : Override<CertificatePinner> {
       override fun Interceptor.Chain.value(): CertificatePinner = certificatePinner
 
-      override fun Interceptor.Chain.withOverride(value: CertificatePinner): Interceptor.Chain = withCertificatePinner(value)
+      override fun Interceptor.Chain.withOverride(value: CertificatePinner): Interceptor.Chain =
+        withCertificatePinner(value)
 
-      override fun OkHttpClient.Builder.withOverride(value: CertificatePinner): OkHttpClient.Builder = certificatePinner(value)
+      override fun OkHttpClient.Builder.withOverride(value: CertificatePinner): OkHttpClient.Builder =
+        certificatePinner(value)
 
       override val nonDefaultValue: CertificatePinner =
         CertificatePinner
@@ -669,21 +738,27 @@ class InterceptorOverridesTest {
 
       override fun Interceptor.Chain.withOverride(value: ConnectionPool): Interceptor.Chain = withConnectionPool(value)
 
-      override fun OkHttpClient.Builder.withOverride(value: ConnectionPool): OkHttpClient.Builder = connectionPool(value)
+      override fun OkHttpClient.Builder.withOverride(value: ConnectionPool): OkHttpClient.Builder =
+        connectionPool(value)
 
       override val nonDefaultValue: ConnectionPool = ConnectionPool(keepAliveDuration = 1, timeUnit = TimeUnit.MINUTES)
 
-      override val badValue: ConnectionPool = ConnectionPool(keepAliveDuration = 1, timeUnit = TimeUnit.MINUTES, connectionListener = object : ConnectionListener() {
-        override fun connectStart(route: Route, call: Call): Unit = TODO()
-      })
+      override val badValue: ConnectionPool = ConnectionPool(
+        keepAliveDuration = 1,
+        timeUnit = TimeUnit.MINUTES,
+        connectionListener = object : ConnectionListener() {
+          override fun connectStart(route: Route, call: Call): Unit = TODO()
+        })
 
-      override fun isDefaultValue(value: ConnectionPool): Boolean = value.delegate.keepAliveDurationNs == 5.minutes.inWholeNanoseconds
+      override fun isDefaultValue(value: ConnectionPool): Boolean =
+        value.delegate.keepAliveDurationNs == 5.minutes.inWholeNanoseconds
     }
 
     object ConnectTimeoutOverride : Override<Int> {
       override fun Interceptor.Chain.value(): Int = connectTimeoutMillis()
 
-      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain = withConnectTimeout(value.toLong(), TimeUnit.MILLISECONDS)
+      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain =
+        withConnectTimeout(value.toLong(), TimeUnit.MILLISECONDS)
 
       override fun OkHttpClient.Builder.withOverride(value: Int): OkHttpClient.Builder =
         connectTimeout(value.toLong(), TimeUnit.MILLISECONDS)
@@ -699,9 +774,11 @@ class InterceptorOverridesTest {
     object ReadTimeoutOverride : Override<Int> {
       override fun Interceptor.Chain.value(): Int = readTimeoutMillis()
 
-      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain = withReadTimeout(value.toLong(), TimeUnit.MILLISECONDS)
+      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain =
+        withReadTimeout(value.toLong(), TimeUnit.MILLISECONDS)
 
-      override fun OkHttpClient.Builder.withOverride(value: Int): OkHttpClient.Builder = readTimeout(value.toLong(), TimeUnit.MILLISECONDS)
+      override fun OkHttpClient.Builder.withOverride(value: Int): OkHttpClient.Builder =
+        readTimeout(value.toLong(), TimeUnit.MILLISECONDS)
 
       override val nonDefaultValue: Int = 5000
 
@@ -714,9 +791,11 @@ class InterceptorOverridesTest {
     object WriteTimeoutOverride : Override<Int> {
       override fun Interceptor.Chain.value(): Int = writeTimeoutMillis()
 
-      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain = withWriteTimeout(value.toLong(), TimeUnit.MILLISECONDS)
+      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain =
+        withWriteTimeout(value.toLong(), TimeUnit.MILLISECONDS)
 
-      override fun OkHttpClient.Builder.withOverride(value: Int): OkHttpClient.Builder = writeTimeout(value.toLong(), TimeUnit.MILLISECONDS)
+      override fun OkHttpClient.Builder.withOverride(value: Int): OkHttpClient.Builder =
+        writeTimeout(value.toLong(), TimeUnit.MILLISECONDS)
 
       override val nonDefaultValue: Int = 5000
 
@@ -729,9 +808,11 @@ class InterceptorOverridesTest {
     object RetryOnConnectionFailureOverride : Override<Boolean> {
       override fun Interceptor.Chain.value(): Boolean = retryOnConnectionFailure
 
-      override fun Interceptor.Chain.withOverride(value: Boolean): Interceptor.Chain = withRetryOnConnectionFailure(value)
+      override fun Interceptor.Chain.withOverride(value: Boolean): Interceptor.Chain =
+        withRetryOnConnectionFailure(value)
 
-      override fun OkHttpClient.Builder.withOverride(value: Boolean): OkHttpClient.Builder = retryOnConnectionFailure(value)
+      override fun OkHttpClient.Builder.withOverride(value: Boolean): OkHttpClient.Builder =
+        retryOnConnectionFailure(value)
 
       override val nonDefaultValue: Boolean = false
 
@@ -749,7 +830,7 @@ class InterceptorOverridesTest {
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        ).hostnameVerifier(RecordingHostnameVerifier())
+        )
         .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }
