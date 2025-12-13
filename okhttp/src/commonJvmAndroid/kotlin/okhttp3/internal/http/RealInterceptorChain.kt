@@ -32,6 +32,7 @@ import okhttp3.Connection
 import okhttp3.ConnectionPool
 import okhttp3.CookieJar
 import okhttp3.Dns
+import okhttp3.EventListener
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -80,7 +81,7 @@ class RealInterceptorChain(
     index: Int,
     exchange: Nothing?,
     request: Request,
-    client: OkHttpClient,
+    client: OkHttpClient = call.client,
   ) : this(
     call,
     interceptors,
@@ -156,6 +157,15 @@ class RealInterceptorChain(
     x509TrustManager,
     certificateChainCleaner,
   )
+
+  override val eventListener: EventListener
+    get() = call.eventListener
+
+  override val followSslRedirects: Boolean
+    get() = call.client.followSslRedirects
+
+  override val followRedirects: Boolean
+    get() = call.client.followRedirects
 
   override fun connection(): Connection? = exchange?.connection
 

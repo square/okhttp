@@ -170,7 +170,6 @@ class TestValueFactory : Closeable {
       index = 0,
       exchange = null,
       request = call.request(),
-      client = call.client,
     )
 
   fun newRoutePlanner(

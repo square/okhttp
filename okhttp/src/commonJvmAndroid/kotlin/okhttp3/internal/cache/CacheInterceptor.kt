@@ -40,11 +40,11 @@ import okio.Timeout
 import okio.buffer
 
 /** Serves requests from the cache and writes responses to the cache. */
-class CacheInterceptor(
-  internal val call: RealCall,
-) : Interceptor {
+class CacheInterceptor : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
+    val call = chain.call()
+    val eventListener = chain.eventListener
     val cache = chain.cache
     val cacheCandidate = cache?.get(chain.request().requestForCache())
 
@@ -73,7 +73,7 @@ class CacheInterceptor(
         .receivedResponseAtMillis(System.currentTimeMillis())
         .build()
         .also {
-          call.eventListener.satisfactionFailure(call, it)
+          eventListener.satisfactionFailure(call, it)
         }
     }
 
@@ -84,14 +84,14 @@ class CacheInterceptor(
         .cacheResponse(cacheResponse.stripBody())
         .build()
         .also {
-          call.eventListener.cacheHit(call, it)
+          eventListener.cacheHit(call, it)
         }
     }
 
     if (cacheResponse != null) {
-      call.eventListener.cacheConditionalHit(call, cacheResponse)
+      eventListener.cacheConditionalHit(call, cacheResponse)
     } else if (cache != null) {
-      call.eventListener.cacheMiss(call)
+      eventListener.cacheMiss(call)
     }
 
     var networkResponse: Response? = null
@@ -124,7 +124,7 @@ class CacheInterceptor(
         cache!!.trackConditionalCacheHit()
         cache.update(cacheResponse, response)
         return response.also {
-          call.eventListener.cacheHit(call, it)
+          eventListener.cacheHit(call, it)
         }
       } else {
         cacheResponse.body.closeQuietly()
@@ -147,7 +147,7 @@ class CacheInterceptor(
         return cacheWritingResponse(cacheRequest, response).also {
           if (cacheResponse != null) {
             // This will log a conditional cache miss only.
-            call.eventListener.cacheMiss(call)
+            eventListener.cacheMiss(call)
           }
         }
       }

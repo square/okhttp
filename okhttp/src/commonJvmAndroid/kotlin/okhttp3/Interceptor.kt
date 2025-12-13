@@ -137,6 +137,10 @@ fun interface Interceptor {
       unit: TimeUnit,
     ): Chain
 
+    val followSslRedirects: Boolean
+
+    val followRedirects: Boolean
+
     /**
      * Get the [DNS] instance for the OkHttpClient, or an override from the Call.Chain.
      */
@@ -288,5 +292,7 @@ fun interface Interceptor {
      * Returns a new chain with the specified [ConnectionPool].
      */
     fun withConnectionPool(connectionPool: ConnectionPool): Chain
+
+    val eventListener: EventListener
   }
 }
