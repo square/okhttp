@@ -258,7 +258,7 @@ class RealInterceptorChain(
         sslSocketFactory = sslSocketFactory,
         x509TrustManager = x509TrustManager,
         certificateChainCleaner = newCertificateChainCleaner,
-        certificatePinner = certificatePinner.withCertificateChainCleaner(newCertificateChainCleaner)
+        certificatePinner = certificatePinner.withCertificateChainCleaner(newCertificateChainCleaner),
       )
     } else {
       return copy(
@@ -267,7 +267,6 @@ class RealInterceptorChain(
         certificateChainCleaner = null,
       )
     }
-
   }
 
   override fun withHostnameVerifier(hostnameVerifier: HostnameVerifier): Interceptor.Chain {
@@ -279,11 +278,12 @@ class RealInterceptorChain(
   override fun withCertificatePinner(certificatePinner: CertificatePinner): Interceptor.Chain {
     check(exchange == null) { "certificatePinner can't be adjusted in a network interceptor" }
 
-    val newCertificatePinner = if (certificateChainCleaner != null) {
-      certificatePinner.withCertificateChainCleaner(certificateChainCleaner)
-    } else {
-      certificatePinner
-    }
+    val newCertificatePinner =
+      if (certificateChainCleaner != null) {
+        certificatePinner.withCertificateChainCleaner(certificateChainCleaner)
+      } else {
+        certificatePinner
+      }
 
     return copy(certificatePinner = newCertificatePinner)
   }
