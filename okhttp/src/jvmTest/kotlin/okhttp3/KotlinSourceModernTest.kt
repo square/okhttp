@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package okhttp3
 
 import java.io.File
@@ -61,7 +62,6 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.internal.authenticator.JavaNetAuthenticator
 import okhttp3.internal.http2.Settings
 import okhttp3.internal.proxy.NullProxySelector
-import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.java.net.cookiejar.JavaNetCookieJar
 import okhttp3.logging.HttpLoggingInterceptor
@@ -92,13 +92,19 @@ import org.junit.jupiter.api.Test
  */
 @Suppress(
   "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE",
+  "AssignedValueIsNeverRead",
+  "CanBeVal",
+  "DEPRECATION",
+  "IMPLICIT_NOTHING_AS_TYPE_PARAMETER",
+  "RedundantExplicitType",
+  "RedundantNullableReturnType",
   "UNUSED_ANONYMOUS_PARAMETER",
   "UNUSED_VALUE",
   "UNUSED_VARIABLE",
   "VARIABLE_WITH_REDUNDANT_INITIALIZER",
-  "RedundantLambdaArrow",
-  "RedundantExplicitType",
-  "IMPLICIT_NOTHING_AS_TYPE_PARAMETER",
+  "VariableInitializerIsRedundant",
+  "VariableNeverRead",
+  "unused",
 )
 @Disabled
 class KotlinSourceModernTest {
@@ -384,7 +390,7 @@ class KotlinSourceModernTest {
     val maxRequestsPerHost: Int = dispatcher.maxRequestsPerHost
     dispatcher.maxRequestsPerHost = 0
     val executorService: ExecutorService = dispatcher.executorService
-    dispatcher.idleCallback = Runnable { ({ TODO() })() }
+    dispatcher.idleCallback = Runnable { TODO() }
     val queuedCalls: List<Call> = dispatcher.queuedCalls()
     val runningCalls: List<Call> = dispatcher.runningCalls()
     val queuedCallsCount: Int = dispatcher.queuedCallsCount()
@@ -1448,5 +1454,12 @@ class KotlinSourceModernTest {
       override fun withConnectionPool(connectionPool: ConnectionPool): Interceptor.Chain {
         TODO()
       }
+
+      override val followSslRedirects: Boolean
+        get() = TODO()
+      override val followRedirects: Boolean
+        get() = TODO()
+      override val eventListener: EventListener
+        get() = TODO()
     }
 }
