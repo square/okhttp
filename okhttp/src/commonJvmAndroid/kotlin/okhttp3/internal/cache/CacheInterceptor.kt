@@ -44,7 +44,6 @@ class CacheInterceptor : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
     val call = chain.call()
-    val eventListener = chain.eventListener
     val cache = chain.cache
     val cacheCandidate = cache?.get(chain.request().requestForCache())
 
@@ -73,7 +72,7 @@ class CacheInterceptor : Interceptor {
         .receivedResponseAtMillis(System.currentTimeMillis())
         .build()
         .also {
-          eventListener.satisfactionFailure(call, it)
+          chain.eventListener.satisfactionFailure(call, it)
         }
     }
 
@@ -84,14 +83,14 @@ class CacheInterceptor : Interceptor {
         .cacheResponse(cacheResponse.stripBody())
         .build()
         .also {
-          eventListener.cacheHit(call, it)
+          chain.eventListener.cacheHit(call, it)
         }
     }
 
     if (cacheResponse != null) {
-      eventListener.cacheConditionalHit(call, cacheResponse)
+      chain.eventListener.cacheConditionalHit(call, cacheResponse)
     } else if (cache != null) {
-      eventListener.cacheMiss(call)
+      chain.eventListener.cacheMiss(call)
     }
 
     var networkResponse: Response? = null
@@ -124,7 +123,7 @@ class CacheInterceptor : Interceptor {
         cache!!.trackConditionalCacheHit()
         cache.update(cacheResponse, response)
         return response.also {
-          eventListener.cacheHit(call, it)
+          chain.eventListener.cacheHit(call, it)
         }
       } else {
         cacheResponse.body.closeQuietly()
@@ -147,7 +146,7 @@ class CacheInterceptor : Interceptor {
         return cacheWritingResponse(cacheRequest, response).also {
           if (cacheResponse != null) {
             // This will log a conditional cache miss only.
-            eventListener.cacheMiss(call)
+            chain.eventListener.cacheMiss(call)
           }
         }
       }
