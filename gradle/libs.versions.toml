@@ -19,7 +19,7 @@ org-jetbrains-kotlin = "2.2.21"
 org-junit-jupiter = "5.13.4"
 retrofit = "3.0.0"
 startupRuntime = "1.2.0"
-testcontainers = "1.21.3"
+testcontainers = "1.21.4"
 
 [libraries]
 amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.5.0"
