@@ -26,7 +26,7 @@ import okhttp3.internal.readFieldOrNull
  * Base Android reflection based SocketAdapter for the built in Android SSLSocket.
  *
  * It's assumed to always be present with known class names on Android devices, so we build
- * optimistically via [buildIfSupported].  But it also doesn't assume a compile time API.
+ * optimistically via [buildIfSupported]. But it also doesn't assume a compile time API.
  */
 class StandardAndroidSocketAdapter(
   sslSocketClass: Class<in SSLSocket>,
@@ -48,20 +48,23 @@ class StandardAndroidSocketAdapter(
         X509TrustManager::class.java,
         "x509TrustManager",
       )
-    return x509TrustManager ?: readFieldOrNull(
-      context,
-      X509TrustManager::class.java,
-      "trustManager",
-    )
+    return x509TrustManager
+      ?: readFieldOrNull(
+        context,
+        X509TrustManager::class.java,
+        "trustManager",
+      )
   }
 
   companion object {
-    @Suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST", "PrivateApi")
     fun buildIfSupported(packageName: String = "com.android.org.conscrypt"): SocketAdapter? =
       try {
-        val sslSocketClass = Class.forName("$packageName.OpenSSLSocketImpl") as Class<in SSLSocket>
+        val sslSocketClass =
+          Class.forName("$packageName.OpenSSLSocketImpl") as Class<in SSLSocket>
         val sslSocketFactoryClass =
-          Class.forName("$packageName.OpenSSLSocketFactoryImpl") as Class<in SSLSocketFactory>
+          Class.forName("$packageName.OpenSSLSocketFactoryImpl") as
+            Class<in SSLSocketFactory>
         val paramsClass = Class.forName("$packageName.SSLParametersImpl")
 
         StandardAndroidSocketAdapter(sslSocketClass, sslSocketFactoryClass, paramsClass)
