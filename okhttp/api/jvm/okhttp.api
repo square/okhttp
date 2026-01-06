@@ -1258,10 +1258,6 @@ public abstract interface class okhttp3/TrailersSource {
 public final class okhttp3/TrailersSource$Companion {
 }
 
-public final class okhttp3/TrailersSource$DefaultImpls {
-	public static fun peek (Lokhttp3/TrailersSource;)Lokhttp3/Headers;
-}
-
 public abstract interface class okhttp3/WebSocket {
 	public abstract fun cancel ()V
 	public abstract fun close (ILjava/lang/String;)Z
