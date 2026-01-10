@@ -6,7 +6,13 @@ LIMIT=${1:-10}
 WORKFLOW="build.yml"
 BRANCH="master"
 REPO="square/okhttp"
+SKILL_DIR=$(dirname "$0")
 FAILURES_FILE=$(mktemp)
+OUTPUT_FILE="$SKILL_DIR/flaky-tests.txt"
+
+# Clear previous output
+rm -f "$OUTPUT_FILE"
+touch "$OUTPUT_FILE"
 
 echo "Fetching last $LIMIT failed runs for $WORKFLOW on $BRANCH..."
 
@@ -40,10 +46,13 @@ for run_id in $RUN_IDS; do
     echo "$LOG_CONTENT" | grep "FAILED" -A 1 | grep -v "Task :" | sed 's/^/    /' || echo "    Could not extract failure details from logs."
 
     # Extract class names for summary
-    # Matches lines ending in FAILED, removes "Task :", excludes "BUILD FAILED"
-    # Strips timestamp (if any), then extracts class name (before [ or >)
     echo "$LOG_CONTENT" | grep "FAILED" | grep -v "Task :" | grep -v "BUILD FAILED" | \
       sed -E 's/^.*Z //;s/^[[:space:]]*//;s/\[.*//;s/ >.*//' >> "$FAILURES_FILE"
+
+    # Extract clean test names for output file (ClassName.methodName)
+    # Filter out Android tests and malformed lines
+    echo "$LOG_CONTENT" | grep "FAILED" | grep " > " | grep -v "Task :" | grep -v "android" | \
+      sed -E 's/^.*Z //;s/\[.*\] > /./;s/\(.*//' >> "$OUTPUT_FILE"
 
   done <<< "$JOB_DATA"
 done
@@ -56,6 +65,15 @@ if [ -s "$FAILURES_FILE" ]; then
   sort "$FAILURES_FILE" | uniq -c | sort -nr
 else
   echo "No specific test failures identified."
+fi
+
+# Unique and sort the output file
+if [ -s "$OUTPUT_FILE" ]; then
+  sort -u "$OUTPUT_FILE" -o "$OUTPUT_FILE"
+  echo ""
+  echo "Clean list of flaky tests written to: $OUTPUT_FILE"
+else
+  echo "No clean test names extracted."
 fi
 
 rm -f "$FAILURES_FILE"

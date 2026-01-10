@@ -65,6 +65,7 @@ import okio.fakefilesystem.FakeFileSystem
 import okio.use
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -3160,7 +3161,7 @@ class CacheTest {
    *
    * https://github.com/square/okhttp/issues/227
    */
-  @Test
+  @RepeatedTest(100)
   fun testGoldenCacheResponse() {
     cache.close()
     server.enqueue(
@@ -3218,7 +3219,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   }
 
   /** Exercise the cache format in OkHttp 2.7 and all earlier releases.  */
-  @Test
+  @RepeatedTest(100)
   fun testGoldenCacheHttpsResponseOkHttp27() {
     val url = server.url("/")
     val urlKey = key(url)
@@ -3267,7 +3268,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   }
 
   /** The TLS version is present in OkHttp 3.0 and beyond.  */
-  @Test
+  @RepeatedTest(100)
   fun testGoldenCacheHttpsResponseOkHttp30() {
     val url = server.url("/")
     val urlKey = key(url)
@@ -3320,7 +3321,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     assertThat(response.header("Content-Length")).isEqualTo("3")
   }
 
-  @Test
+  @RepeatedTest(100)
   fun testGoldenCacheHttpResponseOkHttp30() {
     val url = server.url("/")
     val urlKey = key(url)

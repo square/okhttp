@@ -1,54 +1,88 @@
 #!/bin/bash
 # Reproduce flaky tests locally.
-# Usage: ./reproduce-flakes.sh [test_filter] [repetitions]
-# Example: ./reproduce-flakes.sh "okhttp3.RouteFailureTest" 20
+# Usage: ./reproduce-flakes.sh
+#
+# This script:
+# 1. Reads the list of flaky tests from flaky-tests.txt
+# 2. Maps them to the correct Gradle module and task.
+# 3. Runs them in appropriate Gradle invocations.
+#
+# RECOMMENDATION:
+# Before running this, manually edit the failing test methods in your IDE
+# to use @RepeatedTest(100) instead of @Test. This ensures they run enough
+# times to trigger the flake.
 
-TEST_FILTER=${1:-""}
-REPETITIONS=${2:-20}
-PROJECT_DIR=$(pwd)
+SKILL_DIR=$(dirname "$0")
+FLAKY_TESTS_FILE="$SKILL_DIR/flaky-tests.txt"
 
-if [ -z "$TEST_FILTER" ]; then
-  echo "Usage: $0 [test_filter] [repetitions]"
-  echo "Example: $0 \"okhttp3.RouteFailureTest\" 20"
-  echo ""
-  echo "You can find candidates using ./identify-flakes.sh"
+# 1. Check for flaky tests file
+if [ ! -f "$FLAKY_TESTS_FILE" ]; then
+  echo "Error: flaky-tests.txt not found."
+  echo "Run ./identify-flakes.sh first to generate the list of flakes."
   exit 1
 fi
 
-echo "Verifying compilation..."
-if ! ./gradlew :okhttp:jvmTestClasses > /dev/null; then
-  echo "Compilation failed. Fix build errors before running tests."
-  exit 1
+if [ ! -s "$FLAKY_TESTS_FILE" ]; then
+  echo "No flaky tests found in flaky-tests.txt."
+  exit 0
 fi
-echo "Compilation successful."
 
-echo "Attempting to reproduce flake in: $TEST_FILTER"
-echo "Repetitions: $REPETITIONS"
+echo "Reading flaky tests from $FLAKY_TESTS_FILE..."
 echo "--------------------------------------------------"
 
-FAIL_COUNT=0
+# associative array to hold task -> test filters
+declare -A TASK_FILTERS
 
-for ((i=1; i<=REPETITIONS; i++)); do
-  echo "Run $i/$REPETITIONS..."
+while read -r test_entry; do
+  # Skip empty lines
+  if [ -z "$test_entry" ]; then continue; fi
 
-  # Run the test. output to a temp file to check for failure.
-  # We use --continue to ensure it doesn't just stop the script on error code,
-  # though we want to count failures.
-  if ./gradlew -q :okhttp:jvmTest --tests "$TEST_FILTER" ; then
-    echo "  PASS"
-  else
-    echo "  FAIL"
-    FAIL_COUNT=$((FAIL_COUNT+1))
+  # ClassName is everything before the last dot
+  CLASS_NAME=$(echo "$test_entry" | sed 's/\.[^.]*$//')
+
+  # Find the file
+  FILE_PATH=$(find . -name "${CLASS_NAME}.kt" -o -name "${CLASS_NAME}.java" | head -n 1)
+
+  if [ -z "$FILE_PATH" ]; then
+    echo "Warning: Could not find file for class $CLASS_NAME. Skipping."
+    continue
   fi
-done
+
+  # Determine module and task
+  # Example path: ./okhttp/src/jvmTest/kotlin/okhttp3/CacheTest.kt -> module: okhttp, task: jvmTest
+  # Example path: ./mockwebserver/src/test/java/... -> module: mockwebserver, task: test
+
+  MODULE=$(echo "$FILE_PATH" | cut -d'/' -f2)
+
+  if [[ "$FILE_PATH" == *"/src/jvmTest/"* ]]; then
+    TASK=":$MODULE:jvmTest"
+  elif [[ "$FILE_PATH" == *"/src/test/"* ]]; then
+    TASK=":$MODULE:test"
+  elif [[ "$FILE_PATH" == *"/src/androidTest/"* ]]; then
+    # Skip Android instrumentation tests for local reproduction for now
+    echo "Skipping Android instrumentation test: $test_entry"
+    continue
+  else
+    # Default fallback
+    TASK=":$MODULE:test"
+  fi
+
+  # Append to the list for this task
+  if [ -z "${TASK_FILTERS[$TASK]}" ]; then
+    TASK_FILTERS[$TASK]="--tests $test_entry"
+  else
+    TASK_FILTERS[$TASK]="${TASK_FILTERS[$TASK]} --tests $test_entry"
+  fi
+
+done < "$FLAKY_TESTS_FILE"
 
 echo "--------------------------------------------------"
-echo "Summary for $TEST_FILTER:"
-echo "Total Runs: $REPETITIONS"
-echo "Failures: $FAIL_COUNT"
 
-if [ $FAIL_COUNT -gt 0 ]; then
-  echo "Result: REPRODUCED"
-else
-  echo "Result: NOT REPRODUCED"
-fi
+# Run Gradle commands
+for TASK in "${!TASK_FILTERS[@]}"; do
+  ARGS="${TASK_FILTERS[$TASK]}"
+  echo "Running tests for task $TASK..."
+  echo "./gradlew $TASK $ARGS"
+  ./gradlew $TASK $ARGS
+  echo "--------------------------------------------------"
+done

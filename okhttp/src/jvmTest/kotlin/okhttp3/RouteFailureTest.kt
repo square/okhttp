@@ -33,6 +33,7 @@ import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -82,7 +83,7 @@ class RouteFailureTest {
         .build()
   }
 
-  @Test
+  @RepeatedTest(100)
   fun http2OneBadHostOneGoodNoRetryOnConnectionFailure() {
     enableProtocol(Protocol.HTTP_2)
 
@@ -162,7 +163,7 @@ class RouteFailureTest {
     )
   }
 
-  @Test
+  @RepeatedTest(100)
   fun http2OneBadHostOneGoodNoRetryOnConnectionFailureFastFallback() {
     enableProtocol(Protocol.HTTP_2)
 
@@ -242,7 +243,7 @@ class RouteFailureTest {
     )
   }
 
-  @Test
+  @RepeatedTest(100)
   fun http2OneBadHostRetryOnConnectionFailure() {
     enableProtocol(Protocol.HTTP_2)
 
@@ -276,7 +277,7 @@ class RouteFailureTest {
     )
   }
 
-  @Test
+  @RepeatedTest(100)
   fun http2OneBadHostRetryOnConnectionFailureFastFallback() {
     enableProtocol(Protocol.HTTP_2)
 

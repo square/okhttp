@@ -71,6 +71,7 @@ import okio.ByteString.Companion.encodeUtf8
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -1043,7 +1044,7 @@ class WebSocketHttpTest {
   }
 
   /** https://github.com/square/okhttp/issues/5705  */
-  @Test
+  @RepeatedTest(100)
   fun closeWithoutSuccessfulConnect() {
     val request =
       Request

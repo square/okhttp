@@ -3,17 +3,24 @@
 ## Description
 This skill helps identify flaky tests in the OkHttp project by analyzing recent failures in the GitHub Actions `build.yml` workflow on the `master` branch. It fetches failed run logs, extracts test failure patterns, and **aggregates the number of failures encountered per test class**.
 
-## Usage
-Run the script from the root of the repository. It requires the GitHub CLI (`gh`) to be installed and authenticated.
+## Reproduction
+To reproduce these flakes locally:
 
-```bash
-./.github/skills/flake-detector/identify-flakes.sh [limit]
-```
+1.  **Identify** the specific failing method using the detector:
+    ```bash
+    ./.github/skills/flake-detector/identify-flakes.sh
+    ```
 
-- `limit` (optional): The number of recent failed runs to analyze. Defaults to 10.
+2.  **Modify** the test code to repeat the test.
+    *   Open the failing test file.
+    *   Replace `@Test` with `@RepeatedTest(100)` for the failing test method.
+    *   Add import `org.junit.jupiter.api.RepeatedTest`.
 
-**Output:**
-The script prints the failure details for each run and concludes with a **Summary Table** showing the most frequent failing classes across all analyzed runs (e.g., `12 CacheTest`).
+3.  **Run** the reproduction script:
+    ```bash
+    ./.github/skills/flake-detector/reproduce-flakes.sh
+    ```
+    This script will automatically detect recent failing methods and execute them. If you have applied `@RepeatedTest`, it will run them 100 times.
 
 ## Known Flakes (as of Jan 2026)
 Based on recent analysis, the following tests are known to be flaky, ordered by observed frequency:
