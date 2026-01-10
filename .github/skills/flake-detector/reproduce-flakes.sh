@@ -19,7 +19,7 @@ CLASS_FILE_MAP_FILE=$(mktemp)
 # 1. Determine which tests to run
 TESTS_TO_RUN=()
 if [ "$#" -ge 1 ]; then
-  echo "Overriding flaky-tests.txt with provided test filters: $@"
+  echo "Overriding flaky-tests.txt with provided test filters: $*"
   for arg in "$@"; do
     TESTS_TO_RUN+=("$arg")
   done
