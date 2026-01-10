@@ -51,6 +51,7 @@ import okio.Source
 import okio.buffer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -194,7 +195,7 @@ class Http2ConnectionTest {
    * Confirm that we account for discarded data frames. It's possible that data frames are in-flight
    * just prior to us canceling a stream.
    */
-  @Test fun discardedDataFramesAreCounted() {
+  @RepeatedTest(100) fun discardedDataFramesAreCounted() {
     // Write the mocking script.
     peer.sendFrame().settings(Settings())
     peer.acceptFrame() // ACK

@@ -100,6 +100,7 @@ import org.junit.Assume.assumeThat
 import org.junit.Assume.assumeTrue
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -235,7 +236,7 @@ class EventListenerTest(
     )
   }
 
-  @Test
+  @RepeatedTest(100)
   fun successfulCallEventSequenceForEnqueue() {
     server.enqueue(
       MockResponse
@@ -411,7 +412,7 @@ class EventListenerTest(
     )
   }
 
-  @Test
+  @RepeatedTest(100)
   fun cancelAsyncCall() {
     server.enqueue(
       MockResponse
