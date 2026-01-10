@@ -83,7 +83,7 @@ class RouteFailureTest {
         .build()
   }
 
-  @RepeatedTest(100)
+  @Test
   fun http2OneBadHostOneGoodNoRetryOnConnectionFailure() {
     enableProtocol(Protocol.HTTP_2)
 
@@ -164,7 +164,7 @@ class RouteFailureTest {
     )
   }
 
-  @RepeatedTest(100)
+  @Test
   fun http2OneBadHostOneGoodNoRetryOnConnectionFailureFastFallback() {
     enableProtocol(Protocol.HTTP_2)
 
@@ -245,7 +245,7 @@ class RouteFailureTest {
     )
   }
 
-  @RepeatedTest(100)
+  @Test
   fun http2OneBadHostRetryOnConnectionFailure() {
     enableProtocol(Protocol.HTTP_2)
 
@@ -280,7 +280,7 @@ class RouteFailureTest {
     )
   }
 
-  @RepeatedTest(100)
+  @Test
   fun http2OneBadHostRetryOnConnectionFailureFastFallback() {
     enableProtocol(Protocol.HTTP_2)
 
@@ -292,20 +292,21 @@ class RouteFailureTest {
     dns[server1.hostName] = listOf(ipv6)
     socketFactory[ipv6] = server1.socketAddress
 
-            client =
-              client
-                .newBuilder()
-                .fastFallback(true)
-                .apply {
-                  retryOnConnectionFailure = true
-                }.build()
-    
-            executeSynchronously(request)
-              .assertFailureMatches("stream was reset: REFUSED_STREAM")
-    
-            assertThat(client.routeDatabase.failedRoutes).isEmpty()
-            server1.takeRequest()
-            assertThat(server1.requestCount).isEqualTo(1)
+    client =
+      client
+        .newBuilder()
+        .fastFallback(true)
+        .apply {
+          retryOnConnectionFailure = true
+        }.build()
+
+    executeSynchronously(request)
+      .assertFailureMatches("stream was reset: REFUSED_STREAM")
+
+    assertThat(client.routeDatabase.failedRoutes).isEmpty()
+    server1.takeRequest()
+    assertThat(server1.requestCount).isEqualTo(1)
+
     assertThat(clientTestRule.recordedConnectionEventTypes()).containsExactly(
       "ConnectStart",
       "ConnectEnd",

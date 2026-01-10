@@ -65,18 +65,17 @@ echo "--------------------------------------------------"
 declare -A TASK_FILTERS
 
 for test_entry in "${TESTS_TO_RUN[@]}"; do
-  # ClassName is everything before the last dot if it's a method, or the whole thing if just a class
-  if [[ "$test_entry" == *.* ]]; then
-    CLASS_NAME="${test_entry%.*}"
-  else
-    CLASS_NAME="$test_entry"
-  fi
+  # Extract the fully qualified class name (e.g., "okhttp3.RouteFailureTest")
+  FULLY_QUALIFIED_CLASS_NAME=$(echo "$test_entry" | sed -E 's/\.[^.]+$//')
 
-  # Lookup the file path from the pre-generated map
-  FILE_PATH="${CLASS_FILE_MAP[$CLASS_NAME]}"
+  # Extract the simple class name (e.g., "RouteFailureTest") for the find command
+  CLASS_NAME=$(basename "$(echo "$FULLY_QUALIFIED_CLASS_NAME" | tr . /)")
+
+  # Find the file using the simple class name
+  FILE_PATH=$(find . -name "${CLASS_NAME}.kt" -o -name "${CLASS_NAME}.java" | head -n 1)
 
   if [ -z "$FILE_PATH" ]; then
-    echo "Warning: Could not find file for class $CLASS_NAME. Skipping."
+    echo "Warning: Could not find file for class $FULLY_QUALIFIED_CLASS_NAME. Skipping."
     continue
   fi
 
