@@ -38,7 +38,7 @@ while read -r test_entry; do
   if [ -z "$test_entry" ]; then continue; fi
 
   # ClassName is everything before the last dot
-  CLASS_NAME=$(echo "$test_entry" | sed 's/\.[^.]*$//')
+  CLASS_NAME="${test_entry%.*}"
 
   # Find the file
   FILE_PATH=$(find . -name "${CLASS_NAME}.kt" -o -name "${CLASS_NAME}.java" | head -n 1)
@@ -83,6 +83,8 @@ for TASK in "${!TASK_FILTERS[@]}"; do
   ARGS="${TASK_FILTERS[$TASK]}"
   echo "Running tests for task $TASK..."
   echo "./gradlew $TASK $ARGS"
-  ./gradlew $TASK $ARGS
+  # We intentionally don't quote $ARGS here to allow word splitting of multiple --tests flags
+  # shellcheck disable=SC2086
+  ./gradlew "$TASK" $ARGS
   echo "--------------------------------------------------"
 done
