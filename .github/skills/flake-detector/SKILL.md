@@ -22,6 +22,8 @@ To reproduce these flakes locally:
     ```
     This script will automatically detect recent failing methods and execute them. If you have applied `@RepeatedTest`, it will run them 100 times.
 
+4.  **Cleanup**: `@RepeatedTest` should be removed from tests that aren't recently flaky in CI, and that run fine locally also. Revert them to `@Test` to avoid slowing down the test suite.
+
 ## Known Flakes (as of Jan 2026)
 Based on recent analysis, the following tests are known to be flaky, ordered by observed frequency:
 
