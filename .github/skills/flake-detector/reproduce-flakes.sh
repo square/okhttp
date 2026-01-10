@@ -30,11 +30,11 @@ FAIL_COUNT=0
 
 for ((i=1; i<=REPETITIONS; i++)); do
   echo "Run $i/$REPETITIONS..."
-  
+
   # Run the test. output to a temp file to check for failure.
-  # We use --continue to ensure it doesn't just stop the script on error code, 
+  # We use --continue to ensure it doesn't just stop the script on error code,
   # though we want to count failures.
-  if ./gradlew :okhttp:test --tests "$TEST_FILTER" > /dev/null 2>&1; then
+  if ./gradlew -q :okhttp:jvmTest --tests "$TEST_FILTER" ; then
     echo "  PASS"
   else
     echo "  FAIL"
