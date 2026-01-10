@@ -65,8 +65,12 @@ echo "--------------------------------------------------"
 declare -A TASK_FILTERS
 
 for test_entry in "${TESTS_TO_RUN[@]}"; do
-  # ClassName is everything before the last dot
-  CLASS_NAME="${test_entry%.*}"
+  # ClassName is everything before the last dot if it's a method, or the whole thing if just a class
+  if [[ "$test_entry" == *.* ]]; then
+    CLASS_NAME="${test_entry%.*}"
+  else
+    CLASS_NAME="$test_entry"
+  fi
 
   # Lookup the file path from the pre-generated map
   FILE_PATH="${CLASS_FILE_MAP[$CLASS_NAME]}"
