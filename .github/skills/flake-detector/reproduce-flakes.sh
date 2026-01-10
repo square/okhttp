@@ -16,6 +16,35 @@ SKILL_DIR=$(dirname "$0")
 FLAKY_TESTS_FILE="$SKILL_DIR/flaky-tests.txt"
 CLASS_FILE_MAP_FILE=$(mktemp)
 
+# 1. Determine which tests to run
+TESTS_TO_RUN=()
+if [ "$#" -ge 1 ]; then
+  echo "Overriding flaky-tests.txt with provided test filters: $@"
+  for arg in "$@"; do
+    TESTS_TO_RUN+=("$arg")
+  done
+else
+  # Check for flaky tests file
+  if [ ! -f "$FLAKY_TESTS_FILE" ]; then
+    echo "Error: flaky-tests.txt not found."
+    echo "Run ./identify-flakes.sh first to generate the list of flakes or provide a test filter as an argument."
+    exit 1
+  fi
+
+  if [ ! -s "$FLAKY_TESTS_FILE" ]; then
+    echo "No flaky tests found in flaky-tests.txt."
+    rm -f "$CLASS_FILE_MAP_FILE"
+    exit 0
+  fi
+
+  echo "Reading flaky tests from $FLAKY_TESTS_FILE..."
+  while read -r test_entry; do
+    if [ -n "$test_entry" ]; then
+      TESTS_TO_RUN+=("$test_entry")
+    fi
+  done < "$FLAKY_TESTS_FILE"
+fi
+
 # Generate class name to file path mapping once
 echo "Generating class file map for faster lookups..."
 find . -path "*/src/*Test/*" \( -name "*.kt" -o -name "*.java" \) -print0 | while IFS= read -r -d $'\0' file; do
@@ -30,29 +59,12 @@ while IFS=';' read -r class_name file_path; do
   CLASS_FILE_MAP["$class_name"]="$file_path"
 done < "$CLASS_FILE_MAP_FILE"
 
-# 1. Check for flaky tests file
-if [ ! -f "$FLAKY_TESTS_FILE" ]; then
-  echo "Error: flaky-tests.txt not found."
-  echo "Run ./identify-flakes.sh first to generate the list of flakes."
-  exit 1
-fi
-
-if [ ! -s "$FLAKY_TESTS_FILE" ]; then
-  echo "No flaky tests found in flaky-tests.txt."
-  rm -f "$CLASS_FILE_MAP_FILE"
-  exit 0
-fi
-
-echo "Reading flaky tests from $FLAKY_TESTS_FILE..."
 echo "--------------------------------------------------"
 
 # associative array to hold task -> test filters
 declare -A TASK_FILTERS
 
-while read -r test_entry; do
-  # Skip empty lines
-  if [ -z "$test_entry" ]; then continue; fi
-
+for test_entry in "${TESTS_TO_RUN[@]}"; do
   # ClassName is everything before the last dot
   CLASS_NAME="${test_entry%.*}"
 
