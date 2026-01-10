@@ -96,18 +96,16 @@ class BridgeInterceptor(
       networkResponse.promisesBody()
     ) {
       val responseBody = networkResponse.body
-      if (responseBody != null) {
-        val gzipSource = GzipSource(responseBody.source())
-        val strippedHeaders =
-          networkResponse.headers
-            .newBuilder()
-            .removeAll("Content-Encoding")
-            .removeAll("Content-Length")
-            .build()
-        responseBuilder.headers(strippedHeaders)
-        val contentType = networkResponse.header("Content-Type")
-        responseBuilder.body(RealResponseBody(contentType, -1L, gzipSource.buffer()))
-      }
+      val gzipSource = GzipSource(responseBody.source())
+      val strippedHeaders =
+        networkResponse.headers
+          .newBuilder()
+          .removeAll("Content-Encoding")
+          .removeAll("Content-Length")
+          .build()
+      responseBuilder.headers(strippedHeaders)
+      val contentType = networkResponse.header("Content-Type")
+      responseBuilder.body(RealResponseBody(contentType, -1L, gzipSource.buffer()))
     }
 
     return responseBuilder.build()
