@@ -1744,7 +1744,7 @@ class EventListenerTest(
     timeToFirstByte()
   }
 
-  @Test
+  @RepeatedTest(100)
   fun timeToFirstByteHttp2OverHttps() {
     platform.assumeHttp2Support()
     enableTlsWithTunnel()
