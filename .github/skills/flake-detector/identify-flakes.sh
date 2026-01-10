@@ -52,7 +52,7 @@ for run_id in $RUN_IDS; do
     # Extract clean test names for output file (ClassName.methodName)
     # Filter out Android tests and malformed lines
     echo "$LOG_CONTENT" | grep "FAILED" | grep " > " | grep -v "Task :" | grep -v "android" | \
-      sed -E 's/^.*Z //;s/\[.*\] > /./;s/\(.*//' >> "$OUTPUT_FILE"
+      sed -E 's/^.*Z //;s/\[.*\] > /./;s/\(.*//;s/_[0-9]+$//' >> "$OUTPUT_FILE"
 
   done <<< "$JOB_DATA"
 done

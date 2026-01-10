@@ -14,6 +14,21 @@
 
 SKILL_DIR=$(dirname "$0")
 FLAKY_TESTS_FILE="$SKILL_DIR/flaky-tests.txt"
+CLASS_FILE_MAP_FILE=$(mktemp)
+
+# Generate class name to file path mapping once
+echo "Generating class file map for faster lookups..."
+find . -path "*/src/*Test/*" \( -name "*.kt" -o -name "*.java" \) -print0 | while IFS= read -r -d $'\0' file; do
+  BASENAME=$(basename "$file")
+  CLASS_NAME="${BASENAME%.*}"
+  echo "${CLASS_NAME};${file}" >> "$CLASS_FILE_MAP_FILE"
+done
+
+# associative array to hold class name to file path
+declare -A CLASS_FILE_MAP
+while IFS=';' read -r class_name file_path; do
+  CLASS_FILE_MAP["$class_name"]="$file_path"
+done < "$CLASS_FILE_MAP_FILE"
 
 # 1. Check for flaky tests file
 if [ ! -f "$FLAKY_TESTS_FILE" ]; then
@@ -24,6 +39,7 @@ fi
 
 if [ ! -s "$FLAKY_TESTS_FILE" ]; then
   echo "No flaky tests found in flaky-tests.txt."
+  rm -f "$CLASS_FILE_MAP_FILE"
   exit 0
 fi
 
@@ -40,8 +56,8 @@ while read -r test_entry; do
   # ClassName is everything before the last dot
   CLASS_NAME="${test_entry%.*}"
 
-  # Find the file
-  FILE_PATH=$(find . -name "${CLASS_NAME}.kt" -o -name "${CLASS_NAME}.java" | head -n 1)
+  # Lookup the file path from the pre-generated map
+  FILE_PATH="${CLASS_FILE_MAP[$CLASS_NAME]}"
 
   if [ -z "$FILE_PATH" ]; then
     echo "Warning: Could not find file for class $CLASS_NAME. Skipping."
@@ -88,3 +104,5 @@ for TASK in "${!TASK_FILTERS[@]}"; do
   ./gradlew "$TASK" $ARGS
   echo "--------------------------------------------------"
 done
+
+rm -f "$CLASS_FILE_MAP_FILE"
