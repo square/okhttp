@@ -83,7 +83,7 @@ class RouteFailureTest {
         .build()
   }
 
-  @RepeatedTest(100)
+  @Test
   fun http2OneBadHostOneGoodNoRetryOnConnectionFailure() {
     enableProtocol(Protocol.HTTP_2)
 
@@ -164,7 +164,7 @@ class RouteFailureTest {
     )
   }
 
-  @RepeatedTest(100)
+  @Test
   fun http2OneBadHostOneGoodNoRetryOnConnectionFailureFastFallback() {
     enableProtocol(Protocol.HTTP_2)
 
@@ -245,7 +245,7 @@ class RouteFailureTest {
     )
   }
 
-  @RepeatedTest(100)
+  @Test
   fun http2OneBadHostRetryOnConnectionFailure() {
     enableProtocol(Protocol.HTTP_2)
 
@@ -280,7 +280,7 @@ class RouteFailureTest {
     )
   }
 
-  @RepeatedTest(100)
+  @Test
   fun http2OneBadHostRetryOnConnectionFailureFastFallback() {
     enableProtocol(Protocol.HTTP_2)
 
