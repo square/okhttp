@@ -1044,7 +1044,7 @@ class WebSocketHttpTest {
   }
 
   /** https://github.com/square/okhttp/issues/5705  */
-  @Test
+  @RepeatedTest(100)
   fun closeWithoutSuccessfulConnect() {
     val request =
       Request
