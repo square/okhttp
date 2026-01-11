@@ -1216,6 +1216,8 @@ class HttpOverHttp2Test(
       .isEqualTo(expectedSequenceNumber)
     responseDequeuedLatch!!.await()
     call.cancel()
+    // Avoid flaky race conditions
+    Thread.sleep(100)
     requestCanceledLatch!!.countDown()
     latch.await()
   }
