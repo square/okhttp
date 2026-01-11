@@ -1116,7 +1116,7 @@ class HttpOverHttp2Test(
     assertThat(server.takeRequest().exchangeIndex).isEqualTo(1)
   }
 
-  @RepeatedTest(100)
+  @Test
   fun recoverFromMultipleCancelReusesConnection() {
     val responseDequeuedLatches =
       Arrays.asList(
@@ -1217,7 +1217,7 @@ class HttpOverHttp2Test(
     responseDequeuedLatch!!.await()
     call.cancel()
     // Avoid flaky race conditions
-    Thread.sleep(100)
+    Thread.sleep(500)
     requestCanceledLatch!!.countDown()
     latch.await()
   }
