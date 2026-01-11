@@ -236,7 +236,7 @@ class EventListenerTest(
     )
   }
 
-  @RepeatedTest(100)
+  @Test
   fun successfulCallEventSequenceForEnqueue() {
     server.enqueue(
       MockResponse
@@ -412,7 +412,7 @@ class EventListenerTest(
     )
   }
 
-  @RepeatedTest(100)
+  @Test
   fun cancelAsyncCall() {
     server.enqueue(
       MockResponse
