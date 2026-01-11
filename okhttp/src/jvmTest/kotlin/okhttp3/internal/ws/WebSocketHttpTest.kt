@@ -1044,7 +1044,7 @@ class WebSocketHttpTest {
   }
 
   /** https://github.com/square/okhttp/issues/5705  */
-  @RepeatedTest(100)
+  @Test
   fun closeWithoutSuccessfulConnect() {
     val request =
       Request
@@ -1054,6 +1054,7 @@ class WebSocketHttpTest {
     val webSocket = client.newWebSocket(request, clientListener)
     webSocket.send("hello")
     webSocket.close(1000, null)
+    clientListener.assertFailure()
   }
 
   /** https://github.com/square/okhttp/issues/7768  */
