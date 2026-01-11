@@ -392,7 +392,7 @@ class DuplexTest {
    * already split off another thread to stream the request body. Because we permit at most one
    * exchange at a time we break the request stream out from under that writer.
    */
-  @Test
+  @RepeatedTest(100)
   fun duplexWithRedirect() {
     enableProtocol(Protocol.HTTP_2)
     val duplexResponseSent = CountDownLatch(1)
