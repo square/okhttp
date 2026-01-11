@@ -3171,6 +3171,7 @@ class CacheTest {
         .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build(),
     )
+    addFinalFailingResponse()
     val url = server.url("/")
     val urlKey = key(url)
     val entryMetadata =
@@ -3206,7 +3207,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.0", entryMetadata)
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3221,6 +3222,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   /** Exercise the cache format in OkHttp 2.7 and all earlier releases.  */
   @RepeatedTest(100)
   fun testGoldenCacheHttpsResponseOkHttp27() {
+    addFinalFailingResponse()
+
     val url = server.url("/")
     val urlKey = key(url)
     val prefix = get().getPrefix()
@@ -3256,7 +3259,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3270,6 +3273,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   /** The TLS version is present in OkHttp 3.0 and beyond.  */
   @RepeatedTest(100)
   fun testGoldenCacheHttpsResponseOkHttp30() {
+    addFinalFailingResponse()
+
     val url = server.url("/")
     val urlKey = key(url)
     val prefix = get().getPrefix()
@@ -3310,7 +3315,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3323,6 +3328,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
   @RepeatedTest(100)
   fun testGoldenCacheHttpResponseOkHttp30() {
+    addFinalFailingResponse()
+
     val url = server.url("/")
     val urlKey = key(url)
     val prefix = get().getPrefix()
@@ -3356,7 +3363,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3365,6 +3372,12 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     val response = get(url)
     assertThat(response.body.string()).isEqualTo(entryBody)
     assertThat(response.header("Content-Length")).isEqualTo("3")
+  }
+
+  private fun addFinalFailingResponse() {
+    // Should not get to this response, so fail if so.
+    // Avoids timeout on error
+    server.enqueue(MockResponse(code = 420, body = "Enhance Your Calm"))
   }
 
   @Test
@@ -3824,7 +3837,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     file: String,
     content: String,
   ) {
-    val sink = fileSystem.sink(directory.div(file)).buffer()
+    val sink = fileSystem.sink(directory / file).buffer()
     sink.writeUtf8(content)
     sink.close()
   }
