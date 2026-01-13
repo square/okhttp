@@ -173,6 +173,7 @@ internal fun commonHeadersOf(vararg inputNamesAndValues: String): Headers {
   // Make a defensive copy and clean it up.
   val namesAndValues: Array<String> = arrayOf(*inputNamesAndValues)
   for (i in namesAndValues.indices) {
+    @Suppress("SENSELESS_COMPARISON")
     require(namesAndValues[i] != null) { "Headers cannot be null" }
     namesAndValues[i] = inputNamesAndValues[i].trim()
   }
@@ -202,5 +203,6 @@ internal fun Map<String, String>.commonToHeaders(): Headers {
     i += 2
   }
 
+  @Suppress("UNCHECKED_CAST")
   return Headers(namesAndValues as Array<String>)
 }

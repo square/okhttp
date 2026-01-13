@@ -108,7 +108,7 @@ class ConscryptPlatform private constructor() : Platform() {
     val isSupported: Boolean =
       try {
         // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
-        Class.forName("org.conscrypt.Conscrypt\$Version", false, javaClass.classLoader)
+        Class.forName("org.conscrypt.Conscrypt\$Version", false, ConscryptPlatform::class.java.classLoader)
 
         when {
           // Bump this version if we ever have a binary incompatibility

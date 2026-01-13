@@ -190,8 +190,9 @@ subprojects {
   tasks.withType<KotlinCompile> {
     compilerOptions {
       jvmTarget.set(projectJvmTarget)
-      freeCompilerArgs = listOf(
+      freeCompilerArgs.addAll(
         "-Xjvm-default=all",
+        "-Xexpect-actual-classes",
       )
     }
   }
