@@ -362,7 +362,7 @@ afterEvaluate {
 // but it's easy enough for us to keep it working. https://github.com/square/okhttp/issues/8826
 tasks.withType<KotlinCompile> {
   compilerOptions {
-    freeCompilerArgs = listOf("-module-name=okhttp")
+    freeCompilerArgs.addAll("-module-name=okhttp", "-Xexpect-actual-classes")
   }
 }
 

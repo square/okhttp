@@ -209,9 +209,9 @@ class RealCall(
     // Build a full stack of interceptors.
     val interceptors = mutableListOf<Interceptor>()
     interceptors += client.interceptors
-    interceptors += RetryAndFollowUpInterceptor(client)
-    interceptors += BridgeInterceptor(client.cookieJar)
-    interceptors += CacheInterceptor(this, client.cache)
+    interceptors += RetryAndFollowUpInterceptor()
+    interceptors += BridgeInterceptor()
+    interceptors += CacheInterceptor()
     interceptors += ConnectInterceptor
     if (!forWebSocket) {
       interceptors += client.networkInterceptors
@@ -225,9 +225,6 @@ class RealCall(
         index = 0,
         exchange = null,
         request = originalRequest,
-        connectTimeoutMillis = client.connectTimeoutMillis,
-        readTimeoutMillis = client.readTimeoutMillis,
-        writeTimeoutMillis = client.writeTimeoutMillis,
       )
 
     var calledNoMoreExchanges = false
@@ -275,15 +272,15 @@ class RealCall(
       val routePlanner =
         RealRoutePlanner(
           taskRunner = client.taskRunner,
-          connectionPool = connectionPool,
-          readTimeoutMillis = client.readTimeoutMillis,
-          writeTimeoutMillis = client.writeTimeoutMillis,
+          connectionPool = chain.connectionPool.delegate,
+          readTimeoutMillis = chain.readTimeoutMillis,
+          writeTimeoutMillis = chain.writeTimeoutMillis,
           socketConnectTimeoutMillis = chain.connectTimeoutMillis,
           socketReadTimeoutMillis = chain.readTimeoutMillis,
           pingIntervalMillis = client.pingIntervalMillis,
-          retryOnConnectionFailure = client.retryOnConnectionFailure,
+          retryOnConnectionFailure = chain.retryOnConnectionFailure,
           fastFallback = client.fastFallback,
-          address = client.address(request.url),
+          address = chain.address(request.url),
           routeDatabase = client.routeDatabase,
           call = this,
           request = request,
