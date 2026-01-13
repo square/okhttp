@@ -94,7 +94,7 @@ class OpenJSSEPlatform private constructor() : Platform() {
     val isSupported: Boolean =
       try {
         // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
-        Class.forName("org.openjsse.net.ssl.OpenJSSE", false, javaClass.classLoader)
+        Class.forName("org.openjsse.net.ssl.OpenJSSE", false, OpenJSSEPlatform::class.java.classLoader)
 
         true
       } catch (_: ClassNotFoundException) {

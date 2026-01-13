@@ -77,6 +77,7 @@ class Android10SocketAdapter : SocketAdapter {
   companion object {
     fun buildIfSupported(): SocketAdapter? = if (isSupported()) Android10SocketAdapter() else null
 
+    @androidx.annotation.ChecksSdkIntAtLeast(api = 29)
     fun isSupported() = isAndroid && Build.VERSION.SDK_INT >= 29
   }
 }
