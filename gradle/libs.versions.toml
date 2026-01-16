@@ -9,7 +9,7 @@ graalvm = "25.0.1"
 #noinspection UnusedVersionCatalogEntry
 junit-platform = "1.13.4"
 kotlinx-serialization = "1.9.0"
-ksp = "2.3.2"
+ksp = "2.3.4"
 lintGradle = "1.0.0-alpha05"
 mockserverClient = "5.15.0"
 org-bouncycastle = "1.82"
@@ -46,7 +46,7 @@ codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
 converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "retrofit" }
-eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.23.200"
+eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.24.0"
 gradlePlugin-android = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.14.0.0"
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:2.0.1"
@@ -63,7 +63,7 @@ gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.35.0"
 gradlePlugin-mavenSympathy = "io.github.usefulness.maven-sympathy:io.github.usefulness.maven-sympathy.gradle.plugin:0.3.0"
 gradlePlugin-mrjar = "me.champeau.mrjar:me.champeau.mrjar.gradle.plugin:0.1.1"
 gradlePlugin-shadow = "com.gradleup.shadow:shadow-gradle-plugin:9.2.2"
-gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:8.0.0"
+gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:8.1.0"
 hamcrestLibrary = "org.hamcrest:hamcrest-library:3.0"
 httpClient5 = "org.apache.httpcomponents.client5:httpclient5:5.5.2"
 #noinspection NewerVersionAvailable
