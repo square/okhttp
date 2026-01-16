@@ -188,7 +188,9 @@ if (platform == "jdk8alpn") {
 }
 
 android {
-  compileSdk = 35
+  compileSdk {
+    version = preview("CANARY")
+  }
 
   namespace = "okhttp.okhttp3"
 

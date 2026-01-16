@@ -9,7 +9,9 @@ plugins {
 val androidBuild = property("androidBuild").toString().toBoolean()
 
 android {
-  compileSdk = 35
+  compileSdk {
+    version = preview("CANARY")
+  }
 
   namespace = "okhttp.android.test"
 
