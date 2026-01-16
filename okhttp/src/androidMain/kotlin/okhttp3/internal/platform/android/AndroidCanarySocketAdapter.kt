@@ -81,6 +81,14 @@ internal constructor() : SocketAdapter {
           cryptoCloudflareEchList.toByteArray()
         )
       )
+    } else if (hostname == "tls-ech.dev") {
+      println("setting ECH")
+      SSLSockets.setEchConfigList(
+        sslSocket,
+        EchConfigList.fromBytes(
+          echDevList.toByteArray()
+        )
+      )
     }
 
     sslSocket.sslParameters = sslParameters
@@ -96,6 +104,13 @@ internal constructor() : SocketAdapter {
         " ",
         ""
       ).decodeHex()
+
+    val echDevList =
+      "00 49 fe 0d 00 45 2b 00 20 00 20 01 58 81 d4 1a 3e 2e f8 f2 20 81 85 dc 47 92 45 d2 06 24 dd d0 91 8a 80 56 f2 e2 6a f4 7e 26 28 00 08 00 01 00 01 00 01 00 03 40 12 70 75 62 6c 69 63 2e 74 6c 73 2d 65 63 68 2e 64 65 76 00 00".replace(
+        " ",
+        ""
+      ).decodeHex()
+
 
     fun buildIfSupported(): SocketAdapter? =
       if (isSupported()) AndroidCanarySocketAdapter() else null

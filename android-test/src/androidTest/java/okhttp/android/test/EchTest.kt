@@ -20,6 +20,7 @@ import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okio.IOException
 import org.junit.jupiter.api.Test
 
 class EchTest {
@@ -28,12 +29,12 @@ class EchTest {
     OkHttpClient
       .Builder()
       .dns {
-        if (it == "crypto.cloudflare.com") {
-          println("returning hints")
-          listOf(InetAddress.getByName("162.159.135.79"), InetAddress.getByName("162.159.136.79"))
-        } else {
+//        if (it == "crypto.cloudflare.com") {
+//          println("returning hints")
+//          listOf(InetAddress.getByName("162.159.135.79"), InetAddress.getByName("162.159.136.79"))
+//        } else {
           Dns.SYSTEM.lookup(it)
-        }
+//        }
       }
       .build()
 
@@ -45,13 +46,21 @@ class EchTest {
     sendRequest(Request.Builder().url("https://crypto.cloudflare.com/cdn-cgi/trace").build()) {
       println(it.body.string())
     }
+
+    sendRequest(Request.Builder().url("https://tls-ech.dev/").build()) {
+      println(it.body.string())
+    }
   }
 
   private fun sendRequest(request: Request, fn: (Response) -> Unit = {}) {
+    try {
     val response = client.newCall(request).execute()
 
-    response.use {
-      fn(it)
+      response.use {
+        fn(it)
+      }
+    } catch (ioe: IOException) {
+      ioe.printStackTrace()
     }
   }
 }
