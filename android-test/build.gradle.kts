@@ -108,6 +108,9 @@ dependencies {
   androidTestImplementation(libs.squareup.moshi.kotlin)
   androidTestImplementation(libs.squareup.okio.fakefilesystem)
 
+  //noinspection UseTomlInstead
+  androidTestImplementation("dnsjava:dnsjava:3.6.3")
+
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.junit.jupiter.api)
   androidTestImplementation(libs.junit5android.core)
