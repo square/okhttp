@@ -30,14 +30,15 @@ import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
-import org.junit.jupiter.api.Assumptions.assumeTrue
-import org.junit.jupiter.api.Tag
-import org.junit.jupiter.api.Test
+import org.junit.Assume.assumeTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import androidx.test.ext.junit.runners.AndroidJUnit4
 
 /**
  * Tests for SNI overriding on Android.
  */
-@Tag("Remote")
+@RunWith(AndroidJUnit4::class)
 class SniOverrideTest {
   var client =
     OkHttpClient

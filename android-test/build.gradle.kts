@@ -3,7 +3,6 @@
 plugins {
   id("com.android.library")
   kotlin("android")
-  id("de.mannodermaus.android-junit5")
 }
 
 val androidBuild = property("androidBuild").toString().toBoolean()
@@ -16,12 +15,10 @@ android {
   defaultConfig {
     minSdk = 21
 
-    // Make sure to use the AndroidJUnitRunner (or a sub-class) in order to hook in the JUnit 5 Test Builder
+    // Use standard AndroidJUnitRunner for JUnit 4 tests (compatible with API 21+)
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     testInstrumentationRunnerArguments += mapOf(
-      "runnerBuilder" to "de.mannodermaus.junit5.AndroidJUnit5Builder",
-      "notPackage" to "org.bouncycastle",
-      "configurationParameters" to "junit.jupiter.extensions.autodetection.enabled=true"
+      "notPackage" to "org.bouncycastle"
     )
   }
 
@@ -107,13 +104,6 @@ dependencies {
   androidTestImplementation(libs.squareup.okio.fakefilesystem)
 
   androidTestImplementation(libs.androidx.test.runner)
-  androidTestImplementation(libs.junit.jupiter.api)
-  androidTestImplementation(libs.junit5android.core)
-  androidTestRuntimeOnly(libs.junit5android.runner)
-}
-
-junitPlatform {
-  filters {
-    excludeTags("Remote")
-  }
+  // Use JUnit 4 for Android instrumented tests (compatible with API 21+)
+  androidTestImplementation(libs.junit)
 }

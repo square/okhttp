@@ -28,13 +28,14 @@ import okhttp3.DelegatingSSLSocketFactory
 import okhttp3.EventListener
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.junit.jupiter.api.Tag
-import org.junit.jupiter.api.Test
+import org.junit.Test
+import org.junit.runner.RunWith
+import androidx.test.ext.junit.runners.AndroidJUnit4
 
 /**
  * Tests for ALPN overriding on Android.
  */
-@Tag("Remote")
+@RunWith(AndroidJUnit4::class)
 class AlpnOverrideTest {
   class CustomSSLSocketFactory(
     delegate: SSLSocketFactory,
