@@ -27,16 +27,17 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.internal.platform.Platform
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.parallel.Isolated
+import org.junit.After
+import org.junit.Test
+import org.junit.runner.RunWith
+import androidx.test.ext.junit.runners.AndroidJUnit4
 
-@Isolated
+@RunWith(AndroidJUnit4::class)
 @SdkSuppress(minSdkVersion = 28)
 class StrictModeTest {
   private val violations = mutableListOf<Violation>()
 
-  @AfterEach
+  @After
   fun cleanup() {
     StrictMode.setThreadPolicy(
       ThreadPolicy

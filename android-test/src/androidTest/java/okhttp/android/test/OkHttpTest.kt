@@ -44,7 +44,6 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.junit5.StartStop
 import okhttp3.Cache
 import okhttp3.Call
 import okhttp3.CallEvent.CallEnd
@@ -77,7 +76,6 @@ import okhttp3.Gzip
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
-import okhttp3.OkHttpClientTestRule
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.TlsVersion
@@ -90,7 +88,6 @@ import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.PlatformRegistry
 import okhttp3.logging.LoggingEventListener
-import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.internal.TlsUtil.localhost
 import okhttp3.zstd.Zstd
@@ -98,38 +95,25 @@ import okio.ByteString.Companion.toByteString
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 import org.conscrypt.Conscrypt
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.fail
-import org.junit.jupiter.api.Assumptions.assumeTrue
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Tag
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
-import org.opentest4j.TestAbortedException
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import org.junit.After
+import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.Ignore
+import org.junit.Test
+import org.junit.runner.RunWith
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.AssumptionViolatedException
 
-@Tag("Slow")
+@RunWith(AndroidJUnit4::class)
 class OkHttpTest {
-  @Suppress("RedundantVisibilityModifier")
-  @JvmField
-  @RegisterExtension
-  public val platform = PlatformRule()
-
-  @Suppress("RedundantVisibilityModifier")
-  @JvmField
-  @RegisterExtension
-  public val clientTestRule =
-    OkHttpClientTestRule().apply {
-      logger = Logger.getLogger(OkHttpTest::class.java.name)
-    }
-
   private var client: OkHttpClient =
-    clientTestRule
-      .newClientBuilder()
+    OkHttpClient.Builder()
       .addInterceptor(CompressionInterceptor(Zstd, Brotli, Gzip))
       .build()
 
@@ -141,13 +125,18 @@ class OkHttpTest {
 
   private val handshakeCertificates = localhost()
 
-  @StartStop
   private val server = MockWebServer()
 
-  @BeforeEach
+  @Before
   fun setup() {
     // Needed because of Platform.resetForTests
     PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext<Context>()
+    server.start()
+  }
+
+  @After
+  fun tearDown() {
+    server.shutdown()
   }
 
   @Test
@@ -225,7 +214,7 @@ class OkHttpTest {
         OkHttpClient
           .Builder()
           .eventListenerFactory(
-            clientTestRule.wrap(
+            (
               object : EventListener() {
                 override fun connectionAcquired(
                   call: Call,
@@ -296,7 +285,7 @@ class OkHttpTest {
       try {
         ProviderInstaller.installIfNeeded(InstrumentationRegistry.getInstrumentation().targetContext)
       } catch (gpsnae: GooglePlayServicesNotAvailableException) {
-        throw TestAbortedException("Google Play Services not available", gpsnae)
+        throw AssumptionViolatedException("Google Play Services not available", gpsnae)
       }
 
       val request = Request.Builder().url("https://facebook.com/robots.txt").build()
@@ -308,7 +297,7 @@ class OkHttpTest {
         OkHttpClient
           .Builder()
           .eventListenerFactory(
-            clientTestRule.wrap(
+            (
               object : EventListener() {
                 override fun connectionAcquired(
                   call: Call,
@@ -340,7 +329,7 @@ class OkHttpTest {
       try {
         ProviderInstaller.installIfNeeded(InstrumentationRegistry.getInstrumentation().targetContext)
       } catch (gpsnae: GooglePlayServicesNotAvailableException) {
-        throw TestAbortedException("Google Play Services not available", gpsnae)
+        throw AssumptionViolatedException("Google Play Services not available", gpsnae)
       }
 
       val clientCertificates =
@@ -389,7 +378,7 @@ class OkHttpTest {
       client
         .newBuilder()
         .eventListenerFactory(
-          clientTestRule.wrap(
+          (
             object : EventListener() {
               override fun connectionAcquired(
                 call: Call,
@@ -452,7 +441,7 @@ class OkHttpTest {
   }
 
   @Test
-  @Disabled("cleartext required for additional okhttp wide tests")
+  @Ignore("cleartext required for additional okhttp wide tests")
   fun testHttpRequestBlocked() {
     assumeTrue(Build.VERSION.SDK_INT >= 23)
 
@@ -479,7 +468,7 @@ class OkHttpTest {
   )
 
   @Test
-  @Disabled
+  @Ignore
   fun testSSLFeatures() {
     assumeNetwork()
 
@@ -581,7 +570,7 @@ class OkHttpTest {
     client =
       client
         .newBuilder()
-        .eventListenerFactory(clientTestRule.wrap(eventRecorder))
+        .eventListenerFactory((eventRecorder))
         .build()
 
     server.enqueue(MockResponse(body = "abc1"))
@@ -652,7 +641,7 @@ class OkHttpTest {
       client
         .newBuilder()
         .eventListenerFactory(
-          clientTestRule.wrap(
+          (
             object : EventListener() {
               override fun connectionAcquired(
                 call: Call,
@@ -697,7 +686,7 @@ class OkHttpTest {
     client =
       client
         .newBuilder()
-        .eventListenerFactory(clientTestRule.wrap(LoggingEventListener.Factory()))
+        .eventListenerFactory((LoggingEventListener.Factory()))
         .build()
 
     val dohDns = buildCloudflareIp(client)
@@ -872,7 +861,7 @@ class OkHttpTest {
   }
 
   @Test
-  @Disabled("breaks conscrypt test")
+  @Ignore("breaks conscrypt test")
   fun testBouncyCastleRequest() {
     assumeNetwork()
 
@@ -901,7 +890,7 @@ class OkHttpTest {
           .newBuilder()
           .sslSocketFactory(sslContext.socketFactory, trustManager)
           .eventListenerFactory(
-            clientTestRule.wrap(
+            (
               object : EventListener() {
                 override fun connectionAcquired(
                   call: Call,
@@ -930,7 +919,7 @@ class OkHttpTest {
   }
 
   @Test
-  @Disabled("TODO: currently logging okhttp3.internal.concurrent.TaskRunner, okhttp3.internal.http2.Http2")
+  @Ignore("TODO: currently logging okhttp3.internal.concurrent.TaskRunner, okhttp3.internal.http2.Http2")
   fun testLoggingLevels() {
     enableTls()
 
@@ -1076,7 +1065,7 @@ class OkHttpTest {
     try {
       InetAddress.getByName("www.google.com")
     } catch (uhe: UnknownHostException) {
-      throw TestAbortedException(uhe.message, uhe)
+      throw AssumptionViolatedException(uhe.message, uhe)
     }
   }
 
