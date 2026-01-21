@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.http1
 
+import java.io.EOFException
+import java.net.ProtocolException
 import okhttp3.Headers
 import okio.BufferedSource
 
@@ -28,7 +30,15 @@ class HeadersReader(
 
   /** Read a single line counted against the header size limit. */
   fun readLine(): String {
-    val line = source.readUtf8LineStrict(headerLimit)
+    val line =
+      try {
+        source.readUtf8LineStrict(headerLimit)
+      } catch (e: EOFException) {
+        throw ProtocolException(
+          "Header line limit exceeded (${HEADER_LIMIT / 1024} KiB). " +
+            "The response headers are too large.",
+        ).initCause(e)
+      }
     headerLimit -= line.length.toLong()
     return line
   }
