@@ -803,6 +803,33 @@ class HostnameVerifierTest {
     assertThat(localVerifier.verify("\uD83D\uDCA9.com", session)).isFalse()
   }
 
+  /**
+   * Test that malformed surrogates (unpaired high/low surrogates) are correctly
+   * identified as non-ASCII and rejected.
+   *
+   * https://github.com/square/okhttp/issues/6357
+   */
+  @Test fun malformedSurrogatesAreNotAscii() {
+    val heldCertificate =
+      HeldCertificate
+        .Builder()
+        .commonName("Foo Corp")
+        .addSubjectAlternativeName("foo.com")
+        .build()
+    val session = session(heldCertificate.certificatePem())
+
+    // Unpaired high surrogate - should not match any hostname
+    assertThat(verifier.verify("\uD800.com", session)).isFalse()
+    assertThat(verifier.verify("foo\uD800.com", session)).isFalse()
+
+    // Unpaired low surrogate - should not match any hostname
+    assertThat(verifier.verify("\uDC00.com", session)).isFalse()
+    assertThat(verifier.verify("foo\uDC00.com", session)).isFalse()
+
+    // Valid hostname should still work
+    assertThat(verifier.verify("foo.com", session)).isTrue()
+  }
+
   @Test fun verifyAsIpAddress() {
     // IPv4
     assertThat("127.0.0.1".canParseAsIpAddress()).isTrue()
