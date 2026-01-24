@@ -304,28 +304,37 @@ subprojects {
 
 /** Configure publishing and signing for published Java and JavaPlatform subprojects. */
 subprojects {
-  apply(plugin = "org.jetbrains.dokka")
+  plugins.withId("com.vanniktech.maven.publish.base") {
+    apply(plugin = "org.jetbrains.dokka")
 
-  extensions.configure<DokkaExtension> {
-    dokkaSourceSets.configureEach {
-      reportUndocumented.set(false)
-      skipDeprecated.set(true)
-      jdkVersion.set(8)
-      perPackageOption {
-        matchingRegex.set(".*\\.internal.*")
-        suppress.set(true)
-      }
-      if (project.file("Module.md").exists()) {
-        includes.from(project.file("Module.md"))
-      }
-      externalDocumentationLinks.register("okio") {
-        url.set(URI.create("https://square.github.io/okio/3.x/okio/"))
-        packageListUrl.set(URI.create("https://square.github.io/okio/3.x/okio/okio/package-list"))
+    extensions.configure<DokkaExtension> {
+      dokkaSourceSets.configureEach {
+        reportUndocumented.set(false)
+        skipDeprecated.set(true)
+        jdkVersion.set(21)
+        perPackageOption {
+          matchingRegex.set(".*\\.internal.*")
+          suppress.set(true)
+        }
+        if (project.file("Module.md").exists()) {
+          includes.from(project.file("Module.md"))
+        }
+        externalDocumentationLinks.register("okio") {
+          url.set(URI.create("https://square.github.io/okio/3.x/okio/"))
+          packageListUrl.set(URI.create("https://square.github.io/okio/3.x/okio/okio/package-list"))
+        }
+        
+        externalDocumentationLinks.named("jdk") {
+           url.set(URI.create("https://docs.oracle.com/en/java/javase/21/docs/api/"))
+           packageListUrl.set(URI.create("https://docs.oracle.com/en/java/javase/21/docs/api/element-list"))
+        }
+        externalDocumentationLinks.register("androidRef") {
+           url.set(URI.create("https://developer.android.com/reference/"))
+           packageListUrl.set(URI.create("https://developer.android.com/reference/package-list"))
+        }
       }
     }
-  }
 
-  plugins.withId("com.vanniktech.maven.publish.base") {
     configure<MavenPublishBaseExtension> {
       publishToMavenCentral(automaticRelease = true)
       signAllPublications()
