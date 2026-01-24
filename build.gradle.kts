@@ -5,7 +5,7 @@ import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import java.net.URI
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.jetbrains.dokka.gradle.DokkaTaskPartial
+import org.jetbrains.dokka.gradle.DokkaExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -304,7 +304,9 @@ subprojects {
 
 /** Configure publishing and signing for published Java and JavaPlatform subprojects. */
 subprojects {
-  tasks.withType<DokkaTaskPartial>().configureEach {
+  apply(plugin = "org.jetbrains.dokka")
+
+  extensions.configure<DokkaExtension> {
     dokkaSourceSets.configureEach {
       reportUndocumented.set(false)
       skipDeprecated.set(true)
@@ -316,9 +318,9 @@ subprojects {
       if (project.file("Module.md").exists()) {
         includes.from(project.file("Module.md"))
       }
-      externalDocumentationLink {
-        url.set(URI.create("https://square.github.io/okio/3.x/okio/").toURL())
-        packageListUrl.set(URI.create("https://square.github.io/okio/3.x/okio/okio/package-list").toURL())
+      externalDocumentationLinks.register("okio") {
+        url.set(URI.create("https://square.github.io/okio/3.x/okio/"))
+        packageListUrl.set(URI.create("https://square.github.io/okio/3.x/okio/okio/package-list"))
       }
     }
   }
@@ -375,4 +377,21 @@ plugins.withId("org.jetbrains.kotlin.jvm") {
 
 tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
+}
+
+dependencies {
+  add("dokka", project(":okhttp"))
+  add("dokka", project(":okhttp-brotli"))
+  add("dokka", project(":okhttp-coroutines"))
+  add("dokka", project(":okhttp-dnsoverhttps"))
+  add("dokka", project(":okhttp-java-net-cookiejar"))
+  add("dokka", project(":logging-interceptor"))
+  add("dokka", project(":okhttp-sse"))
+  add("dokka", project(":okhttp-tls"))
+  add("dokka", project(":okhttp-urlconnection"))
+  add("dokka", project(":okhttp-zstd"))
+  add("dokka", project(":mockwebserver"))
+  add("dokka", project(":mockwebserver3"))
+  add("dokka", project(":mockwebserver3-junit4"))
+  add("dokka", project(":mockwebserver3-junit5"))
 }
