@@ -72,8 +72,10 @@ kotlin {
       execution = "HOST"
     }
 
-    withHostTest {
-      isIncludeAndroidResources = true
+    if (testJavaVersion >= 17) {
+      withHostTest {
+        isIncludeAndroidResources = true
+      }
     }
   }
 
