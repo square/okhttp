@@ -5,7 +5,7 @@ checkStyle = "12.3.1"
 com-squareup-moshi = "1.15.2"
 com-squareup-okio = "3.16.4"
 de-mannodermaus-junit5 = "1.9.0"
-graalvm = "25.0.1"
+graalvm = "25.0.2"
 #noinspection UnusedVersionCatalogEntry
 junit-platform = "1.13.4"
 kotlinx-serialization = "1.9.0"
@@ -55,7 +55,7 @@ gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref 
 gradlePlugin-burst = { module = "app.cash.burst:burst-gradle-plugin", version = "2.10.2" }
 gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:2.1.0"
 gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:4.4.0"
-gradlePlugin-graalvmBuildTools = "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin:0.11.3"
+gradlePlugin-graalvmBuildTools = "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin:0.11.4"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
