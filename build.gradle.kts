@@ -300,7 +300,7 @@ subprojects {
 
 /** Configure publishing and signing for published Java and JavaPlatform subprojects. */
 subprojects {
-  plugins.withId("com.vanniktech.maven.publish.base") {
+  if (plugins.hasPlugin("com.vanniktech.maven.publish.base")) {
     if (dokkaBuild) {
       apply(plugin = "org.jetbrains.dokka")
 
@@ -334,10 +334,12 @@ subprojects {
     }
 
     // Only enable lint checks for published modules
-    apply(plugin = "com.android.lint")
+    if (project.name != "okhttp") {
+      apply(plugin = "com.android.lint")
 
-    dependencies {
-      "lintChecks"(rootProject.libs.androidx.lint.gradle)
+      dependencies {
+        "lintChecks"(rootProject.libs.androidx.lint.gradle)
+      }
     }
 
     configure<MavenPublishBaseExtension> {
