@@ -58,9 +58,18 @@ kotlin {
     compileSdk = 35
     minSdk = 21
 
+    androidResources {
+      enable = true
+    }
+
     optimization {
       consumerKeepRules.publish = true
       consumerKeepRules.files.add(file("okhttp3.pro"))
+    }
+
+    withDeviceTest {
+      instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+      execution = "HOST"
     }
 
     withHostTest {
@@ -330,13 +339,6 @@ afterEvaluate {
       // Work around robolectric requirements and limitations
       // https://cs.android.com/android-studio/platform/tools/base/+/mirror-goog-studio-main:build-system/gradle-core/src/main/java/com/android/build/gradle/tasks/factory/AndroidUnitTest.java;l=339
       allJvmArgs = allJvmArgs.filter { !it.startsWith("--add-opens") }
-    }
-    if (name.matches("test.*UnitTest".toRegex()) && javaLauncher.get().metadata.languageVersion.asInt() < 17) {
-      // Work around robolectric requirements and limitations
-      // https://github.com/robolectric/robolectric/issues/10419
-      filter {
-        excludeTest("okhttp3.internal.publicsuffix.PublicSuffixDatabaseTest", null)
-      }
     }
   }
 }
