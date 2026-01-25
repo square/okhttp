@@ -38,7 +38,8 @@ buildscript {
   }
 }
 
-val dokkaBuild = System.getProperty("okhttp.dokka", "false").toBoolean()
+val okhttpDokka: String by project
+val dokkaBuild = okhttpDokka.toBoolean()
 val platform = System.getProperty("okhttp.platform", "jdk9")
 val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
 

@@ -9,10 +9,10 @@
 set -ex
 
 # Test generating the javadoc jars
-./gradlew publishToMavenLocal -DRELEASE_SIGNING_ENABLED=false -Pokhttp.dokka=true
+./gradlew publishToMavenLocal -DRELEASE_SIGNING_ENABLED=false -PokhttpDokka=true
 
 # Generate the API docs
-./gradlew dokkaGeneratePublicationHtml -Pokhttp.dokka=true
+./gradlew dokkaGeneratePublicationHtml -PokhttpDokka=true
 
 mv ./build/dokka/html docs/4.x
 
