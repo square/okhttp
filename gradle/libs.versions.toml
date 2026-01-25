@@ -20,7 +20,6 @@ org-junit-jupiter = "5.13.4"
 retrofit = "3.0.0"
 startupRuntime = "1.2.0"
 testcontainers = "1.21.4"
-tracing = "1.3.0"
 
 [libraries]
 amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.5.0"
@@ -32,7 +31,6 @@ androidx-junit = "androidx.test.ext:junit:1.3.0"
 androidx-lint-gradle = { module = "androidx.lint:lint-gradle", version.ref = "lintGradle" }
 androidx-startup-runtime = { module = "androidx.startup:startup-runtime", version.ref = "startupRuntime" }
 androidx-test-runner = "androidx.test:runner:1.7.0"
-androidx-tracing = { module = "androidx.tracing:tracing", version.ref = "tracing" }
 animalsniffer-annotations = "org.codehaus.mojo:animal-sniffer-annotations:1.26"
 aqute-resolve = { module = "biz.aQute.bnd:biz.aQute.resolve", version.ref = "biz-aQute-bnd" }
 assertk = "com.willowtreeapps.assertk:assertk:0.28.1"

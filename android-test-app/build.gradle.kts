@@ -42,11 +42,9 @@ dependencies {
   implementation(libs.playservices.safetynet)
   implementation(projects.okhttp)
   implementation(libs.androidx.activity)
-  implementation(libs.androidx.tracing)
 
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.assertk)
-  androidTestImplementation(libs.androidx.tracing)
 }
