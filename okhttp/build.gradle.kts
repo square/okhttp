@@ -72,6 +72,9 @@ kotlin {
       execution = "HOST"
     }
 
+    // SDK 35 needs 17, for now avoid trying to run on
+    // multiple robolectric versions, since device tests
+    // do that
     if (testJavaVersion >= 17) {
       withHostTest {
         isIncludeAndroidResources = true
@@ -176,17 +179,19 @@ kotlin {
       }
     }
 
-    val androidHostTest by getting {
-      dependencies {
-        implementation(libs.assertk)
-        implementation(libs.kotlin.test.annotations)
-        implementation(libs.kotlin.test.common)
-        implementation(libs.androidx.junit)
+    if (testJavaVersion >= 17) {
+      val androidHostTest by getting {
+        dependencies {
+          implementation(libs.assertk)
+          implementation(libs.kotlin.test.annotations)
+          implementation(libs.kotlin.test.common)
+          implementation(libs.androidx.junit)
 
-        implementation(libs.junit.jupiter.engine)
-        implementation(libs.junit.vintage.engine)
+          implementation(libs.junit.jupiter.engine)
+          implementation(libs.junit.vintage.engine)
 
-        implementation(libs.robolectric)
+          implementation(libs.robolectric)
+        }
       }
     }
   }
