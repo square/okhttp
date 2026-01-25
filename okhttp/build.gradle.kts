@@ -2,7 +2,6 @@
 
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer
@@ -10,7 +9,7 @@ import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 plugins {
   kotlin("multiplatform")
-  id("com.android.library")
+  id("com.android.kotlin.multiplatform.library")
   kotlin("plugin.serialization")
   id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
@@ -54,9 +53,18 @@ kotlin {
   jvm {
   }
 
-  androidTarget {
-    compilerOptions {
-      jvmTarget.set(JvmTarget.JVM_17)
+  androidLibrary {
+    namespace = "okhttp.okhttp3"
+    compileSdk = 35
+    minSdk = 21
+
+    optimization {
+      consumerKeepRules.publish = true
+      consumerKeepRules.files.add(file("okhttp3.pro"))
+    }
+
+    withHostTest {
+      isIncludeAndroidResources = true
     }
   }
 
@@ -157,7 +165,7 @@ kotlin {
       }
     }
 
-    val androidUnitTest by getting {
+    val androidHostTest by getting {
       dependencies {
         implementation(libs.assertk)
         implementation(libs.kotlin.test.annotations)
@@ -186,30 +194,7 @@ if (platform == "jdk8alpn") {
   }
 }
 
-android {
-  compileSdk = 35
 
-  namespace = "okhttp.okhttp3"
-
-  defaultConfig {
-    minSdk = 21
-
-    consumerProguardFiles("okhttp3.pro")
-  }
-
-  testOptions {
-    unitTests {
-      isIncludeAndroidResources = true
-    }
-  }
-
-  sourceSets {
-    named("main") {
-      manifest.srcFile("src/androidMain/AndroidManifest.xml")
-      assets.srcDir("src/androidMain/assets")
-    }
-  }
-}
 
 // From https://github.com/Kotlin/kotlinx-atomicfu/blob/master/atomicfu/build.gradle.kts
 val compileJavaModuleInfo by tasks.registering(JavaCompile::class) {
@@ -368,5 +353,5 @@ tasks.withType<KotlinCompile> {
 apply(plugin = "io.github.usefulness.maven-sympathy")
 
 mavenPublishing {
-  configure(KotlinMultiplatform(javadocJar = JavadocJar.Empty(), androidVariantsToPublish = listOf("release")))
+  configure(KotlinMultiplatform(javadocJar = JavadocJar.Empty()))
 }

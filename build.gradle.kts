@@ -370,7 +370,7 @@ subprojects {
     }
   }
 
-  plugins.withId("binary-compatibility-validator") {
+  if (plugins.hasPlugin("binary-compatibility-validator")) {
     configure<ApiValidationExtension> {
       ignoredPackages += "okhttp3.logging.internal"
       ignoredPackages += "mockwebserver3.internal"
