@@ -5,7 +5,6 @@ import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 plugins {
   kotlin("jvm")
-  id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
   id("com.gradleup.shadow")
 }
