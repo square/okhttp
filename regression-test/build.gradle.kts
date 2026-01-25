@@ -1,6 +1,5 @@
 plugins {
   id("com.android.library")
-
 }
 
 android {
@@ -23,7 +22,6 @@ android {
     targetCompatibility(JavaVersion.VERSION_11)
     sourceCompatibility(JavaVersion.VERSION_11)
   }
-
 
 
   // issue merging due to conflict with httpclient and something else

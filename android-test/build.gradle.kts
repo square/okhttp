@@ -2,7 +2,6 @@
 
 plugins {
   id("com.android.library")
-
   id("de.mannodermaus.android-junit5")
 }
 
@@ -43,7 +42,6 @@ android {
     targetSdk = 34
     unitTests.isIncludeAndroidResources = true
   }
-
 
 
   // issue merging due to conflict with httpclient and something else

@@ -2,7 +2,6 @@
 
 plugins {
   id("com.android.application")
-
 }
 
 android {
@@ -22,7 +21,6 @@ android {
     targetCompatibility(JavaVersion.VERSION_11)
     sourceCompatibility(JavaVersion.VERSION_11)
   }
-
 
 
   buildTypes {
