@@ -111,15 +111,6 @@ subprojects {
     }
   }
 
-  // Skip samples parent
-  if (project.buildFile.exists() && project.name != "okhttp") {
-    apply(plugin = "com.android.lint")
-
-    dependencies {
-      "lintChecks"(rootProject.libs.androidx.lint.gradle)
-    }
-  }
-
   tasks.withType<JavaCompile> {
     options.encoding = Charsets.UTF_8.toString()
   }
@@ -309,7 +300,7 @@ subprojects {
 
 /** Configure publishing and signing for published Java and JavaPlatform subprojects. */
 subprojects {
-  plugins.withId("com.vanniktech.maven.publish.base") {
+  if (plugins.hasPlugin("com.vanniktech.maven.publish.base")) {
     if (dokkaBuild) {
       apply(plugin = "org.jetbrains.dokka")
 
@@ -329,7 +320,7 @@ subprojects {
             url.set(URI.create("https://square.github.io/okio/3.x/okio/"))
             packageListUrl.set(URI.create("https://square.github.io/okio/3.x/okio/okio/package-list"))
           }
-          
+
           externalDocumentationLinks.named("jdk") {
              url.set(URI.create("https://docs.oracle.com/en/java/javase/21/docs/api/"))
              packageListUrl.set(URI.create("https://docs.oracle.com/en/java/javase/21/docs/api/element-list"))
@@ -339,6 +330,15 @@ subprojects {
              packageListUrl.set(URI.create("https://developer.android.com/reference/package-list"))
           }
         }
+      }
+    }
+
+    // Only enable lint checks for published modules
+    if (project.name != "okhttp") {
+      apply(plugin = "com.android.lint")
+
+      dependencies {
+        "lintChecks"(rootProject.libs.androidx.lint.gradle)
       }
     }
 
