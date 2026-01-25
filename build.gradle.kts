@@ -106,7 +106,7 @@ subprojects {
   }
 
   // Skip samples parent
-  if (project.buildFile.exists() && project.name != "okhttp" && project.name != "okhttp-idna-mapping-table") {
+  if (project.buildFile.exists() && project.name != "okhttp" && project.name != "okhttp-idna-mapping-table" && project.name != "native-image-tests") {
     apply(plugin = "com.android.lint")
 
     dependencies {
