@@ -111,15 +111,6 @@ subprojects {
     }
   }
 
-  // Skip samples parent
-  if (project.buildFile.exists() && project.name != "okhttp" && project.name != "okhttp-idna-mapping-table" && project.name != "native-image-tests") {
-    apply(plugin = "com.android.lint")
-
-    dependencies {
-      "lintChecks"(rootProject.libs.androidx.lint.gradle)
-    }
-  }
-
   tasks.withType<JavaCompile> {
     options.encoding = Charsets.UTF_8.toString()
   }
@@ -329,7 +320,7 @@ subprojects {
             url.set(URI.create("https://square.github.io/okio/3.x/okio/"))
             packageListUrl.set(URI.create("https://square.github.io/okio/3.x/okio/okio/package-list"))
           }
-          
+
           externalDocumentationLinks.named("jdk") {
              url.set(URI.create("https://docs.oracle.com/en/java/javase/21/docs/api/"))
              packageListUrl.set(URI.create("https://docs.oracle.com/en/java/javase/21/docs/api/element-list"))
@@ -340,6 +331,13 @@ subprojects {
           }
         }
       }
+    }
+
+    // Only enable lint checks for published modules
+    apply(plugin = "com.android.lint")
+
+    dependencies {
+      "lintChecks"(rootProject.libs.androidx.lint.gradle)
     }
 
     configure<MavenPublishBaseExtension> {
