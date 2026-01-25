@@ -722,6 +722,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
+      - name: Test module-tests
+        run: ./gradlew module-tests:test -PokhttpModuleTests=true
+
       - name: Run with Jlink
-        run: ./gradlew module-tests:imageRun
+        run: ./gradlew module-tests:imageRun -PokhttpModuleTests=true
 
