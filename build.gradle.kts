@@ -38,7 +38,13 @@ buildscript {
   }
 }
 
-apply(plugin = "org.jetbrains.dokka")
+val dokkaBuild = System.getProperty("okhttp.dokka", "false").toBoolean()
+val platform = System.getProperty("okhttp.platform", "jdk9")
+val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
+
+if (dokkaBuild) {
+  apply(plugin = "org.jetbrains.dokka")
+}
 apply(plugin = "com.diffplug.spotless")
 
 configure<SpotlessExtension> {
@@ -78,8 +84,7 @@ allprojects {
   }
 }
 
-val platform = System.getProperty("okhttp.platform", "jdk9")
-val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
+
 
 /** Configure building for Java+Kotlin projects. */
 subprojects {
@@ -197,8 +202,7 @@ subprojects {
     }
   }
 
-  val platform = System.getProperty("okhttp.platform", "jdk9")
-  val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
+
 
   if (project.name != "okhttp") {
     val testRuntimeOnly: Configuration by configurations.getting
@@ -305,32 +309,34 @@ subprojects {
 /** Configure publishing and signing for published Java and JavaPlatform subprojects. */
 subprojects {
   plugins.withId("com.vanniktech.maven.publish.base") {
-    apply(plugin = "org.jetbrains.dokka")
+    if (dokkaBuild) {
+      apply(plugin = "org.jetbrains.dokka")
 
-    extensions.configure<DokkaExtension> {
-      dokkaSourceSets.configureEach {
-        reportUndocumented.set(false)
-        skipDeprecated.set(true)
-        jdkVersion.set(21)
-        perPackageOption {
-          matchingRegex.set(".*\\.internal.*")
-          suppress.set(true)
-        }
-        if (project.file("Module.md").exists()) {
-          includes.from(project.file("Module.md"))
-        }
-        externalDocumentationLinks.register("okio") {
-          url.set(URI.create("https://square.github.io/okio/3.x/okio/"))
-          packageListUrl.set(URI.create("https://square.github.io/okio/3.x/okio/okio/package-list"))
-        }
-        
-        externalDocumentationLinks.named("jdk") {
-           url.set(URI.create("https://docs.oracle.com/en/java/javase/21/docs/api/"))
-           packageListUrl.set(URI.create("https://docs.oracle.com/en/java/javase/21/docs/api/element-list"))
-        }
-        externalDocumentationLinks.register("androidRef") {
-           url.set(URI.create("https://developer.android.com/reference/"))
-           packageListUrl.set(URI.create("https://developer.android.com/reference/package-list"))
+      extensions.configure<DokkaExtension> {
+        dokkaSourceSets.configureEach {
+          reportUndocumented.set(false)
+          skipDeprecated.set(true)
+          jdkVersion.set(21)
+          perPackageOption {
+            matchingRegex.set(".*\\.internal.*")
+            suppress.set(true)
+          }
+          if (project.file("Module.md").exists()) {
+            includes.from(project.file("Module.md"))
+          }
+          externalDocumentationLinks.register("okio") {
+            url.set(URI.create("https://square.github.io/okio/3.x/okio/"))
+            packageListUrl.set(URI.create("https://square.github.io/okio/3.x/okio/okio/package-list"))
+          }
+          
+          externalDocumentationLinks.named("jdk") {
+             url.set(URI.create("https://docs.oracle.com/en/java/javase/21/docs/api/"))
+             packageListUrl.set(URI.create("https://docs.oracle.com/en/java/javase/21/docs/api/element-list"))
+          }
+          externalDocumentationLinks.register("androidRef") {
+             url.set(URI.create("https://developer.android.com/reference/"))
+             packageListUrl.set(URI.create("https://developer.android.com/reference/package-list"))
+          }
         }
       }
     }
@@ -388,19 +394,21 @@ tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
 }
 
-dependencies {
-  add("dokka", project(":okhttp"))
-  add("dokka", project(":okhttp-brotli"))
-  add("dokka", project(":okhttp-coroutines"))
-  add("dokka", project(":okhttp-dnsoverhttps"))
-  add("dokka", project(":okhttp-java-net-cookiejar"))
-  add("dokka", project(":logging-interceptor"))
-  add("dokka", project(":okhttp-sse"))
-  add("dokka", project(":okhttp-tls"))
-  add("dokka", project(":okhttp-urlconnection"))
-  add("dokka", project(":okhttp-zstd"))
-  add("dokka", project(":mockwebserver"))
-  add("dokka", project(":mockwebserver3"))
-  add("dokka", project(":mockwebserver3-junit4"))
-  add("dokka", project(":mockwebserver3-junit5"))
+if (dokkaBuild) {
+  dependencies {
+    add("dokka", project(":okhttp"))
+    add("dokka", project(":okhttp-brotli"))
+    add("dokka", project(":okhttp-coroutines"))
+    add("dokka", project(":okhttp-dnsoverhttps"))
+    add("dokka", project(":okhttp-java-net-cookiejar"))
+    add("dokka", project(":logging-interceptor"))
+    add("dokka", project(":okhttp-sse"))
+    add("dokka", project(":okhttp-tls"))
+    add("dokka", project(":okhttp-urlconnection"))
+    add("dokka", project(":okhttp-zstd"))
+    add("dokka", project(":mockwebserver"))
+    add("dokka", project(":mockwebserver3"))
+    add("dokka", project(":mockwebserver3-junit4"))
+    add("dokka", project(":mockwebserver3-junit5"))
+  }
 }
