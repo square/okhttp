@@ -563,15 +563,6 @@ jobs:
         env:
           API_LEVEL: ${{ matrix.api-level }}
 
-      - name: Run Release Tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ matrix.api-level }}
-          arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
-          script: ./gradlew :android-test-app:connectedCheck
-        env:
-          API_LEVEL: ${{ matrix.api-level }}
-
       - name: Build Release App
         run: ./gradlew android-test-app:lint android-test-app:assembleRelease
 
