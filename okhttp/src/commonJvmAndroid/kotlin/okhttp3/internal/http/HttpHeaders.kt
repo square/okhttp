@@ -152,7 +152,9 @@ private fun Buffer.skipCommasAndWhitespace(): Boolean {
         // Consume space or tab.
       }
 
-      else -> break@loop
+      else -> {
+        break@loop
+      }
     }
   }
   return commaFound

@@ -150,6 +150,7 @@ class WebSocketReader(
             false
           }
       }
+
       else -> {
         if (reservedFlag1) throw ProtocolException("Unexpected rsv1 flag")
       }
@@ -215,9 +216,11 @@ class WebSocketReader(
       OPCODE_CONTROL_PING -> {
         frameCallback.onReadPing(controlFrameBuffer.readByteString())
       }
+
       OPCODE_CONTROL_PONG -> {
         frameCallback.onReadPong(controlFrameBuffer.readByteString())
       }
+
       OPCODE_CONTROL_CLOSE -> {
         var code = CLOSE_NO_STATUS_CODE
         var reason = ""
@@ -233,6 +236,7 @@ class WebSocketReader(
         frameCallback.onReadClose(code, reason)
         receivedCloseFrame = true
       }
+
       else -> {
         throw ProtocolException("Unknown control opcode: " + opcode.toHexString())
       }

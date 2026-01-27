@@ -1470,15 +1470,20 @@ open class CallTest {
         is SSLProtocolException -> {
           // RI response to the FAIL_HANDSHAKE
         }
+
         is SSLHandshakeException -> {
           // Android's response to the FAIL_HANDSHAKE
         }
+
         is SSLException -> {
           // JDK 11 response to the FAIL_HANDSHAKE
           val jvmVersion = System.getProperty("java.specification.version")
           assertThat(jvmVersion).isEqualTo("11")
         }
-        else -> throw expected
+
+        else -> {
+          throw expected
+        }
       }
     }
   }

@@ -166,7 +166,9 @@ open class Platform {
    */
   open fun getStackTraceForCloseable(closer: String): Any? =
     when {
-      logger.isLoggable(Level.FINE) -> Throwable(closer) // These are expensive to allocate.
+      logger.isLoggable(Level.FINE) -> Throwable(closer)
+
+      // These are expensive to allocate.
       else -> null
     }
 

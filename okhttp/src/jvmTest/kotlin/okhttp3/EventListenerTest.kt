@@ -501,18 +501,21 @@ class EventListenerTest(
       )
     expectedEventTypes +=
       when {
-        emptyBody ->
+        emptyBody -> {
           listOf(
             ResponseBodyStart::class,
             ResponseBodyEnd::class,
             FollowUpDecision::class,
           )
-        else ->
+        }
+
+        else -> {
           listOf(
             FollowUpDecision::class,
             ResponseBodyStart::class,
             ResponseBodyEnd::class,
           )
+        }
       }
     expectedEventTypes +=
       listOf(
