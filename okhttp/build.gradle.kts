@@ -2,7 +2,6 @@
 
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer
@@ -10,7 +9,7 @@ import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 plugins {
   kotlin("multiplatform")
-  id("com.android.library")
+  id("com.android.kotlin.multiplatform.library")
   kotlin("plugin.serialization")
   id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
@@ -54,9 +53,32 @@ kotlin {
   jvm {
   }
 
-  androidTarget {
-    compilerOptions {
-      jvmTarget.set(JvmTarget.JVM_17)
+  androidLibrary {
+    namespace = "okhttp.okhttp3"
+    compileSdk = 35
+    minSdk = 21
+
+    androidResources {
+      enable = true
+    }
+
+    optimization {
+      consumerKeepRules.publish = true
+      consumerKeepRules.files.add(file("okhttp3.pro"))
+    }
+
+    withDeviceTest {
+      instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+      execution = "HOST"
+    }
+
+    // SDK 35 needs 17, for now avoid trying to run on
+    // multiple robolectric versions, since device tests
+    // do that
+    if (testJavaVersion >= 17) {
+      withHostTest {
+        isIncludeAndroidResources = true
+      }
     }
   }
 
@@ -157,17 +179,19 @@ kotlin {
       }
     }
 
-    val androidUnitTest by getting {
-      dependencies {
-        implementation(libs.assertk)
-        implementation(libs.kotlin.test.annotations)
-        implementation(libs.kotlin.test.common)
-        implementation(libs.androidx.junit)
+    if (testJavaVersion >= 17) {
+      val androidHostTest by getting {
+        dependencies {
+          implementation(libs.assertk)
+          implementation(libs.kotlin.test.annotations)
+          implementation(libs.kotlin.test.common)
+          implementation(libs.androidx.junit)
 
-        implementation(libs.junit.jupiter.engine)
-        implementation(libs.junit.vintage.engine)
+          implementation(libs.junit.jupiter.engine)
+          implementation(libs.junit.vintage.engine)
 
-        implementation(libs.robolectric)
+          implementation(libs.robolectric)
+        }
       }
     }
   }
@@ -186,30 +210,7 @@ if (platform == "jdk8alpn") {
   }
 }
 
-android {
-  compileSdk = 35
 
-  namespace = "okhttp.okhttp3"
-
-  defaultConfig {
-    minSdk = 21
-
-    consumerProguardFiles("okhttp3.pro")
-  }
-
-  testOptions {
-    unitTests {
-      isIncludeAndroidResources = true
-    }
-  }
-
-  sourceSets {
-    named("main") {
-      manifest.srcFile("src/androidMain/AndroidManifest.xml")
-      assets.srcDir("src/androidMain/assets")
-    }
-  }
-}
 
 // From https://github.com/Kotlin/kotlinx-atomicfu/blob/master/atomicfu/build.gradle.kts
 val compileJavaModuleInfo by tasks.registering(JavaCompile::class) {
@@ -346,13 +347,6 @@ afterEvaluate {
       // https://cs.android.com/android-studio/platform/tools/base/+/mirror-goog-studio-main:build-system/gradle-core/src/main/java/com/android/build/gradle/tasks/factory/AndroidUnitTest.java;l=339
       allJvmArgs = allJvmArgs.filter { !it.startsWith("--add-opens") }
     }
-    if (name.matches("test.*UnitTest".toRegex()) && javaLauncher.get().metadata.languageVersion.asInt() < 17) {
-      // Work around robolectric requirements and limitations
-      // https://github.com/robolectric/robolectric/issues/10419
-      filter {
-        excludeTest("okhttp3.internal.publicsuffix.PublicSuffixDatabaseTest", null)
-      }
-    }
   }
 }
 
@@ -368,5 +362,5 @@ tasks.withType<KotlinCompile> {
 apply(plugin = "io.github.usefulness.maven-sympathy")
 
 mavenPublishing {
-  configure(KotlinMultiplatform(javadocJar = JavadocJar.Empty(), androidVariantsToPublish = listOf("release")))
+  configure(KotlinMultiplatform(javadocJar = JavadocJar.Empty()))
 }
