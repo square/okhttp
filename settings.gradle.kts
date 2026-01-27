@@ -52,7 +52,10 @@ include(":samples:static-server")
 include(":samples:tlssurvey")
 include(":samples:unixdomainsockets")
 include(":container-tests")
-include(":module-tests")
+val okhttpModuleTests: String by settings
+if (okhttpModuleTests.toBoolean()) {
+  include(":module-tests")
+}
 
 project(":okhttp-logging-interceptor").name = "logging-interceptor"
 

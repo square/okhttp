@@ -1,6 +1,5 @@
 plugins {
   id("com.android.library")
-  kotlin("android")
 }
 
 android {
@@ -24,9 +23,6 @@ android {
     sourceCompatibility(JavaVersion.VERSION_11)
   }
 
-  kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_11.toString()
-  }
 
   // issue merging due to conflict with httpclient and something else
   packagingOptions.resources.excludes += setOf(

@@ -8,6 +8,9 @@ plugins {
 dependencies {
   implementation(projects.okhttp)
   implementation(projects.loggingInterceptor)
+  
+  // Force version 26.0.2-1 which is a proper JPMS module, unlike transitive 13.0
+  implementation("org.jetbrains:annotations:26.0.2-1")
 
   testImplementation(projects.okhttp)
   testImplementation(projects.loggingInterceptor)
@@ -33,9 +36,6 @@ jlinkApplication {
 }
 
 extraJavaModuleInfo {
-  module("org.jetbrains:annotations", "org.jetbrains.annotations") {
-    exportAllPackages()
-  }
   module("com.squareup.okio:okio-jvm", "okio") {
     exportAllPackages()
     requires("kotlin.stdlib")
@@ -44,6 +44,12 @@ extraJavaModuleInfo {
   module("com.squareup.okio:okio", "okio") {
     exportAllPackages()
   }
+}
+
+// Exclude dokka from all configurations
+// to attempt to avoid https://github.com/gradlex-org/extra-java-module-info/issues/221
+configurations.all {
+  exclude(group = "org.jetbrains.dokka")
 }
 
 val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
