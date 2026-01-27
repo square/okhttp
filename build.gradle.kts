@@ -52,7 +52,12 @@ configure<SpotlessExtension> {
   kotlin {
     target("**/*.kt")
     targetExclude("**/kotlinTemplates/**/*.kt")
+    targetExclude("**/generated-sources/**/*.kt")
     ktlint()
+    suppressLintsFor {
+      step = "ktlint"
+      shortCode = "standard:mixed-condition-operators"
+    }
   }
 }
 
