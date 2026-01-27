@@ -40,7 +40,7 @@ bouncycastle-bctls = { module = "org.bouncycastle:bctls-jdk15to18", version.ref 
 brotli-dec = "org.brotli:dec:0.1.2"
 #noinspection UnusedVersionCatalogEntry
 checkStyle = { module = "com.puppycrawl.tools:checkstyle", version.ref = "checkStyle" }
-clikt = "com.github.ajalt.clikt:clikt:5.0.3"
+clikt = "com.github.ajalt.clikt:clikt:5.1.0"
 #noinspection UnusedVersionCatalogEntry
 codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
