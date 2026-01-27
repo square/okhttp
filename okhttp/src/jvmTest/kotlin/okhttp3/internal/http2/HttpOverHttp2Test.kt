@@ -1552,7 +1552,10 @@ class HttpOverHttp2Test(
     }.also { expected ->
       when (expected) {
         is SocketTimeoutException, is SSLException -> {}
-        else -> throw expected
+
+        else -> {
+          throw expected
+        }
       }
     }
 

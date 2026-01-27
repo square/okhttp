@@ -248,9 +248,11 @@ class OkHttpTest {
             // Conscrypt 2.5+ defaults to SSLEngine-based SSLSocket
             assertEquals("org.conscrypt.Java8EngineSocket", socketClass)
           }
+
           Build.VERSION.SDK_INT < 22 -> {
             assertEquals("org.conscrypt.KitKatPlatformOpenSSLSocketImplAdapter", socketClass)
           }
+
           else -> {
             assertEquals("org.conscrypt.ConscryptFileDescriptorSocket", socketClass)
           }
@@ -856,6 +858,7 @@ class OkHttpTest {
         is IllegalArgumentException -> {
           assertEquals("Android internal error", ioe.message)
         }
+
         is CertificateException -> {
           assertTrue(ioe.cause?.cause is IllegalArgumentException)
           assertEquals(
@@ -866,7 +869,10 @@ class OkHttpTest {
               ?.startsWith("Invalid input to toASCII"),
           )
         }
-        else -> throw ioe
+
+        else -> {
+          throw ioe
+        }
       }
     }
   }

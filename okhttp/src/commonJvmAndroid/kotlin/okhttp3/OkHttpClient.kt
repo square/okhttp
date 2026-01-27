@@ -191,6 +191,7 @@ open class OkHttpClient internal constructor(
     when {
       // Defer calls to ProxySelector.getDefault() because it can throw a SecurityException.
       builder.proxy != null -> NullProxySelector
+
       else -> builder.proxySelector ?: ProxySelector.getDefault() ?: NullProxySelector
     }
 

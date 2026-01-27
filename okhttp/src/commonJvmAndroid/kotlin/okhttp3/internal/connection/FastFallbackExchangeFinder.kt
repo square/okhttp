@@ -121,7 +121,10 @@ internal class FastFallbackExchangeFinder(
             FailedPlan(e)
           }
         }
-        else -> return null // Nothing further to try.
+
+        else -> {
+          return null
+        } // Nothing further to try.
       }
 
     // Already connected. Return it immediately.

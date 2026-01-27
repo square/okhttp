@@ -154,7 +154,9 @@ class Handshake internal constructor(
             throw IOException("cipherSuite == $cipherSuiteString")
           }
 
-          else -> CipherSuite.forJavaName(cipherSuiteString)
+          else -> {
+            CipherSuite.forJavaName(cipherSuiteString)
+          }
         }
 
       val tlsVersionString = checkNotNull(protocol) { "tlsVersion == null" }

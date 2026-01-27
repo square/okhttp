@@ -641,7 +641,10 @@ class URLConnectionTest {
     }.also { expected ->
       when (expected) {
         is SSLException, is TlsFatalAlert -> {}
-        else -> throw expected
+
+        else -> {
+          throw expected
+        }
       }
     }
   }
@@ -762,8 +765,12 @@ class URLConnectionTest {
             assertThat(expected.cause!!).isInstanceOf<CertificateException>()
           }
         }
+
         is TlsFatalAlert -> {}
-        else -> throw expected
+
+        else -> {
+          throw expected
+        }
       }
     }
     assertThat(server.requestCount).isEqualTo(0)
@@ -4080,17 +4087,23 @@ class URLConnectionTest {
         is SSLProtocolException -> {
           // RI response to the FAIL_HANDSHAKE
         }
+
         is SSLHandshakeException -> {
           // Android's response to the FAIL_HANDSHAKE
         }
+
         is SSLException -> {
           // JDK 1.9 response to the FAIL_HANDSHAKE
           // javax.net.ssl.SSLException: Unexpected handshake message: client_hello
         }
+
         is SocketException -> {
           // Conscrypt's response to the FAIL_HANDSHAKE
         }
-        else -> throw expected
+
+        else -> {
+          throw expected
+        }
       }
     }
   }
