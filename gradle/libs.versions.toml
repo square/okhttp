@@ -7,7 +7,7 @@ com-squareup-okio = "3.16.4"
 de-mannodermaus-junit5 = "2.0.1"
 graalvm = "25.0.2"
 #noinspection UnusedVersionCatalogEntry
-junit-platform = "1.13.4"
+junit-platform = "1.14.2"
 kotlinx-serialization = "1.10.0"
 ksp = "2.3.4"
 lintGradle = "1.0.0-alpha05"
