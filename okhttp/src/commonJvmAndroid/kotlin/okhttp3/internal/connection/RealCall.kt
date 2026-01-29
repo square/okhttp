@@ -19,6 +19,7 @@ import java.io.IOException
 import java.io.InterruptedIOException
 import java.lang.ref.WeakReference
 import java.net.Socket
+import java.time.LocalTime
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
@@ -28,6 +29,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.EventListener
@@ -76,11 +79,19 @@ class RealCall(
 
   private val timeout =
     object : AsyncTimeout() {
+
       override fun timedOut() {
+        Exception("Timeout").printStackTrace()
+        println("RealCall: Timed out ${LocalTime.now()}")
         this@RealCall.cancel()
+      }
+
+      override fun toString(): String {
+        return "RealCall.timeout ${this.timeoutNanos().nanoseconds.inWholeSeconds}"
       }
     }.apply {
       timeout(client.callTimeoutMillis.toLong(), MILLISECONDS)
+      println("RealCall: new timeout $this ${LocalTime.now()} " + client.callTimeoutMillis.milliseconds.inWholeSeconds)
     }
 
   private val executed = AtomicBoolean()
@@ -180,6 +191,7 @@ class RealCall(
   override fun execute(): Response {
     check(executed.compareAndSet(false, true)) { "Already Executed" }
 
+    println("RealCall: execute ${LocalTime.now()}")
     timeout.enter()
     callStart()
     try {
@@ -462,6 +474,7 @@ class RealCall(
 
   private fun timeoutExit(cause: IOException?): IOException? {
     if (timeoutEarlyExit) return cause
+    println("RealCall: timeoutExit ${LocalTime.now()}")
     if (!timeout.exit()) return cause
 
     val e = InterruptedIOException("timeout")
@@ -476,6 +489,7 @@ class RealCall(
   fun timeoutEarlyExit() {
     check(!timeoutEarlyExit)
     timeoutEarlyExit = true
+    println("RealCall: exit ${LocalTime.now()}")
     timeout.exit()
   }
 
@@ -575,6 +589,7 @@ class RealCall(
     override fun run() {
       threadName("OkHttp ${redactedUrl()}") {
         var signalledCallback = false
+        println("RealCall: timeout enter ${LocalTime.now()}")
         timeout.enter()
         try {
           val response = getResponseWithInterceptorChain()

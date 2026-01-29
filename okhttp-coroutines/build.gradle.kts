@@ -5,6 +5,7 @@ plugins {
   kotlin("jvm")
   id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
+  id("app.cash.burst")
 }
 
 project.applyOsgi(
