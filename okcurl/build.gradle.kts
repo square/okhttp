@@ -1,15 +1,27 @@
-import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinJvm
+import okhttp3.buildsupport.testJavaVersion
 import org.graalvm.buildtools.gradle.dsl.GraalVMExtension
-import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   kotlin("jvm")
   id("okhttp.publish-conventions")
+  id("okhttp.jvm-conventions")
+  id("okhttp.quality-conventions")
+  id("okhttp.testing-conventions")
   id("com.gradleup.shadow")
 }
 
-val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
+tasks.withType<KotlinCompile> {
+  compilerOptions {
+    jvmTarget.set(JvmTarget.JVM_17)
+  }
+}
+
+tasks.withType<JavaCompile> {
+    sourceCompatibility = JvmTarget.JVM_17.target
+    targetCompatibility = JvmTarget.JVM_17.target
+}
 
 val copyResourcesTemplates = tasks.register<Copy>("copyResourcesTemplates") {
   from("src/main/resources-templates")
@@ -18,31 +30,30 @@ val copyResourcesTemplates = tasks.register<Copy>("copyResourcesTemplates") {
   filteringCharset = Charsets.UTF_8.toString()
 }
 
-kotlin {
-  sourceSets {
-    val main by getting {
-      resources.srcDir(copyResourcesTemplates.get().outputs)
-    }
-  }
+configure<JavaPluginExtension> {
+  sourceSets.getByName("main").resources.srcDir(copyResourcesTemplates.get().outputs)
 }
 
 dependencies {
   api(projects.okhttp)
   api(projects.loggingInterceptor)
-  api(libs.squareup.okio)
+  api(libs.square.okio)
   implementation(libs.clikt)
 
-  testApi(libs.assertk)
+  testImplementation(projects.okhttpTestingSupport)
+  testImplementation(projects.mockwebserver3)
+  testImplementation(projects.mockwebserver3Junit5)
+  testImplementation(libs.junit)
+  testImplementation(libs.assertk)
   testImplementation(kotlin("test"))
 }
 
-configure<AnimalSnifferExtension> {
+animalsniffer {
   isIgnoreFailures = true
 }
 
 tasks.jar {
   manifest {
-    attributes("Automatic-Module-Name" to "okhttp3.curl")
     attributes("Main-Class" to "okhttp3.curl.MainCommandLineKt")
   }
 }
@@ -64,10 +75,11 @@ configure<GraalVMExtension> {
     named("main") {
       imageName = "okcurl"
       mainClass = "okhttp3.curl.MainCommandLineKt"
+      if (System.getProperty("os.name").lowercase().contains("windows")) {
+        // windows requires a slightly different approach for some things
+      } else {
+        buildArgs("--no-fallback")
+      }
     }
   }
-}
-
-mavenPublishing {
-  configure(KotlinJvm(javadocJar = JavadocJar.Empty()))
 }

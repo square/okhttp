@@ -1,10 +1,9 @@
-import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinJvm
-
 plugins {
   kotlin("jvm")
   id("okhttp.publish-conventions")
-  id("binary-compatibility-validator")
+  id("okhttp.jvm-conventions")
+  id("okhttp.quality-conventions")
+  id("okhttp.testing-conventions")
 }
 
 project.applyOsgi(
@@ -19,8 +18,4 @@ dependencies {
   "friendsApi"(projects.okhttp)
   api(projects.okhttpJavaNetCookiejar)
   compileOnly(libs.animalsniffer.annotations)
-}
-
-mavenPublishing {
-  configure(KotlinJvm(javadocJar = JavadocJar.Empty()))
 }

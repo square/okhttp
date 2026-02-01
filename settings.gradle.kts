@@ -9,8 +9,14 @@ pluginManagement {
 
 import java.util.Properties
 
-
 rootProject.name = "okhttp-parent"
+
+dependencyResolutionManagement {
+  repositories {
+    mavenCentral()
+    google()
+  }
+}
 
 plugins {
   id("org.gradle.toolchains.foojay-resolver-convention") version("1.0.0")

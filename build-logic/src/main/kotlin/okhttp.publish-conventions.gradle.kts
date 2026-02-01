@@ -1,7 +1,12 @@
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
+import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import kotlinx.validation.ApiValidationExtension
 
 plugins {
   id("com.vanniktech.maven.publish.base")
+  id("binary-compatibility-validator")
 }
 
 configure<MavenPublishBaseExtension> {
@@ -28,5 +33,23 @@ configure<MavenPublishBaseExtension> {
         name.set("Square, Inc.")
       }
     }
+  }
+
+  if (project.name == "okhttp") {
+    configure(KotlinMultiplatform(javadocJar = JavadocJar.Empty()))
+  } else if (plugins.hasPlugin(JavaBasePlugin::class.java)) {
+    configure(KotlinJvm(javadocJar = JavadocJar.Empty()))
+  }
+}
+
+plugins.withId("binary-compatibility-validator") {
+  configure<ApiValidationExtension> {
+    ignoredPackages += "okhttp3.logging.internal"
+    ignoredPackages += "mockwebserver3.internal"
+    ignoredPackages += "okhttp3.internal"
+    ignoredPackages += "mockwebserver3.junit5.internal"
+    ignoredPackages += "okhttp3.brotli.internal"
+    ignoredPackages += "okhttp3.sse.internal"
+    ignoredPackages += "okhttp3.tls.internal"
   }
 }

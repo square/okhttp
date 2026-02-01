@@ -1,11 +1,9 @@
-import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinJvm
-
 plugins {
   kotlin("jvm")
   id("okhttp.publish-conventions")
-  id("binary-compatibility-validator")
-  id("ru.vyarus.animalsniffer")
+  id("okhttp.jvm-conventions")
+  id("okhttp.quality-conventions")
+  id("okhttp.testing-conventions")
 }
 
 project.applyOsgi(
@@ -16,7 +14,7 @@ project.applyOsgi(
 project.applyJavaModules("okhttp3.tls")
 
 dependencies {
-  api(libs.squareup.okio)
+  api(libs.square.okio)
   "friendsImplementation"(projects.okhttp)
   compileOnly(libs.animalsniffer.annotations)
 
@@ -31,8 +29,4 @@ dependencies {
 animalsniffer {
   // InsecureExtendedTrustManager (API 24+)
   ignore = listOf("javax.net.ssl.X509ExtendedTrustManager")
-}
-
-mavenPublishing {
-  configure(KotlinJvm(javadocJar = JavadocJar.Empty()))
 }

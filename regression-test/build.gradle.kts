@@ -1,9 +1,10 @@
 plugins {
+  id("okhttp.base-conventions")
   id("com.android.library")
 }
 
 android {
-  compileSdk = 35
+  compileSdk = 36
 
   namespace = "okhttp.android.regression"
 
@@ -30,7 +31,6 @@ android {
   )
 }
 
-
 dependencies {
   val okhttpLegacyVersion = "3.12.12"
 
@@ -45,7 +45,7 @@ dependencies {
   androidTestImplementation(libs.bouncycastle.bctls)
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
-  androidTestImplementation(libs.httpClient5)
-  androidTestImplementation(libs.squareup.moshi)
-  androidTestImplementation(libs.squareup.moshi.kotlin)
+  androidTestImplementation(libs.http.client5)
+  androidTestImplementation(libs.square.moshi)
+  androidTestImplementation(libs.square.moshi.kotlin)
 }

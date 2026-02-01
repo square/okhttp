@@ -1,7 +1,8 @@
 @file:Suppress("UnstableApiUsage")
 
-import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinMultiplatform
+import okhttp3.buildsupport.alpnBootVersion
+import okhttp3.buildsupport.platform
+import okhttp3.buildsupport.testJavaVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer
@@ -12,12 +13,12 @@ plugins {
   id("com.android.kotlin.multiplatform.library")
   kotlin("plugin.serialization")
   id("okhttp.publish-conventions")
-  id("binary-compatibility-validator")
+  id("okhttp.jvm-conventions")
+  id("okhttp.quality-conventions")
+  id("okhttp.testing-conventions")
   id("app.cash.burst")
+  alias(libs.plugins.maven.sympathy)
 }
-
-val platform = System.getProperty("okhttp.platform", "jdk9")
-val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
 
 val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
   val kotlinTemplatesOutput = layout.buildDirectory.dir("generated/sources/kotlinTemplates")
@@ -55,7 +56,7 @@ kotlin {
 
   androidLibrary {
     namespace = "okhttp.okhttp3"
-    compileSdk = 35
+    compileSdk = 36
     minSdk = 21
 
     androidResources {
@@ -90,7 +91,7 @@ kotlin {
       kotlin.srcDir(generateIdnaMappingTable.map { it.outputs })
 
       dependencies {
-        api(libs.squareup.okio)
+        api(libs.square.okio)
         api(libs.kotlin.stdlib)
 
         compileOnly(libs.animalsniffer.annotations)
@@ -131,50 +132,49 @@ kotlin {
         compileOnly(libs.bouncycastle.bctls)
 
         // graal build support
-        compileOnly(libs.nativeImageSvm)
+        compileOnly(libs.native.image.svm)
         compileOnly(libs.openjsse)
       }
     }
 
     val jvmTest by getting {
       dependencies {
-        implementation(projects.okhttpTestingSupport)
         implementation(libs.assertk)
+        implementation(libs.conscrypt.openjdk)
+        implementation(libs.junit.jupiter.api)
+        implementation(libs.junit.jupiter.engine)
+        implementation(libs.junit.jupiter.params)
+        implementation(libs.junit.vintage.engine)
+        implementation(libs.junit)
         implementation(libs.kotlin.test.annotations)
         implementation(libs.kotlin.test.common)
+        implementation(libs.kotlin.test.junit)
+        implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.serialization.core)
         implementation(libs.kotlinx.serialization.json)
-        implementation(projects.okhttpJavaNetCookiejar)
-        implementation(projects.okhttpTls)
-        implementation(projects.okhttpUrlconnection)
+        implementation(libs.openjsse)
+        implementation(libs.square.moshi.kotlin)
+        implementation(libs.square.moshi)
+        implementation(libs.square.okio.fakefilesystem)
+        implementation(projects.loggingInterceptor)
+        implementation(projects.mockwebserver)
         implementation(projects.mockwebserver3)
         implementation(projects.mockwebserver3Junit4)
         implementation(projects.mockwebserver3Junit5)
-        implementation(projects.mockwebserver)
-        implementation(projects.loggingInterceptor)
         implementation(projects.okhttpBrotli)
+        implementation(projects.okhttpCoroutines)
         implementation(projects.okhttpDnsoverhttps)
         implementation(projects.okhttpIdnaMappingTable)
+        implementation(projects.okhttpJavaNetCookiejar)
         implementation(projects.okhttpSse)
-        implementation(projects.okhttpCoroutines)
-        implementation(libs.kotlinx.coroutines.core)
-        implementation(libs.squareup.moshi)
-        implementation(libs.squareup.moshi.kotlin)
-        implementation(libs.squareup.okio.fakefilesystem)
-        implementation(libs.conscrypt.openjdk)
-        implementation(libs.junit)
-        implementation(libs.junit.jupiter.api)
-        implementation(libs.junit.jupiter.params)
-        implementation(libs.kotlin.test.junit)
-        implementation(libs.openjsse)
-
-        implementation(libs.junit.jupiter.engine)
-        implementation(libs.junit.vintage.engine)
+        implementation(projects.okhttpTestingSupport)
+        implementation(projects.okhttpTls)
+        implementation(projects.okhttpUrlconnection)
 
         if (platform == "conscrypt") {
-          implementation(rootProject.libs.conscrypt.openjdk)
+          implementation(libs.conscrypt.openjdk)
         } else if (platform == "openjsse") {
-          implementation(rootProject.libs.openjsse)
+          implementation(libs.openjsse)
         }
       }
     }
@@ -182,14 +182,12 @@ kotlin {
     if (testJavaVersion >= 17) {
       val androidHostTest by getting {
         dependencies {
-          implementation(libs.assertk)
-          implementation(libs.kotlin.test.annotations)
-          implementation(libs.kotlin.test.common)
           implementation(libs.androidx.junit)
-
+          implementation(libs.assertk)
           implementation(libs.junit.jupiter.engine)
           implementation(libs.junit.vintage.engine)
-
+          implementation(libs.kotlin.test.annotations)
+          implementation(libs.kotlin.test.common)
           implementation(libs.robolectric)
         }
       }
@@ -199,7 +197,7 @@ kotlin {
 
 if (platform == "jdk8alpn") {
   // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
-  val alpnBootVersion = alpnBootVersion()
+  val alpnBootVersion = alpnBootVersion
   if (alpnBootVersion != null) {
     val alpnBootJar = configurations.detachedConfiguration(
       dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")
@@ -306,19 +304,7 @@ project.applyOsgiMultiplatform(
 
 val androidSignature by configurations.getting
 val jvmSignature by configurations.getting
-
-val checkstyleConfig: Configuration by configurations.named("checkstyleConfig")
-dependencies {
-  // Everything else requires Android API 21+.
-  androidSignature(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
-
-  // OkHttp requires Java 8+.
-  jvmSignature(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
-
-  checkstyleConfig(rootProject.libs.checkStyle) {
-    isTransitive = false
-  }
-}
+val checkstyleConfig by configurations.getting
 
 // Animal Sniffer confirms we generally don't use APIs not on Java 8.
 configure<AnimalSnifferExtension> {
@@ -332,12 +318,6 @@ project.tasks.withType<AnimalSniffer> {
   } else {
     animalsnifferSignatures = androidSignature
   }
-}
-
-configure<CheckstyleExtension> {
-  config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
-  toolVersion = rootProject.libs.versions.checkStyle.get()
-  sourceSets = listOf(project.sourceSets["jvmMain"])
 }
 
 afterEvaluate {
@@ -357,10 +337,4 @@ tasks.withType<KotlinCompile> {
   compilerOptions {
     freeCompilerArgs.addAll("-module-name=okhttp", "-Xexpect-actual-classes")
   }
-}
-
-apply(plugin = "io.github.usefulness.maven-sympathy")
-
-mavenPublishing {
-  configure(KotlinMultiplatform(javadocJar = JavadocJar.Empty()))
 }
