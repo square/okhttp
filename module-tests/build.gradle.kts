@@ -11,7 +11,7 @@ plugins {
 dependencies {
   implementation(projects.okhttp)
   implementation(projects.loggingInterceptor)
-  
+
   // Force version 26.0.2-1 which is a proper JPMS module, unlike transitive 13.0
   implementation(libs.jetbrains.annotations)
 
