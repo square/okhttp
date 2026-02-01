@@ -147,13 +147,13 @@ subprojects {
     configure<CheckstyleExtension> {
       config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
       toolVersion = rootProject.libs.versions.checkStyle.get()
-      sourceSets = listOf(project.sourceSets["main"])
+      sourceSets = listOf(project.extensions.getByType<SourceSetContainer>()["main"])
     }
 
     // Animal Sniffer confirms we generally don't use APIs not on Java 8.
     configure<AnimalSnifferExtension> {
       annotation = "okhttp3.internal.SuppressSignatureCheck"
-      sourceSets = listOf(project.sourceSets["main"])
+      sourceSets = listOf(project.extensions.getByType<SourceSetContainer>()["main"])
       signatures = androidSignature + jvmSignature
       failWithoutSignatures = false
     }
@@ -347,32 +347,6 @@ subprojects {
       }
     }
 
-    configure<MavenPublishBaseExtension> {
-      publishToMavenCentral(automaticRelease = true)
-      signAllPublications()
-      pom {
-        name.set(project.name)
-        description.set("Square’s meticulous HTTP client for Java and Kotlin.")
-        url.set("https://square.github.io/okhttp/")
-        licenses {
-          license {
-            name.set("The Apache Software License, Version 2.0")
-            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-            distribution.set("repo")
-          }
-        }
-        scm {
-          connection.set("scm:git:https://github.com/square/okhttp.git")
-          developerConnection.set("scm:git:ssh://git@github.com/square/okhttp.git")
-          url.set("https://github.com/square/okhttp")
-        }
-        developers {
-          developer {
-            name.set("Square, Inc.")
-          }
-        }
-      }
-    }
   }
 
   plugins.withId("binary-compatibility-validator") {
