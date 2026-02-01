@@ -11,7 +11,7 @@ plugins {
   kotlin("multiplatform")
   id("com.android.kotlin.multiplatform.library")
   kotlin("plugin.serialization")
-  id("com.vanniktech.maven.publish.base")
+  id("okhttp.publish-conventions")
   id("binary-compatibility-validator")
   id("app.cash.burst")
 }

@@ -3,7 +3,7 @@ import com.vanniktech.maven.publish.KotlinJvm
 
 plugins {
   kotlin("jvm")
-  id("com.vanniktech.maven.publish.base")
+  id("okhttp.publish-conventions")
   id("binary-compatibility-validator")
 }
 

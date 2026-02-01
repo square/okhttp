@@ -1,4 +1,14 @@
+pluginManagement {
+  includeBuild("build-logic")
+  repositories {
+    mavenCentral()
+    gradlePluginPortal()
+    google()
+  }
+}
+
 import java.util.Properties
+
 
 rootProject.name = "okhttp-parent"
 

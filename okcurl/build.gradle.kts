@@ -5,7 +5,7 @@ import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 plugins {
   kotlin("jvm")
-  id("com.vanniktech.maven.publish.base")
+  id("okhttp.publish-conventions")
   id("com.gradleup.shadow")
 }
 
