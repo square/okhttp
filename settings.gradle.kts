@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 pluginManagement {
   includeBuild("build-logic")
   repositories {
@@ -6,8 +8,6 @@ pluginManagement {
     google()
   }
 }
-
-import java.util.Properties
 
 rootProject.name = "okhttp-parent"
 
@@ -76,7 +76,7 @@ if (okhttpModuleTests.toBoolean()) {
 project(":okhttp-logging-interceptor").name = "logging-interceptor"
 
 val androidHome = System.getenv("ANDROID_HOME")
-val localProperties = Properties().apply {
+val localProperties = java.util.Properties().apply {
   val file = rootProject.projectDir.resolve("local.properties")
   if (file.exists()) {
     load(file.inputStream())

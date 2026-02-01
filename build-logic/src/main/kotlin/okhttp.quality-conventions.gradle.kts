@@ -33,7 +33,7 @@ val jvmSignature = configurations.maybeCreate("jvmSignature")
 configure<CheckstyleExtension> {
   config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
   toolVersion = version("checkstyle")
-  
+
   val sourceSets = project.extensions.findByType<SourceSetContainer>()
   val main = sourceSets?.findByName("main") ?: sourceSets?.findByName("jvmMain")
   if (main != null) {
@@ -43,13 +43,13 @@ configure<CheckstyleExtension> {
 
 configure<AnimalSnifferExtension> {
   annotation = "okhttp3.internal.SuppressSignatureCheck"
-  
+
   val sourceSets = project.extensions.findByType<SourceSetContainer>()
   val main = sourceSets?.findByName("main") ?: sourceSets?.findByName("jvmMain")
   if (main != null) {
     this.sourceSets = listOf(main)
   }
-  
+
   signatures = androidSignature + jvmSignature
   failWithoutSignatures = false
 }
@@ -59,6 +59,8 @@ dependencies {
   // For now, we'll keep the standard ones and allow modules to add more
   androidSignature(library("signature-android-apilevel21")) { artifact { type = "signature" } }
   jvmSignature(library("codehaus-signature-java18")) { artifact { type = "signature" } }
+
+  "lintChecks"(library("gradlePlugin-lint-gradle"))
 }
 
 configure<com.android.build.api.dsl.Lint> {
