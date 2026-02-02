@@ -1,7 +1,7 @@
 [versions]
 agp = "9.0.0"
 biz-aQute-bnd = "7.1.0"
-checkStyle = "12.3.1"
+checkStyle = "13.1.0"
 com-squareup-moshi = "1.15.2"
 com-squareup-okio = "3.16.4"
 de-mannodermaus-junit5 = "2.0.1"
