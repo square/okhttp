@@ -163,8 +163,9 @@ class HandshakeCertificatesTest {
         .toSet()
 
     // It's safe to assume all platforms will have a major Internet certificate issuer.
+    // Entrust may not be in all platform certs, so switch to DigiCert
     assertThat(names).matchesPredicate { strings ->
-      strings.any { it.matches(Regex("[A-Z]+=Entrust.*")) }
+      strings.any { it.matches(Regex("[A-Z]+=DigiCert.*")) }
     }
   }
 
