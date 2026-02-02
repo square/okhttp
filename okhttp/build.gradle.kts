@@ -20,33 +20,35 @@ plugins {
   alias(libs.plugins.maven.sympathy)
 }
 
-val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
-  val kotlinTemplatesOutput = layout.buildDirectory.dir("generated/sources/kotlinTemplates")
+val copyKotlinTemplates =
+  tasks.register<Copy>("copyKotlinTemplates") {
+    val kotlinTemplatesOutput = layout.buildDirectory.dir("generated/sources/kotlinTemplates")
 
-  from("src/commonJvmAndroid/kotlinTemplates")
-  into(kotlinTemplatesOutput)
+    from("src/commonJvmAndroid/kotlinTemplates")
+    into(kotlinTemplatesOutput)
 
-  filteringCharset = Charsets.UTF_8.toString()
+    filteringCharset = Charsets.UTF_8.toString()
 
-  expand(
-    // Build & use okhttp3/internal/-InternalVersion.kt
-    "projectVersion" to project.version,
-  )
-}
+    expand(
+      // Build & use okhttp3/internal/-InternalVersion.kt
+      "projectVersion" to project.version,
+    )
+  }
 
 // Build & use okhttp3/internal/idn/IdnaMappingTableInstance.kt
 val generateIdnaMappingTableConfiguration: Configuration by configurations.creating
 dependencies {
   generateIdnaMappingTableConfiguration(projects.okhttpIdnaMappingTable)
 }
-val generateIdnaMappingTable = tasks.register<JavaExec>("generateIdnaMappingTable") {
-  val idnaOutput = layout.buildDirectory.dir("generated/sources/idnaMappingTable")
+val generateIdnaMappingTable =
+  tasks.register<JavaExec>("generateIdnaMappingTable") {
+    val idnaOutput = layout.buildDirectory.dir("generated/sources/idnaMappingTable")
 
-  outputs.dir(idnaOutput)
-  mainClass.set("okhttp3.internal.idn.GenerateIdnaMappingTableCode")
-  args(idnaOutput.get())
-  classpath = generateIdnaMappingTableConfiguration
-}
+    outputs.dir(idnaOutput)
+    mainClass.set("okhttp3.internal.idn.GenerateIdnaMappingTableCode")
+    args(idnaOutput.get())
+    classpath = generateIdnaMappingTableConfiguration
+  }
 
 kotlin {
   jvmToolchain(8)
@@ -84,19 +86,20 @@ kotlin {
   }
 
   sourceSets {
-    val commonJvmAndroid = create("commonJvmAndroid") {
-      dependsOn(commonMain.get())
+    val commonJvmAndroid =
+      create("commonJvmAndroid") {
+        dependsOn(commonMain.get())
 
-      kotlin.srcDir(copyKotlinTemplates.map { it.outputs })
-      kotlin.srcDir(generateIdnaMappingTable.map { it.outputs })
+        kotlin.srcDir(copyKotlinTemplates.map { it.outputs })
+        kotlin.srcDir(generateIdnaMappingTable.map { it.outputs })
 
-      dependencies {
-        api(libs.square.okio)
-        api(libs.kotlin.stdlib)
+        dependencies {
+          api(libs.square.okio)
+          api(libs.kotlin.stdlib)
 
-        compileOnly(libs.animalsniffer.annotations)
+          compileOnly(libs.animalsniffer.annotations)
+        }
       }
-    }
 
     commonTest {
       dependencies {
@@ -199,16 +202,16 @@ if (platform == "jdk8alpn") {
   // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
   val alpnBootVersion = alpnBootVersion
   if (alpnBootVersion != null) {
-    val alpnBootJar = configurations.detachedConfiguration(
-      dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")
-    ).singleFile
+    val alpnBootJar =
+      configurations
+        .detachedConfiguration(
+          dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion"),
+        ).singleFile
     tasks.withType<Test> {
-      jvmArgs("-Xbootclasspath/p:${alpnBootJar}")
+      jvmArgs("-Xbootclasspath/p:$alpnBootJar")
     }
   }
 }
-
-
 
 // From https://github.com/Kotlin/kotlinx-atomicfu/blob/master/atomicfu/build.gradle.kts
 val compileJavaModuleInfo by tasks.registering(JavaCompile::class) {
@@ -263,8 +266,8 @@ val compileJavaModuleInfo by tasks.registering(JavaCompile::class) {
   options.compilerArgs.addAll(
     listOf(
       "--patch-module",
-      "$moduleName=${compileKotlinTask.destinationDirectory.get().asFile}"
-    )
+      "$moduleName=${compileKotlinTask.destinationDirectory.get().asFile}",
+    ),
   )
 
   // Use the classpath of the compileKotlinJvm task.
@@ -322,7 +325,11 @@ project.tasks.withType<AnimalSniffer> {
 
 afterEvaluate {
   tasks.withType<Test> {
-    if (javaLauncher.get().metadata.languageVersion.asInt() < 9) {
+    if (javaLauncher
+        .get()
+        .metadata.languageVersion
+        .asInt() < 9
+    ) {
       // Work around robolectric requirements and limitations
       // https://cs.android.com/android-studio/platform/tools/base/+/mirror-goog-studio-main:build-system/gradle-core/src/main/java/com/android/build/gradle/tasks/factory/AndroidUnitTest.java;l=339
       allJvmArgs = allJvmArgs.filter { !it.startsWith("--add-opens") }

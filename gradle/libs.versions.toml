@@ -13,7 +13,7 @@ assertk = "0.28.1"
 binary-compatibility-validator = "0.18.1"
 bnd = "7.1.0"
 brotli-dec = "0.1.2"
-burst = "2.12.0-beta1"
+burst = "2.10.2"
 checkstyle = "12.3.1"
 clikt = "5.0.3"
 extra-java-module-info = "1.14"
@@ -144,7 +144,6 @@ gradlePlugin-binaryCompatibilityValidator = { module = "org.jetbrains.kotlinx:bi
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "bnd" }
 gradlePlugin-dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka-plugin" }
 gradlePlugin-graalvm = { module = "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin", version.ref = "graalvm-plugin" }
-gradlePlugin-lint-gradle = { group = "androidx.lint", name = "lint-gradle", version.ref = "lint-gradle" }
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 gradlePlugin-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp-plugin" }
 gradlePlugin-mavenPublish = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "maven-publish" }

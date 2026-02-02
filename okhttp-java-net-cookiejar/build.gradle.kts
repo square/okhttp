@@ -8,7 +8,7 @@ plugins {
 
 project.applyOsgi(
   "Export-Package: okhttp3.java.net.cookiejar",
-  "Bundle-SymbolicName: com.squareup.okhttp3.java.net.cookiejar"
+  "Bundle-SymbolicName: com.squareup.okhttp3.java.net.cookiejar",
 )
 
 project.applyJavaModules("okhttp3.java.net.cookiejar")

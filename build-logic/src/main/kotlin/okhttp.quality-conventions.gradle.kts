@@ -60,7 +60,7 @@ dependencies {
   androidSignature(library("signature-android-apilevel21")) { artifact { type = "signature" } }
   jvmSignature(library("codehaus-signature-java18")) { artifact { type = "signature" } }
 
-  "lintChecks"(library("gradlePlugin-lint-gradle"))
+  "lintChecks"(library("androidx-lint-gradle"))
 }
 
 configure<com.android.build.api.dsl.Lint> {

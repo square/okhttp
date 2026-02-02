@@ -9,7 +9,7 @@ plugins {
 project.applyOsgi(
   "Export-Package: okhttp3.zstd",
   "Automatic-Module-Name: okhttp3.zstd",
-  "Bundle-SymbolicName: com.squareup.okhttp3.zstd"
+  "Bundle-SymbolicName: com.squareup.okhttp3.zstd",
 )
 
 dependencies {

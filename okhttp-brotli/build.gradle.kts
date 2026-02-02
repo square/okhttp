@@ -8,7 +8,7 @@ plugins {
 
 project.applyOsgi(
   "Export-Package: okhttp3.brotli",
-  "Bundle-SymbolicName: com.squareup.okhttp3.brotli"
+  "Bundle-SymbolicName: com.squareup.okhttp3.brotli",
 )
 
 project.applyJavaModules("okhttp3.brotli")
