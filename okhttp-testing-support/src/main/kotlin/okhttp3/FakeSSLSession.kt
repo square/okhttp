@@ -53,6 +53,7 @@ class FakeSSLSession(
       certificates as Array<Certificate>
     }
 
+  @Suppress("removal", "OVERRIDE_DEPRECATION")
   @Throws(
     SSLPeerUnverifiedException::class,
   )

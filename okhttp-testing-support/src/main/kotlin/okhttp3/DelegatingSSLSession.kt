@@ -62,6 +62,7 @@ abstract class DelegatingSSLSession(
 
   override fun getLocalCertificates(): Array<Certificate>? = delegate!!.localCertificates
 
+  @Suppress("removal", "OVERRIDE_DEPRECATION")
   @Throws(SSLPeerUnverifiedException::class)
   override fun getPeerCertificateChain(): Array<X509Certificate> = delegate!!.peerCertificateChain
 
