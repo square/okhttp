@@ -9,7 +9,7 @@ plugins {
 project.applyJavaModules("mockwebserver3.junit5")
 
 dependencies {
-  api(projects.okhttp)
+  "friendsApi"(projects.okhttp)
   api(projects.mockwebserver3)
   api(libs.junit.jupiter.api)
   compileOnly(libs.animalsniffer.annotations)
