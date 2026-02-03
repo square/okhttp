@@ -17,7 +17,7 @@ tasks.withType<KotlinCompile> {
 
 // TODO reenable other tests
 // https://github.com/square/okhttp/issues/8901
-//sourceSets {
+// sourceSets {
 //  test {
 //    java.srcDirs(
 //      "../okhttp-brotli/src/test/java",
@@ -26,7 +26,7 @@ tasks.withType<KotlinCompile> {
 //      "../okhttp-sse/src/test/java",
 //    )
 //  }
-//}
+// }
 
 dependencies {
   implementation(projects.okhttp)
