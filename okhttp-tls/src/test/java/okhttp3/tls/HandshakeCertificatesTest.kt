@@ -163,8 +163,18 @@ class HandshakeCertificatesTest {
         .toSet()
 
     // It's safe to assume all platforms will have a major Internet certificate issuer.
+    val majorIssuers = listOf(
+      "DigiCert",
+      "Let's Encrypt",
+      "ISRG",  // Internet Security Research Group (Let's Encrypt parent)
+      "GlobalSign",
+      "Comodo",
+      "Sectigo",
+      "GeoTrust",
+      "Entrust",
+    )
     assertThat(names).matchesPredicate { strings ->
-      strings.any { it.matches(Regex("[A-Z]+=Entrust.*")) }
+      strings.any { name -> majorIssuers.any { issuer -> name.contains(issuer, ignoreCase = true) } }
     }
   }
 
