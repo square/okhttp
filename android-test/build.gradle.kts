@@ -1,14 +1,13 @@
-@file:Suppress("UnstableApiUsage")
+import okhttp3.buildsupport.androidBuild
 
 plugins {
+  id("okhttp.base-conventions")
   id("com.android.library")
   id("de.mannodermaus.android-junit5")
 }
 
-val androidBuild = property("androidBuild").toString().toBoolean()
-
 android {
-  compileSdk = 35
+  compileSdk = 36
 
   namespace = "okhttp.android.test"
 
@@ -70,11 +69,11 @@ dependencies {
   testImplementation(libs.androidx.test.runner)
   testImplementation(libs.robolectric)
   testImplementation(libs.androidx.espresso.core)
-  testImplementation(libs.squareup.okio.fakefilesystem)
+  testImplementation(libs.square.okio.fakefilesystem)
   testImplementation(projects.okhttpTestingSupport)
-  testImplementation(rootProject.libs.conscrypt.openjdk)
-  testImplementation(rootProject.libs.junit.jupiter.engine)
-  testImplementation(rootProject.libs.junit.vintage.engine)
+  testImplementation(libs.conscrypt.openjdk)
+  testImplementation(libs.junit.jupiter.engine)
+  testImplementation(libs.junit.vintage.engine)
 
   androidTestImplementation(projects.okhttpTestingSupport) {
     exclude("org.openjsse", "openjsse")
@@ -95,12 +94,12 @@ dependencies {
   androidTestImplementation(projects.okhttpTls)
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
-  androidTestImplementation(libs.httpClient5)
+  androidTestImplementation(libs.http.client5)
   androidTestImplementation(libs.kotlin.test.common)
   androidTestImplementation(libs.kotlin.test.junit)
-  androidTestImplementation(libs.squareup.moshi)
-  androidTestImplementation(libs.squareup.moshi.kotlin)
-  androidTestImplementation(libs.squareup.okio.fakefilesystem)
+  androidTestImplementation(libs.square.moshi)
+  androidTestImplementation(libs.square.moshi.kotlin)
+  androidTestImplementation(libs.square.okio.fakefilesystem)
 
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.junit.jupiter.api)

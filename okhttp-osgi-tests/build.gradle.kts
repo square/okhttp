@@ -1,5 +1,9 @@
+import okhttp3.buildsupport.testJavaVersion
+
 plugins {
   kotlin("jvm")
+  id("okhttp.jvm-conventions")
+  id("okhttp.testing-conventions")
 }
 
 dependencies {
@@ -52,23 +56,19 @@ normalization {
 // Expose OSGi jars to the test environment.
 val osgiTestDeploy: Configuration by configurations.creating
 
-val test = tasks.named("test")
 val copyOsgiTestDeployment = tasks.register<Copy>("copyOsgiTestDeployment") {
   from(osgiTestDeploy)
   into(layout.buildDirectory.dir("resources/test/okhttp3/osgi/deployments"))
 }
 
-test.configure {
-  dependsOn(copyOsgiTestDeployment)
-}
-
 dependencies {
-  osgiTestDeploy(libs.eclipseOsgi)
+  osgiTestDeploy(libs.eclipse.osgi)
   osgiTestDeploy(libs.kotlin.stdlib.osgi)
 }
 
-val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
+val testJavaVersion = project.testJavaVersion
 tasks.withType<Test> {
+  dependsOn(copyOsgiTestDeployment)
   onlyIf("Tests require JDK 17") {
     testJavaVersion >= 17
   }

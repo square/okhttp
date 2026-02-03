@@ -1,6 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 plugins {
+  id("okhttp.base-conventions")
   id("com.android.application")
 }
 

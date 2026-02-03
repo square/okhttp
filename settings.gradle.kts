@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 pluginManagement {
   includeBuild("build-logic")
   repositories {
@@ -7,10 +9,14 @@ pluginManagement {
   }
 }
 
-import java.util.Properties
-
-
 rootProject.name = "okhttp-parent"
+
+dependencyResolutionManagement {
+  repositories {
+    mavenCentral()
+    google()
+  }
+}
 
 plugins {
   id("org.gradle.toolchains.foojay-resolver-convention") version("1.0.0")
@@ -70,7 +76,7 @@ if (okhttpModuleTests.toBoolean()) {
 project(":okhttp-logging-interceptor").name = "logging-interceptor"
 
 val androidHome = System.getenv("ANDROID_HOME")
-val localProperties = Properties().apply {
+val localProperties = java.util.Properties().apply {
   val file = rootProject.projectDir.resolve("local.properties")
   if (file.exists()) {
     load(file.inputStream())
