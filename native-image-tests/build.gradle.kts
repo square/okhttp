@@ -15,6 +15,11 @@ tasks.withType<KotlinCompile> {
   }
 }
 
+tasks.withType<JavaCompile> {
+  sourceCompatibility = JvmTarget.JVM_17.target
+  targetCompatibility = JvmTarget.JVM_17.target
+}
+
 // TODO reenable other tests
 // https://github.com/square/okhttp/issues/8901
 // sourceSets {
