@@ -1,5 +1,8 @@
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.kotlin.dsl.withType
+import ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer
 
 plugins {
   id("okhttp.base-conventions")
@@ -27,9 +30,6 @@ dependencies {
   }
 }
 
-val androidSignature = configurations.maybeCreate("androidSignature")
-val jvmSignature = configurations.maybeCreate("jvmSignature")
-
 configure<CheckstyleExtension> {
   config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
   toolVersion = version("checkstyle")
@@ -40,6 +40,9 @@ configure<CheckstyleExtension> {
     this.sourceSets = listOf(main)
   }
 }
+
+val androidSignature = configurations.maybeCreate("androidSignature")
+val jvmSignature = configurations.maybeCreate("jvmSignature")
 
 configure<AnimalSnifferExtension> {
   annotation = "okhttp3.internal.SuppressSignatureCheck"
@@ -52,6 +55,13 @@ configure<AnimalSnifferExtension> {
 
   signatures = androidSignature + jvmSignature
   failWithoutSignatures = false
+}
+
+// Default to only published modules
+project.tasks.withType<AnimalSniffer> {
+  onlyIf {
+    project.extensions.findByType<MavenPublishBaseExtension>() != null
+  }
 }
 
 dependencies {

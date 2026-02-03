@@ -42,14 +42,12 @@ configure<MavenPublishBaseExtension> {
   }
 }
 
-plugins.withId("binary-compatibility-validator") {
-  configure<ApiValidationExtension> {
-    ignoredPackages += "okhttp3.logging.internal"
-    ignoredPackages += "mockwebserver3.internal"
-    ignoredPackages += "okhttp3.internal"
-    ignoredPackages += "mockwebserver3.junit5.internal"
-    ignoredPackages += "okhttp3.brotli.internal"
-    ignoredPackages += "okhttp3.sse.internal"
-    ignoredPackages += "okhttp3.tls.internal"
-  }
+configure<ApiValidationExtension> {
+  ignoredPackages += "okhttp3.logging.internal"
+  ignoredPackages += "mockwebserver3.internal"
+  ignoredPackages += "okhttp3.internal"
+  ignoredPackages += "mockwebserver3.junit5.internal"
+  ignoredPackages += "okhttp3.brotli.internal"
+  ignoredPackages += "okhttp3.sse.internal"
+  ignoredPackages += "okhttp3.tls.internal"
 }

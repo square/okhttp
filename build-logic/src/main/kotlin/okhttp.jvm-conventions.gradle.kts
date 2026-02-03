@@ -15,11 +15,9 @@ fun library(alias: String) = libs.findLibrary(alias).get().get().let {
 }
 fun version(alias: String) = libs.findVersion(alias).get().toString()
 
-if (plugins.hasPlugin(JavaBasePlugin::class.java)) {
-  extensions.configure<JavaPluginExtension> {
-    toolchain {
-      languageVersion.set(JavaLanguageVersion.of(17))
-    }
+extensions.configure<JavaPluginExtension> {
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(21))
   }
 }
 

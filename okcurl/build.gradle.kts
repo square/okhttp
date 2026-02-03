@@ -1,7 +1,9 @@
+import kotlinx.validation.ApiValidationExtension
 import okhttp3.buildsupport.testJavaVersion
 import org.graalvm.buildtools.gradle.dsl.GraalVMExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 plugins {
   kotlin("jvm")
@@ -49,8 +51,14 @@ dependencies {
   testImplementation(kotlin("test"))
 }
 
-animalsniffer {
-  isIgnoreFailures = true
+val jvmSignature = configurations.getByName("jvmSignature")
+configure<AnimalSnifferExtension> {
+  // Only check JVM
+  signatures = jvmSignature
+}
+
+configure<ApiValidationExtension> {
+  validationDisabled = true
 }
 
 tasks.jar {

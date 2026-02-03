@@ -127,12 +127,13 @@ open class Platform {
   open fun getSelectedProtocol(sslSocket: SSLSocket): String? = null
 
   /** For MockWebServer. This returns the inbound SNI names. */
+  @Suppress("NewApi")
   @IgnoreJRERequirement // This function is overridden to require API >= 24.
   open fun getHandshakeServerNames(sslSocket: SSLSocket): List<String> {
     val session = sslSocket.session as? ExtendedSSLSession ?: return listOf()
     return try {
       session.requestedServerNames.mapNotNull { (it as? SNIHostName)?.asciiName }
-    } catch (uoe: UnsupportedOperationException) {
+    } catch (_: UnsupportedOperationException) {
       // UnsupportedOperationException – if the underlying provider does not implement the operation
       // https://github.com/bcgit/bc-java/issues/1773
       listOf()

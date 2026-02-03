@@ -89,7 +89,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
 
       - name: Run Checks
-        run: ./gradlew check -PgraalBuild=true -x jvmTest -x test
+        run: ./gradlew check -PgraalBuild=true -x jvmTest -x test -x allTests -x java9Test
 
   testopenjdk11:
     permissions:

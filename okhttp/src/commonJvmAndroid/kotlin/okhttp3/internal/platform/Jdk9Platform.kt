@@ -28,6 +28,7 @@ import okhttp3.internal.SuppressSignatureCheck
  *
  * This may also be used for Android tests with Robolectric.
  */
+@Suppress("NewApi")
 open class Jdk9Platform : Platform() {
   @SuppressSignatureCheck
   override fun configureTlsExtensions(
