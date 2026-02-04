@@ -58,6 +58,7 @@ class ApacheHttpClientTest {
     val request = HttpGet(server.url("/").toUri())
     request.addHeader("Accept", "text/plain")
 
+    @Suppress("DEPRECATION")
     httpClient.execute(request).use { response ->
       assertThat(response.code).isEqualTo(200)
       assertThat(EntityUtils.toString(response.entity)).isEqualTo("hello, Apache HttpClient 5.x")
@@ -66,11 +67,11 @@ class ApacheHttpClientTest {
     val recorded = server.takeRequest()
     assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
     assertThat(
-      recorded.headers["Accept-Encoding"]?.split(", ").orEmpty()
+      recorded.headers["Accept-Encoding"]?.split(", ").orEmpty(),
     ).containsExactlyInAnyOrder(
       "gzip",
       "x-gzip",
-      "deflate"
+      "deflate",
     )
     assertThat(recorded.headers["User-Agent"]!!).startsWith("Apache-HttpClient/")
   }
