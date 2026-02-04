@@ -67,9 +67,13 @@ dependencies {
 }
 
 val testJavaVersion = project.testJavaVersion
+val okhttpForceConfigurationCache: String by project
 tasks.withType<Test> {
   dependsOn(copyOsgiTestDeployment)
   onlyIf("Tests require JDK 17") {
     testJavaVersion >= 17
+  }
+  onlyIf("OSGi tests are incompatible with configuration cache due to BND limitations") {
+    !okhttpForceConfigurationCache.toBoolean()
   }
 }
