@@ -28,6 +28,7 @@ import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.getByName
 import org.gradle.kotlin.dsl.named
+import org.gradle.kotlin.dsl.provideDelegate
 
 fun Project.applyOsgi(vararg bndProperties: String) {
   plugins.withId("org.jetbrains.kotlin.jvm") { applyOsgi("jar", "osgiApi", bndProperties) }
@@ -56,12 +57,8 @@ private fun Project.applyOsgi(
     bnd(*bndProperties)
   }
   // Call the convention when the task has finished, to modify the jar to contain OSGi metadata.
-  val okhttpForceConfigurationCache =
-    project.providers
-      .gradleProperty("okhttpForceConfigurationCache")
-      .map { it.toBoolean() }
-      .getOrElse(false)
-  if (!okhttpForceConfigurationCache) {
+  val okhttpForceConfigurationCache: String by project
+  if (!okhttpForceConfigurationCache.toBoolean()) {
     val buildAction = bundleExtension.buildAction()
     jarTask.doLast { buildAction.execute(this) }
   } else {
@@ -127,12 +124,8 @@ fun Project.applyOsgiMultiplatform(vararg bndProperties: String) {
           classpath(tasks.named("jvmMainClasses").map { it.outputs })
           bnd(*bndProperties)
         }
-    val okhttpForceConfigurationCache =
-      project.providers
-        .gradleProperty("okhttpForceConfigurationCache")
-        .map { it.toBoolean() }
-        .getOrElse(false)
-    if (!okhttpForceConfigurationCache) {
+    val okhttpForceConfigurationCache: String by project
+    if (!okhttpForceConfigurationCache.toBoolean()) {
       val buildAction = bundleExtension.buildAction()
       doLast { buildAction.execute(this) }
     } else {
