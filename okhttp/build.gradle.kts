@@ -29,10 +29,8 @@ val copyKotlinTemplates =
 
     filteringCharset = Charsets.UTF_8.toString()
 
-    val projectVersionProvider = project.provider { project.version }
     expand(
-      // Build & use okhttp3/internal/-InternalVersion.kt
-      "projectVersion" to projectVersionProvider,
+      "projectVersion" to project.version.toString(),
     )
   }
 
