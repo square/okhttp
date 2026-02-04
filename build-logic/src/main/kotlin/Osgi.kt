@@ -66,7 +66,7 @@ private fun Project.applyOsgi(
     jarTask.doLast { buildAction.execute(this) }
   } else {
     logger.warn(
-      "Skipping OSGi metadata generation for ${jarTask.name} because configuration caching is enabled and BND is not compatible."
+      "Skipping OSGi metadata generation for ${jarTask.name} because configuration caching is enabled and BND is not compatible.",
     )
   }
 }
@@ -84,31 +84,23 @@ fun Project.applyOsgiMultiplatform(vararg bndProperties: String) {
     object : SourceSet by jvmMainSourceSet {
       override fun getName() = "main"
 
-      override fun getProcessResourcesTaskName() =
-        "${jvmMainSourceSet.processResourcesTaskName}ForFakeMain"
+      override fun getProcessResourcesTaskName() = "${jvmMainSourceSet.processResourcesTaskName}ForFakeMain"
 
-      override fun getCompileJavaTaskName() =
-        "${jvmMainSourceSet.compileJavaTaskName}ForFakeMain"
+      override fun getCompileJavaTaskName() = "${jvmMainSourceSet.compileJavaTaskName}ForFakeMain"
 
       override fun getClassesTaskName() = "${jvmMainSourceSet.classesTaskName}ForFakeMain"
 
-      override fun getCompileOnlyConfigurationName(): String =
-        jvmMainSourceSet.compileOnlyConfigurationName + "ForFakeMain"
+      override fun getCompileOnlyConfigurationName(): String = jvmMainSourceSet.compileOnlyConfigurationName + "ForFakeMain"
 
-      override fun getCompileClasspathConfigurationName(): String =
-        jvmMainSourceSet.compileClasspathConfigurationName + "ForFakeMain"
+      override fun getCompileClasspathConfigurationName(): String = jvmMainSourceSet.compileClasspathConfigurationName + "ForFakeMain"
 
-      override fun getImplementationConfigurationName(): String =
-        jvmMainSourceSet.implementationConfigurationName + "ForFakeMain"
+      override fun getImplementationConfigurationName(): String = jvmMainSourceSet.implementationConfigurationName + "ForFakeMain"
 
-      override fun getAnnotationProcessorConfigurationName(): String =
-        jvmMainSourceSet.annotationProcessorConfigurationName + "ForFakeMain"
+      override fun getAnnotationProcessorConfigurationName(): String = jvmMainSourceSet.annotationProcessorConfigurationName + "ForFakeMain"
 
-      override fun getRuntimeClasspathConfigurationName(): String =
-        jvmMainSourceSet.runtimeClasspathConfigurationName + "ForFakeMain"
+      override fun getRuntimeClasspathConfigurationName(): String = jvmMainSourceSet.runtimeClasspathConfigurationName + "ForFakeMain"
 
-      override fun getRuntimeOnlyConfigurationName(): String =
-        jvmMainSourceSet.runtimeOnlyConfigurationName + "ForFakeMain"
+      override fun getRuntimeOnlyConfigurationName(): String = jvmMainSourceSet.runtimeOnlyConfigurationName + "ForFakeMain"
 
       override fun getTaskName(
         verb: String?,
@@ -124,12 +116,12 @@ fun Project.applyOsgiMultiplatform(vararg bndProperties: String) {
   // Call the convention when the task has finished, to modify the jar to contain OSGi metadata.
   tasks.named<Jar>("jvmJar").configure {
     val bundleExtension =
-      extensions.create(
-        BundleTaskExtension.NAME,
-        BundleTaskExtension::class.java,
-        this,
-      )
-        .apply {
+      extensions
+        .create(
+          BundleTaskExtension.NAME,
+          BundleTaskExtension::class.java,
+          this,
+        ).apply {
           val osgiApiArtifacts = osgiApi.artifacts
           classpath(osgiApiArtifacts)
           classpath(tasks.named("jvmMainClasses").map { it.outputs })
@@ -147,7 +139,7 @@ fun Project.applyOsgiMultiplatform(vararg bndProperties: String) {
       // Configuration caching is enabled, and BND's buildAction is not compatible.
       // We skip OSGi metadata generation for now when configuration caching is enabled.
       logger.warn(
-        "Skipping OSGi metadata generation for :okhttp:jvmJar because configuration caching is enabled and BND is not compatible."
+        "Skipping OSGi metadata generation for :okhttp:jvmJar because configuration caching is enabled and BND is not compatible.",
       )
     }
   }
