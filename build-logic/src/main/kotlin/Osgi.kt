@@ -30,9 +30,7 @@ import org.gradle.kotlin.dsl.getByName
 import org.gradle.kotlin.dsl.named
 
 fun Project.applyOsgi(vararg bndProperties: String) {
-  plugins.withId("org.jetbrains.kotlin.jvm") {
-    applyOsgi("jar", "osgiApi", bndProperties)
-  }
+  plugins.withId("org.jetbrains.kotlin.jvm") { applyOsgi("jar", "osgiApi", bndProperties) }
 }
 
 private fun Project.applyOsgi(
@@ -43,24 +41,33 @@ private fun Project.applyOsgi(
   val osgi = project.sourceSets.create("osgi")
   val osgiApi = project.configurations.getByName(osgiApiConfigurationName)
 
-  project.dependencies {
-    osgiApi(kotlinOsgi)
-  }
+  project.dependencies { osgiApi(kotlinOsgi) }
 
   val jarTask = tasks.getByName<Jar>(jarTaskName)
   val bundleExtension =
-    jarTask.extensions.findByType() ?: jarTask.extensions.create(
-      BundleTaskExtension.NAME,
-      BundleTaskExtension::class.java,
-      jarTask,
-    )
+    jarTask.extensions.findByType()
+      ?: jarTask.extensions.create(
+        BundleTaskExtension.NAME,
+        BundleTaskExtension::class.java,
+        jarTask,
+      )
   bundleExtension.run {
     setClasspath(osgi.compileClasspath + sourceSets["main"].compileClasspath)
     bnd(*bndProperties)
   }
   // Call the convention when the task has finished, to modify the jar to contain OSGi metadata.
-  jarTask.doLast {
-    bundleExtension.buildAction().execute(this)
+  val okhttpForceConfigurationCache =
+    project.providers
+      .gradleProperty("okhttpForceConfigurationCache")
+      .map { it.toBoolean() }
+      .getOrElse(false)
+  if (!okhttpForceConfigurationCache) {
+    val buildAction = bundleExtension.buildAction()
+    jarTask.doLast { buildAction.execute(this) }
+  } else {
+    logger.warn(
+      "Skipping OSGi metadata generation for ${jarTask.name} because configuration caching is enabled and BND is not compatible."
+    )
   }
 }
 
@@ -77,55 +84,71 @@ fun Project.applyOsgiMultiplatform(vararg bndProperties: String) {
     object : SourceSet by jvmMainSourceSet {
       override fun getName() = "main"
 
-      override fun getProcessResourcesTaskName() = "${jvmMainSourceSet.processResourcesTaskName}ForFakeMain"
+      override fun getProcessResourcesTaskName() =
+        "${jvmMainSourceSet.processResourcesTaskName}ForFakeMain"
 
-      override fun getCompileJavaTaskName() = "${jvmMainSourceSet.compileJavaTaskName}ForFakeMain"
+      override fun getCompileJavaTaskName() =
+        "${jvmMainSourceSet.compileJavaTaskName}ForFakeMain"
 
       override fun getClassesTaskName() = "${jvmMainSourceSet.classesTaskName}ForFakeMain"
 
-      override fun getCompileOnlyConfigurationName(): String = jvmMainSourceSet.compileOnlyConfigurationName + "ForFakeMain"
+      override fun getCompileOnlyConfigurationName(): String =
+        jvmMainSourceSet.compileOnlyConfigurationName + "ForFakeMain"
 
-      override fun getCompileClasspathConfigurationName(): String = jvmMainSourceSet.compileClasspathConfigurationName + "ForFakeMain"
+      override fun getCompileClasspathConfigurationName(): String =
+        jvmMainSourceSet.compileClasspathConfigurationName + "ForFakeMain"
 
-      override fun getImplementationConfigurationName(): String = jvmMainSourceSet.implementationConfigurationName + "ForFakeMain"
+      override fun getImplementationConfigurationName(): String =
+        jvmMainSourceSet.implementationConfigurationName + "ForFakeMain"
 
-      override fun getAnnotationProcessorConfigurationName(): String = jvmMainSourceSet.annotationProcessorConfigurationName + "ForFakeMain"
+      override fun getAnnotationProcessorConfigurationName(): String =
+        jvmMainSourceSet.annotationProcessorConfigurationName + "ForFakeMain"
 
-      override fun getRuntimeClasspathConfigurationName(): String = jvmMainSourceSet.runtimeClasspathConfigurationName + "ForFakeMain"
+      override fun getRuntimeClasspathConfigurationName(): String =
+        jvmMainSourceSet.runtimeClasspathConfigurationName + "ForFakeMain"
 
-      override fun getRuntimeOnlyConfigurationName(): String = jvmMainSourceSet.runtimeOnlyConfigurationName + "ForFakeMain"
+      override fun getRuntimeOnlyConfigurationName(): String =
+        jvmMainSourceSet.runtimeOnlyConfigurationName + "ForFakeMain"
 
       override fun getTaskName(
         verb: String?,
         target: String?,
       ) = "${jvmMainSourceSet.getTaskName(verb, target)}ForFakeMain"
     }
-  extensions
-    .getByType(JavaPluginExtension::class.java)
-    .sourceSets
-    .add(mainSourceSet)
+  extensions.getByType(JavaPluginExtension::class.java).sourceSets.add(mainSourceSet)
   tasks.named { it.endsWith("ForFakeMain") }.configureEach { onlyIf { false } }
 
   val osgiApi = configurations.create("osgiApi")
-  dependencies {
-    osgiApi(kotlinOsgi)
-  }
+  dependencies { osgiApi(kotlinOsgi) }
 
   // Call the convention when the task has finished, to modify the jar to contain OSGi metadata.
   tasks.named<Jar>("jvmJar").configure {
     val bundleExtension =
-      extensions
-        .create(
-          BundleTaskExtension.NAME,
-          BundleTaskExtension::class.java,
-          this,
-        ).apply {
-          classpath(osgiApi.artifacts)
+      extensions.create(
+        BundleTaskExtension.NAME,
+        BundleTaskExtension::class.java,
+        this,
+      )
+        .apply {
+          val osgiApiArtifacts = osgiApi.artifacts
+          classpath(osgiApiArtifacts)
           classpath(tasks.named("jvmMainClasses").map { it.outputs })
           bnd(*bndProperties)
         }
-    doLast {
-      bundleExtension.buildAction().execute(this)
+    val okhttpForceConfigurationCache =
+      project.providers
+        .gradleProperty("okhttpForceConfigurationCache")
+        .map { it.toBoolean() }
+        .getOrElse(false)
+    if (!okhttpForceConfigurationCache) {
+      val buildAction = bundleExtension.buildAction()
+      doLast { buildAction.execute(this) }
+    } else {
+      // Configuration caching is enabled, and BND's buildAction is not compatible.
+      // We skip OSGi metadata generation for now when configuration caching is enabled.
+      logger.warn(
+        "Skipping OSGi metadata generation for :okhttp:jvmJar because configuration caching is enabled and BND is not compatible."
+      )
     }
   }
 }

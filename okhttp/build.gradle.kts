@@ -29,9 +29,10 @@ val copyKotlinTemplates =
 
     filteringCharset = Charsets.UTF_8.toString()
 
+    val projectVersionProvider = project.provider { project.version }
     expand(
       // Build & use okhttp3/internal/-InternalVersion.kt
-      "projectVersion" to project.version,
+      "projectVersion" to projectVersionProvider,
     )
   }
 
@@ -284,7 +285,7 @@ tasks.named<Jar>("jvmJar").configure {
     )
   }
 
-  from(compileJavaModuleInfo.get().destinationDirectory) {
+  from(compileJavaModuleInfo.map { it.destinationDirectory }) {
     into("META-INF/versions/9/")
   }
 }

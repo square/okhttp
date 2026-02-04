@@ -48,13 +48,12 @@ tasks.withType<KotlinCompile>().configureEach {
   friendPaths.from(friendsTestImplementation.incoming.artifactView { }.files)
 }
 
+val resolvableConfigurations = configurations.filter { it.isCanBeResolved }
 tasks.register("downloadDependencies") {
   description = "Download all dependencies to the Gradle cache"
   doLast {
-    for (configuration in configurations) {
-      if (configuration.isCanBeResolved) {
-        configuration.files
-      }
+    for (configuration in resolvableConfigurations) {
+      configuration.files
     }
   }
 }
