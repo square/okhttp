@@ -67,7 +67,10 @@ object JsseDebugLogging {
       JsseDebugMessage.Type.Setup, JsseDebugMessage.Type.Encrypted, JsseDebugMessage.Type.Plaintext -> {
         println(message.message + " (skipped output)")
       }
-      else -> println(message)
+
+      else -> {
+        println(message)
+      }
     }
   }
 

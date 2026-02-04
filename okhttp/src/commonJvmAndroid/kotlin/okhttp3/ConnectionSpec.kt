@@ -253,6 +253,7 @@ class ConnectionSpec internal constructor(
         require(tls) { "no cipher suites for cleartext connections" }
         require(cipherSuites.isNotEmpty()) { "At least one cipher suite is required" }
 
+        @Suppress("UNCHECKED_CAST")
         this.cipherSuites = cipherSuites.copyOf() as Array<String> // Defensive copy.
       }
 
@@ -275,6 +276,7 @@ class ConnectionSpec internal constructor(
         require(tls) { "no TLS versions for cleartext connections" }
         require(tlsVersions.isNotEmpty()) { "At least one TLS version is required" }
 
+        @Suppress("UNCHECKED_CAST")
         this.tlsVersions = tlsVersions.copyOf() as Array<String> // Defensive copy.
       }
 

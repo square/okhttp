@@ -1215,6 +1215,8 @@ class HttpOverHttp2Test(
       .isEqualTo(expectedSequenceNumber)
     responseDequeuedLatch!!.await()
     call.cancel()
+    // Avoid flaky race conditions
+    Thread.sleep(100)
     requestCanceledLatch!!.countDown()
     latch.await()
   }
@@ -1550,7 +1552,10 @@ class HttpOverHttp2Test(
     }.also { expected ->
       when (expected) {
         is SocketTimeoutException, is SSLException -> {}
-        else -> throw expected
+
+        else -> {
+          throw expected
+        }
       }
     }
 

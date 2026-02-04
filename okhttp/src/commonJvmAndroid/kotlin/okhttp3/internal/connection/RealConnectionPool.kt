@@ -91,8 +91,14 @@ class RealConnectionPool internal constructor(
       val acquired =
         connection.withLock {
           when {
-            requireMultiplexed && !connection.isMultiplexed -> false
-            !connection.isEligible(address, routes) -> false
+            requireMultiplexed && !connection.isMultiplexed -> {
+              false
+            }
+
+            !connection.isEligible(address, routes) -> {
+              false
+            }
+
             else -> {
               call.acquireConnectionNoEvents(connection)
               true

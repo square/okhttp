@@ -207,20 +207,24 @@ object Hpack {
               // 10000000
               throw IOException("index == 0")
             }
+
             b and 0x80 == 0x80 -> {
               // 1NNNNNNN
               val index = readInt(b, PREFIX_7_BITS)
               readIndexedHeader(index - 1)
             }
+
             b == 0x40 -> {
               // 01000000
               readLiteralHeaderWithIncrementalIndexingNewName()
             }
+
             b and 0x40 == 0x40 -> {
               // 01NNNNNN
               val index = readInt(b, PREFIX_6_BITS)
               readLiteralHeaderWithIncrementalIndexingIndexedName(index - 1)
             }
+
             b and 0x20 == 0x20 -> {
               // 001NNNNN
               maxDynamicTableByteCount = readInt(b, PREFIX_5_BITS)
@@ -229,10 +233,12 @@ object Hpack {
               }
               adjustDynamicTableByteCount()
             }
+
             b == 0x10 || b == 0 -> {
               // 000?0000 - Ignore never indexed bit.
               readLiteralHeaderWithoutIndexingNewName()
             }
+
             else -> {
               // 000?NNNN - Ignore never indexed bit.
               val index = readInt(b, PREFIX_4_BITS)
@@ -541,6 +547,7 @@ object Hpack {
               // Indexed Header Field.
               writeInt(headerIndex, PREFIX_7_BITS, 0x80)
             }
+
             headerNameIndex == -1 -> {
               // Literal Header Field with Incremental Indexing - New Name.
               out.writeByte(0x40)
@@ -548,12 +555,14 @@ object Hpack {
               writeByteString(value)
               insertIntoDynamicTable(header)
             }
+
             name.startsWith(Header.PSEUDO_PREFIX) && TARGET_AUTHORITY != name -> {
               // Follow Chromes lead - only include the :authority pseudo header, but exclude all other
               // pseudo headers. Literal Header Field without Indexing - Indexed Name.
               writeInt(headerNameIndex, PREFIX_4_BITS, 0)
               writeByteString(value)
             }
+
             else -> {
               // Literal Header Field with Incremental Indexing - Indexed Name.
               writeInt(headerNameIndex, PREFIX_6_BITS, 0x40)
