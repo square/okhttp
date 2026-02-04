@@ -32,9 +32,9 @@ fun Project.applyOsgi(vararg bndProperties: String) {
 }
 
 private fun Project.applyOsgi(
-        jarTaskName: String,
-        osgiApiConfigurationName: String,
-        bndProperties: Array<out String>,
+  jarTaskName: String,
+  osgiApiConfigurationName: String,
+  bndProperties: Array<out String>,
 ) {
   val osgi = project.sourceSets.create("osgi")
   val osgiApi = project.configurations.getByName(osgiApiConfigurationName)
@@ -43,19 +43,19 @@ private fun Project.applyOsgi(
 
   val jarTask = tasks.getByName<GradleJar>(jarTaskName)
   val bundleExtension =
-          jarTask.extensions.create(
-                  BundleTaskExtension.NAME,
-                  BundleTaskExtension::class.java,
-                  jarTask,
-          )
+    jarTask.extensions.create(
+      BundleTaskExtension.NAME,
+      BundleTaskExtension::class.java,
+      jarTask,
+    )
   bundleExtension.run {
     setClasspath(osgi.compileClasspath + sourceSets["main"].compileClasspath)
     properties.empty()
     bnd(*bndProperties)
   }
   jarTask.doLast(
-          "buildBundle",
-          BndBuildAction(bundleExtension, jarTask, sourceSets["main"].allSource),
+    "buildBundle",
+    BndBuildAction(bundleExtension, jarTask, sourceSets["main"].allSource),
   )
 }
 
@@ -76,11 +76,11 @@ fun Project.applyOsgiMultiplatform(vararg bndProperties: String) {
 
   tasks.named<GradleJar>("jvmJar").configure {
     val bundleExtension =
-            extensions.create(
-                    BundleTaskExtension.NAME,
-                    BundleTaskExtension::class.java,
-                    this,
-            )
+      extensions.create(
+        BundleTaskExtension.NAME,
+        BundleTaskExtension::class.java,
+        this,
+      )
     val osgiApiArtifacts = osgiApi.artifacts
     val jvmMainClasses = tasks.named("jvmMainClasses").map { it.outputs.files }
     bundleExtension.apply {
@@ -98,9 +98,9 @@ val Project.sourceSets: SourceSetContainer
 
 private val Project.kotlinOsgi: MinimalExternalModuleDependency
   get() =
-          extensions
-                  .getByType(VersionCatalogsExtension::class.java)
-                  .named("libs")
-                  .findLibrary("kotlin.stdlib.osgi")
-                  .get()
-                  .get()
+    extensions
+      .getByType(VersionCatalogsExtension::class.java)
+      .named("libs")
+      .findLibrary("kotlin.stdlib.osgi")
+      .get()
+      .get()
