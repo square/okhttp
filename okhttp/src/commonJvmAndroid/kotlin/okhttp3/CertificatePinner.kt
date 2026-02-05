@@ -174,11 +174,15 @@ class CertificatePinner internal constructor(
             if (sha256 == null) sha256 = peerCertificate.sha256Hash()
             if (pin.hash == sha256) return // Success!
           }
+
           "sha1" -> {
             if (sha1 == null) sha1 = peerCertificate.sha1Hash()
             if (pin.hash == sha1) return // Success!
           }
-          else -> throw AssertionError("unsupported hashAlgorithm: ${pin.hashAlgorithm}")
+
+          else -> {
+            throw AssertionError("unsupported hashAlgorithm: ${pin.hashAlgorithm}")
+          }
         }
       }
     }
@@ -274,11 +278,15 @@ class CertificatePinner internal constructor(
           this.hashAlgorithm = "sha1"
           this.hash = pin.substring("sha1/".length).decodeBase64() ?: throw IllegalArgumentException("Invalid pin hash: $pin")
         }
+
         pin.startsWith("sha256/") -> {
           this.hashAlgorithm = "sha256"
           this.hash = pin.substring("sha256/".length).decodeBase64() ?: throw IllegalArgumentException("Invalid pin hash: $pin")
         }
-        else -> throw IllegalArgumentException("pins must start with 'sha256/' or 'sha1/': $pin")
+
+        else -> {
+          throw IllegalArgumentException("pins must start with 'sha256/' or 'sha1/': $pin")
+        }
       }
     }
 
@@ -291,6 +299,7 @@ class CertificatePinner internal constructor(
           hostname.regionMatches(hostname.length - suffixLength, pattern, 3, suffixLength) &&
             (prefixLength == 0 || hostname[prefixLength - 1] == '.')
         }
+
         pattern.startsWith("*.") -> {
           // With * there must be a prefix so include the dot in regionMatches().
           val suffixLength = pattern.length - 1
@@ -298,7 +307,10 @@ class CertificatePinner internal constructor(
           hostname.regionMatches(hostname.length - suffixLength, pattern, 1, suffixLength) &&
             hostname.lastIndexOf('.', prefixLength - 1) == -1
         }
-        else -> hostname == pattern
+
+        else -> {
+          hostname == pattern
+        }
       }
 
     fun matchesCertificate(certificate: X509Certificate): Boolean =

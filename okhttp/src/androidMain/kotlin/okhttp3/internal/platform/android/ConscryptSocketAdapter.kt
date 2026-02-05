@@ -67,6 +67,7 @@ class ConscryptSocketAdapter : SocketAdapter {
         when {
           // Bump this version if we ever have a binary incompatibility
           Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> true
+
           else -> false
         }
       } catch (e: NoClassDefFoundError) {

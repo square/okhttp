@@ -74,12 +74,18 @@ private class LinkedTags<K : Any>(
     // Create a copy of this `LinkedTags` that doesn't have a mapping for `key`.
     val thisMinusKey =
       when {
-        key == this.key -> next // Subtract this!
+        key == this.key -> {
+          next
+        }
+
+        // Subtract this!
 
         else -> {
           val nextMinusKey = next.plus(key, null)
           when {
-            nextMinusKey === next -> this // Same as the following line, but with fewer allocations.
+            nextMinusKey === next -> this
+
+            // Same as the following line, but with fewer allocations.
             else -> LinkedTags(this.key, this.value, nextMinusKey)
           }
         }

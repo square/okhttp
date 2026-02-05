@@ -56,21 +56,25 @@ fun buildIdnaMappingTableData(table: SimpleIdnaMappingTable): IdnaMappingTableDa
           rangesBuffer.writeByte('-'.code)
           rangesBuffer.writeByte('-'.code)
         }
+
         is MappedRange.Inline1 -> {
           rangesBuffer.writeByte(range.b1)
           rangesBuffer.writeByte(range.b2)
           rangesBuffer.writeByte('-'.code)
         }
+
         is MappedRange.Inline2 -> {
           rangesBuffer.writeByte(range.b1)
           rangesBuffer.writeByte(range.b2)
           rangesBuffer.writeByte(range.b3)
         }
+
         is MappedRange.InlineDelta -> {
           rangesBuffer.writeByte(range.b1)
           rangesBuffer.writeByte(range.b2)
           rangesBuffer.writeByte(range.b3)
         }
+
         is MappedRange.External -> {
           // Write the mapping.
           val mappingOffset: Int
@@ -141,7 +145,7 @@ internal fun sections(mappings: List<Mapping>): Map<Int, List<MappedRange>> {
 
     sectionList +=
       when (mapping.type) {
-        TYPE_MAPPED ->
+        TYPE_MAPPED -> {
           run {
             val deltaMapping = inlineDeltaOrNull(mapping)
             if (deltaMapping != null) {
@@ -154,12 +158,15 @@ internal fun sections(mappings: List<Mapping>): Map<Int, List<MappedRange>> {
               else -> MappedRange.External(rangeStart, mapping.mappedTo)
             }
           }
+        }
 
         TYPE_IGNORED, TYPE_VALID, TYPE_DISALLOWED -> {
           MappedRange.Constant(rangeStart, mapping.type)
         }
 
-        else -> error("unexpected mapping type: ${mapping.type}")
+        else -> {
+          error("unexpected mapping type: ${mapping.type}")
+        }
       }
   }
 

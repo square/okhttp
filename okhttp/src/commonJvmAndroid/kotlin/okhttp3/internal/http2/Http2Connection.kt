@@ -771,7 +771,9 @@ class Http2Connection internal constructor(
           delta = peerInitialWindowSize - previousPeerSettings.initialWindowSize.toLong()
           streamsToNotify =
             when {
-              delta == 0L || streams.isEmpty() -> null // No adjustment is necessary.
+              delta == 0L || streams.isEmpty() -> null
+
+              // No adjustment is necessary.
               else -> streams.values.toTypedArray()
             }
 
@@ -811,13 +813,16 @@ class Http2Connection internal constructor(
             INTERVAL_PING -> {
               intervalPongsReceived++
             }
+
             DEGRADED_PING -> {
               degradedPongsReceived++
             }
+
             AWAIT_PING -> {
               awaitPongsReceived++
               notifyAll()
             }
+
             else -> {
               // Ignore an unexpected pong.
             }

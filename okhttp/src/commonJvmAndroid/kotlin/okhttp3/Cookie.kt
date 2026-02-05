@@ -496,6 +496,7 @@ class Cookie private constructor(
               // Ignore this attribute, it isn't recognizable as a date.
             }
           }
+
           attributeName.equals("max-age", ignoreCase = true) -> {
             try {
               deltaSeconds = parseMaxAge(attributeValue)
@@ -504,6 +505,7 @@ class Cookie private constructor(
               // Ignore this attribute, it isn't recognizable as a max age.
             }
           }
+
           attributeName.equals("domain", ignoreCase = true) -> {
             try {
               domain = parseDomain(attributeValue)
@@ -512,15 +514,19 @@ class Cookie private constructor(
               // Ignore this attribute, it isn't recognizable as a domain.
             }
           }
+
           attributeName.equals("path", ignoreCase = true) -> {
             path = attributeValue
           }
+
           attributeName.equals("secure", ignoreCase = true) -> {
             secureOnly = true
           }
+
           attributeName.equals("httponly", ignoreCase = true) -> {
             httpOnly = true
           }
+
           attributeName.equals("samesite", ignoreCase = true) -> {
             sameSite = attributeValue
           }
@@ -610,13 +616,16 @@ class Cookie private constructor(
             minute = matcher.group(2).toInt()
             second = matcher.group(3).toInt()
           }
+
           dayOfMonth == -1 && matcher.usePattern(DAY_OF_MONTH_PATTERN).matches() -> {
             dayOfMonth = matcher.group(1).toInt()
           }
+
           month == -1 && matcher.usePattern(MONTH_PATTERN).matches() -> {
             val monthString = matcher.group(1).lowercase(Locale.US)
             month = MONTH_PATTERN.pattern().indexOf(monthString) / 4 // Sneaky! jan=1, dec=12.
           }
+
           year == -1 && matcher.usePattern(YEAR_PATTERN).matches() -> {
             year = matcher.group(1).toInt()
           }
@@ -663,15 +672,14 @@ class Cookie private constructor(
     ): Int {
       for (i in pos until limit) {
         val c = input[i].code
-        val dateCharacter = (
-          c < ' '.code &&
-            c != '\t'.code ||
-            c >= '\u007f'.code ||
-            c in '0'.code..'9'.code ||
-            c in 'a'.code..'z'.code ||
-            c in 'A'.code..'Z'.code ||
-            c == ':'.code
-        )
+        val dateCharacter =
+          (
+            (
+              ((c < ' '.code) && (c != '\t'.code)) || (c >= '\u007f'.code) || (c in ('0'.code..'9'.code)) || (c in ('a'.code..'z'.code)) ||
+                (c in ('A'.code..'Z'.code)) ||
+                (c == ':'.code)
+            )
+          )
         if (dateCharacter == !invert) return i
       }
       return limit

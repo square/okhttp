@@ -1,15 +1,21 @@
 plugins {
   kotlin("jvm")
+  id("okhttp.base-conventions")
 }
 
-val platform = System.getProperty("okhttp.platform", "jdk9")
-val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
+import okhttp3.buildsupport.platform
+import okhttp3.buildsupport.testJavaVersion
+
+val platform = project.platform
+val testJavaVersion = project.testJavaVersion
 
 tasks.withType<Test> {
   useJUnitPlatform()
+  val isCi = providers.environmentVariable("CI")
+  val containerTests = providers.gradleProperty("containerTests")
   onlyIf("By default not in CI") {
-    System.getenv("CI") == null
-      || (project.hasProperty("containerTests") && project.property("containerTests").toString().toBoolean())
+    !isCi.isPresent
+      || (containerTests.isPresent && containerTests.get().toBoolean())
   }
 
   jvmArgs(

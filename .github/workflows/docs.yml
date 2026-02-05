@@ -27,8 +27,8 @@ jobs:
       - name: Configure JDK
         uses: actions/setup-java@v5
         with:
-          distribution: 'zulu'
-          java-version: 17
+          distribution: 'temurin'
+          java-version: 21
 
       - uses: actions/setup-python@v6
         with:

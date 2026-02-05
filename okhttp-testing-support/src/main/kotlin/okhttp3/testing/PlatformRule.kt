@@ -442,13 +442,25 @@ open class PlatformRule
         if (property == null) {
           property =
             when (Platform.get()) {
-              is ConscryptPlatform -> CONSCRYPT_PROPERTY
-              is OpenJSSEPlatform -> OPENJSSE_PROPERTY
-              is Jdk8WithJettyBootPlatform -> CONSCRYPT_PROPERTY
+              is ConscryptPlatform -> {
+                CONSCRYPT_PROPERTY
+              }
+
+              is OpenJSSEPlatform -> {
+                OPENJSSE_PROPERTY
+              }
+
+              is Jdk8WithJettyBootPlatform -> {
+                CONSCRYPT_PROPERTY
+              }
+
               is Jdk9Platform -> {
                 if (isCorrettoInstalled) CORRETTO_PROPERTY else JDK9_PROPERTY
               }
-              else -> JDK8_PROPERTY
+
+              else -> {
+                JDK8_PROPERTY
+              }
             }
         }
 

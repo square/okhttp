@@ -91,8 +91,12 @@ class AllMainsTest {
     cause: Throwable,
   ): Boolean =
     when (className) {
-      "okhttp3.recipes.CheckHandshake" -> true // by design
-      "okhttp3.recipes.RequestBodyCompression" -> true // expired token
+      "okhttp3.recipes.CheckHandshake" -> true
+
+      // by design
+      "okhttp3.recipes.RequestBodyCompression" -> true
+
+      // expired token
       else -> false
     }
 }

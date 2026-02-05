@@ -260,7 +260,10 @@ class ConnectionReuseTest {
     }.also { expected ->
       when (expected) {
         is SSLException, is TlsFatalAlert -> {}
-        else -> throw expected
+
+        else -> {
+          throw expected
+        }
       }
     }
   }

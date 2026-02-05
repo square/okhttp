@@ -84,6 +84,7 @@ class OpenJSSEPlatform private constructor() : Platform() {
       when (val protocol = sslSocket.applicationProtocol) {
         // Handles both un-configured and none selected.
         null, "" -> null
+
         else -> protocol
       }
     } else {
