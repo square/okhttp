@@ -72,8 +72,9 @@ tasks.shadowJar {
 }
 
 tasks.withType<Test> {
+  val javaVersion = project.testJavaVersion
   onlyIf("native build requires Java 17") {
-    testJavaVersion > 17
+    javaVersion > 17
   }
 }
 

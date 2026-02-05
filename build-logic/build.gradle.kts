@@ -27,6 +27,7 @@ dependencies {
   implementation(libs.gradlePlugin.binaryCompatibilityValidator)
   implementation(libs.gradlePlugin.android)
   implementation(libs.gradlePlugin.bnd)
+  implementation(libs.aqute.bnd)
   implementation(libs.gradlePlugin.animalsniffer)
   implementation(libs.gradlePlugin.spotless)
   implementation(libs.gradlePlugin.shadow)

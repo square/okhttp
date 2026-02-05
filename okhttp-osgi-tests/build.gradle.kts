@@ -66,14 +66,10 @@ dependencies {
   osgiTestDeploy(libs.kotlin.stdlib.osgi)
 }
 
-val testJavaVersion = project.testJavaVersion
-val okhttpForceConfigurationCache: String by project
 tasks.withType<Test> {
   dependsOn(copyOsgiTestDeployment)
+  val javaVersion = project.testJavaVersion
   onlyIf("Tests require JDK 17") {
-    testJavaVersion >= 17
-  }
-  onlyIf("OSGi tests are incompatible with configuration cache due to BND limitations") {
-    !okhttpForceConfigurationCache.toBoolean()
+    javaVersion >= 17
   }
 }

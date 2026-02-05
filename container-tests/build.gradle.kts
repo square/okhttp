@@ -11,9 +11,11 @@ val testJavaVersion = project.testJavaVersion
 
 tasks.withType<Test> {
   useJUnitPlatform()
+  val isCi = providers.environmentVariable("CI")
+  val containerTests = providers.gradleProperty("containerTests")
   onlyIf("By default not in CI") {
-    System.getenv("CI") == null
-      || (project.hasProperty("containerTests") && project.property("containerTests").toString().toBoolean())
+    !isCi.isPresent
+      || (containerTests.isPresent && containerTests.get().toBoolean())
   }
 
   jvmArgs(
