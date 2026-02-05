@@ -74,6 +74,7 @@ androidx-lint-gradle = { module = "androidx.lint:lint-gradle", version.ref = "li
 androidx-startup-runtime = { module = "androidx.startup:startup-runtime", version.ref = "startup-runtime" }
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
 animalsniffer-annotations = { module = "org.codehaus.mojo:animal-sniffer-annotations", version.ref = "animalsniffer-annotations" }
+aqute-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd", version.ref = "bnd" }
 aqute-resolve = { module = "biz.aQute.bnd:biz.aQute.resolve", version.ref = "bnd" }
 assertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "assertk" }
 bouncycastle-bcpkix = { module = "org.bouncycastle:bcpkix-jdk15to18", version.ref = "org-bouncycastle" }
