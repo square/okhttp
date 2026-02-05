@@ -123,10 +123,10 @@ Releases
 
 Our [change log][changelog] has release history.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/5.1.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/5.3.0/jar).
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp:5.1.0")
+implementation("com.squareup.okhttp3:okhttp:5.3.0")
 ```
 
 Snapshot builds are [available][snap]. [R8 and ProGuard][r8_proguard] rules are available.
@@ -136,7 +136,7 @@ Also, we have a [bill of materials (BOM)][bom] available to help you keep OkHttp
 ```kotlin
     dependencies {
        // define a BOM and its version
-       implementation(platform("com.squareup.okhttp3:okhttp-bom:5.1.0"))
+       implementation(platform("com.squareup.okhttp3:okhttp-bom:5.3.0"))
 
        // define any required OkHttp artifacts without version
        implementation("com.squareup.okhttp3:okhttp")
@@ -171,8 +171,8 @@ Maven projects.
 <dependency>
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>okhttp-jvm</artifactId>
-  <!-- Remove after OkHttp 5.3.0 with updated BOM. -->
-  <version>5.2.0</version>
+  <!-- Remove after OkHttp 5.2.0 with updated BOM. -->
+  <version>5.1.0</version>
 </dependency>
 
 <dependency>
@@ -191,10 +191,10 @@ MockWebServer
 
 OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/5.1.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/5.3.0/jar).
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver3:5.1.0")
+testImplementation("com.squareup.okhttp3:mockwebserver3:5.3.0")
 ```
 
 MockWebServer is used for firstly for internal testing, and for basic testing of apps using OkHttp client.
@@ -217,7 +217,7 @@ $ ./okcurl/build/graal/okcurl https://httpbin.org/get
 Java Modules
 ------------
 
-OkHttp (5.3+) implements Java 9 Modules.
+OkHttp (5.2+) implements Java 9 Modules.
 
 With this in place Java builds should fail if apps attempt to use internal packages.
 
@@ -226,7 +226,7 @@ error: package okhttp3.internal.platform is not visible
     okhttp3.internal.platform.Platform.get();
                     ^
   (package okhttp3.internal.platform is declared in module okhttp3,
-    which does not export it to module i.am.bad.and.i.should.feel.bad)
+    which does not export it to module com.bigco.sdk)
 ```
 
 The stable public API is based on the list of defined modules:

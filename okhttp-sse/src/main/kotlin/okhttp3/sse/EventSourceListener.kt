@@ -28,13 +28,6 @@ abstract class EventSourceListener {
   ) {
   }
 
-  /**
-   * Invoked when a new event has been sent to the client.
-   *
-   * @param id The `id` line of the event, might be null.
-   * @param type The `event` line of the event, might be null.
-   * @param data The `data` line of the event.
-   */
   open fun onEvent(
     eventSource: EventSource,
     id: String?,
@@ -44,8 +37,6 @@ abstract class EventSourceListener {
   }
 
   /**
-   * Invoked when the HTTP connection has been closed normally.
-   *
    * No further calls to this listener will be made.
    */
   open fun onClosed(eventSource: EventSource) {

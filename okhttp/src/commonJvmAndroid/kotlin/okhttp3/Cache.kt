@@ -26,7 +26,6 @@ import java.security.cert.CertificateFactory
 import java.util.TreeSet
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.internal.UnreadableRequestBody
 import okhttp3.internal.cache.CacheRequest
 import okhttp3.internal.cache.CacheStrategy
 import okhttp3.internal.cache.DiskLruCache
@@ -46,12 +45,10 @@ import okio.ByteString.Companion.toByteString
 import okio.FileSystem
 import okio.ForwardingSink
 import okio.ForwardingSource
-import okio.HashingSink
 import okio.Path
 import okio.Path.Companion.toOkioPath
 import okio.Sink
 import okio.Source
-import okio.blackholeSink
 import okio.buffer
 
 /**
@@ -194,12 +191,7 @@ class Cache internal constructor(
     get() = cache.isClosed()
 
   internal fun get(request: Request): Response? {
-    if (request.body != null && request.body.isOneShot()) {
-      // Don't cache one-shot QUERY requests, since we need to cache by using the body,
-      // and we can't consume the body twice
-      return null
-    }
-    val key = key(request)
+    val key = key(request.url)
     val snapshot: DiskLruCache.Snapshot =
       try {
         cache[key] ?: return null
@@ -236,16 +228,9 @@ class Cache internal constructor(
       return null
     }
 
-    if (!HttpMethod.isCacheable(requestMethod)) {
-      // Don't cache non-GET and non-QUERY responses. We're technically allowed to cache HEAD
-      // requests and some POST requests, but the complexity of doing so is high and the benefit
-      // is low.
-      return null
-    }
-
-    if (response.request.body != null && response.request.body.isOneShot()) {
-      // Don't cache one-shot QUERY requests, since we need to cache by using the body,
-      // and we can't consume the body twice
+    if (requestMethod != "GET") {
+      // Don't cache non-GET responses. We're technically allowed to cache HEAD, QUERY and some
+      // POST requests, but the complexity of doing so is high and the benefit is low.
       return null
     }
 
@@ -256,7 +241,7 @@ class Cache internal constructor(
     val entry = Entry(response)
     var editor: DiskLruCache.Editor? = null
     try {
-      editor = cache.edit(key(response.request)) ?: return null
+      editor = cache.edit(key(response.request.url)) ?: return null
       entry.writeTo(editor)
       return RealCacheRequest(editor)
     } catch (_: IOException) {
@@ -267,7 +252,7 @@ class Cache internal constructor(
 
   @Throws(IOException::class)
   internal fun remove(request: Request) {
-    cache.remove(key(request))
+    cache.remove(key(request.url))
   }
 
   internal fun update(
@@ -702,13 +687,7 @@ class Cache internal constructor(
     fun response(snapshot: DiskLruCache.Snapshot): Response {
       val contentType = responseHeaders["Content-Type"]
       val contentLength = responseHeaders["Content-Length"]
-      val cacheRequest =
-        Request(
-          url = url,
-          headers = varyHeaders,
-          method = requestMethod,
-          body = if (HttpMethod.requiresRequestBody(requestMethod)) UnreadableRequestBody() else null,
-        )
+      val cacheRequest = Request(url, varyHeaders, requestMethod)
       return Response
         .Builder()
         .request(cacheRequest)
@@ -771,35 +750,6 @@ class Cache internal constructor(
         .encodeUtf8()
         .md5()
         .hex()
-
-    /** Returns the cache key for a request */
-    internal fun key(request: Request): String {
-      if (
-        // Request such as PUT, DELETE that invalidates a GET
-        !HttpMethod.invalidatesCache(request.method) &&
-
-        // QUERY request that considers the request body in the cache key
-        HttpMethod.isCacheable(request.method) &&
-        HttpMethod.permitsRequestBody(request.method) &&
-        request.body != null
-      ) {
-        val hashingSink = HashingSink.md5(blackholeSink())
-        hashingSink.buffer().use {
-          it.writeUtf8(request.method)
-          it.writeByte(0)
-          it.writeUtf8(request.url.toString())
-          it.writeByte(0)
-          request.body.writeTo(it)
-        }
-        return hashingSink.hash.hex()
-      }
-
-      return request.url
-        .toString()
-        .encodeUtf8()
-        .md5()
-        .hex()
-    }
 
     @Throws(IOException::class)
     internal fun readInt(source: BufferedSource): Int {

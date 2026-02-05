@@ -1,13 +1,19 @@
+import okhttp3.buildsupport.testJavaVersion
+
 plugins {
+  id("okhttp.base-conventions")
   id("java")
   id("application")
-  id("com.github.iherasymenko.jlink") version "0.7"
-  id("org.gradlex.extra-java-module-info") version "1.13.1"
+  alias(libs.plugins.jlink)
+  alias(libs.plugins.extra.java.module.info)
 }
 
 dependencies {
   implementation(projects.okhttp)
   implementation(projects.loggingInterceptor)
+
+  // Force version 26.0.2-1 which is a proper JPMS module, unlike transitive 13.0
+  implementation(libs.jetbrains.annotations)
 
   testImplementation(projects.okhttp)
   testImplementation(projects.loggingInterceptor)
@@ -33,9 +39,6 @@ jlinkApplication {
 }
 
 extraJavaModuleInfo {
-  module("org.jetbrains:annotations", "org.jetbrains.annotations") {
-    exportAllPackages()
-  }
   module("com.squareup.okio:okio-jvm", "okio") {
     exportAllPackages()
     requires("kotlin.stdlib")
@@ -46,7 +49,14 @@ extraJavaModuleInfo {
   }
 }
 
-val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
+// Exclude dokka from all configurations
+// to attempt to avoid https://github.com/gradlex-org/extra-java-module-info/issues/221
+configurations.all {
+  exclude(group = "org.jetbrains.dokka")
+}
+
+
+val testJavaVersion = project.testJavaVersion
 
 tasks.withType<Test> {
   useJUnitPlatform()

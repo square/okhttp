@@ -62,7 +62,10 @@ class SimpleIdnaMappingTable internal constructor(
     var result = true
 
     when (mapping.type) {
-      TYPE_IGNORED -> Unit
+      TYPE_IGNORED -> {
+        Unit
+      }
+
       TYPE_MAPPED, TYPE_DISALLOWED_STD3_MAPPED -> {
         sink.write(mapping.mappedTo)
       }
@@ -142,7 +145,9 @@ private fun BufferedSource.skipWhitespace() {
 
 private fun BufferedSource.skipRestOfLine() {
   when (val newline = indexOf('\n'.code.toByte())) {
-    -1L -> skip(buffer.size) // Exhaust this source.
+    -1L -> skip(buffer.size)
+
+    // Exhaust this source.
     else -> skip(newline + 1)
   }
 }
@@ -195,7 +200,9 @@ fun BufferedSource.readPlainTextIdnaMappingTable(): SimpleIdnaMappingTable {
           readHexadecimalUnsignedLong()
         }
 
-        else -> sourceCodePoint0
+        else -> {
+          sourceCodePoint0
+        }
       }
 
     skipWhitespace()
@@ -228,9 +235,13 @@ fun BufferedSource.readPlainTextIdnaMappingTable(): SimpleIdnaMappingTable {
         }
       }
 
-      TYPE_DISALLOWED, TYPE_DISALLOWED_STD3_VALID, TYPE_IGNORED, TYPE_VALID -> Unit
+      TYPE_DISALLOWED, TYPE_DISALLOWED_STD3_VALID, TYPE_IGNORED, TYPE_VALID -> {
+        Unit
+      }
 
-      else -> throw IOException("unexpected type")
+      else -> {
+        throw IOException("unexpected type")
+      }
     }
 
     skipRestOfLine()

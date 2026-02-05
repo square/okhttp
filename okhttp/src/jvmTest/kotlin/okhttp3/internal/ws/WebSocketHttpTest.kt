@@ -46,11 +46,11 @@ import mockwebserver3.RecordedRequest
 import mockwebserver3.SocketEffect.CloseSocket
 import mockwebserver3.SocketEffect.Stall
 import mockwebserver3.junit5.StartStop
+import okhttp3.EventRecorder
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Protocol
-import okhttp3.RecordingEventListener
 import okhttp3.RecordingHostnameVerifier
 import okhttp3.Request
 import okhttp3.Response
@@ -938,11 +938,11 @@ class WebSocketHttpTest {
 
   @Test
   fun webSocketsDontTriggerEventListener() {
-    val listener = RecordingEventListener()
+    val eventRecorder = EventRecorder()
     client =
       client
         .newBuilder()
-        .eventListenerFactory(clientTestRule.wrap(listener))
+        .eventListenerFactory(clientTestRule.wrap(eventRecorder))
         .build()
     webServer.enqueue(
       MockResponse
@@ -961,7 +961,7 @@ class WebSocketHttpTest {
     clientListener.assertClosing(1000, "")
     clientListener.assertClosed(1000, "")
     serverListener.assertClosed(1000, "")
-    assertThat(listener.recordedEventTypes()).isEmpty()
+    assertThat(eventRecorder.recordedEventTypes()).isEmpty()
   }
 
   @Test

@@ -132,10 +132,17 @@ class OkHttpClientTestRule :
     Logger.getLogger("javax.net.ssl").fn()
   }
 
-  fun wrap(eventListener: EventListener) = EventListener.Factory { ClientRuleEventListener(eventListener, ::addEvent) }
+  fun wrap(eventListener: EventListener) =
+    EventListener.Factory {
+      ClientRuleEventListener(::addEvent) + eventListener
+    }
+
+  fun wrap(eventRecorder: EventRecorder) = wrap(eventRecorder.eventListener)
 
   fun wrap(eventListenerFactory: EventListener.Factory) =
-    EventListener.Factory { call -> ClientRuleEventListener(eventListenerFactory.create(call), ::addEvent) }
+    EventListener.Factory { call ->
+      ClientRuleEventListener(::addEvent) + eventListenerFactory.create(call)
+    }
 
   /**
    * Returns an OkHttpClient for tests to use as a starting point.
@@ -209,6 +216,10 @@ class OkHttpClientTestRule :
       uncaughtException = throwable
     }
   }
+
+  @Synchronized fun takeUncaughtException(): Throwable? =
+    uncaughtException
+      .also { uncaughtException = null }
 
   fun ensureAllConnectionsReleased() {
     testClient?.let {

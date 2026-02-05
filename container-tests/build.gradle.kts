@@ -1,9 +1,13 @@
 plugins {
   kotlin("jvm")
+  id("okhttp.base-conventions")
 }
 
-val platform = System.getProperty("okhttp.platform", "jdk9")
-val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
+import okhttp3.buildsupport.platform
+import okhttp3.buildsupport.testJavaVersion
+
+val platform = project.platform
+val testJavaVersion = project.testJavaVersion
 
 tasks.withType<Test> {
   useJUnitPlatform()

@@ -204,7 +204,10 @@ object Punycode {
           in 'a'..'z', in 'A'..'Z', in '0'..'9', '-' -> {
             codePoints += codePoint.code
           }
-          else -> return false // Malformed.
+
+          else -> {
+            return false
+          } // Malformed.
         }
       }
       pos++ // Consume '-'.
@@ -311,7 +314,9 @@ object Punycode {
             }
           }
 
-          else -> c.code
+          else -> {
+            c.code
+          }
         }
       i++
     }

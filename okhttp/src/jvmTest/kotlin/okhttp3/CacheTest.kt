@@ -547,7 +547,7 @@ class CacheTest {
   }
 
   @Test
-  fun queryRequestsCacheTheBody() {
+  fun queryRequestsCacheTheBodyWithCacheUrlOverride() {
     server.enqueue(
       MockResponse
         .Builder()
@@ -562,6 +562,13 @@ class CacheTest {
         .body("DEF")
         .build(),
     )
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("DEFa")
+        .build(),
+    )
 
     val url = server.url("/same")
 
@@ -571,6 +578,7 @@ class CacheTest {
         .Builder()
         .url(url)
         .query("foo".toRequestBody())
+        .cacheUrlOverride(url.newBuilder().addQueryParameter("body", "foo").build())
         .build()
     val response1 = client.newCall(request1).execute()
     assertThat(response1.body.string()).isEqualTo("ABC")
@@ -581,17 +589,28 @@ class CacheTest {
         .Builder()
         .url(url)
         .query("bar".toRequestBody())
+        .cacheUrlOverride(url.newBuilder().addQueryParameter("body", "bar").build())
         .build()
     val response2 = client.newCall(request2).execute()
     assertThat(response2.body.string()).isEqualTo("DEF")
 
-    // Third QUERY request with body "foo" again, should be cached and return "ABC"
-    val response3 = client.newCall(request1).execute()
-    assertThat(response3.body.string()).isEqualTo("ABC")
+    // Third QUERY request with body "bar" but not cached
+    val request3 =
+      Request
+        .Builder()
+        .url(url)
+        .query("bar".toRequestBody())
+        .build()
+    val response3 = client.newCall(request3).execute()
+    assertThat(response3.body.string()).isEqualTo("DEFa")
 
-    // Fourth QUERY request with body "bar" again, should be cached and return "DEF"
-    val response4 = client.newCall(request2).execute()
-    assertThat(response4.body.string()).isEqualTo("DEF")
+    // Fourth QUERY request with body "foo" again, should be cached and return "ABC"
+    val response1a = client.newCall(request1).execute()
+    assertThat(response1a.body.string()).isEqualTo("ABC")
+
+    // Fifth QUERY request with body "bar" again, should be cached and return "DEF"
+    val response2a = client.newCall(request2).execute()
+    assertThat(response2a.body.string()).isEqualTo("DEF")
   }
 
   @Test
@@ -1213,7 +1232,7 @@ class CacheTest {
 
   @Test
   fun requestMethodQueryIsCached() {
-    testRequestMethod("QUERY", true)
+    testRequestMethod("QUERY", false)
   }
 
   @Test
@@ -3151,6 +3170,7 @@ class CacheTest {
         .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build(),
     )
+    addFinalFailingResponse()
     val url = server.url("/")
     val urlKey = key(url)
     val entryMetadata =
@@ -3186,7 +3206,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.0", entryMetadata)
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3201,6 +3221,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   /** Exercise the cache format in OkHttp 2.7 and all earlier releases.  */
   @Test
   fun testGoldenCacheHttpsResponseOkHttp27() {
+    addFinalFailingResponse()
+
     val url = server.url("/")
     val urlKey = key(url)
     val prefix = get().getPrefix()
@@ -3236,7 +3258,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3250,6 +3272,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   /** The TLS version is present in OkHttp 3.0 and beyond.  */
   @Test
   fun testGoldenCacheHttpsResponseOkHttp30() {
+    addFinalFailingResponse()
+
     val url = server.url("/")
     val urlKey = key(url)
     val prefix = get().getPrefix()
@@ -3290,7 +3314,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3303,6 +3327,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
   @Test
   fun testGoldenCacheHttpResponseOkHttp30() {
+    addFinalFailingResponse()
+
     val url = server.url("/")
     val urlKey = key(url)
     val prefix = get().getPrefix()
@@ -3336,7 +3362,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3345,6 +3371,12 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     val response = get(url)
     assertThat(response.body.string()).isEqualTo(entryBody)
     assertThat(response.header("Content-Length")).isEqualTo("3")
+  }
+
+  private fun addFinalFailingResponse() {
+    // Should not get to this response, so fail if so.
+    // Avoids timeout on error
+    server.enqueue(MockResponse(code = 420, body = "Enhance Your Calm"))
   }
 
   @Test
@@ -3804,7 +3836,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     file: String,
     content: String,
   ) {
-    val sink = fileSystem.sink(directory.div(file)).buffer()
+    val sink = fileSystem.sink(directory / file).buffer()
     sink.writeUtf8(content)
     sink.close()
   }

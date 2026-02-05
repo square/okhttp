@@ -15,6 +15,8 @@
  */
 package okhttp3
 
+import app.cash.burst.Burst
+import app.cash.burst.burstValues
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
@@ -34,8 +36,6 @@ import mockwebserver3.junit5.StartStop
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
 import okhttp3.Provider.CONSCRYPT
-import okhttp3.Provider.JSSE
-import okhttp3.TlsExtensionMode.DISABLED
 import okhttp3.TlsExtensionMode.STANDARD
 import okhttp3.TlsVersion.TLS_1_2
 import okhttp3.TlsVersion.TLS_1_3
@@ -46,14 +46,14 @@ import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.MethodSource
 
 @Suppress("UsePropertyAccessSyntax")
 @Timeout(6)
 @Tag("slow")
+@Burst
 class SocketChannelTest {
   @JvmField @RegisterExtension
   val platform = PlatformRule()
@@ -93,9 +93,23 @@ class SocketChannelTest {
     platform.assumeNotBouncyCastle()
   }
 
-  @ParameterizedTest
-  @MethodSource("connectionTypes")
-  fun testConnection(socketMode: SocketMode) {
+  @Test
+  fun testHttp(socketMode: SocketMode = burstValues(Channel, Standard)) {
+    testConnection(socketMode)
+  }
+
+  @Test
+  fun testHttps(
+    provider: Provider = Provider.JSSE,
+    protocol: Protocol = burstValues(HTTP_1_1, HTTP_2),
+    tlsVersion: TlsVersion = burstValues(TLS_1_3, TLS_1_2),
+    socketMode: SocketMode = burstValues(Channel, Standard),
+    tlsExtensionMode: TlsExtensionMode = TlsExtensionMode.STANDARD,
+  ) {
+    testConnection(TlsInstance(provider, protocol, tlsVersion, socketMode, tlsExtensionMode))
+  }
+
+  private fun testConnection(socketMode: SocketMode) {
     // https://github.com/square/okhttp/pull/6554
     assumeFalse(
       socketMode is TlsInstance &&
@@ -224,23 +238,6 @@ class SocketChannelTest {
         assertThat(response.protocol).isEqualTo(HTTP_1_1)
       }
     }
-  }
-
-  companion object {
-    @Suppress("unused")
-    @JvmStatic
-    fun connectionTypes(): List<SocketMode> =
-      listOf(CONSCRYPT, JSSE).flatMap { provider ->
-        listOf(HTTP_1_1, HTTP_2).flatMap { protocol ->
-          listOf(TLS_1_3, TLS_1_2).flatMap { tlsVersion ->
-            listOf(Channel, Standard).flatMap { socketMode ->
-              listOf(DISABLED, STANDARD).map { tlsExtensionMode ->
-                TlsInstance(provider, protocol, tlsVersion, socketMode, tlsExtensionMode)
-              }
-            }
-          }
-        }
-      } + Channel + Standard
   }
 }
 

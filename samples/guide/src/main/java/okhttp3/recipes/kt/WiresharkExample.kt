@@ -86,6 +86,7 @@ class WireSharkListenerFactory(
           Thread.sleep(10000)
         }
       }
+
       CommandLine -> {
         return ProcessBuilder(
           "tshark",
@@ -102,6 +103,7 @@ class WireSharkListenerFactory(
           .redirectError(Redirect.INHERIT)
           .start()
       }
+
       Gui -> {
         return ProcessBuilder(
           "nohup",

@@ -1,5 +1,6 @@
 plugins {
-  id("com.vanniktech.maven.publish.base")
+  id("okhttp.base-conventions")
+  id("okhttp.publish-conventions")
   id("java-platform")
 }
 

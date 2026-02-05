@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.http
 
+import app.cash.burst.Burst
 import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.doesNotContain
@@ -44,11 +45,11 @@ import okhttp3.CallEvent.RequestFailed
 import okhttp3.CallEvent.ResponseFailed
 import okhttp3.DelegatingServerSocketFactory
 import okhttp3.DelegatingSocketFactory
+import okhttp3.EventRecorder
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Protocol.HTTP_1_1
-import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.SimpleProvider
@@ -61,20 +62,21 @@ import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.BufferedSink
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ArgumentsSource
 
 @Timeout(30)
 @Tag("Slow")
-class CancelTest {
+@Burst
+class CancelTest(
+  private val cancelMode: CancelMode = INTERRUPT,
+  private val connectionType: ConnectionType = H2,
+) {
   @JvmField @RegisterExtension
   val platform = PlatformRule()
-
-  lateinit var cancelMode: CancelMode
-  lateinit var connectionType: ConnectionType
 
   private var threadToCancel: Thread? = null
 
@@ -97,12 +99,10 @@ class CancelTest {
   private lateinit var server: MockWebServer
   private lateinit var client: OkHttpClient
 
-  val listener = RecordingEventListener()
+  val eventRecorder = EventRecorder()
 
-  fun setUp(mode: Pair<CancelMode, ConnectionType>) {
-    this.cancelMode = mode.first
-    this.connectionType = mode.second
-
+  @BeforeEach
+  fun setUp() {
     if (connectionType == H2) {
       platform.assumeHttp2Support()
     }
@@ -138,7 +138,7 @@ class CancelTest {
         ).sslSocketFactory(
           handshakeCertificates.sslSocketFactory(),
           handshakeCertificates.trustManager,
-        ).eventListener(listener)
+        ).eventListener(eventRecorder.eventListener)
         .apply {
           if (connectionType == HTTPS) {
             protocols(listOf(HTTP_1_1))
@@ -147,10 +147,8 @@ class CancelTest {
     threadToCancel = Thread.currentThread()
   }
 
-  @ParameterizedTest
-  @ArgumentsSource(CancelModelParamProvider::class)
-  fun cancelWritingRequestBody(mode: Pair<CancelMode, ConnectionType>) {
-    setUp(mode)
+  @Test
+  fun cancelWritingRequestBody() {
     server.enqueue(MockResponse())
     val call =
       client.newCall(
@@ -182,10 +180,8 @@ class CancelTest {
     }
   }
 
-  @ParameterizedTest
-  @ArgumentsSource(CancelModelParamProvider::class)
-  fun cancelReadingResponseBody(mode: Pair<CancelMode, ConnectionType>) {
-    setUp(mode)
+  @Test
+  fun cancelReadingResponseBody() {
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
       MockResponse
@@ -211,10 +207,8 @@ class CancelTest {
     assertEquals(if (connectionType == H2) 1 else 0, client.connectionPool.connectionCount())
   }
 
-  @ParameterizedTest
-  @ArgumentsSource(CancelModelParamProvider::class)
-  fun cancelAndFollowup(mode: Pair<CancelMode, ConnectionType>) {
-    setUp(mode)
+  @Test
+  fun cancelAndFollowup() {
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
       MockResponse
@@ -243,8 +237,8 @@ class CancelTest {
 
     cancelLatch.await()
 
-    val events = listener.eventSequence.filter { isConnectionEvent(it) }.map { it.name }
-    listener.clearAllEvents()
+    val events = eventRecorder.eventSequence.filter { isConnectionEvent(it) }.map { it.name }
+    eventRecorder.clearAllEvents()
 
     assertThat(events).startsWith("CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired")
     if (cancelMode == CANCEL) {
@@ -260,7 +254,7 @@ class CancelTest {
       assertEquals(".", it.body.string())
     }
 
-    val events2 = listener.eventSequence.filter { isConnectionEvent(it) }.map { it.name }
+    val events2 = eventRecorder.eventSequence.filter { isConnectionEvent(it) }.map { it.name }
     val expectedEvents2 =
       mutableListOf<String>().apply {
         add("CallStart")

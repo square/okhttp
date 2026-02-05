@@ -2,6 +2,8 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
+    "group:monorepos",
+    "group:recommended",
     ":dependencyDashboard"
   ],
   "semanticCommits": "disabled",
@@ -33,11 +35,17 @@
       "allowedVersions": "<=2.6"
     },
     {
-      "matchPackageNames": [
-        "org.eclipse.jetty:jetty-client"
+      "extends": [
+        "monorepo:jetty"
       ],
       "allowedVersions": "<10.0",
       "description": "JDK 11 requirement"
+    },
+    {
+      "extends": [
+        "monorepo:junit5"
+      ],
+      "allowedVersions": "<5.14.0",
     },
     {
       "matchPackageNames": [

@@ -31,6 +31,9 @@ import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketEffect.CloseStream
+import okhttp3.CallEvent.ConnectEnd
+import okhttp3.CallEvent.ConnectFailed
+import okhttp3.CallEvent.ConnectStart
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.Flaky
 import org.junit.jupiter.api.AfterEach
@@ -62,7 +65,7 @@ class FastFallbackTest {
   private lateinit var serverIpv4: MockWebServer
   private lateinit var serverIpv6: MockWebServer
 
-  private val listener = RecordingEventListener()
+  private val eventRecorder = EventRecorder()
   private lateinit var client: OkHttpClient
   private lateinit var url: HttpUrl
 
@@ -95,7 +98,7 @@ class FastFallbackTest {
     client =
       clientTestRule
         .newClientBuilder()
-        .eventListenerFactory(clientTestRule.wrap(listener))
+        .eventListenerFactory(clientTestRule.wrap(eventRecorder))
         .connectTimeout(60, TimeUnit.SECONDS) // Deliberately exacerbate slow fallbacks.
         .dns { dnsResults }
         .fastFallback(true)
@@ -133,8 +136,8 @@ class FastFallbackTest {
     assertThat(response.body.string()).isEqualTo("hello from IPv6")
 
     // In the process we made one successful connection attempt.
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(1)
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(0)
+    assertThat(eventRecorder.recordedEventTypes().filter { it == ConnectStart::class }).hasSize(1)
+    assertThat(eventRecorder.recordedEventTypes().filter { it == ConnectFailed::class }).hasSize(0)
   }
 
   @Test
@@ -157,8 +160,8 @@ class FastFallbackTest {
     assertThat(response.body.string()).isEqualTo("hello from IPv6")
 
     // In the process we made one successful connection attempt.
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(1)
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(0)
+    assertThat(eventRecorder.recordedEventTypes().filter { it == ConnectStart::class }).hasSize(1)
+    assertThat(eventRecorder.recordedEventTypes().filter { it == ConnectFailed::class }).hasSize(0)
   }
 
   @Test
@@ -173,9 +176,9 @@ class FastFallbackTest {
     assertThat(response.body.string()).isEqualTo("hello from IPv4")
 
     // In the process we made one successful connection attempt.
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(2)
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(1)
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectEnd" }).hasSize(1)
+    assertThat(eventRecorder.recordedEventTypes().filter { it == ConnectStart::class }).hasSize(2)
+    assertThat(eventRecorder.recordedEventTypes().filter { it == ConnectFailed::class }).hasSize(1)
+    assertThat(eventRecorder.recordedEventTypes().filter { it == ConnectEnd::class }).hasSize(1)
   }
 
   @Test
@@ -190,9 +193,9 @@ class FastFallbackTest {
     assertThat(response.body.string()).isEqualTo("hello from IPv6")
 
     // In the process we made two connection attempts including one failure.
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(1)
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectEnd" }).hasSize(1)
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(0)
+    assertThat(eventRecorder.recordedEventTypes().filter { it == ConnectStart::class }).hasSize(1)
+    assertThat(eventRecorder.recordedEventTypes().filter { it == ConnectEnd::class }).hasSize(1)
+    assertThat(eventRecorder.recordedEventTypes().filter { it == ConnectFailed::class }).hasSize(0)
   }
 
   @Test
@@ -206,8 +209,8 @@ class FastFallbackTest {
     }
 
     // In the process we made two unsuccessful connection attempts.
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(2)
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(2)
+    assertThat(eventRecorder.recordedEventTypes().filter { it == ConnectStart::class }).hasSize(2)
+    assertThat(eventRecorder.recordedEventTypes().filter { it == ConnectFailed::class }).hasSize(2)
   }
 
   @RetryingTest(5)
@@ -228,8 +231,8 @@ class FastFallbackTest {
     assertThat(response.body.string()).isEqualTo("hello from IPv4")
 
     // In the process we made two connection attempts including one failure.
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(2)
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(1)
+    assertThat(eventRecorder.recordedEventTypes().filter { it == ConnectStart::class }).hasSize(2)
+    assertThat(eventRecorder.recordedEventTypes().filter { it == ConnectFailed::class }).hasSize(1)
   }
 
   @Test

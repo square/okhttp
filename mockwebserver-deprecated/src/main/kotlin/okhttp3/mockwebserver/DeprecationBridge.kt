@@ -58,34 +58,79 @@ internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
   result.trailers(trailers)
 
   when (socketPolicy) {
-    SocketPolicy.EXPECT_CONTINUE, SocketPolicy.CONTINUE_ALWAYS -> result.add100Continue()
-    SocketPolicy.UPGRADE_TO_SSL_AT_END -> result.inTunnel()
-    SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE -> result.shutdownServer(true)
-    SocketPolicy.KEEP_OPEN -> Unit
-    SocketPolicy.DISCONNECT_AT_END -> result.onResponseEnd(ShutdownConnection)
-    SocketPolicy.DISCONNECT_AT_START -> result.onRequestStart(CloseSocket())
-    SocketPolicy.DISCONNECT_AFTER_REQUEST -> result.onResponseStart(CloseSocket())
-    SocketPolicy.DISCONNECT_DURING_REQUEST_BODY -> result.onRequestBody(CloseSocket())
-    SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY -> result.onResponseBody(CloseSocket())
-    SocketPolicy.DO_NOT_READ_REQUEST_BODY -> result.doNotReadRequestBody()
-    SocketPolicy.FAIL_HANDSHAKE -> result.failHandshake()
-    SocketPolicy.SHUTDOWN_INPUT_AT_END ->
+    SocketPolicy.EXPECT_CONTINUE, SocketPolicy.CONTINUE_ALWAYS -> {
+      result.add100Continue()
+    }
+
+    SocketPolicy.UPGRADE_TO_SSL_AT_END -> {
+      result.inTunnel()
+    }
+
+    SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE -> {
+      result.shutdownServer(true)
+    }
+
+    SocketPolicy.KEEP_OPEN -> {
+      Unit
+    }
+
+    SocketPolicy.DISCONNECT_AT_END -> {
+      result.onResponseEnd(ShutdownConnection)
+    }
+
+    SocketPolicy.DISCONNECT_AT_START -> {
+      result.onRequestStart(CloseSocket())
+    }
+
+    SocketPolicy.DISCONNECT_AFTER_REQUEST -> {
+      result.onResponseStart(CloseSocket())
+    }
+
+    SocketPolicy.DISCONNECT_DURING_REQUEST_BODY -> {
+      result.onRequestBody(CloseSocket())
+    }
+
+    SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY -> {
+      result.onResponseBody(CloseSocket())
+    }
+
+    SocketPolicy.DO_NOT_READ_REQUEST_BODY -> {
+      result.doNotReadRequestBody()
+    }
+
+    SocketPolicy.FAIL_HANDSHAKE -> {
+      result.failHandshake()
+    }
+
+    SocketPolicy.SHUTDOWN_INPUT_AT_END -> {
       result.onResponseEnd(
         CloseSocket(
           closeSocket = false,
           shutdownInput = true,
         ),
       )
-    SocketPolicy.SHUTDOWN_OUTPUT_AT_END ->
+    }
+
+    SocketPolicy.SHUTDOWN_OUTPUT_AT_END -> {
       result.onResponseEnd(
         CloseSocket(
           closeSocket = false,
           shutdownOutput = true,
         ),
       )
-    SocketPolicy.STALL_SOCKET_AT_START -> result.onRequestStart(SocketEffect.Stall)
-    SocketPolicy.NO_RESPONSE -> result.onResponseStart(SocketEffect.Stall)
-    SocketPolicy.RESET_STREAM_AT_START -> result.onRequestStart(CloseStream(http2ErrorCode))
+    }
+
+    SocketPolicy.STALL_SOCKET_AT_START -> {
+      result.onRequestStart(SocketEffect.Stall)
+    }
+
+    SocketPolicy.NO_RESPONSE -> {
+      result.onResponseStart(SocketEffect.Stall)
+    }
+
+    SocketPolicy.RESET_STREAM_AT_START -> {
+      result.onRequestStart(CloseStream(http2ErrorCode))
+    }
   }
 
   result.throttleBody(throttleBytesPerPeriod, getThrottlePeriod(MILLISECONDS), MILLISECONDS)

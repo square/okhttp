@@ -22,15 +22,17 @@ import okhttp3.UrlComponentEncodingTester.Component
 
 fun urlComponentEncodingTesterJvmPlatform(component: Component): UrlComponentEncodingTester.Platform =
   when (component) {
-    Component.USER ->
+    Component.USER -> {
       UrlComponentEncodingTesterJvmPlatform()
         .escapeForUri('%'.code)
+    }
 
-    Component.PASSWORD ->
+    Component.PASSWORD -> {
       UrlComponentEncodingTesterJvmPlatform()
         .escapeForUri('%'.code)
+    }
 
-    Component.HOST ->
+    Component.HOST -> {
       UrlComponentEncodingTesterJvmPlatform()
         .stripForUri(
           '\"'.code,
@@ -42,16 +44,18 @@ fun urlComponentEncodingTesterJvmPlatform(component: Component): UrlComponentEnc
           '|'.code,
           '}'.code,
         )
+    }
 
-    Component.PATH ->
+    Component.PATH -> {
       UrlComponentEncodingTesterJvmPlatform()
         .escapeForUri(
           '%'.code,
           '['.code,
           ']'.code,
         )
+    }
 
-    Component.QUERY ->
+    Component.QUERY -> {
       UrlComponentEncodingTesterJvmPlatform()
         .escapeForUri(
           '%'.code,
@@ -62,8 +66,9 @@ fun urlComponentEncodingTesterJvmPlatform(component: Component): UrlComponentEnc
           '|'.code,
           '}'.code,
         )
+    }
 
-    Component.QUERY_VALUE ->
+    Component.QUERY_VALUE -> {
       UrlComponentEncodingTesterJvmPlatform()
         .escapeForUri(
           '%'.code,
@@ -74,8 +79,9 @@ fun urlComponentEncodingTesterJvmPlatform(component: Component): UrlComponentEnc
           '|'.code,
           '}'.code,
         )
+    }
 
-    Component.FRAGMENT ->
+    Component.FRAGMENT -> {
       UrlComponentEncodingTesterJvmPlatform()
         .escapeForUri(
           '%'.code,
@@ -91,6 +97,7 @@ fun urlComponentEncodingTesterJvmPlatform(component: Component): UrlComponentEnc
           '|'.code,
           '}'.code,
         )
+    }
   }
 
 private class UrlComponentEncodingTesterJvmPlatform : UrlComponentEncodingTester.Platform() {

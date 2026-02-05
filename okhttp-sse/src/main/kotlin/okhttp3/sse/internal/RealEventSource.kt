@@ -25,18 +25,22 @@ import okhttp3.internal.stripBody
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 
-internal class RealEventSource private constructor(
-  private val call: Call?,
+internal class RealEventSource(
   private val request: Request,
   private val listener: EventSourceListener,
 ) : EventSource,
   ServerSentEventReader.Callback,
   Callback {
-  constructor(call: Call, listener: EventSourceListener) : this(call, call.request(), listener)
-
-  constructor(response: Response, listener: EventSourceListener) : this(null, response.request, listener)
+  private var call: Call? = null
 
   @Volatile private var canceled = false
+
+  fun connect(callFactory: Call.Factory) {
+    call =
+      callFactory.newCall(request).apply {
+        enqueue(this@RealEventSource)
+      }
+  }
 
   override fun onResponse(
     call: Call,
@@ -45,7 +49,7 @@ internal class RealEventSource private constructor(
     processResponse(response)
   }
 
-  internal fun processResponse(response: Response) {
+  fun processResponse(response: Response) {
     response.use {
       if (!response.isSuccessful) {
         listener.onFailure(this, null, response)
