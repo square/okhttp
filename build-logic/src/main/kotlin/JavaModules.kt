@@ -16,8 +16,11 @@
 
 import me.champeau.mrjar.MultiReleaseExtension
 import org.gradle.api.Project
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.jvm.toolchain.JavaToolchainService
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.named
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
@@ -55,5 +58,9 @@ fun Project.applyJavaModules(
 
     classpath = compileKotlinTask.libraries
     modularity.inferModulePath.set(true)
+
+    val javaToolchains = project.extensions.getByType<JavaToolchainService>()
+    val javaPluginExtension = project.extensions.getByType<JavaPluginExtension>()
+    javaCompiler.set(javaToolchains.compilerFor(javaPluginExtension.toolchain))
   }
 }
