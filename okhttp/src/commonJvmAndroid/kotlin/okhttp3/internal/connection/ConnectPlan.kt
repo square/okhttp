@@ -363,7 +363,7 @@ class ConnectPlan internal constructor(
             """
             |Hostname ${address.url.host} not verified:
             |    certificate: ${CertificatePinner.pin(cert)}
-            |    DN: ${cert.subjectDN.name}
+            |    DN: ${cert.subjectX500Principal.name}
             |    subjectAltNames: ${OkHostnameVerifier.allSubjectAltNames(cert)}
             """.trimMargin(),
           )

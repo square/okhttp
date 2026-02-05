@@ -196,7 +196,7 @@ class CertificatePinner internal constructor(
           append("\n    ")
           append(pin(element))
           append(": ")
-          append(element.subjectDN.name)
+          append(element.subjectX500Principal.name)
         }
         append("\n  Pinned certificates for ")
         append(hostname)
