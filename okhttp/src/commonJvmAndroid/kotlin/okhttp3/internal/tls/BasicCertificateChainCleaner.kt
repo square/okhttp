@@ -109,7 +109,7 @@ class BasicCertificateChainCleaner(
     signingCert: X509Certificate,
     minIntermediates: Int,
   ): Boolean {
-    if (toVerify.issuerDN != signingCert.subjectDN) {
+    if (toVerify.issuerX500Principal != signingCert.subjectX500Principal) {
       return false
     }
     if (signingCert.basicConstraints < minIntermediates) {
