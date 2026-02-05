@@ -111,8 +111,8 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
         with:
           build-scan-publish: true
-          build-scan-terms-of-service-url: 'https://gradle.com/terms-of-service'
-          build-scan-terms-of-service-agree: 'yes'
+          build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
+          build-scan-terms-of-use-agree: 'yes'
 
       - name: Run Tests
         run: ./gradlew test allTests -Ptest.java.version=${{ matrix.java-version }}
