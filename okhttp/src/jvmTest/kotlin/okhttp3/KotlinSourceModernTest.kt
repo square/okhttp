@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package okhttp3
 
 import java.io.File
@@ -46,6 +47,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
+import kotlin.reflect.KClass
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Headers.Companion.toHeaders
@@ -90,13 +92,19 @@ import org.junit.jupiter.api.Test
  */
 @Suppress(
   "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE",
+  "AssignedValueIsNeverRead",
+  "CanBeVal",
+  "DEPRECATION",
+  "IMPLICIT_NOTHING_AS_TYPE_PARAMETER",
+  "RedundantExplicitType",
+  "RedundantNullableReturnType",
   "UNUSED_ANONYMOUS_PARAMETER",
   "UNUSED_VALUE",
   "UNUSED_VARIABLE",
   "VARIABLE_WITH_REDUNDANT_INITIALIZER",
-  "RedundantLambdaArrow",
-  "RedundantExplicitType",
-  "IMPLICIT_NOTHING_AS_TYPE_PARAMETER",
+  "VariableInitializerIsRedundant",
+  "VariableNeverRead",
+  "unused",
 )
 @Disabled
 class KotlinSourceModernTest {
@@ -200,6 +208,22 @@ class KotlinSourceModernTest {
         override fun isCanceled(): Boolean = TODO()
 
         override fun timeout(): Timeout = TODO()
+
+        override fun addEventListener(eventListener: EventListener) = TODO()
+
+        override fun <T : Any> tag(type: KClass<T>): T? = TODO()
+
+        override fun <T> tag(type: Class<out T>): T? = TODO()
+
+        override fun <T : Any> tag(
+          type: KClass<T>,
+          computeIfAbsent: () -> T,
+        ): T = TODO()
+
+        override fun <T : Any> tag(
+          type: Class<T>,
+          computeIfAbsent: () -> T,
+        ): T = TODO()
 
         override fun clone(): Call = TODO()
       }
@@ -366,7 +390,7 @@ class KotlinSourceModernTest {
     val maxRequestsPerHost: Int = dispatcher.maxRequestsPerHost
     dispatcher.maxRequestsPerHost = 0
     val executorService: ExecutorService = dispatcher.executorService
-    dispatcher.idleCallback = Runnable { ({ TODO() })() }
+    dispatcher.idleCallback = Runnable { TODO() }
     val queuedCalls: List<Call> = dispatcher.queuedCalls()
     val runningCalls: List<Call> = dispatcher.runningCalls()
     val queuedCallsCount: Int = dispatcher.queuedCallsCount()
@@ -1327,22 +1351,115 @@ class KotlinSourceModernTest {
       override fun connectTimeoutMillis(): Int = TODO()
 
       override fun withConnectTimeout(
-        timeout: Int,
+        timeout: Long,
         unit: TimeUnit,
       ): Interceptor.Chain = TODO()
 
       override fun readTimeoutMillis(): Int = TODO()
 
       override fun withReadTimeout(
-        timeout: Int,
+        timeout: Long,
         unit: TimeUnit,
       ): Interceptor.Chain = TODO()
 
       override fun writeTimeoutMillis(): Int = TODO()
 
       override fun withWriteTimeout(
-        timeout: Int,
+        timeout: Long,
         unit: TimeUnit,
       ): Interceptor.Chain = TODO()
+
+      override val dns: Dns
+        get() = TODO()
+
+      override val socketFactory: SocketFactory
+        get() = TODO()
+
+      override val retryOnConnectionFailure: Boolean
+        get() = TODO()
+      override val authenticator: Authenticator
+        get() = TODO()
+      override val cookieJar: CookieJar
+        get() = TODO()
+      override val cache: Cache?
+        get() = TODO()
+      override val proxy: Proxy?
+        get() = TODO()
+      override val proxySelector: ProxySelector
+        get() = TODO()
+      override val proxyAuthenticator: Authenticator
+        get() = TODO()
+      override val sslSocketFactoryOrNull: SSLSocketFactory
+        get() = TODO()
+      override val x509TrustManagerOrNull: X509TrustManager
+        get() = TODO()
+      override val hostnameVerifier: HostnameVerifier
+        get() = TODO()
+      override val certificatePinner: CertificatePinner
+        get() = TODO()
+      override val connectionPool: ConnectionPool
+        get() = TODO()
+
+      override fun withDns(dns: Dns): Interceptor.Chain {
+        TODO()
+      }
+
+      override fun withSocketFactory(socketFactory: SocketFactory): Interceptor.Chain {
+        TODO()
+      }
+
+      override fun withRetryOnConnectionFailure(retryOnConnectionFailure: Boolean): Interceptor.Chain {
+        TODO()
+      }
+
+      override fun withAuthenticator(authenticator: Authenticator): Interceptor.Chain {
+        TODO()
+      }
+
+      override fun withCookieJar(cookieJar: CookieJar): Interceptor.Chain {
+        TODO()
+      }
+
+      override fun withCache(cache: Cache?): Interceptor.Chain {
+        TODO()
+      }
+
+      override fun withProxy(proxy: Proxy?): Interceptor.Chain {
+        TODO()
+      }
+
+      override fun withProxySelector(proxySelector: ProxySelector): Interceptor.Chain {
+        TODO()
+      }
+
+      override fun withProxyAuthenticator(proxyAuthenticator: Authenticator): Interceptor.Chain {
+        TODO()
+      }
+
+      override fun withSslSocketFactory(
+        sslSocketFactory: SSLSocketFactory?,
+        x509TrustManager: X509TrustManager?,
+      ): Interceptor.Chain {
+        TODO()
+      }
+
+      override fun withHostnameVerifier(hostnameVerifier: HostnameVerifier): Interceptor.Chain {
+        TODO()
+      }
+
+      override fun withCertificatePinner(certificatePinner: CertificatePinner): Interceptor.Chain {
+        TODO()
+      }
+
+      override fun withConnectionPool(connectionPool: ConnectionPool): Interceptor.Chain {
+        TODO()
+      }
+
+      override val followSslRedirects: Boolean
+        get() = TODO()
+      override val followRedirects: Boolean
+        get() = TODO()
+      override val eventListener: EventListener
+        get() = TODO()
     }
 }

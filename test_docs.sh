@@ -9,12 +9,12 @@
 set -ex
 
 # Test generating the javadoc jars
-./gradlew publishToMavenLocal -DRELEASE_SIGNING_ENABLED=false
+./gradlew publishToMavenLocal -DRELEASE_SIGNING_ENABLED=false -PokhttpDokka=true
 
 # Generate the API docs
-./gradlew dokkaHtmlMultiModule
+./gradlew dokkaGeneratePublicationHtml -PokhttpDokka=true
 
-mv ./build/dokka/htmlMultiModule docs/4.x
+mv ./build/dokka/html docs/4.x
 
 # Copy in special files that GitHub wants in the project root.
 cat README.md | grep -v 'project website' > docs/index.md

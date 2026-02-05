@@ -17,12 +17,15 @@ package okhttp3
 
 import java.net.URL
 import kotlin.reflect.KClass
-import kotlin.reflect.cast
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.internal.EmptyTags
+import okhttp3.internal.Tags
 import okhttp3.internal.http.GzipRequestBody
 import okhttp3.internal.http.HttpMethod
+import okhttp3.internal.isProbablyUtf8
 import okhttp3.internal.isSensitiveHeader
+import okio.Buffer
 
 /**
  * An HTTP request. Instances of this class are immutable if their [body] is null or itself
@@ -46,7 +49,7 @@ class Request internal constructor(
   @get:JvmName("cacheUrlOverride")
   val cacheUrlOverride: HttpUrl? = builder.cacheUrlOverride
 
-  internal val tags: Map<KClass<*>, Any> = builder.tags.toMap()
+  internal val tags = builder.tags
 
   private var lazyCacheControl: CacheControl? = null
 
@@ -79,13 +82,6 @@ class Request internal constructor(
         body,
       ),
   )
-
-  init {
-    val connectionHeader = headers["Connection"]
-    require(body == null || !"upgrade".equals(connectionHeader, ignoreCase = true)) {
-      "expected a null request body with 'Connection: upgrade'"
-    }
-  }
 
   fun header(name: String): String? = headers[name]
 
@@ -191,7 +187,7 @@ class Request internal constructor(
         }
         append(']')
       }
-      if (tags.isNotEmpty()) {
+      if (tags != EmptyTags) {
         append(", tags=")
         append(tags)
       }
@@ -204,9 +200,7 @@ class Request internal constructor(
     internal var headers: Headers.Builder
     internal var body: RequestBody? = null
     internal var cacheUrlOverride: HttpUrl? = null
-
-    /** A mutable map of tags, or an immutable empty map if we don't have any. */
-    internal var tags = mapOf<KClass<*>, Any>()
+    internal var tags: Tags = EmptyTags
 
     constructor() {
       this.method = "GET"
@@ -217,11 +211,7 @@ class Request internal constructor(
       this.url = request.url
       this.method = request.method
       this.body = request.body
-      this.tags =
-        when {
-          request.tags.isEmpty() -> mapOf()
-          else -> request.tags.toMutableMap()
-        }
+      this.tags = request.tags
       this.headers = request.headers.newBuilder()
       this.cacheUrlOverride = request.cacheUrlOverride
     }
@@ -318,7 +308,24 @@ class Request internal constructor(
     open fun patch(body: RequestBody): Builder = method("PATCH", body)
 
     /**
-     * A QUERY request with a body. If `body.isOneShot()` is true, then caching will be disabled.
+     * Sets this request's method to `QUERY`.
+     *
+     * By default, `QUERY` requests are not cached. You can use [cacheUrlOverride] to specify
+     * how to cache them.
+     *
+     * A typical use case is to hash the request body:
+     *
+     * ```kotlin
+     *     val hash = body.sha256().hex()
+     *     val query = Request
+     *         .Builder()
+     *         .query(body)
+     *         .url("https://example.com/query")
+     *         .cacheUrlOverride("https://example.com/query/$hash".toHttpUrl())
+     *         .build()
+     * ```
+     *
+     * @see cacheUrlOverride
      */
     open fun query(body: RequestBody): Builder = method("QUERY", body)
 
@@ -365,18 +372,7 @@ class Request internal constructor(
       tag: T?,
     ): Builder =
       apply {
-        if (tag == null) {
-          if (tags.isNotEmpty()) {
-            (tags as MutableMap).remove(type)
-          }
-        } else {
-          val mutableTags =
-            when {
-              tags.isEmpty() -> mutableMapOf<KClass<*>, Any>().also { tags = it }
-              else -> tags as MutableMap<KClass<*>, Any>
-            }
-          mutableTags[type] = type.cast(tag)
-        }
+        tags = tags.plus(type, tag)
       }
 
     /** Attaches [tag] to the request using `Object.class` as a key. */
@@ -435,4 +431,64 @@ class Request internal constructor(
 
     open fun build(): Request = Request(this)
   }
+
+  /**
+   * Returns a cURL command equivalent to this request, useful for debugging and reproducing
+   * requests.
+   *
+   * This includes the HTTP method, headers, request body (if present), and URL.
+   *
+   * Example:
+   *
+   * ```
+   * curl 'https://example.com/api' \
+   *   -X PUT \
+   *   -H 'Authorization: Bearer token' \
+   *   --data '{\"key\":\"value\"}'
+   * ```
+   *
+   * **Note:** This will consume the request body. This may have side effects if the [RequestBody]
+   * is streaming or can be consumed only once.
+   */
+  @JvmOverloads
+  fun toCurl(includeBody: Boolean = true): String =
+    buildString {
+      append("curl ${url.toString().shellEscape()}")
+
+      val contentType = body?.contentType()?.toString()
+
+      // Add method if not the default.
+      val defaultMethod =
+        when {
+          includeBody && body != null -> "POST"
+          else -> "GET"
+        }
+      if (method != defaultMethod) {
+        append(" \\\n  -X ${method.shellEscape()}")
+      }
+
+      // Append headers.
+      for ((name, value) in headers) {
+        if (contentType != null && name.equals("Content-Type", ignoreCase = true)) continue
+        append(" \\\n  -H ${"$name: $value".shellEscape()}")
+      }
+
+      if (contentType != null) {
+        append(" \\\n  -H ${"Content-Type: $contentType".shellEscape()}")
+      }
+
+      // Append body if present.
+      if (includeBody && body != null) {
+        val bodyBuffer = Buffer()
+        body.writeTo(bodyBuffer)
+
+        if (bodyBuffer.isProbablyUtf8()) {
+          append(" \\\n  --data ${bodyBuffer.readUtf8().shellEscape()}")
+        } else {
+          append(" \\\n  --data-binary ${bodyBuffer.readByteString().hex().shellEscape()}")
+        }
+      }
+    }
+
+  private fun String.shellEscape(): String = "'${replace("'", "'\\''")}'"
 }

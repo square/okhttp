@@ -191,6 +191,7 @@ open class OkHttpClient internal constructor(
     when {
       // Defer calls to ProxySelector.getDefault() because it can throw a SecurityException.
       builder.proxy != null -> NullProxySelector
+
       else -> builder.proxySelector ?: ProxySelector.getDefault() ?: NullProxySelector
     }
 
@@ -201,7 +202,7 @@ open class OkHttpClient internal constructor(
   @get:JvmName("socketFactory")
   val socketFactory: SocketFactory = builder.socketFactory
 
-  private val sslSocketFactoryOrNull: SSLSocketFactory?
+  internal val sslSocketFactoryOrNull: SSLSocketFactory?
 
   @get:JvmName("sslSocketFactory")
   val sslSocketFactory: SSLSocketFactory
@@ -267,16 +268,7 @@ open class OkHttpClient internal constructor(
 
   @get:JvmName("connectionPool")
   val connectionPool: ConnectionPool =
-    builder.connectionPool ?: ConnectionPool(
-      readTimeoutMillis = readTimeoutMillis,
-      writeTimeoutMillis = writeTimeoutMillis,
-      socketConnectTimeoutMillis = connectTimeoutMillis,
-      socketReadTimeoutMillis = readTimeoutMillis,
-      pingIntervalMillis = pingIntervalMillis,
-      retryOnConnectionFailure = retryOnConnectionFailure,
-      fastFallback = fastFallback,
-      routeDatabase = routeDatabase,
-    ).also {
+    builder.connectionPool ?: ConnectionPool().also {
       // Cache the pool in the builder so that it will be shared with other clients
       builder.connectionPool = it
     }
@@ -295,14 +287,14 @@ open class OkHttpClient internal constructor(
       this.x509TrustManager = builder.x509TrustManagerOrNull!!
       this.certificatePinner =
         builder.certificatePinner
-          .withCertificateChainCleaner(certificateChainCleaner!!)
+          .withCertificateChainCleaner(certificateChainCleaner)
     } else {
       this.x509TrustManager = Platform.get().platformTrustManager()
-      this.sslSocketFactoryOrNull = Platform.get().newSslSocketFactory(x509TrustManager!!)
-      this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
+      this.sslSocketFactoryOrNull = Platform.get().newSslSocketFactory(x509TrustManager)
+      this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager)
       this.certificatePinner =
         builder.certificatePinner
-          .withCertificateChainCleaner(certificateChainCleaner!!)
+          .withCertificateChainCleaner(certificateChainCleaner)
     }
 
     verifyClientState()
@@ -1113,6 +1105,7 @@ open class OkHttpClient internal constructor(
      *
      * The default value is 0 which imposes no timeout.
      */
+    @Suppress("NewApi")
     @IgnoreJRERequirement
     fun callTimeout(duration: Duration) =
       apply {
@@ -1155,6 +1148,7 @@ open class OkHttpClient internal constructor(
      * The connect timeout is applied when connecting a TCP socket to the target host. The default
      * value is 10 seconds.
      */
+    @Suppress("NewApi")
     @IgnoreJRERequirement
     fun connectTimeout(duration: Duration) =
       apply {
@@ -1200,6 +1194,7 @@ open class OkHttpClient internal constructor(
      * @see Socket.setSoTimeout
      * @see Source.timeout
      */
+    @Suppress("NewApi")
     @IgnoreJRERequirement
     fun readTimeout(duration: Duration) =
       apply {
@@ -1246,6 +1241,7 @@ open class OkHttpClient internal constructor(
      *
      * @see Sink.timeout
      */
+    @Suppress("NewApi")
     @IgnoreJRERequirement
     fun writeTimeout(duration: Duration) =
       apply {
@@ -1299,6 +1295,7 @@ open class OkHttpClient internal constructor(
      *
      * The default value of 0 disables client-initiated pings.
      */
+    @Suppress("NewApi")
     @IgnoreJRERequirement
     fun pingInterval(duration: Duration) =
       apply {
@@ -1346,6 +1343,7 @@ open class OkHttpClient internal constructor(
      * wait for a graceful shutdown. If the server doesn't respond the web socket will be canceled.
      * The default value is 60 seconds.
      */
+    @Suppress("NewApi")
     @IgnoreJRERequirement
     fun webSocketCloseTimeout(duration: Duration) =
       apply {

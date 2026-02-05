@@ -95,15 +95,28 @@ class Http1ExchangeCodec(
     contentLength: Long,
   ): Sink =
     when {
-      request.body?.isDuplex() == true -> throw ProtocolException(
-        "Duplex connections are not supported for HTTP/1",
-      )
-      request.isChunked -> newChunkedSink() // Stream a request body of unknown length.
-      contentLength != -1L -> newKnownLengthSink() // Stream a request body of a known length.
-      else -> // Stream a request body of a known length.
+      request.body?.isDuplex() == true -> {
+        throw ProtocolException(
+          "Duplex connections are not supported for HTTP/1",
+        )
+      }
+
+      request.isChunked -> {
+        newChunkedSink()
+      }
+
+      // Stream a request body of unknown length.
+      contentLength != -1L -> {
+        newKnownLengthSink()
+      }
+
+      // Stream a request body of a known length.
+      else -> {
+        // Stream a request body of a known length.
         throw IllegalStateException(
           "Cannot stream a request body without chunked encoding or a known content length!",
         )
+      }
     }
 
   override fun cancel() {
@@ -134,8 +147,14 @@ class Http1ExchangeCodec(
 
   override fun openResponseBodySource(response: Response): Source =
     when {
-      !response.promisesBody() -> newFixedLengthSource(response.request.url, 0)
-      response.isChunked -> newChunkedSource(response.request.url)
+      !response.promisesBody() -> {
+        newFixedLengthSource(response.request.url, 0)
+      }
+
+      response.isChunked -> {
+        newChunkedSource(response.request.url)
+      }
+
       else -> {
         val contentLength = response.headersContentLength()
         if (contentLength != -1L) {
@@ -207,16 +226,19 @@ class Http1ExchangeCodec(
         expectContinue && statusLine.code == HTTP_CONTINUE -> {
           null
         }
+
         statusLine.code == HTTP_CONTINUE -> {
           state = STATE_READ_RESPONSE_HEADERS
           responseBuilder
         }
+
         statusLine.code in (102 until 200) -> {
           // Processing and Early Hints will mean a second headers are coming.
           // Treat others the same for now
           state = STATE_READ_RESPONSE_HEADERS
           responseBuilder
         }
+
         else -> {
           state = STATE_OPEN_RESPONSE_BODY
           responseBuilder
@@ -484,7 +506,7 @@ class Http1ExchangeCodec(
       try {
         bytesRemainingInChunk = socket.source.readHexadecimalUnsignedLong()
         val extensions = socket.source.readUtf8LineStrict().trim()
-        if (bytesRemainingInChunk < 0L || extensions.isNotEmpty() && !extensions.startsWith(";")) {
+        if ((bytesRemainingInChunk < 0L) || (extensions.isNotEmpty() && !extensions.startsWith(";"))) {
           throw ProtocolException(
             "expected chunk size and optional extensions" +
               " but was \"$bytesRemainingInChunk$extensions\"",

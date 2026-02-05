@@ -105,16 +105,20 @@ class CacheStrategy internal constructor(
               servedDate = value.toHttpDateOrNull()
               servedDateString = value
             }
+
             fieldName.equals("Expires", ignoreCase = true) -> {
               expires = value.toHttpDateOrNull()
             }
+
             fieldName.equals("Last-Modified", ignoreCase = true) -> {
               lastModified = value.toHttpDateOrNull()
               lastModifiedString = value
             }
+
             fieldName.equals("ETag", ignoreCase = true) -> {
               etag = value
             }
+
             fieldName.equals("Age", ignoreCase = true) -> {
               ageSeconds = value.toNonNegativeInt(-1)
             }
@@ -210,7 +214,9 @@ class CacheStrategy internal constructor(
           conditionValue = servedDateString
         }
 
-        else -> return CacheStrategy(request, null) // No condition! Make a regular request.
+        else -> {
+          return CacheStrategy(request, null)
+        } // No condition! Make a regular request.
       }
 
       val conditionalRequestHeaders = request.headers.newBuilder()

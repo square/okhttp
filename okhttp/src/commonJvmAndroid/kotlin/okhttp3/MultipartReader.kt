@@ -137,7 +137,9 @@ class MultipartReader
             continue@afterBoundaryLoop
           }
 
-          -1 -> throw ProtocolException("unexpected characters after boundary")
+          -1 -> {
+            throw ProtocolException("unexpected characters after boundary")
+          }
         }
       }
 
@@ -167,7 +169,9 @@ class MultipartReader
 
         return source.timeout().intersectWith(timeout) {
           when (val limit = currentPartBytesRemaining(maxByteCount = byteCount)) {
-            0L -> -1L // No more bytes in this part.
+            0L -> -1L
+
+            // No more bytes in this part.
             else -> source.read(sink, limit)
           }
         }
@@ -190,8 +194,12 @@ class MultipartReader
           toIndex = toIndex,
         )
       return when {
-        boundaryIndex != -1L -> boundaryIndex // We found the boundary.
-        source.buffer.size >= toIndex -> minOf(toIndex, maxByteCount) // No boundary before toIndex.
+        boundaryIndex != -1L -> boundaryIndex
+
+        // We found the boundary.
+        source.buffer.size >= toIndex -> minOf(toIndex, maxByteCount)
+
+        // No boundary before toIndex.
         else -> throw EOFException() // We ran out of data before we found the required boundary.
       }
     }

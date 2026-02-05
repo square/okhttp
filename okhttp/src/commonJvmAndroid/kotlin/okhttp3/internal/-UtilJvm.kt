@@ -88,11 +88,17 @@ internal fun BufferedSource.readBomAsCharset(default: Charset): Charset =
   when (select(UNICODE_BOMS)) {
     // a mapping from the index of encoding methods in UNICODE_BOMS to its corresponding encoding method
     0 -> UTF_8
+
     1 -> UTF_16BE
+
     2 -> UTF_32LE
+
     3 -> UTF_16LE
+
     4 -> UTF_32BE
+
     -1 -> default
+
     else -> throw AssertionError()
   }
 
@@ -254,7 +260,9 @@ internal inline fun <K, V> Map<K, V>.unmodifiable(): Map<K, V> = Collections.unm
 internal fun <T> List<T>.toImmutableList(): List<T> =
   when {
     this.isEmpty() -> emptyList()
+
     this.size == 1 -> Collections.singletonList(this[0])
+
     // Collection.toArray returns Object[] (covariant).
     // It is faster than creating real T[] via reflection (Arrays.copyOf).
     else -> (this as java.util.Collection<*>).toArray().asList().unmodifiable() as List<T>

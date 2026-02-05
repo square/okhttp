@@ -1,49 +1,68 @@
-import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinJvm
+import kotlinx.validation.ApiValidationExtension
+import okhttp3.buildsupport.testJavaVersion
 import org.graalvm.buildtools.gradle.dsl.GraalVMExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 plugins {
   kotlin("jvm")
-  id("org.jetbrains.dokka")
-  id("com.vanniktech.maven.publish.base")
+  id("okhttp.publish-conventions")
+  id("okhttp.jvm-conventions")
+  id("okhttp.quality-conventions")
+  id("okhttp.testing-conventions")
   id("com.gradleup.shadow")
 }
 
-val testJavaVersion = System.getProperty("test.java.version", "21").toInt()
-
-val copyResourcesTemplates = tasks.register<Copy>("copyResourcesTemplates") {
-  from("src/main/resources-templates")
-  into(layout.buildDirectory.dir("generated/resources-templates"))
-  expand("projectVersion" to "${project.version}")
-  filteringCharset = Charsets.UTF_8.toString()
+tasks.withType<KotlinCompile> {
+  compilerOptions {
+    jvmTarget.set(JvmTarget.JVM_17)
+  }
 }
 
-kotlin {
-  sourceSets {
-    val main by getting {
-      resources.srcDir(copyResourcesTemplates.get().outputs)
-    }
+tasks.withType<JavaCompile> {
+  sourceCompatibility = JvmTarget.JVM_17.target
+  targetCompatibility = JvmTarget.JVM_17.target
+}
+
+val copyResourcesTemplates =
+  tasks.register<Copy>("copyResourcesTemplates") {
+    from("src/main/resources-templates")
+    into(layout.buildDirectory.dir("generated/resources-templates"))
+    expand("projectVersion" to "${project.version}")
+    filteringCharset = Charsets.UTF_8.toString()
   }
+
+configure<JavaPluginExtension> {
+  sourceSets.getByName("main").resources.srcDir(copyResourcesTemplates.get().outputs)
 }
 
 dependencies {
   api(projects.okhttp)
   api(projects.loggingInterceptor)
-  api(libs.squareup.okio)
+  api(libs.square.okio)
   implementation(libs.clikt)
 
-  testApi(libs.assertk)
+  testImplementation(projects.okhttpTestingSupport)
+  testImplementation(projects.mockwebserver3)
+  testImplementation(projects.mockwebserver3Junit5)
+  testImplementation(libs.junit)
+  testImplementation(libs.assertk)
   testImplementation(kotlin("test"))
 }
 
+val jvmSignature = configurations.getByName("jvmSignature")
 configure<AnimalSnifferExtension> {
-  isIgnoreFailures = true
+  // Only check JVM
+  signatures = jvmSignature
+}
+
+configure<ApiValidationExtension> {
+  validationDisabled = true
 }
 
 tasks.jar {
   manifest {
-    attributes("Automatic-Module-Name" to "okhttp3.curl")
     attributes("Main-Class" to "okhttp3.curl.MainCommandLineKt")
   }
 }
@@ -53,8 +72,9 @@ tasks.shadowJar {
 }
 
 tasks.withType<Test> {
+  val javaVersion = project.testJavaVersion
   onlyIf("native build requires Java 17") {
-    testJavaVersion > 17
+    javaVersion > 17
   }
 }
 
@@ -65,10 +85,11 @@ configure<GraalVMExtension> {
     named("main") {
       imageName = "okcurl"
       mainClass = "okhttp3.curl.MainCommandLineKt"
+      if (System.getProperty("os.name").lowercase().contains("windows")) {
+        // windows requires a slightly different approach for some things
+      } else {
+        buildArgs("--no-fallback")
+      }
     }
   }
-}
-
-mavenPublishing {
-  configure(KotlinJvm(javadocJar = JavadocJar.Empty()))
 }

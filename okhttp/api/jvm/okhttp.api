@@ -119,6 +119,7 @@ public final class okhttp3/CacheControl$Companion {
 }
 
 public abstract interface class okhttp3/Call : java/lang/Cloneable {
+	public abstract fun addEventListener (Lokhttp3/EventListener;)V
 	public abstract fun cancel ()V
 	public abstract fun clone ()Lokhttp3/Call;
 	public abstract fun enqueue (Lokhttp3/Callback;)V
@@ -126,6 +127,10 @@ public abstract interface class okhttp3/Call : java/lang/Cloneable {
 	public abstract fun isCanceled ()Z
 	public abstract fun isExecuted ()Z
 	public abstract fun request ()Lokhttp3/Request;
+	public abstract fun tag (Ljava/lang/Class;)Ljava/lang/Object;
+	public abstract fun tag (Ljava/lang/Class;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public abstract fun tag (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+	public abstract fun tag (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public abstract fun timeout ()Lokio/Timeout;
 }
 
@@ -496,9 +501,12 @@ public abstract class okhttp3/EventListener {
 	public fun connectStart (Lokhttp3/Call;Ljava/net/InetSocketAddress;Ljava/net/Proxy;)V
 	public fun connectionAcquired (Lokhttp3/Call;Lokhttp3/Connection;)V
 	public fun connectionReleased (Lokhttp3/Call;Lokhttp3/Connection;)V
+	public fun dispatcherQueueEnd (Lokhttp3/Call;Lokhttp3/Dispatcher;)V
+	public fun dispatcherQueueStart (Lokhttp3/Call;Lokhttp3/Dispatcher;)V
 	public fun dnsEnd (Lokhttp3/Call;Ljava/lang/String;Ljava/util/List;)V
 	public fun dnsStart (Lokhttp3/Call;Ljava/lang/String;)V
 	public fun followUpDecision (Lokhttp3/Call;Lokhttp3/Response;Lokhttp3/Request;)V
+	public final fun plus (Lokhttp3/EventListener;)Lokhttp3/EventListener;
 	public fun proxySelectEnd (Lokhttp3/Call;Lokhttp3/HttpUrl;Ljava/util/List;)V
 	public fun proxySelectStart (Lokhttp3/Call;Lokhttp3/HttpUrl;)V
 	public fun requestBodyEnd (Lokhttp3/Call;J)V
@@ -741,12 +749,42 @@ public abstract interface class okhttp3/Interceptor$Chain {
 	public abstract fun call ()Lokhttp3/Call;
 	public abstract fun connectTimeoutMillis ()I
 	public abstract fun connection ()Lokhttp3/Connection;
+	public abstract fun getAuthenticator ()Lokhttp3/Authenticator;
+	public abstract fun getCache ()Lokhttp3/Cache;
+	public abstract fun getCertificatePinner ()Lokhttp3/CertificatePinner;
+	public abstract fun getConnectionPool ()Lokhttp3/ConnectionPool;
+	public abstract fun getCookieJar ()Lokhttp3/CookieJar;
+	public abstract fun getDns ()Lokhttp3/Dns;
+	public abstract fun getEventListener ()Lokhttp3/EventListener;
+	public abstract fun getFollowRedirects ()Z
+	public abstract fun getFollowSslRedirects ()Z
+	public abstract fun getHostnameVerifier ()Ljavax/net/ssl/HostnameVerifier;
+	public abstract fun getProxy ()Ljava/net/Proxy;
+	public abstract fun getProxyAuthenticator ()Lokhttp3/Authenticator;
+	public abstract fun getProxySelector ()Ljava/net/ProxySelector;
+	public abstract fun getRetryOnConnectionFailure ()Z
+	public abstract fun getSocketFactory ()Ljavax/net/SocketFactory;
+	public abstract fun getSslSocketFactoryOrNull ()Ljavax/net/ssl/SSLSocketFactory;
+	public abstract fun getX509TrustManagerOrNull ()Ljavax/net/ssl/X509TrustManager;
 	public abstract fun proceed (Lokhttp3/Request;)Lokhttp3/Response;
 	public abstract fun readTimeoutMillis ()I
 	public abstract fun request ()Lokhttp3/Request;
-	public abstract fun withConnectTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
-	public abstract fun withReadTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
-	public abstract fun withWriteTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withAuthenticator (Lokhttp3/Authenticator;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withCache (Lokhttp3/Cache;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withCertificatePinner (Lokhttp3/CertificatePinner;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withConnectTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withConnectionPool (Lokhttp3/ConnectionPool;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withCookieJar (Lokhttp3/CookieJar;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withDns (Lokhttp3/Dns;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withHostnameVerifier (Ljavax/net/ssl/HostnameVerifier;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withProxy (Ljava/net/Proxy;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withProxyAuthenticator (Lokhttp3/Authenticator;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withProxySelector (Ljava/net/ProxySelector;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withReadTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withRetryOnConnectionFailure (Z)Lokhttp3/Interceptor$Chain;
+	public abstract fun withSocketFactory (Ljavax/net/SocketFactory;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withSslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;Ljavax/net/ssl/X509TrustManager;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withWriteTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
 	public abstract fun writeTimeoutMillis ()I
 }
 
@@ -1017,6 +1055,9 @@ public final class okhttp3/Request {
 	public final fun tag ()Ljava/lang/Object;
 	public final fun tag (Ljava/lang/Class;)Ljava/lang/Object;
 	public final fun tag (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+	public final fun toCurl ()Ljava/lang/String;
+	public final fun toCurl (Z)Ljava/lang/String;
+	public static synthetic fun toCurl$default (Lokhttp3/Request;ZILjava/lang/Object;)Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 	public final fun url ()Lokhttp3/HttpUrl;
 }
@@ -1072,6 +1113,7 @@ public abstract class okhttp3/RequestBody {
 	public static final fun create ([BLokhttp3/MediaType;II)Lokhttp3/RequestBody;
 	public fun isDuplex ()Z
 	public fun isOneShot ()Z
+	public final fun sha256 ()Lokio/ByteString;
 	public abstract fun writeTo (Lokio/BufferedSink;)V
 }
 
@@ -1244,10 +1286,6 @@ public abstract interface class okhttp3/TrailersSource {
 }
 
 public final class okhttp3/TrailersSource$Companion {
-}
-
-public final class okhttp3/TrailersSource$DefaultImpls {
-	public static fun peek (Lokhttp3/TrailersSource;)Lokhttp3/Headers;
 }
 
 public abstract interface class okhttp3/WebSocket {

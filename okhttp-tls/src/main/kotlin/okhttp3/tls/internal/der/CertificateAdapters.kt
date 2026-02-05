@@ -54,11 +54,15 @@ internal object CertificateAdapters {
             peekHeader.tag == Adapters.UTC_TIME.tag -> {
             Adapters.UTC_TIME.fromDer(reader)
           }
+
           peekHeader.tagClass == Adapters.GENERALIZED_TIME.tagClass &&
             peekHeader.tag == Adapters.GENERALIZED_TIME.tag -> {
             Adapters.GENERALIZED_TIME.fromDer(reader)
           }
-          else -> throw ProtocolException("expected time but was $peekHeader at $reader")
+
+          else -> {
+            throw ProtocolException("expected time but was $peekHeader at $reader")
+          }
         }
       }
 
@@ -110,8 +114,11 @@ internal object CertificateAdapters {
         // when it is present, and for others we must omit it!
         // https://tools.ietf.org/html/rfc4055#section-2.1
         ObjectIdentifiers.SHA256_WITH_RSA_ENCRYPTION -> Adapters.NULL
+
         ObjectIdentifiers.RSA_ENCRYPTION -> Adapters.NULL
+
         ObjectIdentifiers.EC_PUBLIC_KEY -> Adapters.OBJECT_IDENTIFIER
+
         else -> null
       }
     }

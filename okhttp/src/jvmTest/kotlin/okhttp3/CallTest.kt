@@ -76,10 +76,26 @@ import mockwebserver3.SocketEffect.ShutdownConnection
 import mockwebserver3.SocketEffect.Stall
 import mockwebserver3.junit5.StartStop
 import okhttp3.CallEvent.CallEnd
+import okhttp3.CallEvent.CallFailed
+import okhttp3.CallEvent.CallStart
+import okhttp3.CallEvent.ConnectEnd
 import okhttp3.CallEvent.ConnectStart
 import okhttp3.CallEvent.ConnectionAcquired
 import okhttp3.CallEvent.ConnectionReleased
+import okhttp3.CallEvent.DnsEnd
+import okhttp3.CallEvent.DnsStart
+import okhttp3.CallEvent.FollowUpDecision
+import okhttp3.CallEvent.ProxySelectEnd
+import okhttp3.CallEvent.ProxySelectStart
+import okhttp3.CallEvent.RequestBodyEnd
+import okhttp3.CallEvent.RequestBodyStart
+import okhttp3.CallEvent.RequestHeadersEnd
+import okhttp3.CallEvent.RequestHeadersStart
+import okhttp3.CallEvent.ResponseBodyEnd
+import okhttp3.CallEvent.ResponseBodyStart
 import okhttp3.CallEvent.ResponseFailed
+import okhttp3.CallEvent.ResponseHeadersEnd
+import okhttp3.CallEvent.ResponseHeadersStart
 import okhttp3.CallEvent.RetryDecision
 import okhttp3.CertificatePinner.Companion.pin
 import okhttp3.Credentials.basic
@@ -143,12 +159,12 @@ open class CallTest {
   @StartStop
   private val server2 = MockWebServer()
 
-  private var listener = RecordingEventListener()
+  private var eventRecorder = EventRecorder()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client =
     clientTestRule
       .newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(listener))
+      .eventListenerFactory(clientTestRule.wrap(eventRecorder))
       .build()
   private val callback = RecordingCallback()
   private val cache =
@@ -1261,36 +1277,36 @@ open class CallTest {
     dispatcher.enqueue(MockResponse.Builder().onResponseStart(CloseSocket()).build())
     dispatcher.enqueue(MockResponse(body = "retry success"))
     server.dispatcher = dispatcher
-    listener =
-      object : RecordingEventListener() {
+    val requestFinishedListener =
+      object : EventListener() {
         override fun requestHeadersEnd(
           call: Call,
           request: Request,
         ) {
           requestFinished.countDown()
-          super.responseHeadersStart(call)
         }
       }
     client =
       client
         .newBuilder()
         .dns(DoubleInetAddressDns())
-        .eventListenerFactory(clientTestRule.wrap(listener))
-        .build()
+        .eventListenerFactory(
+          clientTestRule.wrap(eventRecorder.eventListener + requestFinishedListener),
+        ).build()
     assertThat(client.retryOnConnectionFailure).isTrue()
     executeSynchronously("/").assertBody("seed connection pool")
     executeSynchronously("/").assertBody("retry success")
 
     // The call that seeds the connection pool.
-    listener.removeUpToEvent(CallEnd::class.java)
+    eventRecorder.removeUpToEvent(CallEnd::class.java)
 
     // The ResponseFailed event is not necessarily fatal!
-    listener.removeUpToEvent(ConnectionAcquired::class.java)
-    listener.removeUpToEvent(ResponseFailed::class.java)
-    listener.removeUpToEvent(ConnectionReleased::class.java)
-    listener.removeUpToEvent(ConnectionAcquired::class.java)
-    listener.removeUpToEvent(ConnectionReleased::class.java)
-    listener.removeUpToEvent(CallEnd::class.java)
+    eventRecorder.removeUpToEvent(ConnectionAcquired::class.java)
+    eventRecorder.removeUpToEvent(ResponseFailed::class.java)
+    eventRecorder.removeUpToEvent(ConnectionReleased::class.java)
+    eventRecorder.removeUpToEvent(ConnectionAcquired::class.java)
+    eventRecorder.removeUpToEvent(ConnectionReleased::class.java)
+    eventRecorder.removeUpToEvent(CallEnd::class.java)
   }
 
   @Test
@@ -1454,15 +1470,20 @@ open class CallTest {
         is SSLProtocolException -> {
           // RI response to the FAIL_HANDSHAKE
         }
+
         is SSLHandshakeException -> {
           // Android's response to the FAIL_HANDSHAKE
         }
+
         is SSLException -> {
           // JDK 11 response to the FAIL_HANDSHAKE
           val jvmVersion = System.getProperty("java.specification.version")
           assertThat(jvmVersion).isEqualTo("11")
         }
-        else -> throw expected
+
+        else -> {
+          throw expected
+        }
       }
     }
   }
@@ -1702,7 +1723,7 @@ open class CallTest {
     val response1 = client.newCall(request1).execute()
     assertThat(response1.body.string()).isEqualTo("abc")
 
-    listener.clearAllEvents()
+    eventRecorder.clearAllEvents()
 
     val request2 =
       Request(
@@ -1715,44 +1736,44 @@ open class CallTest {
       assertThat(expected.message!!).startsWith("unexpected end of stream on http://")
     }
 
-    assertThat(listener.recordedEventTypes()).containsExactly(
-      "CallStart",
-      "ConnectionAcquired",
-      "RequestHeadersStart",
-      "RequestHeadersEnd",
-      "RequestBodyStart",
-      "RequestBodyEnd",
-      "ResponseFailed",
-      "RetryDecision",
-      "ConnectionReleased",
-      "CallFailed",
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
+      CallStart::class,
+      ConnectionAcquired::class,
+      RequestHeadersStart::class,
+      RequestHeadersEnd::class,
+      RequestBodyStart::class,
+      RequestBodyEnd::class,
+      ResponseFailed::class,
+      RetryDecision::class,
+      ConnectionReleased::class,
+      CallFailed::class,
     )
-    assertThat(listener.findEvent<RetryDecision>()).all {
+    assertThat(eventRecorder.findEvent<RetryDecision>()).all {
       prop(RetryDecision::retry).isFalse()
     }
-    listener.clearAllEvents()
+    eventRecorder.clearAllEvents()
 
     val response3 = client.newCall(request1).execute()
     assertThat(response3.body.string()).isEqualTo("abc")
 
-    assertThat(listener.recordedEventTypes()).containsExactly(
-      "CallStart",
-      "ProxySelectStart",
-      "ProxySelectEnd",
-      "DnsStart",
-      "DnsEnd",
-      "ConnectStart",
-      "ConnectEnd",
-      "ConnectionAcquired",
-      "RequestHeadersStart",
-      "RequestHeadersEnd",
-      "ResponseHeadersStart",
-      "ResponseHeadersEnd",
-      "FollowUpDecision",
-      "ResponseBodyStart",
-      "ResponseBodyEnd",
-      "ConnectionReleased",
-      "CallEnd",
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
+      CallStart::class,
+      ProxySelectStart::class,
+      ProxySelectEnd::class,
+      DnsStart::class,
+      DnsEnd::class,
+      ConnectStart::class,
+      ConnectEnd::class,
+      ConnectionAcquired::class,
+      RequestHeadersStart::class,
+      RequestHeadersEnd::class,
+      ResponseHeadersStart::class,
+      ResponseHeadersEnd::class,
+      FollowUpDecision::class,
+      ResponseBodyStart::class,
+      ResponseBodyEnd::class,
+      ConnectionReleased::class,
+      CallEnd::class,
     )
 
     val get = server.takeRequest()
@@ -3632,7 +3653,7 @@ open class CallTest {
     }
     if (!platform.isJdk8()) {
       val connectCount =
-        listener.eventSequence
+        eventRecorder.eventSequence
           .stream()
           .filter { event: CallEvent? -> event is ConnectStart }
           .count()
