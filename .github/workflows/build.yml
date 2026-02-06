@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 env:
-  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
+  GRADLE_OPTS: "-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
