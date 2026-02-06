@@ -28,6 +28,9 @@ tasks.withType<Test> {
   if (platform == "loom") {
     jvmArgs("-Djdk.tracePinnedThreads=short")
   }
+  if (platform == "openjsse") {
+    jvmArgs("--add-exports=java.base/sun.security.action=ALL-UNNAMED")
+  }
 
   val javaToolchains = project.extensions.getByType<JavaToolchainService>()
   javaLauncher.set(javaToolchains.launcherFor {
