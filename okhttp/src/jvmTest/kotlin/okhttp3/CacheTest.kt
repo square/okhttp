@@ -73,13 +73,17 @@ import org.junit.jupiter.api.extension.RegisterExtension
 class CacheTest {
   val fileSystem = FakeFileSystem()
 
-  @RegisterExtension val clientTestRule = OkHttpClientTestRule()
+  @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
 
-  @RegisterExtension val platform = PlatformRule()
+  @RegisterExtension
+  val platform = PlatformRule()
 
-  @StartStop private val server = MockWebServer()
+  @StartStop
+  private val server = MockWebServer()
 
-  @StartStop private val server2 = MockWebServer()
+  @StartStop
+  private val server2 = MockWebServer()
 
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private lateinit var client: OkHttpClient
@@ -250,7 +254,11 @@ class CacheTest {
         .addInformationalResponse(MockResponse(initialResponseCode))
     server.enqueue(builder.build())
     server.start()
-    val request = Request.Builder().url(server.url("/")).build()
+    val request =
+      Request
+        .Builder()
+        .url(server.url("/"))
+        .build()
     val response = client.newCall(request).execute()
     assertThat(response.code).isEqualTo(finalResponseCode)
 
@@ -391,8 +399,7 @@ class CacheTest {
     val response1 = client.newCall(request).execute()
     assertThat(response1.body.string()).isEqualTo("ABC")
     val cacheEntry =
-      fileSystem
-        .allPaths
+      fileSystem.allPaths
         .stream()
         .filter { e: Path -> e.name.endsWith(".0") }
         .findFirst()
@@ -435,7 +442,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("DEF").build(),
+      MockResponse
+        .Builder()
+        .body("DEF")
+        .build(),
     )
     val request = Request.Builder().url(server.url("/")).build()
     val response1 = client.newCall(request).execute()
@@ -466,7 +476,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("DEF").build(),
+      MockResponse
+        .Builder()
+        .body("DEF")
+        .build(),
     )
     val request1 = Request.Builder().url(server.url("/foo")).build()
     val response1 = client.newCall(request1).execute()
@@ -657,7 +670,9 @@ class CacheTest {
       override fun contentType(): MediaType? = "application/text-plain".toMediaTypeOrNull()
 
       override fun writeTo(sink: BufferedSink) {
-        internalBody.forEach { item -> sink.writeUtf8(this@toOneShotRequestBody) }
+        internalBody.forEach { item ->
+          sink.writeUtf8(this@toOneShotRequestBody)
+        }
       }
     }
 
@@ -682,7 +697,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("DEF").build(),
+      MockResponse
+        .Builder()
+        .body("DEF")
+        .build(),
     )
     client =
       client
@@ -704,10 +722,9 @@ class CacheTest {
     // 2 direct + 2 redirect = 4
     assertThat(cache.requestCount()).isEqualTo(4)
     assertThat(cache.hitCount()).isEqualTo(2)
-    assertThat(response2.handshake!!.cipherSuite)
-      .isEqualTo(
-        response1.handshake!!.cipherSuite,
-      )
+    assertThat(response2.handshake!!.cipherSuite).isEqualTo(
+      response1.handshake!!.cipherSuite,
+    )
   }
 
   /**
@@ -729,7 +746,10 @@ class CacheTest {
         .build(),
     )
     server2.enqueue(
-      MockResponse.Builder().body("DEF").build(),
+      MockResponse
+        .Builder()
+        .body("DEF")
+        .build(),
     )
     server.enqueue(
       MockResponse
@@ -811,10 +831,16 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("b").build(),
+      MockResponse
+        .Builder()
+        .body("b")
+        .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("c").build(),
+      MockResponse
+        .Builder()
+        .body("c")
+        .build(),
     )
     val url = server.url("/")
     assertThat(get(url).body.string()).isEqualTo("a")
@@ -830,17 +856,23 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("a").build(),
+      MockResponse
+        .Builder()
+        .body("a")
+        .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("b").build(),
+      MockResponse
+        .Builder()
+        .body("b")
+        .build(),
     )
     val url = server.url("/")
     assertThat(get(url).body.string()).isEqualTo("a")
     assertThat(get(url).body.string()).isEqualTo("b")
   }
 
-  /** https://github.com/square/okhttp/issues/2198 */
+  /** https://github.com/square/okhttp/issues/2198  */
   @Test
   fun cachedRedirect() {
     server.enqueue(
@@ -852,10 +884,16 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("ABC").build(),
+      MockResponse
+        .Builder()
+        .body("ABC")
+        .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("ABC").build(),
+      MockResponse
+        .Builder()
+        .body("ABC")
+        .build(),
     )
     val request1 = Request.Builder().url(server.url("/")).build()
     val response1 = client.newCall(request1).execute()
@@ -887,11 +925,18 @@ class CacheTest {
     transferKind.setBody(mockResponse, "ABCDE\nFGHIJKLMNOPQRSTUVWXYZ", 16)
     server.enqueue(truncateViolently(mockResponse, 16).build())
     server.enqueue(
-      MockResponse.Builder().body("Request #2").build(),
+      MockResponse
+        .Builder()
+        .body("Request #2")
+        .build(),
     )
     val bodySource = get(server.url("/")).body.source()
     assertThat(bodySource.readUtf8Line()).isEqualTo("ABCDE")
-    bodySource.use { assertFailsWith<IOException> { bodySource.readUtf8(21) } }
+    bodySource.use {
+      assertFailsWith<IOException> {
+        bodySource.readUtf8(21)
+      }
+    }
     assertThat(cache.writeAbortCount()).isEqualTo(1)
     assertThat(cache.writeSuccessCount()).isEqualTo(0)
     val response = get(server.url("/"))
@@ -917,17 +962,25 @@ class CacheTest {
 
   private fun testClientPrematureDisconnect(transferKind: TransferKind) {
     // Setting a low transfer speed ensures that stream discarding will time out.
-    val builder = MockResponse.Builder().throttleBody(6, 1, TimeUnit.SECONDS)
+    val builder =
+      MockResponse
+        .Builder()
+        .throttleBody(6, 1, TimeUnit.SECONDS)
     transferKind.setBody(builder, "ABCDE\nFGHIJKLMNOPQRSTUVWXYZ", 1024)
     server.enqueue(builder.build())
     server.enqueue(
-      MockResponse.Builder().body("Request #2").build(),
+      MockResponse
+        .Builder()
+        .body("Request #2")
+        .build(),
     )
     val response1 = get(server.url("/"))
     val source = response1.body.source()
     assertThat(source.readUtf8(5)).isEqualTo("ABCDE")
     source.close()
-    assertFailsWith<IllegalStateException> { source.readByte() }
+    assertFailsWith<IllegalStateException> {
+      source.readByte()
+    }
     assertThat(cache.writeAbortCount()).isEqualTo(1)
     assertThat(cache.writeSuccessCount()).isEqualTo(0)
     val response2 = get(server.url("/"))
@@ -973,7 +1026,8 @@ class CacheTest {
           .addHeader("Date: " + formatDate(-15, TimeUnit.SECONDS))
           .build(),
       )
-    assertThat(conditionalRequest.headers["If-Modified-Since"]).isEqualTo(lastModifiedDate)
+    assertThat(conditionalRequest.headers["If-Modified-Since"])
+      .isEqualTo(lastModifiedDate)
   }
 
   @Test
@@ -993,10 +1047,9 @@ class CacheTest {
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
     val response = get(server.url("/"))
     assertThat(response.body.string()).isEqualTo("A")
-    assertThat(response.header("Warning"))
-      .isEqualTo(
-        "113 HttpURLConnection \"Heuristic expiration\"",
-      )
+    assertThat(response.header("Warning")).isEqualTo(
+      "113 HttpURLConnection \"Heuristic expiration\"",
+    )
   }
 
   @Test
@@ -1010,7 +1063,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val url =
       server
@@ -1033,20 +1089,27 @@ class CacheTest {
           .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS))
           .build(),
       )
-    assertThat(conditionalRequest.headers["If-Modified-Since"]).isEqualTo(lastModifiedDate)
+    assertThat(conditionalRequest.headers["If-Modified-Since"])
+      .isEqualTo(lastModifiedDate)
   }
 
   @Test
   fun expirationDateInThePastWithNoLastModifiedHeader() {
     assertNotCached(
-      MockResponse.Builder().addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)).build(),
+      MockResponse
+        .Builder()
+        .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS))
+        .build(),
     )
   }
 
   @Test
   fun expirationDateInTheFuture() {
     assertFullyCached(
-      MockResponse.Builder().addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)).build(),
+      MockResponse
+        .Builder()
+        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
+        .build(),
     )
   }
 
@@ -1074,7 +1137,8 @@ class CacheTest {
           .addHeader("Cache-Control: max-age=60")
           .build(),
       )
-    assertThat(conditionalRequest.headers["If-Modified-Since"]).isEqualTo(lastModifiedDate)
+    assertThat(conditionalRequest.headers["If-Modified-Since"])
+      .isEqualTo(lastModifiedDate)
   }
 
   @Test
@@ -1104,7 +1168,10 @@ class CacheTest {
   @Test
   fun maxAgeInTheFutureWithNoDateHeader() {
     assertFullyCached(
-      MockResponse.Builder().addHeader("Cache-Control: max-age=60").build(),
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .build(),
     )
   }
 
@@ -1228,7 +1295,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().addHeader("X-Response-ID: 2").build(),
+      MockResponse
+        .Builder()
+        .addHeader("X-Response-ID: 2")
+        .build(),
     )
     val url = server.url("/")
     val request =
@@ -1253,7 +1323,10 @@ class CacheTest {
     }
     if (!expectCached) {
       server.enqueue(
-        MockResponse.Builder().addHeader("X-Response-ID: 3").build(),
+        MockResponse
+          .Builder()
+          .addHeader("X-Response-ID: 3")
+          .build(),
       )
       val response3 = get(url)
       response3.body.close()
@@ -1262,7 +1335,10 @@ class CacheTest {
   }
 
   private fun requestBodyOrNull(requestMethod: String): RequestBody? =
-    if (requestMethod == "POST" || requestMethod == "PUT" || requestMethod == "QUERY") {
+    if (requestMethod == "POST" ||
+      requestMethod == "PUT" ||
+      requestMethod == "QUERY"
+    ) {
       "foo".toRequestBody("text/plain".toMediaType())
     } else {
       null
@@ -1295,10 +1371,16 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("C").build(),
+      MockResponse
+        .Builder()
+        .body("C")
+        .build(),
     )
     val url = server.url("/")
     assertThat(get(url).body.string()).isEqualTo("A")
@@ -1333,7 +1415,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("C").build(),
+      MockResponse
+        .Builder()
+        .body("C")
+        .build(),
     )
     val url = server.url("/")
     assertThat(get(url).body.string()).isEqualTo("A")
@@ -1368,7 +1453,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("C").build(),
+      MockResponse
+        .Builder()
+        .body("C")
+        .build(),
     )
     val url = server.url("/")
     assertThat(get(url).body.string()).isEqualTo("A")
@@ -1387,12 +1475,15 @@ class CacheTest {
   fun etag() {
     val conditionalRequest =
       assertConditionallyCached(
-        MockResponse.Builder().addHeader("ETag: v1").build(),
+        MockResponse
+          .Builder()
+          .addHeader("ETag: v1")
+          .build(),
       )
     assertThat(conditionalRequest.headers["If-None-Match"]).isEqualTo("v1")
   }
 
-  /** If both If-Modified-Since and If-None-Match conditions apply, send only If-None-Match. */
+  /** If both If-Modified-Since and If-None-Match conditions apply, send only If-None-Match.  */
   @Test
   fun etagAndExpirationDateInThePast() {
     val lastModifiedDate = formatDate(-2, TimeUnit.HOURS)
@@ -1424,7 +1515,10 @@ class CacheTest {
   @Test
   fun cacheControlNoCache() {
     assertNotCached(
-      MockResponse.Builder().addHeader("Cache-Control: no-cache").build(),
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: no-cache")
+        .build(),
     )
   }
 
@@ -1440,13 +1534,17 @@ class CacheTest {
           .addHeader("Cache-Control: no-cache")
           .build(),
       )
-    assertThat(conditionalRequest.headers["If-Modified-Since"]).isEqualTo(lastModifiedDate)
+    assertThat(conditionalRequest.headers["If-Modified-Since"])
+      .isEqualTo(lastModifiedDate)
   }
 
   @Test
   fun pragmaNoCache() {
     assertNotCached(
-      MockResponse.Builder().addHeader("Pragma: no-cache").build(),
+      MockResponse
+        .Builder()
+        .addHeader("Pragma: no-cache")
+        .build(),
     )
   }
 
@@ -1462,13 +1560,17 @@ class CacheTest {
           .addHeader("Pragma: no-cache")
           .build(),
       )
-    assertThat(conditionalRequest.headers["If-Modified-Since"]).isEqualTo(lastModifiedDate)
+    assertThat(conditionalRequest.headers["If-Modified-Since"])
+      .isEqualTo(lastModifiedDate)
   }
 
   @Test
   fun cacheControlNoStore() {
     assertNotCached(
-      MockResponse.Builder().addHeader("Cache-Control: no-store").build(),
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: no-store")
+        .build(),
     )
   }
 
@@ -1498,7 +1600,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("BB").build(),
+      MockResponse
+        .Builder()
+        .body("BB")
+        .build(),
     )
     val url = server.url("/")
     val request =
@@ -1537,7 +1642,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
     val url = server.url("/")
     assertThat(get(url).body.string()).isEqualTo("A")
@@ -1569,7 +1677,11 @@ class CacheTest {
         .build()
     val response1 = client.newCall(request1).execute()
     assertThat(response1.body.string()).isEqualTo("A")
-    val request2 = Request.Builder().url(server.url("/")).build()
+    val request2 =
+      Request
+        .Builder()
+        .url(server.url("/"))
+        .build()
     val response2 = client.newCall(request2).execute()
     assertThat(response2.body.string()).isEqualTo("B")
   }
@@ -1605,10 +1717,16 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
 
     // At least three request/response pairs are required because after the first request is cached
@@ -1639,7 +1757,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("DEFDEFDEF").build(),
+      MockResponse
+        .Builder()
+        .body("DEFDEFDEF")
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("ABCABCABC")
     assertThat(get(server.url("/")).body.string()).isEqualTo("ABCABCABC")
@@ -1667,7 +1788,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("DEFDEFDEF").build(),
+      MockResponse
+        .Builder()
+        .body("DEFDEFDEF")
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("ABCABCABC")
     assertThat(get(server.url("/")).body.string()).isEqualTo("ABCABCABC")
@@ -1693,14 +1817,17 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("DEFDEFDEF").build(),
+      MockResponse
+        .Builder()
+        .body("DEFDEFDEF")
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("ABCABCABC")
     assertThat(get(server.url("/")).body.string()).isEqualTo("ABCABCABC")
     assertThat(get(server.url("/")).body.string()).isEqualTo("DEFDEFDEF")
   }
 
-  /** https://github.com/square/okhttp/issues/947 */
+  /** https://github.com/square/okhttp/issues/947  */
   @Test
   fun gzipAndVaryOnAcceptEncoding() {
     server.enqueue(
@@ -1713,7 +1840,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("FAIL").build(),
+      MockResponse
+        .Builder()
+        .body("FAIL")
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("ABCABCABC")
     assertThat(get(server.url("/")).body.string()).isEqualTo("ABCABCABC")
@@ -1764,7 +1894,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
     val request =
@@ -1788,7 +1921,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
     val request =
@@ -1812,7 +1948,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
     val request =
@@ -1823,10 +1962,9 @@ class CacheTest {
         .build()
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("A")
-    assertThat(response.header("Warning"))
-      .isEqualTo(
-        "110 HttpURLConnection \"Response is stale\"",
-      )
+    assertThat(response.header("Warning")).isEqualTo(
+      "110 HttpURLConnection \"Response is stale\"",
+    )
   }
 
   @Test
@@ -1841,7 +1979,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
 
@@ -1854,10 +1995,9 @@ class CacheTest {
         .build()
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("A")
-    assertThat(response.header("Warning"))
-      .isEqualTo(
-        "110 HttpURLConnection \"Response is stale\"",
-      )
+    assertThat(response.header("Warning")).isEqualTo(
+      "110 HttpURLConnection \"Response is stale\"",
+    )
   }
 
   @Test
@@ -1871,7 +2011,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
     val request =
@@ -1953,7 +2096,10 @@ class CacheTest {
   @Test
   fun requestOnlyIfCachedWithUnhelpfulResponseCached() {
     server.enqueue(
-      MockResponse.Builder().body("A").build(),
+      MockResponse
+        .Builder()
+        .body("A")
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
     val request =
@@ -1982,7 +2128,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val url = server.url("/")
     assertThat(get(url).body.string()).isEqualTo("A")
@@ -2008,7 +2157,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val url = server.url("/")
     assertThat(get(url).body.string()).isEqualTo("A")
@@ -2031,7 +2183,8 @@ class CacheTest {
         .addHeader("Cache-Control: max-age=0")
         .build()
     val ifModifiedSinceDate = formatDate(-24, TimeUnit.HOURS)
-    val request = assertClientSuppliedCondition(response, "If-Modified-Since", ifModifiedSinceDate)
+    val request =
+      assertClientSuppliedCondition(response, "If-Modified-Since", ifModifiedSinceDate)
     assertThat(request.headers["If-Modified-Since"]).isEqualTo(ifModifiedSinceDate)
     assertThat(request.headers["If-None-Match"]).isNull()
   }
@@ -2057,10 +2210,16 @@ class CacheTest {
     conditionValue: String,
   ): RecordedRequest {
     server.enqueue(
-      seed.newBuilder().body("A").build(),
+      seed
+        .newBuilder()
+        .body("A")
+        .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
     val url = server.url("/")
     assertThat(get(url).body.string()).isEqualTo("A")
@@ -2101,7 +2260,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
@@ -2118,7 +2280,10 @@ class CacheTest {
   @Test
   fun clientSuppliedConditionWithoutCachedResult() {
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
     val request =
       Request
@@ -2141,7 +2306,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val url = server.url("/")
     val request =
@@ -2166,7 +2334,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     assertThat(get(server.url("/foo")).body.string()).isEqualTo("A")
     assertThat(get(server.url("/bar")).body.string()).isEqualTo("B")
@@ -2183,10 +2354,16 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     assertThat(get(server.url("/a")).body.string()).isEqualTo("A")
     assertThat(get(server.url("/a")).body.string()).isEqualTo("A")
@@ -2213,10 +2390,16 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("C").build(),
+      MockResponse
+        .Builder()
+        .body("C")
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
     assertThat(cache.requestCount()).isEqualTo(1)
@@ -2240,10 +2423,16 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
     assertThat(cache.requestCount()).isEqualTo(1)
@@ -2287,7 +2476,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val url = server.url("/")
     val frRequest =
@@ -2319,7 +2511,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val url = server.url("/")
     val request =
@@ -2351,7 +2546,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
@@ -2368,7 +2566,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
     val request =
@@ -2392,7 +2593,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val request =
       Request
@@ -2416,7 +2620,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val url = server.url("/")
     val request =
@@ -2449,7 +2656,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val url = server.url("/")
     val request =
@@ -2486,7 +2696,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val url = server.url("/")
     val frRequest =
@@ -2522,7 +2735,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val url = server.url("/")
     val request1 =
@@ -2556,7 +2772,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val url = server.url("/")
     val request1 =
@@ -2590,7 +2809,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
     assertThat(get(server.url("/")).body.string()).isEqualTo("B")
@@ -2608,7 +2830,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     client =
       client
@@ -2640,7 +2865,11 @@ class CacheTest {
   @Test
   fun cachePlusCookies() {
     val cookieJar = RecordingCookieJar()
-    client = client.newBuilder().cookieJar(cookieJar).build()
+    client =
+      client
+        .newBuilder()
+        .cookieJar(cookieJar)
+        .build()
     server.enqueue(
       MockResponse
         .Builder()
@@ -2728,7 +2957,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
     val response1 = get(server.url("/"))
     assertThat(response1.body.string()).isEqualTo("A")
@@ -2750,7 +2982,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
     val response1 = get(server.url("/"))
     assertThat(response1.body.string()).isEqualTo("A")
@@ -2792,7 +3027,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
 
     // A cache miss writes the cache.
@@ -2876,7 +3114,10 @@ class CacheTest {
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(304).build(),
+      MockResponse
+        .Builder()
+        .code(304)
+        .build(),
     )
     assertThat(get(server.url("/")).body.string()).isEqualTo("A")
     val response = get(server.url("/"))
@@ -2886,7 +3127,10 @@ class CacheTest {
   @Test
   fun responseSourceHeaderFetched() {
     server.enqueue(
-      MockResponse.Builder().body("A").build(),
+      MockResponse
+        .Builder()
+        .body("A")
+        .build(),
     )
     val response = get(server.url("/"))
     assertThat(response.body.string()).isEqualTo("A")
@@ -2894,7 +3138,10 @@ class CacheTest {
 
   @Test
   fun emptyResponseHeaderNameFromCacheIsLenient() {
-    val headers = Headers.Builder().add("Cache-Control: max-age=120")
+    val headers =
+      Headers
+        .Builder()
+        .add("Cache-Control: max-age=120")
     addHeaderLenient(headers, ": A")
     server.enqueue(
       MockResponse
@@ -2950,8 +3197,7 @@ class CacheTest {
 
       """.trimIndent()
     val entryBody = "abc"
-    val journalBody =
-      """libcore.io.DiskLruCache
+    val journalBody = """libcore.io.DiskLruCache
 1
 201105
 2
@@ -2963,14 +3209,18 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
-    client = client.newBuilder().cache(cache).build()
+    client =
+      client
+        .newBuilder()
+        .cache(cache)
+        .build()
     val response = get(url)
     assertThat(response.body.string()).isEqualTo(entryBody)
     assertThat(response.header("Content-Length")).isEqualTo("3")
     assertThat(response.header("etag")).isEqualTo("foo")
   }
 
-  /** Exercise the cache format in OkHttp 2.7 and all earlier releases. */
+  /** Exercise the cache format in OkHttp 2.7 and all earlier releases.  */
   @Test
   fun testGoldenCacheHttpsResponseOkHttp27() {
     addFinalFailingResponse()
@@ -2997,8 +3247,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
       """.trimIndent()
     val entryBody = "abc"
-    val journalBody =
-      """libcore.io.DiskLruCache
+    val journalBody = """libcore.io.DiskLruCache
 1
 201105
 2
@@ -3012,13 +3261,17 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
     cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
-    client = client.newBuilder().cache(cache).build()
+    client =
+      client
+        .newBuilder()
+        .cache(cache)
+        .build()
     val response = get(url)
     assertThat(response.body.string()).isEqualTo(entryBody)
     assertThat(response.header("Content-Length")).isEqualTo("3")
   }
 
-  /** The TLS version is present in OkHttp 3.0 and beyond. */
+  /** The TLS version is present in OkHttp 3.0 and beyond.  */
   @Test
   fun testGoldenCacheHttpsResponseOkHttp30() {
     addFinalFailingResponse()
@@ -3064,7 +3317,11 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
     cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
-    client = client.newBuilder().cache(cache).build()
+    client =
+      client
+        .newBuilder()
+        .cache(cache)
+        .build()
     val response = get(url)
     assertThat(response.body.string()).isEqualTo(entryBody)
     assertThat(response.header("Content-Length")).isEqualTo("3")
@@ -3108,7 +3365,11 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
     cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
-    client = client.newBuilder().cache(cache).build()
+    client =
+      client
+        .newBuilder()
+        .cache(cache)
+        .build()
     val response = get(url)
     assertThat(response.body.string()).isEqualTo(entryBody)
     assertThat(response.header("Content-Length")).isEqualTo("3")
@@ -3130,7 +3391,10 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val url = server.url("/")
     assertThat(get(url).body.string()).isEqualTo("A")
@@ -3149,7 +3413,10 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
 
     // Seed the cache.
@@ -3161,10 +3428,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         .newBuilder()
         .addNetworkInterceptor(
           Interceptor { chain: Interceptor.Chain ->
-            ifNoneMatch.compareAndSet(
-              null,
-              chain.request().header("If-None-Match"),
-            )
+            ifNoneMatch.compareAndSet(null, chain.request().header("If-None-Match"))
             chain.proceed(chain.request())
           },
         ).build()
@@ -3192,9 +3456,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     client =
       client
         .newBuilder()
-        .addNetworkInterceptor(
-          Interceptor { chain: Interceptor.Chain? -> throw AssertionError() },
-        ).build()
+        .addNetworkInterceptor(Interceptor { chain: Interceptor.Chain? -> throw AssertionError() })
+        .build()
     assertThat(get(url).body.string()).isEqualTo("A")
   }
 
@@ -3202,17 +3465,26 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   fun iterateCache() {
     // Put some responses in the cache.
     server.enqueue(
-      MockResponse.Builder().body("a").build(),
+      MockResponse
+        .Builder()
+        .body("a")
+        .build(),
     )
     val urlA = server.url("/a")
     assertThat(get(urlA).body.string()).isEqualTo("a")
     server.enqueue(
-      MockResponse.Builder().body("b").build(),
+      MockResponse
+        .Builder()
+        .body("b")
+        .build(),
     )
     val urlB = server.url("/b")
     assertThat(get(urlB).body.string()).isEqualTo("b")
     server.enqueue(
-      MockResponse.Builder().body("c").build(),
+      MockResponse
+        .Builder()
+        .body("c")
+        .build(),
     )
     val urlC = server.url("/c")
     assertThat(get(urlC).body.string()).isEqualTo("c")
@@ -3228,7 +3500,9 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
     // ... and nothing else.
     assertThat(i.hasNext()).isFalse()
-    assertFailsWith<NoSuchElementException> { i.next() }
+    assertFailsWith<NoSuchElementException> {
+      i.next()
+    }
   }
 
   @Test
@@ -3251,7 +3525,10 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
     // Confirm that subsequent requests suffer a cache miss.
     server.enqueue(
-      MockResponse.Builder().body("b").build(),
+      MockResponse
+        .Builder()
+        .body("b")
+        .build(),
     )
     assertThat(get(url).body.string()).isEqualTo("b")
   }
@@ -3260,20 +3537,28 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   fun iteratorRemoveWithoutNextThrows() {
     // Put a response in the cache.
     server.enqueue(
-      MockResponse.Builder().body("a").build(),
+      MockResponse
+        .Builder()
+        .body("a")
+        .build(),
     )
     val url = server.url("/a")
     assertThat(get(url).body.string()).isEqualTo("a")
     val i = cache.urls()
     assertThat(i.hasNext()).isTrue()
-    assertFailsWith<IllegalStateException> { i.remove() }
+    assertFailsWith<IllegalStateException> {
+      i.remove()
+    }
   }
 
   @Test
   fun iteratorRemoveOncePerCallToNext() {
     // Put a response in the cache.
     server.enqueue(
-      MockResponse.Builder().body("a").build(),
+      MockResponse
+        .Builder()
+        .body("a")
+        .build(),
     )
     val url = server.url("/a")
     assertThat(get(url).body.string()).isEqualTo("a")
@@ -3282,14 +3567,19 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     i.remove()
 
     // Too many calls to remove().
-    assertFailsWith<IllegalStateException> { i.remove() }
+    assertFailsWith<IllegalStateException> {
+      i.remove()
+    }
   }
 
   @Test
   fun elementEvictedBetweenHasNextAndNext() {
     // Put a response in the cache.
     server.enqueue(
-      MockResponse.Builder().body("a").build(),
+      MockResponse
+        .Builder()
+        .body("a")
+        .build(),
     )
     val url = server.url("/a")
     assertThat(get(url).body.string()).isEqualTo("a")
@@ -3310,7 +3600,10 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   fun elementEvictedBeforeHasNextIsOmitted() {
     // Put a response in the cache.
     server.enqueue(
-      MockResponse.Builder().body("a").build(),
+      MockResponse
+        .Builder()
+        .body("a")
+        .build(),
     )
     val url = server.url("/a")
     assertThat(get(url).body.string()).isEqualTo("a")
@@ -3319,10 +3612,12 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
     // The URL was evicted before hasNext() made any promises.
     assertThat(i.hasNext()).isFalse()
-    assertFailsWith<NoSuchElementException> { i.next() }
+    assertFailsWith<NoSuchElementException> {
+      i.next()
+    }
   }
 
-  /** Test https://github.com/square/okhttp/issues/1712. */
+  /** Test https://github.com/square/okhttp/issues/1712.  */
   @Test
   fun conditionalMissUpdatesCache() {
     server.enqueue(
@@ -3333,7 +3628,10 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
     server.enqueue(
       MockResponse
@@ -3343,7 +3641,10 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
     val url = server.url("/")
     assertThat(get(url).body.string()).isEqualTo("A")
@@ -3400,7 +3701,10 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
     val response1 = get(server.url("/"))
     assertThat(response1.body.string()).isEqualTo("abcd")
@@ -3434,48 +3738,46 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     )
     val response1 = get(server.url("/"))
     assertThat(response1.body.string()).isEqualTo("abcd")
-    assertThat(response1.headers)
-      .isEqualTo(
-        headersOf(
-          "Etag",
-          "a",
-          "Cache-Control",
-          "max-age=0",
-          "A",
-          "a1",
-          "B",
-          "b2",
-          "B",
-          "b3",
-          "Content-Length",
-          "4",
-        ),
-      )
+    assertThat(response1.headers).isEqualTo(
+      headersOf(
+        "Etag",
+        "a",
+        "Cache-Control",
+        "max-age=0",
+        "A",
+        "a1",
+        "B",
+        "b2",
+        "B",
+        "b3",
+        "Content-Length",
+        "4",
+      ),
+    )
 
     // The original 'A' header is retained because the network response doesn't have one.
     // The original 'B' headers are replaced by the network response.
     // The network's 'C' header is added.
     val response2 = get(server.url("/"))
     assertThat(response2.body.string()).isEqualTo("abcd")
-    assertThat(response2.headers)
-      .isEqualTo(
-        headersOf(
-          "Etag",
-          "a",
-          "Cache-Control",
-          "max-age=0",
-          "A",
-          "a1",
-          "Content-Length",
-          "4",
-          "B",
-          "b4",
-          "B",
-          "b5",
-          "C",
-          "c6",
-        ),
-      )
+    assertThat(response2.headers).isEqualTo(
+      headersOf(
+        "Etag",
+        "a",
+        "Cache-Control",
+        "max-age=0",
+        "A",
+        "a1",
+        "Content-Length",
+        "4",
+        "B",
+        "b4",
+        "B",
+        "b5",
+        "C",
+        "c6",
+      ),
+    )
   }
 
   @Test
@@ -3516,12 +3818,18 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         .status("HTTP/1.1 200 Fantastic")
     server.enqueue(mockResponse.build())
 
-    client.newCall(request).execute().use { it.body.bytes() }
+    client.newCall(request).execute().use {
+      it.body.bytes()
+    }
     return client.newCall(request).execute()
   }
 
   private operator fun get(url: HttpUrl): Response {
-    val request = Request.Builder().url(url).build()
+    val request =
+      Request
+        .Builder()
+        .url(url)
+        .build()
     return client.newCall(request).execute()
   }
 
@@ -3552,10 +3860,16 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
   private fun assertNotCached(response: MockResponse) {
     server.enqueue(
-      response.newBuilder().body("A").build(),
+      response
+        .newBuilder()
+        .body("A")
+        .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val url = server.url("/")
     assertThat(get(url).body.string()).isEqualTo("A")
@@ -3573,7 +3887,10 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().code(HttpURLConnection.HTTP_NOT_MODIFIED).build(),
+      MockResponse
+        .Builder()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build(),
     )
 
     // scenario 2: condition fails
@@ -3623,7 +3940,10 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("B").build(),
+      MockResponse
+        .Builder()
+        .body("B")
+        .build(),
     )
     val url = server.url("/")
     assertThat(get(url).body.string()).isEqualTo("A")
@@ -3633,7 +3953,10 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   @Test
   fun immutableIsCachedAfterMultipleCalls() {
     server.enqueue(
-      MockResponse.Builder().body("A").build(),
+      MockResponse
+        .Builder()
+        .body("A")
+        .build(),
     )
     server.enqueue(
       MockResponse
@@ -3643,7 +3966,10 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         .build(),
     )
     server.enqueue(
-      MockResponse.Builder().body("C").build(),
+      MockResponse
+        .Builder()
+        .body("C")
+        .build(),
     )
     val url = server.url("/")
     assertThat(get(url).body.string()).isEqualTo("A")
@@ -3667,7 +3993,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
           .addHeader("Date: " + formatDate(-15, TimeUnit.SECONDS))
           .build(),
       )
-    assertThat(conditionalRequest.headers["If-Modified-Since"]).isEqualTo(lastModifiedDate)
+    assertThat(conditionalRequest.headers["If-Modified-Since"])
+      .isEqualTo(lastModifiedDate)
   }
 
   @Test
@@ -3698,20 +4025,19 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     val c = Cache(loggingFileSystem, path, 100000L)
     assertThat(c.directoryPath).isEqualTo(path)
     c.size()
-    assertThat(events)
-      .containsExactly(
-        "metadataOrNull:/cache/journal.bkp",
-        "metadataOrNull:/cache",
-        "sink:/cache/journal.bkp",
-        "delete:/cache/journal.bkp",
-        "metadataOrNull:/cache/journal",
-        "metadataOrNull:/cache",
-        "sink:/cache/journal.tmp",
-        "metadataOrNull:/cache/journal",
-        "atomicMove:/cache/journal.tmp",
-        "atomicMove:/cache/journal",
-        "appendingSink:/cache/journal",
-      )
+    assertThat(events).containsExactly(
+      "metadataOrNull:/cache/journal.bkp",
+      "metadataOrNull:/cache",
+      "sink:/cache/journal.bkp",
+      "delete:/cache/journal.bkp",
+      "metadataOrNull:/cache/journal",
+      "metadataOrNull:/cache",
+      "sink:/cache/journal.tmp",
+      "metadataOrNull:/cache/journal",
+      "atomicMove:/cache/journal.tmp",
+      "atomicMove:/cache/journal",
+      "appendingSink:/cache/journal",
+    )
     events.clear()
     c.size()
     assertThat(events).isEmpty()
@@ -3726,8 +4052,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   }
 
   /**
-   * Shortens the body of `response` but not the corresponding headers. Only useful to test how
-   * clients respond to the premature conclusion of the HTTP body.
+   * Shortens the body of `response` but not the corresponding headers. Only useful to test
+   * how clients respond to the premature conclusion of the HTTP body.
    */
   private fun truncateViolently(
     builder: MockResponse.Builder,
@@ -3774,8 +4100,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
         response.onResponseEnd(ShutdownConnection)
         response.removeHeader("Content-Length")
       }
-    },
-    ;
+    }, ;
 
     abstract fun setBody(
       response: MockResponse.Builder,
@@ -3792,7 +4117,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     }
   }
 
-  /** Returns a gzipped copy of `bytes`. */
+  /** Returns a gzipped copy of `bytes`.  */
   fun gzip(data: String): Buffer {
     val result = Buffer()
     val sink = GzipSink(result).buffer()
