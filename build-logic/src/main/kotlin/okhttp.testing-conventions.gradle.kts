@@ -29,13 +29,9 @@ tasks.withType<Test> {
     jvmArgs("-Djdk.tracePinnedThreads=short")
   }
   if (platform == "openjsse") {
-    // Not required on the target JDK which is 8
-    // but gets further
-    jvmArgs("--add-exports=java.base/sun.security.action=ALL-UNNAMED")
-    jvmArgs("--add-exports=java.base/sun.security.util=ALL-UNNAMED")
-    jvmArgs("--add-exports=java.base/sun.security.x509=ALL-UNNAMED")
-    jvmArgs("--add-opens=java.base/sun.security.util=ALL-UNNAMED")
-    jvmArgs("--add-opens=java.base/sun.security.x509=ALL-UNNAMED")
+    if (testJavaVersion > 8) {
+      throw GradleException("OpenJSSE is only supported on Java 8")
+    }
   }
 
   val javaToolchains = project.extensions.getByType<JavaToolchainService>()

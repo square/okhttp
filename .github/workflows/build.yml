@@ -158,11 +158,15 @@ jobs:
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'providers')
     strategy:
       matrix:
-        provider:
-          - openjsse
-          - bouncycastle
-          - corretto
-          - conscrypt
+        include:
+          - provider: openjsse
+            java-version: 8
+          - provider: bouncycastle
+            java-version: 21
+          - provider: corretto
+            java-version: 21
+          - provider: conscrypt
+            java-version: 21
 
     steps:
       - name: Checkout
@@ -172,13 +176,15 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: 21
+          java-version: |
+            ${{ matrix.java-version }}
+            21
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
       - name: Run Tests
-        run: ./gradlew test allTests -Pokhttp.platform=${{ matrix.provider }}
+        run: ./gradlew test allTests -Pokhttp.platform=${{ matrix.provider }} -Ptest.java.version=${{ matrix.java-version }}
 
   testopenjdklatest:
     runs-on: ubuntu-latest
