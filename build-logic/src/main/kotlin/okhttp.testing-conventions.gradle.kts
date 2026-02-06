@@ -30,6 +30,7 @@ tasks.withType<Test> {
   }
   if (platform == "openjsse") {
     jvmArgs("--add-exports=java.base/sun.security.action=ALL-UNNAMED")
+    jvmArgs("--add-exports=java.base/sun.security.x509=ALL-UNNAMED")
   }
 
   val javaToolchains = project.extensions.getByType<JavaToolchainService>()
