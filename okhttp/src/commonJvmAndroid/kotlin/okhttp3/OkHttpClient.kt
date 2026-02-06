@@ -146,6 +146,14 @@ open class OkHttpClient internal constructor(
     builder.interceptors.toImmutableList()
 
   /**
+   * Returns an immutable list of Call decorators that have a chance to return a different, likely
+   * decorating, implementation of Call. This allows functionality such as fail fast without normal Call
+   * execution based on network conditions, or setting Tracing context on the calling thread.
+   */
+  val callDecorators: List<Call.Decorator> =
+    builder.callDecorators.toImmutableList()
+
+  /**
    * Returns an immutable list of interceptors that observe a single network request and response.
    * These interceptors must call [Interceptor.Chain.proceed] exactly once: it is an error for
    * a network interceptor to short-circuit or repeat a network request.
@@ -266,6 +274,26 @@ open class OkHttpClient internal constructor(
   internal val routeDatabase: RouteDatabase = builder.routeDatabase ?: RouteDatabase()
   internal val taskRunner: TaskRunner = builder.taskRunner ?: TaskRunner.INSTANCE
 
+  private val decoratedCallFactory =
+    callDecorators.foldRight(
+      Call.Factory { request ->
+        RealCall(client = this, originalRequest = request, forWebSocket = false)
+      },
+    ) { callDecorator, next ->
+      Call.Factory { request ->
+        callDecorator.newCall(
+          object : Call.Chain {
+            override val client: OkHttpClient
+              get() = this@OkHttpClient
+            override val request: Request
+              get() = request
+
+            override fun proceed(request: Request): Call = next.newCall(request)
+          },
+        )
+      }
+    }
+
   @get:JvmName("connectionPool")
   val connectionPool: ConnectionPool =
     builder.connectionPool ?: ConnectionPool().also {
@@ -351,7 +379,7 @@ open class OkHttpClient internal constructor(
   }
 
   /** Prepares the [request] to be executed at some point in the future. */
-  override fun newCall(request: Request): Call = RealCall(this, request, forWebSocket = false)
+  override fun newCall(request: Request): Call = decoratedCallFactory.newCall(request)
 
   /** Uses [request] to connect a new web socket. */
   override fun newWebSocket(
@@ -588,6 +616,7 @@ open class OkHttpClient internal constructor(
     internal var dispatcher: Dispatcher = Dispatcher()
     internal var connectionPool: ConnectionPool? = null
     internal val interceptors: MutableList<Interceptor> = mutableListOf()
+    internal val callDecorators: MutableList<Call.Decorator> = mutableListOf()
     internal val networkInterceptors: MutableList<Interceptor> = mutableListOf()
     internal var eventListenerFactory: EventListener.Factory = EventListener.NONE.asFactory()
     internal var retryOnConnectionFailure = true
@@ -623,6 +652,7 @@ open class OkHttpClient internal constructor(
       this.dispatcher = okHttpClient.dispatcher
       this.connectionPool = okHttpClient.connectionPool
       this.interceptors += okHttpClient.interceptors
+      this.callDecorators += okHttpClient.callDecorators
       this.networkInterceptors += okHttpClient.networkInterceptors
       this.eventListenerFactory = okHttpClient.eventListenerFactory
       this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure
@@ -725,6 +755,11 @@ open class OkHttpClient internal constructor(
     fun eventListenerFactory(eventListenerFactory: EventListener.Factory) =
       apply {
         this.eventListenerFactory = eventListenerFactory
+      }
+
+    fun addCallDecorator(decorator: Call.Decorator) =
+      apply {
+        callDecorators += decorator
       }
 
     /**
