@@ -29,8 +29,13 @@ tasks.withType<Test> {
     jvmArgs("-Djdk.tracePinnedThreads=short")
   }
   if (platform == "openjsse") {
+    // Not required on the target JDK which is 8
+    // but gets further
     jvmArgs("--add-exports=java.base/sun.security.action=ALL-UNNAMED")
+    jvmArgs("--add-exports=java.base/sun.security.util=ALL-UNNAMED")
     jvmArgs("--add-exports=java.base/sun.security.x509=ALL-UNNAMED")
+    jvmArgs("--add-opens=java.base/sun.security.util=ALL-UNNAMED")
+    jvmArgs("--add-opens=java.base/sun.security.x509=ALL-UNNAMED")
   }
 
   val javaToolchains = project.extensions.getByType<JavaToolchainService>()
