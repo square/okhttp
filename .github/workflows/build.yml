@@ -54,7 +54,7 @@ jobs:
         with:
           pattern: '.github/renovate.json'
 
-  checkjdk11:
+  checks:
     permissions:
       checks: write # for mikepenz/action-junit-report
     runs-on: ubuntu-latest
@@ -84,7 +84,7 @@ jobs:
       - name: Run Checks
         run: ./gradlew check -PgraalBuild=true -x jvmTest -x test -x allTests -x java9Test
 
-  test_jvm:
+  jvm:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -127,7 +127,7 @@ jobs:
           files: |
             **/build/test-results/*/TEST-*.xml
 
-  testopenjdk8alpn:
+  openjdk8alpn:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
 
@@ -153,7 +153,7 @@ jobs:
       - name: Run Tests
         run: ./gradlew test allTests -Ptest.java.version=8 -Pokhttp.platform=jdk8alpn -Palpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
 
-  test_providers:
+  providers:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'providers')
     strategy:
@@ -186,7 +186,7 @@ jobs:
       - name: Run Tests
         run: ./gradlew test allTests -Pokhttp.platform=${{ matrix.provider }} -Ptest.java.version=${{ matrix.java-version }}
 
-  testopenjdklatest:
+  openjdklatest:
     runs-on: ubuntu-latest
 
     steps:
@@ -212,7 +212,7 @@ jobs:
       - name: Run Tests
         run: ./gradlew test allTests -Ptest.java.version=24
 
-  testopenjdkearlyaccess:
+  openjdkearlyaccess:
     runs-on: ubuntu-latest
     if: false # https://youtrack.jetbrains.com/issue/KTOR-8489
 
@@ -258,7 +258,7 @@ jobs:
       - name: Run Tests
         run: ./gradlew test allTests
 
-  testgraal:
+  graal:
     runs-on: ubuntu-latest
 
     steps:
@@ -290,7 +290,7 @@ jobs:
       - name: Run native-image tests
         run: ./gradlew -PgraalBuild=true native-image-tests:nativeTest
 
-  testandroid:
+  android:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -320,30 +320,45 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Verify KVM
+        run: |
+          sudo apt-get install -y cpu-checker
+          kvm-ok || echo "KVM is not accelerated"
+          kvm-ok || exit 1
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
       - name: Gradle cache
         run: ./gradlew :android-test:test
 
-      - name: AVD cache
-        uses: actions/cache@v5
+      - name: AVD System Image Cache
+        uses: actions/cache@v4
         id: avd-cache
         with:
+          key: avd-${{ runner.os }}-${{ matrix.api-level }}-${{ matrix.api-level >= 30 && 'x86_64' || 'x86' }}
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ matrix.api-level }}
+            # Added the actual system image path
+            ${{ env.ANDROID_HOME }}/system-images/android-${{ matrix.api-level }}
 
       - name: Create AVD and generate snapshot for caching
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
-          arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
           force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: false
+          arch: ${{ matrix.api-level >= 30 && 'x86_64' || 'x86' }}
+          # No window, no audio, and use swiftshader for headless environments
+          emulator-options: >
+            -no-window
+            -gpu swiftshader_indirect
+            -noaudio
+            -no-boot-anim
+            -camera-back none
+            -memory 2048
+          disable-animations: true
           script: echo "Generated AVD snapshot for caching."
 
       - name: Run Tests
@@ -351,7 +366,7 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
-          script: ./gradlew :android-test:connectedCheck
+          script: ./gradlew -PandroidBuild=true connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
 
@@ -369,7 +384,7 @@ jobs:
 #        env:
 #          API_LEVEL: ${{ matrix.api-level }}
 
-  testloom:
+  loom:
     runs-on: ubuntu-latest
 
     steps:
@@ -390,69 +405,7 @@ jobs:
       - name: Run Tests
         run: ./gradlew test allTests -Pokhttp.platform=loom -Ptest.java.version=24 -PcontainerTests=true
 
-
-  testandroidregression:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    if: contains(github.event.pull_request.labels.*.name, 'android-regression')
-
-    strategy:
-      fail-fast: false
-      matrix:
-        api-level:
-          - 29
-          - 34
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Configure JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: 'temurin'
-          java-version: 21
-
-      - name: Enable KVM group perms
-        # https://github.blog/changelog/2023-02-23-hardware-accelerated-android-virtualization-on-actions-windows-and-linux-larger-hosted-runners/
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Gradle cache
-        uses: gradle/actions/setup-gradle@v5
-
-      - name: AVD cache
-        uses: actions/cache@v5
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-${{ matrix.api-level }}
-
-      - name: Create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ matrix.api-level }}
-          force-avd-creation: false
-          arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: false
-          script: echo "Generated AVD snapshot for caching."
-
-      - name: Run Tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ matrix.api-level }}
-          arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
-          script: ./gradlew -PandroidBuild=true :regression-test:connectedCheck
-        env:
-          API_LEVEL: ${{ matrix.api-level }}
-
-  test_maven:
+  maven:
     runs-on: ubuntu-latest
 
     steps:
@@ -475,7 +428,7 @@ jobs:
         working-directory: ./maven-tests
         run: ./mvnw -q verify
 
-  test_java_modules:
+  java9_modules:
     runs-on: ubuntu-latest
 
     steps:
