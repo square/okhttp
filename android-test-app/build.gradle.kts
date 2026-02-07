@@ -1,5 +1,8 @@
 @file:Suppress("UnstableApiUsage")
 
+import okhttp3.buildsupport.testJavaVersion
+
+
 plugins {
   id("okhttp.base-conventions")
   id("com.android.application")
@@ -10,7 +13,8 @@ android {
 
   namespace = "okhttp.android.testapp"
 
-  testBuildType = "release"
+  // Release APKs can't be tested currently with AGP
+  testBuildType = "debug"
 
   defaultConfig {
     minSdk = 21
