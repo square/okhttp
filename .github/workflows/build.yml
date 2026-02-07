@@ -327,7 +327,7 @@ jobs:
         run: ./gradlew :android-test:test
 
       - name: AVD System Image Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: avd-cache
         with:
           key: avd-${{ runner.os }}-${{ matrix.api-level }}-${{ matrix.api-level >= 30 && 'x86_64' || 'x86' }}
