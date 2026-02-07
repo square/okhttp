@@ -28,6 +28,11 @@ tasks.withType<Test> {
   if (platform == "loom") {
     jvmArgs("-Djdk.tracePinnedThreads=short")
   }
+  if (platform == "openjsse") {
+    if (testJavaVersion > 8) {
+      throw GradleException("OpenJSSE is only supported on Java 8")
+    }
+  }
 
   val javaToolchains = project.extensions.getByType<JavaToolchainService>()
   javaLauncher.set(javaToolchains.launcherFor {
