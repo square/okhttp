@@ -85,6 +85,8 @@ jobs:
         run: ./gradlew check -PgraalBuild=true -x jvmTest -x test -x allTests -x java9Test
 
   jvm:
+    permissions:
+      checks: write # for mikepenz/action-junit-report
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
