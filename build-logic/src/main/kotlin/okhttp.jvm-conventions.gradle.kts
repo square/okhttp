@@ -1,4 +1,3 @@
-import groovyjarjarantlr4.v4.runtime.misc.RuleDependencyChecker.checkDependencies
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import tapmoc.TapmocExtension
