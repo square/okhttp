@@ -64,6 +64,10 @@ startup-runtime = "1.2.0"
 testcontainers = "1.21.4"
 zstd-kmp-okio = "0.4.0"
 
+# Set to lower version than KGP version to maximize compatibility
+# Default to matching okio
+kotlinCoreLibrariesVersion = "2.1.21"
+
 [libraries]
 amazon-corretto = { module = "software.amazon.cryptools:AmazonCorrettoCryptoProvider", version.ref = "amazon-corretto" }
 androidx-activity = { module = "androidx.activity:activity-ktx", version.ref = "androidx-activity" }
@@ -151,6 +155,7 @@ gradlePlugin-mavenPublish = { module = "com.vanniktech:gradle-maven-publish-plug
 gradlePlugin-mrjar = { module = "me.champeau.mrjar:me.champeau.mrjar.gradle.plugin", version.ref = "mrjar" }
 gradlePlugin-shadow = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow-plugin" }
 gradlePlugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless-plugin" }
+gradlePlugin-tapmoc = { module =  "com.gradleup.tapmoc:com.gradleup.tapmoc.gradle.plugin", version = "0.4.0"}
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

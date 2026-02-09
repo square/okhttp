@@ -34,6 +34,7 @@ dependencies {
   implementation(libs.gradlePlugin.graalvm)
   implementation(libs.gradlePlugin.ksp)
   implementation(libs.gradlePlugin.mrjar)
+  implementation(libs.gradlePlugin.tapmoc)
   implementation(libs.androidx.lint.gradle)
   implementation(libs.kotlin.gradle.plugin.api)
 }
