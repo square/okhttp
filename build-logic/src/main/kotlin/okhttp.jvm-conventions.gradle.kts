@@ -48,6 +48,6 @@ tasks.withType<KotlinCompile> {
 }
 
 extensions.configure<TapmocExtension> {
-  // Fail the build if any api dependency exposes incompatible Kotlin metadata, Kotlin stdlib or Java bytecode version.
+  // Fail the build if any api dependency exposes incompatible Kotlin metadata, Kotlin stdlib, or Java bytecode version.
   checkDependencies()
 }
