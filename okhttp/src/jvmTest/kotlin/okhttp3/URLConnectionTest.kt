@@ -4509,7 +4509,7 @@ class URLConnectionTest {
     private fun certificatesToString(certificates: Array<X509Certificate>): String {
       val result: MutableList<String> = ArrayList()
       for (certificate in certificates) {
-        result.add(certificate.subjectDN.toString() + " " + certificate.serialNumber)
+        result.add(certificate.subjectX500Principal.toString() + " " + certificate.serialNumber)
       }
       return result.toString()
     }

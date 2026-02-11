@@ -95,7 +95,7 @@ class CallKotlinTest {
       assertEquals(200, response.code)
       assertEquals(
         "CN=localhost",
-        (response.handshake!!.peerCertificates.single() as X509Certificate).subjectDN.name,
+        (response.handshake!!.peerCertificates.single() as X509Certificate).subjectX500Principal.name,
       )
     }
   }
