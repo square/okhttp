@@ -195,8 +195,9 @@ class DiskLruCache(
 
           try {
             trimToSize()
-          } catch (_: IOException) {
+          } catch (e: IOException) {
             mostRecentTrimFailed = true
+            Platform.get().log("DiskLruCache $directory trim failed", WARN, e)
           }
 
           try {
@@ -204,10 +205,11 @@ class DiskLruCache(
               rebuildJournal()
               redundantOpCount = 0
             }
-          } catch (_: IOException) {
+          } catch (e: IOException) {
             mostRecentRebuildFailed = true
             journalWriter?.closeQuietly()
             journalWriter = blackholeSink().buffer()
+            Platform.get().log("DiskLruCache $directory journal rebuild failed", WARN, e)
           }
 
           return -1L
@@ -829,9 +831,8 @@ class DiskLruCache(
         checkNotNull(removeSnapshot) { "remove() before next()" }
         try {
           this@DiskLruCache.remove(removeSnapshot.key())
-        } catch (_: IOException) {
-          // Nothing useful to do here. We failed to remove from the cache. Most likely that's
-          // because we couldn't update the journal, but the cached entry will still be gone.
+        } catch (e: IOException) {
+          Platform.get().log("DiskLruCache $directory remove failed", WARN, e)
         } finally {
           this.removeSnapshot = null
         }
@@ -903,7 +904,8 @@ class DiskLruCache(
         }
         return try {
           fileSystem.source(entry.cleanFiles[index])
-        } catch (_: FileNotFoundException) {
+        } catch (e: FileNotFoundException) {
+          Platform.get().log("DiskLruCache $directory entry source not found", WARN, e)
           null
         }
       }
@@ -927,7 +929,8 @@ class DiskLruCache(
         val sink: Sink
         try {
           sink = fileSystem.sink(dirtyFile)
-        } catch (_: FileNotFoundException) {
+        } catch (e: FileNotFoundException) {
+          Platform.get().log("DiskLruCache $directory dirty file not found", WARN, e)
           return blackholeSink()
         }
         return FaultHidingSink(sink) {
@@ -1056,16 +1059,15 @@ class DiskLruCache(
           sources += newSource(i)
         }
         return Snapshot(key, sequenceNumber, sources, lengths)
-      } catch (_: FileNotFoundException) {
-        // A file must have been deleted manually!
+      } catch (e: FileNotFoundException) {
+        Platform.get().log("DiskLruCache $directory entry missing files", WARN, e)
         for (source in sources) {
           source.closeQuietly()
         }
-        // Since the entry is no longer valid, remove it so the metadata is accurate (i.e. the cache
-        // size.)
         try {
           removeEntry(this)
-        } catch (_: IOException) {
+        } catch (removeException: IOException) {
+          Platform.get().log("DiskLruCache $directory entry removal failed", WARN, removeException)
         }
         return null
       }
