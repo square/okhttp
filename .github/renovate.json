@@ -53,6 +53,13 @@
       ],
       "allowedVersions": "<2.0.0",
       "description": "JDK 11 requirement"
+    },
+    {
+      "matchPackageNames": [
+        "androidx.activity:activity-ktx"
+      ],
+      "allowedVersions": "<=1.11.0",
+      "description": "Android minSdk 23 requirement"
     }
   ]
 }
