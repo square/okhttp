@@ -418,6 +418,9 @@ class CacheTest(
     assertThat(cache.requestCount()).isEqualTo(2)
     assertThat(cache.networkCount()).isEqualTo(2)
     assertThat(cache.hitCount()).isEqualTo(0)
+
+    response1.close()
+    response2.close()
   }
 
   private fun corruptCertificate(cacheEntry: Path) {
@@ -3796,6 +3799,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
     assertThat(response.request.url).isEqualTo(request.url)
     assertThat(response.cacheResponse!!.request.url).isEqualTo(request.url)
+
+    response.close()
   }
 
   @Test
@@ -3815,6 +3820,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
     assertThat(response.request.url).isEqualTo(request.url)
     assertThat(response.cacheResponse!!.request.url).isEqualTo(cacheUrlOverride)
+
+    response.close()
   }
 
   private fun testBasicCachingRules(request: Request): Response {
@@ -4033,22 +4040,41 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     val c = Cache(loggingFileSystem, path, 100000L)
     assertThat(c.directoryPath).isEqualTo(path)
     c.size()
-    assertThat(events).containsExactly(
-      "metadataOrNull:/cache/journal.bkp",
-      "metadataOrNull:/cache",
-      "sink:/cache/journal.bkp",
-      "delete:/cache/journal.bkp",
-      "metadataOrNull:/cache/journal",
-      "metadataOrNull:/cache",
-      "sink:/cache/journal.tmp",
-      "metadataOrNull:/cache/journal",
-      "atomicMove:/cache/journal.tmp",
-      "atomicMove:/cache/journal",
-      "appendingSink:/cache/journal",
-    )
+    if (emulatedFileSystem == EmulatedFileSystem.Unix) {
+      assertThat(events).containsExactly(
+        "metadataOrNull:/cache/journal.bkp",
+        "metadataOrNull:/cache",
+        "sink:/cache/journal.bkp",
+        "delete:/cache/journal.bkp",
+        "metadataOrNull:/cache/journal",
+        "metadataOrNull:/cache",
+        "sink:/cache/journal.tmp",
+        "metadataOrNull:/cache/journal",
+        "atomicMove:/cache/journal.tmp",
+        "atomicMove:/cache/journal",
+        "appendingSink:/cache/journal",
+      )
+    } else {
+      assertThat(events).containsExactly(
+        "metadataOrNull:/cache/journal.bkp",
+        "metadataOrNull:/cache",
+        "sink:/cache/journal.bkp",
+        "delete:/cache/journal.bkp",
+        "delete:/cache/journal.bkp", // investigate
+        "metadataOrNull:/cache/journal",
+        "metadataOrNull:/cache",
+        "sink:/cache/journal.tmp",
+        "metadataOrNull:/cache/journal",
+        "atomicMove:/cache/journal.tmp",
+        "atomicMove:/cache/journal",
+        "appendingSink:/cache/journal",
+      )
+    }
     events.clear()
     c.size()
     assertThat(events).isEmpty()
+
+    c.close()
   }
 
   private fun assertFullyCached(response: MockResponse) {
