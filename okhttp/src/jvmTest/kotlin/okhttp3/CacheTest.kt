@@ -424,7 +424,7 @@ class CacheTest(
   }
 
   private fun corruptCertificate(cacheEntry: Path) {
-    var content = fileSystem.source(cacheEntry).buffer().readUtf8()
+    var content = fileSystem.source(cacheEntry).buffer().use { it.readUtf8() }
     content = content.replace("MII", "!!!")
     fileSystem
       .sink(cacheEntry)
