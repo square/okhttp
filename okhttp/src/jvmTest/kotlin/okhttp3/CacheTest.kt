@@ -4135,7 +4135,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   }
 
   enum class EmulatedFileSystem {
-    Unix, Windows
+    Unix,
+    Windows,
   }
 
   companion object {
