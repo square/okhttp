@@ -24,7 +24,7 @@ dependencies {
 val testJavaVersion = project.testJavaVersion
 
 if (testJavaVersion >= 11) {
-tasks.withType<Test> {
+  tasks.withType<Test> {
     jvmArgs(
       "--add-opens=java.base/sun.security.ssl=ALL-UNNAMED",
       "--add-opens=java.base/sun.security.util=ALL-UNNAMED",

@@ -39,7 +39,7 @@ import okio.source
 public open class RecordingSocket(
   delegate: Socket,
   private val socketEventListener: SocketEventListener,
-  public val socketName: String = "Socket"
+  public val socketName: String = "Socket",
 ) : SocketDecorator(delegate) {
   init {
     if (delegate.isConnected) {
@@ -59,47 +59,60 @@ public open class RecordingSocket(
     recordConnect(endpoint)
   }
 
-  override fun connect(endpoint: SocketAddress?, timeout: Int) {
+  override fun connect(
+    endpoint: SocketAddress?,
+    timeout: Int,
+  ) {
     super.connect(endpoint, timeout)
     recordSocketConnection()
     recordConnect(endpoint)
   }
 
   private fun recordSocketConnection() {
-    this.socketConnection = SocketEvent.SocketConnection(
-      delegate.localSocketAddress as InetSocketAddress,
-      delegate.remoteSocketAddress as InetSocketAddress
-    )
+    this.socketConnection =
+      SocketEvent.SocketConnection(
+        delegate.localSocketAddress as InetSocketAddress,
+        delegate.remoteSocketAddress as InetSocketAddress,
+      )
   }
 
   private val mySource: Source by lazy {
     object : ForwardingSource(delegate.source()) {
-      override fun read(sink: Buffer, byteCount: Long): Long {
+      override fun read(
+        sink: Buffer,
+        byteCount: Long,
+      ): Long {
         val startSize = sink.size
         val readCount = super.read(sink, byteCount)
 
         val payloadSize = sink.size - startSize
-        val payload = if (payloadSize > 0) {
-          val clone = Buffer()
-          sink.copyTo(clone, startSize, payloadSize)
-          clone
-        } else null
+        val payload =
+          if (payloadSize > 0) {
+            val clone = Buffer()
+            sink.copyTo(clone, startSize, payloadSize)
+            clone
+          } else {
+            null
+          }
 
-        val event = if (readCount == -1L) {
-          SocketEvent.ReadEof(
-            clock.now(), Thread.currentThread().name, socketName,
-            socketConnection,
-          )
-        } else {
-          SocketEvent.ReadSuccess(
-            clock.now(),
-            Thread.currentThread().name,
-            socketName,
-            socketConnection,
-            readCount,
-            payload,
-          )
-        }
+        val event =
+          if (readCount == -1L) {
+            SocketEvent.ReadEof(
+              clock.now(),
+              Thread.currentThread().name,
+              socketName,
+              socketConnection,
+            )
+          } else {
+            SocketEvent.ReadSuccess(
+              clock.now(),
+              Thread.currentThread().name,
+              socketName,
+              socketConnection,
+              readCount,
+              payload,
+            )
+          }
         socketEventListener.onEvent(event)
         return readCount
       }
@@ -112,7 +125,7 @@ public open class RecordingSocket(
             Thread.currentThread().name,
             socketName,
             socketConnection,
-          )
+          ),
         )
       }
     }
@@ -120,12 +133,18 @@ public open class RecordingSocket(
 
   private val mySink: Sink by lazy {
     object : ForwardingSink(delegate.sink()) {
-      override fun write(source: Buffer, byteCount: Long) {
-        val payload = if (byteCount > 0) {
-          val clone = Buffer()
-          source.copyTo(clone, 0, byteCount)
-          clone
-        } else null
+      override fun write(
+        source: Buffer,
+        byteCount: Long,
+      ) {
+        val payload =
+          if (byteCount > 0) {
+            val clone = Buffer()
+            source.copyTo(clone, 0, byteCount)
+            clone
+          } else {
+            null
+          }
 
         super.write(source, byteCount)
 
@@ -137,8 +156,8 @@ public open class RecordingSocket(
             socketConnection,
             byteCount,
             clock.now(),
-            payload
-          )
+            payload,
+          ),
         )
       }
 
@@ -150,7 +169,7 @@ public open class RecordingSocket(
             Thread.currentThread().name,
             socketName,
             socketConnection,
-          )
+          ),
         )
       }
     }
@@ -168,8 +187,8 @@ public open class RecordingSocket(
         socketName,
         socketConnection,
         address?.hostName,
-        address?.port ?: 0
-      )
+        address?.port ?: 0,
+      ),
     )
   }
 
@@ -182,9 +201,11 @@ public open class RecordingSocket(
     if (this::socketConnection.isInitialized) {
       socketEventListener.onEvent(
         SocketEvent.Close(
-          clock.now(), Thread.currentThread().name, socketName,
+          clock.now(),
+          Thread.currentThread().name,
+          socketName,
           socketConnection,
-        )
+        ),
       )
     }
   }
@@ -197,7 +218,7 @@ public open class RecordingSocket(
         Thread.currentThread().name,
         socketName,
         socketConnection,
-      )
+      ),
     )
   }
 
@@ -210,9 +231,8 @@ public open class RecordingSocket(
           Thread.currentThread().name,
           socketName,
           socketConnection,
-        )
+        ),
       )
     }
   }
 }
-

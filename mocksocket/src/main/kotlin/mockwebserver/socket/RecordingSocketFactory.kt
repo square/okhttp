@@ -5,42 +5,40 @@ import java.net.Socket
 import javax.net.SocketFactory
 
 public class RecordingSocketFactory(
-    private val socketEventListener: SocketEventListener,
-    private val delegate: SocketFactory = getDefault(),
+  private val socketEventListener: SocketEventListener,
+  private val delegate: SocketFactory = getDefault(),
 ) : SocketFactory() {
-  override fun createSocket(): Socket {
-    return RecordingSocket(delegate.createSocket(), socketEventListener)
-  }
+  override fun createSocket(): Socket = RecordingSocket(delegate.createSocket(), socketEventListener)
 
-  override fun createSocket(host: String?, port: Int): Socket {
-    return RecordingSocket(delegate.createSocket(host, port), socketEventListener)
-  }
+  override fun createSocket(
+    host: String?,
+    port: Int,
+  ): Socket = RecordingSocket(delegate.createSocket(host, port), socketEventListener)
 
   override fun createSocket(
     host: String?,
     port: Int,
     localHost: InetAddress?,
-    localPort: Int
-  ): Socket {
-    return RecordingSocket(
+    localPort: Int,
+  ): Socket =
+    RecordingSocket(
       delegate.createSocket(host, port, localHost, localPort),
-      socketEventListener
+      socketEventListener,
     )
-  }
 
-  override fun createSocket(host: InetAddress?, port: Int): Socket {
-    return RecordingSocket(delegate.createSocket(host, port), socketEventListener)
-  }
+  override fun createSocket(
+    host: InetAddress?,
+    port: Int,
+  ): Socket = RecordingSocket(delegate.createSocket(host, port), socketEventListener)
 
   override fun createSocket(
     address: InetAddress?,
     port: Int,
     localAddress: InetAddress?,
-    localPort: Int
-  ): Socket {
-    return RecordingSocket(
+    localPort: Int,
+  ): Socket =
+    RecordingSocket(
       delegate.createSocket(address, port, localAddress, localPort),
-      socketEventListener
+      socketEventListener,
     )
-  }
 }

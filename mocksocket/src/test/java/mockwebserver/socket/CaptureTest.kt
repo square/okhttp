@@ -45,7 +45,6 @@ class CaptureTest {
 
   private val loggerHandler =
     object : Handler() {
-
       override fun publish(record: LogRecord) {
         // https://timothybasanov.com/2016/05/26/java-pre-master-secret.html
         // https://security.stackexchange.com/questions/35639/decrypting-tls-in-wireshark-when-using-dhe-rsa-ciphersuites
@@ -124,20 +123,23 @@ class CaptureTest {
   }
 
   @Test
-  fun exportPcapAndNetlog(): Unit = runBlocking {
-    // Compose multiple listeners so both pcap and netlog can be generated in a single pass.
-    val netLogRecorder = NetLogRecorder(file = fileNetLog)
-    val pcapRecorder = PcapRecorder(file = filePcap)
-    val multiListener = object : SocketEventListener {
-      override fun onEvent(event: SocketEvent) {
-        netLogRecorder.onEvent(event)
-        pcapRecorder.onEvent(event)
-      }
-    }
+  fun exportPcapAndNetlog(): Unit =
+    runBlocking {
+      // Compose multiple listeners so both pcap and netlog can be generated in a single pass.
+      val netLogRecorder = NetLogRecorder(file = fileNetLog)
+      val pcapRecorder = PcapRecorder(file = filePcap)
+      val multiListener =
+        object : SocketEventListener {
+          override fun onEvent(event: SocketEvent) {
+            netLogRecorder.onEvent(event)
+            pcapRecorder.onEvent(event)
+          }
+        }
 
-    try {
-      val connectionSpec =
-        ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+      try {
+        val connectionSpec =
+          ConnectionSpec
+            .Builder(ConnectionSpec.MODERN_TLS)
 //          .cipherSuites(
 //            CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
 //            CipherSuite.TLS_RSA_WITH_AES_256_GCM_SHA384,
@@ -145,58 +147,72 @@ class CaptureTest {
 //            CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
 //            CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
 //          )
-          .tlsVersions(TlsVersion.TLS_1_2)
-          .build()
+            .tlsVersions(TlsVersion.TLS_1_2)
+            .build()
 
-      val client = OkHttpClient.Builder()
-        .socketFactory(RecordingSocketFactory(socketEventListener = multiListener))
-        .connectionSpecs(listOf(connectionSpec))
-        .addInterceptor { it.proceed(it.request().newBuilder()
-          .header("Accept-Encoding", "identity")
-          .build()) }
-        .eventListener(object : EventListener() {
+        val client =
+          OkHttpClient
+            .Builder()
+            .socketFactory(RecordingSocketFactory(socketEventListener = multiListener))
+            .connectionSpecs(listOf(connectionSpec))
+            .addInterceptor {
+              it.proceed(
+                it
+                  .request()
+                  .newBuilder()
+                  .header("Accept-Encoding", "identity")
+                  .build(),
+              )
+            }.eventListener(
+              object : EventListener() {
+                override fun secureConnectEnd(
+                  call: Call,
+                  handshake: Handshake?,
+                ) {
+                  super.secureConnectEnd(call, handshake)
+                  println(handshake)
+                }
 
-          override fun secureConnectEnd(call: Call, handshake: Handshake?) {
-            super.secureConnectEnd(call, handshake)
-            println(handshake)
-          }
+                override fun connectionAcquired(
+                  call: Call,
+                  connection: Connection,
+                ) {
+                  if (connection.handshake() != null) {
+                    val sslSocket = connection.socket() as SSLSocket
+                    val session = sslSocket.session as ExtendedSSLSession
+                    logKey(session)
+                  }
+                }
+              },
+            ).build()
 
-          override fun connectionAcquired(call: Call, connection: Connection) {
-            if (connection.handshake() != null) {
-              val sslSocket = connection.socket() as SSLSocket
-              val session = sslSocket.session as ExtendedSSLSession
-              logKey(session)
-            }
-          }
-        })
-        .build()
+        client.newCall(Request("https://google.com/robots.txt".toHttpUrl())).execute().use {
+          it.body.string()
+        }
 
-      client.newCall(Request("https://google.com/robots.txt".toHttpUrl())).execute().use {
-        it.body.string()
+        client.newCall(Request("https://github.com/robots.txt".toHttpUrl())).execute().use {
+          it.body.string()
+        }
+      } finally {
+        netLogRecorder.close()
+        pcapRecorder.close()
       }
 
-      client.newCall(Request("https://github.com/robots.txt".toHttpUrl())).execute().use {
-        it.body.string()
-      }
-    } finally {
-      netLogRecorder.close()
-      pcapRecorder.close()
+      // Verify traces got written
+      assertThat(fileSystem.exists(fileNetLog)).isTrue()
+      assertThat(fileSystem.metadata(fileNetLog).size).isNotNull().isGreaterThan(100L)
+
+      assertThat(fileSystem.exists(filePcap)).isTrue()
+      assertThat(fileSystem.metadata(filePcap).size).isNotNull().isGreaterThan(100L)
     }
 
-    // Verify traces got written
-    assertThat(fileSystem.exists(fileNetLog)).isTrue()
-    assertThat(fileSystem.metadata(fileNetLog).size).isNotNull().isGreaterThan(100L)
-
-    assertThat(fileSystem.exists(filePcap)).isTrue()
-    assertThat(fileSystem.metadata(filePcap).size).isNotNull().isGreaterThan(100L)
-  }
-
-  private val masterSecretField: Field = run {
-    val clazz = Class.forName("sun.security.ssl.SSLSessionImpl")
-    val field = clazz.getDeclaredField("masterSecret")
-    field.isAccessible = true
-    field
-  }
+  private val masterSecretField: Field =
+    run {
+      val clazz = Class.forName("sun.security.ssl.SSLSessionImpl")
+      val field = clazz.getDeclaredField("masterSecret")
+      field.isAccessible = true
+      field
+    }
 
   private fun logKey(session: ExtendedSSLSession) {
     val masterSecret = masterSecretField.get(session) as SecretKey?

@@ -16,22 +16,23 @@
 package mockwebserver.socket
 
 public interface SocketEventListener {
-    public fun onEvent(event: SocketEvent)
+  public fun onEvent(event: SocketEvent)
 
-    public companion object {
-      public val Noop: SocketEventListener = object : SocketEventListener {
+  public companion object {
+    public val Noop: SocketEventListener =
+      object : SocketEventListener {
         override fun onEvent(event: SocketEvent) {}
       }
-    }
+  }
 }
 
 public class MemorySocketEventListener(
-    private val _events: MutableList<SocketEvent> = mutableListOf()
+  private val _events: MutableList<SocketEvent> = mutableListOf(),
 ) : SocketEventListener {
-    public val events: List<SocketEvent>
-        get() = _events.toList()
+  public val events: List<SocketEvent>
+    get() = _events.toList()
 
-    override fun onEvent(event: SocketEvent) {
-        _events.add(event)
-    }
+  override fun onEvent(event: SocketEvent) {
+    _events.add(event)
+  }
 }

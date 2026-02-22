@@ -30,8 +30,11 @@ import okio.FileSystem
 import okio.Path
 import okio.buffer
 
-public class PcapRecorder(file: Path, fileSystem: FileSystem = FileSystem.SYSTEM) : SocketEventListener, Closeable {
-
+public class PcapRecorder(
+  file: Path,
+  fileSystem: FileSystem = FileSystem.SYSTEM,
+) : SocketEventListener,
+  Closeable {
   private val globalHeader = PcapGlobalHeader.createDefaultHeader()
   private val out = PcapOutputStream.create(globalHeader, fileSystem.sink(file).buffer().outputStream())
   private var closed = false
@@ -61,27 +64,27 @@ public class PcapRecorder(file: Path, fileSystem: FileSystem = FileSystem.SYSTEM
               ack,
               syn = true,
               ackFlag = false,
-              payload = null
+              payload = null,
             )
             seq++
           }
         }
 
         is SocketEvent.WriteSuccess -> {
-            // PSH, ACK
-            val payloadBytes = event.payload?.readByteArray()
-            writePacket(
-              out,
-              event.timestamp,
-              event.connection,
-              seq,
-              ack,
-              syn = false,
-              ackFlag = true,
-              psh = true,
-              payload = payloadBytes
-            )
-            if (payloadBytes != null) seq += payloadBytes.size
+          // PSH, ACK
+          val payloadBytes = event.payload?.readByteArray()
+          writePacket(
+            out,
+            event.timestamp,
+            event.connection,
+            seq,
+            ack,
+            syn = false,
+            ackFlag = true,
+            psh = true,
+            payload = payloadBytes,
+          )
+          if (payloadBytes != null) seq += payloadBytes.size
         }
 
         is SocketEvent.ReadSuccess -> {
@@ -113,7 +116,7 @@ public class PcapRecorder(file: Path, fileSystem: FileSystem = FileSystem.SYSTEM
             syn = false,
             ackFlag = true,
             fin = true,
-            payload = null
+            payload = null,
           )
           seq++
         }
@@ -145,7 +148,7 @@ public class PcapRecorder(file: Path, fileSystem: FileSystem = FileSystem.SYSTEM
     ackFlag: Boolean = false,
     fin: Boolean = false,
     psh: Boolean = false,
-    payload: ByteArray? = null
+    payload: ByteArray? = null,
   ) {
     // Because pkts.io is built around reading packets rather than forging them from scratch natively as a builder
     // we manually construct a raw Ethernet + IPv4 + TCP packet byte string for the writer, using standard standard header lengths.
@@ -159,7 +162,7 @@ public class PcapRecorder(file: Path, fileSystem: FileSystem = FileSystem.SYSTEM
     // Ethernet (14 bytes)
     pkt.write(ByteArray(6) { 0x00 }) // Dst MAC
     pkt.write(ByteArray(6) { 0x00 }) // Src MAC
-    pkt.writeShort(0x0800)           // Type IPv4
+    pkt.writeShort(0x0800) // Type IPv4
 
     // IPv4 (20 bytes)
     pkt.writeByte(0x45) // Version 4, IHL 5
@@ -210,11 +213,12 @@ public class PcapRecorder(file: Path, fileSystem: FileSystem = FileSystem.SYSTEM
     val recordHeader = PcapRecordHeader.createDefaultHeader(timestamp.toEpochMilliseconds())
     recordHeader.capturedLength = rawPkt.size.toLong()
     recordHeader.totalLength = rawPkt.size.toLong()
-    val frame = PCapPacketImpl(
-      globalHeader,
-      recordHeader,
-      Buffers.wrap(rawPkt)
-    )
+    val frame =
+      PCapPacketImpl(
+        globalHeader,
+        recordHeader,
+        Buffers.wrap(rawPkt),
+      )
     out.write(frame)
   }
 }
