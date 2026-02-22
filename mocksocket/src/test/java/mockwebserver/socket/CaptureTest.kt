@@ -151,6 +151,9 @@ class CaptureTest {
       val client = OkHttpClient.Builder()
         .socketFactory(RecordingSocketFactory(socketEventListener = multiListener))
         .connectionSpecs(listOf(connectionSpec))
+        .addInterceptor { it.proceed(it.request().newBuilder()
+          .header("Accept-Encoding", "identity")
+          .build()) }
         .eventListener(object : EventListener() {
 
           override fun secureConnectEnd(call: Call, handshake: Handshake?) {
