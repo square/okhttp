@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import app.cash.burst.Burst
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isCloseTo
@@ -70,7 +71,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @Tag("Slow")
-class CacheTest {
+@Burst
+class CacheTest(val emulateWindows: Boolean = false) {
   val fileSystem = FakeFileSystem()
 
   @RegisterExtension
@@ -94,7 +96,11 @@ class CacheTest {
   fun setUp() {
     platform.assumeNotOpenJSSE()
     server.protocolNegotiationEnabled = false
-    fileSystem.emulateUnix()
+    if (emulateWindows) {
+      fileSystem.emulateWindows()
+    } else {
+      fileSystem.emulateUnix()
+    }
     cache = Cache(fileSystem, "/cache/".toPath(), Long.MAX_VALUE)
     client =
       clientTestRule
