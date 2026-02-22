@@ -1,3 +1,5 @@
+import okhttp3.buildsupport.testJavaVersion
+
 plugins {
   kotlin("jvm")
   id("okhttp.publish-conventions")
@@ -19,12 +21,16 @@ dependencies {
   testRuntimeOnly(libs.junit.jupiter.engine)
 }
 
+val testJavaVersion = project.testJavaVersion
+
+if (testJavaVersion >= 11) {
 tasks.withType<Test> {
-  jvmArgs(
-    "--add-opens=java.base/sun.security.ssl=ALL-UNNAMED",
-    "--add-opens=java.base/sun.security.util=ALL-UNNAMED",
-    "--add-opens=java.base/sun.security.provider=ALL-UNNAMED",
-  )
+    jvmArgs(
+      "--add-opens=java.base/sun.security.ssl=ALL-UNNAMED",
+      "--add-opens=java.base/sun.security.util=ALL-UNNAMED",
+      "--add-opens=java.base/sun.security.provider=ALL-UNNAMED",
+    )
+  }
 }
 
 kotlin {
