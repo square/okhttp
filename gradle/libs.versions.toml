@@ -49,6 +49,7 @@ org-bouncycastle = "1.83"
 org-conscrypt = "2.5.2"
 org-junit-jupiter = "5.13.4"
 playservices-safetynet = "18.1.0"
+pkts-core = "3.0.3"
 robolectric = "4.16.1"
 robolectric-android = "16-robolectric-13921718"
 serialization = "1.10.0"
@@ -141,6 +142,7 @@ square-okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem",
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainers-junit5 = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 square-zstd-kmp-okio = { module = "com.squareup.zstd:zstd-kmp-okio", version.ref = "zstd-kmp-okio" }
+pkts-core = { module = "io.pkts:pkts-core", version.ref = "pkts-core" }
 
 # Build Logic Dependencies
 gradlePlugin-android = { module = "com.android.tools.build:gradle", version.ref = "agp" }
