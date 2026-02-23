@@ -523,7 +523,7 @@ class OkHttpTest {
       assertTrue(tlsVersion == TlsVersion.TLS_1_2 || tlsVersion == TlsVersion.TLS_1_3)
       assertEquals(
         "CN=localhost",
-        (response.handshake!!.peerCertificates.first() as X509Certificate).subjectDN.name,
+        (response.handshake!!.peerCertificates.first() as X509Certificate).subjectX500Principal.name,
       )
     }
   }

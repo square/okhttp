@@ -139,7 +139,7 @@ class Handshake internal constructor(
   private val Certificate.name: String
     get() =
       when (this) {
-        is X509Certificate -> subjectDN.toString()
+        is X509Certificate -> subjectX500Principal.toString()
         else -> type
       }
 
