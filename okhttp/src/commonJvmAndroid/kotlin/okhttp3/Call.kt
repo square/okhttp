@@ -183,4 +183,34 @@ interface Call : Cloneable {
   fun interface Factory {
     fun newCall(request: Request): Call
   }
+
+  /**
+   * The equivalent of an Interceptor for [Call.Factory], but critically supported within an [OkHttpClient].
+   *
+   * While an [Interceptor] forms a chain as part of execution of a Call. Call.Decorator intercepts
+   * [Call.Factory.newCall] with similar flexibility to Application [OkHttpClient.interceptors].
+   *
+   * That is, it may do any of
+   * - Modify the request such as adding Tracing Context
+   * - Wrap the [Call] returned
+   * - Return some [Call] implementation that will immediately fail avoiding network calls based on network or
+   *   authentication state.
+   * - Redirect the [Call], such as using an alternative [Call.Factory].
+   * - Defer execution, something not safe in an Interceptor.
+   *
+   * It should not throw an exception and instead return a Call that will fail on [Call.execute].
+   *
+   * This flexibility means that the app developer configuring the decorators on [OkHttpClient] must be responsible
+   * for how these are composed in a chain.
+   */
+  fun interface Decorator {
+    fun newCall(chain: Chain): Call
+  }
+
+  interface Chain {
+    val client: OkHttpClient
+    val request: Request
+
+    fun proceed(request: Request): Call
+  }
 }

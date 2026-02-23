@@ -134,6 +134,16 @@ public abstract interface class okhttp3/Call : java/lang/Cloneable {
 	public abstract fun timeout ()Lokio/Timeout;
 }
 
+public abstract interface class okhttp3/Call$Chain {
+	public abstract fun getClient ()Lokhttp3/OkHttpClient;
+	public abstract fun getRequest ()Lokhttp3/Request;
+	public abstract fun proceed (Lokhttp3/Request;)Lokhttp3/Call;
+}
+
+public abstract interface class okhttp3/Call$Decorator {
+	public abstract fun newCall (Lokhttp3/Call$Chain;)Lokhttp3/Call;
+}
+
 public abstract interface class okhttp3/Call$Factory {
 	public abstract fun newCall (Lokhttp3/Request;)Lokhttp3/Call;
 }
@@ -940,6 +950,7 @@ public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Fact
 	public final fun fastFallback ()Z
 	public final fun followRedirects ()Z
 	public final fun followSslRedirects ()Z
+	public final fun getCallDecorators ()Ljava/util/List;
 	public final fun hostnameVerifier ()Ljavax/net/ssl/HostnameVerifier;
 	public final fun interceptors ()Ljava/util/List;
 	public final fun minWebSocketMessageToCompress ()J
@@ -965,6 +976,7 @@ public final class okhttp3/OkHttpClient$Builder {
 	public final fun -addInterceptor (Lkotlin/jvm/functions/Function1;)Lokhttp3/OkHttpClient$Builder;
 	public final fun -addNetworkInterceptor (Lkotlin/jvm/functions/Function1;)Lokhttp3/OkHttpClient$Builder;
 	public fun <init> ()V
+	public final fun addCallDecorator (Lokhttp3/Call$Decorator;)Lokhttp3/OkHttpClient$Builder;
 	public final fun addInterceptor (Lokhttp3/Interceptor;)Lokhttp3/OkHttpClient$Builder;
 	public final fun addNetworkInterceptor (Lokhttp3/Interceptor;)Lokhttp3/OkHttpClient$Builder;
 	public final fun authenticator (Lokhttp3/Authenticator;)Lokhttp3/OkHttpClient$Builder;
@@ -1310,5 +1322,11 @@ public abstract class okhttp3/WebSocketListener {
 	public fun onMessage (Lokhttp3/WebSocket;Ljava/lang/String;)V
 	public fun onMessage (Lokhttp3/WebSocket;Lokio/ByteString;)V
 	public fun onOpen (Lokhttp3/WebSocket;Lokhttp3/Response;)V
+}
+
+public final class okhttp3/android/AndroidNetworkPinning : okhttp3/Call$Decorator {
+	public fun <init> ()V
+	public final fun getNetworkCallback ()Landroid/net/ConnectivityManager$NetworkCallback;
+	public fun newCall (Lokhttp3/Call$Chain;)Lokhttp3/Call;
 }
 
