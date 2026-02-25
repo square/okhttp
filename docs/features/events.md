@@ -8,7 +8,7 @@ Events allow you to capture metrics on your application’s HTTP calls. Use even
 
 ### EventListener
 
-Subclass [EventListener](https://square.github.io/okhttp/5.x/okhttp/okhttp3/-event-listener) and override methods for the events you are interested in. In a successful HTTP call with no redirects or retries the sequence of events is described by this flow.
+Subclass [EventListener](https://square.github.io/okhttp/5.x/okhttp/okhttp3/-event-listener/) and override methods for the events you are interested in. In a successful HTTP call with no redirects or retries the sequence of events is described by this flow.
 
 ![Events Diagram](../assets/images/events@2x.png)
 
