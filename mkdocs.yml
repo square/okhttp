@@ -1,5 +1,5 @@
 site_name: OkHttp
-site_url: https://square.github.io/okhttp/
+site_url: https://square.github.com/okhttp/
 repo_name: OkHttp
 repo_url: https://github.com/square/okhttp
 site_description: "Square’s meticulous HTTP client for the JVM, Android, and GraalVM"
