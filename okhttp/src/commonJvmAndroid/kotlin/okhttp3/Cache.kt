@@ -628,9 +628,9 @@ class Cache internal constructor(
           .writeDecimalLong(receivedResponseMillis)
           .writeByte('\n'.code)
 
-        if (url.isHttps) {
+        if (url.isHttps && handshake != null) {
           sink.writeByte('\n'.code)
-          sink.writeUtf8(handshake!!.cipherSuite.javaName).writeByte('\n'.code)
+          sink.writeUtf8(handshake.cipherSuite.javaName).writeByte('\n'.code)
           writeCertList(sink, handshake.peerCertificates)
           writeCertList(sink, handshake.localCertificates)
           sink.writeUtf8(handshake.tlsVersion.javaName).writeByte('\n'.code)
