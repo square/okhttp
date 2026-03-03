@@ -383,6 +383,7 @@ class HttpUrl private constructor(
     get() = scheme == "https"
 
   /** Returns this URL as a [java.net.URL][URL]. */
+  @Suppress("deprecation")
   @JvmName("url")
   fun toUrl(): URL {
     try {

@@ -159,7 +159,7 @@ class HandshakeCertificatesTest {
     val acceptedIssuers = handshakeCertificates.trustManager.acceptedIssuers
     val names =
       acceptedIssuers
-        .map { it.subjectDN.name }
+        .map { it.subjectX500Principal.name }
         .toSet()
 
     // It's safe to assume all platforms will have a major Internet certificate issuer.

@@ -171,7 +171,7 @@ class CustomTrust {
         println(response.body.string())
 
         for (peerCertificate in response.handshake?.peerCertificates.orEmpty()) {
-          println((peerCertificate as X509Certificate).subjectDN)
+          println((peerCertificate as X509Certificate).subjectX500Principal)
         }
       }
   }
