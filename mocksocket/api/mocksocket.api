@@ -1,0 +1,429 @@
+public final class mockwebserver/socket/MemorySocketEventListener : mockwebserver/socket/SocketEventListener {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getEvents ()Ljava/util/List;
+	public fun onEvent (Lmockwebserver/socket/SocketEvent;)V
+}
+
+public final class mockwebserver/socket/NetLogRecorder : java/io/Closeable, mockwebserver/socket/SocketEventListener {
+	public fun <init> (Lokio/Path;Lokio/FileSystem;)V
+	public synthetic fun <init> (Lokio/Path;Lokio/FileSystem;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public fun onEvent (Lmockwebserver/socket/SocketEvent;)V
+}
+
+public final class mockwebserver/socket/PcapRecorder : java/io/Closeable, mockwebserver/socket/SocketEventListener {
+	public fun <init> (Lokio/Path;Lokio/FileSystem;)V
+	public synthetic fun <init> (Lokio/Path;Lokio/FileSystem;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public final fun getSimulateTcp ()Z
+	public fun onEvent (Lmockwebserver/socket/SocketEvent;)V
+}
+
+public class mockwebserver/socket/RecordingSocket : mockwebserver/socket/SocketDecorator {
+	public fun <init> (Ljava/net/Socket;Lmockwebserver/socket/SocketEventListener;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/net/Socket;Lmockwebserver/socket/SocketEventListener;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public fun connect (Ljava/net/SocketAddress;)V
+	public fun connect (Ljava/net/SocketAddress;I)V
+	public fun getInputStream ()Ljava/io/InputStream;
+	public fun getOutputStream ()Ljava/io/OutputStream;
+	public final fun getSocketName ()Ljava/lang/String;
+	public fun shutdownInput ()V
+	public fun shutdownOutput ()V
+}
+
+public final class mockwebserver/socket/RecordingSocketFactory : javax/net/SocketFactory {
+	public fun <init> (Lmockwebserver/socket/SocketEventListener;Ljavax/net/SocketFactory;)V
+	public synthetic fun <init> (Lmockwebserver/socket/SocketEventListener;Ljavax/net/SocketFactory;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun createSocket ()Ljava/net/Socket;
+	public fun createSocket (Ljava/lang/String;I)Ljava/net/Socket;
+	public fun createSocket (Ljava/lang/String;ILjava/net/InetAddress;I)Ljava/net/Socket;
+	public fun createSocket (Ljava/net/InetAddress;I)Ljava/net/Socket;
+	public fun createSocket (Ljava/net/InetAddress;ILjava/net/InetAddress;I)Ljava/net/Socket;
+}
+
+public class mockwebserver/socket/SocketDecorator : java/net/Socket {
+	public fun <init> (Ljava/net/Socket;)V
+	public fun bind (Ljava/net/SocketAddress;)V
+	public fun close ()V
+	public fun connect (Ljava/net/SocketAddress;)V
+	public fun connect (Ljava/net/SocketAddress;I)V
+	public fun getChannel ()Ljava/nio/channels/SocketChannel;
+	public final fun getDelegate ()Ljava/net/Socket;
+	public fun getInetAddress ()Ljava/net/InetAddress;
+	public fun getInputStream ()Ljava/io/InputStream;
+	public fun getKeepAlive ()Z
+	public fun getLocalAddress ()Ljava/net/InetAddress;
+	public fun getLocalPort ()I
+	public fun getLocalSocketAddress ()Ljava/net/SocketAddress;
+	public fun getOOBInline ()Z
+	public fun getOutputStream ()Ljava/io/OutputStream;
+	public fun getPort ()I
+	public fun getReceiveBufferSize ()I
+	public fun getRemoteSocketAddress ()Ljava/net/SocketAddress;
+	public fun getReuseAddress ()Z
+	public fun getSendBufferSize ()I
+	public fun getSoLinger ()I
+	public fun getSoTimeout ()I
+	public fun getTcpNoDelay ()Z
+	public fun getTrafficClass ()I
+	public fun isBound ()Z
+	public fun isClosed ()Z
+	public fun isConnected ()Z
+	public fun isInputShutdown ()Z
+	public fun isOutputShutdown ()Z
+	public fun sendUrgentData (I)V
+	public fun setKeepAlive (Z)V
+	public fun setOOBInline (Z)V
+	public fun setReceiveBufferSize (I)V
+	public fun setReuseAddress (Z)V
+	public fun setSendBufferSize (I)V
+	public fun setSoLinger (ZI)V
+	public fun setSoTimeout (I)V
+	public fun setTcpNoDelay (Z)V
+	public fun setTrafficClass (I)V
+	public fun shutdownInput ()V
+	public fun shutdownOutput ()V
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class mockwebserver/socket/SocketEvent {
+	public abstract fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public abstract fun getSocketName ()Ljava/lang/String;
+	public abstract fun getThreadName ()Ljava/lang/String;
+	public abstract fun getTimestamp ()Lkotlin/time/Instant;
+}
+
+public final class mockwebserver/socket/SocketEvent$AcceptReturning : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;)Lmockwebserver/socket/SocketEvent$AcceptReturning;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$AcceptReturning;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;ILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$AcceptReturning;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun getPeerSocketName ()Ljava/lang/String;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$AcceptStarting : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;)Lmockwebserver/socket/SocketEvent$AcceptStarting;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$AcceptStarting;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;ILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$AcceptStarting;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$Close : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;)Lmockwebserver/socket/SocketEvent$Close;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$Close;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;ILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$Close;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$Connect : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;I)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()I
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;I)Lmockwebserver/socket/SocketEvent$Connect;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$Connect;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;IILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$Connect;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun getHost ()Ljava/lang/String;
+	public final fun getPort ()I
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$DataArrival : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;JLkotlin/time/Instant;Lokio/Buffer;)V
+	public synthetic fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;JLkotlin/time/Instant;Lokio/Buffer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun component5 ()J
+	public final fun component6 ()Lkotlin/time/Instant;
+	public final fun component7 ()Lokio/Buffer;
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;JLkotlin/time/Instant;Lokio/Buffer;)Lmockwebserver/socket/SocketEvent$DataArrival;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$DataArrival;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;JLkotlin/time/Instant;Lokio/Buffer;ILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$DataArrival;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArrivalTime ()Lkotlin/time/Instant;
+	public final fun getByteCount ()J
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun getPayload ()Lokio/Buffer;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$ReadEof : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;)Lmockwebserver/socket/SocketEvent$ReadEof;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$ReadEof;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;ILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$ReadEof;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$ReadFailed : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;)Lmockwebserver/socket/SocketEvent$ReadFailed;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$ReadFailed;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;ILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$ReadFailed;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun getReason ()Ljava/lang/String;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$ReadSuccess : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;JLokio/Buffer;)V
+	public synthetic fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;JLokio/Buffer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun component5 ()J
+	public final fun component6 ()Lokio/Buffer;
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;JLokio/Buffer;)Lmockwebserver/socket/SocketEvent$ReadSuccess;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$ReadSuccess;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;JLokio/Buffer;ILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$ReadSuccess;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getByteCount ()J
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun getPayload ()Lokio/Buffer;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$ReadTimeout : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;I)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun component5 ()I
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;I)Lmockwebserver/socket/SocketEvent$ReadTimeout;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$ReadTimeout;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;IILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$ReadTimeout;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public final fun getTimeoutMs ()I
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$ReadWait : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;J)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun component5 ()J
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;J)Lmockwebserver/socket/SocketEvent$ReadWait;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$ReadWait;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;JILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$ReadWait;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public final fun getWaitNanos ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$ShutdownInput : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;)Lmockwebserver/socket/SocketEvent$ShutdownInput;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$ShutdownInput;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;ILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$ShutdownInput;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$ShutdownOutput : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;)Lmockwebserver/socket/SocketEvent$ShutdownOutput;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$ShutdownOutput;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;ILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$ShutdownOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$SocketConnection {
+	public fun <init> (Ljava/net/InetSocketAddress;Ljava/net/InetSocketAddress;)V
+	public final fun component1 ()Ljava/net/InetSocketAddress;
+	public final fun component2 ()Ljava/net/InetSocketAddress;
+	public final fun copy (Ljava/net/InetSocketAddress;Ljava/net/InetSocketAddress;)Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/net/InetSocketAddress;Ljava/net/InetSocketAddress;ILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLocal ()Ljava/net/InetSocketAddress;
+	public final fun getPeer ()Ljava/net/InetSocketAddress;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$TimeoutReached : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;)Lmockwebserver/socket/SocketEvent$TimeoutReached;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$TimeoutReached;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;ILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$TimeoutReached;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun getMessage ()Ljava/lang/String;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$WriteFailed : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;)Lmockwebserver/socket/SocketEvent$WriteFailed;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$WriteFailed;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;Ljava/lang/String;ILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$WriteFailed;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun getReason ()Ljava/lang/String;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$WriteSuccess : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;JLkotlin/time/Instant;Lokio/Buffer;)V
+	public synthetic fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;JLkotlin/time/Instant;Lokio/Buffer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun component5 ()J
+	public final fun component6 ()Lkotlin/time/Instant;
+	public final fun component7 ()Lokio/Buffer;
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;JLkotlin/time/Instant;Lokio/Buffer;)Lmockwebserver/socket/SocketEvent$WriteSuccess;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$WriteSuccess;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;JLkotlin/time/Instant;Lokio/Buffer;ILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$WriteSuccess;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArrivalTime ()Lkotlin/time/Instant;
+	public final fun getByteCount ()J
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun getPayload ()Lokio/Buffer;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class mockwebserver/socket/SocketEvent$WriteWaitBufferFull : mockwebserver/socket/SocketEvent {
+	public fun <init> (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;J)V
+	public final fun component1 ()Lkotlin/time/Instant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public final fun component5 ()J
+	public final fun copy (Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;J)Lmockwebserver/socket/SocketEvent$WriteWaitBufferFull;
+	public static synthetic fun copy$default (Lmockwebserver/socket/SocketEvent$WriteWaitBufferFull;Lkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lmockwebserver/socket/SocketEvent$SocketConnection;JILjava/lang/Object;)Lmockwebserver/socket/SocketEvent$WriteWaitBufferFull;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBufferSize ()J
+	public fun getConnection ()Lmockwebserver/socket/SocketEvent$SocketConnection;
+	public fun getSocketName ()Ljava/lang/String;
+	public fun getThreadName ()Ljava/lang/String;
+	public fun getTimestamp ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class mockwebserver/socket/SocketEventListener {
+	public static final field Companion Lmockwebserver/socket/SocketEventListener$Companion;
+	public abstract fun onEvent (Lmockwebserver/socket/SocketEvent;)V
+}
+
+public final class mockwebserver/socket/SocketEventListener$Companion {
+	public final fun getNoop ()Lmockwebserver/socket/SocketEventListener;
+}
+
