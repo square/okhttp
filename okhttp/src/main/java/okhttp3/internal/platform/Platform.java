@@ -21,7 +21,6 @@ import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -40,6 +39,9 @@ import okhttp3.internal.tls.TrustRootIndex;
 import okio.Buffer;
 
 /**
+ * Replacement Platform class that avoids eager call to Security.getProviders()
+ * ----------------------------------------------------------------------------
+ *
  * Access to platform-specific features.
  *
  * <h3>Server name indication (SNI)</h3>
@@ -185,16 +187,19 @@ public class Platform {
     return buildCertificateChainCleaner(trustManager);
   }
 
-  public static boolean isConscryptPreferred() {
-    // mainly to allow tests to run cleanly
-    if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
-      return true;
-    }
-
-    // check if Provider manually installed
-    String preferredProvider = Security.getProviders()[0].getName();
-    return "Conscrypt".equals(preferredProvider);
-  }
+  /* Avoid eager call to Security.getProviders()
+  ----------------------------------------------
+  | public static boolean isConscryptPreferred() {
+  |   // mainly to allow tests to run cleanly
+  |   if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
+  |     return true;
+  |   }
+  |
+  |   // check if Provider manually installed
+  |   String preferredProvider = Security.getProviders()[0].getName();
+  |   return "Conscrypt".equals(preferredProvider);
+  | }
+  ---------------------------------------------- */
 
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
@@ -212,13 +217,16 @@ public class Platform {
   }
 
   private static Platform findJvmPlatform() {
-    if (isConscryptPreferred()) {
-      Platform conscrypt = ConscryptPlatform.buildIfSupported();
-
-      if (conscrypt != null) {
-        return conscrypt;
-      }
-    }
+    /* Avoid eager call to Security.getProviders()
+    ----------------------------------------------
+    | if (isConscryptPreferred()) {
+    |   Platform conscrypt = ConscryptPlatform.buildIfSupported();
+    |
+    |   if (conscrypt != null) {
+    |     return conscrypt;
+    |   }
+    | }
+    ---------------------------------------------- */
 
     Platform jdk9 = Jdk9Platform.buildIfSupported();
 
