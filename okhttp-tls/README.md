@@ -228,7 +228,7 @@ Download
 implementation("com.squareup.okhttp3:okhttp-tls:5.3.0")
 ```
 
- [held_certificate]: https://square.github.io/okhttp/4.x/okhttp-tls/okhttp3.tls/-held-certificate/
- [held_certificate_builder]: https://square.github.io/okhttp/4.x/okhttp-tls/okhttp3.tls/-held-certificate/-builder/
- [handshake_certificates]: https://square.github.io/okhttp/4.x/okhttp-tls/okhttp3.tls/-handshake-certificates/
- [handshake_certificates_builder]: https://square.github.io/okhttp/4.x/okhttp-tls/okhttp3.tls/-handshake-certificates/-builder/
+ [held_certificate]: https://square.github.io/okhttp/5.x/okhttp-tls/okhttp3.tls/-held-certificate/
+ [held_certificate_builder]: https://square.github.io/okhttp/5.x/okhttp-tls/okhttp3.tls/-held-certificate/-builder/
+ [handshake_certificates]: https://square.github.io/okhttp/5.x/okhttp-tls/okhttp3.tls/-handshake-certificates/
+ [handshake_certificates_builder]: https://square.github.io/okhttp/5.x/okhttp-tls/okhttp3.tls/-handshake-certificates/-builder/
