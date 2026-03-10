@@ -9,7 +9,7 @@ Note that zstd is not used for sending requests.
 
 ```java
 OkHttpClient client = new OkHttpClient.Builder()
-  .addInterceptor(CompressionInterceptor(Zstd))
+  .addInterceptor(CompressionInterceptor(Zstd, Gzip))
   .build();
 ```
 
