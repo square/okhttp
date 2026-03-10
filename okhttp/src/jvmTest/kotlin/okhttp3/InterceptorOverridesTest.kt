@@ -587,7 +587,7 @@ class InterceptorOverridesTest {
       override fun isDefaultValue(value: Cache?): Boolean = value == null
     }
 
-    object ProxyOverride : Override<java.net.Proxy?> {
+    object ProxyOverride : Override<Proxy?> {
       override fun Interceptor.Chain.value(): java.net.Proxy? = proxy
 
       override fun Interceptor.Chain.withOverride(value: java.net.Proxy?): Interceptor.Chain = withProxy(value)
@@ -786,7 +786,7 @@ class InterceptorOverridesTest {
     object ConnectTimeoutOverride : Override<Int> {
       override fun Interceptor.Chain.value(): Int = connectTimeoutMillis()
 
-      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain = withConnectTimeout(value.toLong(), TimeUnit.MILLISECONDS)
+      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain = withConnectTimeout(value, TimeUnit.MILLISECONDS)
 
       override fun OkHttpClient.Builder.withOverride(value: Int): OkHttpClient.Builder =
         connectTimeout(value.toLong(), TimeUnit.MILLISECONDS)
@@ -802,7 +802,7 @@ class InterceptorOverridesTest {
     object ReadTimeoutOverride : Override<Int> {
       override fun Interceptor.Chain.value(): Int = readTimeoutMillis()
 
-      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain = withReadTimeout(value.toLong(), TimeUnit.MILLISECONDS)
+      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain = withReadTimeout(value, TimeUnit.MILLISECONDS)
 
       override fun OkHttpClient.Builder.withOverride(value: Int): OkHttpClient.Builder = readTimeout(value.toLong(), TimeUnit.MILLISECONDS)
 
@@ -817,7 +817,7 @@ class InterceptorOverridesTest {
     object WriteTimeoutOverride : Override<Int> {
       override fun Interceptor.Chain.value(): Int = writeTimeoutMillis()
 
-      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain = withWriteTimeout(value.toLong(), TimeUnit.MILLISECONDS)
+      override fun Interceptor.Chain.withOverride(value: Int): Interceptor.Chain = withWriteTimeout(value, TimeUnit.MILLISECONDS)
 
       override fun OkHttpClient.Builder.withOverride(value: Int): OkHttpClient.Builder = writeTimeout(value.toLong(), TimeUnit.MILLISECONDS)
 
