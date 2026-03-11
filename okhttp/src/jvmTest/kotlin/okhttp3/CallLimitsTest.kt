@@ -31,7 +31,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 
 @Burst
 class CallLimitsTest(
-  private val protocol: Protocol = burstValues(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1)
+  private val protocol: Protocol = burstValues(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1),
 ) {
   @RegisterExtension
   val platform = PlatformRule()
@@ -40,13 +40,16 @@ class CallLimitsTest(
   val clientTestRule = OkHttpClientTestRule()
 
   @StartStop
-  private val server = MockWebServer().apply {
-    protocols = listOf(protocol)
-  }
+  private val server =
+    MockWebServer().apply {
+      protocols = listOf(protocol)
+    }
 
-  private var client = clientTestRule.newClientBuilder()
-    .protocols(listOf(protocol))
-    .build()
+  private var client =
+    clientTestRule
+      .newClientBuilder()
+      .protocols(listOf(protocol))
+      .build()
 
   @Test
   fun largeStatusLine() {
