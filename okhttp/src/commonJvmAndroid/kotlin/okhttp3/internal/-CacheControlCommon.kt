@@ -62,6 +62,7 @@ internal fun CacheControl.Companion.commonForceCache() =
   CacheControl
     .Builder()
     .onlyIfCached()
+    // Keep FORCE_CACHE on the TimeUnit overload to avoid Kotlin Duration ABI coupling.
     .maxStale(Int.MAX_VALUE, TimeUnit.SECONDS)
     .build()
 

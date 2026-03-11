@@ -16,8 +16,11 @@
 package okhttp3
 
 import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.doesNotContain
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
 import kotlin.test.Test
 import kotlin.time.Duration.Companion.seconds
@@ -73,5 +76,21 @@ class CacheControlTest {
     assertThat(cacheControl.isPrivate).isFalse()
     assertThat(cacheControl.isPublic).isFalse()
     assertThat(cacheControl.mustRevalidate).isFalse()
+  }
+
+  @Test
+  fun forceCacheAvoidsKotlinDurationAbiSymbols() {
+    assertThat(CacheControl.FORCE_CACHE.maxStaleSeconds).isEqualTo(Int.MAX_VALUE)
+
+    val resource =
+      CacheControlTest::class.java.classLoader.getResourceAsStream(
+        "okhttp3/internal/_CacheControlCommonKt.class",
+      )
+    assertThat(resource).isNotNull()
+
+    val classConstantPool = resource!!.readBytes().toString(Charsets.ISO_8859_1)
+    assertThat(classConstantPool).contains("java/util/concurrent/TimeUnit")
+    assertThat(classConstantPool).doesNotContain("kotlin/time/Duration")
+    assertThat(classConstantPool).doesNotContain("fromRawValue")
   }
 }
