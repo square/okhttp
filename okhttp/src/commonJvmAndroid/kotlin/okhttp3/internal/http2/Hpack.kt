@@ -387,6 +387,7 @@ object Hpack {
         val huffmanDecode = firstByte and 0x80 == 0x80 // 1NNNNNNN
         val length = readInt(firstByte, PREFIX_7_BITS).toLong()
 
+        // If the compressed or decompressed length exceeds the limit, don't even bother.
         if (headerListByteCount + length > HEADER_LIMIT) {
           throw IOException("header byte count limit of $HEADER_LIMIT exceeded")
         }
