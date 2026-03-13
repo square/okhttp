@@ -37,8 +37,7 @@ junit-pioneer = "1.9.1"
 junit-platform = "1.14.3"
 junit4 = "4.13.2"
 kotlin = "2.2.21"
-ksp = "2.3.4"
-ksp-plugin = "2.3.6"
+ksp = "2.3.6"
 lint-gradle = "1.0.0-alpha05"
 maven-publish = "0.36.0"
 maven-sympathy = "0.3.0"
@@ -150,7 +149,7 @@ gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref 
 gradlePlugin-dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka-plugin" }
 gradlePlugin-graalvm = { module = "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin", version.ref = "graalvm-plugin" }
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
-gradlePlugin-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp-plugin" }
+gradlePlugin-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
 gradlePlugin-mavenPublish = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "maven-publish" }
 gradlePlugin-mrjar = { module = "me.champeau.mrjar:me.champeau.mrjar.gradle.plugin", version.ref = "mrjar" }
 gradlePlugin-shadow = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow-plugin" }
@@ -170,7 +169,7 @@ graalvm = { id = "org.graalvm.buildtools.native", version.ref = "graalvm-plugin"
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-plugin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 gradle-lint = { id = "com.android.lint", version.ref = "lint-gradle" }
 maven-publish = { id = "com.vanniktech.maven.publish.base", version.ref = "maven-publish" }
 maven-sympathy = { id = "io.github.usefulness.maven-sympathy", version.ref = "maven-sympathy" }
