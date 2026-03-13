@@ -378,6 +378,39 @@ class CookiesTest {
     assertThat(request.headers["Quux"]).isNull()
   }
 
+  @Test
+  fun cookieHandlerWithQuotedValueAndTrailingSpace() {
+    server.enqueue(MockResponse())
+    val serverUrl = urlWithIpAddress(server, "/")
+    val androidCookieHandler: CookieHandler =
+      object : CookieHandler() {
+        override fun get(
+          uri: URI,
+          map: Map<String, List<String>>,
+        ) = mapOf(
+          "Cookie" to
+            listOf(
+              "a=\"android \"",
+            ),
+        )
+
+        override fun put(
+          uri: URI,
+          map: Map<String, List<String>>,
+        ) {
+        }
+      }
+    client =
+      client
+        .newBuilder()
+        .cookieJar(JavaNetCookieJar(androidCookieHandler))
+        .build()
+    get(serverUrl)
+    val request = server.takeRequest()
+    assertThat(request.headers["Cookie"]).isEqualTo("a=android")
+    assertThat(request.headers["Quux"]).isNull()
+  }
+
   private fun urlWithIpAddress(
     server: MockWebServer,
     path: String,
