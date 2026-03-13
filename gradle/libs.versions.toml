@@ -21,7 +21,6 @@ codehaus-signature-java18 = "1.0"
 coroutines = "1.10.2"
 de-mannodermaus-junit5 = "2.0.1"
 dokka = "2.1.0"
-dokka-plugin = "2.1.0"
 eclipse-osgi = "3.24.100"
 graalvm = "25.0.2"
 graalvm-plugin = "0.11.5"
@@ -147,7 +146,7 @@ gradlePlugin-android = { module = "com.android.tools.build:gradle", version.ref 
 gradlePlugin-animalsniffer = { module = "ru.vyarus:gradle-animalsniffer-plugin", version.ref = "animalsniffer" }
 gradlePlugin-binaryCompatibilityValidator = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "binary-compatibility-validator" }
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "bnd" }
-gradlePlugin-dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka-plugin" }
+gradlePlugin-dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 gradlePlugin-graalvm = { module = "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin", version.ref = "graalvm-plugin" }
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 gradlePlugin-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp-plugin" }
@@ -165,7 +164,7 @@ animalsniffer = { id = "ru.vyarus.animalsniffer", version.ref = "animalsniffer" 
 binary-compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binary-compatibility-validator" }
 bnd = { id = "biz.aQute.bnd", version.ref = "bnd" }
 burst = { id = "app.cash.burst", version.ref = "burst" }
-dokka = { id = "org.jetbrains.dokka", version.ref = "dokka-plugin" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 graalvm = { id = "org.graalvm.buildtools.native", version.ref = "graalvm-plugin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
