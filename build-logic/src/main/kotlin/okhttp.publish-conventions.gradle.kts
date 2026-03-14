@@ -55,13 +55,10 @@ configure<ApiValidationExtension> {
 }
 
 if (project.name == "okhttp") {
-//  dependencies {
-//    "bcv-rt-jvm-cp"("org.jetbrains.kotlin:kotlin-metadata-jvm:2.2.21")
-//  }
+  // Workaround for https://github.com/Kotlin/binary-compatibility-validator/issues/312
   val apiBuild = tasks.register<KotlinApiBuildTask>("androidApiBuild") {
     outputApiFile = project.layout.buildDirectory.file("${this.name}/okhttp.api")
     inputClassesDirs.from(tasks.getByName("compileAndroidMain").outputs)
-//    runtimeClasspath.from(project.configurations.named("bcv-rt-jvm-cp-resolver"))
   }
   val apiCheck = tasks.register<KotlinApiCompareTask>("androidApiCheck") {
     group = "verification"
