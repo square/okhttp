@@ -169,7 +169,6 @@ class Http2Reader(
     streamId: Int,
   ): List<Header> {
     continuation.left = length
-    continuation.length = continuation.left
     continuation.padding = padding
     continuation.flags = flags
     continuation.streamId = streamId
@@ -404,7 +403,6 @@ class Http2Reader(
   internal class ContinuationSource(
     private val source: BufferedSource,
   ) : Source {
-    var length: Int = 0
     var flags: Int = 0
     var streamId: Int = 0
 
@@ -440,8 +438,8 @@ class Http2Reader(
     private fun readContinuationHeader() {
       val previousStreamId = streamId
 
-      left = source.readMedium()
-      length = left
+      val length = source.readMedium()
+      left = length
       val type = source.readByte() and 0xff
       flags = source.readByte() and 0xff
       if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags))
