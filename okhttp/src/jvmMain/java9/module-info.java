@@ -4,7 +4,7 @@ module okhttp3 {
   requires transitive okio;
   requires java.logging;
   exports okhttp3;
-  exports okhttp3.internal to okhttp3.logging, okhttp3.sse, okhttp3.java.net.cookiejar, okhttp3.dnsoverhttps, mockwebserver3, okhttp3.mockwebserver, okhttp3.coroutines, okhttp3.tls;
+  exports okhttp3.internal to okhttp3.logging, okhttp3.sse, okhttp3.java.net.cookiejar, okhttp3.dnsoverhttps, mockwebserver3, okhttp3.mockwebserver, mockwebserver3.junit5, okhttp3.coroutines, okhttp3.tls;
   exports okhttp3.internal.concurrent to mockwebserver3, okhttp3.mockwebserver;
   exports okhttp3.internal.connection to mockwebserver3, okhttp3.mockwebserver, okhttp3.logging;
   exports okhttp3.internal.http to okhttp3.logging, okhttp3.brotli, mockwebserver3;

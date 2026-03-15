@@ -221,7 +221,9 @@ class RetryAndFollowUpInterceptor : Interceptor {
         return chain.proxyAuthenticator.authenticate(route, userResponse)
       }
 
-      HTTP_UNAUTHORIZED -> return chain.authenticator.authenticate(route, userResponse)
+      HTTP_UNAUTHORIZED -> {
+        return chain.authenticator.authenticate(route, userResponse)
+      }
 
       HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> {
         return buildRedirectRequest(userResponse, method, chain)
@@ -285,7 +287,9 @@ class RetryAndFollowUpInterceptor : Interceptor {
         return userResponse.request
       }
 
-      else -> return null
+      else -> {
+        return null
+      }
     }
   }
 

@@ -107,7 +107,9 @@ class CacheTest {
   @AfterEach
   fun tearDown() {
     ResponseCache.setDefault(null)
-    cache.delete()
+    if (this::cache.isInitialized) {
+      cache.delete()
+    }
   }
 
   /**

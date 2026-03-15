@@ -1,10 +1,6 @@
 Change Log
 ==========
 
-## Version 4.x
-
-See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
-
 ## Version 5.3.2
 
 _2025-11-18_
@@ -754,6 +750,9 @@ and Android! Please report any issues you encounter: we'll fix them urgently.
 Note that this was originally released on 2020-10-06 as 4.10.0-RC1. The only change from that
 release is the version name.
 
+## Version 4.x
+
+See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the legacy version changelogs.
 
 [GraalVM]: https://www.graalvm.org/
 [Gradle module metadata]: https://docs.gradle.org/current/userguide/publishing_gradle_module_metadata.html

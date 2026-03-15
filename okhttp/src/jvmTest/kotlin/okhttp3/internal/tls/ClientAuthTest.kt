@@ -240,12 +240,15 @@ class ClientAuthTest {
         is SSLHandshakeException -> {
           // JDK 11+
         }
+
         is SSLException -> {
           // javax.net.ssl.SSLException: readRecord
         }
+
         is SocketException -> {
           // Conscrypt, JDK 8 (>= 292), JDK 9
         }
+
         else -> {
           assertThat(expected.message).isEqualTo("exhausted all routes")
         }
@@ -295,15 +298,19 @@ class ClientAuthTest {
         is SSLHandshakeException -> {
           // JDK 11+
         }
+
         is SSLException -> {
           // javax.net.ssl.SSLException: readRecord
         }
+
         is SocketException -> {
           // Conscrypt, JDK 8 (>= 292), JDK 9
         }
+
         is ConnectionShutdownException -> {
           // It didn't fail until it reached the application layer.
         }
+
         else -> {
           assertThat(expected.message).isEqualTo("exhausted all routes")
         }

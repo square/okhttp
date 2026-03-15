@@ -130,11 +130,15 @@ class MediaType internal constructor(
               // Value is "double-quoted". That's valid and our regex group already strips the quotes.
               parameter.groups[3]!!.value
             }
+
             token.startsWith('\'') && token.endsWith('\'') && token.length > 2 -> {
               // If the token is 'single-quoted' it's invalid! But we're lenient and strip the quotes.
               token.substring(1, token.length - 1)
             }
-            else -> token
+
+            else -> {
+              token
+            }
           }
 
         parameterNamesAndValues += name

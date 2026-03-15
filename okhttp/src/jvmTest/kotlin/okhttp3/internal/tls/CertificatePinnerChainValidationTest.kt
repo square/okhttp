@@ -439,11 +439,15 @@ class CertificatePinnerChainValidationTest {
           // On Android, the handshake fails before the certificate pinner runs.
           assertThat(expected.message!!).contains("Could not validate certificate")
         }
+
         is SSLPeerUnverifiedException -> {
           // On OpenJDK, the handshake succeeds but the certificate pinner fails.
           assertThat(expected.message!!).startsWith("Certificate pinning failure!")
         }
-        else -> throw expected
+
+        else -> {
+          throw expected
+        }
       }
     }
   }
@@ -599,11 +603,15 @@ class CertificatePinnerChainValidationTest {
           // Certificate pinning fails!
           assertThat(expected.message!!).startsWith("Certificate pinning failure!")
         }
+
         is SSLHandshakeException -> {
           // We didn't have the opportunity to do certificate pinning because the handshake failed.
           assertThat(expected.message!!).contains("this is not a CA certificate")
         }
-        else -> throw expected
+
+        else -> {
+          throw expected
+        }
       }
     }
   }

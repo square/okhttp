@@ -100,7 +100,9 @@ class ServerSentEventReader(
           }
         }
 
-        else -> throw AssertionError()
+        else -> {
+          throw AssertionError()
+        }
       }
     }
   }

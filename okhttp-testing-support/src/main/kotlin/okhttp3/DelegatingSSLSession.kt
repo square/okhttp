@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("DEPRECATION")
+
 package okhttp3
 
 import java.security.Principal
@@ -60,6 +62,7 @@ abstract class DelegatingSSLSession(
 
   override fun getLocalCertificates(): Array<Certificate>? = delegate!!.localCertificates
 
+  @Suppress("removal", "OVERRIDE_DEPRECATION")
   @Throws(SSLPeerUnverifiedException::class)
   override fun getPeerCertificateChain(): Array<X509Certificate> = delegate!!.peerCertificateChain
 

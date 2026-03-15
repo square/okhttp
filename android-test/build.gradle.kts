@@ -1,12 +1,10 @@
-@file:Suppress("UnstableApiUsage")
+import okhttp3.buildsupport.androidBuild
 
 plugins {
+  id("okhttp.base-conventions")
   id("com.android.library")
-  kotlin("android")
   id("de.mannodermaus.android-junit5")
 }
-
-val androidBuild = property("androidBuild").toString().toBoolean()
 
 android {
   compileSdk {
@@ -46,9 +44,6 @@ android {
     unitTests.isIncludeAndroidResources = true
   }
 
-  kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_11.toString()
-  }
 
   // issue merging due to conflict with httpclient and something else
   packagingOptions.resources.excludes += setOf(
@@ -76,11 +71,11 @@ dependencies {
   testImplementation(libs.androidx.test.runner)
   testImplementation(libs.robolectric)
   testImplementation(libs.androidx.espresso.core)
-  testImplementation(libs.squareup.okio.fakefilesystem)
+  testImplementation(libs.square.okio.fakefilesystem)
   testImplementation(projects.okhttpTestingSupport)
-  testImplementation(rootProject.libs.conscrypt.openjdk)
-  testImplementation(rootProject.libs.junit.jupiter.engine)
-  testImplementation(rootProject.libs.junit.vintage.engine)
+  testImplementation(libs.conscrypt.openjdk)
+  testImplementation(libs.junit.jupiter.engine)
+  testImplementation(libs.junit.vintage.engine)
 
   androidTestImplementation(projects.okhttpTestingSupport) {
     exclude("org.openjsse", "openjsse")
@@ -101,12 +96,12 @@ dependencies {
   androidTestImplementation(projects.okhttpTls)
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
-  androidTestImplementation(libs.httpClient5)
+  androidTestImplementation(libs.http.client5)
   androidTestImplementation(libs.kotlin.test.common)
   androidTestImplementation(libs.kotlin.test.junit)
-  androidTestImplementation(libs.squareup.moshi)
-  androidTestImplementation(libs.squareup.moshi.kotlin)
-  androidTestImplementation(libs.squareup.okio.fakefilesystem)
+  androidTestImplementation(libs.square.moshi)
+  androidTestImplementation(libs.square.moshi.kotlin)
+  androidTestImplementation(libs.square.okio.fakefilesystem)
 
   //noinspection UseTomlInstead
   androidTestImplementation("dnsjava:dnsjava:3.6.3")
