@@ -104,7 +104,7 @@ dependencies {
   androidTestImplementation(libs.square.okio.fakefilesystem)
 
   //noinspection UseTomlInstead
-  androidTestImplementation("dnsjava:dnsjava:3.6.3")
+  androidTestImplementation("dnsjava:dnsjava:3.6.4")
 
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.junit.jupiter.api)

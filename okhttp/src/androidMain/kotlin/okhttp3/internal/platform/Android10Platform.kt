@@ -40,7 +40,7 @@ import okhttp3.internal.tls.TrustRootIndex
 
 /** Android 10+ (API 29+). */
 @SuppressSignatureCheck
-class Android10Platform :
+open class Android10Platform :
   Platform(),
   ContextAwarePlatform {
   override var applicationContext: Context? = null

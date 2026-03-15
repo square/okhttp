@@ -123,6 +123,9 @@ kotlin {
         compileOnly(libs.conscrypt.openjdk)
         implementation(libs.androidx.annotation)
         implementation(libs.androidx.startup.runtime)
+
+        //noinspection UseTomlInstead
+        implementation("dnsjava:dnsjava:3.6.4")
       }
     }
 
