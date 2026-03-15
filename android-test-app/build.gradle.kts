@@ -9,7 +9,9 @@ plugins {
 }
 
 android {
-  compileSdk = 36
+  compileSdk {
+    version = preview("CANARY")
+  }
 
   namespace = "okhttp.android.testapp"
 

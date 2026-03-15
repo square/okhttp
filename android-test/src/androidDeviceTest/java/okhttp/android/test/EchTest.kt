@@ -78,9 +78,12 @@ class EchTest {
         .build()
 
     client.sendRequest(Request.Builder().url("https://cloudflare-ech.com/").build()) {
+      println(it.body.string())
     }
 
-    client.sendRequest(Request.Builder().url("https://crypto.cloudflare.com/cdn-cgi/trace").build()) {
+    client.sendRequest(
+      Request.Builder().url("https://crypto.cloudflare.com/cdn-cgi/trace").build()
+    ) {
       println(it.body.string())
     }
 
