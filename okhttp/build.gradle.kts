@@ -55,9 +55,11 @@ kotlin {
   jvm {
   }
 
-  androidLibrary {
+  android {
     namespace = "okhttp.okhttp3"
-    compileSdk = 36
+    compileSdk {
+      version = preview("CANARY")
+    }
     minSdk = 21
 
     androidResources {
@@ -207,34 +209,7 @@ if (platform == "jdk8alpn") {
           dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion"),
         ).singleFile
     tasks.withType<Test> {
-      jvmArgs("-Xbootclasspath/p:${alpnBootJar}")
-    }
-  }
-}
-
-android {
-  compileSdk {
-    version = preview("CANARY")
-  }
-
-  namespace = "okhttp.okhttp3"
-
-  defaultConfig {
-    minSdk = 21
-
-    consumerProguardFiles("okhttp3.pro")
-  }
-
-  testOptions {
-    unitTests {
-      isIncludeAndroidResources = true
-    }
-  }
-
-  sourceSets {
-    named("main") {
-      manifest.srcFile("src/androidMain/AndroidManifest.xml")
-      assets.srcDir("src/androidMain/assets")
+      jvmArgs("-Xbootclasspath/p:$alpnBootJar")
     }
   }
 }
