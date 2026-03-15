@@ -15,20 +15,11 @@
  */
 package okhttp.android.test
 
-import android.net.ssl.EchConfigList
-import android.net.ssl.SSLSockets
-import java.net.Socket
-import javax.net.ssl.SSLSocket
-import okhttp3.DelegatingSSLSocketFactory
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.platform.AndroidDnsResolverDns
-import okhttp3.internal.platform.Platform
 import okio.IOException
 import org.junit.jupiter.api.Test
-import org.xbill.DNS.HTTPSRecord
-import org.xbill.DNS.SVCBBase
 
 class EchTest {
 
