@@ -26,9 +26,6 @@ import android.util.CloseGuard
 import android.util.Log
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
-import java.io.IOException
-import java.net.InetAddress
-import java.net.Socket
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -37,7 +34,7 @@ import okhttp3.Dns
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.AndroidPlatform.Companion.Tag
-import okhttp3.internal.platform.android.AndroidCanarySocketAdapter
+import okhttp3.internal.platform.android.Android17SocketAdapter
 import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
@@ -58,7 +55,7 @@ internal constructor() :
   override var applicationContext: Context? = null
 
   private val socketAdapter by lazy {
-    AndroidCanarySocketAdapter.buildIfSupported()!!
+    Android17SocketAdapter.buildIfSupported()!!
   }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =

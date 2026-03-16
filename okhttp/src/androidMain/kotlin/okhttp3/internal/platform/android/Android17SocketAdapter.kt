@@ -33,7 +33,7 @@ import okhttp3.internal.platform.Platform.Companion.isAndroid
  */
 @SuppressLint("NewApi")
 @SuppressSignatureCheck
-class AndroidCanarySocketAdapter
+class Android17SocketAdapter
 @RequiresApi(36)
 internal constructor() : SocketAdapter {
   init {
@@ -65,7 +65,7 @@ internal constructor() : SocketAdapter {
     // Enable ALPN.
     sslParameters.applicationProtocols = Platform.alpnProtocolNames(protocols).toTypedArray()
 
-
+// Would need access to Dns to do it here
 //    println("setting ECH")
 //    SSLSockets.setEchConfigList(
 //      sslSocket,
@@ -82,7 +82,7 @@ internal constructor() : SocketAdapter {
 
 
     fun buildIfSupported(): SocketAdapter? =
-      if (isSupported()) AndroidCanarySocketAdapter() else null
+      if (isSupported()) Android17SocketAdapter() else null
 
     @ChecksSdkIntAtLeast(api = 36)
     fun isSupported() = isAndroid && Build.VERSION.SDK_INT >= 36
