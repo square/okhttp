@@ -16,6 +16,7 @@
 package okhttp3.internal.platform.android
 
 import android.annotation.SuppressLint
+import android.net.ssl.EchConfigList
 import android.net.ssl.SSLSockets
 import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast
@@ -23,8 +24,11 @@ import androidx.annotation.RequiresApi
 import javax.net.ssl.SSLSocket
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
+import okhttp3.internal.platform.Android17Platform
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.isAndroid
+import org.xbill.DNS.HTTPSRecord
+import org.xbill.DNS.SVCBBase
 
 /**
  * Simple non-reflection SocketAdapter for Android Q+.
@@ -65,14 +69,25 @@ internal constructor() : SocketAdapter {
     // Enable ALPN.
     sslParameters.applicationProtocols = Platform.alpnProtocolNames(protocols).toTypedArray()
 
-// Would need access to Dns to do it here
-//    println("setting ECH")
-//    SSLSockets.setEchConfigList(
-//      sslSocket,
-//      EchConfigList.fromBytes(
-//        echDevList.toByteArray()
-//      )
-//    )
+    val platform = Platform.get() as Android17Platform
+
+    if (hostname != null) {
+      val echMode = platform.echModeConfiguration.echMode(hostname)
+      if (echMode.attempt) {
+        // TODO check require
+        val httpsRecord = platform.androidDns.httpsRecords[hostname]?.get()
+        val echConfig = httpsRecord?.getSvcParamValue(HTTPSRecord.ECH) as SVCBBase.ParameterEch?
+
+        println("config for $hostname $echConfig")
+
+        if (echConfig != null) {
+          SSLSockets.setEchConfigList(
+            sslSocket,
+            EchConfigList.fromBytes(echConfig.data)
+          )
+        }
+      }
+    }
 
     sslSocket.sslParameters = sslParameters
   }

@@ -81,24 +81,6 @@ internal constructor() :
     protocols: List<Protocol>,
   ) {
     socketAdapter.configureTlsExtensions(sslSocket, hostname, protocols)
-
-    if (hostname != null) {
-      val echMode = echModeConfiguration.echMode(hostname)
-      if (echMode.attempt) {
-        // TODO check require
-        val httpsRecord = androidDns.httpsRecords[hostname]?.get()
-        val echConfig = httpsRecord?.getSvcParamValue(HTTPSRecord.ECH) as SVCBBase.ParameterEch?
-
-        println("config for $hostname $echConfig")
-
-        if (echConfig != null) {
-          SSLSockets.setEchConfigList(
-            sslSocket,
-            EchConfigList.fromBytes(echConfig.data)
-          )
-        }
-      }
-    }
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
@@ -148,7 +130,7 @@ internal constructor() :
 
 
   @RequiresApi(36)
-  private val androidDns = AndroidDnsResolverDns()
+  internal val androidDns = AndroidDnsResolverDns()
 
   @SuppressLint("NewApi")
   override fun platformDns(): Dns = androidDns
