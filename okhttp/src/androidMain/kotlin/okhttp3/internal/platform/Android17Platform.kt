@@ -47,7 +47,7 @@ import org.xbill.DNS.SVCBBase
 /** Android 17+ (API 29+). */
 @SuppressSignatureCheck
 class Android17Platform
-@RequiresApi(37)
+@RequiresApi(36)
 internal constructor() :
   Platform(),
   ContextAwarePlatform {
@@ -76,12 +76,32 @@ internal constructor() :
     return super.buildTrustRootIndex(trustManager)
   }
 
+  @Suppress("NewApi")
+  @RequiresApi(37)
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<Protocol>,
   ) {
     socketAdapter.configureTlsExtensions(sslSocket, hostname, protocols)
+
+    if (hostname != null) {
+      val echMode = echModeConfiguration.echMode(hostname)
+      if (echMode.attempt) {
+        // TODO check require
+        val httpsRecord = androidDns.httpsRecords[hostname]?.get()
+        val echConfig = httpsRecord?.getSvcParamValue(HTTPSRecord.ECH) as SVCBBase.ParameterEch?
+
+        println("config for $hostname $echConfig")
+
+        if (echConfig != null) {
+          SSLSockets.setEchConfigList(
+            sslSocket,
+            EchConfigList.fromBytes(echConfig.data)
+          )
+        }
+      }
+    }
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
@@ -128,99 +148,19 @@ internal constructor() :
     }
   }
 
-  @RequiresApi(37)
+
+
+  @RequiresApi(36)
   private val androidDns = AndroidDnsResolverDns()
 
   @SuppressLint("NewApi")
   override fun platformDns(): Dns = androidDns
 
-  @SuppressLint("NewApi")
-  override fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
-    return Android17SSLSocketFactory(super.newSslSocketFactory(trustManager), androidDns, echModeConfiguration)
-  }
-
   companion object {
-    val isSupported: Boolean = isAndroid && Build.VERSION.SDK_INT >= 37
+    val isSupported: Boolean = isAndroid && Build.VERSION.SDK_INT >= 36
 
-    @ChecksSdkIntAtLeast(37)
+    @ChecksSdkIntAtLeast(36)
     fun buildIfSupported(): Platform? = if (isSupported) Android17Platform() else null
-  }
-}
-
-@RequiresApi(37)
-class Android17SSLSocketFactory(private val delegate: SSLSocketFactory, private val dns: AndroidDnsResolverDns, private val echModeConfiguration: EchModeConfiguration): SSLSocketFactory() {
-  @Throws(IOException::class)
-  override fun createSocket(): SSLSocket {
-    TODO()
-  }
-
-  @Throws(IOException::class)
-  override fun createSocket(
-    host: String,
-    port: Int,
-  ): SSLSocket {
-    TODO()
-  }
-
-  @Throws(IOException::class)
-  override fun createSocket(
-    host: String,
-    port: Int,
-    localAddress: InetAddress,
-    localPort: Int,
-  ): SSLSocket {
-    TODO()
-  }
-
-  @Throws(IOException::class)
-  override fun createSocket(
-    host: InetAddress,
-    port: Int,
-  ): SSLSocket {
-    TODO()
-  }
-
-  @Throws(IOException::class)
-  override fun createSocket(
-    host: InetAddress,
-    port: Int,
-    localAddress: InetAddress,
-    localPort: Int,
-  ): SSLSocket {
-    TODO()
-  }
-
-  override fun getDefaultCipherSuites(): Array<String> = delegate.defaultCipherSuites
-
-  override fun getSupportedCipherSuites(): Array<String> = delegate.supportedCipherSuites
-
-  @Throws(IOException::class)
-  @Suppress("NewApi")
-  override fun createSocket(
-    socket: Socket,
-    host: String,
-    port: Int,
-    autoClose: Boolean,
-  ): SSLSocket {
-    val sslSocket = delegate.createSocket(socket, host, port, autoClose) as SSLSocket
-
-    val echMode = echModeConfiguration.echMode(host)
-    if (echMode.attempt) {
-      // TODO check require
-      val httpsRecord = dns.httpsRecords[host]?.get()
-      val echConfig = httpsRecord?.getSvcParamValue(HTTPSRecord.ECH) as SVCBBase.ParameterEch?
-
-      println("config for $host $echConfig")
-
-      if (echConfig != null) {
-        SSLSockets.setEchConfigList(
-          sslSocket,
-          EchConfigList.fromBytes(echConfig.data)
-        )
-      }
-    }
-
-    return sslSocket
   }
 }
 

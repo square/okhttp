@@ -12,7 +12,7 @@ import org.xbill.DNS.Message
 import org.xbill.DNS.Section.ANSWER
 
 @Suppress("NewApi")
-@RequiresApi(37)
+@RequiresApi(36)
 class AndroidDnsResolverDns : Dns {
   val dnsResolver = DnsResolver.getInstance()
 
