@@ -17,8 +17,7 @@ package okhttp3.internal.platform
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.net.ssl.EchConfigList
-import android.net.ssl.SSLSockets
+import android.net.ssl.EchConfigMismatchException
 import android.os.Build
 import android.os.StrictMode
 import android.security.NetworkSecurityPolicy
@@ -27,6 +26,7 @@ import android.util.Log
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -38,8 +38,6 @@ import okhttp3.internal.platform.android.Android17SocketAdapter
 import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
-import org.xbill.DNS.HTTPSRecord
-import org.xbill.DNS.SVCBBase
 
 /** Android 17+ (API 29+). */
 @SuppressSignatureCheck
@@ -108,6 +106,11 @@ internal constructor() :
       return EchMode.fromNetworkSecurityPolicy(
         NetworkSecurityPolicy.getInstance().getDomainEncryptionMode(hostname)
       )
+    }
+
+    @SuppressLint("NewApi")
+    override fun isEchConfigError(e: SSLException): Boolean {
+      return e is EchConfigMismatchException
     }
   }
 

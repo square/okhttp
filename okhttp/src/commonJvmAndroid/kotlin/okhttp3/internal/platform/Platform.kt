@@ -26,6 +26,7 @@ import java.util.logging.Logger
 import javax.net.ssl.ExtendedSSLSession
 import javax.net.ssl.SNIHostName
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
@@ -249,6 +250,8 @@ open class Platform {
 
 interface EchModeConfiguration {
   open fun echMode(hostname: String): EchMode
+
+  open fun isEchConfigError(e: SSLException) = false
 
   companion object {
     val Unspecified = object : EchModeConfiguration {
