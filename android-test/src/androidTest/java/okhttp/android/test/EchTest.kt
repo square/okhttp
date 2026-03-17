@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Block, Inc.
+ * Copyright (c) 2026 OkHttp Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package okhttp.android.test
 
+import assertk.assertThat
+import assertk.assertions.isNotNull
+import assertk.assertions.matchesPredicate
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okio.IOException
 import org.junit.jupiter.api.Test
 
 class EchTest {
@@ -30,30 +32,32 @@ class EchTest {
         .Builder()
         .build()
 
-    client.sendRequest(Request.Builder().url("https://cloudflare-ech.com/").build()) {
-      println(it.body.string())
-    }
+    val cloudflareEchBody =
+      client.sendRequest(Request.Builder().url("https://cloudflare-ech.com/").build()) {
+        it.body.string()
+      }
+    assertThat(cloudflareEchBody).matchesPredicate { it.contains("ECH enabled") }
 
-    client.sendRequest(
+    val cloudflareBody = client.sendRequest(
       Request.Builder().url("https://crypto.cloudflare.com/cdn-cgi/trace").build()
     ) {
-      println(it.body.string())
+      it.body.string()
     }
+    assertThat(cloudflareBody).matchesPredicate { it.contains("ECH enabled") }
 
-    client.sendRequest(Request.Builder().url("https://tls-ech.dev/").build()) {
-      println(it.body.string())
+    val tlsEchBody = client.sendRequest(Request.Builder().url("https://tls-ech.dev/").build()) {
+      it.body.string()
     }
+    assertThat(tlsEchBody).matchesPredicate { it.contains("ECH enabled") }
   }
 
-  private fun OkHttpClient.sendRequest(request: Request, fn: (Response) -> Unit = {}) {
-    try {
-      val response = newCall(request).execute()
+  private fun <T> OkHttpClient.sendRequest(request: Request, fn: (Response) -> T): T {
+    val response = newCall(request).execute()
 
-      response.use {
-        fn(it)
-      }
-    } catch (ioe: IOException) {
-      ioe.printStackTrace()
+    assertThat(response.handshake?.echConfig).isNotNull()
+
+    return response.use {
+      fn(it)
     }
   }
 }

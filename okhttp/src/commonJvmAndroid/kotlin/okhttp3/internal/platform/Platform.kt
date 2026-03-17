@@ -26,15 +26,16 @@ import java.util.logging.Logger
 import javax.net.ssl.ExtendedSSLSession
 import javax.net.ssl.SNIHostName
 import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Call
 import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.ech.EchModeConfiguration
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.readFieldOrNull
 import okhttp3.internal.tls.BasicCertificateChainCleaner
@@ -78,9 +79,10 @@ open class Platform {
   open fun newSSLContext(): SSLContext = SSLContext.getInstance("TLS")
 
   open fun platformTrustManager(): X509TrustManager {
-    val factory = TrustManagerFactory.getInstance(
-      TrustManagerFactory.getDefaultAlgorithm(),
-    )
+    val factory =
+      TrustManagerFactory.getInstance(
+        TrustManagerFactory.getDefaultAlgorithm(),
+      )
     factory.init(null as KeyStore?)
     val trustManagers = factory.trustManagers!!
     check(trustManagers.size == 1 && trustManagers[0] is X509TrustManager) {
@@ -114,6 +116,7 @@ open class Platform {
    * Configure TLS extensions on `sslSocket` for `route`.
    */
   open fun configureTlsExtensions(
+    call: Call?,
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<@JvmSuppressWildcards Protocol>,
@@ -169,12 +172,13 @@ open class Platform {
    * should be used specifically for [java.io.Closeable] objects and in conjunction with
    * [logCloseableLeak].
    */
-  open fun getStackTraceForCloseable(closer: String): Any? = when {
-    logger.isLoggable(Level.FINE) -> Throwable(closer)
+  open fun getStackTraceForCloseable(closer: String): Any? =
+    when {
+      logger.isLoggable(Level.FINE) -> Throwable(closer)
 
-    // These are expensive to allocate.
-    else -> null
-  }
+      // These are expensive to allocate.
+      else -> null
+    }
 
   open fun logCloseableLeak(
     message: String,
@@ -182,7 +186,9 @@ open class Platform {
   ) {
     var logMessage = message
     if (stackTrace == null) {
-      logMessage += " To see where this was allocated, set the OkHttpClient logger level to " + "FINE: Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
+      logMessage +=
+        " To see where this was allocated, set the OkHttpClient logger level to " +
+        "FINE: Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
     }
     log(logMessage, WARN, stackTrace as Throwable?)
   }
@@ -190,12 +196,12 @@ open class Platform {
   open fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
     BasicCertificateChainCleaner(buildTrustRootIndex(trustManager))
 
-  open fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex =
-    BasicTrustRootIndex(*trustManager.acceptedIssuers)
+  open fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex = BasicTrustRootIndex(*trustManager.acceptedIssuers)
 
   open fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
     try {
-      return newSSLContext().apply {
+      return newSSLContext()
+        .apply {
           init(null, arrayOf<TrustManager>(trustManager), null)
         }.socketFactory
     } catch (e: GeneralSecurityException) {
@@ -224,8 +230,7 @@ open class Platform {
       PublicSuffixDatabase.resetForTests()
     }
 
-    fun alpnProtocolNames(protocols: List<Protocol>) =
-      protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
+    fun alpnProtocolNames(protocols: List<Protocol>) = protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
 
     val isAndroid: Boolean
       get() = PlatformRegistry.isAndroid
@@ -246,34 +251,4 @@ open class Platform {
       return result.readByteArray()
     }
   }
-}
-
-interface EchModeConfiguration {
-  open fun echMode(hostname: String): EchMode
-
-  open fun isEchConfigError(e: SSLException) = false
-
-  companion object {
-    val Unspecified = object : EchModeConfiguration {
-      override fun echMode(hostname: String): EchMode {
-        return EchMode.Unspecified
-      }
-    }
-  }
-}
-
-enum class EchMode(val attempt: Boolean, val require: Boolean) {
-  Unspecified(attempt = false, require = false),
-  Disabled(
-    attempt = false, require = false
-  ),
-  Opportunistic(
-    attempt = true, require = false
-  ),
-  Strict(
-    attempt = true, require = false
-  ),
-  FailClosed(attempt = true, require = true);
-
-  companion object
 }

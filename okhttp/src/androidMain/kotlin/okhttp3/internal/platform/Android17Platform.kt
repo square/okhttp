@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Square, Inc.
+ * Copyright (c) 2026 OkHttp Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package okhttp3.internal.platform
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.net.ssl.EchConfigMismatchException
 import android.os.Build
 import android.os.StrictMode
 import android.security.NetworkSecurityPolicy
@@ -26,131 +25,108 @@ import android.util.Log
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Call
 import okhttp3.Dns
 import okhttp3.Protocol
+import okhttp3.ech.EchModeConfiguration
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.AndroidPlatform.Companion.Tag
 import okhttp3.internal.platform.android.Android17SocketAdapter
 import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
+import okhttp3.internal.platform.android.AndroidEchModeConfiguration
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
 
-/** Android 17+ (API 29+). */
+/** Android 17+ (API 37+). */
 @SuppressSignatureCheck
 class Android17Platform
-@RequiresApi(36)
-internal constructor() :
+  @RequiresApi(36)
+  internal constructor() :
   Platform(),
-  ContextAwarePlatform {
-  init {
-    println("Android17Platform")
-  }
+    ContextAwarePlatform {
+    init {
+      println("Android17Platform")
+    }
 
-  override var applicationContext: Context? = null
+    override var applicationContext: Context? = null
 
-  private val socketAdapter by lazy {
-    Android17SocketAdapter.buildIfSupported()!!
-  }
+    private val socketAdapter by lazy {
+      Android17SocketAdapter.buildIfSupported()!!
+    }
 
-  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
-    socketAdapter.trustManager(sslSocketFactory)
+    override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = socketAdapter.trustManager(sslSocketFactory)
 
-  override fun newSSLContext(): SSLContext {
-    StrictMode.noteSlowCall("newSSLContext")
+    override fun newSSLContext(): SSLContext {
+      StrictMode.noteSlowCall("newSSLContext")
 
-    return super.newSSLContext()
-  }
+      return super.newSSLContext()
+    }
 
-  override fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex {
-    StrictMode.noteSlowCall("buildTrustRootIndex")
+    override fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex {
+      StrictMode.noteSlowCall("buildTrustRootIndex")
 
-    return super.buildTrustRootIndex(trustManager)
-  }
+      return super.buildTrustRootIndex(trustManager)
+    }
 
-  @Suppress("NewApi")
-  @RequiresApi(37)
-  override fun configureTlsExtensions(
-    sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<Protocol>,
-  ) {
-    socketAdapter.configureTlsExtensions(sslSocket, hostname, protocols)
-  }
-
-  override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
-    socketAdapter.getSelectedProtocol(sslSocket)
-
-  @RequiresApi(36)
-  override fun getStackTraceForCloseable(closer: String): Any =
-    CloseGuard().apply { open(closer) }
-
-  @RequiresApi(36)
-  override fun logCloseableLeak(
-    message: String,
-    stackTrace: Any?,
-  ) {
-    (stackTrace as CloseGuard).warnIfOpen()
-  }
-
-  @SuppressLint("NewApi")
-  override fun isCleartextTrafficPermitted(hostname: String): Boolean =
-    NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
-
-  override val echModeConfiguration: EchModeConfiguration = object : EchModeConfiguration {
-    @SuppressLint("NewApi")
-    override fun echMode(hostname: String): EchMode {
-      return EchMode.fromNetworkSecurityPolicy(
-        NetworkSecurityPolicy.getInstance().getDomainEncryptionMode(hostname)
+    override fun configureTlsExtensions(
+      call: Call?,
+      sslSocket: SSLSocket,
+      hostname: String?,
+      protocols: List<Protocol>,
+    ) {
+      socketAdapter.configureTlsExtensions(
+        call = call,
+        sslSocket = sslSocket,
+        hostname = hostname,
+        protocols = protocols,
       )
     }
 
+    override fun getSelectedProtocol(sslSocket: SSLSocket): String? = socketAdapter.getSelectedProtocol(sslSocket)
+
+    @RequiresApi(36)
+    override fun getStackTraceForCloseable(closer: String): Any = CloseGuard().apply { open(closer) }
+
+    @RequiresApi(36)
+    override fun logCloseableLeak(
+      message: String,
+      stackTrace: Any?,
+    ) {
+      (stackTrace as CloseGuard).warnIfOpen()
+    }
+
     @SuppressLint("NewApi")
-    override fun isEchConfigError(e: SSLException): Boolean {
-      return e is EchConfigMismatchException
+    override fun isCleartextTrafficPermitted(hostname: String): Boolean =
+      NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
+
+    @SuppressLint("NewApi")
+    override val echModeConfiguration: EchModeConfiguration = AndroidEchModeConfiguration()
+
+    override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
+      AndroidCertificateChainCleaner.buildIfSupported(trustManager)!!
+
+    override fun log(
+      message: String,
+      level: Int,
+      t: Throwable?,
+    ) {
+      if (level == WARN) {
+        Log.w(Tag, message, t)
+      } else {
+        Log.i(Tag, message, t)
+      }
+    }
+
+    @SuppressLint("NewApi")
+    override fun platformDns(): Dns = AndroidDnsResolverDns()
+
+    companion object {
+      val isSupported: Boolean = (isAndroid && Build.VERSION.SDK_INT >= 36)
+
+      @ChecksSdkIntAtLeast(36)
+      fun buildIfSupported(): Platform? = if (isSupported) Android17Platform() else null
     }
   }
-
-
-  override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
-    AndroidCertificateChainCleaner.buildIfSupported(trustManager)!!
-
-  override fun log(
-    message: String,
-    level: Int,
-    t: Throwable?,
-  ) {
-    if (level == WARN) {
-      Log.w(Tag, message, t)
-    } else {
-      Log.i(Tag, message, t)
-    }
-  }
-
-
-
-  @RequiresApi(36)
-  internal val androidDns = AndroidDnsResolverDns()
-
-  @SuppressLint("NewApi")
-  override fun platformDns(): Dns = androidDns
-
-  companion object {
-    val isSupported: Boolean = isAndroid && Build.VERSION.SDK_INT >= 36
-
-    @ChecksSdkIntAtLeast(36)
-    fun buildIfSupported(): Platform? = if (isSupported) Android17Platform() else null
-  }
-}
-
-private fun EchMode.Companion.fromNetworkSecurityPolicy(domainEncryptionMode: Int): EchMode {
-  return when (domainEncryptionMode) {
-    NetworkSecurityPolicy.DOMAIN_ENCRYPTION_MODE_OPPORTUNISTIC -> EchMode.Opportunistic
-    NetworkSecurityPolicy.DOMAIN_ENCRYPTION_MODE_ENABLED -> EchMode.Strict
-    NetworkSecurityPolicy.DOMAIN_ENCRYPTION_MODE_DISABLED -> EchMode.Disabled
-    else -> EchMode.Unspecified
-  }
-}

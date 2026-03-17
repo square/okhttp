@@ -25,8 +25,8 @@ actual object PlatformRegistry {
     AndroidLog.enable()
 
     val androidPlatform =
-      Android17Platform.buildIfSupported() ?:
-      Android10Platform.buildIfSupported()
+      Android17Platform.buildIfSupported()
+        ?: Android10Platform.buildIfSupported()
         ?: AndroidPlatform.buildIfSupported()
     if (androidPlatform != null) return androidPlatform
 
