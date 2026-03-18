@@ -10,6 +10,7 @@ configure<com.diffplug.gradle.spotless.SpotlessExtension> {
   }
   kotlinGradle {
     target("*.kts")
+    targetExclude("build/**/*.kts")
     ktlint()
   }
 }
