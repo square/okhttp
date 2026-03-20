@@ -1,6 +1,6 @@
 plugins {
   `kotlin-dsl`
-  id("com.diffplug.spotless") version "8.2.1"
+  id("com.diffplug.spotless") version "8.4.0"
 }
 
 configure<com.diffplug.gradle.spotless.SpotlessExtension> {
@@ -10,6 +10,7 @@ configure<com.diffplug.gradle.spotless.SpotlessExtension> {
   }
   kotlinGradle {
     target("*.kts")
+    targetExclude("build/**/*.kts")
     ktlint()
   }
 }

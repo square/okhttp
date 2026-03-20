@@ -1,5 +1,5 @@
 [versions]
-agp = "9.0.1"
+agp = "9.1.0"
 amazon-corretto = "2.5.0"
 android-junit5 = "2.0.1"
 androidx-activity = "1.11.0"
@@ -14,17 +14,16 @@ binary-compatibility-validator = "0.18.1"
 bnd = "7.2.1"
 brotli-dec = "0.1.2"
 burst = "2.10.2"
-checkstyle = "13.2.0"
+checkstyle = "13.3.0"
 clikt = "5.1.0"
 extra-java-module-info = "1.14"
 codehaus-signature-java18 = "1.0"
 coroutines = "1.10.2"
 de-mannodermaus-junit5 = "2.0.1"
 dokka = "2.1.0"
-dokka-plugin = "2.1.0"
-eclipse-osgi = "3.24.0"
+eclipse-osgi = "3.24.100"
 graalvm = "25.0.2"
-graalvm-plugin = "0.11.4"
+graalvm-plugin = "0.11.5"
 guava = "33.5.0-jre"
 hamcrest-library = "3.0"
 http-client5 = "5.6"
@@ -37,8 +36,7 @@ junit-pioneer = "1.9.1"
 junit-platform = "1.14.3"
 junit4 = "4.13.2"
 kotlin = "2.2.21"
-ksp = "2.3.4"
-ksp-plugin = "2.3.6"
+ksp = "2.3.6"
 lint-gradle = "1.0.0-alpha05"
 maven-publish = "0.36.0"
 maven-sympathy = "0.3.0"
@@ -52,13 +50,13 @@ playservices-safetynet = "18.1.0"
 robolectric = "4.16.1"
 robolectric-android = "16-robolectric-13921718"
 serialization = "1.10.0"
-shadow-plugin = "9.3.2"
+shadow-plugin = "9.4.0"
 signature-android-apilevel21 = "5.0.1_r2"
 signature-android-apilevel24 = "7.0_r2"
-spotless-plugin = "8.2.1"
+spotless-plugin = "8.3.0"
 square-kotlin-poet = "2.2.0"
 square-moshi = "1.15.2"
-square-okio = "3.16.4"
+square-okio = "3.17.0"
 square-retrofit = "3.0.0"
 startup-runtime = "1.2.0"
 testcontainers = "1.21.4"
@@ -147,10 +145,10 @@ gradlePlugin-android = { module = "com.android.tools.build:gradle", version.ref 
 gradlePlugin-animalsniffer = { module = "ru.vyarus:gradle-animalsniffer-plugin", version.ref = "animalsniffer" }
 gradlePlugin-binaryCompatibilityValidator = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "binary-compatibility-validator" }
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "bnd" }
-gradlePlugin-dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka-plugin" }
+gradlePlugin-dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 gradlePlugin-graalvm = { module = "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin", version.ref = "graalvm-plugin" }
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
-gradlePlugin-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp-plugin" }
+gradlePlugin-ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
 gradlePlugin-mavenPublish = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "maven-publish" }
 gradlePlugin-mrjar = { module = "me.champeau.mrjar:me.champeau.mrjar.gradle.plugin", version.ref = "mrjar" }
 gradlePlugin-shadow = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow-plugin" }
@@ -165,12 +163,12 @@ animalsniffer = { id = "ru.vyarus.animalsniffer", version.ref = "animalsniffer" 
 binary-compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binary-compatibility-validator" }
 bnd = { id = "biz.aQute.bnd", version.ref = "bnd" }
 burst = { id = "app.cash.burst", version.ref = "burst" }
-dokka = { id = "org.jetbrains.dokka", version.ref = "dokka-plugin" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 graalvm = { id = "org.graalvm.buildtools.native", version.ref = "graalvm-plugin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp-plugin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 gradle-lint = { id = "com.android.lint", version.ref = "lint-gradle" }
 maven-publish = { id = "com.vanniktech.maven.publish.base", version.ref = "maven-publish" }
 maven-sympathy = { id = "io.github.usefulness.maven-sympathy", version.ref = "maven-sympathy" }

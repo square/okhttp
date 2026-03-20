@@ -375,17 +375,6 @@ jobs:
       - name: Build Release App
         run: ./gradlew android-test-app:lint android-test-app:assembleRelease
 
-#  Can't run with AGP 9
-#  java.lang.NoClassDefFoundError: Failed resolution of: Landroidx/tracing/Trace;
-#      - name: Run Release Tests
-#        uses: reactivecircus/android-emulator-runner@v2
-#        with:
-#          api-level: ${{ matrix.api-level }}
-#          arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
-#          script: ./gradlew :android-test-app:connectedReleaseAndroidTest
-#        env:
-#          API_LEVEL: ${{ matrix.api-level }}
-
   loom:
     runs-on: ubuntu-latest
 

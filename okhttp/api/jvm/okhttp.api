@@ -772,7 +772,7 @@ public abstract interface class okhttp3/Interceptor$Chain {
 	public abstract fun withAuthenticator (Lokhttp3/Authenticator;)Lokhttp3/Interceptor$Chain;
 	public abstract fun withCache (Lokhttp3/Cache;)Lokhttp3/Interceptor$Chain;
 	public abstract fun withCertificatePinner (Lokhttp3/CertificatePinner;)Lokhttp3/Interceptor$Chain;
-	public abstract fun withConnectTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withConnectTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
 	public abstract fun withConnectionPool (Lokhttp3/ConnectionPool;)Lokhttp3/Interceptor$Chain;
 	public abstract fun withCookieJar (Lokhttp3/CookieJar;)Lokhttp3/Interceptor$Chain;
 	public abstract fun withDns (Lokhttp3/Dns;)Lokhttp3/Interceptor$Chain;
@@ -780,11 +780,11 @@ public abstract interface class okhttp3/Interceptor$Chain {
 	public abstract fun withProxy (Ljava/net/Proxy;)Lokhttp3/Interceptor$Chain;
 	public abstract fun withProxyAuthenticator (Lokhttp3/Authenticator;)Lokhttp3/Interceptor$Chain;
 	public abstract fun withProxySelector (Ljava/net/ProxySelector;)Lokhttp3/Interceptor$Chain;
-	public abstract fun withReadTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withReadTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
 	public abstract fun withRetryOnConnectionFailure (Z)Lokhttp3/Interceptor$Chain;
 	public abstract fun withSocketFactory (Ljavax/net/SocketFactory;)Lokhttp3/Interceptor$Chain;
 	public abstract fun withSslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;Ljavax/net/ssl/X509TrustManager;)Lokhttp3/Interceptor$Chain;
-	public abstract fun withWriteTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withWriteTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
 	public abstract fun writeTimeoutMillis ()I
 }
 
