@@ -139,8 +139,12 @@ open class EventRecorder(
     } else {
       eventsForMatching.forEach loop@{
         when (e.closes(it)) {
-          null -> return // no open event
-          true -> return // found open event
+          null -> return
+
+          // no open event
+          true -> return
+
+          // found open event
           false -> return@loop // this is not the open event so continue
         }
       }

@@ -79,6 +79,7 @@ class Headers internal constructor(
    * Returns the last value corresponding to the specified field parsed as an HTTP date, or null if
    * either the field is absent or cannot be parsed as a date.
    */
+  @Suppress("NewApi")
   @IgnoreJRERequirement // Only programs that already have Instant will use this.
   fun getInstant(name: String): Instant? = getDate(name)?.toInstant()
 
@@ -215,11 +216,13 @@ class Headers internal constructor(
           index != -1 -> {
             addLenient(line.substring(0, index), line.substring(index + 1))
           }
+
           line[0] == ':' -> {
             // Work around empty header names and header names that start with a colon (created by old
             // broken SPDY versions of the response cache).
             addLenient("", line.substring(1)) // Empty header name.
           }
+
           else -> {
             // No header name.
             addLenient("", line)
@@ -273,6 +276,7 @@ class Headers internal constructor(
      * Add a header with the specified name and formatted instant. Does validation of header names
      * and value.
      */
+    @Suppress("NewApi")
     @IgnoreJRERequirement // Only programs that already have Instant will use this.
     fun add(
       name: String,
@@ -292,6 +296,7 @@ class Headers internal constructor(
      * Set a field with the specified instant. If the field is not found, it is added. If the field
      * is found, the existing values are replaced.
      */
+    @Suppress("NewApi")
     @IgnoreJRERequirement // Only programs that already have Instant will use this.
     operator fun set(name: String, value: Instant) = set(name, Date.from(value))
 

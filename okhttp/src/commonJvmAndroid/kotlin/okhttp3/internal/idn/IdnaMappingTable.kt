@@ -135,6 +135,7 @@ internal class IdnaMappingTable internal constructor(
         val beginIndex = ranges.read14BitInt(rangesIndex + 2)
         sink.writeUtf8(mappings, beginIndex, beginIndex + b1)
       }
+
       in 64..79 -> {
         // Mapped inline as codePoint delta to subtract
         val b2 = ranges[rangesIndex + 2].code
@@ -143,6 +144,7 @@ internal class IdnaMappingTable internal constructor(
         val codepointDelta = (b1 and 0xF shl 14) or (b2 shl 7) or b3
         sink.writeUtf8CodePoint(codePoint - codepointDelta)
       }
+
       in 80..95 -> {
         // Mapped inline as codePoint delta to add
         val b2 = ranges[rangesIndex + 2].code
@@ -151,47 +153,59 @@ internal class IdnaMappingTable internal constructor(
         val codepointDelta = (b1 and 0xF shl 14) or (b2 shl 7) or b3
         sink.writeUtf8CodePoint(codePoint + codepointDelta)
       }
+
       119 -> {
         // Ignored.
       }
+
       120 -> {
         // Valid.
         sink.writeUtf8CodePoint(codePoint)
       }
+
       121 -> {
         // Disallowed.
         sink.writeUtf8CodePoint(codePoint)
         return false
       }
+
       122 -> {
         // Mapped inline to the sequence: [b2].
         sink.writeByte(ranges[rangesIndex + 2].code)
       }
+
       123 -> {
         // Mapped inline to the sequence: [b2a].
         sink.writeByte(ranges[rangesIndex + 2].code or 0x80)
       }
+
       124 -> {
         // Mapped inline to the sequence: [b2, b3].
         sink.writeByte(ranges[rangesIndex + 2].code)
         sink.writeByte(ranges[rangesIndex + 3].code)
       }
+
       125 -> {
         // Mapped inline to the sequence: [b2a, b3].
         sink.writeByte(ranges[rangesIndex + 2].code or 0x80)
         sink.writeByte(ranges[rangesIndex + 3].code)
       }
+
       126 -> {
         // Mapped inline to the sequence: [b2, b3a].
         sink.writeByte(ranges[rangesIndex + 2].code)
         sink.writeByte(ranges[rangesIndex + 3].code or 0x80)
       }
+
       127 -> {
         // Mapped inline to the sequence: [b2a, b3a].
         sink.writeByte(ranges[rangesIndex + 2].code or 0x80)
         sink.writeByte(ranges[rangesIndex + 3].code or 0x80)
       }
-      else -> error("unexpected rangesIndex for $codePoint")
+
+      else -> {
+        error("unexpected rangesIndex for $codePoint")
+      }
     }
 
     return true
@@ -216,7 +230,9 @@ internal class IdnaMappingTable internal constructor(
       }
 
     return when {
-      offset >= 0 -> offset * 4 // This section was found by binary search.
+      offset >= 0 -> offset * 4
+
+      // This section was found by binary search.
       else -> (-offset - 2) * 4 // Not found? Use the preceding element.
     }
   }
@@ -244,7 +260,9 @@ internal class IdnaMappingTable internal constructor(
       }
 
     return when {
-      offset >= 0 -> offset * 4 // This entry was found by binary search.
+      offset >= 0 -> offset * 4
+
+      // This entry was found by binary search.
       else -> (-offset - 2) * 4 // Not found? Use the preceding element.
     }
   }

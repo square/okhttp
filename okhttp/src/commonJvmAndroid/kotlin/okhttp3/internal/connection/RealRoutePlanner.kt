@@ -104,10 +104,14 @@ class RealRoutePlanner internal constructor(
             candidate.noNewExchanges = true
             call.releaseConnectionNoEvents()
           }
+
           candidate.noNewExchanges || !sameHostAndPort(candidate.route().address.url) -> {
             call.releaseConnectionNoEvents()
           }
-          else -> null
+
+          else -> {
+            null
+          }
         }
       }
 

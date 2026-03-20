@@ -1344,14 +1344,18 @@ class HttpUrl private constructor(
             this.scheme = "https"
             pos += "https:".length
           }
+
           input.startsWith("http:", ignoreCase = true, startIndex = pos) -> {
             this.scheme = "http"
             pos += "http:".length
           }
-          else -> throw IllegalArgumentException(
-            "Expected URL scheme 'http' or 'https' but was '" +
-              input.substring(0, schemeDelimiterOffset) + "'",
-          )
+
+          else -> {
+            throw IllegalArgumentException(
+              "Expected URL scheme 'http' or 'https' but was '" +
+                input.substring(0, schemeDelimiterOffset) + "'",
+            )
+          }
         }
       } else if (base != null) {
         this.scheme = base.scheme
@@ -1678,7 +1682,10 @@ class HttpUrl private constructor(
               if (input[i] == ']') break
             }
           }
-          ':' -> return i
+
+          ':' -> {
+            return i
+          }
         }
         i++
       }

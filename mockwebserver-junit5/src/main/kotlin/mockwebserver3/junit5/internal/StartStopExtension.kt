@@ -18,6 +18,7 @@ package mockwebserver3.junit5.internal
 import java.lang.reflect.Modifier
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
+import okhttp3.internal.SuppressSignatureCheck
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtensionContext.Namespace
 import org.junit.platform.commons.support.AnnotationSupport.findAnnotatedFields
 
 /** Implements the policy specified by [StartStop]. */
+@SuppressSignatureCheck
 internal class StartStopExtension :
   BeforeEachCallback,
   BeforeAllCallback {
@@ -49,6 +51,7 @@ internal class StartStopExtension :
   }
 
   override fun beforeEach(context: ExtensionContext) {
+    // Requires API 24
     val testInstance = context.testInstance.get()
     val store = context.getStore(Namespace.create(StartStop::class.java))
 

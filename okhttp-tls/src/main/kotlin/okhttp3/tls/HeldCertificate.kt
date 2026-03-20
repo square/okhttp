@@ -462,6 +462,7 @@ class HeldCertificate(
               it.canParseAsIpAddress() -> {
                 generalNameIpAddress to InetAddress.getByName(it).address.toByteString()
               }
+
               else -> {
                 generalNameDnsName to it
               }
@@ -480,16 +481,19 @@ class HeldCertificate(
 
     private fun signatureAlgorithm(signedByKeyPair: KeyPair): AlgorithmIdentifier =
       when (signedByKeyPair.private) {
-        is RSAPrivateKey ->
+        is RSAPrivateKey -> {
           AlgorithmIdentifier(
             algorithm = SHA256_WITH_RSA_ENCRYPTION,
             parameters = null,
           )
-        else ->
+        }
+
+        else -> {
           AlgorithmIdentifier(
             algorithm = SHA256_WITH_ECDSA,
             parameters = ByteString.EMPTY,
           )
+        }
       }
 
     private fun generateKeyPair(): KeyPair =
@@ -548,10 +552,12 @@ class HeldCertificate(
             require(certificatePem == null) { "string includes multiple certificates" }
             certificatePem = match.groups[0]!!.value // Keep --BEGIN-- and --END-- for certificates.
           }
+
           "PRIVATE KEY" -> {
             require(pkcs8Base64 == null) { "string includes multiple private keys" }
             pkcs8Base64 = match.groups[2]!!.value // Include the contents only for PKCS8.
           }
+
           else -> {
             throw IllegalArgumentException("unexpected type: $label")
           }

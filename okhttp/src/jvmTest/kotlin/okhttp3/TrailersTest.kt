@@ -643,7 +643,9 @@ open class TrailersTest {
     body: String,
   ) = apply {
     when (protocol) {
-      Protocol.HTTP_1_1 -> chunkedBody(body, 1024) // Force multiple chunks.
+      Protocol.HTTP_1_1 -> chunkedBody(body, 1024)
+
+      // Force multiple chunks.
       else -> body(body)
     }
   }

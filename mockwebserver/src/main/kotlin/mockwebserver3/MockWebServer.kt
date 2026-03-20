@@ -494,6 +494,7 @@ public class MockWebServer : Closeable {
           }
           openClientSockets.remove(raw)
         }
+
         else -> {
           protocol =
             when {

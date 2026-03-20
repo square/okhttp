@@ -171,6 +171,7 @@ object Http2 {
     when (type) {
       // Special case types that have 0 or 1 flag.
       TYPE_SETTINGS, TYPE_PING -> return if (flags == FLAG_ACK) "ACK" else BINARY[flags]
+
       TYPE_PRIORITY, TYPE_RST_STREAM, TYPE_GOAWAY, TYPE_WINDOW_UPDATE -> return BINARY[flags]
     }
     val result = if (flags < FLAGS.size) FLAGS[flags]!! else BINARY[flags]
@@ -179,10 +180,14 @@ object Http2 {
       type == TYPE_PUSH_PROMISE && flags and FLAG_END_PUSH_PROMISE != 0 -> {
         result.replace("HEADERS", "PUSH_PROMISE") // TODO: Avoid allocation.
       }
+
       type == TYPE_DATA && flags and FLAG_COMPRESSED != 0 -> {
         result.replace("PRIORITY", "COMPRESSED") // TODO: Avoid allocation.
       }
-      else -> result
+
+      else -> {
+        result
+      }
     }
   }
 }

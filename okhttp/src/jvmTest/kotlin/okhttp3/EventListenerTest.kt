@@ -29,7 +29,7 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
-import assertk.assertions.isSameAs
+import assertk.assertions.isSameInstanceAs
 import assertk.assertions.prop
 import java.io.File
 import java.io.IOException
@@ -507,18 +507,21 @@ class EventListenerTest(
       )
     expectedEventTypes +=
       when {
-        emptyBody ->
+        emptyBody -> {
           listOf(
             ResponseBodyStart::class,
             ResponseBodyEnd::class,
             FollowUpDecision::class,
           )
-        else ->
+        }
+
+        else -> {
           listOf(
             FollowUpDecision::class,
             ResponseBodyStart::class,
             ResponseBodyEnd::class,
           )
+        }
       }
     expectedEventTypes +=
       listOf(
@@ -728,10 +731,10 @@ class EventListenerTest(
     assertThat(response.code).isEqualTo(200)
     response.body.close()
     val dnsStart: DnsStart = eventRecorder.removeUpToEvent<DnsStart>()
-    assertThat(dnsStart.call).isSameAs(call)
+    assertThat(dnsStart.call).isSameInstanceAs(call)
     assertThat(dnsStart.domainName).isEqualTo(server.hostName)
     val dnsEnd: DnsEnd = eventRecorder.removeUpToEvent<DnsEnd>()
-    assertThat(dnsEnd.call).isSameAs(call)
+    assertThat(dnsEnd.call).isSameInstanceAs(call)
     assertThat(dnsEnd.domainName).isEqualTo(server.hostName)
     assertThat(dnsEnd.inetAddressList.size).isEqualTo(1)
   }
@@ -821,7 +824,7 @@ class EventListenerTest(
     }
     eventRecorder.removeUpToEvent<DnsStart>()
     val callFailed: CallFailed = eventRecorder.removeUpToEvent<CallFailed>()
-    assertThat(callFailed.call).isSameAs(call)
+    assertThat(callFailed.call).isSameInstanceAs(call)
     assertThat(callFailed.ioe).isInstanceOf<UnknownHostException>()
   }
 
@@ -845,7 +848,7 @@ class EventListenerTest(
     }
     eventRecorder.removeUpToEvent<DnsStart>()
     val callFailed: CallFailed = eventRecorder.removeUpToEvent<CallFailed>()
-    assertThat(callFailed.call).isSameAs(call)
+    assertThat(callFailed.call).isSameInstanceAs(call)
     assertThat(callFailed.ioe).isInstanceOf(
       UnknownHostException::class.java,
     )
@@ -867,11 +870,11 @@ class EventListenerTest(
     val address = client.dns.lookup(server.hostName)[0]
     val expectedAddress = InetSocketAddress(address, server.port)
     val connectStart = eventRecorder.removeUpToEvent<ConnectStart>()
-    assertThat(connectStart.call).isSameAs(call)
+    assertThat(connectStart.call).isSameInstanceAs(call)
     assertThat(connectStart.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectStart.proxy).isEqualTo(Proxy.NO_PROXY)
     val connectEnd = eventRecorder.removeUpToEvent<CallEvent.ConnectEnd>()
-    assertThat(connectEnd.call).isSameAs(call)
+    assertThat(connectEnd.call).isSameInstanceAs(call)
     assertThat(connectEnd.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectEnd.protocol).isEqualTo(Protocol.HTTP_1_1)
   }
@@ -898,11 +901,11 @@ class EventListenerTest(
     val address = client.dns.lookup(server.hostName)[0]
     val expectedAddress = InetSocketAddress(address, server.port)
     val connectStart = eventRecorder.removeUpToEvent<ConnectStart>()
-    assertThat(connectStart.call).isSameAs(call)
+    assertThat(connectStart.call).isSameInstanceAs(call)
     assertThat(connectStart.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectStart.proxy).isEqualTo(Proxy.NO_PROXY)
     val connectFailed = eventRecorder.removeUpToEvent<ConnectFailed>()
-    assertThat(connectFailed.call).isSameAs(call)
+    assertThat(connectFailed.call).isSameInstanceAs(call)
     assertThat(connectFailed.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectFailed.protocol).isNull()
     assertThat(connectFailed.ioe).isNotNull()
@@ -961,13 +964,13 @@ class EventListenerTest(
     val expectedAddress = InetSocketAddress(address, server.port)
     val connectStart: ConnectStart =
       eventRecorder.removeUpToEvent<ConnectStart>()
-    assertThat(connectStart.call).isSameAs(call)
+    assertThat(connectStart.call).isSameInstanceAs(call)
     assertThat(connectStart.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectStart.proxy).isEqualTo(
       server.proxyAddress,
     )
     val connectEnd = eventRecorder.removeUpToEvent<ConnectEnd>()
-    assertThat(connectEnd.call).isSameAs(call)
+    assertThat(connectEnd.call).isSameInstanceAs(call)
     assertThat(connectEnd.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectEnd.protocol).isEqualTo(Protocol.HTTP_1_1)
   }
@@ -999,11 +1002,11 @@ class EventListenerTest(
         server.port,
       )
     val connectStart = eventRecorder.removeUpToEvent<ConnectStart>()
-    assertThat(connectStart.call).isSameAs(call)
+    assertThat(connectStart.call).isSameInstanceAs(call)
     assertThat(connectStart.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectStart.proxy).isEqualTo(proxy)
     val connectEnd = eventRecorder.removeUpToEvent<ConnectEnd>()
-    assertThat(connectEnd.call).isSameAs(call)
+    assertThat(connectEnd.call).isSameInstanceAs(call)
     assertThat(connectEnd.inetSocketAddress).isEqualTo(expectedAddress)
     assertThat(connectEnd.protocol).isEqualTo(Protocol.HTTP_1_1)
   }
@@ -1065,9 +1068,9 @@ class EventListenerTest(
     assertThat(response.code).isEqualTo(200)
     response.body.close()
     val secureStart = eventRecorder.removeUpToEvent<SecureConnectStart>()
-    assertThat(secureStart.call).isSameAs(call)
+    assertThat(secureStart.call).isSameInstanceAs(call)
     val secureEnd = eventRecorder.removeUpToEvent<SecureConnectEnd>()
-    assertThat(secureEnd.call).isSameAs(call)
+    assertThat(secureEnd.call).isSameInstanceAs(call)
     assertThat(secureEnd.handshake).isNotNull()
   }
 
@@ -1091,9 +1094,9 @@ class EventListenerTest(
       call.execute()
     }
     val secureStart = eventRecorder.removeUpToEvent<SecureConnectStart>()
-    assertThat(secureStart.call).isSameAs(call)
+    assertThat(secureStart.call).isSameInstanceAs(call)
     val callFailed = eventRecorder.removeUpToEvent<CallFailed>()
-    assertThat(callFailed.call).isSameAs(call)
+    assertThat(callFailed.call).isSameInstanceAs(call)
     assertThat(callFailed.ioe).isNotNull()
   }
 
@@ -1123,9 +1126,9 @@ class EventListenerTest(
     assertThat(response.code).isEqualTo(200)
     response.body.close()
     val secureStart = eventRecorder.removeUpToEvent<SecureConnectStart>()
-    assertThat(secureStart.call).isSameAs(call)
+    assertThat(secureStart.call).isSameInstanceAs(call)
     val secureEnd = eventRecorder.removeUpToEvent<SecureConnectEnd>()
-    assertThat(secureEnd.call).isSameAs(call)
+    assertThat(secureEnd.call).isSameInstanceAs(call)
     assertThat(secureEnd.handshake).isNotNull()
   }
 
@@ -1212,7 +1215,7 @@ class EventListenerTest(
     assertThat(response.code).isEqualTo(200)
     response.body.close()
     val connectionAcquired = eventRecorder.removeUpToEvent<ConnectionAcquired>()
-    assertThat(connectionAcquired.call).isSameAs(call)
+    assertThat(connectionAcquired.call).isSameInstanceAs(call)
     assertThat(connectionAcquired.connection).isNotNull()
   }
 
@@ -1274,7 +1277,7 @@ class EventListenerTest(
     assertThat(response2.code).isEqualTo(200)
     response2.body.close()
     val connectionAcquired2 = eventRecorder.removeUpToEvent<ConnectionAcquired>()
-    assertThat(connectionAcquired2.connection).isSameAs(
+    assertThat(connectionAcquired2.connection).isSameInstanceAs(
       connectionAcquired1.connection,
     )
   }
