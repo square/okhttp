@@ -17,8 +17,6 @@ pom.xml.*
 release.properties
 local.properties
 
-.vscode
-
 .idea
 *.iml
 *.ipr
