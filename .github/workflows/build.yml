@@ -33,7 +33,7 @@ jobs:
           java-version: 21
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Upload Artifacts
         run: ./gradlew clean publish --stacktrace
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: gradle/actions/wrapper-validation@v5
+      - uses: gradle/actions/wrapper-validation@v6
       - name: Validate Renovate
         uses: rinchsan/renovate-config-validator@v0.2.0
         with:
@@ -79,7 +79,7 @@ jobs:
           native-image-job-reports: true
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Run Checks
         run: ./gradlew check -PgraalBuild=true -x jvmTest -x test -x allTests -x java9Test
@@ -110,7 +110,7 @@ jobs:
             21
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Run Tests
         run: ./gradlew test allTests -Ptest.java.version=${{ matrix.java-version }}
@@ -150,7 +150,7 @@ jobs:
           java-version: 21
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Run Tests
         run: ./gradlew test allTests -Ptest.java.version=8 -Pokhttp.platform=jdk8alpn -Palpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
@@ -183,7 +183,7 @@ jobs:
             21
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Run Tests
         run: ./gradlew test allTests -Pokhttp.platform=${{ matrix.provider }} -Ptest.java.version=${{ matrix.java-version }}
@@ -209,7 +209,7 @@ jobs:
           echo 'kotlin.jvm.target.validation.mode=ignore' >> ./gradle.properties
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Run Tests
         run: ./gradlew test allTests -Ptest.java.version=24
@@ -236,7 +236,7 @@ jobs:
           echo 'kotlin.jvm.target.validation.mode=ignore' >> ./gradle.properties
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Run Tests
         run: ./gradlew test allTests -Ptest.java.version=25
@@ -255,7 +255,7 @@ jobs:
           java-version: 21
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Run Tests
         run: ./gradlew test allTests
@@ -281,13 +281,13 @@ jobs:
           native-image-job-reports: true
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build okcurl
         run: ./gradlew okcurl:nativeBuild
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Run native-image tests
         run: ./gradlew -PgraalBuild=true native-image-tests:nativeTest
@@ -329,7 +329,7 @@ jobs:
           kvm-ok || exit 1
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Gradle cache
         run: ./gradlew :android-test:test
@@ -391,7 +391,7 @@ jobs:
             24
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Run Tests
         run: ./gradlew test allTests -Pokhttp.platform=loom -Ptest.java.version=24 -PcontainerTests=true
@@ -410,7 +410,7 @@ jobs:
           java-version: 21
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Publish local snapshot
         run: ./gradlew publishToMavenLocal
@@ -433,7 +433,7 @@ jobs:
           java-version: 24
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Test module-tests
         run: ./gradlew module-tests:test -PokhttpModuleTests=true
