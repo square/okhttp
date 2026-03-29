@@ -323,6 +323,7 @@ class ConnectPlan internal constructor(
             ),
         )
       }
+
       else -> {
         val failure =
           ProtocolException(
@@ -442,7 +443,9 @@ class ConnectPlan internal constructor(
       tunnelCodec.skipConnectBody(response)
 
       when (response.code) {
-        HttpURLConnection.HTTP_OK -> return null
+        HttpURLConnection.HTTP_OK -> {
+          return null
+        }
 
         HttpURLConnection.HTTP_PROXY_AUTH -> {
           nextRequest = route.address.proxyAuthenticator.authenticate(route, response)
@@ -453,7 +456,9 @@ class ConnectPlan internal constructor(
           }
         }
 
-        else -> throw IOException("Unexpected response code for CONNECT: ${response.code}")
+        else -> {
+          throw IOException("Unexpected response code for CONNECT: ${response.code}")
+        }
       }
     }
   }

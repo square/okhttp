@@ -179,11 +179,13 @@ class WebSocketWriter(
         b1 = b1 or dataSize.toInt()
         sinkBuffer.writeByte(b1)
       }
+
       dataSize <= PAYLOAD_SHORT_MAX -> {
         b1 = b1 or PAYLOAD_SHORT
         sinkBuffer.writeByte(b1)
         sinkBuffer.writeShort(dataSize.toInt())
       }
+
       else -> {
         b1 = b1 or PAYLOAD_LONG
         sinkBuffer.writeByte(b1)

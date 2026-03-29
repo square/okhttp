@@ -78,6 +78,7 @@ class BouncyCastlePlatform private constructor() : Platform() {
       when (val protocol = (sslSocket as BCSSLSocket).applicationProtocol) {
         // Handles both un-configured and none selected.
         null, "" -> null
+
         else -> protocol
       }
     } else {
@@ -88,7 +89,7 @@ class BouncyCastlePlatform private constructor() : Platform() {
     val isSupported: Boolean =
       try {
         // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
-        Class.forName("org.bouncycastle.jsse.provider.BouncyCastleJsseProvider", false, javaClass.classLoader)
+        Class.forName("org.bouncycastle.jsse.provider.BouncyCastleJsseProvider", false, BouncyCastlePlatform::class.java.classLoader)
 
         true
       } catch (_: ClassNotFoundException) {

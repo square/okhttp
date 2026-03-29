@@ -20,6 +20,9 @@ package okhttp3.internal
 
 import okhttp3.Headers
 
+/** This is the same as Chrome's limit. */
+internal const val HEADER_LIMIT = 256 * 1024L
+
 internal fun Headers.commonName(index: Int): String = namesAndValues.getOrNull(index * 2) ?: throw IndexOutOfBoundsException("name[$index]")
 
 internal fun Headers.commonValue(index: Int): String =
@@ -173,6 +176,7 @@ internal fun commonHeadersOf(vararg inputNamesAndValues: String): Headers {
   // Make a defensive copy and clean it up.
   val namesAndValues: Array<String> = arrayOf(*inputNamesAndValues)
   for (i in namesAndValues.indices) {
+    @Suppress("SENSELESS_COMPARISON")
     require(namesAndValues[i] != null) { "Headers cannot be null" }
     namesAndValues[i] = inputNamesAndValues[i].trim()
   }
@@ -202,5 +206,6 @@ internal fun Map<String, String>.commonToHeaders(): Headers {
     i += 2
   }
 
+  @Suppress("UNCHECKED_CAST")
   return Headers(namesAndValues as Array<String>)
 }

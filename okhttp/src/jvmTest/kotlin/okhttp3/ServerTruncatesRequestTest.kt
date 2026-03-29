@@ -48,6 +48,7 @@ import okhttp3.CallEvent.ResponseHeadersStart
 import okhttp3.CallEvent.SecureConnectEnd
 import okhttp3.CallEvent.SecureConnectStart
 import okhttp3.Headers.Companion.headersOf
+import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.internal.duplex.AsyncRequestBody
 import okhttp3.testing.PlatformRule
 import okio.BufferedSink
@@ -91,6 +92,10 @@ class ServerTruncatesRequestTest {
 
   @Test
   fun serverTruncatesRequestOnLongPostHttp1() {
+    // "java.net.SocketException: Socket closed" thrown reading response after
+    // "java.net.SocketException: Connection reset by peer" writing request
+    assumeNotWindows()
+
     serverTruncatesRequestOnLongPost(https = false)
   }
 
@@ -196,6 +201,10 @@ class ServerTruncatesRequestTest {
 
   @Test
   fun serverTruncatesRequestButTrailersCanStillBeReadHttp1() {
+    // "java.net.SocketException: Socket closed" thrown reading response after
+    // "java.net.SocketException: Connection reset by peer" writing request
+    assumeNotWindows()
+
     serverTruncatesRequestButTrailersCanStillBeRead(http2 = false)
   }
 

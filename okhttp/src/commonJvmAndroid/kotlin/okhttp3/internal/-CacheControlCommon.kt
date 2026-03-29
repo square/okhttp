@@ -137,10 +137,12 @@ internal fun CacheControl.Companion.commonParse(headers: Headers): CacheControl 
           headerValue = value
         }
       }
+
       name.equals("Pragma", ignoreCase = true) -> {
         // Might specify additional cache-control params. We invalidate just in case.
         canUseHeaderValue = false
       }
+
       else -> {
         continue@loop
       }
@@ -179,36 +181,47 @@ internal fun CacheControl.Companion.commonParse(headers: Headers): CacheControl 
         "no-cache".equals(directive, ignoreCase = true) -> {
           noCache = true
         }
+
         "no-store".equals(directive, ignoreCase = true) -> {
           noStore = true
         }
+
         "max-age".equals(directive, ignoreCase = true) -> {
           maxAgeSeconds = parameter.toNonNegativeInt(-1)
         }
+
         "s-maxage".equals(directive, ignoreCase = true) -> {
           sMaxAgeSeconds = parameter.toNonNegativeInt(-1)
         }
+
         "private".equals(directive, ignoreCase = true) -> {
           isPrivate = true
         }
+
         "public".equals(directive, ignoreCase = true) -> {
           isPublic = true
         }
+
         "must-revalidate".equals(directive, ignoreCase = true) -> {
           mustRevalidate = true
         }
+
         "max-stale".equals(directive, ignoreCase = true) -> {
           maxStaleSeconds = parameter.toNonNegativeInt(Int.MAX_VALUE)
         }
+
         "min-fresh".equals(directive, ignoreCase = true) -> {
           minFreshSeconds = parameter.toNonNegativeInt(-1)
         }
+
         "only-if-cached".equals(directive, ignoreCase = true) -> {
           onlyIfCached = true
         }
+
         "no-transform".equals(directive, ignoreCase = true) -> {
           noTransform = true
         }
+
         "immutable".equals(directive, ignoreCase = true) -> {
           immutable = true
         }

@@ -641,7 +641,7 @@ Response caching uses HTTP headers for all configuration. You can add request he
       }
     ```
 
-To prevent a response from using the cache, use [`CacheControl.FORCE_NETWORK`](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-cache-control/-f-o-r-c-e_-n-e-t-w-o-r-k/). To prevent it from using the network, use [`CacheControl.FORCE_CACHE`](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-cache-control/-f-o-r-c-e_-c-a-c-h-e/). Be warned: if you use `FORCE_CACHE` and the response requires the network, OkHttp will return a `504 Unsatisfiable Request` response.
+To prevent a response from using the cache, use [`CacheControl.FORCE_NETWORK`](https://square.github.io/okhttp/5.x/okhttp/okhttp3/-cache-control/-companion/-f-o-r-c-e_-n-e-t-w-o-r-k). To prevent it from using the network, use [`CacheControl.FORCE_CACHE`](https://square.github.io/okhttp/5.x/okhttp/okhttp3/-cache-control/-companion/-f-o-r-c-e_-c-a-c-h-e). Be warned: if you use `FORCE_CACHE` and the response requires the network, OkHttp will return a `504 Unsatisfiable Request` response.
 
 
 ### Canceling a Call ([.kt][CancelCallKotlin], [.java][CancelCallJava])

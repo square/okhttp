@@ -17,6 +17,7 @@ package okhttp3.internal.http2
 
 import java.io.IOException
 import java.util.Arrays
+import okhttp3.internal.HEADER_LIMIT
 import okhttp3.internal.and
 import okhttp3.internal.http2.Header.Companion.RESPONSE_STATUS
 import okhttp3.internal.http2.Header.Companion.TARGET_AUTHORITY
@@ -130,6 +131,7 @@ object Hpack {
       private var maxDynamicTableByteCount: Int = headerTableSizeSetting,
     ) {
       private val headerList = mutableListOf<Header>()
+      private var headerListByteCount = 0L
       private val source: BufferedSource = source.buffer()
 
       // Visible for testing.
@@ -145,6 +147,7 @@ object Hpack {
       fun getAndResetHeaderList(): List<Header> {
         val result = headerList.toList()
         headerList.clear()
+        headerListByteCount = 0L
         return result
       }
 
@@ -207,20 +210,24 @@ object Hpack {
               // 10000000
               throw IOException("index == 0")
             }
+
             b and 0x80 == 0x80 -> {
               // 1NNNNNNN
               val index = readInt(b, PREFIX_7_BITS)
               readIndexedHeader(index - 1)
             }
+
             b == 0x40 -> {
               // 01000000
               readLiteralHeaderWithIncrementalIndexingNewName()
             }
+
             b and 0x40 == 0x40 -> {
               // 01NNNNNN
               val index = readInt(b, PREFIX_6_BITS)
               readLiteralHeaderWithIncrementalIndexingIndexedName(index - 1)
             }
+
             b and 0x20 == 0x20 -> {
               // 001NNNNN
               maxDynamicTableByteCount = readInt(b, PREFIX_5_BITS)
@@ -229,10 +236,12 @@ object Hpack {
               }
               adjustDynamicTableByteCount()
             }
+
             b == 0x10 || b == 0 -> {
               // 000?0000 - Ignore never indexed bit.
               readLiteralHeaderWithoutIndexingNewName()
             }
+
             else -> {
               // 000?NNNN - Ignore never indexed bit.
               val index = readInt(b, PREFIX_4_BITS)
@@ -246,13 +255,13 @@ object Hpack {
       private fun readIndexedHeader(index: Int) {
         if (isStaticHeader(index)) {
           val staticEntry = STATIC_HEADER_TABLE[index]
-          headerList.add(staticEntry)
+          addHeader(staticEntry)
         } else {
           val dynamicTableIndex = dynamicTableIndex(index - STATIC_HEADER_TABLE.size)
           if (dynamicTableIndex < 0 || dynamicTableIndex >= dynamicTable.size) {
             throw IOException("Header index too large ${index + 1}")
           }
-          headerList += dynamicTable[dynamicTableIndex]!!
+          addHeader(dynamicTable[dynamicTableIndex]!!)
         }
       }
 
@@ -263,14 +272,14 @@ object Hpack {
       private fun readLiteralHeaderWithoutIndexingIndexedName(index: Int) {
         val name = getName(index)
         val value = readByteString()
-        headerList.add(Header(name, value))
+        addHeader(Header(name, value))
       }
 
       @Throws(IOException::class)
       private fun readLiteralHeaderWithoutIndexingNewName() {
         val name = checkLowercase(readByteString())
         val value = readByteString()
-        headerList.add(Header(name, value))
+        addHeader(Header(name, value))
       }
 
       @Throws(IOException::class)
@@ -308,7 +317,7 @@ object Hpack {
         entry: Header,
       ) {
         var index = index
-        headerList.add(entry)
+        addHeader(entry)
 
         var delta = entry.hpackSize
         if (index != -1) { // Index -1 == new header.
@@ -378,12 +387,29 @@ object Hpack {
         val huffmanDecode = firstByte and 0x80 == 0x80 // 1NNNNNNN
         val length = readInt(firstByte, PREFIX_7_BITS).toLong()
 
+        // If the compressed or decompressed length exceeds the limit, don't even bother.
+        if (headerListByteCount + length > HEADER_LIMIT) {
+          throw IOException("header byte count limit of $HEADER_LIMIT exceeded")
+        }
+
         return if (huffmanDecode) {
           val decodeBuffer = Buffer()
           Huffman.decode(source, length, decodeBuffer)
           decodeBuffer.readByteString()
         } else {
           source.readByteString(length)
+        }
+      }
+
+      @Throws(IOException::class)
+      private fun addHeader(header: Header) {
+        headerList.add(header)
+
+        val headerSize = header.name.size + header.value.size
+        val newHeaderListSize = headerListByteCount + headerSize
+        headerListByteCount = newHeaderListSize
+        if (newHeaderListSize > HEADER_LIMIT) {
+          throw IOException("header byte count limit of $HEADER_LIMIT exceeded")
         }
       }
     }
@@ -541,6 +567,7 @@ object Hpack {
               // Indexed Header Field.
               writeInt(headerIndex, PREFIX_7_BITS, 0x80)
             }
+
             headerNameIndex == -1 -> {
               // Literal Header Field with Incremental Indexing - New Name.
               out.writeByte(0x40)
@@ -548,12 +575,14 @@ object Hpack {
               writeByteString(value)
               insertIntoDynamicTable(header)
             }
+
             name.startsWith(Header.PSEUDO_PREFIX) && TARGET_AUTHORITY != name -> {
               // Follow Chromes lead - only include the :authority pseudo header, but exclude all other
               // pseudo headers. Literal Header Field without Indexing - Indexed Name.
               writeInt(headerNameIndex, PREFIX_4_BITS, 0)
               writeByteString(value)
             }
+
             else -> {
               // Literal Header Field with Incremental Indexing - Indexed Name.
               writeInt(headerNameIndex, PREFIX_6_BITS, 0x40)

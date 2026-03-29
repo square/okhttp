@@ -127,6 +127,7 @@ internal class DerReader(
         length0 == 0b1000_0000 -> {
           throw ProtocolException("indefinite length not permitted for DER")
         }
+
         (length0 and 0b1000_0000) == 0b1000_0000 -> {
           // Length specified over multiple bytes.
           val lengthBytes = length0 and 0b0111_1111
@@ -148,6 +149,7 @@ internal class DerReader(
 
           lengthBits
         }
+
         else -> {
           // Length is 127 or fewer bytes.
           (length0 and 0b0111_1111).toLong()
@@ -269,11 +271,13 @@ internal class DerReader(
         result.writeByte(dot)
         result.writeDecimalLong(xy)
       }
+
       in 40L until 80L -> {
         result.writeDecimalLong(1)
         result.writeByte(dot)
         result.writeDecimalLong(xy - 40L)
       }
+
       else -> {
         result.writeDecimalLong(2)
         result.writeByte(dot)

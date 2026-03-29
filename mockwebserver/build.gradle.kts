@@ -1,12 +1,9 @@
-import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinJvm
-import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
-
 plugins {
   kotlin("jvm")
-  id("org.jetbrains.dokka")
-  id("com.vanniktech.maven.publish.base")
-  id("binary-compatibility-validator")
+  id("okhttp.publish-conventions")
+  id("okhttp.jvm-conventions")
+  id("okhttp.quality-conventions")
+  id("okhttp.testing-conventions")
 }
 
 project.applyJavaModules("mockwebserver3")
@@ -21,10 +18,6 @@ dependencies {
   testImplementation(libs.kotlin.test.common)
   testImplementation(libs.kotlin.test.junit)
   testImplementation(libs.assertk)
-}
-
-mavenPublishing {
-  configure(KotlinJvm(javadocJar = JavadocJar.Empty()))
 }
 
 kotlin {
