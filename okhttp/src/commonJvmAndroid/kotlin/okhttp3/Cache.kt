@@ -238,6 +238,13 @@ class Cache internal constructor(
       return null
     }
 
+    if (response.request.url.isHttps && response.handshake == null) {
+      // An HTTPS response without a handshake cannot be serialized to the cache format because the
+      // Entry reader expects TLS session data for HTTPS URLs. This can happen when a network
+      // interceptor strips the handshake or when cacheUrlOverride rewrites an HTTP URL to HTTPS.
+      return null
+    }
+
     val entry = Entry(response)
     var editor: DiskLruCache.Editor? = null
     try {
@@ -259,6 +266,9 @@ class Cache internal constructor(
     cached: Response,
     network: Response,
   ) {
+    if (network.request.url.isHttps && network.handshake == null) {
+      return
+    }
     val entry = Entry(network)
     val snapshot = (cached.body as CacheResponseBody).snapshot
     var editor: DiskLruCache.Editor? = null
