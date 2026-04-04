@@ -60,5 +60,5 @@ fun interface Dns {
 }
 
 interface EchAware {
-  fun getHostRecords(host: String): ByteString?
+  fun getHostRecords(host: String): Any?
 }

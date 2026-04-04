@@ -387,7 +387,7 @@ class ConnectPlan internal constructor(
           tlsVersion = unverifiedHandshake.tlsVersion,
           cipherSuite = unverifiedHandshake.cipherSuite,
           localCertificates = unverifiedHandshake.localCertificates,
-          echConfig = call.tag(EchConfig::class)
+          echConfig = call.tag(EchConfig::class),
         ) {
           certificatePinner.certificateChainCleaner!!.clean(
             unverifiedHandshake.peerCertificates,

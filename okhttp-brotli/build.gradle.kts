@@ -21,6 +21,5 @@ dependencies {
   testImplementation(libs.conscrypt.openjdk)
   testImplementation(libs.junit)
   testImplementation(libs.kotlin.test.common)
-  testImplementation(libs.kotlin.test.junit)
   testImplementation(libs.assertk)
 }

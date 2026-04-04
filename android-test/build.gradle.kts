@@ -8,7 +8,7 @@ plugins {
 
 android {
   compileSdk {
-    version = preview("CANARY")
+    version = release(37)
   }
 
   namespace = "okhttp.android.test"
@@ -61,6 +61,7 @@ dependencies {
   implementation(libs.playservices.safetynet)
   "friendsImplementation"(projects.okhttp)
   "friendsImplementation"(projects.okhttpDnsoverhttps)
+  implementation(libs.androidx.activity)
 
   testImplementation(projects.okhttp)
   testImplementation(libs.junit)
@@ -98,13 +99,9 @@ dependencies {
   androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(libs.http.client5)
   androidTestImplementation(libs.kotlin.test.common)
-  androidTestImplementation(libs.kotlin.test.junit)
   androidTestImplementation(libs.square.moshi)
   androidTestImplementation(libs.square.moshi.kotlin)
   androidTestImplementation(libs.square.okio.fakefilesystem)
-
-  //noinspection UseTomlInstead
-  androidTestImplementation("dnsjava:dnsjava:3.6.4")
 
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.junit.jupiter.api)

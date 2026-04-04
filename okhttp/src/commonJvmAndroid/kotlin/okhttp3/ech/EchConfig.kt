@@ -25,5 +25,5 @@ import okio.ByteString
  * These parameters are typically retrieved from DNS via HTTPS or SVCB records.
  */
 data class EchConfig(
-  val config: ByteString
+  val config: ByteString,
 )

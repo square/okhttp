@@ -58,7 +58,7 @@ kotlin {
   android {
     namespace = "okhttp.okhttp3"
     compileSdk {
-      version = preview("CANARY")
+      version = release(37)
     }
     minSdk = 21
 
@@ -108,7 +108,6 @@ kotlin {
         implementation(libs.assertk)
         implementation(libs.kotlin.test.annotations)
         implementation(libs.kotlin.test.common)
-        implementation(libs.kotlin.test.junit)
         implementation(libs.junit)
         implementation(libs.junit.jupiter.api)
         implementation(libs.junit.jupiter.params)
@@ -123,9 +122,6 @@ kotlin {
         compileOnly(libs.conscrypt.openjdk)
         implementation(libs.androidx.annotation)
         implementation(libs.androidx.startup.runtime)
-
-        //noinspection UseTomlInstead
-        implementation("dnsjava:dnsjava:3.6.4")
       }
     }
 
@@ -155,7 +151,6 @@ kotlin {
         implementation(libs.junit)
         implementation(libs.kotlin.test.annotations)
         implementation(libs.kotlin.test.common)
-        implementation(libs.kotlin.test.junit)
         implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.serialization.core)
         implementation(libs.kotlinx.serialization.json)

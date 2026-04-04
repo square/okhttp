@@ -19,6 +19,5 @@ dependencies {
   testImplementation(projects.okhttpBrotli)
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(libs.kotlin.test.common)
-  testImplementation(libs.kotlin.test.junit)
   testImplementation(libs.assertk)
 }

@@ -17,69 +17,90 @@ package okhttp3.internal.platform
 
 import android.net.DnsResolver
 import android.net.DnsResolver.Callback
+import android.net.dns.HttpsEndpoint
+import android.net.dns.HttpsRecord
 import androidx.annotation.RequiresApi
 import java.net.InetAddress
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 import okhttp3.Dns
 import okhttp3.EchAware
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
-import org.xbill.DNS.HTTPSRecord
-import org.xbill.DNS.Message
-import org.xbill.DNS.SVCBBase
-import org.xbill.DNS.Section.ANSWER
 
 @Suppress("NewApi")
 @RequiresApi(36)
 class AndroidDnsResolverDns :
   Dns,
   EchAware {
-  val dnsResolver = DnsResolver.getInstance()
+  val dnsResolver: DnsResolver by lazy {
+    val handlerThread = android.os.HandlerThread("DnsLooper").apply { start() }
 
-  val httpsRecords: MutableMap<String, Future<HTTPSRecord?>> = HashMap()
+    DnsResolver(PlatformRegistry.applicationContext!!, handlerThread.looper)
+  }
+
+  val httpsRecords: MutableMap<String, Future<HttpsRecord?>> = HashMap()
 
   override fun lookup(hostname: String): List<InetAddress> {
-    val future = CompletableFuture<HTTPSRecord?>()
+    val httpsFuture = CompletableFuture<HttpsRecord?>()
+    val dnsFuture = CompletableFuture<List<InetAddress>>()
 
-    val callback: Callback<ByteArray> =
-      object : Callback<ByteArray> {
+    val callback: Callback<HttpsEndpoint?> =
+      object : Callback<HttpsEndpoint?> {
         override fun onAnswer(
-          p0: ByteArray,
-          p1: Int,
+          answer: HttpsEndpoint,
+          rcode: Int,
         ) {
-          val answers = Message(p0).getSection(ANSWER)
-          if (answers.isEmpty()) {
-            future.complete(null)
-          } else {
-            future.complete(answers.single() as HTTPSRecord)
+          if (answer.httpsRecords.isNotEmpty()) {
+            if (answer.httpsRecords.size > 1) {
+              answer.httpsRecords.forEach {
+                println("${it.priority} ${it.targetName} ${it.port} ${it.alpnIds} ${it.ipAddressHints}")
+              }
+            }
+            httpsFuture.complete(answer.httpsRecords.first())
+          }
+          if (answer.ipAddresses.isNotEmpty()) {
+            dnsFuture.complete(answer.ipAddresses)
           }
         }
 
         override fun onError(p0: DnsResolver.DnsException) {
-          future.completeExceptionally(p0)
+          if (!dnsFuture.isDone) {
+            dnsFuture.completeExceptionally(p0)
+          }
+          if (!httpsFuture.isDone) {
+            httpsFuture.completeExceptionally(p0)
+          }
         }
       }
     @Suppress("WrongConstant")
-    dnsResolver.rawQuery(
+    dnsResolver.query(
+      // network =
       null,
+      // domain =
       hostname,
-      DnsResolver.CLASS_IN,
-      65,
+      // flags =
       DnsResolver.FLAG_EMPTY,
+      // executor =
       { it.run() },
+      // httpsTimeoutMillis =
+      1_000,
+      // cancellationSignal =
       null,
+      // callback =
       callback,
     )
-    httpsRecords[hostname] = future
+    httpsRecords[hostname] = httpsFuture
 
-    // TODO replace with DnsResolver call
-    return Dns.SYSTEM.lookup(hostname)
+    // TODO replace with real timeout
+    return dnsFuture.get(5, TimeUnit.SECONDS)
   }
 
-  override fun getHostRecords(host: String): ByteString? {
+  override fun getHostRecords(host: String): Any? {
     val record = httpsRecords[host]?.get()
-    val echConfig = record?.getSvcParamValue(HTTPSRecord.ECH) as SVCBBase.ParameterEch?
-    return echConfig?.data?.toByteString()
+    val echConfig = record?.echConfigList
+    return echConfig
   }
 }

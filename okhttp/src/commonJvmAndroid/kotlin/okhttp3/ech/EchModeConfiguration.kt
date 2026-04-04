@@ -62,12 +62,12 @@ interface EchModeConfiguration {
      */
     val Unspecified =
       object : EchModeConfiguration {
-        override fun echMode(hostname: String): EchMode = EchMode.Unspecified
+        override fun echMode(host: String): EchMode = EchMode.Unspecified
 
         override fun applyEch(
           sslSocket: SSLSocket,
           echMode: EchMode,
-          hostname: String,
+          host: String,
           dns: Dns,
         ) {
           check(!echMode.attempt)

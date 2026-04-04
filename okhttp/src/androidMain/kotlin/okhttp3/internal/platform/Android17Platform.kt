@@ -43,14 +43,10 @@ import okhttp3.internal.tls.TrustRootIndex
 /** Android 17+ (API 37+). */
 @SuppressSignatureCheck
 class Android17Platform
-  @RequiresApi(36)
+  @RequiresApi(37)
   internal constructor() :
   Platform(),
     ContextAwarePlatform {
-    init {
-      println("Android17Platform")
-    }
-
     override var applicationContext: Context? = null
 
     private val socketAdapter by lazy {
@@ -124,9 +120,9 @@ class Android17Platform
     override fun platformDns(): Dns = AndroidDnsResolverDns()
 
     companion object {
-      val isSupported: Boolean = (isAndroid && Build.VERSION.SDK_INT >= 36)
+      val isSupported: Boolean = (isAndroid && Build.VERSION.SDK_INT >= 37)
 
-      @ChecksSdkIntAtLeast(36)
+      @ChecksSdkIntAtLeast(37)
       fun buildIfSupported(): Platform? = if (isSupported) Android17Platform() else null
     }
   }

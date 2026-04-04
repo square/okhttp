@@ -53,12 +53,12 @@ class AndroidEchModeConfiguration : EchModeConfiguration {
     host: String,
     dns: Dns,
   ) {
-    val echConfig = (dns as EchAware).getHostRecords(host)
+    val echConfig = (dns as? EchAware)?.getHostRecords(host)
 
     if (echConfig != null) {
       SSLSockets.setEchConfigList(
         sslSocket,
-        EchConfigList.fromBytes(echConfig.toByteArray()),
+        echConfig as EchConfigList,
       )
     } else if (echMode.require) {
       throw IOException("Unable to apply required ECH config for $host")
