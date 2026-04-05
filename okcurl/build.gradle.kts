@@ -1,9 +1,11 @@
 import kotlinx.validation.ApiValidationExtension
 import okhttp3.buildsupport.testJavaVersion
 import org.graalvm.buildtools.gradle.dsl.GraalVMExtension
+import org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
+import java.nio.file.Files
 
 plugins {
   kotlin("jvm")
@@ -90,6 +92,46 @@ configure<GraalVMExtension> {
       } else {
         buildArgs("--no-fallback")
       }
+
+      javaLauncher.set(
+        javaToolchains.launcherFor {
+          languageVersion.set(JavaLanguageVersion.of(25))
+          vendor.set(JvmVendorSpec.GRAAL_VM)
+        },
+      )
+    }
+  }
+}
+
+// https://github.com/gradle/gradle/issues/28583
+tasks.named<BuildNativeImageTask>("nativeCompile") {
+  // Gradle's "Copy" task cannot handle symbolic links, see https://github.com/gradle/gradle/issues/3982. That is why
+  // links contained in the GraalVM distribution archive get broken during provisioning and are replaced by empty
+  // files. Address this by recreating the links in the toolchain directory.
+  val toolchainDir =
+    options.get().javaLauncher.get().executablePath.asFile.parentFile.run {
+      if (name == "bin") parentFile else this
+    }
+
+  val toolchainFiles = toolchainDir.walkTopDown().filter { it.isFile }
+  val emptyFiles = toolchainFiles.filter { it.length() == 0L }
+
+  // Find empty toolchain files that are named like other toolchain files and assume these should have been links.
+  val links =
+    toolchainFiles.mapNotNull { file ->
+      emptyFiles.singleOrNull { it != file && it.name == file.name }?.let {
+        file to it
+      }
+    }
+
+  // Fix up symbolic links.
+  links.forEach { (target, link) ->
+    logger.quiet("Fixing up '$link' to link to '$target'.")
+
+    if (link.delete()) {
+      Files.createSymbolicLink(link.toPath(), target.toPath())
+    } else {
+      logger.warn("Unable to delete '$link'.")
     }
   }
 }
