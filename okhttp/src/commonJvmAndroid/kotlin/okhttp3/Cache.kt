@@ -242,6 +242,10 @@ class Cache internal constructor(
       // An HTTPS response without a handshake cannot be serialized to the cache format because the
       // Entry reader expects TLS session data for HTTPS URLs. This can happen when a network
       // interceptor strips the handshake or when cacheUrlOverride rewrites an HTTP URL to HTTPS.
+      Platform.get().log(
+        "HTTPS response has no handshake; skipping cache write for ${response.request.url.redact()}",
+        WARN,
+      )
       return null
     }
 
@@ -266,7 +270,12 @@ class Cache internal constructor(
     cached: Response,
     network: Response,
   ) {
+    // HTTPS responses without a handshake cannot be serialized (see put() for details).
     if (network.request.url.isHttps && network.handshake == null) {
+      Platform.get().log(
+        "HTTPS response has no handshake; skipping cache update for ${network.request.url.redact()}",
+        WARN,
+      )
       return
     }
     val entry = Entry(network)
