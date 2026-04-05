@@ -15,7 +15,6 @@
  */
 package okhttp.android.testapp
 
-import addTracing
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import okhttp3.Call
@@ -24,6 +23,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient.Builder
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.android.addTracing
 import okhttp3.internal.platform.AndroidPlatform
 import okio.IOException
 
