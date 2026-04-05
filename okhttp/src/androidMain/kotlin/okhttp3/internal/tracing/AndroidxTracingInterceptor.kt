@@ -1,4 +1,4 @@
-package okhttp3.android.tracing
+package okhttp3.internal.tracing
 
 import androidx.tracing.trace
 import okhttp3.Interceptor
@@ -9,7 +9,7 @@ import okhttp3.Response
  * Tracing implementation of Interceptor that marks each Call in a Perfetto
  * trace. Typically used as a network interceptor.
  */
-class AndroidxTracingInterceptor(
+internal class AndroidxTracingInterceptor(
     val traceLabel: (Request) -> String = { it.defaultTracingLabel },
 ) : Interceptor {
   override fun intercept(chain: Interceptor.Chain): Response =

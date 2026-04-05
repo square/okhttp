@@ -51,7 +51,7 @@ class ConnectionPool internal constructor(
   )
 
   // Internal until we promote ConnectionListener to be a public API.
-  constructor(
+  internal constructor(
     maxIdleConnections: Int = 5,
     keepAliveDuration: Long = 5,
     timeUnit: TimeUnit = TimeUnit.MINUTES,
