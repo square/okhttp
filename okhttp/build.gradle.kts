@@ -58,7 +58,7 @@ kotlin {
   android {
     namespace = "okhttp.okhttp3"
     compileSdk {
-      version = release(37)
+      version = release(36)
     }
     minSdk = 21
 
