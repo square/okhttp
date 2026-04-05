@@ -44,7 +44,6 @@ android {
     unitTests.isIncludeAndroidResources = true
   }
 
-
   // issue merging due to conflict with httpclient and something else
   packagingOptions.resources.excludes += setOf(
     "META-INF/DEPENDENCIES",
@@ -113,4 +112,9 @@ junitPlatform {
   filters {
     excludeTags("Remote")
   }
+}
+
+tasks.withType<Test> {
+  // Fix for robolectric https://github.com/robolectric/robolectric/pull/10996
+  jvmArgs("--add-opens", "java.base/jdk.internal.access=ALL-UNNAMED")
 }
