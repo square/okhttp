@@ -55,9 +55,11 @@ kotlin {
   jvm {
   }
 
-  androidLibrary {
+  android {
     namespace = "okhttp.okhttp3"
-    compileSdk = 36
+    compileSdk {
+      version = release(37)
+    }
     minSdk = 21
 
     androidResources {
