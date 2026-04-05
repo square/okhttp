@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import app.cash.burst.Burst
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
@@ -32,11 +33,11 @@ import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
 
+@Burst
 class RouteFailureTest {
   private lateinit var socketFactory: SpecificHostSocketFactory
   private lateinit var client: OkHttpClient
@@ -53,7 +54,7 @@ class RouteFailureTest {
   @StartStop
   val server2 = MockWebServer()
 
-  private var listener = RecordingEventListener()
+  private var eventRecorder = EventRecorder()
 
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
@@ -78,11 +79,11 @@ class RouteFailureTest {
         .newClientBuilder()
         .dns(dns)
         .socketFactory(socketFactory)
-        .eventListenerFactory(clientTestRule.wrap(listener))
+        .eventListenerFactory(clientTestRule.wrap(eventRecorder))
         .build()
   }
 
-  @Test
+  @RepeatedTest(100)
   fun http2OneBadHostOneGoodNoRetryOnConnectionFailure() {
     enableProtocol(Protocol.HTTP_2)
 
@@ -107,6 +108,7 @@ class RouteFailureTest {
       .assertFailureMatches("stream was reset: REFUSED_STREAM")
 
     assertThat(client.routeDatabase.failedRoutes).isEmpty()
+    server1.takeRequest()
     assertThat(server1.requestCount).isEqualTo(1)
     assertThat(server2.requestCount).isEqualTo(0)
 
@@ -162,7 +164,7 @@ class RouteFailureTest {
     )
   }
 
-  @Test
+  @RepeatedTest(100)
   fun http2OneBadHostOneGoodNoRetryOnConnectionFailureFastFallback() {
     enableProtocol(Protocol.HTTP_2)
 
@@ -187,6 +189,7 @@ class RouteFailureTest {
       .assertFailureMatches("stream was reset: REFUSED_STREAM")
 
     assertThat(client.routeDatabase.failedRoutes).isEmpty()
+    server1.takeRequest()
     assertThat(server1.requestCount).isEqualTo(1)
     assertThat(server2.requestCount).isEqualTo(0)
 
@@ -242,7 +245,7 @@ class RouteFailureTest {
     )
   }
 
-  @Test
+  @RepeatedTest(100)
   fun http2OneBadHostRetryOnConnectionFailure() {
     enableProtocol(Protocol.HTTP_2)
 
@@ -266,6 +269,7 @@ class RouteFailureTest {
       .assertFailureMatches("stream was reset: REFUSED_STREAM")
 
     assertThat(client.routeDatabase.failedRoutes).isEmpty()
+    server1.takeRequest()
     assertThat(server1.requestCount).isEqualTo(1)
 
     assertThat(clientTestRule.recordedConnectionEventTypes()).containsExactly(
@@ -276,7 +280,7 @@ class RouteFailureTest {
     )
   }
 
-  @Test
+  @RepeatedTest(100)
   fun http2OneBadHostRetryOnConnectionFailureFastFallback() {
     enableProtocol(Protocol.HTTP_2)
 
@@ -300,6 +304,7 @@ class RouteFailureTest {
       .assertFailureMatches("stream was reset: REFUSED_STREAM")
 
     assertThat(client.routeDatabase.failedRoutes).isEmpty()
+    server1.takeRequest()
     assertThat(server1.requestCount).isEqualTo(1)
 
     assertThat(clientTestRule.recordedConnectionEventTypes()).containsExactly(
@@ -310,9 +315,8 @@ class RouteFailureTest {
     )
   }
 
-  @ParameterizedTest
-  @ValueSource(booleans = [false, true])
-  fun proxyMoveTest(cleanClose: Boolean) {
+  @Test
+  fun proxyMoveTest(cleanClose: Boolean = true) {
     // Define a single Proxy at myproxy:8008 that will artificially move during the test
     val proxySelector = RecordingProxySelector()
     val socketAddress = InetSocketAddress.createUnresolved("myproxy", 8008)

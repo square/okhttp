@@ -16,7 +16,6 @@
  */
 package mockwebserver3.internal
 
-import java.net.Socket
 import okio.Buffer
 import okio.Sink
 
@@ -25,7 +24,7 @@ import okio.Sink
  * this permits any interval to be used.
  */
 internal class ThrottledSink(
-  private val socket: Socket,
+  private val socket: MockWebServerSocket,
   private val delegate: Sink,
   private val bytesPerPeriod: Long,
   private val periodDelayNanos: Long,

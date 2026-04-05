@@ -18,16 +18,11 @@ package mockwebserver3.internal
 import java.io.IOException
 import java.net.Inet6Address
 import java.net.ProtocolException
-import java.net.Socket
-import javax.net.ssl.SSLSocket
 import mockwebserver3.RecordedRequest
-import okhttp3.Handshake
-import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.internal.platform.Platform
 import okio.ByteString
 
 internal fun RecordedRequest(
@@ -38,23 +33,9 @@ internal fun RecordedRequest(
   body: ByteString?,
   connectionIndex: Int,
   exchangeIndex: Int,
-  socket: Socket,
+  socket: MockWebServerSocket,
   failure: IOException? = null,
 ): RecordedRequest {
-  val handshake: Handshake?
-  val handshakeServerNames: List<String>
-  if (socket is SSLSocket) {
-    try {
-      handshake = socket.session.handshake()
-      handshakeServerNames = Platform.get().getHandshakeServerNames(socket)
-    } catch (e: IOException) {
-      throw IllegalArgumentException(e)
-    }
-  } else {
-    handshake = null
-    handshakeServerNames = listOf()
-  }
-
   val requestUrl =
     when (requestLine.method) {
       "CONNECT" -> "${socket.scheme}://${requestLine.target}/".toHttpUrlOrNull()
@@ -66,8 +47,8 @@ internal fun RecordedRequest(
   return RecordedRequest(
     connectionIndex = connectionIndex,
     exchangeIndex = exchangeIndex,
-    handshake = handshake,
-    handshakeServerNames = handshakeServerNames,
+    handshake = socket.handshake,
+    handshakeServerNames = socket.handshakeServerNames,
     method = requestLine.method,
     target = requestLine.target,
     version = requestLine.version,
@@ -120,15 +101,8 @@ internal val DEFAULT_REQUEST_LINE_HTTP_2 =
     version = "HTTP/2",
   )
 
-private val Socket.scheme: String
-  get() =
-    when (this) {
-      is SSLSocket -> "https"
-      else -> "http"
-    }
-
 private fun requestUrl(
-  socket: Socket,
+  socket: MockWebServerSocket,
   requestLine: RequestLine,
   headers: Headers,
 ): HttpUrl {

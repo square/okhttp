@@ -29,8 +29,7 @@ actual object PlatformRegistry {
         ?: AndroidPlatform.buildIfSupported()
     if (androidPlatform != null) return androidPlatform
 
-    // If the API version is 0, assume this is the Android artifact, but running on the JVM.
-    // Robolectric?
+    // If the API version is 0, assume this is the Android artifact, but running on the JVM without Robolectric.
     if (Build.VERSION.SDK_INT == 0) {
       return Jdk9Platform.buildIfSupported()
         ?: Platform()

@@ -28,9 +28,6 @@ abstract class EventSourceListener {
   ) {
   }
 
-  /**
-   * TODO description.
-   */
   open fun onEvent(
     eventSource: EventSource,
     id: String?,
@@ -40,8 +37,6 @@ abstract class EventSourceListener {
   }
 
   /**
-   * TODO description.
-   *
    * No further calls to this listener will be made.
    */
   open fun onClosed(eventSource: EventSource) {

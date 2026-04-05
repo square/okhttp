@@ -96,6 +96,9 @@ Requirements
 
 OkHttp works on Android 5.0+ (API level 21+) and Java 8+.
 
+On Android, OkHttp uses [AndroidX Startup][androidx_startup]. If you disable the initializer in the manifest,
+then apps are responsible for calling `OkHttp.initialize(applicationContext)` in `Application.onCreate`.
+
 OkHttp depends on [Okio][okio] for high-performance I/O and the [Kotlin standard library][kotlin]. Both are small libraries with strong backward-compatibility.
 
 We highly recommend you keep OkHttp up-to-date. As with auto-updating web browsers, staying current
@@ -120,10 +123,10 @@ Releases
 
 Our [change log][changelog] has release history.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/5.1.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/5.3.0/jar).
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp:5.1.0")
+implementation("com.squareup.okhttp3:okhttp:5.3.0")
 ```
 
 Snapshot builds are [available][snap]. [R8 and ProGuard][r8_proguard] rules are available.
@@ -133,7 +136,7 @@ Also, we have a [bill of materials (BOM)][bom] available to help you keep OkHttp
 ```kotlin
     dependencies {
        // define a BOM and its version
-       implementation(platform("com.squareup.okhttp3:okhttp-bom:5.1.0"))
+       implementation(platform("com.squareup.okhttp3:okhttp-bom:5.3.0"))
 
        // define any required OkHttp artifacts without version
        implementation("com.squareup.okhttp3:okhttp")
@@ -168,8 +171,8 @@ Maven projects.
 <dependency>
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>okhttp-jvm</artifactId>
-  <!-- Remove after OkHttp 5.3.0 with updated BOM. -->
-  <version>5.2.0</version>
+  <!-- Remove after OkHttp 5.2.0 with updated BOM. -->
+  <version>5.1.0</version>
 </dependency>
 
 <dependency>
@@ -188,10 +191,10 @@ MockWebServer
 
 OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/5.1.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/5.3.0/jar).
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver3:5.1.0")
+testImplementation("com.squareup.okhttp3:mockwebserver3:5.3.0")
 ```
 
 MockWebServer is used for firstly for internal testing, and for basic testing of apps using OkHttp client.
@@ -202,9 +205,7 @@ more full featured testing library such as [MockServer](https://www.mock-server.
 GraalVM Native Image
 --------------------
 
-Building your native images with Graal https://www.graalvm.org/ should work automatically.
-This is not currently in a final released version, so `5.0.0-alpha.2` should be used.
-Please report any bugs or workarounds you find.
+Building your native images with [GraalVM] should work automatically.
 
 See the okcurl module for an example build.
 
@@ -212,6 +213,36 @@ See the okcurl module for an example build.
 $ ./gradlew okcurl:nativeImage
 $ ./okcurl/build/graal/okcurl https://httpbin.org/get
 ```
+
+Java Modules
+------------
+
+OkHttp (5.2+) implements Java 9 Modules.
+
+With this in place Java builds should fail if apps attempt to use internal packages.
+
+```
+error: package okhttp3.internal.platform is not visible
+    okhttp3.internal.platform.Platform.get();
+                    ^
+  (package okhttp3.internal.platform is declared in module okhttp3,
+    which does not export it to module com.bigco.sdk)
+```
+
+The stable public API is based on the list of defined modules:
+
+- okhttp3
+- okhttp3.brotli
+- okhttp3.coroutines
+- okhttp3.dnsoverhttps
+- okhttp3.java.net.cookiejar
+- okhttp3.logging
+- okhttp3.sse
+- okhttp3.tls
+- okhttp3.urlconnection
+- mockwebserver3
+- mockwebserver3.junit4
+- mockwebserver3.junit5
 
 License
 -------
@@ -232,14 +263,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
+ [GraalVM]: https://www.graalvm.org/
+ [androidx_startup]: https://developer.android.com/jetpack/androidx/releases/startup
  [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
  [changelog]: https://square.github.io/okhttp/changelog/
  [conscrypt]: https://github.com/google/conscrypt/
  [get_example]: https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/GetExample.java
  [kotlin]: https://kotlinlang.org/
  [okhttp3_pro]: https://raw.githubusercontent.com/square/okhttp/master/okhttp/src/main/resources/META-INF/proguard/okhttp3.pro
- [okhttp_312x]: https://github.com/square/okhttp/tree/okhttp_3.12.x
  [okhttp]: https://square.github.io/okhttp/
+ [okhttp_312x]: https://github.com/square/okhttp/tree/okhttp_3.12.x
  [okio]: https://github.com/square/okio
  [post_example]: https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/PostExample.java
  [r8_proguard]: https://square.github.io/okhttp/features/r8_proguard/

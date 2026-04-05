@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import kotlin.reflect.KClass
 import okio.Timeout
 
 open class FailingCall : Call {
@@ -31,6 +32,22 @@ open class FailingCall : Call {
   override fun isCanceled(): Boolean = error("unexpected")
 
   override fun timeout(): Timeout = error("unexpected")
+
+  override fun addEventListener(eventListener: EventListener) = error("unexpected")
+
+  override fun <T : Any> tag(type: KClass<T>): T? = error("unexpected")
+
+  override fun <T> tag(type: Class<out T>): T? = error("unexpected")
+
+  override fun <T : Any> tag(
+    type: KClass<T>,
+    computeIfAbsent: () -> T,
+  ): T = error("unexpected")
+
+  override fun <T : Any> tag(
+    type: Class<T>,
+    computeIfAbsent: () -> T,
+  ): T = error("unexpected")
 
   override fun clone(): Call = error("unexpected")
 }

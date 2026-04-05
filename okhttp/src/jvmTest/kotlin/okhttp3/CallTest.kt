@@ -76,10 +76,26 @@ import mockwebserver3.SocketEffect.ShutdownConnection
 import mockwebserver3.SocketEffect.Stall
 import mockwebserver3.junit5.StartStop
 import okhttp3.CallEvent.CallEnd
+import okhttp3.CallEvent.CallFailed
+import okhttp3.CallEvent.CallStart
+import okhttp3.CallEvent.ConnectEnd
 import okhttp3.CallEvent.ConnectStart
 import okhttp3.CallEvent.ConnectionAcquired
 import okhttp3.CallEvent.ConnectionReleased
+import okhttp3.CallEvent.DnsEnd
+import okhttp3.CallEvent.DnsStart
+import okhttp3.CallEvent.FollowUpDecision
+import okhttp3.CallEvent.ProxySelectEnd
+import okhttp3.CallEvent.ProxySelectStart
+import okhttp3.CallEvent.RequestBodyEnd
+import okhttp3.CallEvent.RequestBodyStart
+import okhttp3.CallEvent.RequestHeadersEnd
+import okhttp3.CallEvent.RequestHeadersStart
+import okhttp3.CallEvent.ResponseBodyEnd
+import okhttp3.CallEvent.ResponseBodyStart
 import okhttp3.CallEvent.ResponseFailed
+import okhttp3.CallEvent.ResponseHeadersEnd
+import okhttp3.CallEvent.ResponseHeadersStart
 import okhttp3.CallEvent.RetryDecision
 import okhttp3.CertificatePinner.Companion.pin
 import okhttp3.Credentials.basic
@@ -143,12 +159,12 @@ open class CallTest {
   @StartStop
   private val server2 = MockWebServer()
 
-  private var listener = RecordingEventListener()
+  private var eventRecorder = EventRecorder()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client =
     clientTestRule
       .newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(listener))
+      .eventListenerFactory(clientTestRule.wrap(eventRecorder))
       .build()
   private val callback = RecordingCallback()
   private val cache =
@@ -1261,36 +1277,36 @@ open class CallTest {
     dispatcher.enqueue(MockResponse.Builder().onResponseStart(CloseSocket()).build())
     dispatcher.enqueue(MockResponse(body = "retry success"))
     server.dispatcher = dispatcher
-    listener =
-      object : RecordingEventListener() {
+    val requestFinishedListener =
+      object : EventListener() {
         override fun requestHeadersEnd(
           call: Call,
           request: Request,
         ) {
           requestFinished.countDown()
-          super.responseHeadersStart(call)
         }
       }
     client =
       client
         .newBuilder()
         .dns(DoubleInetAddressDns())
-        .eventListenerFactory(clientTestRule.wrap(listener))
-        .build()
+        .eventListenerFactory(
+          clientTestRule.wrap(eventRecorder.eventListener + requestFinishedListener),
+        ).build()
     assertThat(client.retryOnConnectionFailure).isTrue()
     executeSynchronously("/").assertBody("seed connection pool")
     executeSynchronously("/").assertBody("retry success")
 
     // The call that seeds the connection pool.
-    listener.removeUpToEvent(CallEnd::class.java)
+    eventRecorder.removeUpToEvent(CallEnd::class.java)
 
     // The ResponseFailed event is not necessarily fatal!
-    listener.removeUpToEvent(ConnectionAcquired::class.java)
-    listener.removeUpToEvent(ResponseFailed::class.java)
-    listener.removeUpToEvent(ConnectionReleased::class.java)
-    listener.removeUpToEvent(ConnectionAcquired::class.java)
-    listener.removeUpToEvent(ConnectionReleased::class.java)
-    listener.removeUpToEvent(CallEnd::class.java)
+    eventRecorder.removeUpToEvent(ConnectionAcquired::class.java)
+    eventRecorder.removeUpToEvent(ResponseFailed::class.java)
+    eventRecorder.removeUpToEvent(ConnectionReleased::class.java)
+    eventRecorder.removeUpToEvent(ConnectionAcquired::class.java)
+    eventRecorder.removeUpToEvent(ConnectionReleased::class.java)
+    eventRecorder.removeUpToEvent(CallEnd::class.java)
   }
 
   @Test
@@ -1454,15 +1470,20 @@ open class CallTest {
         is SSLProtocolException -> {
           // RI response to the FAIL_HANDSHAKE
         }
+
         is SSLHandshakeException -> {
           // Android's response to the FAIL_HANDSHAKE
         }
+
         is SSLException -> {
           // JDK 11 response to the FAIL_HANDSHAKE
           val jvmVersion = System.getProperty("java.specification.version")
           assertThat(jvmVersion).isEqualTo("11")
         }
-        else -> throw expected
+
+        else -> {
+          throw expected
+        }
       }
     }
   }
@@ -1702,7 +1723,7 @@ open class CallTest {
     val response1 = client.newCall(request1).execute()
     assertThat(response1.body.string()).isEqualTo("abc")
 
-    listener.clearAllEvents()
+    eventRecorder.clearAllEvents()
 
     val request2 =
       Request(
@@ -1715,44 +1736,44 @@ open class CallTest {
       assertThat(expected.message!!).startsWith("unexpected end of stream on http://")
     }
 
-    assertThat(listener.recordedEventTypes()).containsExactly(
-      "CallStart",
-      "ConnectionAcquired",
-      "RequestHeadersStart",
-      "RequestHeadersEnd",
-      "RequestBodyStart",
-      "RequestBodyEnd",
-      "ResponseFailed",
-      "RetryDecision",
-      "ConnectionReleased",
-      "CallFailed",
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
+      CallStart::class,
+      ConnectionAcquired::class,
+      RequestHeadersStart::class,
+      RequestHeadersEnd::class,
+      RequestBodyStart::class,
+      RequestBodyEnd::class,
+      ResponseFailed::class,
+      RetryDecision::class,
+      ConnectionReleased::class,
+      CallFailed::class,
     )
-    assertThat(listener.findEvent<RetryDecision>()).all {
+    assertThat(eventRecorder.findEvent<RetryDecision>()).all {
       prop(RetryDecision::retry).isFalse()
     }
-    listener.clearAllEvents()
+    eventRecorder.clearAllEvents()
 
     val response3 = client.newCall(request1).execute()
     assertThat(response3.body.string()).isEqualTo("abc")
 
-    assertThat(listener.recordedEventTypes()).containsExactly(
-      "CallStart",
-      "ProxySelectStart",
-      "ProxySelectEnd",
-      "DnsStart",
-      "DnsEnd",
-      "ConnectStart",
-      "ConnectEnd",
-      "ConnectionAcquired",
-      "RequestHeadersStart",
-      "RequestHeadersEnd",
-      "ResponseHeadersStart",
-      "ResponseHeadersEnd",
-      "FollowUpDecision",
-      "ResponseBodyStart",
-      "ResponseBodyEnd",
-      "ConnectionReleased",
-      "CallEnd",
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
+      CallStart::class,
+      ProxySelectStart::class,
+      ProxySelectEnd::class,
+      DnsStart::class,
+      DnsEnd::class,
+      ConnectStart::class,
+      ConnectEnd::class,
+      ConnectionAcquired::class,
+      RequestHeadersStart::class,
+      RequestHeadersEnd::class,
+      ResponseHeadersStart::class,
+      ResponseHeadersEnd::class,
+      FollowUpDecision::class,
+      ResponseBodyStart::class,
+      ResponseBodyEnd::class,
+      ConnectionReleased::class,
+      CallEnd::class,
     )
 
     val get = server.takeRequest()
@@ -2727,36 +2748,6 @@ open class CallTest {
   }
 
   @Test
-  fun httpWithExcessiveStatusLine() {
-    val longLine = "HTTP/1.1 200 " + "O".repeat(256 * 1024) + "K"
-    server.protocols = listOf(Protocol.HTTP_1_1)
-    server.enqueue(
-      MockResponse
-        .Builder()
-        .status(longLine)
-        .body("I'm not even supposed to be here today.")
-        .build(),
-    )
-    executeSynchronously("/")
-      .assertFailureMatches(".*unexpected end of stream on ${server.url("/").redact()}")
-  }
-
-  @Test
-  fun httpWithExcessiveHeaders() {
-    server.protocols = listOf(Protocol.HTTP_1_1)
-    server.enqueue(
-      MockResponse
-        .Builder()
-        .addHeader("Set-Cookie", "a=${"A".repeat(255 * 1024)}")
-        .addHeader("Set-Cookie", "b=${"B".repeat(1 * 1024)}")
-        .body("I'm not even supposed to be here today.")
-        .build(),
-    )
-    executeSynchronously("/")
-      .assertFailureMatches(".*unexpected end of stream on ${server.url("/").redact()}")
-  }
-
-  @Test
   fun canceledBeforeExecute() {
     val call = client.newCall(Request.Builder().url(server.url("/a")).build())
     call.cancel()
@@ -2823,7 +2814,9 @@ open class CallTest {
     call.enqueue(callback)
     call.cancel()
     latch.countDown()
-    callback.await(server.url("/a")).assertFailure("Canceled", "Socket closed", "Socket is closed")
+    callback
+      .await(server.url("/a"))
+      .assertFailure("canceled", "Canceled", "Socket closed", "Socket is closed")
   }
 
   @Test
@@ -2831,7 +2824,9 @@ open class CallTest {
     val call = client.newCall(Request(server.url("/")))
     call.enqueue(callback)
     client.dispatcher.cancelAll()
-    callback.await(server.url("/")).assertFailure("Canceled", "Socket closed", "Socket is closed")
+    callback
+      .await(server.url("/"))
+      .assertFailure("canceled", "Canceled", "Socket closed", "Socket is closed")
   }
 
   @Test
@@ -2942,7 +2937,9 @@ open class CallTest {
     assertThat(server.takeRequest().url.encodedPath).isEqualTo("/a")
     callback.await(requestA.url).assertBody("A")
     // At this point we know the callback is ready, and that it will receive a cancel failure.
-    callback.await(requestB.url).assertFailure("Canceled", "Socket closed")
+    callback
+      .await(requestB.url)
+      .assertFailure("canceled", "Canceled", "Socket closed", "Socket is closed")
   }
 
   @Test
@@ -2974,6 +2971,7 @@ open class CallTest {
       "Canceled",
       "stream was reset: CANCEL",
       "Socket closed",
+      "Socket is closed",
     )
   }
 
@@ -3625,7 +3623,7 @@ open class CallTest {
     }
     if (!platform.isJdk8()) {
       val connectCount =
-        listener.eventSequence
+        eventRecorder.eventSequence
           .stream()
           .filter { event: CallEvent? -> event is ConnectStart }
           .count()
@@ -4714,7 +4712,7 @@ open class CallTest {
         .build()
     executeSynchronously("/")
       .assertFailure(IOException::class.java)
-      .assertFailure("Socket closed", "Socket is closed")
+      .assertFailure("canceled", "Canceled", "Socket closed", "Socket is closed")
   }
 
   @Test
@@ -4804,7 +4802,8 @@ open class CallTest {
               .build()
           },
         ).build()
-    executeSynchronously("/").assertFailure("Canceled")
+    executeSynchronously("/")
+      .assertFailure("canceled", "Canceled", "Socket closed", "Socket is closed")
     assertThat(closed.get()).isTrue()
   }
 

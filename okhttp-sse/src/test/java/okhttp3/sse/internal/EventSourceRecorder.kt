@@ -67,7 +67,7 @@ class EventSourceRecorder : EventSourceListener() {
     response: Response?,
   ) {
     get().log("[ES] onFailure", Platform.INFO, t)
-    events.add(Failure(t, response))
+    events.add(Failure(t, response, t?.message ?: response?.body?.string()))
     drainCancelQueue(eventSource)
   }
 
@@ -103,10 +103,16 @@ class EventSourceRecorder : EventSourceListener() {
     nextEvent() as Closed
   }
 
-  fun assertFailure(message: String?) {
+  fun assertFailure(
+    message: String?,
+    code: Int? = null,
+  ) {
     val event = nextEvent() as Failure
+    if (code != null) {
+      assertThat(event.response?.code).isEqualTo(code)
+    }
     if (message != null) {
-      assertThat(event.t!!.message).isEqualTo(message)
+      assertThat(event.message).isEqualTo(message)
     } else {
       assertThat(event.t).isNull()
     }
@@ -120,6 +126,7 @@ class EventSourceRecorder : EventSourceListener() {
   internal data class Failure(
     val t: Throwable?,
     val response: Response?,
+    val message: String?,
   )
 
   internal object Closed

@@ -70,6 +70,12 @@ abstract class BaseOkHttpClientUnitTest {
     }
   }
 
+  @Test
+  open fun testPublicSuffixDb() {
+    val httpUrl = "https://www.google.co.uk".toHttpUrl()
+    assertThat(httpUrl.topPrivateDomain()).isEqualTo("google.co.uk")
+  }
+
   private fun assumeNetwork() {
     try {
       InetAddress.getByName("www.google.com")

@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import kotlin.reflect.KClass
 import okio.IOException
 import okio.Timeout
 
@@ -88,8 +89,94 @@ interface Call : Cloneable {
   fun timeout(): Timeout
 
   /**
+   * Configure this call to publish all future events to [eventListener], in addition to the
+   * listeners configured by [OkHttpClient.Builder.eventListener] and other calls to this function.
+   *
+   * If this call is later [cloned][clone], [eventListener] will not be notified of its events.
+   *
+   * There is no mechanism to remove an event listener. Implementations should instead ignore events
+   * that they are not interested in.
+   *
+   * @see EventListener for semantics and restrictions on listener implementations.
+   */
+  fun addEventListener(eventListener: EventListener)
+
+  /**
+   * Returns the tag attached with [type] as a key, or null if no tag is attached with that key.
+   *
+   * The tags on a call are seeded from the [request tags][Request.tag]. This set will grow if new
+   * tags are computed.
+   */
+  fun <T : Any> tag(type: KClass<T>): T?
+
+  /**
+   * Returns the tag attached with [type] as a key, or null if no tag is attached with that key.
+   *
+   * The tags on a call are seeded from the [request tags][Request.tag]. This set will grow if new
+   * tags are computed.
+   */
+  fun <T> tag(type: Class<out T>): T?
+
+  /**
+   * Returns the tag attached with [type] as a key. If it is absent, then [computeIfAbsent] is
+   * called and that value is both inserted and returned.
+   *
+   * If multiple calls to this function are made concurrently with the same [type], multiple values
+   * may be computed. But only one value will be inserted, and that inserted value will be returned
+   * to all callers.
+   *
+   * If computing multiple values is problematic, use an appropriate concurrency mechanism in your
+   * [computeIfAbsent] implementation. No locks are held while calling this function.
+   */
+  fun <T : Any> tag(
+    type: KClass<T>,
+    computeIfAbsent: () -> T,
+  ): T
+
+  /**
+   * Returns the tag attached with [type] as a key. If it is absent, then [computeIfAbsent] is
+   * called and that value is both inserted and returned.
+   *
+   * If multiple calls to this function are made concurrently with the same [type], multiple values
+   * may be computed. But only one value will be inserted, and that inserted value will be returned
+   * to all callers.
+   *
+   * If computing multiple values is problematic, use an appropriate concurrency mechanism in your
+   * [computeIfAbsent] implementation. No locks are held while calling this function.
+   */
+  fun <T : Any> tag(
+    type: Class<T>,
+    computeIfAbsent: () -> T,
+  ): T
+
+  /**
    * Create a new, identical call to this one which can be enqueued or executed even if this call
    * has already been.
+   *
+   * The tags on the returned call will equal the tags as on [request]. Any tags that were computed
+   * for this call will not be included on the cloned call. If necessary you may manually copy over
+   * specific tags by re-computing them:
+   *
+   * ```kotlin
+   * val copy = original.clone()
+   *
+   * val myTag = original.tag(MyTag::class)
+   * if (myTag != null) {
+   *   copy.tag(MyTag::class) { myTag }
+   * }
+   * ```
+   *
+   * ```java
+   * Call copy = original.clone();
+   *
+   * MyTag myTag = original.tag(MyTag.class);
+   * if (myTag != null) {
+   *   copy.tag(MyTag.class, () -> myTag);
+   * }
+   * ```
+   *
+   * If any event listeners were installed on this call with [addEventListener], they will not be
+   * installed on this copy.
    */
   public override fun clone(): Call
 

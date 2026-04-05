@@ -23,6 +23,10 @@ import java.util.concurrent.TimeUnit
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.finishedAccessor
 
+/**
+ * A fake executor for testing that never executes anything! Instead, it just keeps track of what's
+ * been enqueued.
+ */
 internal class RecordingExecutor(
   private val dispatcherTest: DispatcherTest,
 ) : AbstractExecutorService() {

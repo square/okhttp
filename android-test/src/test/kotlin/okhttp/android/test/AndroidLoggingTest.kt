@@ -60,9 +60,16 @@ class AndroidLoggingTest {
 
     val logs = ShadowLog.getLogsForTag(AndroidPlatform.Tag)
     assertThat(logs.map { it.type }).containsOnly(Log.INFO)
-    assertThat(logs.map { it.msg }).containsExactly(
+    assertThat(
+      logs.map {
+        it.msg.replace(
+          "\\d+".toRegex(),
+          "",
+        )
+      },
+    ).containsExactly(
       "--> GET http://google.com/robots.txt",
-      "<-- HTTP FAILED: java.net.UnknownHostException: shortcircuit",
+      "<-- HTTP FAILED: java.net.UnknownHostException: shortcircuit. ${request.url} (ms)",
     )
     // We should consider if these logs should retain Exceptions
     assertThat(logs.last().throwable).isNull()

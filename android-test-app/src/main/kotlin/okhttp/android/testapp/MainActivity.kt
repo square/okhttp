@@ -29,7 +29,7 @@ import okhttp3.android.tracing.AndroidxTracingInterceptor
 import okhttp3.internal.platform.AndroidPlatform
 import okio.IOException
 
-class MainActivity : ComponentActivity() {
+open class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 

@@ -36,7 +36,28 @@ import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
+import okhttp3.CallEvent.CallEnd
+import okhttp3.CallEvent.CallStart
+import okhttp3.CallEvent.ConnectEnd
+import okhttp3.CallEvent.ConnectStart
+import okhttp3.CallEvent.ConnectionAcquired
+import okhttp3.CallEvent.ConnectionReleased
+import okhttp3.CallEvent.DnsEnd
+import okhttp3.CallEvent.DnsStart
 import okhttp3.CallEvent.FollowUpDecision
+import okhttp3.CallEvent.ProxySelectEnd
+import okhttp3.CallEvent.ProxySelectStart
+import okhttp3.CallEvent.RequestBodyEnd
+import okhttp3.CallEvent.RequestBodyStart
+import okhttp3.CallEvent.RequestFailed
+import okhttp3.CallEvent.RequestHeadersEnd
+import okhttp3.CallEvent.RequestHeadersStart
+import okhttp3.CallEvent.ResponseBodyEnd
+import okhttp3.CallEvent.ResponseBodyStart
+import okhttp3.CallEvent.ResponseHeadersEnd
+import okhttp3.CallEvent.ResponseHeadersStart
+import okhttp3.CallEvent.SecureConnectEnd
+import okhttp3.CallEvent.SecureConnectStart
 import okhttp3.Credentials.basic
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -67,12 +88,12 @@ class DuplexTest {
   @StartStop
   private val server = MockWebServer()
 
-  private var listener = RecordingEventListener()
+  private var eventRecorder = EventRecorder()
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client =
     clientTestRule
       .newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(listener))
+      .eventListenerFactory(clientTestRule.wrap(eventRecorder))
       .build()
   private val executorService = Executors.newScheduledThreadPool(1)
 
@@ -302,28 +323,28 @@ class DuplexTest {
       requestBody.close()
     }
     body.awaitSuccess()
-    assertThat(listener.recordedEventTypes()).containsExactly(
-      "CallStart",
-      "ProxySelectStart",
-      "ProxySelectEnd",
-      "DnsStart",
-      "DnsEnd",
-      "ConnectStart",
-      "SecureConnectStart",
-      "SecureConnectEnd",
-      "ConnectEnd",
-      "ConnectionAcquired",
-      "RequestHeadersStart",
-      "RequestHeadersEnd",
-      "RequestBodyStart",
-      "ResponseHeadersStart",
-      "ResponseHeadersEnd",
-      "FollowUpDecision",
-      "ResponseBodyStart",
-      "ResponseBodyEnd",
-      "RequestBodyEnd",
-      "ConnectionReleased",
-      "CallEnd",
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
+      CallStart::class,
+      ProxySelectStart::class,
+      ProxySelectEnd::class,
+      DnsStart::class,
+      DnsEnd::class,
+      ConnectStart::class,
+      SecureConnectStart::class,
+      SecureConnectEnd::class,
+      ConnectEnd::class,
+      ConnectionAcquired::class,
+      RequestHeadersStart::class,
+      RequestHeadersEnd::class,
+      RequestBodyStart::class,
+      ResponseHeadersStart::class,
+      ResponseHeadersEnd::class,
+      FollowUpDecision::class,
+      ResponseBodyStart::class,
+      ResponseBodyEnd::class,
+      RequestBodyEnd::class,
+      ConnectionReleased::class,
+      CallEnd::class,
     )
   }
 
@@ -374,26 +395,21 @@ class DuplexTest {
   fun duplexWithRedirect() {
     enableProtocol(Protocol.HTTP_2)
     val duplexResponseSent = CountDownLatch(1)
-    listener =
-      object : RecordingEventListener() {
-        override fun responseHeadersEnd(
+    val requestHeadersEndListener =
+      object : EventListener() {
+        override fun requestHeadersEnd(
           call: Call,
-          response: Response,
+          request: Request,
         ) {
-          try {
-            // Wait for the server to send the duplex response before acting on the 301 response
-            // and resetting the stream.
-            duplexResponseSent.await()
-          } catch (e: InterruptedException) {
-            throw AssertionError()
-          }
-          super.responseHeadersEnd(call, response)
+          // Wait for the server to send the duplex response before acting on the 301 response
+          // and resetting the stream.
+          duplexResponseSent.await()
         }
       }
     client =
       client
         .newBuilder()
-        .eventListener(listener)
+        .eventListener(eventRecorder.eventListener + requestHeadersEndListener)
         .build()
     val body =
       MockSocketHandler()
@@ -437,37 +453,37 @@ class DuplexTest {
         .isEqualTo("stream was reset: CANCEL")
     }
     body.awaitSuccess()
-    assertThat(listener.recordedEventTypes()).containsExactly(
-      "CallStart",
-      "ProxySelectStart",
-      "ProxySelectEnd",
-      "DnsStart",
-      "DnsEnd",
-      "ConnectStart",
-      "SecureConnectStart",
-      "SecureConnectEnd",
-      "ConnectEnd",
-      "ConnectionAcquired",
-      "RequestHeadersStart",
-      "RequestHeadersEnd",
-      "RequestBodyStart",
-      "ResponseHeadersStart",
-      "ResponseHeadersEnd",
-      "ResponseBodyStart",
-      "ResponseBodyEnd",
-      "FollowUpDecision",
-      "RequestHeadersStart",
-      "RequestHeadersEnd",
-      "ResponseHeadersStart",
-      "ResponseHeadersEnd",
-      "FollowUpDecision",
-      "ResponseBodyStart",
-      "ResponseBodyEnd",
-      "ConnectionReleased",
-      "CallEnd",
-      "RequestFailed",
+    assertThat(eventRecorder.recordedEventTypes()).containsExactly(
+      CallStart::class,
+      ProxySelectStart::class,
+      ProxySelectEnd::class,
+      DnsStart::class,
+      DnsEnd::class,
+      ConnectStart::class,
+      SecureConnectStart::class,
+      SecureConnectEnd::class,
+      ConnectEnd::class,
+      ConnectionAcquired::class,
+      RequestHeadersStart::class,
+      RequestHeadersEnd::class,
+      RequestBodyStart::class,
+      ResponseHeadersStart::class,
+      ResponseHeadersEnd::class,
+      ResponseBodyStart::class,
+      ResponseBodyEnd::class,
+      FollowUpDecision::class,
+      RequestHeadersStart::class,
+      RequestHeadersEnd::class,
+      ResponseHeadersStart::class,
+      ResponseHeadersEnd::class,
+      FollowUpDecision::class,
+      ResponseBodyStart::class,
+      ResponseBodyEnd::class,
+      ConnectionReleased::class,
+      CallEnd::class,
+      RequestFailed::class,
     )
-    assertThat(listener.findEvent<FollowUpDecision>()).all {
+    assertThat(eventRecorder.findEvent<FollowUpDecision>()).all {
       prop(FollowUpDecision::nextRequest).isNotNull()
     }
   }

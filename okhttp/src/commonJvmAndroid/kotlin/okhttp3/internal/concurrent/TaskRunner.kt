@@ -92,7 +92,11 @@ class TaskRunner(
           withLock {
             afterRun(task, -1L, false)
           }
-          throw thrown
+          if (thrown is InterruptedException) {
+            Thread.currentThread().interrupt()
+          } else {
+            throw thrown
+          }
         } finally {
           currentThread.name = oldName
         }

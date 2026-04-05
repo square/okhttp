@@ -15,6 +15,8 @@
  */
 package okhttp3
 
+import app.cash.burst.Burst
+import app.cash.burst.burstValues
 import assertk.assertThat
 import assertk.assertions.containsExactlyInAnyOrder
 import assertk.assertions.isEmpty
@@ -23,7 +25,6 @@ import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
-import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
 import okio.ByteString.Companion.toByteString
@@ -31,10 +32,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
 
+@Burst
 class SessionReuseTest {
   @JvmField @RegisterExtension
   var platform = PlatformRule()
@@ -59,10 +60,8 @@ class SessionReuseTest {
     platform.assumeNotBouncyCastle()
   }
 
-  @ParameterizedTest(name = "{displayName}({arguments})")
-  @ValueSource(strings = ["TLSv1.2", "TLSv1.3"])
-  @Flaky
-  fun testSessionReuse(tlsVersion: String) {
+  @Test
+  fun testSessionReuse(tlsVersion: String = burstValues("TLSv1.2", "TLSv1.3")) {
     if (tlsVersion == TlsVersion.TLS_1_3.javaName) {
       assumeTrue(PlatformVersion.majorVersion != 8)
     }

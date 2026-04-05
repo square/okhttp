@@ -1,5 +1,5 @@
 #!/bin/sh -e
 
-../gradlew -q --console plain nativeImage
+../gradlew -q --console plain nativeBuild
 
 ./build/graal/okcurl "$@"

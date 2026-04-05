@@ -48,7 +48,7 @@ class PublicSuffixListGenerator(
   val fileSystem: FileSystem = FileSystem.SYSTEM,
   val client: OkHttpClient = OkHttpClient(),
 ) {
-  private val testResources = projectRoot / "okhttp/src/test/resources"
+  private val testResources = projectRoot / "okhttp/src/jvmTest/resources"
   private val publicSuffixListDotDat = testResources / "okhttp3/internal/publicsuffix/public_suffix_list.dat"
   private val outputFile = testResources / PUBLIC_SUFFIX_RESOURCE
 

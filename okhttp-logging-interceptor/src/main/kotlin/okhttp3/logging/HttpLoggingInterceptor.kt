@@ -25,10 +25,11 @@ import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
+import okhttp3.internal.UnreadableResponseBody
 import okhttp3.internal.charsetOrUtf8
 import okhttp3.internal.http.promisesBody
+import okhttp3.internal.isProbablyUtf8
 import okhttp3.internal.platform.Platform
-import okhttp3.logging.internal.isProbablyUtf8
 import okio.Buffer
 import okio.GzipSource
 
@@ -229,7 +230,7 @@ class HttpLoggingInterceptor
           val charset: Charset = requestBody.contentType().charsetOrUtf8()
 
           logger.log("")
-          if (!buffer.isProbablyUtf8()) {
+          if (!buffer.isProbablyUtf8(16L)) {
             logger.log(
               "--> END ${request.method} (binary ${requestBody.contentLength()}-byte body omitted)",
             )
@@ -247,7 +248,13 @@ class HttpLoggingInterceptor
       try {
         response = chain.proceed(request)
       } catch (e: Exception) {
-        logger.log("<-- HTTP FAILED: $e")
+        val tookMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
+        logger.log(
+          buildString {
+            append("<-- HTTP FAILED: $e.")
+            append(" ${redactUrl(request.url)} (${tookMs}ms)")
+          },
+        )
         throw e
       }
 
@@ -278,6 +285,8 @@ class HttpLoggingInterceptor
           logger.log("<-- END HTTP (encoded body omitted)")
         } else if (bodyIsStreaming(response)) {
           logger.log("<-- END HTTP (streaming)")
+        } else if (responseBody is UnreadableResponseBody) {
+          logger.log("<-- END HTTP (unreadable body)")
         } else {
           val source = responseBody.source()
           source.request(Long.MAX_VALUE) // Buffer the entire body.
@@ -297,7 +306,7 @@ class HttpLoggingInterceptor
 
           val charset: Charset = responseBody.contentType().charsetOrUtf8()
 
-          if (!buffer.isProbablyUtf8()) {
+          if (!buffer.isProbablyUtf8(16L)) {
             logger.log("")
             logger.log("<-- END HTTP (${totalMs}ms, binary ${buffer.size}-byte body omitted)")
             return response

@@ -35,6 +35,7 @@ import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import java.util.stream.Stream
 import javax.net.ssl.HostnameVerifier
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
@@ -45,6 +46,7 @@ import mockwebserver3.junit5.StartStop
 import okhttp3.Cache.Companion.key
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.cacheGet
@@ -52,6 +54,7 @@ import okhttp3.internal.platform.Platform.Companion.get
 import okhttp3.java.net.cookiejar.JavaNetCookieJar
 import okhttp3.testing.PlatformRule
 import okio.Buffer
+import okio.BufferedSink
 import okio.FileSystem
 import okio.ForwardingFileSystem
 import okio.GzipSink
@@ -104,7 +107,9 @@ class CacheTest {
   @AfterEach
   fun tearDown() {
     ResponseCache.setDefault(null)
-    cache.delete()
+    if (this::cache.isInitialized) {
+      cache.delete()
+    }
   }
 
   /**
@@ -173,6 +178,7 @@ class CacheTest {
   private fun assertCached(
     shouldWriteToCache: Boolean,
     responseCode: Int,
+    method: String = "GET",
   ) {
     var expectedResponseCode = responseCode
     val server = MockWebServer()
@@ -216,6 +222,7 @@ class CacheTest {
       Request
         .Builder()
         .url(server.url("/"))
+        .method(method, null)
         .build()
     val response = client.newCall(request).execute()
     assertThat(response.code).isEqualTo(expectedResponseCode)
@@ -415,6 +422,134 @@ class CacheTest {
       .close()
   }
 
+  /**
+   * A network interceptor strips the handshake from a real HTTPS response before the
+   * CacheInterceptor writes it to disk. This creates the bug condition: url.isHttps=true
+   * but handshake=null. Before the fix, `handshake!!` in writeTo() threw NPE.
+   *
+   * https://github.com/square/okhttp/issues/8962
+   */
+  @Test
+  fun httpsResponseWithNullHandshakeDoesNotCrashWriteTo() {
+    server.useHttps(handshakeCertificates.sslSocketFactory())
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .body("secure content")
+        .addHeader("Cache-Control", "max-age=3600")
+        .build(),
+    )
+
+    client =
+      client
+        .newBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        ).hostnameVerifier(NULL_HOSTNAME_VERIFIER)
+        .addNetworkInterceptor { chain ->
+          chain
+            .proceed(chain.request())
+            .newBuilder()
+            .handshake(null)
+            .build()
+        }.build()
+
+    val response = client.newCall(Request(server.url("/"))).execute()
+    assertThat(response.code).isEqualTo(200)
+    assertThat(response.body.string()).isEqualTo("secure content")
+  }
+
+  /**
+   * Verifies the null-handshake fix holds across multiple sequential cache writes, confirming
+   * it is not a one-time race condition.
+   *
+   * https://github.com/square/okhttp/issues/8962
+   */
+  @Test
+  fun multipleHttpsRequestsWithNullHandshakeAllSucceed() {
+    server.useHttps(handshakeCertificates.sslSocketFactory())
+    repeat(3) {
+      server.enqueue(
+        MockResponse
+          .Builder()
+          .body("response $it")
+          .addHeader("Cache-Control", "max-age=3600")
+          .build(),
+      )
+    }
+
+    client =
+      client
+        .newBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        ).hostnameVerifier(NULL_HOSTNAME_VERIFIER)
+        .addNetworkInterceptor { chain ->
+          chain
+            .proceed(chain.request())
+            .newBuilder()
+            .handshake(null)
+            .build()
+        }.build()
+
+    repeat(3) { i ->
+      val response = client.newCall(Request(server.url("/path$i"))).execute()
+      assertThat(response.code).isEqualTo(200)
+      assertThat(response.body.string()).isEqualTo("response $i")
+    }
+  }
+
+  /**
+   * When handshake is null for an HTTPS URL, the TLS block is skipped making the entry
+   * unreadable on re-read. The response should still succeed but won't be served from cache
+   * on subsequent requests.
+   *
+   * https://github.com/square/okhttp/issues/8962
+   */
+  @Test
+  fun httpsResponseWithNullHandshakeIsNotServedFromCache() {
+    server.useHttps(handshakeCertificates.sslSocketFactory())
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .body("first")
+        .addHeader("Cache-Control", "max-age=3600")
+        .build(),
+    )
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .body("second")
+        .addHeader("Cache-Control", "max-age=3600")
+        .build(),
+    )
+
+    client =
+      client
+        .newBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager,
+        ).hostnameVerifier(NULL_HOSTNAME_VERIFIER)
+        .addNetworkInterceptor { chain ->
+          chain
+            .proceed(chain.request())
+            .newBuilder()
+            .handshake(null)
+            .build()
+        }.build()
+
+    val response1 = client.newCall(Request(server.url("/"))).execute()
+    assertThat(response1.body.string()).isEqualTo("first")
+
+    // Second request hits the network again because the first entry was not cacheable
+    val response2 = client.newCall(Request(server.url("/"))).execute()
+    assertThat(response2.body.string()).isEqualTo("second")
+    assertThat(response2.cacheResponse).isNull()
+  }
+
   @Test
   fun responseCachingAndRedirects() {
     server.enqueue(
@@ -498,6 +633,176 @@ class CacheTest {
     assertThat(recordedRequest3.connectionIndex).isEqualTo(0)
     assertThat(recordedRequest3.exchangeIndex).isEqualTo(2)
   }
+
+  @Test
+  fun getAndQueryRedirectToCachedResultIndependently() {
+    // GET responses
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("ABC")
+        .build(),
+    )
+    // QUERY responses
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("DEF")
+        .build(),
+    )
+
+    val requestGet1 =
+      Request
+        .Builder()
+        .url(server.url("/foo"))
+        .get()
+        .build()
+    val response1 = client.newCall(requestGet1).execute()
+    assertThat(response1.body.string()).isEqualTo("ABC")
+    val recordedRequest1 = server.takeRequest()
+    assertThat(recordedRequest1.requestLine).isEqualTo("GET /foo HTTP/1.1")
+
+    val requestQuery1 =
+      Request
+        .Builder()
+        .url(server.url("/foo"))
+        .query(RequestBody.EMPTY)
+        .build()
+    val response2 = client.newCall(requestQuery1).execute()
+    assertThat(response2.body.string()).isEqualTo("DEF")
+    val recordedRequest2 = server.takeRequest()
+    assertThat(recordedRequest2.requestLine).isEqualTo("QUERY /foo HTTP/1.1")
+  }
+
+  @Test
+  fun queryRequestsCacheTheBodyWithCacheUrlOverride() {
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("ABC")
+        .build(),
+    )
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("DEF")
+        .build(),
+    )
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("DEFa")
+        .build(),
+    )
+
+    val url = server.url("/same")
+
+    // First QUERY request with body "foo"
+    val request1 =
+      Request
+        .Builder()
+        .url(url)
+        .query("foo".toRequestBody())
+        .cacheUrlOverride(url.newBuilder().addQueryParameter("body", "foo").build())
+        .build()
+    val response1 = client.newCall(request1).execute()
+    assertThat(response1.body.string()).isEqualTo("ABC")
+
+    // Second QUERY request with body "bar"
+    val request2 =
+      Request
+        .Builder()
+        .url(url)
+        .query("bar".toRequestBody())
+        .cacheUrlOverride(url.newBuilder().addQueryParameter("body", "bar").build())
+        .build()
+    val response2 = client.newCall(request2).execute()
+    assertThat(response2.body.string()).isEqualTo("DEF")
+
+    // Third QUERY request with body "bar" but not cached
+    val request3 =
+      Request
+        .Builder()
+        .url(url)
+        .query("bar".toRequestBody())
+        .build()
+    val response3 = client.newCall(request3).execute()
+    assertThat(response3.body.string()).isEqualTo("DEFa")
+
+    // Fourth QUERY request with body "foo" again, should be cached and return "ABC"
+    val response1a = client.newCall(request1).execute()
+    assertThat(response1a.body.string()).isEqualTo("ABC")
+
+    // Fifth QUERY request with body "bar" again, should be cached and return "DEF"
+    val response2a = client.newCall(request2).execute()
+    assertThat(response2a.body.string()).isEqualTo("DEF")
+  }
+
+  @Test
+  fun oneshotBodyIsNotCachedForQueryRequest() {
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("ABC1")
+        .build(),
+    )
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .addHeader("Cache-Control: max-age=60")
+        .body("ABC2")
+        .build(),
+    )
+
+    val url = server.url("/same")
+
+    // QUERY request with body "foo"
+    val body = "foo"
+
+    val request1 =
+      Request
+        .Builder()
+        .url(url)
+        .query(body.toOneShotRequestBody())
+        .build()
+    val response1 = client.newCall(request1).execute()
+    assertThat(response1.body.string()).isEqualTo("ABC1")
+
+    // QUERY request with body "foo" again, should not be cached
+    val request2 =
+      Request
+        .Builder()
+        .url(url)
+        .query(body.toOneShotRequestBody())
+        .build()
+    val response2 = client.newCall(request2).execute()
+    assertThat(response2.body.string()).isEqualTo("ABC2")
+
+    // Check that the cache did not store the response
+    assertThat(cache.requestCount()).isEqualTo(2)
+    assertThat(cache.hitCount()).isEqualTo(0)
+  }
+
+  private fun String.toOneShotRequestBody(): RequestBody =
+    object : RequestBody() {
+      val internalBody = Stream.of(this)
+
+      override fun isOneShot(): Boolean = true
+
+      override fun contentType(): MediaType? = "application/text-plain".toMediaTypeOrNull()
+
+      override fun writeTo(sink: BufferedSink) {
+        internalBody.forEach { item ->
+          sink.writeUtf8(this@toOneShotRequestBody)
+        }
+      }
+    }
 
   @Test
   fun secureResponseCachingAndRedirects() {
@@ -1056,6 +1361,16 @@ class CacheTest {
   }
 
   @Test
+  fun requestMethodQueryIsCached() {
+    testRequestMethod("QUERY", false)
+  }
+
+  @Test
+  fun requestMethodQueryIsCachedWithOverride() {
+    testRequestMethod("QUERY", true, withOverride = true)
+  }
+
+  @Test
   fun requestMethodHeadIsNotCached() {
     // We could support this but choose not to for implementation simplicity
     testRequestMethod("HEAD", false)
@@ -1127,17 +1442,35 @@ class CacheTest {
     val response1 = client.newCall(request).execute()
     response1.body.close()
     assertThat(response1.header("X-Response-ID")).isEqualTo("1")
-    val response2 = get(url)
+    val response2 = client.newCall(request).execute()
     response2.body.close()
     if (expectCached) {
       assertThat(response2.header("X-Response-ID")).isEqualTo("1")
     } else {
       assertThat(response2.header("X-Response-ID")).isEqualTo("2")
     }
+    if (!expectCached) {
+      server.enqueue(
+        MockResponse
+          .Builder()
+          .addHeader("X-Response-ID: 3")
+          .build(),
+      )
+      val response3 = get(url)
+      response3.body.close()
+      assertThat(response3.header("X-Response-ID")).isEqualTo("3")
+    }
   }
 
   private fun requestBodyOrNull(requestMethod: String): RequestBody? =
-    if (requestMethod == "POST" || requestMethod == "PUT") "foo".toRequestBody("text/plain".toMediaType()) else null
+    if (requestMethod == "POST" ||
+      requestMethod == "PUT" ||
+      requestMethod == "QUERY"
+    ) {
+      "foo".toRequestBody("text/plain".toMediaType())
+    } else {
+      null
+    }
 
   @Test
   fun postInvalidatesCache() {
@@ -2967,6 +3300,7 @@ class CacheTest {
         .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build(),
     )
+    addFinalFailingResponse()
     val url = server.url("/")
     val urlKey = key(url)
     val entryMetadata =
@@ -3002,7 +3336,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.0", entryMetadata)
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3017,6 +3351,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   /** Exercise the cache format in OkHttp 2.7 and all earlier releases.  */
   @Test
   fun testGoldenCacheHttpsResponseOkHttp27() {
+    addFinalFailingResponse()
+
     val url = server.url("/")
     val urlKey = key(url)
     val prefix = get().getPrefix()
@@ -3052,7 +3388,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3066,6 +3402,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
   /** The TLS version is present in OkHttp 3.0 and beyond.  */
   @Test
   fun testGoldenCacheHttpsResponseOkHttp30() {
+    addFinalFailingResponse()
+
     val url = server.url("/")
     val urlKey = key(url)
     val prefix = get().getPrefix()
@@ -3106,7 +3444,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3119,6 +3457,8 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
 
   @Test
   fun testGoldenCacheHttpResponseOkHttp30() {
+    addFinalFailingResponse()
+
     val url = server.url("/")
     val urlKey = key(url)
     val prefix = get().getPrefix()
@@ -3152,7 +3492,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     writeFile(cache.directoryPath, "$urlKey.1", entryBody)
     writeFile(cache.directoryPath, "journal", journalBody)
     cache.close()
-    cache = Cache(fileSystem, cache.directory.path.toPath(), Int.MAX_VALUE.toLong())
+    cache = Cache(fileSystem, cache.directoryPath, Int.MAX_VALUE.toLong())
     client =
       client
         .newBuilder()
@@ -3161,6 +3501,12 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     val response = get(url)
     assertThat(response.body.string()).isEqualTo(entryBody)
     assertThat(response.header("Content-Length")).isEqualTo("3")
+  }
+
+  private fun addFinalFailingResponse() {
+    // Should not get to this response, so fail if so.
+    // Avoids timeout on error
+    server.enqueue(MockResponse(code = 420, body = "Enhance Your Calm"))
   }
 
   @Test
@@ -3620,7 +3966,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     file: String,
     content: String,
   ) {
-    val sink = fileSystem.sink(directory.div(file)).buffer()
+    val sink = fileSystem.sink(directory / file).buffer()
     sink.writeUtf8(content)
     sink.close()
   }

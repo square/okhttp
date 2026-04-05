@@ -655,6 +655,28 @@ class MockWebServerTest {
   }
 
   @Test
+  fun http100ContinueChunkedStreaming() {
+    server.enqueue(
+      MockResponse
+        .Builder()
+        .body("response")
+        .add100Continue()
+        .build(),
+    )
+    val url = server.url("/").toUrl()
+    val connection = url.openConnection() as HttpURLConnection
+    connection.doOutput = true
+    connection.setRequestProperty("Expect", "100-Continue")
+    connection.setChunkedStreamingMode(0)
+    connection.outputStream.write("request".toByteArray(UTF_8))
+    val inputStream = connection.inputStream
+    val reader = BufferedReader(InputStreamReader(inputStream, UTF_8))
+    assertThat(reader.readLine()).isEqualTo("response")
+    val request = server.takeRequest()
+    assertThat(request.body?.utf8()).isEqualTo("request")
+  }
+
+  @Test
   fun multiple1xxResponses() {
     server.enqueue(
       MockResponse

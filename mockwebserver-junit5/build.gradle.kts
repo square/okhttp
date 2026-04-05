@@ -1,26 +1,15 @@
-import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinJvm
-
 plugins {
   kotlin("jvm")
-  id("org.jetbrains.dokka")
-  id("com.vanniktech.maven.publish.base")
-  id("binary-compatibility-validator")
+  id("okhttp.publish-conventions")
+  id("okhttp.jvm-conventions")
+  id("okhttp.quality-conventions")
+  id("okhttp.testing-conventions")
 }
 
-tasks {
-  jar {
-    manifest {
-      attributes("Automatic-Module-Name" to "mockwebserver3.junit5")
-    }
-  }
-  test {
-    useJUnitPlatform()
-  }
-}
+project.applyJavaModules("mockwebserver3.junit5")
 
 dependencies {
-  api(projects.okhttp)
+  "friendsApi"(projects.okhttp)
   api(projects.mockwebserver3)
   api(libs.junit.jupiter.api)
   compileOnly(libs.animalsniffer.annotations)
@@ -29,8 +18,4 @@ dependencies {
   testImplementation(libs.kotlin.junit5)
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(libs.assertk)
-}
-
-mavenPublishing {
-  configure(KotlinJvm(javadocJar = JavadocJar.Empty()))
 }

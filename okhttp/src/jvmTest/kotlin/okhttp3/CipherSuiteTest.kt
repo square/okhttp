@@ -18,7 +18,7 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
-import assertk.assertions.isSameAs
+import assertk.assertions.isSameInstanceAs
 import okhttp3.CipherSuite.Companion.forJavaName
 import okhttp3.internal.applyConnectionSpec
 import org.junit.jupiter.api.Assertions.assertArrayEquals
@@ -43,9 +43,11 @@ class CipherSuiteTest {
   @Test
   fun instancesAreInterned() {
     assertThat(forJavaName("TestCipherSuite"))
-      .isSameAs(forJavaName("TestCipherSuite"))
+      .isSameInstanceAs(forJavaName("TestCipherSuite"))
     assertThat(forJavaName(CipherSuite.TLS_KRB5_WITH_DES_CBC_MD5.javaName))
-      .isSameAs(CipherSuite.TLS_KRB5_WITH_DES_CBC_MD5)
+      .isSameInstanceAs(
+        CipherSuite.TLS_KRB5_WITH_DES_CBC_MD5,
+      )
   }
 
   /**
@@ -58,7 +60,7 @@ class CipherSuiteTest {
     val cs = forJavaName("FakeCipherSuite_instancesAreInterned")
     System.gc() // Unless cs references the String instance, it may now be garbage collected.
     assertThat(forJavaName(java.lang.String(cs.javaName) as String))
-      .isSameAs(cs)
+      .isSameInstanceAs(cs)
   }
 
   @Test

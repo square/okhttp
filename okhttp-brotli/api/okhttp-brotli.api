@@ -1,5 +1,10 @@
-public final class okhttp3/brotli/BrotliInterceptor : okhttp3/Interceptor {
+public final class okhttp3/brotli/Brotli : okhttp3/CompressionInterceptor$DecompressionAlgorithm {
+	public static final field INSTANCE Lokhttp3/brotli/Brotli;
+	public fun decompress (Lokio/BufferedSource;)Lokio/Source;
+	public fun getEncoding ()Ljava/lang/String;
+}
+
+public final class okhttp3/brotli/BrotliInterceptor : okhttp3/CompressionInterceptor {
 	public static final field INSTANCE Lokhttp3/brotli/BrotliInterceptor;
-	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
 }
 

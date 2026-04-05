@@ -15,6 +15,31 @@
  */
 package okhttp.android.testapp
 
+import android.annotation.SuppressLint
 import android.app.Application
+import android.os.Build
+import okhttp3.OkHttp
 
-class TestApplication : Application()
+class TestApplication : Application() {
+  override fun onCreate() {
+    super.onCreate()
+
+    if (isSecondaryProcess()) {
+      OkHttp.initialize(applicationContext)
+    }
+  }
+
+  private fun isSecondaryProcess(): Boolean = getProcess() != packageName
+
+  @SuppressLint("DiscouragedPrivateApi")
+  private fun getProcess(): String? =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      getProcessName()
+    } else {
+      Class
+        .forName("android.app.ActivityThread")
+        .getDeclaredMethod("currentProcessName")
+        .apply { isAccessible = true }
+        .invoke(null) as String
+    }
+}

@@ -21,12 +21,14 @@ import android.os.Build
 import android.os.StrictMode
 import android.security.NetworkSecurityPolicy
 import android.util.CloseGuard
+import android.util.Log
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
+import okhttp3.internal.platform.AndroidPlatform.Companion.Tag
 import okhttp3.internal.platform.android.Android10SocketAdapter
 import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
 import okhttp3.internal.platform.android.AndroidSocketAdapter
@@ -109,6 +111,18 @@ class Android10Platform :
 
   override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
     AndroidCertificateChainCleaner.buildIfSupported(trustManager) ?: super.buildCertificateChainCleaner(trustManager)
+
+  override fun log(
+    message: String,
+    level: Int,
+    t: Throwable?,
+  ) {
+    if (level == WARN) {
+      Log.w(Tag, message, t)
+    } else {
+      Log.i(Tag, message, t)
+    }
+  }
 
   companion object {
     val isSupported: Boolean = isAndroid && Build.VERSION.SDK_INT >= 29

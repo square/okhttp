@@ -24,7 +24,10 @@ import okhttp3.internal.chooseCharset
 import okio.BufferedSink
 import okio.ByteString
 import okio.FileSystem
+import okio.HashingSink
 import okio.Path
+import okio.blackholeSink
+import okio.buffer
 import okio.source
 
 abstract class RequestBody {
@@ -94,6 +97,18 @@ abstract class RequestBody {
    *  * A misdirected request (HTTP 421) on a coalesced connection.
    */
   open fun isOneShot(): Boolean = false
+
+  /**
+   * Returns the SHA-256 hash of this [RequestBody]
+   */
+  @Throws(IOException::class)
+  fun sha256(): ByteString {
+    val hashingSink = HashingSink.sha256(blackholeSink())
+    hashingSink.buffer().use {
+      this.writeTo(it)
+    }
+    return hashingSink.hash
+  }
 
   companion object {
     /** Empty request body with no content-type. */

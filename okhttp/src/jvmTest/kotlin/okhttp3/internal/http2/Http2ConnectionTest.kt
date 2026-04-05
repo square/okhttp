@@ -43,6 +43,7 @@ import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.concurrent.notifyAll
 import okhttp3.internal.concurrent.wait
 import okhttp3.internal.concurrent.withLock
+import okhttp3.internal.connection.asBufferedSocket
 import okio.AsyncTimeout
 import okio.Buffer
 import okio.BufferedSource
@@ -497,7 +498,7 @@ class Http2ConnectionTest {
     val connection =
       Http2Connection
         .Builder(true, TaskRunner.INSTANCE)
-        .socket(socket)
+        .socket(socket.asBufferedSocket(), "peer")
         .pushObserver(IGNORE)
         .build()
     connection.start(sendConnectionPreface = false)
@@ -1890,7 +1891,7 @@ class Http2ConnectionTest {
     val connection =
       Http2Connection
         .Builder(true, TaskRunner.INSTANCE)
-        .socket(peer.openSocket())
+        .socket(peer.openSocket().asBufferedSocket(), "peer")
         .build()
     connection.start(sendConnectionPreface = false)
     val stream = connection.newStream(headerEntries("b", "banana"), false)
@@ -1912,11 +1913,10 @@ class Http2ConnectionTest {
     peer.acceptFrame() // SYN_STREAM.
     peer.play()
     val taskRunner = taskFaker.taskRunner
-    val socket = peer.openSocket()
     val connection =
       Http2Connection
         .Builder(true, taskRunner)
-        .socket(socket)
+        .socket(peer.openSocket().asBufferedSocket(), "peer")
         .pushObserver(IGNORE)
         .build()
     connection.start(sendConnectionPreface = false)
@@ -1972,7 +1972,7 @@ class Http2ConnectionTest {
     val connection =
       Http2Connection
         .Builder(true, TaskRunner.INSTANCE)
-        .socket(peer.openSocket())
+        .socket(peer.openSocket().asBufferedSocket(), "peer")
         .pushObserver(pushObserver)
         .listener(listener)
         .build()

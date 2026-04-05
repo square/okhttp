@@ -33,6 +33,7 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.readFieldOrNull
 import okhttp3.internal.tls.BasicCertificateChainCleaner
 import okhttp3.internal.tls.BasicTrustRootIndex
@@ -126,12 +127,13 @@ open class Platform {
   open fun getSelectedProtocol(sslSocket: SSLSocket): String? = null
 
   /** For MockWebServer. This returns the inbound SNI names. */
+  @Suppress("NewApi")
   @IgnoreJRERequirement // This function is overridden to require API >= 24.
   open fun getHandshakeServerNames(sslSocket: SSLSocket): List<String> {
     val session = sslSocket.session as? ExtendedSSLSession ?: return listOf()
     return try {
       session.requestedServerNames.mapNotNull { (it as? SNIHostName)?.asciiName }
-    } catch (uoe: UnsupportedOperationException) {
+    } catch (_: UnsupportedOperationException) {
       // UnsupportedOperationException – if the underlying provider does not implement the operation
       // https://github.com/bcgit/bc-java/issues/1773
       listOf()
@@ -165,7 +167,9 @@ open class Platform {
    */
   open fun getStackTraceForCloseable(closer: String): Any? =
     when {
-      logger.isLoggable(Level.FINE) -> Throwable(closer) // These are expensive to allocate.
+      logger.isLoggable(Level.FINE) -> Throwable(closer)
+
+      // These are expensive to allocate.
       else -> null
     }
 
@@ -212,6 +216,7 @@ open class Platform {
 
     fun resetForTests(platform: Platform = findPlatform()) {
       this.platform = platform
+      PublicSuffixDatabase.resetForTests()
     }
 
     fun alpnProtocolNames(protocols: List<Protocol>) = protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }

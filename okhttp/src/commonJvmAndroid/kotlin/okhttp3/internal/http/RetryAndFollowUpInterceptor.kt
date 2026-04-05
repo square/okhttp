@@ -48,9 +48,7 @@ import okhttp3.internal.withSuppressed
  * This interceptor recovers from failures and follows redirects as necessary. It may throw an
  * [IOException] if the call was canceled.
  */
-class RetryAndFollowUpInterceptor(
-  private val client: OkHttpClient,
-) : Interceptor {
+class RetryAndFollowUpInterceptor : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
     val realChain = chain as RealInterceptorChain
@@ -75,7 +73,7 @@ class RetryAndFollowUpInterceptor(
           newRoutePlanner = true
         } catch (e: IOException) {
           // An attempt to communicate with a server failed. The request may have been sent.
-          val isRecoverable = recover(e, call, request)
+          val isRecoverable = recover(e, call, chain, request)
           call.eventListener.retryDecision(call, e, isRecoverable)
           if (!isRecoverable) throw e.withSuppressed(recoveredFailures)
           recoveredFailures += e
@@ -92,7 +90,7 @@ class RetryAndFollowUpInterceptor(
             .build()
 
         val exchange = call.interceptorScopedExchange
-        val followUp = followUpRequest(response, exchange)
+        val followUp = followUpRequest(response, exchange, chain)
 
         if (followUp == null) {
           if (exchange != null && exchange.isDuplex) {
@@ -135,12 +133,13 @@ class RetryAndFollowUpInterceptor(
   private fun recover(
     e: IOException,
     call: RealCall,
+    chain: Interceptor.Chain,
     userRequest: Request,
   ): Boolean {
     val requestSendStarted = e !is ConnectionShutdownException
 
     // The application layer has forbidden retries.
-    if (!client.retryOnConnectionFailure) return false
+    if (!chain.retryOnConnectionFailure) return false
 
     // We can't send the request body again.
     if (requestSendStarted && requestIsOneShot(e, userRequest)) return false
@@ -207,6 +206,7 @@ class RetryAndFollowUpInterceptor(
   private fun followUpRequest(
     userResponse: Response,
     exchange: Exchange?,
+    chain: Interceptor.Chain,
   ): Request? {
     val route = exchange?.connection?.route()
     val responseCode = userResponse.code
@@ -218,20 +218,22 @@ class RetryAndFollowUpInterceptor(
         if (selectedProxy.type() != Proxy.Type.HTTP) {
           throw ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy")
         }
-        return client.proxyAuthenticator.authenticate(route, userResponse)
+        return chain.proxyAuthenticator.authenticate(route, userResponse)
       }
 
-      HTTP_UNAUTHORIZED -> return client.authenticator.authenticate(route, userResponse)
+      HTTP_UNAUTHORIZED -> {
+        return chain.authenticator.authenticate(route, userResponse)
+      }
 
       HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> {
-        return buildRedirectRequest(userResponse, method)
+        return buildRedirectRequest(userResponse, method, chain)
       }
 
       HTTP_CLIENT_TIMEOUT -> {
         // 408's are rare in practice, but some servers like HAProxy use this response code. The
         // spec says that we may repeat the request without modifications. Modern browsers also
         // repeat the request (even non-idempotent ones.)
-        if (!client.retryOnConnectionFailure) {
+        if (!chain.retryOnConnectionFailure) {
           // The application layer has directed us not to retry the request.
           return null
         }
@@ -285,16 +287,19 @@ class RetryAndFollowUpInterceptor(
         return userResponse.request
       }
 
-      else -> return null
+      else -> {
+        return null
+      }
     }
   }
 
   private fun buildRedirectRequest(
     userResponse: Response,
     method: String,
+    chain: Interceptor.Chain,
   ): Request? {
     // Does the client allow redirects?
-    if (!client.followRedirects) return null
+    if (!chain.followRedirects) return null
 
     val location = userResponse.header("Location") ?: return null
     // Don't follow redirects to unsupported protocols.
@@ -302,7 +307,7 @@ class RetryAndFollowUpInterceptor(
 
     // If configured, don't follow redirects between SSL and non-SSL.
     val sameScheme = url.scheme == userResponse.request.url.scheme
-    if (!sameScheme && !client.followSslRedirects) return null
+    if (!sameScheme && !chain.followSslRedirects) return null
 
     // Most redirects don't include a request body.
     val requestBuilder = userResponse.request.newBuilder()

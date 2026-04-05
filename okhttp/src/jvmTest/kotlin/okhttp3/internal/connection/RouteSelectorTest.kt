@@ -19,7 +19,7 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
-import assertk.assertions.isSameAs
+import assertk.assertions.isSameInstanceAs
 import assertk.assertions.isTrue
 import java.io.IOException
 import java.net.InetAddress
@@ -37,7 +37,6 @@ import okhttp3.Request
 import okhttp3.Route
 import okhttp3.TestValueFactory
 import okhttp3.internal.connection.RouteSelector.Companion.socketHost
-import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.testing.PlatformRule
 import org.junit.jupiter.api.AfterEach
@@ -387,8 +386,8 @@ class RouteSelectorTest {
     val routes = selection.routes
     assertRoute(routes[0], address, Proxy.NO_PROXY, dns.lookup(uriHost, 0), uriPort)
     assertRoute(routes[1], address, Proxy.NO_PROXY, dns.lookup(uriHost, 1), uriPort)
-    assertThat(selection.next()).isSameAs(routes[0])
-    assertThat(selection.next()).isSameAs(routes[1])
+    assertThat(selection.next()).isSameInstanceAs(routes[0])
+    assertThat(selection.next()).isSameInstanceAs(routes[1])
     assertThat(selection.hasNext()).isFalse()
     assertThat(routeSelector.hasNext()).isFalse()
   }
@@ -554,19 +553,7 @@ class RouteSelectorTest {
       address = address,
       routeDatabase = routeDatabase,
       fastFallback = fastFallback,
-      connectionUser = CallConnectionUser(call, ConnectionListener.NONE, newChain(call)),
-    )
-
-  private fun newChain(call: RealCall): RealInterceptorChain =
-    RealInterceptorChain(
       call = call,
-      interceptors = listOf(),
-      index = 0,
-      exchange = null,
-      request = call.request(),
-      connectTimeoutMillis = 10_000,
-      readTimeoutMillis = 10_000,
-      writeTimeoutMillis = 10_000,
     )
 
   companion object {

@@ -153,7 +153,7 @@ class PublicSuffixDatabase internal constructor(
 
     private const val EXCEPTION_MARKER = '!'
 
-    private val instance = PublicSuffixDatabase(PublicSuffixList.Default)
+    private var instance = PublicSuffixDatabase(PublicSuffixList.Default)
 
     fun get(): PublicSuffixDatabase = instance
 
@@ -243,6 +243,10 @@ class PublicSuffixDatabase internal constructor(
         }
       }
       return match
+    }
+
+    internal fun resetForTests() {
+      instance = PublicSuffixDatabase(PublicSuffixList.Default)
     }
   }
 }

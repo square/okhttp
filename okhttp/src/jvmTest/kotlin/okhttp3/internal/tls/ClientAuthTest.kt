@@ -38,9 +38,17 @@ import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
+import okhttp3.CallEvent.CallFailed
+import okhttp3.CallEvent.CallStart
+import okhttp3.CallEvent.ConnectStart
+import okhttp3.CallEvent.DnsEnd
+import okhttp3.CallEvent.DnsStart
+import okhttp3.CallEvent.ProxySelectEnd
+import okhttp3.CallEvent.ProxySelectStart
+import okhttp3.CallEvent.SecureConnectStart
+import okhttp3.EventRecorder
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
-import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.testing.Flaky
@@ -232,12 +240,15 @@ class ClientAuthTest {
         is SSLHandshakeException -> {
           // JDK 11+
         }
+
         is SSLException -> {
           // javax.net.ssl.SSLException: readRecord
         }
+
         is SocketException -> {
           // Conscrypt, JDK 8 (>= 292), JDK 9
         }
+
         else -> {
           assertThat(expected.message).isEqualTo("exhausted all routes")
         }
@@ -287,15 +298,19 @@ class ClientAuthTest {
         is SSLHandshakeException -> {
           // JDK 11+
         }
+
         is SSLException -> {
           // javax.net.ssl.SSLException: readRecord
         }
+
         is SocketException -> {
           // Conscrypt, JDK 8 (>= 292), JDK 9
         }
+
         is ConnectionShutdownException -> {
           // It didn't fail until it reached the application layer.
         }
+
         else -> {
           assertThat(expected.message).isEqualTo("exhausted all routes")
         }
@@ -321,11 +336,11 @@ class ClientAuthTest {
         .validityInterval(1, 2)
         .build()
     var client = buildClient(clientCert, clientIntermediateCa.certificate)
-    val listener = RecordingEventListener()
+    val eventRecorder = EventRecorder()
     client =
       client
         .newBuilder()
-        .eventListener(listener)
+        .eventListener(eventRecorder.eventListener)
         .build()
     val socketFactory = buildServerSslSocketFactory()
     server.useHttps(socketFactory)
@@ -346,17 +361,17 @@ class ClientAuthTest {
     // Gradle - JDK 11
     // CallStart, ProxySelectStart, ProxySelectEnd, DnsStart, DnsEnd, ConnectStart, SecureConnectStart,
     // SecureConnectEnd, ConnectFailed, CallFailed
-    val recordedEventTypes = listener.recordedEventTypes()
+    val recordedEventTypes = eventRecorder.recordedEventTypes()
     assertThat(recordedEventTypes).startsWith(
-      "CallStart",
-      "ProxySelectStart",
-      "ProxySelectEnd",
-      "DnsStart",
-      "DnsEnd",
-      "ConnectStart",
-      "SecureConnectStart",
+      CallStart::class,
+      ProxySelectStart::class,
+      ProxySelectEnd::class,
+      DnsStart::class,
+      DnsEnd::class,
+      ConnectStart::class,
+      SecureConnectStart::class,
     )
-    assertThat(recordedEventTypes).endsWith("CallFailed")
+    assertThat(recordedEventTypes).endsWith(CallFailed::class)
   }
 
   private fun buildClient(

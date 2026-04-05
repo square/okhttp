@@ -15,6 +15,8 @@
  */
 package okhttp3
 
+import app.cash.burst.Burst
+import app.cash.burst.burstValues
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
@@ -35,9 +37,8 @@ import okhttp3.internal.http.MAX_DATE
 import okhttp3.internal.parseCookie
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
 
+@Burst
 class CookieTest {
   val url = "https://example.com/".toHttpUrl()
 
@@ -613,9 +614,8 @@ class CookieTest {
     cookieBuilder.sameSite("a").build()
   }
 
-  @ParameterizedTest(name = "{displayName}({arguments})")
-  @ValueSource(strings = ["Lax", "Strict", "UnrecognizedButValid"])
-  fun builderSameSite(sameSite: String) {
+  @Test
+  fun builderSameSite(sameSite: String = burstValues("Lax", "Strict", "UnrecognizedButValid")) {
     val cookie =
       Cookie
         .Builder()

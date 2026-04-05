@@ -28,7 +28,7 @@ class FakeRoutePlanner(
   val taskFaker: TaskFaker = factory.taskFaker,
 ) : RoutePlanner,
   Closeable {
-  val pool = factory.newConnectionPool(routePlanner = this)
+  val pool = factory.newConnectionPool()
   val events = LinkedBlockingDeque<String>()
   var canceled = false
   var autoGeneratePlans = false
@@ -145,14 +145,17 @@ class FakeRoutePlanner(
           events += "plan $id TCP connect failed"
           ConnectResult(this, nextPlan = connectTcpNextPlan, throwable = tcpConnectThrowable)
         }
+
         canceled -> {
           events += "plan $id TCP connect canceled"
           ConnectResult(this, nextPlan = connectTcpNextPlan, throwable = IOException("canceled"))
         }
+
         connectTcpNextPlan != null -> {
           events += "plan $id needs follow-up"
           ConnectResult(this, nextPlan = connectTcpNextPlan)
         }
+
         else -> {
           events += "plan $id TCP connected"
           connectState = ConnectState.TCP_CONNECTED
@@ -172,14 +175,17 @@ class FakeRoutePlanner(
           events += "plan $id TLS connect failed"
           ConnectResult(this, nextPlan = connectTlsNextPlan, throwable = tlsConnectThrowable)
         }
+
         canceled -> {
           events += "plan $id TLS connect canceled"
           ConnectResult(this, nextPlan = connectTlsNextPlan, throwable = IOException("canceled"))
         }
+
         connectTlsNextPlan != null -> {
           events += "plan $id needs follow-up"
           ConnectResult(this, nextPlan = connectTlsNextPlan)
         }
+
         else -> {
           events += "plan $id TLS connected"
           connectState = ConnectState.TLS_CONNECTED

@@ -370,7 +370,9 @@ class DiskLruCache(
         // This work was already done by calling lruEntries.get().
       }
 
-      else -> throw IOException("unexpected journal line: $line")
+      else -> {
+        throw IOException("unexpected journal line: $line")
+      }
     }
   }
 

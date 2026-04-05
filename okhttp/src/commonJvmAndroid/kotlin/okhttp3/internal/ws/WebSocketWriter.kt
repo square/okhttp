@@ -18,6 +18,7 @@ package okhttp3.internal.ws
 import java.io.Closeable
 import java.io.IOException
 import java.util.Random
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_RSV1
 import okhttp3.internal.ws.WebSocketProtocol.B1_FLAG_MASK
@@ -178,11 +179,13 @@ class WebSocketWriter(
         b1 = b1 or dataSize.toInt()
         sinkBuffer.writeByte(b1)
       }
+
       dataSize <= PAYLOAD_SHORT_MAX -> {
         b1 = b1 or PAYLOAD_SHORT
         sinkBuffer.writeByte(b1)
         sinkBuffer.writeShort(dataSize.toInt())
       }
+
       else -> {
         b1 = b1 or PAYLOAD_LONG
         sinkBuffer.writeByte(b1)
@@ -203,10 +206,11 @@ class WebSocketWriter(
     }
 
     sinkBuffer.write(messageBuffer, dataSize)
-    sink.emit()
+    sink.flush()
   }
 
   override fun close() {
-    messageDeflater?.close()
+    messageDeflater?.closeQuietly()
+    sink.closeQuietly()
   }
 }

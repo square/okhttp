@@ -28,6 +28,7 @@ import okhttp3.internal.SuppressSignatureCheck
  *
  * This may also be used for Android tests with Robolectric.
  */
+@Suppress("NewApi")
 open class Jdk9Platform : Platform() {
   @SuppressSignatureCheck
   override fun configureTlsExtensions(
@@ -70,9 +71,11 @@ open class Jdk9Platform : Platform() {
 
   override fun newSSLContext(): SSLContext =
     when {
-      majorVersion != null && majorVersion >= 9 ->
+      majorVersion != null && majorVersion >= 9 -> {
         SSLContext.getInstance("TLS")
-      else ->
+      }
+
+      else -> {
         try {
           // Based on SSLSocket.getApplicationProtocol check we should
           // have TLSv1.3 if we request it.
@@ -81,6 +84,7 @@ open class Jdk9Platform : Platform() {
         } catch (nsae: NoSuchAlgorithmException) {
           SSLContext.getInstance("TLS")
         }
+      }
     }
 
   companion object {

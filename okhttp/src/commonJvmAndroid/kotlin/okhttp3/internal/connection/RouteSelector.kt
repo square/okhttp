@@ -21,7 +21,6 @@ import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.SocketException
 import java.net.UnknownHostException
-import java.util.NoSuchElementException
 import okhttp3.Address
 import okhttp3.HttpUrl
 import okhttp3.Route
@@ -33,10 +32,10 @@ import okhttp3.internal.toImmutableList
  * Selects routes to connect to an origin server. Each connection requires a choice of proxy server,
  * IP address, and TLS mode. Connections may also be recycled.
  */
-class RouteSelector(
+class RouteSelector internal constructor(
   private val address: Address,
   private val routeDatabase: RouteDatabase,
-  private val connectionUser: ConnectionUser,
+  private val call: RealCall,
   private val fastFallback: Boolean,
 ) {
   // State for negotiating the next proxy to use.
@@ -112,10 +111,10 @@ class RouteSelector(
       return proxiesOrNull.toImmutableList()
     }
 
-    connectionUser.proxySelectStart(url)
+    call.eventListener.proxySelectStart(call, url)
     proxies = selectProxies()
     nextProxyIndex = 0
-    connectionUser.proxySelectEnd(url, proxies)
+    call.eventListener.proxySelectEnd(call, url, proxies)
   }
 
   /** Returns true if there's another proxy to try. */
@@ -166,14 +165,14 @@ class RouteSelector(
         if (socketHost.canParseAsIpAddress()) {
           listOf(InetAddress.getByName(socketHost))
         } else {
-          connectionUser.dnsStart(socketHost)
+          call.eventListener.dnsStart(call, socketHost)
 
           val result = address.dns.lookup(socketHost)
           if (result.isEmpty()) {
             throw UnknownHostException("${address.dns} returned no addresses for $socketHost")
           }
 
-          connectionUser.dnsEnd(socketHost, result)
+          call.eventListener.dnsEnd(call, socketHost, result)
           result
         }
 
