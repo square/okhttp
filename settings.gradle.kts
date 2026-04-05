@@ -6,6 +6,7 @@ pluginManagement {
     mavenCentral()
     gradlePluginPortal()
     google()
+    maven { url = java.net.URI.create("https://central.sonatype.com/repository/maven-snapshots/") }
   }
 }
 
@@ -15,6 +16,7 @@ dependencyResolutionManagement {
   repositories {
     mavenCentral()
     google()
+    maven { url = java.net.URI.create("https://central.sonatype.com/repository/maven-snapshots/") }
   }
 }
 

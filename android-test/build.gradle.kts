@@ -7,7 +7,9 @@ plugins {
 }
 
 android {
-  compileSdk = 36
+  compileSdk {
+    version = release(37)
+  }
 
   namespace = "okhttp.android.test"
 
@@ -38,10 +40,9 @@ android {
   }
 
   testOptions {
-    targetSdk = 34
+    targetSdk = 37
     unitTests.isIncludeAndroidResources = true
   }
-
 
   // issue merging due to conflict with httpclient and something else
   packagingOptions.resources.excludes += setOf(
@@ -59,6 +60,7 @@ dependencies {
   implementation(libs.playservices.safetynet)
   "friendsImplementation"(projects.okhttp)
   "friendsImplementation"(projects.okhttpDnsoverhttps)
+  implementation(libs.androidx.activity)
 
   testImplementation(projects.okhttp)
   testImplementation(libs.junit)
@@ -96,7 +98,6 @@ dependencies {
   androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(libs.http.client5)
   androidTestImplementation(libs.kotlin.test.common)
-  androidTestImplementation(libs.kotlin.test.junit)
   androidTestImplementation(libs.square.moshi)
   androidTestImplementation(libs.square.moshi.kotlin)
   androidTestImplementation(libs.square.okio.fakefilesystem)
@@ -111,4 +112,9 @@ junitPlatform {
   filters {
     excludeTags("Remote")
   }
+}
+
+tasks.withType<Test> {
+  // Fix for robolectric https://github.com/robolectric/robolectric/pull/10996
+  jvmArgs("--add-opens", "java.base/jdk.internal.access=ALL-UNNAMED")
 }

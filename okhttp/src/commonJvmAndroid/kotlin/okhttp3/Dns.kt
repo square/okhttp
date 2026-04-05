@@ -18,6 +18,7 @@ package okhttp3
 import java.net.InetAddress
 import java.net.UnknownHostException
 import okhttp3.Dns.Companion.SYSTEM
+import okio.ByteString
 
 /**
  * A domain name service that resolves IP addresses for host names. Most applications will use the
@@ -56,4 +57,8 @@ fun interface Dns {
       }
     }
   }
+}
+
+interface EchAware {
+  fun getHostRecords(host: String): Any?
 }

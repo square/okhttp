@@ -55,9 +55,11 @@ kotlin {
   jvm {
   }
 
-  androidLibrary {
+  android {
     namespace = "okhttp.okhttp3"
-    compileSdk = 36
+    compileSdk {
+      version = release(37)
+    }
     minSdk = 21
 
     androidResources {
@@ -106,7 +108,6 @@ kotlin {
         implementation(libs.assertk)
         implementation(libs.kotlin.test.annotations)
         implementation(libs.kotlin.test.common)
-        implementation(libs.kotlin.test.junit)
         implementation(libs.junit)
         implementation(libs.junit.jupiter.api)
         implementation(libs.junit.jupiter.params)
@@ -150,7 +151,6 @@ kotlin {
         implementation(libs.junit)
         implementation(libs.kotlin.test.annotations)
         implementation(libs.kotlin.test.common)
-        implementation(libs.kotlin.test.junit)
         implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.serialization.core)
         implementation(libs.kotlinx.serialization.json)

@@ -16,6 +16,7 @@
 package okhttp3.internal.platform.android
 
 import javax.net.ssl.SSLSocket
+import okhttp3.Call
 import okhttp3.Protocol
 import okhttp3.internal.platform.Platform
 import org.bouncycastle.jsse.BCSSLSocket
@@ -38,6 +39,7 @@ class BouncyCastleSocketAdapter : SocketAdapter {
   }
 
   override fun configureTlsExtensions(
+    call: Call?,
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<Protocol>,

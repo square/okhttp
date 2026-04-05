@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Square, Inc.
+ * Copyright (c) 2026 OkHttp Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,15 @@ package okhttp3.internal.platform.android
 import android.annotation.SuppressLint
 import android.net.ssl.SSLSockets
 import android.os.Build
-import java.io.IOException
-import java.lang.IllegalArgumentException
+import androidx.annotation.ChecksSdkIntAtLeast
+import androidx.annotation.RequiresApi
 import javax.net.ssl.SSLSocket
 import okhttp3.Call
 import okhttp3.Protocol
+import okhttp3.ech.EchMode
 import okhttp3.internal.SuppressSignatureCheck
+import okhttp3.internal.connection.RealCall
+import okhttp3.internal.platform.Android17Platform
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.isAndroid
 
@@ -34,33 +37,31 @@ import okhttp3.internal.platform.Platform.Companion.isAndroid
  */
 @SuppressLint("NewApi")
 @SuppressSignatureCheck
-class Android10SocketAdapter : SocketAdapter {
-  override fun matchesSocket(sslSocket: SSLSocket): Boolean = SSLSockets.isSupportedSocket(sslSocket)
+class Android17SocketAdapter
+  @RequiresApi(36)
+  internal constructor() : SocketAdapter {
+    init {
+      println("AndroidCanarySocketAdapter")
+    }
 
-  override fun isSupported(): Boolean = Companion.isSupported()
+    override fun matchesSocket(sslSocket: SSLSocket): Boolean = SSLSockets.isSupportedSocket(sslSocket)
 
-  @SuppressLint("NewApi")
-  override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
-    try {
+    override fun isSupported(): Boolean = Companion.isSupported()
+
+    override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
       // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
       // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
       when (val protocol = sslSocket.applicationProtocol) {
         null, "" -> null
         else -> protocol
       }
-    } catch (e: UnsupportedOperationException) {
-      // https://docs.oracle.com/javase/9/docs/api/javax/net/ssl/SSLSocket.html#getApplicationProtocol--
-      null
-    }
 
-  @SuppressLint("NewApi")
-  override fun configureTlsExtensions(
-    call: Call?,
-    sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<Protocol>,
-  ) {
-    try {
+    override fun configureTlsExtensions(
+      call: Call?,
+      sslSocket: SSLSocket,
+      hostname: String?,
+      protocols: List<Protocol>,
+    ) {
       SSLSockets.setUseSessionTickets(sslSocket, true)
 
       val sslParameters = sslSocket.sslParameters
@@ -69,17 +70,28 @@ class Android10SocketAdapter : SocketAdapter {
       sslParameters.applicationProtocols = Platform.alpnProtocolNames(protocols).toTypedArray()
 
       sslSocket.sslParameters = sslParameters
-    } catch (iae: IllegalArgumentException) {
-      // probably java.lang.IllegalArgumentException: Invalid input to toASCII from IDN.toASCII
-      throw IOException("Android internal error", iae)
+
+      if (hostname != null) {
+        val client = (call as? RealCall)?.client ?: return
+
+        val echModeConfiguration = client.echModeConfiguration
+
+        val echMode =
+          call.tag(EchMode::class) {
+            echModeConfiguration.echMode(hostname)
+          }
+
+        if (echMode.attempt) {
+          echModeConfiguration.applyEch(sslSocket, echMode, hostname, client.dns)
+        }
+      }
+    }
+
+    @SuppressSignatureCheck
+    companion object {
+      fun buildIfSupported(): SocketAdapter? = if (isSupported()) Android17SocketAdapter() else null
+
+      @ChecksSdkIntAtLeast(api = 36)
+      fun isSupported() = isAndroid && Build.VERSION.SDK_INT >= 36
     }
   }
-
-  @SuppressSignatureCheck
-  companion object {
-    fun buildIfSupported(): SocketAdapter? = if (isSupported()) Android10SocketAdapter() else null
-
-    @androidx.annotation.ChecksSdkIntAtLeast(api = 29)
-    fun isSupported() = isAndroid && Build.VERSION.SDK_INT >= 29
-  }
-}

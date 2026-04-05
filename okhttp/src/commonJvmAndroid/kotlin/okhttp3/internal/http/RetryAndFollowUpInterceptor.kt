@@ -30,17 +30,20 @@ import java.net.ProtocolException
 import java.net.Proxy
 import java.net.SocketTimeoutException
 import java.security.cert.CertificateException
+import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ech.EchMode
 import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.http2.ConnectionShutdownException
+import okhttp3.internal.platform.Platform
 import okhttp3.internal.stripBody
 import okhttp3.internal.withSuppressed
 
@@ -138,6 +141,14 @@ class RetryAndFollowUpInterceptor : Interceptor {
   ): Boolean {
     val requestSendStarted = e !is ConnectionShutdownException
 
+    if (e is SSLException) {
+      val echConfig = call.client.echModeConfiguration
+      if (echConfig.echMode(call.request().url.host).fallback && echConfig.isEchConfigError(e)) {
+        Platform.get().log("Should retry here with ECH disabled")
+        call.tag(EchMode::class) { EchMode.Fallback }
+      }
+    }
+
     // The application layer has forbidden retries.
     if (!chain.retryOnConnectionFailure) return false
 
@@ -208,6 +219,10 @@ class RetryAndFollowUpInterceptor : Interceptor {
     exchange: Exchange?,
     chain: Interceptor.Chain,
   ): Request? {
+    if (chain.call().tag(EchMode::class) == EchMode.Fallback) {
+      return chain.request()
+    }
+
     val route = exchange?.connection?.route()
     val responseCode = userResponse.code
 

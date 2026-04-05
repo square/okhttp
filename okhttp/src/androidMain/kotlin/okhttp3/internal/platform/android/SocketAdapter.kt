@@ -18,6 +18,7 @@ package okhttp3.internal.platform.android
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Call
 import okhttp3.Protocol
 
 interface SocketAdapter {
@@ -30,6 +31,7 @@ interface SocketAdapter {
   fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = false
 
   fun configureTlsExtensions(
+    call: Call?,
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<Protocol>,

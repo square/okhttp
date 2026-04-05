@@ -30,6 +30,7 @@ import javax.net.ssl.X509TrustManager
 import kotlin.time.Duration as KotlinDuration
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
+import okhttp3.ech.EchModeConfiguration
 import okhttp3.internal.asFactory
 import okhttp3.internal.checkDuration
 import okhttp3.internal.concurrent.TaskRunner
@@ -272,6 +273,8 @@ open class OkHttpClient internal constructor(
       // Cache the pool in the builder so that it will be shared with other clients
       builder.connectionPool = it
     }
+
+  var echModeConfiguration: EchModeConfiguration = builder.echModeConfiguration
 
   constructor() : this(Builder())
 
@@ -597,7 +600,7 @@ open class OkHttpClient internal constructor(
     internal var followSslRedirects = true
     internal var cookieJar: CookieJar = CookieJar.NO_COOKIES
     internal var cache: Cache? = null
-    internal var dns: Dns = Dns.SYSTEM
+    internal var dns: Dns = Platform.get().platformDns()
     internal var proxy: Proxy? = null
     internal var proxySelector: ProxySelector? = null
     internal var proxyAuthenticator: Authenticator = Authenticator.NONE
@@ -618,6 +621,7 @@ open class OkHttpClient internal constructor(
     internal var minWebSocketMessageToCompress = RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE
     internal var routeDatabase: RouteDatabase? = null
     internal var taskRunner: TaskRunner? = null
+    internal var echModeConfiguration: EchModeConfiguration = Platform.get().echModeConfiguration
 
     internal constructor(okHttpClient: OkHttpClient) : this() {
       this.dispatcher = okHttpClient.dispatcher
@@ -653,6 +657,7 @@ open class OkHttpClient internal constructor(
       this.minWebSocketMessageToCompress = okHttpClient.minWebSocketMessageToCompress
       this.routeDatabase = okHttpClient.routeDatabase
       this.taskRunner = okHttpClient.taskRunner
+      this.echModeConfiguration = okHttpClient.echModeConfiguration
     }
 
     /**
