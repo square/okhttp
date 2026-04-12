@@ -295,6 +295,9 @@ jobs:
   android:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
 
     strategy:
       fail-fast: false
@@ -315,62 +318,43 @@ jobs:
           distribution: 'temurin'
           java-version: 21
 
-      - name: Enable KVM group perms
-        # https://github.blog/changelog/2023-02-23-hardware-accelerated-android-virtualization-on-actions-windows-and-linux-larger-hosted-runners/
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Verify KVM
-        run: |
-          sudo apt-get install -y cpu-checker
-          kvm-ok || echo "KVM is not accelerated"
-          kvm-ok || exit 1
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
-      - name: Gradle cache
-        run: ./gradlew :android-test:test
+      - name: Build Android APKs
+        run: >
+          ./gradlew -PandroidBuild=true
+          :android-test:assembleDebugAndroidTest
+          :android-test-app:assembleDebug
+          :android-test-app:assembleDebugAndroidTest
+          :regression-test:assembleDebugAndroidTest
 
-      - name: AVD System Image Cache
-        uses: actions/cache@v5
-        id: avd-cache
+      - name: Configure emulator.wtf credentials
+        uses: emulator-wtf/configure-credentials@v1
         with:
-          key: avd-${{ runner.os }}-${{ matrix.api-level }}-${{ matrix.api-level >= 30 && 'x86_64' || 'x86' }}
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-            # Added the actual system image path
-            ${{ env.ANDROID_HOME }}/system-images/android-${{ matrix.api-level }}
+          oidc-configuration-id: # TODO: add OIDC configuration ID from emulator.wtf
 
-      - name: Create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
+      - name: Run android-test instrumented tests
+        uses: emulator-wtf/run-tests@v0
         with:
-          api-level: ${{ matrix.api-level }}
-          force-avd-creation: false
-          arch: ${{ matrix.api-level >= 30 && 'x86_64' || 'x86' }}
-          # No window, no audio, and use swiftshader for headless environments
-          emulator-options: >
-            -no-window
-            -gpu swiftshader_indirect
-            -noaudio
-            -no-boot-anim
-            -camera-back none
-            -memory 2048
-          disable-animations: true
-          script: echo "Generated AVD snapshot for caching."
+          test: android-test/build/outputs/apk/androidTest/debug/android-test-debug-androidTest.apk
+          devices: version=${{ matrix.api-level }}
+          outputs-dir: build/test-results/android-test
 
-      - name: Run Tests
-        uses: reactivecircus/android-emulator-runner@v2
+      - name: Run android-test-app instrumented tests
+        uses: emulator-wtf/run-tests@v0
         with:
-          api-level: ${{ matrix.api-level }}
-          arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
-          script: ./gradlew -PandroidBuild=true connectedCheck
-        env:
-          API_LEVEL: ${{ matrix.api-level }}
+          app: android-test-app/build/outputs/apk/debug/android-test-app-debug.apk
+          test: android-test-app/build/outputs/apk/androidTest/debug/android-test-app-debug-androidTest.apk
+          devices: version=${{ matrix.api-level }}
+          outputs-dir: build/test-results/android-test-app
+
+      - name: Run regression-test instrumented tests
+        uses: emulator-wtf/run-tests@v0
+        with:
+          test: regression-test/build/outputs/apk/androidTest/debug/regression-test-debug-androidTest.apk
+          devices: version=${{ matrix.api-level }}
+          outputs-dir: build/test-results/regression-test
 
       - name: Build Release App
         run: ./gradlew android-test-app:lint android-test-app:assembleRelease
