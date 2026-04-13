@@ -153,7 +153,7 @@ gradlePlugin-mavenPublish = { module = "com.vanniktech:gradle-maven-publish-plug
 gradlePlugin-mrjar = { module = "me.champeau.mrjar:me.champeau.mrjar.gradle.plugin", version.ref = "mrjar" }
 gradlePlugin-shadow = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow-plugin" }
 gradlePlugin-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless-plugin" }
-gradlePlugin-tapmoc = { module =  "com.gradleup.tapmoc:com.gradleup.tapmoc.gradle.plugin", version = "0.4.1"}
+gradlePlugin-tapmoc = { module =  "com.gradleup.tapmoc:com.gradleup.tapmoc.gradle.plugin", version = "0.4.2"}
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
