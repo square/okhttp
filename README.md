@@ -157,7 +157,7 @@ Maven projects.
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp-bom</artifactId>
-      <version>5.2.0</version>
+      <version>5.3.0</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -171,8 +171,6 @@ Maven projects.
 <dependency>
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>okhttp-jvm</artifactId>
-  <!-- Remove after OkHttp 5.2.0 with updated BOM. -->
-  <version>5.1.0</version>
 </dependency>
 
 <dependency>
