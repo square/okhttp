@@ -74,7 +74,7 @@ jobs:
       - uses: graalvm/setup-graalvm@v1
         with:
           distribution: 'graalvm'
-          java-version: 21
+          java-version: 25
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: true
 
@@ -276,7 +276,7 @@ jobs:
       - uses: graalvm/setup-graalvm@v1
         with:
           distribution: 'graalvm'
-          java-version: 24
+          java-version: 25
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: true
 
