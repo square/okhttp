@@ -365,19 +365,25 @@ object Hpack {
         }
 
         // This is a multibyte value. Read 7 bits at a time.
-        var result = prefixMask
+        var result = prefixMask.toLong()
         var shift = 0
+        var byteCount = 0
         while (true) {
-          val b = readByte()
-          if (b and 0x80 != 0) { // Equivalent to (b >= 128) since b is in [0..255].
-            result += b and 0x7f shl shift
-            shift += 7
-          } else {
-            result += b shl shift // Last byte.
-            break
+          // An Int.MAX_VALUE payload needs at most 5 continuation bytes after the prefix.
+          if (byteCount == 5) {
+            throw IOException("HPACK integer overflow")
           }
+          val b = readByte()
+          byteCount++
+          val increment = (b and 0x7f).toLong() shl shift
+          if (increment > Int.MAX_VALUE.toLong() - result) {
+            throw IOException("HPACK integer overflow")
+          }
+          result += increment
+          if (b and 0x80 == 0) break
+          shift += 7
         }
-        return result
+        return result.toInt()
       }
 
       /** Reads a potentially Huffman encoded byte string. */

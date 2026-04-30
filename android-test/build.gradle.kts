@@ -1,3 +1,4 @@
+import de.mannodermaus.gradle.plugins.junit5.dsl.UnsupportedDeviceBehavior
 import okhttp3.buildsupport.androidBuild
 
 plugins {
@@ -109,6 +110,7 @@ dependencies {
 }
 
 junitPlatform {
+  instrumentationTests.behaviorForUnsupportedDevices = UnsupportedDeviceBehavior.Skip
   filters {
     excludeTags("Remote")
   }
