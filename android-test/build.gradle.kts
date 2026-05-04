@@ -26,17 +26,6 @@ android {
     )
   }
 
-  if (androidBuild) {
-    sourceSets.getByName("androidTest") {
-      java.srcDirs(
-        "../okhttp-brotli/src/test/java",
-        "../okhttp-dnsoverhttps/src/test/java",
-        "../okhttp-logging-interceptor/src/test/java",
-        "../okhttp-sse/src/test/java",
-      )
-    }
-  }
-
   compileOptions {
     targetCompatibility(JavaVersion.VERSION_11)
     sourceCompatibility(JavaVersion.VERSION_11)
@@ -56,6 +45,19 @@ android {
     "org/bouncycastle/LICENSE",
     "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
   )
+}
+
+if (androidBuild) {
+  androidComponents {
+    onVariants(selector().all()) { variant ->
+      variant.androidTest?.sources?.java?.apply {
+        addStaticSourceDirectory("../okhttp-brotli/src/test/java")
+        addStaticSourceDirectory("../okhttp-dnsoverhttps/src/test/java")
+        addStaticSourceDirectory("../okhttp-logging-interceptor/src/test/java")
+        addStaticSourceDirectory("../okhttp-sse/src/test/java")
+      }
+    }
+  }
 }
 
 dependencies {
