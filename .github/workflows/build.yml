@@ -474,6 +474,10 @@ jobs:
           "$ADB" -s emulator-5554 wait-for-device
           timeout 1200 bash -c 'until [[ "$("$1" -s emulator-5554 shell getprop sys.boot_completed | tr -d "\r")" == "1" ]]; do sleep 2; done' -- "$ADB"
           timeout 300 bash -c 'until "$1" -s emulator-5554 shell service check input | grep -q "found"; do sleep 2; done' -- "$ADB"
+          timeout 300 bash -c 'until "$1" -s emulator-5554 shell service check package | grep -q "found"; do sleep 2; done' -- "$ADB"
+          timeout 300 bash -c 'until "$1" -s emulator-5554 shell service check activity | grep -q "found"; do sleep 2; done' -- "$ADB"
+          "$ADB" -s emulator-5554 shell getprop ro.build.version.sdk
+          "$ADB" -s emulator-5554 shell getprop ro.build.version.release
 
           ./gradlew -PandroidBuild=true connectedCheck
         env:
