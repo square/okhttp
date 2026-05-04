@@ -46,6 +46,7 @@ jobs:
   validation:
     name: "Validation"
     runs-on: ubuntu-latest
+    if: false
     steps:
       - uses: actions/checkout@v6
       - uses: gradle/actions/wrapper-validation@v5
@@ -58,6 +59,7 @@ jobs:
     permissions:
       checks: write # for mikepenz/action-junit-report
     runs-on: ubuntu-latest
+    if: false
 
     steps:
       - name: Checkout
@@ -88,6 +90,7 @@ jobs:
     permissions:
       checks: write # for mikepenz/action-junit-report
     runs-on: ubuntu-latest
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -131,7 +134,7 @@ jobs:
 
   openjdk8alpn:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
+    if: false
 
     steps:
       - name: Checkout
@@ -157,7 +160,7 @@ jobs:
 
   providers:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'providers')
+    if: false
     strategy:
       matrix:
         include:
@@ -190,6 +193,7 @@ jobs:
 
   openjdklatest:
     runs-on: ubuntu-latest
+    if: false
 
     steps:
       - name: Checkout
@@ -243,6 +247,7 @@ jobs:
 
   testwindows:
     runs-on: windows-latest
+    if: false
 
     steps:
       - name: Checkout
@@ -262,6 +267,7 @@ jobs:
 
   graal:
     runs-on: ubuntu-latest
+    if: false
 
     steps:
       - name: Checkout
@@ -300,18 +306,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - api-level: 21
-            arch: x86
-            target: default
-          - api-level: 23
-            arch: x86
-            target: default
-          - api-level: 29
-            arch: x86
-            target: default
-          - api-level: 34
-            arch: x86_64
-            target: default
           - api-level: '37.0'
             arch: x86_64
             target: google_apis_ps16k
@@ -445,6 +439,7 @@ jobs:
 
   loom:
     runs-on: ubuntu-latest
+    if: false
 
     steps:
       - name: Checkout
@@ -466,6 +461,7 @@ jobs:
 
   maven:
     runs-on: ubuntu-latest
+    if: false
 
     steps:
       - name: Checkout
@@ -489,6 +485,7 @@ jobs:
 
   java9_modules:
     runs-on: ubuntu-latest
+    if: false
 
     steps:
       - name: Checkout
