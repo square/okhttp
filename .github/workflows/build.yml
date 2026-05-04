@@ -436,7 +436,8 @@ jobs:
 
       - name: Stop Android 37 Emulator
         if: always() && matrix.api-level == '37.0'
-        run: "$ANDROID_HOME/platform-tools/adb" -s emulator-5554 emu kill || true
+        run: |
+          "$ANDROID_HOME/platform-tools/adb" -s emulator-5554 emu kill || true
 
       - name: Build Release App
         run: ./gradlew android-test-app:lint android-test-app:assembleRelease
