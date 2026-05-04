@@ -274,6 +274,7 @@ open class OkHttpClient internal constructor(
       builder.connectionPool = it
     }
 
+  /** Controls Encrypted Client Hello (ECH) behavior for new TLS connections. */
   var echModeConfiguration: EchModeConfiguration = builder.echModeConfiguration
 
   constructor() : this(Builder())

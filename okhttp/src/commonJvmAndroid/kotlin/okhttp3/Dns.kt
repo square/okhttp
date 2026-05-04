@@ -58,6 +58,16 @@ fun interface Dns {
   }
 }
 
+/**
+ * A [Dns] implementation that can also return HTTPS or SVCB host records for configuring
+ * Encrypted Client Hello (ECH).
+ */
 interface EchAware {
+  /**
+   * Returns host records for [host], or null if no records are available.
+   *
+   * The returned type is platform-specific. On Android this is an `EchConfigList` suitable for
+   * configuring the TLS socket.
+   */
   fun getHostRecords(host: String): Any?
 }

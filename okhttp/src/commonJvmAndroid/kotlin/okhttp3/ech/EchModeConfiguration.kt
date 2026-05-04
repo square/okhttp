@@ -35,7 +35,10 @@ interface EchModeConfiguration {
   fun echMode(host: String): EchMode
 
   /**
-   * Configures the [sslSocket] with Encrypted Client Hello (ECH) parameters
+   * Configures [sslSocket] with Encrypted Client Hello (ECH) parameters for [host].
+   *
+   * Implementations may use [dns] to retrieve ECH configuration records. If [echMode] requires
+   * ECH and no configuration can be applied, this should throw an [java.io.IOException].
    */
   fun applyEch(
     sslSocket: SSLSocket,
@@ -55,6 +58,7 @@ interface EchModeConfiguration {
    */
   fun isEchConfigError(e: SSLException): Boolean = false
 
+  /** Built-in [EchModeConfiguration] instances. */
   companion object {
     /**
      * A default implementation of [EchModeConfiguration] that performs no ECH-related actions

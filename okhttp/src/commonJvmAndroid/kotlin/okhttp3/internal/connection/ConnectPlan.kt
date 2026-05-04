@@ -412,9 +412,9 @@ class ConnectPlan internal constructor(
       socket = sslSocket.asBufferedSocket()
       protocol = if (maybeProtocol != null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1
       success = true
-//    } catch (echre: EchRejectedException) {
-      // TODO signal for retry?
     } finally {
+      // ECH rejection is surfaced as an SSLException by the platform. Let it propagate so the
+      // retry interceptor can decide whether to retry with ECH disabled.
       Platform.get().afterHandshake(sslSocket)
       if (!success) {
         sslSocket.closeQuietly()

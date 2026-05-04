@@ -41,6 +41,7 @@ class Handshake internal constructor(
   @get:JvmName("cipherSuite") val cipherSuite: CipherSuite,
   /** Returns a possibly-empty list of certificates that identify this peer. */
   @get:JvmName("localCertificates") val localCertificates: List<Certificate>,
+  /** Returns the Encrypted Client Hello (ECH) configuration used for this handshake, if any. */
   val echConfig: EchConfig? = null,
   // Delayed provider of peerCertificates, to allow lazy cleaning.
   peerCertificatesFn: () -> List<Certificate>,
