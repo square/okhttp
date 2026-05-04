@@ -131,6 +131,7 @@ jobs:
 
   openjdk8alpn:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
 
     steps:
       - name: Checkout
@@ -156,6 +157,7 @@ jobs:
 
   providers:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'providers')
     strategy:
       matrix:
         include:
