@@ -306,9 +306,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - api-level: '37.0'
+          - api-level: 21
+            arch: x86
+            target: default
+          - api-level: 23
+            arch: x86
+            target: default
+          - api-level: 29
+            arch: x86
+            target: default
+          - api-level: 34
             arch: x86_64
-            target: google_apis_ps16k
+            target: default
 
     steps:
       - name: Checkout
@@ -351,7 +360,7 @@ jobs:
             ${{ env.ANDROID_HOME }}/system-images/android-${{ matrix.api-level }}
 
       - name: Create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true' && matrix.api-level != '37.0'
+        if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
@@ -371,7 +380,6 @@ jobs:
           script: echo "Generated AVD snapshot for caching."
 
       - name: Run Tests
-        if: matrix.api-level != '37.0'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
@@ -391,13 +399,50 @@ jobs:
         env:
           API_LEVEL: ${{ matrix.api-level }}
 
+      - name: Build Release App
+        run: ./gradlew android-test-app:lint android-test-app:assembleRelease
+
+  android37:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Enable KVM group perms
+        # https://github.blog/changelog/2023-02-23-hardware-accelerated-android-virtualization-on-actions-windows-and-linux-larger-hosted-runners/
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Verify KVM
+        run: |
+          sudo apt-get install -y cpu-checker
+          kvm-ok || echo "KVM is not accelerated"
+          kvm-ok || exit 1
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Gradle cache
+        run: ./gradlew :android-test:test
+
       - name: Run Android 37 Tests
-        if: matrix.api-level == '37.0'
         run: |
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/sdkmanager' | sort | tail -n 1)"
           AVDMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/avdmanager' | sort | tail -n 1)"
           ADB="$ANDROID_HOME/platform-tools/adb"
           EMULATOR="$ANDROID_HOME/emulator/emulator"
+          export ANDROID_AVD_HOME="$HOME/.android/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
 
           yes | "$SDKMANAGER" --licenses > /dev/null
           "$SDKMANAGER" --install \
@@ -432,15 +477,12 @@ jobs:
 
           ./gradlew -PandroidBuild=true connectedCheck
         env:
-          API_LEVEL: ${{ matrix.api-level }}
+          API_LEVEL: 37.0
 
       - name: Stop Android 37 Emulator
-        if: always() && matrix.api-level == '37.0'
+        if: always()
         run: |
           "$ANDROID_HOME/platform-tools/adb" -s emulator-5554 emu kill || true
-
-      - name: Build Release App
-        run: ./gradlew android-test-app:lint android-test-app:assembleRelease
 
   loom:
     runs-on: ubuntu-latest
