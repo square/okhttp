@@ -1,6 +1,7 @@
 plugins {
   `kotlin-dsl`
   id("com.diffplug.spotless") version "8.4.0"
+  id("com.android.lint") version "1.0.0-alpha05"
 }
 
 configure<com.diffplug.gradle.spotless.SpotlessExtension> {
@@ -36,6 +37,6 @@ dependencies {
   implementation(libs.gradlePlugin.ksp)
   implementation(libs.gradlePlugin.mrjar)
   implementation(libs.gradlePlugin.tapmoc)
-  implementation(libs.androidx.lint.gradle)
   implementation(libs.kotlin.gradle.plugin.api)
+  lintChecks(libs.androidx.lint.gradle)
 }
