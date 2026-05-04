@@ -396,6 +396,8 @@ jobs:
         run: |
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/sdkmanager' | sort | tail -n 1)"
           AVDMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/avdmanager' | sort | tail -n 1)"
+          ADB="$ANDROID_HOME/platform-tools/adb"
+          EMULATOR="$ANDROID_HOME/emulator/emulator"
 
           yes | "$SDKMANAGER" --licenses > /dev/null
           "$SDKMANAGER" --install \
@@ -406,12 +408,14 @@ jobs:
             'system-images;android-37.0;google_apis_ps16k;x86_64' \
             --channel=0 > /dev/null
 
-          echo no | "$AVDMANAGER" create avd \
+          printf 'no\n' | "$AVDMANAGER" create avd \
             --force \
             --name test \
             --package 'system-images;android-37.0;google_apis_ps16k;x86_64'
 
-          "$ANDROID_HOME/emulator/emulator" \
+          "$AVDMANAGER" list avd
+
+          "$EMULATOR" \
             -port 5554 \
             -avd test \
             -no-window \
@@ -422,9 +426,9 @@ jobs:
             -camera-back none \
             -memory 2048 &
 
-          adb -s emulator-5554 wait-for-device
-          timeout 1200 bash -c 'until [[ "$(adb -s emulator-5554 shell getprop sys.boot_completed | tr -d "\r")" == "1" ]]; do sleep 2; done'
-          timeout 300 bash -c 'until adb -s emulator-5554 shell service check input | grep -q "found"; do sleep 2; done'
+          "$ADB" -s emulator-5554 wait-for-device
+          timeout 1200 bash -c 'until [[ "$("$1" -s emulator-5554 shell getprop sys.boot_completed | tr -d "\r")" == "1" ]]; do sleep 2; done' -- "$ADB"
+          timeout 300 bash -c 'until "$1" -s emulator-5554 shell service check input | grep -q "found"; do sleep 2; done' -- "$ADB"
 
           ./gradlew -PandroidBuild=true connectedCheck
         env:
@@ -432,7 +436,7 @@ jobs:
 
       - name: Stop Android 37 Emulator
         if: always() && matrix.api-level == '37.0'
-        run: adb -s emulator-5554 emu kill || true
+        run: "$ANDROID_HOME/platform-tools/adb" -s emulator-5554 emu kill || true
 
       - name: Build Release App
         run: ./gradlew android-test-app:lint android-test-app:assembleRelease
