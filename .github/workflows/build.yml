@@ -450,13 +450,13 @@ jobs:
             platform-tools \
             'platforms;android-37.0' \
             emulator \
-            'system-images;android-37.0;google_apis_ps16k;x86_64' \
+            'system-images;android-37.0;google_apis_playstore_ps16k;x86_64' \
             --channel=0 > /dev/null
 
           printf 'no\n' | "$AVDMANAGER" create avd \
             --force \
             --name test \
-            --package 'system-images;android-37.0;google_apis_ps16k;x86_64'
+            --package 'system-images;android-37.0;google_apis_playstore_ps16k;x86_64'
 
           "$AVDMANAGER" list avd
 
