@@ -20,6 +20,7 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import javax.net.ssl.SSLSocket
+import okhttp3.Call
 import okhttp3.Protocol
 
 /** OpenJDK 8 with `org.mortbay.jetty.alpn:alpn-boot` in the boot class path. */
@@ -31,6 +32,7 @@ class Jdk8WithJettyBootPlatform(
   private val serverProviderClass: Class<*>,
 ) : Platform() {
   override fun configureTlsExtensions(
+    call: Call?,
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<Protocol>,

@@ -30,17 +30,20 @@ import java.net.ProtocolException
 import java.net.Proxy
 import java.net.SocketTimeoutException
 import java.security.cert.CertificateException
+import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ech.EchMode
 import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.http2.ConnectionShutdownException
+import okhttp3.internal.platform.Platform
 import okhttp3.internal.stripBody
 import okhttp3.internal.withSuppressed
 
@@ -137,6 +140,21 @@ class RetryAndFollowUpInterceptor : Interceptor {
     userRequest: Request,
   ): Boolean {
     val requestSendStarted = e !is ConnectionShutdownException
+
+    if (e is SSLException) {
+      val echModeConfiguration = call.client.echModeConfiguration
+      val echMode = echModeConfiguration.echMode(call.request().url.host)
+      if (
+        call.tag(EchMode::class) != EchMode.Fallback &&
+        echMode.fallback &&
+        echModeConfiguration.isEchConfigError(e)
+      ) {
+        // Mark this call so the next connection attempt skips ECH. Without this guard a fallback
+        // connection that also fails with an ECH-classified SSLException could retry indefinitely.
+        Platform.get().log("Should retry here with ECH disabled")
+        call.tag(EchMode::class) { EchMode.Fallback }
+      }
+    }
 
     // The application layer has forbidden retries.
     if (!chain.retryOnConnectionFailure) return false

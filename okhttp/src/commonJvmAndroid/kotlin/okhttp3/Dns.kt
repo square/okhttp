@@ -18,6 +18,7 @@ package okhttp3
 import java.net.InetAddress
 import java.net.UnknownHostException
 import okhttp3.Dns.Companion.SYSTEM
+import okhttp3.ech.EchConfig
 
 /**
  * A domain name service that resolves IP addresses for host names. Most applications will use the
@@ -56,4 +57,17 @@ fun interface Dns {
       }
     }
   }
+}
+
+/**
+ * A [Dns] implementation that can also return HTTPS or SVCB ECH configuration for a host.
+ */
+internal interface EchAware {
+  /**
+   * Returns ECH configuration for [host], or null if no configuration is available.
+   *
+   * The returned [EchConfig] type is platform-specific. On Android this wraps an `EchConfigList`
+   * suitable for configuring the TLS socket.
+   */
+  fun getEchConfig(host: String): EchConfig?
 }

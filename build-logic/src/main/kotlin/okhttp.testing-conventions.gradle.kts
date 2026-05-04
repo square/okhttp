@@ -24,6 +24,10 @@ dependencies {
 tasks.withType<Test> {
   useJUnitPlatform()
   jvmArgs("-Dokhttp.platform=$platform")
+  if (testJavaVersion >= 9) {
+    // Fix for robolectric https://github.com/robolectric/robolectric/pull/10996
+    jvmArgs("--add-opens", "java.base/jdk.internal.access=ALL-UNNAMED")
+  }
 
   if (platform == "loom") {
     jvmArgs("-Djdk.tracePinnedThreads=short")

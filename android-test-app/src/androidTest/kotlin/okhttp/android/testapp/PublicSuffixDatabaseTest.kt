@@ -15,15 +15,23 @@
  */
 package okhttp3.android
 
+import androidx.test.platform.app.InstrumentationRegistry
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttp
+import org.junit.Before
 import org.junit.Test
 
 /**
  * Run with "./gradlew :android-test-app:connectedCheck -PandroidBuild=true" and make sure ANDROID_SDK_ROOT is set.
  */
 class PublicSuffixDatabaseTest {
+  @Before
+  fun setUp() {
+    OkHttp.initialize(InstrumentationRegistry.getInstrumentation().targetContext)
+  }
+
   @Test
   fun testTopLevelDomain() {
     assertThat("https://www.google.com/robots.txt".toHttpUrl().topPrivateDomain()).isEqualTo("google.com")
