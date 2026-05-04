@@ -17,4 +17,5 @@ dependencies {
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.okhttpTls)
   testImplementation(libs.kotlin.test.common)
+  testImplementation(libs.kotlin.test.junit)
 }

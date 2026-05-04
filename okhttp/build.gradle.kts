@@ -151,6 +151,7 @@ kotlin {
         implementation(libs.junit)
         implementation(libs.kotlin.test.annotations)
         implementation(libs.kotlin.test.common)
+        implementation(libs.kotlin.test.junit)
         implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.serialization.core)
         implementation(libs.kotlinx.serialization.json)
@@ -190,6 +191,7 @@ kotlin {
           implementation(libs.junit.vintage.engine)
           implementation(libs.kotlin.test.annotations)
           implementation(libs.kotlin.test.common)
+          implementation(libs.kotlin.test.junit)
           implementation(libs.robolectric)
         }
       }

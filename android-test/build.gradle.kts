@@ -27,12 +27,14 @@ android {
   }
 
   if (androidBuild) {
-    sourceSets["androidTest"].java.srcDirs(
-      "../okhttp-brotli/src/test/java",
-      "../okhttp-dnsoverhttps/src/test/java",
-      "../okhttp-logging-interceptor/src/test/java",
-      "../okhttp-sse/src/test/java"
-    )
+    sourceSets.getByName("androidTest") {
+      java.srcDirs(
+        "../okhttp-brotli/src/test/java",
+        "../okhttp-dnsoverhttps/src/test/java",
+        "../okhttp-logging-interceptor/src/test/java",
+        "../okhttp-sse/src/test/java",
+      )
+    }
   }
 
   compileOptions {
@@ -99,6 +101,7 @@ dependencies {
   androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(libs.http.client5)
   androidTestImplementation(libs.kotlin.test.common)
+  androidTestImplementation(libs.kotlin.test.junit)
   androidTestImplementation(libs.square.moshi)
   androidTestImplementation(libs.square.moshi.kotlin)
   androidTestImplementation(libs.square.okio.fakefilesystem)

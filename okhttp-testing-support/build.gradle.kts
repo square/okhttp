@@ -43,6 +43,7 @@ dependencies {
   compileOnly(libs.robolectric.android)
 
   testImplementation(libs.kotlin.test.common)
+  testImplementation(libs.kotlin.test.junit)
 }
 
 animalsniffer {
