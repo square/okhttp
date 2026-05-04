@@ -25,7 +25,7 @@ import okhttp3.Dns
  * This interface provides the mechanism to determine the ECH strategy for a given host,
  * apply ECH parameters to an [SSLSocket], and identify ECH-specific connection failures.
  */
-interface EchModeConfiguration {
+internal interface EchModeConfiguration {
   /**
    * Determines the [EchMode] strategy to be used for the specified [host].
    *
@@ -38,14 +38,15 @@ interface EchModeConfiguration {
    * Configures [sslSocket] with Encrypted Client Hello (ECH) parameters for [host].
    *
    * Implementations may use [dns] to retrieve ECH configuration records. If [echMode] requires
-   * ECH and no configuration can be applied, this should throw an [java.io.IOException].
+   * ECH and no configuration can be applied, this should throw an [java.io.IOException]. Returns
+   * the configuration that was applied, or null when no ECH configuration was used.
    */
   fun applyEch(
     sslSocket: SSLSocket,
     echMode: EchMode,
     host: String,
     dns: Dns,
-  )
+  ): EchConfig?
 
   /**
    * Returns true if [e] indicates a failure due to an invalid or expired ECH configuration.
@@ -73,8 +74,9 @@ interface EchModeConfiguration {
           echMode: EchMode,
           host: String,
           dns: Dns,
-        ) {
+        ): EchConfig? {
           check(!echMode.attempt)
+          return null
         }
       }
   }

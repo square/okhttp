@@ -20,11 +20,12 @@ import okio.ByteString
 /**
  * Configuration for Encrypted Client Hello (ECH).
  *
- * This class contains the parameters required for a client to encrypt its ClientHello message,
+ * This contains the parameters required for a client to encrypt its ClientHello message,
  * protecting sensitive fields such as the Server Name Indication (SNI) from passive observers.
- * These parameters are typically retrieved from DNS via HTTPS or SVCB records.
+ * These parameters are typically retrieved from DNS via HTTPS or SVCB records, and platform
+ * implementations may carry additional native objects needed to configure TLS sockets.
  */
-data class EchConfig(
-  /** The serialized ECH configuration list. */
-  val config: ByteString,
-)
+internal interface EchConfig {
+  /** The serialized ECH configuration list from DNS. */
+  val config: ByteString
+}

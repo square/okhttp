@@ -142,12 +142,12 @@ class RetryAndFollowUpInterceptor : Interceptor {
     val requestSendStarted = e !is ConnectionShutdownException
 
     if (e is SSLException) {
-      val echConfig = call.client.echModeConfiguration
-      val echMode = echConfig.echMode(call.request().url.host)
+      val echModeConfiguration = call.client.echModeConfiguration
+      val echMode = echModeConfiguration.echMode(call.request().url.host)
       if (
         call.tag(EchMode::class) != EchMode.Fallback &&
         echMode.fallback &&
-        echConfig.isEchConfigError(e)
+        echModeConfiguration.isEchConfigError(e)
       ) {
         // Mark this call so the next connection attempt skips ECH. Without this guard a fallback
         // connection that also fails with an ECH-classified SSLException could retry indefinitely.

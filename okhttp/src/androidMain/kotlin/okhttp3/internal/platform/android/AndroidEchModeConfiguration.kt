@@ -16,7 +16,6 @@
 package okhttp3.internal.platform.android
 
 import android.annotation.SuppressLint
-import android.net.ssl.EchConfigList
 import android.net.ssl.EchConfigMismatchException
 import android.net.ssl.SSLSockets
 import android.security.NetworkSecurityPolicy
@@ -25,22 +24,25 @@ import javax.net.ssl.SSLException
 import javax.net.ssl.SSLSocket
 import okhttp3.Dns
 import okhttp3.EchAware
+import okhttp3.ech.EchConfig
 import okhttp3.ech.EchMode
 import okhttp3.ech.EchModeConfiguration
+import okhttp3.internal.platform.AndroidEchConfig
 import okio.IOException
 
+/**
+ * Android implementation of [EchModeConfiguration] for API 37+.
+ *
+ * This bridges OkHttp's platform-neutral ECH policy to Android's native ECH APIs:
+ * [NetworkSecurityPolicy] supplies the per-host domain encryption policy, [Dns] may provide an
+ * HTTPS/SVCB ECH configuration list, and [SSLSockets] applies that configuration to the TLS socket.
+ */
 @RequiresApi(37)
-class AndroidEchModeConfiguration : EchModeConfiguration {
+internal class AndroidEchModeConfiguration : EchModeConfiguration {
   @Suppress("NewApi")
   override fun echMode(host: String): EchMode {
-    EchMode.fromNetworkSecurityPolicy(
-      NetworkSecurityPolicy.getInstance().getDomainEncryptionMode(host).also {
-        println("$host = $it")
-      },
-    )
-
-    // for now return enabled for testing
-    return EchMode.Opportunistic
+    val domainEncryptionMode = NetworkSecurityPolicy.getInstance().getDomainEncryptionMode(host)
+    return EchMode.fromNetworkSecurityPolicy(domainEncryptionMode)
   }
 
   @SuppressLint("NewApi")
@@ -52,21 +54,25 @@ class AndroidEchModeConfiguration : EchModeConfiguration {
     echMode: EchMode,
     host: String,
     dns: Dns,
-  ) {
-    val echConfig = (dns as? EchAware)?.getHostRecords(host)
+  ): EchConfig? {
+    // The Android DNS implementation returns AndroidEchConfig instances. Other Dns
+    // implementations are valid; they simply won't be able to configure Android ECH sockets.
+    val echConfig = (dns as? EchAware)?.getEchConfig(host) as? AndroidEchConfig
 
     if (echConfig != null) {
       SSLSockets.setEchConfigList(
         sslSocket,
-        echConfig as EchConfigList,
+        echConfig.echConfigList,
       )
+      return echConfig
     } else if (echMode.require) {
       throw IOException("Unable to apply required ECH config for $host")
     }
+    return null
   }
 }
 
-private fun EchMode.Companion.fromNetworkSecurityPolicy(domainEncryptionMode: Int): EchMode =
+internal fun EchMode.Companion.fromNetworkSecurityPolicy(domainEncryptionMode: Int): EchMode =
   when (domainEncryptionMode) {
     NetworkSecurityPolicy.DOMAIN_ENCRYPTION_MODE_OPPORTUNISTIC -> EchMode.Opportunistic
     NetworkSecurityPolicy.DOMAIN_ENCRYPTION_MODE_ENABLED -> EchMode.Strict

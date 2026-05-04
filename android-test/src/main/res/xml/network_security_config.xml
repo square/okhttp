@@ -3,7 +3,7 @@
   <base-config cleartextTrafficPermitted="false">
   </base-config>
   <domain-config cleartextTrafficPermitted="true">
-    <domain>localhost</domain>
+    <domain includeSubdomains="false">localhost</domain>
   </domain-config>
   <domain-config>
     <domain includeSubdomains="true">cloudflare-ech.com</domain>

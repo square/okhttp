@@ -23,6 +23,7 @@ import androidx.annotation.RequiresApi
 import javax.net.ssl.SSLSocket
 import okhttp3.Call
 import okhttp3.Protocol
+import okhttp3.ech.EchConfig
 import okhttp3.ech.EchMode
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.connection.RealCall
@@ -31,9 +32,14 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.isAndroid
 
 /**
- * Simple non-reflection SocketAdapter for Android Q+.
+ * Socket adapter for Android 17+ platform TLS APIs.
  *
- * These API assumptions make it unsuitable for use on earlier Android versions.
+ * Unlike the older Android socket adapters, this calls public platform APIs directly instead of
+ * using reflection or Conscrypt-specific hooks. It configures session tickets, ALPN, and ECH on
+ * Android's `SSLSocket` implementation.
+ *
+ * These API assumptions make it unsuitable for earlier Android versions; use
+ * [Android17Platform] to select this adapter only when the runtime SDK supports it.
  */
 @SuppressLint("NewApi")
 @SuppressSignatureCheck
@@ -82,7 +88,11 @@ class Android17SocketAdapter
           }
 
         if (echMode.attempt) {
-          echModeConfiguration.applyEch(sslSocket, echMode, hostname, client.dns)
+          echModeConfiguration
+            .applyEch(sslSocket, echMode, hostname, client.dns)
+            ?.let { echConfig ->
+              call.tag(EchConfig::class) { echConfig }
+            }
         }
       }
     }

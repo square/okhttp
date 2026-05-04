@@ -18,7 +18,7 @@ package okhttp3.ech
 /**
  * Configures the behavior of Encrypted Client Hello (ECH) for TLS connections.
  */
-enum class EchMode(
+internal enum class EchMode(
   /** True if OkHttp should attempt to configure ECH for the TLS connection. */
   val attempt: Boolean,
   /** True if the connection must fail when ECH cannot be configured or negotiated. */

@@ -299,11 +299,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level:
-          - 21
-          - 23
-          - 29
-          - 34
+        include:
+          - api-level: 21
+            arch: x86
+            target: default
+          - api-level: 23
+            arch: x86
+            target: default
+          - api-level: 29
+            arch: x86
+            target: default
+          - api-level: 34
+            arch: x86_64
+            target: default
+          - api-level: '37.0'
+            arch: x86_64
+            target: google_apis_ps16k
 
     steps:
       - name: Checkout
@@ -338,7 +349,7 @@ jobs:
         uses: actions/cache@v5
         id: avd-cache
         with:
-          key: avd-${{ runner.os }}-${{ matrix.api-level }}-${{ matrix.api-level >= 30 && 'x86_64' || 'x86' }}
+          key: avd-${{ runner.os }}-${{ matrix.api-level }}-${{ matrix.target }}-${{ matrix.arch }}
           path: |
             ~/.android/avd/*
             ~/.android/adb*
@@ -346,12 +357,14 @@ jobs:
             ${{ env.ANDROID_HOME }}/system-images/android-${{ matrix.api-level }}
 
       - name: Create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
+        if: steps.avd-cache.outputs.cache-hit != 'true' && matrix.api-level != '37.0'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
           force-avd-creation: false
-          arch: ${{ matrix.api-level >= 30 && 'x86_64' || 'x86' }}
+          target: ${{ matrix.target }}
+          arch: ${{ matrix.arch }}
+          emulator-boot-timeout: 1200
           # No window, no audio, and use swiftshader for headless environments
           emulator-options: >
             -no-window
@@ -364,13 +377,68 @@ jobs:
           script: echo "Generated AVD snapshot for caching."
 
       - name: Run Tests
+        if: matrix.api-level != '37.0'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
-          arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
+          target: ${{ matrix.target }}
+          arch: ${{ matrix.arch }}
+          emulator-boot-timeout: 1200
+          # Match the snapshot creation options. The action default includes -no-snapshot,
+          # which forces a slow cold boot.
+          emulator-options: >
+            -no-window
+            -gpu swiftshader_indirect
+            -noaudio
+            -no-boot-anim
+            -camera-back none
+            -memory 2048
           script: ./gradlew -PandroidBuild=true connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
+
+      - name: Run Android 37 Tests
+        if: matrix.api-level == '37.0'
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/sdkmanager' | sort | tail -n 1)"
+          AVDMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -path '*/bin/avdmanager' | sort | tail -n 1)"
+
+          yes | "$SDKMANAGER" --licenses > /dev/null
+          "$SDKMANAGER" --install \
+            'build-tools;36.0.0' \
+            platform-tools \
+            'platforms;android-37.0' \
+            emulator \
+            'system-images;android-37.0;google_apis_ps16k;x86_64' \
+            --channel=0 > /dev/null
+
+          echo no | "$AVDMANAGER" create avd \
+            --force \
+            --name test \
+            --package 'system-images;android-37.0;google_apis_ps16k;x86_64'
+
+          "$ANDROID_HOME/emulator/emulator" \
+            -port 5554 \
+            -avd test \
+            -no-window \
+            -gpu swiftshader_indirect \
+            -no-snapshot \
+            -noaudio \
+            -no-boot-anim \
+            -camera-back none \
+            -memory 2048 &
+
+          adb -s emulator-5554 wait-for-device
+          timeout 1200 bash -c 'until [[ "$(adb -s emulator-5554 shell getprop sys.boot_completed | tr -d "\r")" == "1" ]]; do sleep 2; done'
+          timeout 300 bash -c 'until adb -s emulator-5554 shell service check input | grep -q "found"; do sleep 2; done'
+
+          ./gradlew -PandroidBuild=true connectedCheck
+        env:
+          API_LEVEL: ${{ matrix.api-level }}
+
+      - name: Stop Android 37 Emulator
+        if: always() && matrix.api-level == '37.0'
+        run: adb -s emulator-5554 emu kill || true
 
       - name: Build Release App
         run: ./gradlew android-test-app:lint android-test-app:assembleRelease
@@ -440,4 +508,3 @@ jobs:
 
       - name: Run with Jlink
         run: ./gradlew module-tests:imageRun -PokhttpModuleTests=true
-

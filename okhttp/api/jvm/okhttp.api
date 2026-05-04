@@ -485,10 +485,6 @@ public abstract interface class okhttp3/Dns {
 public final class okhttp3/Dns$Companion {
 }
 
-public abstract interface class okhttp3/EchAware {
-	public abstract fun getHostRecords (Ljava/lang/String;)Ljava/lang/Object;
-}
-
 public abstract class okhttp3/EventListener {
 	public static final field Companion Lokhttp3/EventListener$Companion;
 	public static final field NONE Lokhttp3/EventListener;
@@ -579,7 +575,6 @@ public final class okhttp3/Handshake {
 	public fun equals (Ljava/lang/Object;)Z
 	public static final fun get (Ljavax/net/ssl/SSLSession;)Lokhttp3/Handshake;
 	public static final fun get (Lokhttp3/TlsVersion;Lokhttp3/CipherSuite;Ljava/util/List;Ljava/util/List;)Lokhttp3/Handshake;
-	public final fun getEchConfig ()Lokhttp3/ech/EchConfig;
 	public fun hashCode ()I
 	public final fun localCertificates ()Ljava/util/List;
 	public final fun localPrincipal ()Ljava/security/Principal;
@@ -944,7 +939,6 @@ public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Fact
 	public final fun fastFallback ()Z
 	public final fun followRedirects ()Z
 	public final fun followSslRedirects ()Z
-	public final fun getEchModeConfiguration ()Lokhttp3/ech/EchModeConfiguration;
 	public final fun hostnameVerifier ()Ljavax/net/ssl/HostnameVerifier;
 	public final fun interceptors ()Ljava/util/List;
 	public final fun minWebSocketMessageToCompress ()J
@@ -959,7 +953,6 @@ public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Fact
 	public final fun proxySelector ()Ljava/net/ProxySelector;
 	public final fun readTimeoutMillis ()I
 	public final fun retryOnConnectionFailure ()Z
-	public final fun setEchModeConfiguration (Lokhttp3/ech/EchModeConfiguration;)V
 	public final fun socketFactory ()Ljavax/net/SocketFactory;
 	public final fun sslSocketFactory ()Ljavax/net/ssl/SSLSocketFactory;
 	public final fun webSocketCloseTimeout ()I
@@ -1320,50 +1313,5 @@ public abstract class okhttp3/WebSocketListener {
 	public fun onMessage (Lokhttp3/WebSocket;Ljava/lang/String;)V
 	public fun onMessage (Lokhttp3/WebSocket;Lokio/ByteString;)V
 	public fun onOpen (Lokhttp3/WebSocket;Lokhttp3/Response;)V
-}
-
-public final class okhttp3/ech/EchConfig {
-	public fun <init> (Lokio/ByteString;)V
-	public final fun component1 ()Lokio/ByteString;
-	public final fun copy (Lokio/ByteString;)Lokhttp3/ech/EchConfig;
-	public static synthetic fun copy$default (Lokhttp3/ech/EchConfig;Lokio/ByteString;ILjava/lang/Object;)Lokhttp3/ech/EchConfig;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getConfig ()Lokio/ByteString;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class okhttp3/ech/EchMode : java/lang/Enum {
-	public static final field Companion Lokhttp3/ech/EchMode$Companion;
-	public static final field Disabled Lokhttp3/ech/EchMode;
-	public static final field FailClosed Lokhttp3/ech/EchMode;
-	public static final field Fallback Lokhttp3/ech/EchMode;
-	public static final field Opportunistic Lokhttp3/ech/EchMode;
-	public static final field Strict Lokhttp3/ech/EchMode;
-	public static final field Unspecified Lokhttp3/ech/EchMode;
-	public final fun getAttempt ()Z
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public final fun getFallback ()Z
-	public final fun getRequire ()Z
-	public static fun valueOf (Ljava/lang/String;)Lokhttp3/ech/EchMode;
-	public static fun values ()[Lokhttp3/ech/EchMode;
-}
-
-public final class okhttp3/ech/EchMode$Companion {
-}
-
-public abstract interface class okhttp3/ech/EchModeConfiguration {
-	public static final field Companion Lokhttp3/ech/EchModeConfiguration$Companion;
-	public abstract fun applyEch (Ljavax/net/ssl/SSLSocket;Lokhttp3/ech/EchMode;Ljava/lang/String;Lokhttp3/Dns;)V
-	public abstract fun echMode (Ljava/lang/String;)Lokhttp3/ech/EchMode;
-	public abstract fun isEchConfigError (Ljavax/net/ssl/SSLException;)Z
-}
-
-public final class okhttp3/ech/EchModeConfiguration$Companion {
-	public final fun getUnspecified ()Lokhttp3/ech/EchModeConfiguration;
-}
-
-public final class okhttp3/ech/EchModeConfiguration$DefaultImpls {
-	public static fun isEchConfigError (Lokhttp3/ech/EchModeConfiguration;Ljavax/net/ssl/SSLException;)Z
 }
 

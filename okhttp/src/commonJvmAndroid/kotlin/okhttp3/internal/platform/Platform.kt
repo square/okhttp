@@ -164,7 +164,7 @@ open class Platform {
 
   open fun isCleartextTrafficPermitted(hostname: String): Boolean = true
 
-  open val echModeConfiguration: EchModeConfiguration
+  internal open val echModeConfiguration: EchModeConfiguration
     get() = EchModeConfiguration.Unspecified
 
   /**

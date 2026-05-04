@@ -17,6 +17,7 @@ package okhttp3.internal.platform
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.net.DnsResolver
 import android.os.Build
 import android.os.StrictMode
 import android.security.NetworkSecurityPolicy
@@ -40,7 +41,13 @@ import okhttp3.internal.platform.android.AndroidEchModeConfiguration
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
 
-/** Android 17+ (API 37+). */
+/**
+ * Android 17+ (API 37+).
+ *
+ * This platform uses the post-API 36 Android TLS and DNS APIs directly, including domain
+ * encryption policy, HTTPS/SVCB DNS records from [DnsResolver], and Encrypted Client Hello (ECH)
+ * configuration on TLS sockets.
+ */
 @SuppressSignatureCheck
 class Android17Platform
   @RequiresApi(37)
@@ -99,7 +106,7 @@ class Android17Platform
       NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
 
     @SuppressLint("NewApi")
-    override val echModeConfiguration: EchModeConfiguration = AndroidEchModeConfiguration()
+    internal override val echModeConfiguration: EchModeConfiguration = AndroidEchModeConfiguration()
 
     override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
       AndroidCertificateChainCleaner.buildIfSupported(trustManager)!!

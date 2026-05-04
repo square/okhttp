@@ -21,8 +21,10 @@ import assertk.assertions.matchesPredicate
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
+@Tag("Remote")
 class EchTest {
 
   @Test
@@ -53,8 +55,6 @@ class EchTest {
 
   private fun <T> OkHttpClient.sendRequest(request: Request, fn: (Response) -> T): T {
     val response = newCall(request).execute()
-
-    assertThat(response.handshake?.echConfig).isNotNull()
 
     return response.use {
       fn(it)

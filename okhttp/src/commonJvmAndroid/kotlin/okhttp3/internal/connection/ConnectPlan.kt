@@ -413,8 +413,8 @@ class ConnectPlan internal constructor(
       protocol = if (maybeProtocol != null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1
       success = true
     } finally {
-      // ECH rejection is surfaced as an SSLException by the platform. Let it propagate so the
-      // retry interceptor can decide whether to retry with ECH disabled.
+      // ECH rejection is surfaced as an SSLException by the platform. Let it propagate so
+      // RetryAndFollowUpInterceptor can classify it with EchModeConfiguration.isEchConfigError().
       Platform.get().afterHandshake(sslSocket)
       if (!success) {
         sslSocket.closeQuietly()
