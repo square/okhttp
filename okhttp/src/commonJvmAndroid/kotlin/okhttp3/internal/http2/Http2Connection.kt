@@ -85,6 +85,12 @@ class Http2Connection internal constructor(
   /** Asynchronously writes frames to the outgoing socket. */
   private val writerQueue = taskRunner.newQueue()
 
+  /**
+   * Runs the periodic pingInterval watchdog. Separate from [writerQueue] so missing-pong detection
+   * still fires when the writer is wedged on a frame write to a half-open connection.
+   */
+  private val pingQueue = taskRunner.newQueue()
+
   /** Ensures push promise callbacks events are sent in order per stream. */
   private val pushQueue = taskRunner.newQueue()
 
@@ -147,7 +153,7 @@ class Http2Connection internal constructor(
   init {
     if (builder.pingIntervalMillis != 0) {
       val pingIntervalNanos = TimeUnit.MILLISECONDS.toNanos(builder.pingIntervalMillis.toLong())
-      writerQueue.schedule("$connectionName ping", pingIntervalNanos) {
+      pingQueue.schedule("$connectionName ping", pingIntervalNanos) {
         val failDueToMissingPong =
           withLock {
             if (intervalPongsReceived < intervalPingsSent) {
@@ -161,7 +167,12 @@ class Http2Connection internal constructor(
           failConnection(null)
           return@schedule -1L
         } else {
-          writePing(false, INTERVAL_PING, 0)
+          // Fire-and-forget the ping write so the watchdog returns promptly. If writer.lock is
+          // held by a wedged frame write, the ping queues behind it; the next tick sees
+          // pongs < pings and fails the connection, which cancels the socket and unblocks the writer.
+          writerQueue.execute("$connectionName ping write") {
+            writePing(false, INTERVAL_PING, 0)
+          }
           return@schedule pingIntervalNanos
         }
       }
@@ -481,11 +492,17 @@ class Http2Connection internal constructor(
 
     // Release the threads.
     writerQueue.shutdown()
+    pingQueue.shutdown()
     pushQueue.shutdown()
     settingsListenerQueue.shutdown()
   }
 
   private fun failConnection(e: IOException?) {
+    // Cancel the socket before close() so any thread blocked on writer.lock unblocks first;
+    // otherwise close() -> shutdown() -> writer.goAway() would deadlock on the same lock.
+    ignoreIoExceptions {
+      socket.cancel()
+    }
     close(ErrorCode.PROTOCOL_ERROR, ErrorCode.PROTOCOL_ERROR, e)
   }
 
