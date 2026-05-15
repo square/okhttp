@@ -498,8 +498,22 @@ class Http2Connection internal constructor(
   }
 
   private fun failConnection(e: IOException?) {
-    // Cancel the socket before close() so any thread blocked on writer.lock unblocks first;
-    // otherwise close() -> shutdown() -> writer.goAway() would deadlock on the same lock.
+    // Mark active streams with PROTOCOL_ERROR before socket.cancel() so the caller surfaces
+    // StreamResetException(PROTOCOL_ERROR) on its waiting read or write.
+    //
+    // Note that if we cancel first: the reader thread's blocked socket read returns SocketException,
+    // which can reach the caller before close() -> stream.close() sets errorCode in Http2Stream.closeInternal.
+    //
+    // We use closeLater() (which enqueues RST_STREAM via writerQueue) rather than close(): the latter
+    // writes RST_STREAM synchronously under writer.lock, and that lock is already held by the
+    // frame write that's blocked on the half-open socket. See pingQueue.
+    val streamsToClose: Array<Http2Stream>? =
+      withLock {
+        if (streams.isNotEmpty()) streams.values.toTypedArray() else null
+      }
+    streamsToClose?.forEach { stream ->
+      stream.closeLater(ErrorCode.PROTOCOL_ERROR)
+    }
     ignoreIoExceptions {
       socket.cancel()
     }
