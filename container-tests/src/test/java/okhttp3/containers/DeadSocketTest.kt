@@ -107,7 +107,7 @@ class DeadSocketTest {
         ImageFromDockerfile()
           .withDockerfileFromBuilder { builder ->
             builder
-              .from("alpine:3.19")
+              .from("alpine:3")
               .run("apk add --no-cache socat iptables")
               .build()
           },
