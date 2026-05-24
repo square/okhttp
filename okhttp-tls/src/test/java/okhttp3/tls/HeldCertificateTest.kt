@@ -263,6 +263,56 @@ class HeldCertificateTest {
   }
 
   @Test
+  fun ed25519() {
+    platform.assumeNotAndroid()
+    val heldCertificate =
+      HeldCertificate
+        .Builder()
+        .commonName("cash.app")
+        .ed25519()
+        .build()
+    assertThat(heldCertificate.certificate.sigAlgName).isEqualTo("Ed25519", ignoreCase = true)
+    assertThat(heldCertificate.keyPair.private.algorithm).isEqualTo("Ed25519", ignoreCase = true)
+    assertThat(heldCertificate.keyPair.public.algorithm).isEqualTo("Ed25519", ignoreCase = true)
+  }
+
+  @Test
+  fun ed25519RoundTrip() {
+    platform.assumeNotAndroid()
+    val original =
+      HeldCertificate
+        .Builder()
+        .commonName("cash.app")
+        .ed25519()
+        .build()
+    val pem = original.certificatePem() + original.privateKeyPkcs8Pem()
+    val decoded = decode(pem)
+    assertThat(decoded.certificate.encoded).isEqualTo(original.certificate.encoded)
+    assertThat(decoded.keyPair.private.encoded).isEqualTo(original.keyPair.private.encoded)
+    assertThat(decoded.keyPair.public.encoded).isEqualTo(original.keyPair.public.encoded)
+  }
+
+  @Test
+  fun ed25519SignedByEcdsa() {
+    platform.assumeNotAndroid()
+    val root =
+      HeldCertificate
+        .Builder()
+        .certificateAuthority(0)
+        .ecdsa256()
+        .build()
+    val leaf =
+      HeldCertificate
+        .Builder()
+        .ed25519()
+        .signedBy(root)
+        .build()
+    assertThat(root.certificate.sigAlgName).isEqualTo("SHA256WITHECDSA", ignoreCase = true)
+    assertThat(leaf.certificate.sigAlgName).isEqualTo("SHA256WITHECDSA", ignoreCase = true)
+    assertThat(leaf.keyPair.private.algorithm).isEqualTo("Ed25519", ignoreCase = true)
+  }
+
+  @Test
   fun decodeEcdsa256() {
     // The certificate + private key below was generated programmatically:
     //
