@@ -19,6 +19,7 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isCloseTo
 import assertk.assertions.isEqualTo
+import assertk.assertions.isIn
 import assertk.assertions.isNull
 import assertk.assertions.matches
 import java.math.BigInteger
@@ -271,9 +272,9 @@ class HeldCertificateTest {
         .commonName("cash.app")
         .ed25519()
         .build()
-    assertThat(heldCertificate.certificate.sigAlgName).isEqualTo("Ed25519", ignoreCase = true)
-    assertThat(heldCertificate.keyPair.private.algorithm).isEqualTo("Ed25519", ignoreCase = true)
-    assertThat(heldCertificate.keyPair.public.algorithm).isEqualTo("Ed25519", ignoreCase = true)
+    assertThat(heldCertificate.certificate.sigAlgName.lowercase()).isIn("ed25519", "eddsa")
+    assertThat(heldCertificate.keyPair.private.algorithm.lowercase()).isIn("ed25519", "eddsa")
+    assertThat(heldCertificate.keyPair.public.algorithm.lowercase()).isIn("ed25519", "eddsa")
   }
 
   @Test
@@ -309,7 +310,7 @@ class HeldCertificateTest {
         .build()
     assertThat(root.certificate.sigAlgName).isEqualTo("SHA256WITHECDSA", ignoreCase = true)
     assertThat(leaf.certificate.sigAlgName).isEqualTo("SHA256WITHECDSA", ignoreCase = true)
-    assertThat(leaf.keyPair.private.algorithm).isEqualTo("Ed25519", ignoreCase = true)
+    assertThat(leaf.keyPair.private.algorithm.lowercase()).isIn("ed25519", "eddsa")
   }
 
   @Test
