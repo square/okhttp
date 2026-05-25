@@ -1594,7 +1594,9 @@ class HttpUrl private constructor(
       input == ".." ||
         input.equals("%2e.", ignoreCase = true) ||
         input.equals(".%2e", ignoreCase = true) ||
-        input.equals("%2e%2e", ignoreCase = true)
+        input.equals("%2e%2e", ignoreCase = true) ||
+        input.equals("..%2e", ignoreCase = true) ||
+        input.equals("%2e..", ignoreCase = true)
 
     /**
      * Cuts this string up into alternating parameter names and values. This divides a query string

@@ -973,6 +973,10 @@ open class HttpUrlTest {
     assertThat(base.resolve("%2e.")).isEqualTo(parse("http://host/a/"))
     assertThat(base.resolve(".%2e")).isEqualTo(parse("http://host/a/"))
     assertThat(base.resolve("%2e%2e")).isEqualTo(parse("http://host/a/"))
+    assertThat(base.resolve("..%2e")).isEqualTo(parse("http://host/a/"))
+    assertThat(base.resolve("%2e..")).isEqualTo(parse("http://host/a/"))
+    assertThat(base.resolve("..%2E")).isEqualTo(parse("http://host/a/"))
+    assertThat(base.resolve("%2E..")).isEqualTo(parse("http://host/a/"))
     assertThat(base.resolve("%2E")).isEqualTo(parse("http://host/a/b/"))
     assertThat(base.resolve("%2e")).isEqualTo(parse("http://host/a/b/"))
   }
