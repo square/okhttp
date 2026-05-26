@@ -864,8 +864,7 @@ class DiskLruCache(
     fun edit(): Editor? = this@DiskLruCache.edit(key, sequenceNumber)
 
     @Throws(IOException::class)
-    internal fun editMetadata(): Editor? =
-      this@DiskLruCache.edit(key, sequenceNumber, allowSourceLocks = true)
+    internal fun editMetadata(): Editor? = this@DiskLruCache.edit(key, sequenceNumber, allowSourceLocks = true)
 
     /** Returns the unbuffered stream with the value for [index]. */
     fun getSource(index: Int): Source = sources[index]
