@@ -33,14 +33,14 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertFailsWith
+import okhttp3.Headers
+import okhttp3.Headers.Companion.headersOf
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Route
-import okhttp3.Headers
-import okhttp3.Headers.Companion.headersOf
-import okhttp3.TestValueFactory
 import okhttp3.TestUtil.headerEntries
 import okhttp3.TestUtil.repeat
+import okhttp3.TestValueFactory
 import okhttp3.internal.EMPTY_BYTE_ARRAY
 import okhttp3.internal.concurrent.Lockable
 import okhttp3.internal.concurrent.TaskFaker
@@ -2154,8 +2154,7 @@ class Http2ConnectionTest {
         override fun close() {
           cancel()
         }
-      }
-        .buffer()
+      }.buffer()
 
     override fun cancel() {
       canceled.countDown()
