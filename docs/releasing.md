@@ -15,7 +15,7 @@ Releasing
     ```
     sed -i "" \
       "s/version = \".*\"/version = \"$RELEASE_VERSION\"/g" \
-      build.gradle.kts
+      build-logic/src/main/kotlin/okhttp.base-conventions.gradle.kts
     sed -i "" \
       "s/\"com.squareup.okhttp3:\([^\:]*\):[^\"]*\"/\"com.squareup.okhttp3:\1:$RELEASE_VERSION\"/g" \
       `find . -name "README.md"`
@@ -29,7 +29,7 @@ Releasing
 
    sed -i "" \
       "s/version = \".*\"/version = \"$NEXT_VERSION\"/g" \
-      build.gradle.kts
+      build-logic/src/main/kotlin/okhttp.base-conventions.gradle.kts
     git commit -am "Prepare next development version."
     git push
     ```
