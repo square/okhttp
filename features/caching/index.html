@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/icon-square.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1457,7 +1457,7 @@
 
 <h1 id="caching">Caching<a class="headerlink" href="#caching" title="Permanent link">&para;</a></h1>
 <p>OkHttp implements an optional, off by default, Cache. OkHttp aims for RFC correct and
-pragmatic caching behaviour, following common real-world browser like Firefox/Chrome and 
+pragmatic caching behaviour, following common real-world browser like Firefox/Chrome and
 server behaviour when ambiguous.</p>
 <h1 id="basic-usage">Basic Usage<a class="headerlink" href="#basic-usage" title="Permanent link">&para;</a></h1>
 <div class="highlight"><pre><span></span><code><span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">client</span><span class="p">:</span><span class="w"> </span><span class="n">OkHttpClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
@@ -1473,8 +1473,8 @@ server behaviour when ambiguous.</p>
 <h3 id="cache-hit">Cache Hit<a class="headerlink" href="#cache-hit" title="Permanent link">&para;</a></h3>
 <p>In the ideal scenario the cache can fulfill the request without any conditional call to the network.
 This will skip the normal events such as DNS, connecting to the network, and downloading the response body.</p>
-<p>As recommended by the HTTP RFC the max age of a document is defaulted to 10% of the 
-document&rsquo;s age at the time it was served based on &ldquo;Last-Modified&rdquo;. Default expiration dates aren&rsquo;t used for URIs 
+<p>As recommended by the HTTP RFC the max age of a document is defaulted to 10% of the
+document&rsquo;s age at the time it was served based on &ldquo;Last-Modified&rdquo;. Default expiration dates aren&rsquo;t used for URIs
 containing a query.</p>
 <ul>
 <li>CallStart</li>
@@ -1483,10 +1483,10 @@ containing a query.</p>
 </ul>
 <h3 id="cache-miss">Cache Miss<a class="headerlink" href="#cache-miss" title="Permanent link">&para;</a></h3>
 <p>Under a cache miss the normal request events are seen but an additional event shows the presence of the cache.
-Cache Miss will be typical if the item has not been read from the network, is uncacheable, or is past it&rsquo;s 
+Cache Miss will be typical if the item has not been read from the network, is uncacheable, or is past it&rsquo;s
 lifetime based on Response cache headers.</p>
 <ul>
-<li>CallStart </li>
+<li>CallStart</li>
 <li><strong>CacheMiss</strong></li>
 <li>ProxySelectStart</li>
 <li>&hellip; Standard Events &hellip;</li>
@@ -1532,7 +1532,7 @@ This would be typical after a user initiates a force refresh by a pull to refres
 </ol>
 <p>Make sure you are reading responses fully as unless they are read fully, cancelled or stalled Responses will not be cached.</p>
 <h3 id="overriding-normal-cache-behaviour">Overriding normal cache behaviour<a class="headerlink" href="#overriding-normal-cache-behaviour" title="Permanent link">&para;</a></h3>
-<p>See Cache documentation. <a href="https://square.github.io/okhttp/4.x/okhttp/okhttp3/-cache/">https://square.github.io/okhttp/4.x/okhttp/okhttp3/-cache/</a></p>
+<p>See <a href="https://square.github.io/okhttp/5.x/okhttp/okhttp3/-cache/"><code>Cache</code></a> documentation.</p>
 
 
 
@@ -1586,10 +1586,10 @@ This would be typical after a user initiates a force refresh by a pull to refres
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

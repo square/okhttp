@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/icon-square.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1450,7 +1450,7 @@ export NEXT_VERSION=X.Y.Z-SNAPSHOT
 <p><code>``
 sed -i "" \
   "s/version = \".*\"/version = \"$RELEASE_VERSION\"/g" \
-  build.gradle.kts
+  build-logic/src/main/kotlin/okhttp.base-conventions.gradle.kts
 sed -i "" \
   "s/\"com.squareup.okhttp3:\([^\:]*\):[^\"]*\"/\"com.squareup.okhttp3:\1:$RELEASE_VERSION\"/g" \</code>find . -name &ldquo;README.md&rdquo;<code>sed -i "" \
   "s/\/com.squareup.okhttp3\/\([^\:]*\)\/[^\/]*\//\/com.squareup.okhttp3\/\1\/$RELEASE_VERSION\//g" \</code>find . -name &ldquo;README.md&rdquo;`</p>
@@ -1461,7 +1461,7 @@ git push &amp;&amp; git push &ndash;tags</p>
 </ol>
 <p>sed -i &ldquo;&rdquo; \
       &ldquo;s/version = ".*"/version = "$NEXT_VERSION"/g&rdquo; \
-      build.gradle.kts
+      build-logic/src/main/kotlin/okhttp.base-conventions.gradle.kts
     git commit -am &ldquo;Prepare next development version.&rdquo;
     git push
     ```</p>
@@ -1521,10 +1521,10 @@ git push &amp;&amp; git push &ndash;tags</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs"], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

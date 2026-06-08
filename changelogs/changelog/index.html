@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/icon-square.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1133,10 +1133,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#version-4x" class="md-nav__link">
+  <a href="#version-540" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Version 4.x
+        Version 5.4.0
       
     </span>
   </a>
@@ -1423,6 +1423,17 @@
     <span class="md-ellipsis">
       
         Version 5.0.0-alpha.1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-4x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 4.x
       
     </span>
   </a>
@@ -1781,10 +1792,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#version-4x" class="md-nav__link">
+  <a href="#version-540" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Version 4.x
+        Version 5.4.0
       
     </span>
   </a>
@@ -2077,6 +2088,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#version-4x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 4.x
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2095,8 +2117,19 @@
 
 
 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
-<h2 id="version-4x">Version 4.x<a class="headerlink" href="#version-4x" title="Permanent link">&para;</a></h2>
-<p>See <a href="https://square.github.io/okhttp/changelogs/changelog_4x/">4.x Change log</a> for the stable version changelogs.</p>
+<h2 id="version-540">Version 5.4.0<a class="headerlink" href="#version-540" title="Permanent link">&para;</a></h2>
+<p><em>2026-06-08</em></p>
+<ul>
+<li>New: Add superpowers to interceptors. Interceptors can now override anything settable on
+    <code>OkHttpClient.Builder</code>, such as the cache, connection pool, socket factory, and DNS. We expect
+    this will allow most users to use interceptors everywhere, insted of mixing and matching
+    interceptors with custom <code>Call.Factory</code> wrappers.</li>
+<li>Fix: Limit each HTTP/2 response to 256 KiB of total headers.</li>
+<li>Upgrade: <a href="https://github.com/Kotlin/kotlinx.coroutines/releases/tag/1.11.0">kotlinx.coroutines 1.11.0</a>. This is used by the optional
+    <code>okhttp-coroutines</code> artifact.</li>
+<li>Upgrade: <a href="https://www.graalvm.org/release-notes/JDK_25/">GraalVM 25.0.3</a>.</li>
+<li>Upgrade: <a href="https://square.github.io/okio/changelog/#version-3170">Okio 3.17.0</a>.</li>
+</ul>
 <h2 id="version-532">Version 5.3.2<a class="headerlink" href="#version-532" title="Permanent link">&para;</a></h2>
 <p><em>2025-11-18</em></p>
 <ul>
@@ -2903,6 +2936,8 @@ and Android! Please report any issues you encounter: we&rsquo;ll fix them urgent
 </ul>
 <p>Note that this was originally released on 2020-10-06 as 4.10.0-RC1. The only change from that
 release is the version name.</p>
+<h2 id="version-4x">Version 4.x<a class="headerlink" href="#version-4x" title="Permanent link">&para;</a></h2>
+<p>See <a href="https://square.github.io/okhttp/changelogs/changelog_4x/">4.x Change log</a> for the legacy version changelogs.</p>
 
 
 
@@ -2956,10 +2991,10 @@ release is the version name.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

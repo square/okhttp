@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/icon-square.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1678,9 +1678,9 @@
 
 <h1 id="calls">Calls<a class="headerlink" href="#calls" title="Permanent link">&para;</a></h1>
 <p>The HTTP client’s job is to accept your request and produce its response. This is simple in theory but it gets tricky in practice.</p>
-<h2 id="requests"><a href="https://square.github.io/okhttp/4.x/okhttp/okhttp3/-request/">Requests</a><a class="headerlink" href="#requests" title="Permanent link">&para;</a></h2>
+<h2 id="requests"><a href="https://square.github.io/okhttp/5.x/okhttp/okhttp3/-request/">Requests</a><a class="headerlink" href="#requests" title="Permanent link">&para;</a></h2>
 <p>Each HTTP request contains a URL, a method (like <code>GET</code> or <code>POST</code>), and a list of headers. Requests may also contain a body: a data stream of a specific content type.</p>
-<h2 id="responses"><a href="https://square.github.io/okhttp/4.x/okhttp/okhttp3/-response/">Responses</a><a class="headerlink" href="#responses" title="Permanent link">&para;</a></h2>
+<h2 id="responses"><a href="https://square.github.io/okhttp/5.x/okhttp/okhttp3/-response/">Responses</a><a class="headerlink" href="#responses" title="Permanent link">&para;</a></h2>
 <p>The response answers the request with a code (like 200 for success or 404 for not found), headers, and its own optional body.</p>
 <h2 id="rewriting-requests">Rewriting Requests<a class="headerlink" href="#rewriting-requests" title="Permanent link">&para;</a></h2>
 <p>When you provide OkHttp with an HTTP request, you’re describing the request at a high-level: <em>“fetch me this URL with these headers.”</em> For correctness and efficiency, OkHttp rewrites your request before transmitting it.</p>
@@ -1691,20 +1691,20 @@
 <p>If a conditional GET was successful, responses from the network and cache are merged as directed by the spec.</p>
 <h2 id="follow-up-requests">Follow-up Requests<a class="headerlink" href="#follow-up-requests" title="Permanent link">&para;</a></h2>
 <p>When your requested URL has moved, the webserver will return a response code like <code>302</code> to indicate the document’s new URL. OkHttp will follow the redirect to retrieve a final response.</p>
-<p>If the response issues an authorization challenge, OkHttp will ask the <a href="https://square.github.io/okhttp/4.x/okhttp/okhttp3/-authenticator/"><code>Authenticator</code></a> (if one is configured) to satisfy the challenge. If the authenticator supplies a credential, the request is retried with that credential included.</p>
+<p>If the response issues an authorization challenge, OkHttp will ask the <a href="https://square.github.io/okhttp/5.x/okhttp/okhttp3/-authenticator/"><code>Authenticator</code></a> (if one is configured) to satisfy the challenge. If the authenticator supplies a credential, the request is retried with that credential included.</p>
 <h2 id="retrying-requests">Retrying Requests<a class="headerlink" href="#retrying-requests" title="Permanent link">&para;</a></h2>
 <p>Sometimes connections fail: either a pooled connection was stale and disconnected, or the webserver itself couldn’t be reached. OkHttp will retry the request with a different route if one is available.</p>
-<h2 id="calls_1"><a href="https://square.github.io/okhttp/4.x/okhttp/okhttp3/-call/">Calls</a><a class="headerlink" href="#calls_1" title="Permanent link">&para;</a></h2>
+<h2 id="calls_1"><a href="https://square.github.io/okhttp/5.x/okhttp/okhttp3/-call/">Calls</a><a class="headerlink" href="#calls_1" title="Permanent link">&para;</a></h2>
 <p>With rewrites, redirects, follow-ups and retries, your simple request may yield many requests and responses. OkHttp uses <code>Call</code> to model the task of satisfying your request through however many intermediate requests and responses are necessary. Typically this isn’t many! But it’s comforting to know that your code will continue to work if your URLs are redirected or if you failover to an alternate IP address.</p>
 <p>Calls are executed in one of two ways:</p>
 <ul>
 <li><strong>Synchronous:</strong> your thread blocks until the response is readable.</li>
-<li><strong>Asynchronous:</strong> you enqueue the request on any thread, and get <a href="https://square.github.io/okhttp/4.x/okhttp/okhttp3/-callback/">called back</a> on another thread when the response is readable.</li>
+<li><strong>Asynchronous:</strong> you enqueue the request on any thread, and get <a href="https://square.github.io/okhttp/5.x/okhttp/okhttp3/-callback/">called back</a> on another thread when the response is readable.</li>
 </ul>
 <p>Calls can be canceled from any thread. This will fail the call if it hasn’t yet completed! Code that is writing the request body or reading the response body will suffer an <code>IOException</code> when its call is canceled.</p>
 <h2 id="dispatch">Dispatch<a class="headerlink" href="#dispatch" title="Permanent link">&para;</a></h2>
 <p>For synchronous calls, you bring your own thread and are responsible for managing how many simultaneous requests you make. Too many simultaneous connections wastes resources; too few harms latency.</p>
-<p>For asynchronous calls, <a href="https://square.github.io/okhttp/4.x/okhttp/okhttp3/-dispatcher/"><code>Dispatcher</code></a> implements policy for maximum simultaneous requests. You can set maximums per-webserver (default is 5), and overall (default is 64).</p>
+<p>For asynchronous calls, <a href="https://square.github.io/okhttp/5.x/okhttp/okhttp3/-dispatcher/"><code>Dispatcher</code></a> implements policy for maximum simultaneous requests. You can set maximums per-webserver (default is 5), and overall (default is 64).</p>
 
 
 
@@ -1758,10 +1758,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
