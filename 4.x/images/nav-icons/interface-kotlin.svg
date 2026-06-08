@@ -1,9 +1,0 @@
-<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="interfaceKotlin">
-<path id="Vector" fill-rule="evenodd" clip-rule="evenodd" d="M8 15C4.134 15 1 11.866 1 8C1 4.134 4.134 1 8 1C11.866 1 15 4.134 15 8H8V15Z" fill="#62B543" fill-opacity="0.6"/>
-<path id="Vector_2" opacity="0.7" d="M8 11H6V10.0065L7.4 10V6H6V5H10V6H8.6V8H8V11Z" fill="#231F20"/>
-<g id="&#226;&#140;&#152;/modifier/kotlin">
-<path id="&#226;&#140;&#152;/modifier/kotlin_2" d="M16 16H9V9H16L12.4 12.4L16 16Z" fill="#B99BF8"/>
-</g>
-</g>
-</svg>
