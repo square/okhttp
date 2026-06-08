@@ -1,0 +1,114 @@
+/*
+ * Custom Dokka styles
+ */
+code .token {
+    white-space: pre;
+}
+
+/**
+ * Styles based on webhelp's prism.js styles
+ * Changes:
+ * - Since webhelp's styles are in .pcss, they use nesting which is not achievable in native CSS
+ *   so nested css blocks have been unrolled (like dark theme).
+ * - Webhelp uses "Custom Class" prism.js plugin, so all of their prism classes are prefixed with "--prism".
+ *   Dokka doesn't seem to need this plugin at the moment, so all "--prism" prefixes have been removed.
+ * - Removed all styles related to `pre` and `code` tags. Kotlinlang's resulting styles are so spread out and complicated
+ *   that it's difficult to gather in one place. Instead use code styles defined in the main Dokka styles,
+ *   which at the moment looks fairly similar.
+ *
+ * Based on prism.js default theme
+ * Based on dabblet (http://dabblet.com)
+ * @author Lea Verou
+ */
+
+:root {
+	--code-area-punctuation: var(--color-cd-punctuation);
+	--code-area-string: var(--color-cd-builtin);
+	--code-area-keyword: var(--color-cd-keyword);
+	--code-area-function: var(--color-cd-function);
+	--code-area-operator: var(--color-cd-operator);
+	--code-area-number: var(--color-cd-number);
+}
+
+:root.theme-dark {
+	--code-area-string: var(--color-cd-builtin-alternative);
+	--code-area-keyword: var(--color-cd-keyword-alternative);
+	--code-area-function: var(--color-cd-function-alternative);
+	--code-area-operator: var(--color-cd-operator-alternative);
+	--code-area-number: var(--color-cd-number-alternative);
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata,
+.token.punctuation {
+	color: var(--code-area-punctuation);
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+	color: var(--code-area-number);
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+	color: var(--code-area-string);
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+	color: var(--code-area-operator);
+	background: none;
+}
+
+.token.interpolation-punctuation {
+	color: var(--code-area-keyword);
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword,
+.token.interpolation-punctuation {
+	color: var(--code-area-keyword);
+}
+
+.token.function {
+	color: var(--code-area-function);
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+	color: var(--code-area-number);
+}
+
+.token.important,
+.token.bold {
+	font-weight: bold;
+}
+
+.token.italic {
+	font-style: italic;
+}
+
+.token.entity {
+	cursor: help;
+}
+
+:root.theme-dark .language-plaintext .token {
+	/* plaintext code should be colored as article text */
+	color: inherit !important;
+}
