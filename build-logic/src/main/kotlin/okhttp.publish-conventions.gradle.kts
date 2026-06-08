@@ -5,6 +5,8 @@ import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import kotlinx.validation.ApiValidationExtension
 import kotlinx.validation.KotlinApiBuildTask
 import kotlinx.validation.KotlinApiCompareTask
+import org.jetbrains.dokka.gradle.DokkaExtension
+import org.jetbrains.dokka.gradle.DokkaPlugin
 
 plugins {
   id("com.vanniktech.maven.publish.base")
@@ -14,6 +16,18 @@ plugins {
 val okhttpDokka: String? by project
 if (okhttpDokka?.toBoolean() == true) {
   apply(plugin = "org.jetbrains.dokka")
+  plugins.withType<DokkaPlugin> {
+    configure<DokkaExtension> {
+      dokkaPublications.all {
+        dokkaSourceSets.configureEach {
+          perPackageOption {
+            matchingRegex.set(""".*[.]internal([.].*)?""")
+            suppress.set(true)
+          }
+        }
+      }
+    }
+  }
 }
 
 configure<MavenPublishBaseExtension> {
