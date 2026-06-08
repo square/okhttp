@@ -1,0 +1,374 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>ExchangeCodec</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../ui-kit/ui-kit.min.js" defer></script></head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+<a class="library-name--link" href="../../../index.html" tabindex="1">
+                    okhttp-parent
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">
+        </div>
+        <div class="navigation-controls">
+        <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
+                <button class="platform-tag platform-selector jvm-like" data-active="" aria-pressed="true" data-filter=":okhttp/commonJvmAndroid">commonJvmAndroid</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox" aria-label="Target filter">
+                    <div class="dropdown--header"><span>Target filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close target filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":okhttp/commonJvmAndroid" data-filter=":okhttp/commonJvmAndroid">
+                                <span class="checkbox--icon"></span>
+                                commonJvmAndroid
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </ul>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config="{&quot;defaultSize&quot;: 280, &quot;minSize&quot;: 200, &quot;maxSize&quot;: 400}">
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    okhttp-parent
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="okhttp::okhttp3.internal.http/ExchangeCodec///PointingToDeclaration//2118157918">
+  <div class="breadcrumbs"><a href="../../index.html">okhttp</a><span class="delimiter">/</span><a href="../index.html">okhttp3.internal.http</a><span class="delimiter">/</span><span class="current">ExchangeCodec</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Exchange</span><wbr><span><span>Codec</span></span></h1>
+    <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+      <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">ExchangeCodec</a></div><p class="paragraph">Encodes HTTP requests and decodes HTTP responses.</p><h4 class="tableheader">Inheritors</h4><div class="table"><div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../../okhttp3.internal.http1/-http1-exchange-codec/index.html">Http1ExchangeCodec</a></div></span></div><div></div></div></div><div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../../okhttp3.internal.http2/-http2-exchange-codec/index.html">Http2ExchangeCodec</a></div></span></div><div></div></div></div></div></div>    </div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="TYPE">
+        <h2 class="tableheader">Types</h2>
+        <div class="table"><a data-name="1264122441%2FClasslikes%2F2118157918" anchor-label="Carrier" id="1264122441%2FClasslikes%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-carrier/index.html"><span><span>Carrier</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1264122441%2FClasslikes%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">interface </span><a href="-carrier/index.html">Carrier</a></div><div class="brief "><p class="paragraph">Carries an exchange. This is usually a connection, but it could also be a connect plan for CONNECT tunnels. Note that CONNECT tunnels are significantly less capable than connections.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1440886965%2FClasslikes%2F2118157918" anchor-label="Companion" id="1440886965%2FClasslikes%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1440886965%2FClasslikes%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="tableheader">Properties</h2>
+        <div class="table"><a data-name="-14286922%2FProperties%2F2118157918" anchor-label="carrier" id="-14286922%2FProperties%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="carrier.html"><span><span>carrier</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-14286922%2FProperties%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="carrier.html">carrier</a><span class="token operator">: </span><a href="-carrier/index.html">ExchangeCodec.Carrier</a></div><div class="brief "><p class="paragraph">The connection or CONNECT tunnel that owns this codec.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-237530680%2FProperties%2F2118157918" anchor-label="isResponseComplete" id="-237530680%2FProperties%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="is-response-complete.html"><span>is</span><wbr><span>Response</span><wbr><span><span>Complete</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-237530680%2FProperties%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="is-response-complete.html">isResponseComplete</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Returns true if the response body and (possibly empty) trailers have been received.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1901004185%2FProperties%2F2118157918" anchor-label="socket" id="1901004185%2FProperties%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="socket.html"><span><span>socket</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1901004185%2FProperties%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="socket.html">socket</a><span class="token operator">: </span>ERROR CLASS: Symbol not found for Socket</div><div class="brief "><p class="paragraph">The socket that carries this exchange.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="tableheader">Functions</h2>
+        <div class="table"><a data-name="1248664690%2FFunctions%2F2118157918" anchor-label="cancel" id="1248664690%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="cancel.html"><span><span>cancel</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1248664690%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="cancel.html"><span class="token function">cancel</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Cancel this stream. Resources held by this stream will be cleaned up, though not synchronously. That may happen later by the connection pool thread.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1697643859%2FFunctions%2F2118157918" anchor-label="createRequestBody" id="1697643859%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="create-request-body.html"><span>create</span><wbr><span>Request</span><wbr><span><span>Body</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1697643859%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="create-request-body.html"><span class="token function">createRequestBody</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">request<span class="token operator">: </span><a href="../../okhttp3/-request/index.html">Request</a><span class="token punctuation">, </span></span><span class="parameter ">contentLength<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span>ERROR CLASS: Symbol not found for Sink</div><div class="brief "><p class="paragraph">Returns an output stream where the request body can be streamed.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-957653006%2FFunctions%2F2118157918" anchor-label="finishRequest" id="-957653006%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="finish-request.html"><span>finish</span><wbr><span><span>Request</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-957653006%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="finish-request.html"><span class="token function">finishRequest</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Flush the request to the underlying socket and signal no more bytes will be transmitted.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1620940319%2FFunctions%2F2118157918" anchor-label="flushRequest" id="-1620940319%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="flush-request.html"><span>flush</span><wbr><span><span>Request</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1620940319%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="flush-request.html"><span class="token function">flushRequest</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Flush the request to the underlying socket.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="875542564%2FFunctions%2F2118157918" anchor-label="openResponseBodySource" id="875542564%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="open-response-body-source.html"><span>open</span><wbr><span>Response</span><wbr><span>Body</span><wbr><span><span>Source</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="875542564%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="open-response-body-source.html"><span class="token function">openResponseBodySource</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">response<span class="token operator">: </span><a href="../../okhttp3/-response/index.html">Response</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span>ERROR CLASS: Symbol not found for Source</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="148334257%2FFunctions%2F2118157918" anchor-label="peekTrailers" id="148334257%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="peek-trailers.html"><span>peek</span><wbr><span><span>Trailers</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="148334257%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="peek-trailers.html"><span class="token function">peekTrailers</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../okhttp3/-headers/index.html">Headers</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Returns the trailers after the HTTP response if they're ready. May be empty.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1631040892%2FFunctions%2F2118157918" anchor-label="readResponseHeaders" id="-1631040892%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="read-response-headers.html"><span>read</span><wbr><span>Response</span><wbr><span><span>Headers</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1631040892%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="read-response-headers.html"><span class="token function">readResponseHeaders</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">expectContinue<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../okhttp3/-response/-builder/index.html">Response.Builder</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Parses bytes of a response header from an HTTP transport.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="698256290%2FFunctions%2F2118157918" anchor-label="reportedContentLength" id="698256290%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="reported-content-length.html"><span>reported</span><wbr><span>Content</span><wbr><span><span>Length</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="698256290%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="reported-content-length.html"><span class="token function">reportedContentLength</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">response<span class="token operator">: </span><a href="../../okhttp3/-response/index.html">Response</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1087839290%2FFunctions%2F2118157918" anchor-label="writeRequestHeaders" id="1087839290%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="write-request-headers.html"><span>write</span><wbr><span>Request</span><wbr><span><span>Headers</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1087839290%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="write-request-headers.html"><span class="token function">writeRequestHeaders</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">request<span class="token operator">: </span><a href="../../okhttp3/-request/index.html">Request</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">This should update the HTTP engine's sentRequestMillis field.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2026 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

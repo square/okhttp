@@ -1,0 +1,527 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>RealWebSocket</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../ui-kit/ui-kit.min.js" defer></script></head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+<a class="library-name--link" href="../../../index.html" tabindex="1">
+                    okhttp-parent
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">
+        </div>
+        <div class="navigation-controls">
+        <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
+                <button class="platform-tag platform-selector jvm-like" data-active="" aria-pressed="true" data-filter=":okhttp/commonJvmAndroid">commonJvmAndroid</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox" aria-label="Target filter">
+                    <div class="dropdown--header"><span>Target filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close target filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":okhttp/commonJvmAndroid" data-filter=":okhttp/commonJvmAndroid">
+                                <span class="checkbox--icon"></span>
+                                commonJvmAndroid
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </ul>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config="{&quot;defaultSize&quot;: 280, &quot;minSize&quot;: 200, &quot;maxSize&quot;: 400}">
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    okhttp-parent
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="okhttp::okhttp3.internal.ws/RealWebSocket///PointingToDeclaration//2118157918">
+  <div class="breadcrumbs"><a href="../../index.html">okhttp</a><span class="delimiter">/</span><a href="../index.html">okhttp3.internal.ws</a><span class="delimiter">/</span><span class="current">RealWebSocket</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Real</span><wbr><span>Web</span><wbr><span><span>Socket</span></span></h1>
+    <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+      <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">RealWebSocket</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">taskRunner<span class="token operator">: </span><a href="../../okhttp3.internal.concurrent/-task-runner/index.html">TaskRunner</a><span class="token punctuation">, </span></span><span class="parameter ">originalRequest<span class="token operator">: </span><a href="../../okhttp3/-request/index.html">Request</a><span class="token punctuation">, </span></span><span class="parameter ">listener<span class="token operator">: </span><a href="../../okhttp3/-web-socket-listener/index.html">WebSocketListener</a><span class="token punctuation">, </span></span><span class="parameter ">random<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/java/util/Random.html">Random</a><span class="token punctuation">, </span></span><span class="parameter ">pingIntervalMillis<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">extensions<span class="token operator">: </span><a href="../-web-socket-extensions/index.html">WebSocketExtensions</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">minimumDeflateSize<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">webSocketCloseTimeout<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span> : <a href="../../okhttp3/-web-socket/index.html">WebSocket</a>, <a href="../-web-socket-reader/-frame-callback/index.html">WebSocketReader.FrameCallback</a>, <a href="../../okhttp3.internal.concurrent/-lockable/index.html">Lockable</a></div></div>    </div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button><button class="section-tab" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION,EXTENSION_PROPERTY,EXTENSION_FUNCTION">Members &amp; Extensions</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="tableheader">Constructors</h2>
+        <div class="table"><a data-name="14577684%2FConstructors%2F2118157918" anchor-label="RealWebSocket" id="14577684%2FConstructors%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-togglable="CONSTRUCTOR" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-real-web-socket.html"><span>Real</span><wbr><span>Web</span><wbr><span><span>Socket</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="14577684%2FConstructors%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">taskRunner<span class="token operator">: </span><a href="../../okhttp3.internal.concurrent/-task-runner/index.html">TaskRunner</a><span class="token punctuation">, </span></span><span class="parameter ">originalRequest<span class="token operator">: </span><a href="../../okhttp3/-request/index.html">Request</a><span class="token punctuation">, </span></span><span class="parameter ">listener<span class="token operator">: </span><a href="../../okhttp3/-web-socket-listener/index.html">WebSocketListener</a><span class="token punctuation">, </span></span><span class="parameter ">random<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/java/util/Random.html">Random</a><span class="token punctuation">, </span></span><span class="parameter ">pingIntervalMillis<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">extensions<span class="token operator">: </span><a href="../-web-socket-extensions/index.html">WebSocketExtensions</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">minimumDeflateSize<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">webSocketCloseTimeout<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="TYPE">
+        <h2 class="tableheader">Types</h2>
+        <div class="table"><a data-name="51080299%2FClasslikes%2F2118157918" anchor-label="Companion" id="51080299%2FClasslikes%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="51080299%2FClasslikes%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="tableheader">Functions</h2>
+        <div class="table"><a data-name="-821662596%2FFunctions%2F2118157918" anchor-label="cancel" id="-821662596%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="cancel.html"><span><span>cancel</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-821662596%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="cancel.html"><span class="token function">cancel</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Immediately and violently release resources held by this web socket, discarding any enqueued messages. This does nothing if the web socket has already been closed or canceled.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1549586162%2FFunctions%2F2118157918" anchor-label="close" id="1549586162%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="close.html"><span><span>close</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1549586162%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="close.html"><span class="token function">close</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">code<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">reason<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Attempts to initiate a graceful shutdown of this web socket. Any already-enqueued messages will be transmitted before the close message is sent but subsequent calls to <a href="../../okhttp3/-web-socket/send.html">send</a> will return false and their messages will not be enqueued.</p></div><div class="symbol monospace"><span class="token keyword">fun </span><a href="close.html"><span class="token function">close</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">code<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">reason<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">cancelAfterCloseMillis<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1239975892%2FFunctions%2F2118157918" anchor-label="connect" id="-1239975892%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="connect.html"><span><span>connect</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1239975892%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">fun </span><a href="connect.html"><span class="token function">connect</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">client<span class="token operator">: </span><a href="../../okhttp3/-ok-http-client/index.html">OkHttpClient</a></span></span><span class="token punctuation">)</span></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1793770892%2FFunctions%2F2118157918" anchor-label="failWebSocket" id="-1793770892%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="fail-web-socket.html"><span>fail</span><wbr><span>Web</span><wbr><span><span>Socket</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1793770892%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">fun </span><a href="fail-web-socket.html"><span class="token function">failWebSocket</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">e<span class="token operator">: </span><a href="https://developer.android.com/reference/kotlin/java/lang/Exception.html">Exception</a><span class="token punctuation">, </span></span><span class="parameter ">response<span class="token operator">: </span><a href="../../okhttp3/-response/index.html">Response</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">isWriter<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator"> = </span><span class="token boolean">false</span></span></span><span class="token punctuation">)</span></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="917549184%2FFunctions%2F2118157918" anchor-label="finishReader" id="917549184%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="finish-reader.html"><span>finish</span><wbr><span><span>Reader</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="917549184%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">fun </span><a href="finish-reader.html"><span class="token function">finishReader</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Clean up and publish necessary close events when the reader is done. Invoked only by the reader thread.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-118126932%2FFunctions%2F2118157918" anchor-label="initReaderAndWriter" id="-118126932%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="init-reader-and-writer.html"><span>init</span><wbr><span>Reader</span><wbr><span>And</span><wbr><span><span>Writer</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-118126932%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">fun </span><a href="init-reader-and-writer.html"><span class="token function">initReaderAndWriter</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">socket<span class="token operator">: </span><a href="../../okhttp3.internal.connection/-buffered-socket/index.html">BufferedSocket</a><span class="token punctuation">, </span></span><span class="parameter ">client<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">This accepts a BufferedSource instead of using Socket.source, just in case we've already received data from the peer. This accepts a BufferedSink for symmetry with the source.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1033019247%2FFunctions%2F2118157918" anchor-label="loopReader" id="1033019247%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="loop-reader.html"><span>loop</span><wbr><span><span>Reader</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1033019247%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">fun </span><a href="loop-reader.html"><span class="token function">loopReader</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">response<span class="token operator">: </span><a href="../../okhttp3/-response/index.html">Response</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Receive frames until there are no more. Invoked only by the reader thread.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1316245220%2FFunctions%2F2118157918" anchor-label="onReadClose" id="1316245220%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="on-read-close.html"><span>on</span><wbr><span>Read</span><wbr><span><span>Close</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1316245220%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="on-read-close.html"><span class="token function">onReadClose</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">code<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">reason<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-91979857%2FFunctions%2F2118157918" anchor-label="onReadMessage" id="-91979857%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="on-read-message.html"><span>on</span><wbr><span>Read</span><wbr><span><span>Message</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-91979857%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="on-read-message.html"><span class="token function">onReadMessage</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">bytes<span class="token operator">: </span>ERROR CLASS: Symbol not found for ByteString</span></span><span class="token punctuation">)</span></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="on-read-message.html"><span class="token function">onReadMessage</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">text<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2004821772%2FFunctions%2F2118157918" anchor-label="onReadPing" id="2004821772%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="on-read-ping.html"><span>on</span><wbr><span>Read</span><wbr><span><span>Ping</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2004821772%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="on-read-ping.html"><span class="token function">onReadPing</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">payload<span class="token operator">: </span>ERROR CLASS: Symbol not found for ByteString</span></span><span class="token punctuation">)</span></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="424064710%2FFunctions%2F2118157918" anchor-label="onReadPong" id="424064710%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="on-read-pong.html"><span>on</span><wbr><span>Read</span><wbr><span><span>Pong</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="424064710%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="on-read-pong.html"><span class="token function">onReadPong</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">payload<span class="token operator">: </span>ERROR CLASS: Symbol not found for ByteString</span></span><span class="token punctuation">)</span></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-770100901%2FFunctions%2F2118157918" anchor-label="pong" id="-770100901%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="pong.html"><span><span>pong</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-770100901%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">fun </span><a href="pong.html"><span class="token function">pong</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">payload<span class="token operator">: </span>ERROR CLASS: Symbol not found for ByteString</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="321560651%2FFunctions%2F2118157918" anchor-label="processNextFrame" id="321560651%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="process-next-frame.html"><span>process</span><wbr><span>Next</span><wbr><span><span>Frame</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="321560651%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">fun </span><a href="process-next-frame.html"><span class="token function">processNextFrame</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">For testing: receive a single frame and return true if there are more frames to read. Invoked only by the reader thread.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1128502606%2FFunctions%2F2118157918" anchor-label="queueSize" id="-1128502606%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="queue-size.html"><span>queue</span><wbr><span><span>Size</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1128502606%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="queue-size.html"><span class="token function">queueSize</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a></div><div class="brief "><p class="paragraph">Returns the size in bytes of all messages enqueued to be transmitted to the server. This doesn't include framing overhead. If compression is enabled, uncompressed messages size is used to calculate this value. It also doesn't include any bytes buffered by the operating system or network intermediaries. This method returns 0 if no messages are waiting in the queue. If may return a nonzero value after the web socket has been canceled; this indicates that enqueued messages were not transmitted.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="515643848%2FFunctions%2F2118157918" anchor-label="receivedPingCount" id="515643848%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="received-ping-count.html"><span>received</span><wbr><span>Ping</span><wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="515643848%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">fun </span><a href="received-ping-count.html"><span class="token function">receivedPingCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="298484174%2FFunctions%2F2118157918" anchor-label="receivedPongCount" id="298484174%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="received-pong-count.html"><span>received</span><wbr><span>Pong</span><wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="298484174%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">fun </span><a href="received-pong-count.html"><span class="token function">receivedPongCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="978191669%2FFunctions%2F2118157918" anchor-label="request" id="978191669%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="request.html"><span><span>request</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="978191669%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="request.html"><span class="token function">request</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../okhttp3/-request/index.html">Request</a></div><div class="brief "><p class="paragraph">Returns the original request that initiated this web socket.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-414948779%2FFunctions%2F2118157918" anchor-label="send" id="-414948779%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="send.html"><span><span>send</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-414948779%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="send.html"><span class="token function">send</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">bytes<span class="token operator">: </span>ERROR CLASS: Symbol not found for ByteString</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Attempts to enqueue <code class="lang-kotlin">bytes</code> to be sent as a the data of a binary (type <code class="lang-kotlin">0x2</code>) message.</p></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="send.html"><span class="token function">send</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">text<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Attempts to enqueue <code class="lang-kotlin">text</code> to be UTF-8 encoded and sent as a the data of a text (type <code class="lang-kotlin">0x1</code>) message.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="403971391%2FFunctions%2F2118157918" anchor-label="sentPingCount" id="403971391%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="sent-ping-count.html"><span>sent</span><wbr><span>Ping</span><wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="403971391%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">fun </span><a href="sent-ping-count.html"><span class="token function">sentPingCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1542538798%2FFunctions%2F2118157918" anchor-label="tearDown" id="-1542538798%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="tear-down.html"><span>tear</span><wbr><span><span>Down</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1542538798%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">fun </span><a href="tear-down.html"><span class="token function">tearDown</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">For testing: force this web socket to release its threads.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="896355276%2FFunctions%2F2118157918" anchor-label="withLock" id="896355276%2FFunctions%2F2118157918" data-filterable-set=":okhttp/commonJvmAndroid"></a>
+          <div class="table-row table-row_content" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../../okhttp3.internal.concurrent/with-lock.html"><span>with</span><wbr><span><span>Lock</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="896355276%2FFunctions%2F2118157918"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp/commonJvmAndroid" data-filterable-set=":okhttp/commonJvmAndroid" data-active="" data-toggle=":okhttp/commonJvmAndroid">commonJvmAndroid</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp/commonJvmAndroid"><div class="symbol monospace"><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><a href="../../okhttp3.internal.concurrent/with-lock.html">T</a><span class="token operator">&gt; </span><a href="../../okhttp3.internal.concurrent/-lockable/index.html">Lockable</a><span class="token punctuation">.</span><a href="../../okhttp3.internal.concurrent/with-lock.html"><span class="token function">withLock</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">action<span class="token operator">: </span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><a href="../../okhttp3.internal.concurrent/with-lock.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../okhttp3.internal.concurrent/with-lock.html">T</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2026 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

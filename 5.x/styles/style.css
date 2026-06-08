@@ -1,0 +1,454 @@
+/*
+ * Copyright 2014-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+/* --- root styles --- */
+:root {
+    --default-gray: #f4f4f4;
+    --default-font-color: rgb(0, 0, 0);
+    --header-font-color: var(--default-font-color);
+
+    --hover-link-color: #5B5DEF;
+
+    --color-scrollbar: rgba(39, 40, 44, 0.40);
+    --color-scrollbar-track: var(--default-gray);
+    --default-white: #fff;
+    --background-color: var(--default-white);
+    --dark-mode-and-search-icon-color: var(--default-white);
+    --color-dark: #27282c;
+    --default-font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Droid Sans, Helvetica Neue, Arial, sans-serif;
+    --default-monospace-font-family: JetBrains Mono, SFMono-Regular, Consolas, Liberation Mono, Menlo, Courier, monospace;
+    --default-font-size: 16px;
+    --blockquote-background: rgba(39, 40, 44, .05);
+    --border-color: rgba(39, 40, 44, .2);
+    --navigation-highlight-color: rgba(39, 40, 44, 0.05);
+    --top-navigation-height: 73px;
+    --white-10: hsla(0, 0%, 100%, .1);
+
+    --active-tab-border-color: var(--color-key-blue);
+    --inactive-tab-border-color: rgba(164, 164, 170, 0.7);
+
+    --active-section-color: #7F52FF;
+    --inactive-section-color: rgba(25, 25, 28, .7);
+
+    --sidemenu-section-active-color: #7F52FF;
+}
+
+html {
+    height: 100%;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    scrollbar-color: rgba(39, 40, 44, 0.40) #F4F4F4;
+    scrollbar-color: var(--color-scrollbar) var(--color-scrollbar-track);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    color: var(--default-font-color);
+}
+
+html ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+html ::-webkit-scrollbar-track {
+    background-color: var(--color-scrollbar-track);
+}
+
+html ::-webkit-scrollbar-thumb {
+    width: 8px;
+    border-radius: 6px;
+    background: rgba(39, 40, 44, 0.40);
+    background: var(--color-scrollbar);
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
+
+/* /--- root styles --- */
+
+/* --- global tags styles --- */
+
+h1 {
+    font-size: 44px;
+    line-height: 44px;
+    margin-bottom: 24px;
+    margin-top: 48px;
+}
+
+h2 {
+    font-size: 32px;
+    line-height: 32px;
+    margin-bottom: 24px;
+    margin-top: 48px;
+}
+
+h3 {
+    font-size: 24px;
+    line-height: 24px;
+    margin-bottom: 24px;
+    margin-top: 48px;
+}
+
+h4, h5 {
+    font-size: 16px;
+    line-height: 24px;
+    margin-bottom: 24px;
+    margin-top: 24px;
+}
+
+p, ul, ol, table, pre, dl {
+    margin: 0;
+}
+
+u {
+    text-decoration: none;
+    padding-bottom: 2px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+blockquote {
+    border-left: 1ch solid var(--default-gray);
+    margin: 0;
+    padding-left: 1ch;
+    font-style: italic;
+    color: var(--color-dark);
+}
+
+.theme-dark blockquote {
+    color: var(--default-font-color);
+    border-left-color: var(--blockquote-background);
+}
+
+pre {
+    display: block;
+}
+
+dt {
+    color: #444;
+}
+
+img {
+    max-width: 100%;
+}
+
+/* /---  global tags styles --- */
+
+/* ---  utils classes --- */
+.w-100 {
+    width: 100%;
+}
+
+.no-gutters {
+    margin: 0;
+    padding: 0;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.floating-right {
+    float: right;
+}
+
+.pull-right {
+    float: right;
+    margin-left: auto
+}
+
+.clearfix::after {
+    display: block;
+    content: '';
+    clear: both;
+    height: 0;
+}
+
+/* /---  utils classes --- */
+
+/* ---dark theme --- */
+.theme-dark {
+    --background-color: #262628;
+    --color-dark: #3d3d41;
+    --default-font-color: rgba(255, 255, 255, 0.96);
+    --border-color: hsla(0, 0%, 100%, 0.2);
+    --blockquote-background: hsla(0, 0%, 100%, 0.05);
+    --copy-icon-color: hsla(0, 0%, 100%, 0.6);
+    --copy-icon-hover-color: #fff;
+
+    --active-tab-border-color: var(--color-key-blue);
+    --inactive-tab-border-color: hsla(0, 0%, 100%, 0.4);
+
+    --active-section-color: var(--default-font-color);
+    --inactive-section-color: hsla(0, 0%, 100%, 0.4);
+
+    --navigation-highlight-color: rgba(255, 255, 255, 0.05);
+    --footer-background: hsla(0, 0%, 100%, 0.05);
+    --footer-font-color: hsla(0, 0%, 100%, 0.6);
+    --footer-go-to-top-color: var(--footer-font-color);
+
+    --sidemenu-section-active-color: var(--color-dark);
+}
+
+/* /---dark theme --- */
+
+.main-content :is(h1, h2) {
+    font-weight: 600;
+}
+
+.cover > .platform-hinted {
+    margin-bottom: 24px;
+}
+
+.cover {
+    display: flex;
+    flex-direction: column;
+}
+
+.cover .sourceset-dependent-content > .block {
+    padding: 16px 0;
+    font-size: 18px;
+    line-height: 28px;
+}
+
+.cover .platform-hinted.with-platform-tabs .sourceset-dependent-content > .block {
+    padding: 0;
+    font-size: var(--default-font-size);
+}
+
+.cover ~ .divergent-group {
+    margin-top: 24px;
+    padding: 24px 8px 8px 8px;
+}
+
+.cover ~ .divergent-group .main-subrow .symbol {
+    width: 100%;
+}
+
+.main-content p.paragraph,
+.sample-container, blockquote,
+.content > .symbol {
+    margin-top: 8px;
+}
+
+/**
+first block on a page
+http://localhost:8001/jvm/org.jetbrains.dokka.uitest.internal/function-to-be-used-as-sample.html
+ */
+blockquote,
+.content > .symbol:first-of-type,
+p.paragraph:first-child,
+.brief p.paragraph {
+    margin-top: 0;
+}
+
+.content .kdoc-tag > p.paragraph {
+    margin-top: 0;
+}
+
+.divergent-group {
+    background-color: var(--color-background);
+    padding: 16px 0 8px 0;
+    margin-bottom: 2px;
+}
+
+.divergent-group .table-row, tbody > tr {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.divergent-group .table-row:last-of-type, tbody > tr:last-of-type {
+    border-bottom: none;
+}
+
+.title > .divergent-group:first-of-type {
+    padding-top: 0;
+}
+
+.strikethrough {
+    text-decoration: line-through;
+}
+
+/* Workaround for Firefox  https://github.com/Kotlin/dokka/issues/3156 */
+@-moz-document url-prefix() {
+    .strikethrough {
+        position: relative;
+        text-decoration: none;
+    }
+
+    /* complex selectors here are required to handle multiline cases */
+    .strikethrough::after, .strikethrough span:after  {
+        content: '';
+        position: absolute;
+        top: 7px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background-color: currentColor;
+        z-index: 1;
+    }
+}
+
+.symbol:empty {
+    padding: 0;
+}
+
+.brief {
+    white-space: pre-wrap;
+    overflow: hidden;
+}
+
+h1.cover {
+    margin-bottom: 24px;
+    display: block;
+}
+
+@media (max-width: 899px) {
+    h1.cover {
+        font-size: 32px;
+        line-height: 32px;
+        margin-bottom: 24px;
+    }
+}
+
+.UnderCoverText table {
+    margin: 8px 0 8px 0;
+    word-break: break-word;
+}
+
+@media (max-width: 960px) {
+    .UnderCoverText table {
+        display: block;
+        word-break: normal;
+        overflow: auto;
+    }
+}
+
+p.paragraph img {
+    display: block;
+}
+
+.deprecation-content {
+    margin: 16px 0;
+    border: 1px solid var(--border-color);
+    padding: 16px;
+}
+
+.deprecation-content > h3 {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.deprecation-content > h4 {
+    font-size: 16px;
+    margin-top: 16px;
+    margin-bottom: 0;
+}
+
+/** https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.native.concurrent/atomic-lazy.html **/
+.deprecation-content .footnote {
+    display: block;
+}
+
+.deprecation-content .footnote > p {
+    margin: 0;
+}
+
+[data-filterable-current=''] {
+    display: none !important;
+}
+
+.inline-flex {
+    display: inline-flex;
+}
+
+/* Work around an issue: https://github.com/JetBrains/kotlin-playground/issues/91
+Applies for main description blocks with platform tabs.
+Just in case of possible performance degradation it excluding tabs with briefs on classlike page */
+#content > div:not(.tabbedcontent) .sourceset-dependent-content:not([data-active]) {
+    display: block !important;
+    visibility: hidden;
+    height: 0;
+    position: fixed;
+    top: 0;
+}
+
+.with-platform-tags {
+    display: flex;
+}
+
+.with-platform-tags ~ .main-subrow {
+    padding-top: 8px;
+}
+
+.cover .with-platform-tabs {
+    font-size: var(--default-font-size);
+}
+
+.cover > .block {
+    padding-top: 48px;
+    padding-bottom: 24px;
+    font-size: 18px;
+    line-height: 28px;
+}
+
+.cover > .block:empty {
+    padding-bottom: 0;
+}
+
+.parameters.wrapped > .parameter {
+    display: block;
+}
+
+.platform-dependent-row {
+    display: grid;
+    padding-top: 8px;
+}
+
+@media print, (max-width: 960px) {
+    div.wrapper {
+        width: auto;
+        margin: 0;
+    }
+
+    header, section, footer {
+        float: none;
+        position: static;
+        width: auto;
+    }
+
+    header {
+        padding-right: 320px;
+    }
+
+    section {
+        border: 1px solid #e5e5e5;
+        border-width: 1px 0;
+        padding: 20px 0;
+        margin: 0 0 20px;
+    }
+
+    header a small {
+        display: inline;
+    }
+
+    header ul {
+        position: absolute;
+        right: 50px;
+        top: 52px;
+    }
+}
+
+.anchor-highlight {
+    border: 1px solid var(--hover-link-color) !important;
+    box-shadow: 0 0 0 0.2em #c8e1ff;
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
+}
+
+.filtered-message {
+    margin: 25px;
+    font-size: 20px;
+    font-weight: 600;
+}
