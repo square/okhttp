@@ -11,6 +11,11 @@ plugins {
   id("binary-compatibility-validator")
 }
 
+val okhttpDokka: String? by project
+if (okhttpDokka?.toBoolean() == true) {
+  apply(plugin = "org.jetbrains.dokka")
+}
+
 configure<MavenPublishBaseExtension> {
   publishToMavenCentral(automaticRelease = true)
   signAllPublications()
