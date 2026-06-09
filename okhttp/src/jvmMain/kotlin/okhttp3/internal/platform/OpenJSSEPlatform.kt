@@ -22,6 +22,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Call
 import okhttp3.Protocol
 
 /**
@@ -60,6 +61,7 @@ class OpenJSSEPlatform private constructor() : Platform() {
     )
 
   override fun configureTlsExtensions(
+    call: Call?,
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<@JvmSuppressWildcards Protocol>,
@@ -75,7 +77,7 @@ class OpenJSSEPlatform private constructor() : Platform() {
         sslSocket.sslParameters = sslParameters
       }
     } else {
-      super.configureTlsExtensions(sslSocket, hostname, protocols)
+      super.configureTlsExtensions(call, sslSocket, hostname, protocols)
     }
   }
 

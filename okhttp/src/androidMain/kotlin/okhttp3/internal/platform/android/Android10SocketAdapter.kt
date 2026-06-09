@@ -21,6 +21,7 @@ import android.os.Build
 import java.io.IOException
 import java.lang.IllegalArgumentException
 import javax.net.ssl.SSLSocket
+import okhttp3.Call
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.Platform
@@ -54,6 +55,7 @@ class Android10SocketAdapter : SocketAdapter {
 
   @SuppressLint("NewApi")
   override fun configureTlsExtensions(
+    call: Call?,
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<Protocol>,
