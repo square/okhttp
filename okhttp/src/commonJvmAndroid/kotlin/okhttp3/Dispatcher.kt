@@ -31,8 +31,14 @@ import okhttp3.internal.unmodifiable
  * Policy on when async requests are executed.
  *
  * Each dispatcher uses an [ExecutorService] to run calls internally. If you supply your own
- * executor, it should be able to run [the configured maximum][maxRequests] number of calls
- * concurrently.
+ * executor, it must accept any new task at any time while up to [the configured maximum][maxRequests]
+ * calls are already running. A pool sized exactly to `maxRequests` is not sufficient when paired
+ * with [SynchronousQueue], because the dispatcher submits the next promoted call from a worker
+ * thread that has not yet returned to the queue; the offer will fail and the call will surface
+ * [InterruptedIOException] with message `"executor rejected"`.
+ *
+ * Match the pattern used by the default executor (`corePoolSize=0`, `maxPoolSize=Int.MAX_VALUE`,
+ * [SynchronousQueue]), bound the maximum at `2 × maxRequests`, or use a queueing executor.
  */
 class Dispatcher() {
   /**
