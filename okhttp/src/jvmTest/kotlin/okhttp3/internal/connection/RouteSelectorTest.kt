@@ -206,6 +206,35 @@ class RouteSelectorTest {
     assertThat(routeSelector.hasNext()).isFalse()
   }
 
+  @Test fun proxySelectorThrowingIllegalArgumentExceptionFallsBackToDirect() {
+    val brokenProxySelector: ProxySelector =
+      object : ProxySelector() {
+        override fun select(uri: URI): List<Proxy>? {
+          // A system proxy with an unset port makes the platform ProxySelector throw this.
+          throw IllegalArgumentException("port out of range:-1")
+        }
+
+        override fun connectFailed(
+          uri: URI,
+          socketAddress: SocketAddress,
+          e: IOException,
+        ): Unit = throw AssertionError()
+      }
+
+    val address =
+      factory.newAddress(
+        proxySelector = brokenProxySelector,
+      )
+    val routeSelector = newRouteSelector(address)
+    assertThat(routeSelector.hasNext()).isTrue()
+    dns[uriHost] = dns.allocate(1)
+    val selection = routeSelector.next()
+    assertRoute(selection.next(), address, Proxy.NO_PROXY, dns.lookup(uriHost, 0), uriPort)
+    dns.assertRequests(uriHost)
+    assertThat(selection.hasNext()).isFalse()
+    assertThat(routeSelector.hasNext()).isFalse()
+  }
+
   @Test fun proxySelectorReturnsNoProxies() {
     val address = factory.newAddress()
     val routeSelector = newRouteSelector(address)

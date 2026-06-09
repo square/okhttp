@@ -104,8 +104,15 @@ class RouteSelector internal constructor(
       val uri = url.toUri()
       if (uri.host == null) return immutableListOf(Proxy.NO_PROXY)
 
-      // Try each of the ProxySelector choices until one connection succeeds.
-      val proxiesOrNull = address.proxySelector.select(uri)
+      // Try each of the ProxySelector choices until one connection succeeds. A misconfigured
+      // system proxy (such as one with no port set) can make ProxySelector.select() itself throw
+      // IllegalArgumentException; treat that as "no usable proxy" rather than letting it crash.
+      val proxiesOrNull =
+        try {
+          address.proxySelector.select(uri)
+        } catch (_: IllegalArgumentException) {
+          null
+        }
       if (proxiesOrNull.isNullOrEmpty()) return immutableListOf(Proxy.NO_PROXY)
 
       return proxiesOrNull.toImmutableList()
