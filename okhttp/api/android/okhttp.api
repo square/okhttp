@@ -1312,3 +1312,8 @@ public abstract class okhttp3/WebSocketListener {
 	public fun onOpen (Lokhttp3/WebSocket;Lokhttp3/Response;)V
 }
 
+public final class okhttp3/android/AndroidNetworkPinning : okhttp3/Interceptor {
+	public fun <init> ()V
+	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
+}
+
