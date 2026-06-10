@@ -17,7 +17,7 @@
 
 package okhttp3.internal
 
-import kotlin.time.Duration.Companion.seconds
+import java.util.concurrent.TimeUnit
 import okhttp3.CacheControl
 import okhttp3.Headers
 
@@ -62,7 +62,7 @@ internal fun CacheControl.Companion.commonForceCache() =
   CacheControl
     .Builder()
     .onlyIfCached()
-    .maxStale(Int.MAX_VALUE.seconds)
+    .maxStale(Int.MAX_VALUE, TimeUnit.SECONDS)
     .build()
 
 internal fun CacheControl.Builder.commonBuild(): CacheControl =
