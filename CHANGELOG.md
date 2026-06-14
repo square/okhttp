@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+## Version 5.4.0
+
+_2026-06-08_
+
+ *  New: Add superpowers to interceptors. Interceptors can now override anything settable on
+    `OkHttpClient.Builder`, such as the cache, connection pool, socket factory, and DNS. We expect
+    this will allow most users to use interceptors everywhere, insted of mixing and matching
+    interceptors with custom `Call.Factory` wrappers.
+ *  Fix: Limit each HTTP/2 response to 256 KiB of total headers.
+ *  Upgrade: [kotlinx.coroutines 1.11.0][coroutines_1_11_0]. This is used by the optional
+    `okhttp-coroutines` artifact.
+ *  Upgrade: [GraalVM 25.0.3][graalvm_25].
+ *  Upgrade: [Okio 3.17.0][okio_3_17_0].
+
+
 ## Version 5.3.2
 
 _2025-11-18_
@@ -765,11 +780,13 @@ See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) f
 [annotation_1_9_1]: https://developer.android.com/jetpack/androidx/releases/annotation#annotation-1.9.1
 [assertk]: https://github.com/willowtreeapps/assertk
 [coroutines_1_10_2]: https://github.com/Kotlin/kotlinx.coroutines/releases/tag/1.10.2
+[coroutines_1_11_0]: https://github.com/Kotlin/kotlinx.coroutines/releases/tag/1.11.0
 [curl]: https://curl.se/
 [elf_alignment]: https://developer.android.com/guide/practices/page-sizes
 [graalvm]: https://www.graalvm.org/
 [graalvm_21]: https://www.graalvm.org/release-notes/21_0/
 [graalvm_22]: https://www.graalvm.org/release-notes/22_2/
+[graalvm_25]: https://www.graalvm.org/release-notes/JDK_25/
 [idna_15_1_0]: https://www.unicode.org/reports/tr46/#Modifications
 [kotlin_1_4_20]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.20
 [kotlin_1_5_31]: https://github.com/JetBrains/kotlin/releases/tag/v1.5.31
@@ -793,6 +810,7 @@ See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) f
 [okio_3_16_2]: https://square.github.io/okio/changelog/#version-3162
 [okio_3_16_3]: https://square.github.io/okio/changelog/#version-3163
 [okio_3_16_4]: https://square.github.io/okio/changelog/#version-3164
+[okio_3_17_0]: https://square.github.io/okio/changelog/#version-3170
 [okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
 [okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
 [okio_3_7_0]: https://square.github.io/okio/changelog/#version-370
