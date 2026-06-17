@@ -37,8 +37,8 @@ import okhttp3.internal.unmodifiable
  * thread that has not yet returned to the queue; the offer will fail and the call will surface
  * [InterruptedIOException] with message `"executor rejected"`.
  *
- * Match the pattern used by the default executor (`corePoolSize=0`, `maxPoolSize=Int.MAX_VALUE`,
- * [SynchronousQueue]), bound the maximum at `2 × maxRequests`, or use a queueing executor.
+ * Prefer a queueing executor. Avoid [SynchronousQueue] for custom dispatchers because it forces
+ * additional worker threads instead of reusing the workers that are still returning from calls.
  */
 class Dispatcher() {
   /**
