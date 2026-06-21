@@ -313,11 +313,14 @@ class RetryAndFollowUpInterceptor : Interceptor {
     val requestBuilder = userResponse.request.newBuilder()
     if (HttpMethod.permitsRequestBody(method)) {
       val responseCode = userResponse.code
+      val isQueryAndSeeOther = method == "QUERY" && responseCode == HTTP_SEE_OTHER
       val maintainBody =
-        HttpMethod.redirectsWithBody(method) ||
+        (HttpMethod.redirectsWithBody(method) ||
           responseCode == HTTP_PERM_REDIRECT ||
-          responseCode == HTTP_TEMP_REDIRECT
-      if (HttpMethod.redirectsToGet(method) && responseCode != HTTP_PERM_REDIRECT && responseCode != HTTP_TEMP_REDIRECT) {
+          responseCode == HTTP_TEMP_REDIRECT) && !isQueryAndSeeOther
+      if ((HttpMethod.redirectsToGet(method) || isQueryAndSeeOther) &&
+        responseCode != HTTP_PERM_REDIRECT && responseCode != HTTP_TEMP_REDIRECT
+      ) {
         requestBuilder.method("GET", null)
       } else {
         val requestBody = if (maintainBody) userResponse.request.body else null
