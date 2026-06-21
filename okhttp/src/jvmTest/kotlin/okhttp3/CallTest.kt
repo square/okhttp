@@ -2491,6 +2491,96 @@ open class CallTest {
   }
 
   @Test
+  fun queryRedirectsToQueryAndMaintainsRequestBodyOnMovedTemp() {
+    server.enqueue(
+      MockResponse(
+        code = HttpURLConnection.HTTP_MOVED_TEMP,
+        headers = headersOf("Location", "/page2"),
+        body = "This page has moved!",
+      ),
+    )
+    server.enqueue(MockResponse(body = "Page 2"))
+
+    val response =
+      client
+        .newCall(
+          Request
+            .Builder()
+            .url(server.url("/page1"))
+            .query("Query Body".toRequestBody("text/plain".toMediaType()))
+            .build(),
+        ).execute()
+
+    assertThat(response.body.string()).isEqualTo("Page 2")
+    val page1 = server.takeRequest()
+    assertThat(page1.requestLine).isEqualTo("QUERY /page1 HTTP/1.1")
+    assertThat(page1.body?.utf8()).isEqualTo("Query Body")
+    val page2 = server.takeRequest()
+    assertThat(page2.requestLine).isEqualTo("QUERY /page2 HTTP/1.1")
+    assertThat(page2.body?.utf8()).isEqualTo("Query Body")
+  }
+
+  @Test
+  fun queryRedirectsToQueryAndMaintainsRequestBodyOnMovedPerm() {
+    server.enqueue(
+      MockResponse(
+        code = HttpURLConnection.HTTP_MOVED_PERM,
+        headers = headersOf("Location", "/page2"),
+        body = "This page has moved!",
+      ),
+    )
+    server.enqueue(MockResponse(body = "Page 2"))
+
+    val response =
+      client
+        .newCall(
+          Request
+            .Builder()
+            .url(server.url("/page1"))
+            .query("Query Body".toRequestBody("text/plain".toMediaType()))
+            .build(),
+        ).execute()
+
+    assertThat(response.body.string()).isEqualTo("Page 2")
+    val page1 = server.takeRequest()
+    assertThat(page1.requestLine).isEqualTo("QUERY /page1 HTTP/1.1")
+    assertThat(page1.body?.utf8()).isEqualTo("Query Body")
+    val page2 = server.takeRequest()
+    assertThat(page2.requestLine).isEqualTo("QUERY /page2 HTTP/1.1")
+    assertThat(page2.body?.utf8()).isEqualTo("Query Body")
+  }
+
+  @Test
+  fun queryRedirectsToGetAndDropsRequestBodyOnSeeOther() {
+    server.enqueue(
+      MockResponse(
+        code = HttpURLConnection.HTTP_SEE_OTHER,
+        headers = headersOf("Location", "/page2"),
+        body = "See other page!",
+      ),
+    )
+    server.enqueue(MockResponse(body = "Page 2"))
+
+    val response =
+      client
+        .newCall(
+          Request
+            .Builder()
+            .url(server.url("/page1"))
+            .query("Query Body".toRequestBody("text/plain".toMediaType()))
+            .build(),
+        ).execute()
+
+    assertThat(response.body.string()).isEqualTo("Page 2")
+    val page1 = server.takeRequest()
+    assertThat(page1.requestLine).isEqualTo("QUERY /page1 HTTP/1.1")
+    assertThat(page1.body?.utf8()).isEqualTo("Query Body")
+    val page2 = server.takeRequest()
+    assertThat(page2.requestLine).isEqualTo("GET /page2 HTTP/1.1")
+    assertThat(page2.body).isNull()
+  }
+
+  @Test
   fun responseCookies() {
     server.enqueue(
       MockResponse(

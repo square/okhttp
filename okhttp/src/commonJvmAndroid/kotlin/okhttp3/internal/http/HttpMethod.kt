@@ -43,9 +43,9 @@ object HttpMethod {
   @JvmStatic // Despite being 'internal', this method is called by popular 3rd party SDKs.
   fun permitsRequestBody(method: String): Boolean = !(method == "GET" || method == "HEAD")
 
-  fun redirectsWithBody(method: String): Boolean = method == "PROPFIND"
+  fun redirectsWithBody(method: String): Boolean = method == "PROPFIND" || method == "QUERY"
 
-  fun redirectsToGet(method: String): Boolean = method != "PROPFIND"
+  fun redirectsToGet(method: String): Boolean = method != "PROPFIND" && method != "QUERY"
 
   fun isCacheable(requestMethod: String): Boolean = requestMethod == "GET" || requestMethod == "QUERY"
 }
