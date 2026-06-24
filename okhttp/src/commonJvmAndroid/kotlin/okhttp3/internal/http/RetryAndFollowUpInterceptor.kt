@@ -315,9 +315,11 @@ class RetryAndFollowUpInterceptor : Interceptor {
       val responseCode = userResponse.code
       val isQueryAndSeeOther = method == "QUERY" && responseCode == HTTP_SEE_OTHER
       val maintainBody =
-        (HttpMethod.redirectsWithBody(method) ||
-          responseCode == HTTP_PERM_REDIRECT ||
-          responseCode == HTTP_TEMP_REDIRECT) && !isQueryAndSeeOther
+        (
+          HttpMethod.redirectsWithBody(method) ||
+            responseCode == HTTP_PERM_REDIRECT ||
+            responseCode == HTTP_TEMP_REDIRECT
+        ) && !isQueryAndSeeOther
       if ((HttpMethod.redirectsToGet(method) || isQueryAndSeeOther) &&
         responseCode != HTTP_PERM_REDIRECT && responseCode != HTTP_TEMP_REDIRECT
       ) {
