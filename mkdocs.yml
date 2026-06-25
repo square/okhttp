@@ -102,7 +102,9 @@ nav:
     - 'Providers': security/security_providers.md
     - 'Configuration History': security/tls_configuration_history.md
   - 'Works with OkHttp': works_with_okhttp.md
-  - 'API': 5.x/okhttp/okhttp3/
+  - 'API':
+    - '5.x': 5.x/okhttp/okhttp3/
+    - '4.x': 4.x/okhttp/okhttp3/
   - 'Change Logs':
     - 'Change Log': changelogs/changelog.md
     - '4.x Change Log': changelogs/changelog_4x.md
