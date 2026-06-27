@@ -47,9 +47,11 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
 import okhttp3.Cache
 import okhttp3.Call
+import okhttp3.CallEvent
 import okhttp3.CallEvent.CallEnd
 import okhttp3.CallEvent.CallStart
 import okhttp3.CallEvent.ConnectEnd
+import okhttp3.CallEvent.ConnectFailed
 import okhttp3.CallEvent.ConnectStart
 import okhttp3.CallEvent.ConnectionAcquired
 import okhttp3.CallEvent.ConnectionReleased
@@ -328,7 +330,10 @@ class OkHttpTest {
         assertEquals(Protocol.HTTP_2, response.protocol)
         assertEquals(200, response.code)
         assertEquals("com.google.android.gms.org.conscrypt.Java8FileDescriptorSocket", socketClass)
-        assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
+        // The GmsCore Conscrypt provider negotiates TLS 1.3 from the API 37 image onward; earlier
+        // emulator images cap this handshake at TLS 1.2.
+        val expectedTls = if (Build.VERSION.SDK_INT >= 37) TlsVersion.TLS_1_3 else TlsVersion.TLS_1_2
+        assertEquals(expectedTls, response.handshake?.tlsVersion)
       }
     } finally {
       Security.removeProvider("GmsCore_OpenSSL")
@@ -546,7 +551,15 @@ class OkHttpTest {
     try {
       client.newCall(request).execute()
       fail<Any>("")
-    } catch (_: SSLPeerUnverifiedException) {
+    } catch (e: Exception) {
+      // The API 37 emulator can surface the verification failure wrapped (as a cause or a
+      // suppressed exception) rather than thrown directly, so accept any of those shapes.
+      val hasPeerUnverified = e is SSLPeerUnverifiedException ||
+          e.suppressedExceptions.any { it is SSLPeerUnverifiedException } ||
+          e.cause is SSLPeerUnverifiedException
+      if (!hasPeerUnverified) {
+        throw e
+      }
     }
   }
 
@@ -617,7 +630,7 @@ class OkHttpTest {
         ConnectionReleased::class,
         CallEnd::class,
       ),
-      eventRecorder.recordedEventTypes(),
+      eventRecorder.eventSequence.toList().withoutFailedConnectAttempts().map { it::class },
     )
 
     eventRecorder.clearAllEvents()
@@ -643,6 +656,23 @@ class OkHttpTest {
       eventRecorder.recordedEventTypes(),
     )
   }
+
+  /**
+   * Returns these events with failed connection attempts removed. On a dual-stack loopback the
+   * address MockWebServer isn't bound to is tried first, producing a [ConnectStart]/[ConnectFailed]
+   * pair before the successful [ConnectStart] (seen on the API 37 emulator). Dropping those pairs
+   * keeps the event assertion stable across single- and dual-stack environments.
+   */
+  private fun List<CallEvent>.withoutFailedConnectAttempts(): List<CallEvent> =
+    fold(mutableListOf<CallEvent>()) { events, event ->
+      if (event is ConnectFailed) {
+        // Drop the ConnectFailed and the ConnectStart that opened the failed attempt.
+        if (events.lastOrNull() is ConnectStart) events.removeAt(events.lastIndex)
+      } else {
+        events += event
+      }
+      events
+    }
 
   @Test
   fun testSessionReuse() {
