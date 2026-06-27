@@ -26,9 +26,11 @@ import okhttp3.HttpUrl
 import okhttp3.NamedGroup
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
@@ -47,6 +49,10 @@ import org.testcontainers.utility.DockerImageName
  * any Docker work.
  */
 class PostQuantumContainerTest {
+  @JvmField
+  @RegisterExtension
+  val platform = PlatformRule()
+
   @Test
   fun negotiatesPostQuantumGroup() {
     assumeTrue(postQuantumSupported(), "client TLS provider lacks ${NamedGroup.X25519MLKEM768}")
@@ -100,13 +106,14 @@ class PostQuantumContainerTest {
       waitingFor(Wait.forListeningPort())
     }
 
+  /** Native JDK support landed in JDK 27 (JEP 527); Conscrypt 2.6+ supports it on older JDKs. */
+  private fun postQuantumSupported(): Boolean = PlatformVersion.majorVersion >= 27 || platform.isConscrypt()
+
   companion object {
     private const val SERVER_PORT = 4433
 
     /** Must provide OpenSSL >= 3.5, which ships native ML-KEM hybrid key exchange. */
     private val OPENSSL_IMAGE: DockerImageName = DockerImageName.parse("alpine:3.22")
-
-    private fun postQuantumSupported(): Boolean = PlatformVersion.majorVersion >= 27
 
     private val trustAllManager =
       object : X509TrustManager {

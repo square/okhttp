@@ -24,12 +24,14 @@ import okhttp3.ConnectionSpec
 import okhttp3.NamedGroup
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
  * Verifies the [NamedGroup] / `supported_groups` plumbing end-to-end against a [MockWebServer]
@@ -44,6 +46,10 @@ import org.junit.jupiter.api.assertThrows
  * (JEP 527), or Conscrypt 2.6+. The tests skip otherwise.
  */
 class PostQuantumMockWebServerTest {
+  @JvmField
+  @RegisterExtension
+  val platform = PlatformRule()
+
   private val localhost: HeldCertificate =
     HeldCertificate
       .Builder()
@@ -119,10 +125,10 @@ class PostQuantumMockWebServerTest {
       .namedGroups(*groups)
       .build()
 
+  /** Native JDK support landed in JDK 27 (JEP 527); Conscrypt 2.6+ supports it on older JDKs. */
+  private fun postQuantumSupported(): Boolean = PlatformVersion.majorVersion >= 27 || platform.isConscrypt()
+
   companion object {
     private val POST_QUANTUM_GROUP = NamedGroup.X25519MLKEM768
-
-    /** Native JDK support landed in JDK 27 (JEP 527). Conscrypt 2.6+ also works once adopted. */
-    private fun postQuantumSupported(): Boolean = PlatformVersion.majorVersion >= 27
   }
 }
