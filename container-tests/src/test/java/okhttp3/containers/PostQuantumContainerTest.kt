@@ -28,6 +28,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
+import org.conscrypt.Conscrypt
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -107,10 +108,17 @@ class PostQuantumContainerTest {
     }
 
   /** Native JDK support landed in JDK 27 (JEP 527); Conscrypt 2.6+ supports it on older JDKs. */
-  private fun postQuantumSupported(): Boolean = PlatformVersion.majorVersion >= 27 || platform.isConscrypt()
+  private fun postQuantumSupported(): Boolean =
+    PlatformVersion.majorVersion >= 27 || (platform.isConscrypt() && conscryptSupportsPostQuantum())
 
   companion object {
     private const val SERVER_PORT = 4433
+
+    /** Conscrypt added X25519MLKEM768 and SSLParameters.setNamedGroups in 2.6. */
+    private fun conscryptSupportsPostQuantum(): Boolean {
+      val version = Conscrypt.version()
+      return version.major() > 2 || (version.major() == 2 && version.minor() >= 6)
+    }
 
     /** Must provide OpenSSL >= 3.5, which ships native ML-KEM hybrid key exchange. */
     private val OPENSSL_IMAGE: DockerImageName = DockerImageName.parse("alpine:3.22")

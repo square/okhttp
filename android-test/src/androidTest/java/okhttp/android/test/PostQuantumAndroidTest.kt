@@ -79,6 +79,7 @@ class PostQuantumAndroidTest {
   @Test
   fun negotiatesPostQuantumGroup() {
     assumeTrue(serverUrl != null, "pqcServerUrl not set; skipping (needs the PQC server container)")
+    assumeTrue(conscryptSupportsPostQuantum(), "bundled Conscrypt < 2.6 has no post-quantum key exchange")
 
     // Conscrypt is installed above; cert validation is bypassed because this is about key exchange,
     // not authentication (the container uses a throwaway self-signed certificate).
@@ -110,6 +111,12 @@ class PostQuantumAndroidTest {
   }
 
   companion object {
+    /** Conscrypt added X25519MLKEM768 and SSLParameters.setNamedGroups in 2.6. */
+    private fun conscryptSupportsPostQuantum(): Boolean {
+      val version = Conscrypt.version()
+      return version.major() > 2 || (version.major() == 2 && version.minor() >= 6)
+    }
+
     private val trustAllManager =
       object : X509TrustManager {
         override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
