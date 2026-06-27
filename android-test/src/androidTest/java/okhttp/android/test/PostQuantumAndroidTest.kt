@@ -22,6 +22,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import java.security.SecureRandom
 import java.security.Security
 import java.security.cert.X509Certificate
@@ -52,10 +53,11 @@ import org.junit.jupiter.api.Test
  *
  *  * [bundledConscryptNegotiatesPostQuantumGroup] installs the app-bundled `conscrypt-android` (2.6+),
  *    which supports PQC, and is expected to pass wherever that Conscrypt is present.
- *  * [systemProviderNegotiatesPostQuantumGroup] uses the device's *system* TLS stack with no bundled
- *    provider, to empirically answer whether the platform itself negotiates PQC. It only runs on
- *    API 37+ and is expected to fail until the system Conscrypt enables PQC key exchange — run it in
- *    the experimental (non-blocking) API 37 emulator lane to find out.
+ *  * [systemProviderDoesNotYetNegotiatePostQuantumGroup] uses the device's *system* TLS stack with no
+ *    bundled provider. It is a canary: we expect the platform NOT to negotiate PQC yet, so the
+ *    handshake against the PQC-only server should fail. It runs only on API 37+ and **fails loudly if
+ *    the handshake unexpectedly succeeds** — that means the system stack gained PQC support and
+ *    OkHttp's Android handling (and this expectation) should be updated.
  *
  * Note: applying [ConnectionSpec.Builder.namedGroups] on Android needs the Android implementation of
  * `applyNamedGroups` (tracked separately). Until that lands the spec setting is a no-op on device, so
@@ -89,50 +91,60 @@ class PostQuantumAndroidTest {
 
     Security.insertProviderAt(Conscrypt.newProviderBuilder().build(), 1)
 
-    assertNegotiatesPostQuantum()
+    client = newPostQuantumClient()
+    client.newCall(Request(serverUrl!!.toHttpUrl())).execute().use { response ->
+      assertThat(response.code).isEqualTo(200)
+      // `openssl s_server -www` echoes the negotiated parameters in its HTML status page.
+      assertThat(response.body.string()).contains("Protocol")
+    }
   }
 
   @Test
-  fun systemProviderNegotiatesPostQuantumGroup() {
+  fun systemProviderDoesNotYetNegotiatePostQuantumGroup() {
     assumeTrue(serverUrl != null, "pqcServerUrl not set; skipping (needs the PQC server container)")
-    // Probe the *system* TLS stack only where it might plausibly exist (API 37+). No bundled provider
-    // is installed: a pass means the platform negotiates X25519MLKEM768, a failure means it doesn't yet.
+    // Probe the *system* TLS stack only where PQC might plausibly exist (API 37+). No bundled provider
+    // is installed.
     assumeTrue(Build.VERSION.SDK_INT >= 37, "only probing the system provider on API 37+")
 
-    assertNegotiatesPostQuantum()
+    client = newPostQuantumClient()
+
+    // We expect the system stack NOT to negotiate X25519MLKEM768 yet, so the handshake against the
+    // PQC-only server should fail. Any failure (handshake/IO) is the expected "no PQC" outcome.
+    val negotiated =
+      runCatching {
+        client.newCall(Request(serverUrl!!.toHttpUrl())).execute().use { it.isSuccessful }
+      }.getOrDefault(false)
+
+    assertThat(
+      negotiated,
+      "the API 37 system TLS stack negotiated ${NamedGroup.X25519MLKEM768} — platform PQC has " +
+        "landed; update OkHttp's Android named-group handling and remove this expectation",
+    ).isFalse()
   }
 
   /**
-   * Connects to the PQC-only server with whatever provider is currently highest priority. Cert
-   * validation is bypassed because this is about key exchange, not authentication (the container uses
-   * a throwaway self-signed certificate).
+   * Builds a client that requires the post-quantum group, using whatever provider is currently highest
+   * priority. Cert validation is bypassed because this is about key exchange, not authentication (the
+   * container uses a throwaway self-signed certificate).
    */
-  private fun assertNegotiatesPostQuantum() {
+  private fun newPostQuantumClient(): OkHttpClient {
     val sslContext =
       SSLContext.getInstance("TLS").apply {
         init(null, arrayOf(trustAllManager), SecureRandom())
       }
 
-    client =
-      OkHttpClient
-        .Builder()
-        .sslSocketFactory(sslContext.socketFactory, trustAllManager)
-        .hostnameVerifier { _, _ -> true }
-        .connectionSpecs(
-          listOf(
-            ConnectionSpec
-              .Builder(ConnectionSpec.RESTRICTED_TLS)
-              .namedGroups(NamedGroup.X25519MLKEM768)
-              .build(),
-          ),
-        ).build()
-
-    val response = client.newCall(Request(serverUrl!!.toHttpUrl())).execute()
-    response.use {
-      assertThat(response.code).isEqualTo(200)
-      // `openssl s_server -www` echoes the negotiated parameters in its HTML status page.
-      assertThat(response.body.string()).contains("Protocol")
-    }
+    return OkHttpClient
+      .Builder()
+      .sslSocketFactory(sslContext.socketFactory, trustAllManager)
+      .hostnameVerifier { _, _ -> true }
+      .connectionSpecs(
+        listOf(
+          ConnectionSpec
+            .Builder(ConnectionSpec.RESTRICTED_TLS)
+            .namedGroups(NamedGroup.X25519MLKEM768)
+            .build(),
+        ),
+      ).build()
   }
 
   companion object {
