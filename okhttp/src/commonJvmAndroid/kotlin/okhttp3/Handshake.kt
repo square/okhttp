@@ -21,6 +21,7 @@ import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSession
+import okhttp3.ech.EchConfig
 import okhttp3.internal.toImmutableList
 
 /**
@@ -40,6 +41,7 @@ class Handshake internal constructor(
   @get:JvmName("cipherSuite") val cipherSuite: CipherSuite,
   /** Returns a possibly-empty list of certificates that identify this peer. */
   @get:JvmName("localCertificates") val localCertificates: List<Certificate>,
+  internal val echConfig: EchConfig? = null,
   // Delayed provider of peerCertificates, to allow lazy cleaning.
   peerCertificatesFn: () -> List<Certificate>,
 ) {
@@ -194,7 +196,11 @@ class Handshake internal constructor(
       localCertificates: List<Certificate>,
     ): Handshake {
       val peerCertificatesCopy = peerCertificates.toImmutableList()
-      return Handshake(tlsVersion, cipherSuite, localCertificates.toImmutableList()) {
+      return Handshake(
+        tlsVersion = tlsVersion,
+        cipherSuite = cipherSuite,
+        localCertificates = localCertificates.toImmutableList(),
+      ) {
         peerCertificatesCopy
       }
     }

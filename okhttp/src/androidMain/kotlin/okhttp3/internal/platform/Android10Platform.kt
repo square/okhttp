@@ -26,6 +26,7 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Call
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.AndroidPlatform.Companion.Tag
@@ -40,7 +41,7 @@ import okhttp3.internal.tls.TrustRootIndex
 
 /** Android 10+ (API 29+). */
 @SuppressSignatureCheck
-class Android10Platform :
+open class Android10Platform :
   Platform(),
   ContextAwarePlatform {
   override var applicationContext: Context? = null
@@ -72,6 +73,7 @@ class Android10Platform :
   }
 
   override fun configureTlsExtensions(
+    call: Call?,
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<Protocol>,
@@ -79,7 +81,12 @@ class Android10Platform :
     // No TLS extensions if the socket class is custom.
     socketAdapters
       .find { it.matchesSocket(sslSocket) }
-      ?.configureTlsExtensions(sslSocket, hostname, protocols)
+      ?.configureTlsExtensions(
+        call = call,
+        sslSocket = sslSocket,
+        hostname = hostname,
+        protocols = protocols,
+      )
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =

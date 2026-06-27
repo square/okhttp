@@ -345,7 +345,12 @@ class ConnectPlan internal constructor(
     var success = false
     try {
       if (connectionSpec.supportsTlsExtensions) {
-        Platform.get().configureTlsExtensions(sslSocket, address.url.host, address.protocols)
+        Platform.get().configureTlsExtensions(
+          call = call,
+          sslSocket = sslSocket,
+          hostname = address.url.host,
+          protocols = address.protocols,
+        )
       }
 
       // Force handshake. This can throw!
@@ -378,9 +383,10 @@ class ConnectPlan internal constructor(
 
       val handshake =
         Handshake(
-          unverifiedHandshake.tlsVersion,
-          unverifiedHandshake.cipherSuite,
-          unverifiedHandshake.localCertificates,
+          tlsVersion = unverifiedHandshake.tlsVersion,
+          cipherSuite = unverifiedHandshake.cipherSuite,
+          localCertificates = unverifiedHandshake.localCertificates,
+          echConfig = call.echConfig,
         ) {
           certificatePinner.certificateChainCleaner!!.clean(
             unverifiedHandshake.peerCertificates,
@@ -406,6 +412,8 @@ class ConnectPlan internal constructor(
       protocol = if (maybeProtocol != null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1
       success = true
     } finally {
+      // ECH rejection is surfaced as an SSLException by the platform. Let it propagate so
+      // RetryAndFollowUpInterceptor can classify it with EchModeConfiguration.isEchConfigError().
       Platform.get().afterHandshake(sslSocket)
       if (!success) {
         sslSocket.closeQuietly()

@@ -35,6 +35,8 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ech.EchConfig
+import okhttp3.ech.EchMode
 import okhttp3.internal.assertLockNotHeld
 import okhttp3.internal.cache.CacheInterceptor
 import okhttp3.internal.closeQuietly
@@ -104,6 +106,14 @@ class RealCall(
    */
   internal var interceptorScopedExchange: Exchange? = null
     private set
+
+  /**
+   * Encrypted Client Hello (ECH) state for this call. [echMode] is computed once and may be
+   * downgraded to [EchMode.Fallback] when a connection is retried without ECH; [echConfig] is the
+   * configuration that was applied during the TLS handshake, surfaced on the resulting [Handshake].
+   */
+  internal var echMode: EchMode? = null
+  internal var echConfig: EchConfig? = null
 
   // These properties are guarded by `this`. They are typically only accessed by the thread executing
   // the call, but they may be accessed by other threads for duplex requests.
