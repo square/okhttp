@@ -15,10 +15,8 @@
  */
 package okhttp3
 
-import java.lang.reflect.Method
 import java.util.Arrays
 import java.util.Objects
-import javax.net.ssl.SSLParameters
 import javax.net.ssl.SSLSocket
 import okhttp3.ConnectionSpec.Builder
 import okhttp3.internal.concat
@@ -26,6 +24,7 @@ import okhttp3.internal.effectiveCipherSuites
 import okhttp3.internal.hasIntersection
 import okhttp3.internal.indexOf
 import okhttp3.internal.intersect
+import okhttp3.internal.platform.applyNamedGroups
 
 /**
  * Specifies configuration for the socket connection that HTTP traffic travels through. For `https:`
@@ -133,18 +132,10 @@ class ConnectionSpec internal constructor(
     }
 
     if (specToApply.namedGroupsAsString != null) {
-      // SSLParameters.setNamedGroups(String[]) was added in Java 20 and recent Conscrypt releases.
-      // Apply it reflectively so OkHttp keeps building and running on older platforms, where the
-      // configuration is silently ignored. Groups the provider doesn't recognize are dropped during
-      // the handshake, so this is best-effort by design.
-      val setNamedGroups = setNamedGroupsMethod
-      if (setNamedGroups != null) {
-        val sslParameters = sslSocket.sslParameters
-        // Cast to Any so the String[] is passed as a single argument to setNamedGroups(String[])
-        // rather than being spread across Method.invoke's varargs.
-        setNamedGroups.invoke(sslParameters, specToApply.namedGroupsAsString as Any)
-        sslSocket.sslParameters = sslParameters
-      }
+      // SSLParameters.setNamedGroups(String[]) was added in Java 20. The base implementation is a
+      // no-op; on Java 20+ the META-INF/versions/20 multi-release variant applies the groups. Groups
+      // the provider doesn't recognize are dropped during the handshake, so this is best-effort.
+      applyNamedGroups(sslSocket, specToApply.namedGroupsAsString)
     }
   }
 
@@ -474,15 +465,3 @@ class ConnectionSpec internal constructor(
     val CLEARTEXT = Builder(false).build()
   }
 }
-
-/**
- * [javax.net.ssl.SSLParameters.setNamedGroups], resolved reflectively because it was added in
- * Java 20 (and recent Conscrypt releases) and OkHttp still targets earlier platforms. Null when the
- * running platform predates the API.
- */
-private val setNamedGroupsMethod: Method? =
-  try {
-    SSLParameters::class.java.getMethod("setNamedGroups", Array<String>::class.java)
-  } catch (_: NoSuchMethodException) {
-    null
-  }

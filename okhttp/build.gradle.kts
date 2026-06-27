@@ -277,6 +277,30 @@ val compileJavaModuleInfo by tasks.registering(JavaCompile::class) {
   modularity.inferModulePath.set(true)
 }
 
+// Java 20+ multi-release variant of okhttp3.internal.platform.NamedGroups, which calls
+// SSLParameters.setNamedGroups (added in Java 20). The base class compiled from NamedGroups.kt is a
+// no-op, so older runtimes keep working while Java 20+ gets real named-group configuration without
+// reflection.
+val compileNamedGroupsJava20 by tasks.registering(JavaCompile::class) {
+  val compilation = kotlin.targets["jvm"].compilations["main"]
+  val compileKotlinTask = compilation.compileTaskProvider.get() as KotlinJvmCompile
+  val targetDir = compileKotlinTask.destinationDirectory.dir("../java20")
+  val sourceDir = file("src/jvmMain/java20/")
+
+  // Always compile the Kotlin (base) classes first so the multi-release variant overrides them.
+  dependsOn(compileKotlinTask)
+
+  source(sourceDir)
+
+  outputs.dir(targetDir)
+  destinationDirectory.set(targetDir)
+
+  // Target Java 20: that's where SSLParameters.setNamedGroups becomes available.
+  options.release.set(20)
+
+  classpath = compileKotlinTask.libraries
+}
+
 // Call the convention when the task has finished, to modify the jar to contain OSGi metadata.
 tasks.named<Jar>("jvmJar").configure {
   manifest {
@@ -287,6 +311,10 @@ tasks.named<Jar>("jvmJar").configure {
 
   from(compileJavaModuleInfo.map { it.destinationDirectory }) {
     into("META-INF/versions/9/")
+  }
+
+  from(compileNamedGroupsJava20.map { it.destinationDirectory }) {
+    into("META-INF/versions/20/")
   }
 }
 
