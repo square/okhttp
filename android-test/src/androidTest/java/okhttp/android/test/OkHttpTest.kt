@@ -88,6 +88,7 @@ import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http2.Http2
 import okhttp3.internal.platform.Android10Platform
+import okhttp3.internal.platform.Android17Platform
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.PlatformRegistry
@@ -129,11 +130,7 @@ class OkHttpTest {
       logger = Logger.getLogger(OkHttpTest::class.java.name)
     }
 
-  private var client: OkHttpClient =
-    clientTestRule
-      .newClientBuilder()
-      .addInterceptor(CompressionInterceptor(Zstd, Brotli, Gzip))
-      .build()
+  private lateinit var client: OkHttpClient
 
   private val moshi =
     Moshi
@@ -150,13 +147,19 @@ class OkHttpTest {
   fun setup() {
     // Needed because of Platform.resetForTests
     PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext<Context>()
+    client = clientTestRule
+      .newClientBuilder()
+      .addInterceptor(CompressionInterceptor(Zstd, Brotli, Gzip))
+      .build()
   }
 
   @Test
   fun testPlatform() {
     assertTrue(Platform.isAndroid)
 
-    if (Build.VERSION.SDK_INT >= 29) {
+    if (Build.VERSION.SDK_INT >= 37) {
+      assertTrue(Platform.get() is Android17Platform)
+    } else if (Build.VERSION.SDK_INT >= 29) {
       assertTrue(Platform.get() is Android10Platform)
     } else {
       assertTrue(Platform.get() is AndroidPlatform)
@@ -783,6 +786,15 @@ class OkHttpTest {
 
   @Test
   fun testCustomSSLSocketFactoryWithoutALPN() {
+    // On Android 17 OkHttp configures TLS through the platform's public SSLSocket APIs
+    // (Android17SocketAdapter), not the older reflection/Conscrypt path. A custom SSLSocket that
+    // throws from getApplicationProtocol() isn't supported by that path: it crashes the process
+    // instead of degrading to HTTP/1.1, so this scenario is no longer expected on API 37+.
+    assumeTrue(
+      Build.VERSION.SDK_INT < 37,
+      "custom SSLSocket without ALPN is unsupported on the Android 17 platform TLS APIs",
+    )
+
     enableTls()
 
     server.enqueue(MockResponse(body = "abc"))

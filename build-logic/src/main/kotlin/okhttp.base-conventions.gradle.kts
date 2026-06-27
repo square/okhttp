@@ -48,6 +48,13 @@ tasks.withType<KotlinCompile>().configureEach {
   friendPaths.from(friendsTestImplementation.incoming.artifactView { }.files)
 }
 
+tasks.withType<Test> {
+  if (testJavaVersion >= 9) {
+    // Fix for robolectric https://github.com/robolectric/robolectric/pull/10996
+    jvmArgs("--add-opens", "java.base/jdk.internal.access=ALL-UNNAMED")
+  }
+}
+
 val resolvableConfigurations = configurations.filter { it.isCanBeResolved }
 tasks.register("downloadDependencies") {
   description = "Download all dependencies to the Gradle cache"
