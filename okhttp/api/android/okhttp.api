@@ -371,6 +371,7 @@ public final class okhttp3/ConnectionSpec {
 	public fun hashCode ()I
 	public final fun isCompatible (Ljavax/net/ssl/SSLSocket;)Z
 	public final fun isTls ()Z
+	public final fun namedGroups ()Ljava/util/List;
 	public final fun supportsTlsExtensions ()Z
 	public final fun tlsVersions ()Ljava/util/List;
 	public fun toString ()Ljava/lang/String;
@@ -379,10 +380,13 @@ public final class okhttp3/ConnectionSpec {
 public final class okhttp3/ConnectionSpec$Builder {
 	public fun <init> (Lokhttp3/ConnectionSpec;)V
 	public final fun allEnabledCipherSuites ()Lokhttp3/ConnectionSpec$Builder;
+	public final fun allEnabledNamedGroups ()Lokhttp3/ConnectionSpec$Builder;
 	public final fun allEnabledTlsVersions ()Lokhttp3/ConnectionSpec$Builder;
 	public final fun build ()Lokhttp3/ConnectionSpec;
 	public final fun cipherSuites ([Ljava/lang/String;)Lokhttp3/ConnectionSpec$Builder;
 	public final fun cipherSuites ([Lokhttp3/CipherSuite;)Lokhttp3/ConnectionSpec$Builder;
+	public final fun namedGroups ([Ljava/lang/String;)Lokhttp3/ConnectionSpec$Builder;
+	public final fun namedGroups ([Lokhttp3/NamedGroup;)Lokhttp3/ConnectionSpec$Builder;
 	public final fun supportsTlsExtensions (Z)Lokhttp3/ConnectionSpec$Builder;
 	public final fun tlsVersions ([Ljava/lang/String;)Lokhttp3/ConnectionSpec$Builder;
 	public final fun tlsVersions ([Lokhttp3/TlsVersion;)Lokhttp3/ConnectionSpec$Builder;
@@ -887,6 +891,32 @@ public final class okhttp3/MultipartReader$Part : java/io/Closeable {
 	public final fun body ()Lokio/BufferedSource;
 	public fun close ()V
 	public final fun headers ()Lokhttp3/Headers;
+}
+
+public final class okhttp3/NamedGroup : java/lang/Enum {
+	public static final field Companion Lokhttp3/NamedGroup$Companion;
+	public static final field FFDHE2048 Lokhttp3/NamedGroup;
+	public static final field FFDHE3072 Lokhttp3/NamedGroup;
+	public static final field FFDHE4096 Lokhttp3/NamedGroup;
+	public static final field FFDHE6144 Lokhttp3/NamedGroup;
+	public static final field FFDHE8192 Lokhttp3/NamedGroup;
+	public static final field SECP256R1 Lokhttp3/NamedGroup;
+	public static final field SECP256R1MLKEM768 Lokhttp3/NamedGroup;
+	public static final field SECP384R1 Lokhttp3/NamedGroup;
+	public static final field SECP384R1MLKEM1024 Lokhttp3/NamedGroup;
+	public static final field SECP521R1 Lokhttp3/NamedGroup;
+	public static final field X25519 Lokhttp3/NamedGroup;
+	public static final field X25519MLKEM768 Lokhttp3/NamedGroup;
+	public static final field X448 Lokhttp3/NamedGroup;
+	public static final fun forJavaName (Ljava/lang/String;)Lokhttp3/NamedGroup;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun javaName ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lokhttp3/NamedGroup;
+	public static fun values ()[Lokhttp3/NamedGroup;
+}
+
+public final class okhttp3/NamedGroup$Companion {
+	public final fun forJavaName (Ljava/lang/String;)Lokhttp3/NamedGroup;
 }
 
 public final class okhttp3/OkHttp {

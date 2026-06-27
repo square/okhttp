@@ -15,8 +15,10 @@
  */
 package okhttp3
 
+import java.lang.reflect.Method
 import java.util.Arrays
 import java.util.Objects
+import javax.net.ssl.SSLParameters
 import javax.net.ssl.SSLSocket
 import okhttp3.ConnectionSpec.Builder
 import okhttp3.internal.concat
@@ -49,6 +51,7 @@ class ConnectionSpec internal constructor(
   @get:JvmName("supportsTlsExtensions") val supportsTlsExtensions: Boolean,
   internal val cipherSuitesAsString: Array<String>?,
   private val tlsVersionsAsString: Array<String>?,
+  internal val namedGroupsAsString: Array<String>?,
 ) {
   /**
    * Returns the cipher suites to use for a connection. Returns null if all of the SSL socket's
@@ -86,6 +89,26 @@ class ConnectionSpec internal constructor(
   )
   fun tlsVersions(): List<TlsVersion>? = tlsVersions
 
+  /**
+   * Returns the named groups (the TLS 1.3 `supported_groups`, formerly elliptic curves) to offer
+   * when negotiating a connection, in preference order. Returns null if the SSL socket's default
+   * named groups should be used.
+   *
+   * Each entry that isn't a known [NamedGroup] is omitted from this list; use [namedGroupsAsString]
+   * for the raw configuration.
+   */
+  @get:JvmName("namedGroups")
+  val namedGroups: List<NamedGroup>?
+    get() {
+      return namedGroupsAsString?.mapNotNull {
+        try {
+          NamedGroup.forJavaName(it)
+        } catch (_: IllegalArgumentException) {
+          null
+        }
+      }
+    }
+
   @JvmName("-deprecated_supportsTlsExtensions")
   @Deprecated(
     message = "moved to val",
@@ -107,6 +130,21 @@ class ConnectionSpec internal constructor(
 
     if (specToApply.cipherSuites != null) {
       sslSocket.enabledCipherSuites = specToApply.cipherSuitesAsString
+    }
+
+    if (specToApply.namedGroupsAsString != null) {
+      // SSLParameters.setNamedGroups(String[]) was added in Java 20 and recent Conscrypt releases.
+      // Apply it reflectively so OkHttp keeps building and running on older platforms, where the
+      // configuration is silently ignored. Groups the provider doesn't recognize are dropped during
+      // the handshake, so this is best-effort by design.
+      val setNamedGroups = setNamedGroupsMethod
+      if (setNamedGroups != null) {
+        val sslParameters = sslSocket.sslParameters
+        // Cast to Any so the String[] is passed as a single argument to setNamedGroups(String[])
+        // rather than being spread across Method.invoke's varargs.
+        setNamedGroups.invoke(sslParameters, specToApply.namedGroupsAsString as Any)
+        sslSocket.sslParameters = sslParameters
+      }
     }
   }
 
@@ -191,6 +229,7 @@ class ConnectionSpec internal constructor(
     if (isTls) {
       if (!Arrays.equals(this.cipherSuitesAsString, other.cipherSuitesAsString)) return false
       if (!Arrays.equals(this.tlsVersionsAsString, other.tlsVersionsAsString)) return false
+      if (!Arrays.equals(this.namedGroupsAsString, other.namedGroupsAsString)) return false
       if (this.supportsTlsExtensions != other.supportsTlsExtensions) return false
     }
 
@@ -202,6 +241,7 @@ class ConnectionSpec internal constructor(
     if (isTls) {
       result = 31 * result + (cipherSuitesAsString?.contentHashCode() ?: 0)
       result = 31 * result + (tlsVersionsAsString?.contentHashCode() ?: 0)
+      result = 31 * result + (namedGroupsAsString?.contentHashCode() ?: 0)
       result = 31 * result + if (supportsTlsExtensions) 0 else 1
     }
     return result
@@ -214,6 +254,7 @@ class ConnectionSpec internal constructor(
       "ConnectionSpec(" +
         "cipherSuites=${Objects.toString(cipherSuites, "[all enabled]")}, " +
         "tlsVersions=${Objects.toString(tlsVersions, "[all enabled]")}, " +
+        "namedGroups=${Objects.toString(namedGroups, "[all enabled]")}, " +
         "supportsTlsExtensions=$supportsTlsExtensions)"
     )
   }
@@ -222,6 +263,7 @@ class ConnectionSpec internal constructor(
     internal var tls: Boolean = false
     internal var cipherSuites: Array<String>? = null
     internal var tlsVersions: Array<String>? = null
+    internal var namedGroups: Array<String>? = null
     internal var supportsTlsExtensions: Boolean = false
 
     internal constructor(tls: Boolean) {
@@ -232,6 +274,7 @@ class ConnectionSpec internal constructor(
       this.tls = connectionSpec.isTls
       this.cipherSuites = connectionSpec.cipherSuitesAsString
       this.tlsVersions = connectionSpec.tlsVersionsAsString
+      this.namedGroups = connectionSpec.namedGroupsAsString
       this.supportsTlsExtensions = connectionSpec.supportsTlsExtensions
     }
 
@@ -280,6 +323,53 @@ class ConnectionSpec internal constructor(
         this.tlsVersions = tlsVersions.copyOf() as Array<String> // Defensive copy.
       }
 
+    /**
+     * Defer named group (`supported_groups`) selection to the underlying SSL socket. This is the
+     * default behavior.
+     */
+    fun allEnabledNamedGroups() =
+      apply {
+        require(tls) { "no named groups for cleartext connections" }
+        this.namedGroups = null
+      }
+
+    /**
+     * Sets the named groups (TLS 1.3 `supported_groups`) to offer when negotiating a connection, in
+     * preference order. The first group the server also supports is used for key exchange.
+     *
+     * Use this to require or prefer post-quantum key exchange, for example:
+     *
+     * ```kotlin
+     * ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+     *     .namedGroups(NamedGroup.X25519MLKEM768, NamedGroup.X25519, NamedGroup.SECP256R1)
+     *     .build()
+     * ```
+     *
+     * Named groups are applied via [javax.net.ssl.SSLParameters.setNamedGroups], available on
+     * Java 20+ and recent Conscrypt releases; on platforms without that API the configuration is
+     * silently ignored.
+     */
+    fun namedGroups(vararg namedGroups: NamedGroup): Builder =
+      apply {
+        require(tls) { "no named groups for cleartext connections" }
+        val strings = namedGroups.map { it.javaName }.toTypedArray()
+        return namedGroups(*strings)
+      }
+
+    /**
+     * Sets the named groups using their standard string names, as accepted by
+     * [javax.net.ssl.SSLParameters.setNamedGroups] and the `jdk.tls.namedGroups` system property.
+     * This allows requesting groups that are not yet enumerated in [NamedGroup].
+     */
+    fun namedGroups(vararg namedGroups: String) =
+      apply {
+        require(tls) { "no named groups for cleartext connections" }
+        require(namedGroups.isNotEmpty()) { "At least one named group is required" }
+
+        @Suppress("UNCHECKED_CAST")
+        this.namedGroups = namedGroups.copyOf() as Array<String> // Defensive copy.
+      }
+
     @Deprecated(
       "since OkHttp 3.13 all TLS-connections are expected to support TLS extensions.\n" +
         "In a future release setting this to true will be unnecessary and setting it to false\n" +
@@ -297,6 +387,7 @@ class ConnectionSpec internal constructor(
         supportsTlsExtensions,
         cipherSuites,
         tlsVersions,
+        namedGroups,
       )
   }
 
@@ -383,3 +474,15 @@ class ConnectionSpec internal constructor(
     val CLEARTEXT = Builder(false).build()
   }
 }
+
+/**
+ * [javax.net.ssl.SSLParameters.setNamedGroups], resolved reflectively because it was added in
+ * Java 20 (and recent Conscrypt releases) and OkHttp still targets earlier platforms. Null when the
+ * running platform predates the API.
+ */
+private val setNamedGroupsMethod: Method? =
+  try {
+    SSLParameters::class.java.getMethod("setNamedGroups", Array<String>::class.java)
+  } catch (_: NoSuchMethodException) {
+    null
+  }
