@@ -281,7 +281,7 @@ val compileJavaModuleInfo by tasks.registering(JavaCompile::class) {
 // SSLParameters.setNamedGroups (added in Java 20). The base class compiled from NamedGroups.kt is a
 // no-op, so older runtimes keep working while Java 20+ gets real named-group configuration without
 // reflection.
-val compileNamedGroupsJava20 by tasks.registering(JavaCompile::class) {
+val compileJdk20 by tasks.registering(JavaCompile::class) {
   val compilation = kotlin.targets["jvm"].compilations["main"]
   val compileKotlinTask = compilation.compileTaskProvider.get() as KotlinJvmCompile
   val targetDir = compileKotlinTask.destinationDirectory.dir("../java20")
@@ -313,7 +313,7 @@ tasks.named<Jar>("jvmJar").configure {
     into("META-INF/versions/9/")
   }
 
-  from(compileNamedGroupsJava20.map { it.destinationDirectory }) {
+  from(compileJdk20.map { it.destinationDirectory }) {
     into("META-INF/versions/20/")
   }
 }
