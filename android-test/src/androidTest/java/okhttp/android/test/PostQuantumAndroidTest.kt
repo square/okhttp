@@ -16,6 +16,7 @@
 package okhttp.android.test
 
 import android.content.Context
+import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import assertk.assertThat
@@ -43,17 +44,22 @@ import org.junit.jupiter.api.Test
  *
  * Unlike the JVM container tests, the server runs as a Docker container on the *host*: the emulator
  * reaches it at `10.0.2.2`. The PQC-only server URL is passed in as the `pqcServerUrl` instrumentation
- * argument (see the `android-containers` workflow); the test skips when it is absent, so it is inert
+ * argument (see the `android-containers` workflow); the tests skip when it is absent, so they are inert
  * in the regular `connectedCheck` matrix.
  *
- * Android's system Conscrypt has no PQC, so this installs the bundled `conscrypt-android` (2.6+),
- * which does. A successful HTTPS response against a server restricted to [NamedGroup.X25519MLKEM768]
- * proves the group was negotiated.
+ * The PQC-only server only accepts [NamedGroup.X25519MLKEM768], so a successful HTTPS response proves
+ * the group was negotiated. Two providers are probed:
+ *
+ *  * [bundledConscryptNegotiatesPostQuantumGroup] installs the app-bundled `conscrypt-android` (2.6+),
+ *    which supports PQC, and is expected to pass wherever that Conscrypt is present.
+ *  * [systemProviderNegotiatesPostQuantumGroup] uses the device's *system* TLS stack with no bundled
+ *    provider, to empirically answer whether the platform itself negotiates PQC. It only runs on
+ *    API 37+ and is expected to fail until the system Conscrypt enables PQC key exchange — run it in
+ *    the experimental (non-blocking) API 37 emulator lane to find out.
  *
  * Note: applying [ConnectionSpec.Builder.namedGroups] on Android needs the Android implementation of
  * `applyNamedGroups` (tracked separately). Until that lands the spec setting is a no-op on device, so
- * this test relies on the provider's default group preference; once it lands the configuration is
- * honored explicitly.
+ * these tests measure the provider's default group preference rather than an enforced restriction.
  */
 class PostQuantumAndroidTest {
   private val serverUrl: String? =
@@ -64,11 +70,11 @@ class PostQuantumAndroidTest {
   @BeforeEach
   fun setup() {
     PlatformRegistry.applicationContext = ApplicationProvider.getApplicationContext<Context>()
-    Security.insertProviderAt(Conscrypt.newProviderBuilder().build(), 1)
   }
 
   @AfterEach
   fun tearDown() {
+    // Harmless if it was never installed.
     Security.removeProvider("Conscrypt")
     if (::client.isInitialized) {
       client.dispatcher.executorService.shutdown()
@@ -77,12 +83,31 @@ class PostQuantumAndroidTest {
   }
 
   @Test
-  fun negotiatesPostQuantumGroup() {
+  fun bundledConscryptNegotiatesPostQuantumGroup() {
     assumeTrue(serverUrl != null, "pqcServerUrl not set; skipping (needs the PQC server container)")
     assumeTrue(conscryptSupportsPostQuantum(), "bundled Conscrypt < 2.6 has no post-quantum key exchange")
 
-    // Conscrypt is installed above; cert validation is bypassed because this is about key exchange,
-    // not authentication (the container uses a throwaway self-signed certificate).
+    Security.insertProviderAt(Conscrypt.newProviderBuilder().build(), 1)
+
+    assertNegotiatesPostQuantum()
+  }
+
+  @Test
+  fun systemProviderNegotiatesPostQuantumGroup() {
+    assumeTrue(serverUrl != null, "pqcServerUrl not set; skipping (needs the PQC server container)")
+    // Probe the *system* TLS stack only where it might plausibly exist (API 37+). No bundled provider
+    // is installed: a pass means the platform negotiates X25519MLKEM768, a failure means it doesn't yet.
+    assumeTrue(Build.VERSION.SDK_INT >= 37, "only probing the system provider on API 37+")
+
+    assertNegotiatesPostQuantum()
+  }
+
+  /**
+   * Connects to the PQC-only server with whatever provider is currently highest priority. Cert
+   * validation is bypassed because this is about key exchange, not authentication (the container uses
+   * a throwaway self-signed certificate).
+   */
+  private fun assertNegotiatesPostQuantum() {
     val sslContext =
       SSLContext.getInstance("TLS").apply {
         init(null, arrayOf(trustAllManager), SecureRandom())
