@@ -295,15 +295,36 @@ jobs:
   android:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # The pre-release API 37 emulator image is still maturing, so let the entry marked
+    # experimental fail without blocking the build until the image is stable on CI.
+    continue-on-error: ${{ matrix.experimental || false }}
 
     strategy:
       fail-fast: false
       matrix:
-        api-level:
-          - 21
-          - 23
-          - 29
-          - 34
+        include:
+          - api-level: 21
+            arch: x86
+            target: default
+          - api-level: 23
+            arch: x86
+            target: default
+          - api-level: 29
+            arch: x86
+            target: default
+          - api-level: 34
+            arch: x86_64
+            target: default
+          # API 37 only ships 16 KB page-size images; playstore_ps16k resolves to
+          # google_apis_playstore_ps16k. Quoted so YAML keeps the ".0".
+          - api-level: "37.0"
+            arch: x86_64
+            target: playstore_ps16k
+            # API 37 needs more headroom than the other levels.
+            memory: 4096
+            gpu: -gpu auto
+            # Pre-release emulator image; allowed to fail (see continue-on-error above).
+            experimental: true
 
     steps:
       - name: Checkout
@@ -331,14 +352,17 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
-      - name: Gradle cache
-        run: ./gradlew :android-test:test
+      - name: Warm the Gradle cache
+        # Build the instrumentation APK to warm the cache, but don't run the Robolectric unit
+        # tests (`:android-test:test`) here: they fetch the android-all artifact and can take
+        # ~30 min.
+        run: ./gradlew :android-test:assembleDebugAndroidTest
 
       - name: AVD System Image Cache
         uses: actions/cache@v6
         id: avd-cache
         with:
-          key: avd-${{ runner.os }}-${{ matrix.api-level }}-${{ matrix.api-level >= 30 && 'x86_64' || 'x86' }}
+          key: avd-${{ runner.os }}-${{ matrix.api-level }}-${{ matrix.target }}-${{ matrix.arch }}
           path: |
             ~/.android/avd/*
             ~/.android/adb*
@@ -351,15 +375,18 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           force-avd-creation: false
-          arch: ${{ matrix.api-level >= 30 && 'x86_64' || 'x86' }}
-          # No window, no audio, and use swiftshader for headless environments
+          target: ${{ matrix.target }}
+          arch: ${{ matrix.arch }}
+          emulator-boot-timeout: 120
+          # No window, no audio, and use dynamic GPU and feature flags for headless environments
           emulator-options: >
             -no-window
-            -gpu swiftshader_indirect
+            ${{ matrix.gpu || '-gpu swiftshader_indirect' }}
             -noaudio
             -no-boot-anim
             -camera-back none
-            -memory 2048
+            -memory ${{ matrix.memory || '2048' }}
+            -feature GLDirectMem,HasSharedSlotsHostMemoryAllocator
           disable-animations: true
           script: echo "Generated AVD snapshot for caching."
 
@@ -367,7 +394,20 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
-          arch: ${{ matrix.api-level == '34' && 'x86_64' || 'x86' }}
+          target: ${{ matrix.target }}
+          arch: ${{ matrix.arch }}
+          emulator-boot-timeout: 120
+          # These must match the options used to create the snapshot above: the emulator only
+          # restores a cached snapshot when the boot options are identical. The action default
+          # includes -no-snapshot, which would otherwise force a slow cold boot.
+          emulator-options: >
+            -no-window
+            ${{ matrix.gpu || '-gpu swiftshader_indirect' }}
+            -noaudio
+            -no-boot-anim
+            -camera-back none
+            -memory ${{ matrix.memory || '2048' }}
+            -feature GLDirectMem,HasSharedSlotsHostMemoryAllocator
           script: ./gradlew -PandroidBuild=true connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
