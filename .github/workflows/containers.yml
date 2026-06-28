@@ -35,3 +35,13 @@ jobs:
 
       - name: Run Container Tests
         run: ./gradlew container-tests:test -PcontainerTests=true
+
+      # The run above uses JDK 21 + SunJSSE, where the post-quantum tests skip (no PQC provider).
+      # Re-run just those with the Conscrypt platform so X25519MLKEM768 is actually negotiated.
+      # continue-on-error because it depends on a pre-release Conscrypt (2.6-alpha).
+      - name: Run Post-Quantum Container Tests (Conscrypt)
+        continue-on-error: true
+        run: >
+          ./gradlew container-tests:test -PcontainerTests=true
+          -Pokhttp.platform=conscrypt
+          --tests "okhttp3.containers.PostQuantum*"
