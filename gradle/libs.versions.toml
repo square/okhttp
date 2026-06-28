@@ -44,7 +44,11 @@ mockserver-client = "5.15.0"
 mrjar = "0.1.1"
 openjsse = "1.1.14"
 org-bouncycastle = "1.84"
-org-conscrypt = "2.6-alpha4"
+org-conscrypt = "2.5.2"
+# Pre-release Conscrypt with post-quantum (X25519MLKEM768) support, used only by the opt-in PQC
+# tests. Not safe as the global provider: its XDH KeyPairGenerator rejects the NamedParameterSpec
+# that SunJSSE passes, breaking classical X25519 when Conscrypt is a registered JSSE provider.
+conscrypt-pqc = "2.6-alpha4"
 org-junit-jupiter = "5.13.4"
 playservices-safetynet = "18.1.0"
 robolectric = "4.16.1"
@@ -88,6 +92,8 @@ clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
 codehaus-signature-java18 = { module = "org.codehaus.mojo.signature:java18", version.ref = "codehaus-signature-java18" }
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
+conscrypt-pqc-android = { module = "org.conscrypt:conscrypt-android", version.ref = "conscrypt-pqc" }
+conscrypt-pqc-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "conscrypt-pqc" }
 square-retrofit-converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "square-retrofit" }
 eclipse-osgi = { module = "org.eclipse.platform:org.eclipse.osgi", version.ref = "eclipse-osgi" }
 hamcrest-library = { module = "org.hamcrest:hamcrest-library", version.ref = "hamcrest-library" }

@@ -46,4 +46,7 @@ dependencies {
   testImplementation(libs.mockserver)
   testImplementation(libs.mockserver.client)
   testImplementation(libs.testcontainers.junit5)
+  // Conscrypt 2.6+ (post-quantum) for the PQC tests on the conscrypt platform lane; overrides the
+  // stable Conscrypt pulled in transitively by okhttp-testing-support.
+  testImplementation(libs.conscrypt.pqc.openjdk)
 }
