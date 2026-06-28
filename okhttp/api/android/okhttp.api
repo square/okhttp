@@ -908,7 +908,9 @@ public final class okhttp3/NamedGroup {
 	public static final field X25519MLKEM768 Lokhttp3/NamedGroup;
 	public static final field X448 Lokhttp3/NamedGroup;
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
 	public static final fun forJavaName (Ljava/lang/String;)Lokhttp3/NamedGroup;
+	public fun hashCode ()I
 	public final fun javaName ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 }
