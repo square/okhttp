@@ -385,7 +385,6 @@ public final class okhttp3/ConnectionSpec$Builder {
 	public final fun build ()Lokhttp3/ConnectionSpec;
 	public final fun cipherSuites ([Ljava/lang/String;)Lokhttp3/ConnectionSpec$Builder;
 	public final fun cipherSuites ([Lokhttp3/CipherSuite;)Lokhttp3/ConnectionSpec$Builder;
-	public final fun namedGroups ([Ljava/lang/String;)Lokhttp3/ConnectionSpec$Builder;
 	public final fun namedGroups ([Lokhttp3/NamedGroup;)Lokhttp3/ConnectionSpec$Builder;
 	public final fun supportsTlsExtensions (Z)Lokhttp3/ConnectionSpec$Builder;
 	public final fun tlsVersions ([Ljava/lang/String;)Lokhttp3/ConnectionSpec$Builder;
@@ -893,7 +892,7 @@ public final class okhttp3/MultipartReader$Part : java/io/Closeable {
 	public final fun headers ()Lokhttp3/Headers;
 }
 
-public final class okhttp3/NamedGroup : java/lang/Enum {
+public final class okhttp3/NamedGroup {
 	public static final field Companion Lokhttp3/NamedGroup$Companion;
 	public static final field FFDHE2048 Lokhttp3/NamedGroup;
 	public static final field FFDHE3072 Lokhttp3/NamedGroup;
@@ -908,11 +907,10 @@ public final class okhttp3/NamedGroup : java/lang/Enum {
 	public static final field X25519 Lokhttp3/NamedGroup;
 	public static final field X25519MLKEM768 Lokhttp3/NamedGroup;
 	public static final field X448 Lokhttp3/NamedGroup;
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public static final fun forJavaName (Ljava/lang/String;)Lokhttp3/NamedGroup;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun javaName ()Ljava/lang/String;
-	public static fun valueOf (Ljava/lang/String;)Lokhttp3/NamedGroup;
-	public static fun values ()[Lokhttp3/NamedGroup;
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class okhttp3/NamedGroup$Companion {

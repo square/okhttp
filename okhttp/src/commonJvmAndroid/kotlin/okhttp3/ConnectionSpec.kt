@@ -92,20 +92,11 @@ class ConnectionSpec internal constructor(
    * Returns the named groups (the TLS 1.3 `supported_groups`, formerly elliptic curves) to offer
    * when negotiating a connection, in preference order. Returns null if the SSL socket's default
    * named groups should be used.
-   *
-   * Each entry that isn't a known [NamedGroup] is omitted from this list; use [namedGroupsAsString]
-   * for the raw configuration.
    */
   @get:JvmName("namedGroups")
   val namedGroups: List<NamedGroup>?
     get() {
-      return namedGroupsAsString?.mapNotNull {
-        try {
-          NamedGroup.forJavaName(it)
-        } catch (_: IllegalArgumentException) {
-          null
-        }
-      }
+      return namedGroupsAsString?.map { NamedGroup.forJavaName(it) }
     }
 
   @JvmName("-deprecated_supportsTlsExtensions")
@@ -343,22 +334,10 @@ class ConnectionSpec internal constructor(
     fun namedGroups(vararg namedGroups: NamedGroup): Builder =
       apply {
         require(tls) { "no named groups for cleartext connections" }
-        val strings = namedGroups.map { it.javaName }.toTypedArray()
-        return namedGroups(*strings)
-      }
-
-    /**
-     * Sets the named groups using their standard string names, as accepted by
-     * [javax.net.ssl.SSLParameters.setNamedGroups] and the `jdk.tls.namedGroups` system property.
-     * This allows requesting groups that are not yet enumerated in [NamedGroup].
-     */
-    fun namedGroups(vararg namedGroups: String) =
-      apply {
-        require(tls) { "no named groups for cleartext connections" }
         require(namedGroups.isNotEmpty()) { "At least one named group is required" }
 
-        @Suppress("UNCHECKED_CAST")
-        this.namedGroups = namedGroups.copyOf() as Array<String> // Defensive copy.
+        // Use NamedGroup.forJavaName(...) to request groups not enumerated in NamedGroup.
+        this.namedGroups = namedGroups.map { it.javaName }.toTypedArray()
       }
 
     @Deprecated(

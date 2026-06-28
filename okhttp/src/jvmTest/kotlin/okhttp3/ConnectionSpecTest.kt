@@ -464,15 +464,15 @@ class ConnectionSpecTest {
   }
 
   @Test
-  fun namedGroupsStrings() {
-    // Allow arbitrary group names that may not yet be modelled by NamedGroup.
+  fun namedGroupsArbitraryName() {
+    // forJavaName accepts group names not yet modelled by NamedGroup; they round-trip unchanged.
+    val futureGroup = NamedGroup.forJavaName("FutureGroup")
     val spec =
       ConnectionSpec
         .Builder(ConnectionSpec.MODERN_TLS)
-        .namedGroups("X25519MLKEM768", "FutureGroup")
+        .namedGroups(NamedGroup.X25519MLKEM768, futureGroup)
         .build()
-    // "FutureGroup" is unknown so it's dropped from the typed view, but preserved on the wire.
-    assertThat(spec.namedGroups!!).containsExactly(NamedGroup.X25519MLKEM768)
+    assertThat(spec.namedGroups!!).containsExactly(NamedGroup.X25519MLKEM768, futureGroup)
   }
 
   @Test
@@ -480,7 +480,7 @@ class ConnectionSpecTest {
     assertFailsWith<IllegalArgumentException> {
       ConnectionSpec
         .Builder(ConnectionSpec.MODERN_TLS)
-        .namedGroups(*arrayOf<String>())
+        .namedGroups(*arrayOf<NamedGroup>())
         .build()
     }.also { expected ->
       assertThat(expected.message)
@@ -517,10 +517,10 @@ class ConnectionSpecTest {
 
   @Test
   fun namedGroupsRoundTrip() {
+    // Known names intern to the shared constants; unknown names create a preserved instance.
     assertThat(NamedGroup.forJavaName("X25519MLKEM768")).isEqualTo(NamedGroup.X25519MLKEM768)
     assertThat(NamedGroup.forJavaName("x25519")).isEqualTo(NamedGroup.X25519)
-    assertFailsWith<IllegalArgumentException> {
-      NamedGroup.forJavaName("nope")
-    }
+    assertThat(NamedGroup.forJavaName("nope").javaName).isEqualTo("nope")
+    assertThat(NamedGroup.forJavaName("nope")).isEqualTo(NamedGroup.forJavaName("nope"))
   }
 }
