@@ -53,6 +53,7 @@ internal class AndroidAsyncDns
   @RequiresApi(36)
   internal constructor(
     private val dnsResolver: DnsResolver? = null,
+    // Runs inline; this executor is only used to hand off DnsResolver callbacks.
     private val executor: Executor = Executor { it.run() },
     private val timeoutMillis: Int = 5_000,
   ) : AsyncDns {
