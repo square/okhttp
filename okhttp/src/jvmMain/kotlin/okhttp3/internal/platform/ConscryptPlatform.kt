@@ -25,6 +25,7 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Call
 import okhttp3.Protocol
 import org.conscrypt.Conscrypt
 import org.conscrypt.ConscryptHostnameVerifier
@@ -75,6 +76,7 @@ class ConscryptPlatform private constructor() : Platform() {
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
   override fun configureTlsExtensions(
+    call: Call?,
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<@JvmSuppressWildcards Protocol>,
@@ -87,7 +89,7 @@ class ConscryptPlatform private constructor() : Platform() {
       val names = alpnProtocolNames(protocols)
       Conscrypt.setApplicationProtocols(sslSocket, names.toTypedArray())
     } else {
-      super.configureTlsExtensions(sslSocket, hostname, protocols)
+      super.configureTlsExtensions(call, sslSocket, hostname, protocols)
     }
   }
 

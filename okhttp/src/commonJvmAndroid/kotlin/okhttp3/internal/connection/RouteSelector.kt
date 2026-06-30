@@ -26,6 +26,7 @@ import okhttp3.HttpUrl
 import okhttp3.Route
 import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.immutableListOf
+import okhttp3.internal.resolveAddresses
 import okhttp3.internal.toImmutableList
 
 /**
@@ -174,7 +175,7 @@ class RouteSelector internal constructor(
         } else {
           call.eventListener.dnsStart(call, socketHost)
 
-          val result = address.dns.lookup(socketHost)
+          val result = call.resolveAddresses(address.dns, socketHost)
           if (result.isEmpty()) {
             throw UnknownHostException("${address.dns} returned no addresses for $socketHost")
           }

@@ -473,7 +473,12 @@ public class MockWebServer : Closeable {
           openClientSockets.add(sslSocket)
 
           if (protocolNegotiationEnabled) {
-            Platform.get().configureTlsExtensions(sslSocket, null, protocols)
+            Platform.get().configureTlsExtensions(
+              call = null,
+              sslSocket = sslSocket,
+              hostname = null,
+              protocols = protocols,
+            )
           }
 
           sslSocket.startHandshake()

@@ -31,8 +31,12 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.AsyncDns
+import okhttp3.Call
+import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.ech.EchModeConfiguration
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.readFieldOrNull
 import okhttp3.internal.tls.BasicCertificateChainCleaner
@@ -113,6 +117,7 @@ open class Platform {
    * Configure TLS extensions on `sslSocket` for `route`.
    */
   open fun configureTlsExtensions(
+    call: Call?,
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<@JvmSuppressWildcards Protocol>,
@@ -160,6 +165,9 @@ open class Platform {
 
   open fun isCleartextTrafficPermitted(hostname: String): Boolean = true
 
+  internal open val echModeConfiguration: EchModeConfiguration
+    get() = EchModeConfiguration.Unspecified
+
   /**
    * Returns an object that holds a stack trace created at the moment this method is executed. This
    * should be used specifically for [java.io.Closeable] objects and in conjunction with
@@ -179,7 +187,8 @@ open class Platform {
   ) {
     var logMessage = message
     if (stackTrace == null) {
-      logMessage += " To see where this was allocated, set the OkHttpClient logger level to " +
+      logMessage +=
+        " To see where this was allocated, set the OkHttpClient logger level to " +
         "FINE: Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
     }
     log(logMessage, WARN, stackTrace as Throwable?)
@@ -201,10 +210,20 @@ open class Platform {
     }
   }
 
+  open fun platformDns(): Dns = Dns.SYSTEM
+
+  /**
+   * Returns a platform-specific [AsyncDns] capable of resolving HTTPS/SVCB records (including ECH
+   * configuration), or null if the platform has no such resolver. Used as the default
+   * [OkHttpClient.asyncDns].
+   */
+  internal open fun platformAsyncDns(): AsyncDns? = null
+
   override fun toString(): String = javaClass.simpleName
 
   companion object {
-    @Volatile private var platform = findPlatform()
+    @Volatile
+    private var platform = findPlatform()
 
     const val INFO = 4
     const val WARN = 5

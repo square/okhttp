@@ -22,6 +22,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Call
 import okhttp3.Protocol
 import org.bouncycastle.jsse.BCSSLSocket
 import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
@@ -56,6 +57,7 @@ class BouncyCastlePlatform private constructor() : Platform() {
     )
 
   override fun configureTlsExtensions(
+    call: Call?,
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<@JvmSuppressWildcards Protocol>,
@@ -69,7 +71,7 @@ class BouncyCastlePlatform private constructor() : Platform() {
 
       sslSocket.parameters = sslParameters
     } else {
-      super.configureTlsExtensions(sslSocket, hostname, protocols)
+      super.configureTlsExtensions(call, sslSocket, hostname, protocols)
     }
   }
 

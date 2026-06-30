@@ -16,6 +16,7 @@
 package okhttp3.internal.platform.android
 
 import javax.net.ssl.SSLSocket
+import okhttp3.Call
 import okhttp3.Protocol
 
 /**
@@ -36,11 +37,12 @@ class DeferredSocketAdapter(
   override fun matchesSocket(sslSocket: SSLSocket): Boolean = socketAdapterFactory.matchesSocket(sslSocket)
 
   override fun configureTlsExtensions(
+    call: Call?,
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<Protocol>,
   ) {
-    getDelegate(sslSocket)?.configureTlsExtensions(sslSocket, hostname, protocols)
+    getDelegate(sslSocket)?.configureTlsExtensions(call, sslSocket, hostname, protocols)
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? = getDelegate(sslSocket)?.getSelectedProtocol(sslSocket)

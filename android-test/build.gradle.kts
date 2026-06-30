@@ -7,8 +7,14 @@ plugins {
   id("de.mannodermaus.android-junit5")
 }
 
+// The Android API level this module compiles/targets. Robolectric has no android-all artifact
+// for the pre-release SDK 37, so its unit tests are disabled below while this is 37.
+val compileApi = 37
+
 android {
-  compileSdk = 36
+  compileSdk {
+    version = release(compileApi)
+  }
 
   namespace = "okhttp.android.test"
 
@@ -24,25 +30,15 @@ android {
     )
   }
 
-  if (androidBuild) {
-    sourceSets["androidTest"].java.srcDirs(
-      "../okhttp-brotli/src/test/java",
-      "../okhttp-dnsoverhttps/src/test/java",
-      "../okhttp-logging-interceptor/src/test/java",
-      "../okhttp-sse/src/test/java"
-    )
-  }
-
   compileOptions {
     targetCompatibility(JavaVersion.VERSION_11)
     sourceCompatibility(JavaVersion.VERSION_11)
   }
 
   testOptions {
-    targetSdk = 34
+    targetSdk = compileApi
     unitTests.isIncludeAndroidResources = true
   }
-
 
   // issue merging due to conflict with httpclient and something else
   packagingOptions.resources.excludes += setOf(
@@ -55,11 +51,25 @@ android {
   )
 }
 
+if (androidBuild) {
+  androidComponents {
+    onVariants(selector().all()) { variant ->
+      variant.androidTest?.sources?.java?.apply {
+        addStaticSourceDirectory("../okhttp-brotli/src/test/java")
+        addStaticSourceDirectory("../okhttp-dnsoverhttps/src/test/java")
+        addStaticSourceDirectory("../okhttp-logging-interceptor/src/test/java")
+        addStaticSourceDirectory("../okhttp-sse/src/test/java")
+      }
+    }
+  }
+}
+
 dependencies {
   implementation(libs.kotlin.reflect)
   implementation(libs.playservices.safetynet)
   "friendsImplementation"(projects.okhttp)
   "friendsImplementation"(projects.okhttpDnsoverhttps)
+  implementation(libs.androidx.activity)
 
   testImplementation(projects.okhttp)
   testImplementation(libs.junit)
@@ -112,5 +122,14 @@ junitPlatform {
   instrumentationTests.behaviorForUnsupportedDevices = UnsupportedDeviceBehavior.Skip
   filters {
     excludeTags("Remote")
+  }
+}
+
+// Robolectric can't fetch an android-all artifact for the pre-release SDK 37 (MavenArtifactFetcher
+// stalls/fails), so disable its unit tests only while we compile against API 37. The
+// instrumentation tests (connectedCheck) are not Test tasks, so they still run.
+if (compileApi >= 37) {
+  tasks.withType<Test>().configureEach {
+    enabled = false
   }
 }

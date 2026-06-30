@@ -58,7 +58,7 @@ kotlin {
   android {
     namespace = "okhttp.okhttp3"
     compileSdk {
-      version = release(36)
+      version = release(37)
     }
     minSdk = 21
 
@@ -108,7 +108,6 @@ kotlin {
         implementation(libs.assertk)
         implementation(libs.kotlin.test.annotations)
         implementation(libs.kotlin.test.common)
-        implementation(libs.kotlin.test.junit)
         implementation(libs.junit)
         implementation(libs.junit.jupiter.api)
         implementation(libs.junit.jupiter.params)
@@ -192,6 +191,7 @@ kotlin {
           implementation(libs.junit.vintage.engine)
           implementation(libs.kotlin.test.annotations)
           implementation(libs.kotlin.test.common)
+          implementation(libs.kotlin.test.junit)
           implementation(libs.robolectric)
         }
       }

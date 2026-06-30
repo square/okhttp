@@ -30,6 +30,7 @@ import javax.net.ssl.X509TrustManager
 import kotlin.time.Duration as KotlinDuration
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
+import okhttp3.ech.EchModeConfiguration
 import okhttp3.internal.asFactory
 import okhttp3.internal.checkDuration
 import okhttp3.internal.concurrent.TaskRunner
@@ -183,6 +184,12 @@ open class OkHttpClient internal constructor(
   @get:JvmName("dns")
   val dns: Dns = builder.dns
 
+  /**
+   * The asynchronous DNS resolver, or null to resolve with [dns] only. When set, the connection
+   * path can use HTTPS/SVCB records it returns (including Encrypted Client Hello configuration).
+   */
+  internal val asyncDns: AsyncDns? = builder.asyncDns
+
   @get:JvmName("proxy")
   val proxy: Proxy? = builder.proxy
 
@@ -272,6 +279,8 @@ open class OkHttpClient internal constructor(
       // Cache the pool in the builder so that it will be shared with other clients
       builder.connectionPool = it
     }
+
+  internal val echModeConfiguration: EchModeConfiguration = builder.echModeConfiguration
 
   constructor() : this(Builder())
 
@@ -597,7 +606,8 @@ open class OkHttpClient internal constructor(
     internal var followSslRedirects = true
     internal var cookieJar: CookieJar = CookieJar.NO_COOKIES
     internal var cache: Cache? = null
-    internal var dns: Dns = Dns.SYSTEM
+    internal var dns: Dns = Platform.get().platformDns()
+    internal var asyncDns: AsyncDns? = Platform.get().platformAsyncDns()
     internal var proxy: Proxy? = null
     internal var proxySelector: ProxySelector? = null
     internal var proxyAuthenticator: Authenticator = Authenticator.NONE
@@ -618,6 +628,7 @@ open class OkHttpClient internal constructor(
     internal var minWebSocketMessageToCompress = RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE
     internal var routeDatabase: RouteDatabase? = null
     internal var taskRunner: TaskRunner? = null
+    internal var echModeConfiguration: EchModeConfiguration = Platform.get().echModeConfiguration
 
     internal constructor(okHttpClient: OkHttpClient) : this() {
       this.dispatcher = okHttpClient.dispatcher
@@ -633,6 +644,7 @@ open class OkHttpClient internal constructor(
       this.cookieJar = okHttpClient.cookieJar
       this.cache = okHttpClient.cache
       this.dns = okHttpClient.dns
+      this.asyncDns = okHttpClient.asyncDns
       this.proxy = okHttpClient.proxy
       this.proxySelector = okHttpClient.proxySelector
       this.proxyAuthenticator = okHttpClient.proxyAuthenticator
@@ -653,6 +665,7 @@ open class OkHttpClient internal constructor(
       this.minWebSocketMessageToCompress = okHttpClient.minWebSocketMessageToCompress
       this.routeDatabase = okHttpClient.routeDatabase
       this.taskRunner = okHttpClient.taskRunner
+      this.echModeConfiguration = okHttpClient.echModeConfiguration
     }
 
     /**
@@ -820,6 +833,11 @@ open class OkHttpClient internal constructor(
      * Sets the DNS service used to lookup IP addresses for hostnames.
      *
      * If unset, the [system-wide default][Dns.SYSTEM] DNS will be used.
+     *
+     * Setting a [Dns] opts out of any platform [AsyncDns] (such as Android's `AndroidAsyncDns`)
+     * that would otherwise be used by default: an explicitly configured [Dns] always takes
+     * precedence. As a side effect this also disables Encrypted Client Hello, which is only
+     * carried by the async resolver.
      */
     fun dns(dns: Dns) =
       apply {
@@ -827,6 +845,7 @@ open class OkHttpClient internal constructor(
           this.routeDatabase = null
         }
         this.dns = dns
+        this.asyncDns = null
       }
 
     /**

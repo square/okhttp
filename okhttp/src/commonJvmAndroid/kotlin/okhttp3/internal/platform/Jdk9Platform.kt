@@ -20,6 +20,7 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Call
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
 
@@ -32,6 +33,7 @@ import okhttp3.internal.SuppressSignatureCheck
 open class Jdk9Platform : Platform() {
   @SuppressSignatureCheck
   override fun configureTlsExtensions(
+    call: Call?,
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<@JvmSuppressWildcards Protocol>,
