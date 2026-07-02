@@ -117,6 +117,7 @@ public final class mockwebserver3/MockWebServer : java/io/Closeable {
 	public final fun getBodyLimit ()J
 	public final fun getDispatcher ()Lmockwebserver3/Dispatcher;
 	public final fun getHostName ()Ljava/lang/String;
+	public final fun getNamedGroups ()Ljava/util/List;
 	public final fun getPort ()I
 	public final fun getProtocolNegotiationEnabled ()Z
 	public final fun getProtocols ()Ljava/util/List;
@@ -130,6 +131,7 @@ public final class mockwebserver3/MockWebServer : java/io/Closeable {
 	public final fun requireClientAuth ()V
 	public final fun setBodyLimit (J)V
 	public final fun setDispatcher (Lmockwebserver3/Dispatcher;)V
+	public final fun setNamedGroups (Ljava/util/List;)V
 	public final fun setProtocolNegotiationEnabled (Z)V
 	public final fun setProtocols (Ljava/util/List;)V
 	public final fun setServerSocketFactory (Ljavax/net/ServerSocketFactory;)V

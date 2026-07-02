@@ -429,7 +429,7 @@ class ConnectionSpecTest {
         .build()
     assertThat(connectionSpec.toString()).isEqualTo(
       "ConnectionSpec(cipherSuites=[all enabled], tlsVersions=[all enabled], " +
-        "supportsTlsExtensions=true)",
+        "namedGroups=[all enabled], supportsTlsExtensions=true)",
     )
   }
 
@@ -443,7 +443,84 @@ class ConnectionSpecTest {
         .build()
     assertThat(connectionSpec.toString()).isEqualTo(
       "ConnectionSpec(cipherSuites=[SSL_RSA_WITH_RC4_128_MD5], tlsVersions=[TLS_1_2], " +
-        "supportsTlsExtensions=true)",
+        "namedGroups=[all enabled], supportsTlsExtensions=true)",
     )
+  }
+
+  @Test
+  fun namedGroupsDefaultsToNull() {
+    assertThat(ConnectionSpec.MODERN_TLS.namedGroups).isNull()
+  }
+
+  @Test
+  fun namedGroupsTyped() {
+    val spec =
+      ConnectionSpec
+        .Builder(ConnectionSpec.MODERN_TLS)
+        .namedGroups(NamedGroup.X25519MLKEM768, NamedGroup.X25519, NamedGroup.SECP256R1)
+        .build()
+    assertThat(spec.namedGroups!!)
+      .containsExactly(NamedGroup.X25519MLKEM768, NamedGroup.X25519, NamedGroup.SECP256R1)
+  }
+
+  @Test
+  fun namedGroupsArbitraryName() {
+    // forJavaName accepts group names not yet modelled by NamedGroup; they round-trip unchanged.
+    val futureGroup = NamedGroup.forJavaName("FutureGroup")
+    val spec =
+      ConnectionSpec
+        .Builder(ConnectionSpec.MODERN_TLS)
+        .namedGroups(NamedGroup.X25519MLKEM768, futureGroup)
+        .build()
+    assertThat(spec.namedGroups!!).containsExactly(NamedGroup.X25519MLKEM768, futureGroup)
+  }
+
+  @Test
+  fun noNamedGroups() {
+    assertFailsWith<IllegalArgumentException> {
+      ConnectionSpec
+        .Builder(ConnectionSpec.MODERN_TLS)
+        .namedGroups(*arrayOf<NamedGroup>())
+        .build()
+    }.also { expected ->
+      assertThat(expected.message)
+        .isEqualTo("At least one named group is required")
+    }
+  }
+
+  @Test
+  fun namedGroupsForCleartextThrows() {
+    assertFailsWith<IllegalArgumentException> {
+      ConnectionSpec
+        .Builder(false)
+        .namedGroups(NamedGroup.X25519MLKEM768)
+    }
+  }
+
+  @Test
+  fun applyNamedGroupsDoesNotThrow() {
+    // The actual SSLParameters.setNamedGroups call lives in the Java 20 multi-release variant, which
+    // only loads when running from the okhttp jar (not these exploded test classes). Here we just
+    // verify applying a spec with named groups goes through the base no-op cleanly. End-to-end
+    // negotiation is covered by the container tests.
+    platform.assumeNotConscrypt()
+    platform.assumeNotBouncyCastle()
+
+    val spec =
+      ConnectionSpec
+        .Builder(ConnectionSpec.MODERN_TLS)
+        .namedGroups(NamedGroup.X25519MLKEM768, NamedGroup.X25519, NamedGroup.SECP256R1)
+        .build()
+    val socket = SSLSocketFactory.getDefault().createSocket() as SSLSocket
+    applyConnectionSpec(spec, socket, isFallback = false)
+  }
+
+  @Test
+  fun namedGroupsRoundTrip() {
+    // Known names intern to the shared constants; unknown names create a preserved instance.
+    assertThat(NamedGroup.forJavaName("X25519MLKEM768")).isEqualTo(NamedGroup.X25519MLKEM768)
+    assertThat(NamedGroup.forJavaName("x25519")).isEqualTo(NamedGroup.X25519)
+    assertThat(NamedGroup.forJavaName("nope").javaName).isEqualTo("nope")
+    assertThat(NamedGroup.forJavaName("nope")).isEqualTo(NamedGroup.forJavaName("nope"))
   }
 }

@@ -64,6 +64,7 @@ import mockwebserver3.internal.decodeRequestLine
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
+import okhttp3.NamedGroup
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
@@ -77,6 +78,7 @@ import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.platform.applyNamedGroups
 import okhttp3.internal.threadFactory
 import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
@@ -184,6 +186,17 @@ public class MockWebServer : Closeable {
       require(null !in protocolList as List<Protocol?>) { "protocols must not contain null" }
       field = protocolList
     }
+
+  /**
+   * The named groups (TLS 1.3 `supported_groups`) the server offers during the handshake, in
+   * preference order. Empty (the default) defers to the SSL socket's own named groups.
+   *
+   * Set a post-quantum group such as [NamedGroup.X25519MLKEM768] here to require PQC key exchange
+   * end-to-end in a test: the handshake then only succeeds with a client that offers a matching
+   * group. Like the client-side [okhttp3.ConnectionSpec] setting, this is applied via
+   * `SSLParameters.setNamedGroups` and takes effect on Java 20+; older platforms ignore it.
+   */
+  public var namedGroups: List<NamedGroup> = listOf()
 
   public val started: Boolean
     get() = socketAddress_ != null
@@ -474,6 +487,10 @@ public class MockWebServer : Closeable {
 
           if (protocolNegotiationEnabled) {
             Platform.get().configureTlsExtensions(sslSocket, null, protocols)
+          }
+
+          if (namedGroups.isNotEmpty()) {
+            applyNamedGroups(sslSocket, namedGroups.map { it.javaName }.toTypedArray())
           }
 
           sslSocket.startHandshake()
