@@ -485,6 +485,61 @@ public abstract interface class okhttp3/Dns {
 public final class okhttp3/Dns$Companion {
 }
 
+public abstract interface class okhttp3/Dns2 {
+	public abstract fun newCall (Lokhttp3/Dns2$Request;)Lokhttp3/Dns2$Call;
+}
+
+public abstract interface class okhttp3/Dns2$Call {
+	public abstract fun cancel ()V
+	public abstract fun enqueue (Lokhttp3/Dns2$Callback;)V
+	public abstract fun getRequest ()Lokhttp3/Dns2$Request;
+	public abstract fun isCanceled ()Z
+}
+
+public abstract interface class okhttp3/Dns2$Callback {
+	public abstract fun onFailure (Lokhttp3/Dns2$Call;Ljava/io/IOException;)V
+	public abstract fun onRecords (Lokhttp3/Dns2$Call;ZLjava/util/List;)V
+}
+
+public abstract class okhttp3/Dns2$Record {
+	public abstract fun getHostname ()Ljava/lang/String;
+}
+
+public final class okhttp3/Dns2$Record$IpAddress : okhttp3/Dns2$Record {
+	public fun <init> (Ljava/lang/String;Ljava/net/InetAddress;)V
+	public final fun address ()Ljava/net/InetAddress;
+	public fun equals (Ljava/lang/Object;)Z
+	public synthetic fun getHostname ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun hostname ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class okhttp3/Dns2$Record$ServiceMetadata : okhttp3/Dns2$Record {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;ILjava/util/List;Lokio/ByteString;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;ILjava/util/List;Lokio/ByteString;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun alpnIds ()Ljava/util/List;
+	public final fun echConfigList ()Lokio/ByteString;
+	public fun equals (Ljava/lang/Object;)Z
+	public synthetic fun getHostname ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun hostname ()Ljava/lang/String;
+	public final fun ipAddressHints ()Ljava/util/List;
+	public final fun port ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class okhttp3/Dns2$Request {
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;I)V
+	public synthetic fun <init> (Ljava/lang/String;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun hostname ()Ljava/lang/String;
+	public final fun port ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract class okhttp3/EventListener {
 	public static final field Companion Lokhttp3/EventListener$Companion;
 	public static final field NONE Lokhttp3/EventListener;
@@ -1257,6 +1312,28 @@ public final class okhttp3/Route {
 	public final fun requiresTunnel ()Z
 	public final fun socketAddress ()Ljava/net/InetSocketAddress;
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class okhttp3/ServiceMetadataTest {
+	public fun <init> ()V
+	public final fun svcb alias mode loop ()V
+	public final fun svcb alias result ()V
+	public final fun svcb alias result with dot ()V
+	public final fun svcb alpn ids ()V
+	public final fun svcb alpn ids and no default alpn ()V
+	public final fun svcb ech config list ()V
+	public final fun svcb mandatory parameters are not unrecognized ()V
+	public final fun svcb mandatory parameters are recognized ()V
+	public final fun svcb no default alpn without alpn ids ()V
+	public final fun svcb non default port ()V
+	public final fun svcb port ()V
+	public final fun svcb port ipv4 address hints ()V
+	public final fun svcb port ipv6 address hints ()V
+	public final fun svcb service mode loop ()V
+	public final fun svcb service mode result sorting ()V
+	public final fun svcb service mode result with dot ()V
+	public final fun svcb service mode result with no parameters ()V
+	public final fun svcb service mode result with parameters ()V
 }
 
 public final class okhttp3/TlsVersion : java/lang/Enum {
