@@ -16,9 +16,18 @@
 package okhttp3.dns
 
 import java.net.InetAddress
+import okhttp3.Protocol
 import okio.ByteString
 import okio.IOException
 
+/**
+ * Loads IP addresses and service metadata for a hostname.
+ *
+ * This interface is exclusively concerned with collecting information necessary to establish new
+ * HTTP and HTTPS connections. Typical implementations will read `A` (IPv4), `AAAA` (IPv6) and
+ * `HTTPS` (service bindings) records only. Use a different API to read other record types, or to
+ * write DNS records.
+ */
 interface Dns2 {
   /** Recursively resolve [request] to learn IP addresses and service metadata to connect. */
   fun newCall(request: DnsRequest): DnsCall
@@ -34,13 +43,13 @@ interface DnsCall {
 interface DnsCallback {
   /**
    * @param last true if this is the last list of records for this address. That is a terminal event
-   *   and no further calls to this callback will be made.
+   *   and no further calls to this callback will be made for this call.
    * @param records a possibly-empty set of records received from the name server.
    */
   fun onRecords(call: DnsCall, last: Boolean, records: List<DnsRecord>)
 
   /**
-   * This is a terminal event, and no further calls to this callback will be made.
+   * This is a terminal event and no further calls to this callback will be made for this call.
    */
   fun onFailure(call: DnsCall, e: IOException)
 }
@@ -64,21 +73,13 @@ data class DnsRequest(
   val hostname: String,
 
   /**
-   * The SVCB protocol name.
+   * The port to query for record types that support it.
    *
-   * This should be "https" for both "http://" and "https://" URLs, in order to fetch
-   * [DnsRecord.Svcb] records.
+   * In an HTTPS DNS query, the port and hostname are combined like `_8443.api.example.com`. The
+   * port segment is omitted if it is 443. This scheme is called
+   * [AttrLeaf](https://www.rfc-editor.org/info/rfc8552/).
    */
-  val protocol: String? = null,
-
-  /**
-   * The port to query for record types that support it, or -1 for [protocol]'s default port.
-   *
-   * In an SVCB DNS query, the protocol, port, and hostname are combined like
-   * `_8020._ftp.api.example.com`. The protocol and port segments are omitted when they hold
-   * default values. This scheme is called [AttrLeaf](https://www.rfc-editor.org/info/rfc8552/).
-   */
-  val port: Int = -1,
+  val port: Int = 443,
 )
 
 sealed class DnsRecord private constructor() {
@@ -109,13 +110,14 @@ sealed class DnsRecord private constructor() {
   ) : DnsRecord()
 
   /**
-   * Service metadata.
+   * Advice from the hostname owner on how to connect to maximize compatibility and security.
    *
-   * This may apply to all supporting servers, or to a subset of them. If multiple hostnames are
-   * in use (as in the `us-east.api.example.com` example above), those hostnames must be themselves
-   * resolved to get the IP addresses to connect to. If [Svcb.ipAddressHints] is non-empty, those
-   * addresses are available without to an additional DNS round trip. (The additional round trip
-   * is still useful for completeness.)
+   * Each [ServiceMetadata] record may apply to all supporting servers, or to a subset of them. If
+   * multiple servers are in use (as in the `us-east.api.example.com`
+   * [example][DnsRecord.hostname]), those hostnames must be themselves resolved to get the IP
+   * addresses to connect to. If [ipAddressHints] is non-empty, those addresses are available
+   * without to an additional DNS round trip. (The additional round trip is still useful for
+   * completeness.)
    *
    * If this record is present on the DNS results for an `http://` request, the client should
    * simulate a 307 redirect to the equivalent `https://` URL. From RFC 9460, part 9.5:
@@ -124,24 +126,26 @@ sealed class DnsRecord private constructor() {
    *    the client SHOULD behave as if it has received an HTTP 307 (Temporary Redirect) status code
    *    with this "https" URL in the "Location" field.
    *
-   * (TYPE_SVCB, 0x0040).
    * (TYPE_HTTPS, 0x0041).
    */
   // TODO: no data classes in public APIs
-  data class Svcb(
+  data class ServiceMetadata(
     override val hostname: String,
 
     /**
-     * The available ALPN IDs on the target. Use this to select a target that supports the client's
-     * available protocols.
+     * The protocols supported by this server. When an input URL's hostname is served by multiple
+     * servers, use this to select a server that supports the client's available protocols.
      *
      * This value is created by composing two service params. For the "http" protocol, we take the
-     * `alpn` value and then add the default "http/1.1" unless `no-default-alpn` is present.
+     * `alpn` value and then add the default [Protocol.HTTP_1_1] unless `no-default-alpn` is
+     * present.
+     *
+     * If the service returns an unrecognized [Protocol], it is discarded.
      *
      * (`alpn`, 1)
      * (`no-default-alpn`, 2)
      */
-    val alpnIds: List<String>? = null,
+    val alpnIds: List<Protocol>? = null,
 
     /**
      * The socket should connect to this port, even if the URL has a different port.
@@ -151,8 +155,8 @@ sealed class DnsRecord private constructor() {
     val port: Int = -1,
 
     /**
-     * The IP of hostnames addresses known to support this [Svcb] record. If empty, assume all
-     * records with the same [DnsRecord.hostname] also support this configuration.
+     * The IP of the servers known to support this record. If empty, assume all records with the
+     * same [hostname] also support this configuration.
      *
      * (`ipv4hint`, 4)
      * (`ipv6hint`, 6)

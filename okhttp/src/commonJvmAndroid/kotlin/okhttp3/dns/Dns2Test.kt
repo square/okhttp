@@ -48,13 +48,13 @@ class Dns2Test {
   }
 
   /**
-   * Should emit the [DnsRecord.Svcb] record
+   * Should emit the [DnsRecord.ServiceMetadata] record
    */
   fun `svcb service mode result with dot`() {
   }
 
   /**
-   * Should recurse on each alternate service, and emit the [DnsRecord.Svcb] record
+   * Should recurse on each alternate service, and emit the [DnsRecord.ServiceMetadata] record
    */
   fun `svcb service mode result with parameters`() {
   }
