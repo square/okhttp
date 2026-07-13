@@ -198,8 +198,14 @@ class DnsOverHttps internal constructor(
             .filterIsInstance<DnsMessageReader.ResourceRecord.IpAddress>()
             .map { InetAddress.getByAddress(it.address.toByteArray()) }
         }
-        RESPONSE_CODE_SERVER_FAILURE -> throw UnknownHostException("DNS server failure")
-        else -> throw UnknownHostException()
+
+        RESPONSE_CODE_SERVER_FAILURE -> {
+          throw UnknownHostException("DNS server failure")
+        }
+
+        else -> {
+          throw UnknownHostException()
+        }
       }
     }
   }

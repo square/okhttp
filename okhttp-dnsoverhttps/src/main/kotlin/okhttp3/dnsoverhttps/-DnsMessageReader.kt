@@ -91,13 +91,15 @@ internal class DnsMessageReader(
     )
   }
 
-  private fun readName(): String {
-    return buildString {
+  private fun readName(): String =
+    buildString {
       readName(source, this)
     }
-  }
 
-  private tailrec fun readName(source: BufferedSource, builder: StringBuilder) {
+  private tailrec fun readName(
+    source: BufferedSource,
+    builder: StringBuilder,
+  ) {
     while (true) {
       val labelTypeAndLength = source.readByte().toUByte().toInt()
       val labelType = labelTypeAndLength and 0b11000000
@@ -118,7 +120,9 @@ internal class DnsMessageReader(
           return readName(offsetSource, builder)
         }
 
-        0b01_000000, 0b10_000000 -> throw ProtocolException("unsupported label type")
+        0b01_000000, 0b10_000000 -> {
+          throw ProtocolException("unsupported label type")
+        }
       }
     }
   }
