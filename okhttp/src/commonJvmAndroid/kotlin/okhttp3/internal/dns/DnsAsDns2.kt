@@ -31,7 +31,7 @@ import okhttp3.internal.testAndSet
  * When canceled, the callback is immediately notified but the in-flight call is run to completion
  * and discarded.
  */
-class DnsAsDns2(
+internal class DnsAsDns2(
   private val taskRunner: TaskRunner,
   private val delegate: Dns,
 ) : Dns2, Dns by delegate {
