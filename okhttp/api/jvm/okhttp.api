@@ -485,6 +485,61 @@ public abstract interface class okhttp3/Dns {
 public final class okhttp3/Dns$Companion {
 }
 
+public abstract interface class okhttp3/Dns2 {
+	public abstract fun newCall (Lokhttp3/Dns2$Request;)Lokhttp3/Dns2$Call;
+}
+
+public abstract interface class okhttp3/Dns2$Call {
+	public abstract fun cancel ()V
+	public abstract fun enqueue (Lokhttp3/Dns2$Callback;)V
+	public abstract fun getRequest ()Lokhttp3/Dns2$Request;
+	public abstract fun isCanceled ()Z
+}
+
+public abstract interface class okhttp3/Dns2$Callback {
+	public abstract fun onFailure (Lokhttp3/Dns2$Call;Ljava/io/IOException;)V
+	public abstract fun onRecords (Lokhttp3/Dns2$Call;ZLjava/util/List;)V
+}
+
+public abstract class okhttp3/Dns2$Record {
+	public abstract fun getHostname ()Ljava/lang/String;
+}
+
+public final class okhttp3/Dns2$Record$IpAddress : okhttp3/Dns2$Record {
+	public fun <init> (Ljava/lang/String;Ljava/net/InetAddress;)V
+	public final fun address ()Ljava/net/InetAddress;
+	public fun equals (Ljava/lang/Object;)Z
+	public synthetic fun getHostname ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun hostname ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class okhttp3/Dns2$Record$ServiceMetadata : okhttp3/Dns2$Record {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;ILjava/util/List;Lokio/ByteString;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;ILjava/util/List;Lokio/ByteString;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun alpnIds ()Ljava/util/List;
+	public final fun echConfigList ()Lokio/ByteString;
+	public fun equals (Ljava/lang/Object;)Z
+	public synthetic fun getHostname ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun hostname ()Ljava/lang/String;
+	public final fun ipAddressHints ()Ljava/util/List;
+	public final fun port ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class okhttp3/Dns2$Request {
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;I)V
+	public synthetic fun <init> (Ljava/lang/String;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun hostname ()Ljava/lang/String;
+	public final fun port ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract class okhttp3/EventListener {
 	public static final field Companion Lokhttp3/EventListener$Companion;
 	public static final field NONE Lokhttp3/EventListener;
