@@ -36,8 +36,11 @@ interface Dns2 {
 
   interface Call {
     val request: Request
+
     fun enqueue(callback: Callback)
+
     fun cancel()
+
     fun isCanceled(): Boolean
   }
 
@@ -47,60 +50,69 @@ interface Dns2 {
      *   event and no further calls to this callback will be made for this call.
      * @param records a possibly-empty set of records received from the name server.
      */
-    fun onRecords(call: Call, last: Boolean, records: List<Record>)
+    fun onRecords(
+      call: Call,
+      last: Boolean,
+      records: List<Record>,
+    )
 
     /**
      * This is a terminal event and no further calls to this callback will be made for this call.
      */
-    fun onFailure(call: Call, e: IOException)
+    fun onFailure(
+      call: Call,
+      e: IOException,
+    )
   }
 
-  class Request @JvmOverloads constructor(
-    hostname: String,
-    port: Int = -1,
-  ) {
-    /**
-     * The host from a URL like `www.publicobject.com` or `ietf.org`. It may also be a
-     * Punycode-encoded name like `xn--n3h.net`.
-     *
-     * Hostnames must satisfy the following constraints:
-     *
-     *  * All characters must be printable ASCII characters.
-     *  * These characters are forbidden: `#`, `%`, `/`, `:`, `?`, `@`, `[`, `\`, and `]`.
-     *  * The string length must be in [1..253].
-     *  * After splitting the string into `.`-separated labels, each label must be in [1..63]. A
-     *    single trailing `.` is permitted.
-     */
-    @get:JvmName("hostname")
-    val hostname: String = hostname.toCanonicalHost()
-      ?: throw IllegalArgumentException("unexpected hostname: $hostname")
+  class Request
+    @JvmOverloads
+    constructor(
+      hostname: String,
+      port: Int = -1,
+    ) {
+      /**
+       * The host from a URL like `www.publicobject.com` or `ietf.org`. It may also be a
+       * Punycode-encoded name like `xn--n3h.net`.
+       *
+       * Hostnames must satisfy the following constraints:
+       *
+       *  * All characters must be printable ASCII characters.
+       *  * These characters are forbidden: `#`, `%`, `/`, `:`, `?`, `@`, `[`, `\`, and `]`.
+       *  * The string length must be in [1..253].
+       *  * After splitting the string into `.`-separated labels, each label must be in [1..63]. A
+       *    single trailing `.` is permitted.
+       */
+      @get:JvmName("hostname")
+      val hostname: String =
+        hostname.toCanonicalHost()
+          ?: throw IllegalArgumentException("unexpected hostname: $hostname")
 
-    /**
-     * The port to query for record types that support it.
-     *
-     * In an HTTPS DNS query, the port and hostname are combined like `_8443.api.example.com`. The
-     * port segment is omitted if it is 443. This scheme is called
-     * [AttrLeaf](https://www.rfc-editor.org/info/rfc8552/).
-     */
-    @get:JvmName("port")
-    val port: Int = when (port) {
-      -1 -> 443
-      in 1..65535 -> port
-      else -> throw IllegalArgumentException("unexpected port: $port")
+      /**
+       * The port to query for record types that support it.
+       *
+       * In an HTTPS DNS query, the port and hostname are combined like `_8443.api.example.com`. The
+       * port segment is omitted if it is 443. This scheme is called
+       * [AttrLeaf](https://www.rfc-editor.org/info/rfc8552/).
+       */
+      @get:JvmName("port")
+      val port: Int =
+        when (port) {
+          -1 -> 443
+          in 1..65535 -> port
+          else -> throw IllegalArgumentException("unexpected port: $port")
+        }
+
+      override fun equals(other: Any?) = other is Request && other.hostname == hostname && other.port == port
+
+      override fun hashCode() = (31 * hostname.hashCode()) + port
+
+      override fun toString(): String =
+        when (port) {
+          443 -> hostname
+          else -> "$hostname:$port"
+        }
     }
-
-    override fun equals(other: Any?) =
-      other is Request && other.hostname == hostname && other.port == port
-
-    override fun hashCode() = (31 * hostname.hashCode()) + port
-
-    override fun toString(): String {
-      return when (port) {
-        443 -> hostname
-        else -> "$hostname:$port"
-      }
-    }
-  }
 
   sealed class Record private constructor() {
     /**
@@ -122,13 +134,12 @@ interface Dns2 {
       hostname: String,
       @get:JvmName("address") val address: InetAddress,
     ) : Record() {
-
       @get:JvmName("hostname")
-      override val hostname: String = hostname.toCanonicalHost()
-        ?: throw IllegalArgumentException("unexpected hostname: $hostname")
+      override val hostname: String =
+        hostname.toCanonicalHost()
+          ?: throw IllegalArgumentException("unexpected hostname: $hostname")
 
-      override fun equals(other: Any?) =
-        other is IpAddress && other.hostname == hostname && other.address == address
+      override fun equals(other: Any?) = other is IpAddress && other.hostname == hostname && other.address == address
 
       override fun hashCode() = (31 * hostname.hashCode()) + address.hashCode()
 
@@ -154,7 +165,6 @@ interface Dns2 {
      */
     class ServiceMetadata(
       hostname: String,
-
       /**
        * The protocols supported by this server. When an input URL's hostname is served by multiple
        * servers, use this to select a server that supports the client's available protocols.
@@ -166,19 +176,16 @@ interface Dns2 {
        * If the service returns an unrecognized [Protocol], that element is discarded.
        */
       alpnIds: List<Protocol>? = null,
-
       /**
        * The socket should connect to this port, even if the URL has a different port. This will be
        * [Request.port] unless an override is specified.
        */
       port: Int = -1,
-
       /**
        * The IP of the servers known to support this record. If empty, assume all records with the
        * same [hostname] also support this configuration.
        */
       ipAddressHints: List<InetAddress> = listOf(),
-
       /**
        * The Encrypted Client Hello (ECH) data. This is encoded according to RFC 9848 and RFC 9849.
        */
@@ -186,15 +193,17 @@ interface Dns2 {
       val echConfigList: ByteString? = null,
     ) : Record() {
       @get:JvmName("hostname")
-      override val hostname: String = hostname.toCanonicalHost()
-        ?: throw IllegalArgumentException("unexpected hostname: $hostname")
+      override val hostname: String =
+        hostname.toCanonicalHost()
+          ?: throw IllegalArgumentException("unexpected hostname: $hostname")
 
       @get:JvmName("port")
-      val port: Int = when (port) {
-        -1 -> 443
-        in 1..65535 -> port
-        else -> throw IllegalArgumentException("unexpected port: $port")
-      }
+      val port: Int =
+        when (port) {
+          -1 -> 443
+          in 1..65535 -> port
+          else -> throw IllegalArgumentException("unexpected port: $port")
+        }
 
       @get:JvmName("alpnIds")
       val alpnIds: List<Protocol>? = alpnIds?.toList() // Defensive copy.
@@ -202,14 +211,13 @@ interface Dns2 {
       @get:JvmName("ipAddressHints")
       val ipAddressHints: List<InetAddress> = ipAddressHints.toList() // Defensive copy.
 
-      override fun equals(other: Any?): Boolean {
-        return other is ServiceMetadata
-          && other.hostname == hostname
-          && other.alpnIds == alpnIds
-          && other.port == port
-          && other.ipAddressHints == ipAddressHints
-          && other.echConfigList == echConfigList
-      }
+      override fun equals(other: Any?): Boolean =
+        other is ServiceMetadata &&
+          other.hostname == hostname &&
+          other.alpnIds == alpnIds &&
+          other.port == port &&
+          other.ipAddressHints == ipAddressHints &&
+          other.echConfigList == echConfigList
 
       override fun hashCode(): Int {
         var result = 17
@@ -221,8 +229,8 @@ interface Dns2 {
         return result
       }
 
-      override fun toString(): String {
-        return buildString(32) {
+      override fun toString(): String =
+        buildString(32) {
           append("ServiceMetadata{")
           append(hostname)
           if (alpnIds != null) {
@@ -244,7 +252,6 @@ interface Dns2 {
           }
           append("}")
         }
-      }
     }
   }
 }

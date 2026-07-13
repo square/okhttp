@@ -159,14 +159,7 @@ class Dns2Test {
 
   @Test
   fun `service metadata equals and hashCode`() {
-    val original = Dns2.Record.ServiceMetadata(
-      hostname = "example.com",
-      port = 443,
-      alpnIds = listOf(Protocol.HTTP_1_1, Protocol.HTTP_2),
-      ipAddressHints = listOf(InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))),
-      echConfigList = "hello I am ECH config".encodeUtf8(),
-    )
-    assertThat(original).isEqualTo(
+    val original =
       Dns2.Record.ServiceMetadata(
         hostname = "example.com",
         port = 443,
@@ -174,15 +167,24 @@ class Dns2Test {
         ipAddressHints = listOf(InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))),
         echConfigList = "hello I am ECH config".encodeUtf8(),
       )
-    )
-    assertThat(original.hashCode()).isEqualTo(
+    assertThat(original).isEqualTo(
       Dns2.Record.ServiceMetadata(
         hostname = "example.com",
         port = 443,
         alpnIds = listOf(Protocol.HTTP_1_1, Protocol.HTTP_2),
         ipAddressHints = listOf(InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))),
         echConfigList = "hello I am ECH config".encodeUtf8(),
-      ).hashCode()
+      ),
+    )
+    assertThat(original.hashCode()).isEqualTo(
+      Dns2.Record
+        .ServiceMetadata(
+          hostname = "example.com",
+          port = 443,
+          alpnIds = listOf(Protocol.HTTP_1_1, Protocol.HTTP_2),
+          ipAddressHints = listOf(InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))),
+          echConfigList = "hello I am ECH config".encodeUtf8(),
+        ).hashCode(),
     )
     assertThat(original).isNotIn(
       Dns2.Record.ServiceMetadata(
@@ -225,22 +227,24 @@ class Dns2Test {
 
   @Test
   fun `service metadata toString`() {
-    val empty = Dns2.Record.ServiceMetadata(
-      hostname = "example.com",
-    )
+    val empty =
+      Dns2.Record.ServiceMetadata(
+        hostname = "example.com",
+      )
     assertThat(empty.toString()).isEqualTo(
-      "ServiceMetadata{example.com}"
+      "ServiceMetadata{example.com}",
     )
-    val full = Dns2.Record.ServiceMetadata(
-      hostname = "example.com",
-      port = 443,
-      alpnIds = listOf(Protocol.HTTP_1_1, Protocol.HTTP_2),
-      ipAddressHints = listOf(InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))),
-      echConfigList = "hello I am ECH config".encodeUtf8(),
-    )
+    val full =
+      Dns2.Record.ServiceMetadata(
+        hostname = "example.com",
+        port = 443,
+        alpnIds = listOf(Protocol.HTTP_1_1, Protocol.HTTP_2),
+        ipAddressHints = listOf(InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))),
+        echConfigList = "hello I am ECH config".encodeUtf8(),
+      )
     assertThat(full.toString()).isEqualTo(
       "ServiceMetadata{example.com, alpnIds=[http/1.1, h2], ipAddressHints=[127.0.0.1], " +
-        "echConfigList=68656c6c6f204920616d2045434820636f6e666967}"
+        "echConfigList=68656c6c6f204920616d2045434820636f6e666967}",
     )
   }
 }

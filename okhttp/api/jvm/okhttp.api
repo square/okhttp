@@ -1314,28 +1314,6 @@ public final class okhttp3/Route {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class okhttp3/ServiceMetadataTest {
-	public fun <init> ()V
-	public final fun svcb alias mode loop ()V
-	public final fun svcb alias result ()V
-	public final fun svcb alias result with dot ()V
-	public final fun svcb alpn ids ()V
-	public final fun svcb alpn ids and no default alpn ()V
-	public final fun svcb ech config list ()V
-	public final fun svcb mandatory parameters are not unrecognized ()V
-	public final fun svcb mandatory parameters are recognized ()V
-	public final fun svcb no default alpn without alpn ids ()V
-	public final fun svcb non default port ()V
-	public final fun svcb port ()V
-	public final fun svcb port ipv4 address hints ()V
-	public final fun svcb port ipv6 address hints ()V
-	public final fun svcb service mode loop ()V
-	public final fun svcb service mode result sorting ()V
-	public final fun svcb service mode result with dot ()V
-	public final fun svcb service mode result with no parameters ()V
-	public final fun svcb service mode result with parameters ()V
-}
-
 public final class okhttp3/TlsVersion : java/lang/Enum {
 	public static final field Companion Lokhttp3/TlsVersion$Companion;
 	public static final field SSL_3_0 Lokhttp3/TlsVersion;
