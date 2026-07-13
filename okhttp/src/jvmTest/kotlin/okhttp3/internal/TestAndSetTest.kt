@@ -40,10 +40,11 @@ class TestAndSetTest {
   @Test
   fun `value is updated to a matching value between test and set`() {
     val value = AtomicReference("a")
-    val previous = value.testAndSet("b") {
-      value.set("c")
-      true
-    }
+    val previous =
+      value.testAndSet("b") {
+        value.set("c")
+        true
+      }
     assertThat(previous).isEqualTo("c")
     assertThat(value.get()).isEqualTo("b")
   }
@@ -51,10 +52,11 @@ class TestAndSetTest {
   @Test
   fun `value is updated to a non-matching value between test and set`() {
     val value = AtomicReference("a")
-    val previous = value.testAndSet("b") {
-      value.set("c")
-      it == "a"
-    }
+    val previous =
+      value.testAndSet("b") {
+        value.set("c")
+        it == "a"
+      }
     assertThat(previous).isEqualTo("c")
     assertThat(value.get()).isEqualTo("c")
   }

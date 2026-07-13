@@ -29,10 +29,11 @@ import org.junit.jupiter.api.Test
 class DnsAsDns2Test {
   private val dns = BlockingFakeDns()
   private val taskFaker = TaskFaker()
-  private val dns2 = DnsAsDns2(
-    taskRunner = taskFaker.taskRunner,
-    delegate = dns,
-  )
+  private val dns2 =
+    DnsAsDns2(
+      taskRunner = taskFaker.taskRunner,
+      delegate = dns,
+    )
   private val callback = RecordingCallback()
 
   @Test
@@ -139,9 +140,7 @@ class DnsAsDns2Test {
   class BlockingFakeDns : Dns {
     val results = LinkedBlockingDeque<Result<List<InetAddress>>>()
 
-    override fun lookup(hostname: String): List<InetAddress> {
-      return results.take().getOrThrow()
-    }
+    override fun lookup(hostname: String): List<InetAddress> = results.take().getOrThrow()
 
     fun put(inetAddresses: List<InetAddress>) {
       results.put(Result.success(inetAddresses))
@@ -158,12 +157,15 @@ class DnsAsDns2Test {
     override fun onRecords(
       call: Dns2.Call,
       last: Boolean,
-      records: List<Dns2.Record>
+      records: List<Dns2.Record>,
     ) {
       events.put("onRecords(last=$last, records=$records)")
     }
 
-    override fun onFailure(call: Dns2.Call, e: IOException) {
+    override fun onFailure(
+      call: Dns2.Call,
+      e: IOException,
+    ) {
       events.put("onFailure(${e.message})")
     }
   }

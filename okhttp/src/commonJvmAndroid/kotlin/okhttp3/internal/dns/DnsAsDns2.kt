@@ -34,7 +34,8 @@ import okhttp3.internal.testAndSet
 internal class DnsAsDns2(
   private val taskRunner: TaskRunner,
   private val delegate: Dns,
-) : Dns2, Dns by delegate {
+) : Dns2,
+  Dns by delegate {
   override fun newCall(request: Dns2.Request): Dns2.Call = Call(request)
 
   override fun equals(other: Any?) = other is DnsAsDns2 && other.delegate == delegate
@@ -45,7 +46,8 @@ internal class DnsAsDns2(
 
   private inner class Call(
     override val request: Dns2.Request,
-  ) : Task("DnsAsDns2", cancelable = false), Dns2.Call {
+  ) : Task("DnsAsDns2", cancelable = false),
+    Dns2.Call {
     private val state = AtomicReference<State>(State.Idle)
 
     override fun enqueue(callback: Dns2.Callback) {
@@ -86,8 +88,13 @@ internal class DnsAsDns2(
 
   private sealed interface State {
     object Idle : State
-    class Running(val callback: Dns2.Callback) : State
+
+    class Running(
+      val callback: Dns2.Callback,
+    ) : State
+
     object Complete : State
+
     object Canceled : State
   }
 }
