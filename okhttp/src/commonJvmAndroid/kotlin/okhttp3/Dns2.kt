@@ -39,6 +39,7 @@ interface Dns2 {
 
     fun enqueue(callback: Callback)
 
+    /** This does nothing if the call is already complete. */
     fun cancel()
 
     fun isCanceled(): Boolean
