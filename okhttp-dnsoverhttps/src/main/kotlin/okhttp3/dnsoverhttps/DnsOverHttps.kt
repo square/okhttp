@@ -17,6 +17,7 @@ package okhttp3.dnsoverhttps
 
 import java.io.IOException
 import java.net.InetAddress
+import java.net.ProtocolException
 import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
 import okhttp3.Call
@@ -81,7 +82,7 @@ class DnsOverHttps internal constructor(
 
     val failures = ArrayList<Exception>(2)
     val results = ArrayList<InetAddress>(5)
-    executeRequests(hostname, networkRequests, results, failures)
+    executeRequests(networkRequests, results, failures)
 
     return results.ifEmpty {
       throwBestFailure(hostname, failures)
@@ -89,7 +90,6 @@ class DnsOverHttps internal constructor(
   }
 
   private fun executeRequests(
-    hostname: String,
     networkRequests: List<Call>,
     responses: MutableList<InetAddress>,
     failures: MutableList<Exception>,
@@ -113,7 +113,7 @@ class DnsOverHttps internal constructor(
             call: Call,
             response: Response,
           ) {
-            processResponse(response, hostname, responses, failures)
+            processResponse(response, responses, failures)
             latch.countDown()
           }
         },
@@ -129,16 +129,15 @@ class DnsOverHttps internal constructor(
 
   private fun processResponse(
     response: Response,
-    hostname: String,
     results: MutableList<InetAddress>,
     failures: MutableList<Exception>,
   ) {
     try {
-      val addresses = readResponse(hostname, response)
+      val addresses = readResponse(response)
       synchronized(results) {
         results.addAll(addresses)
       }
-    } catch (e: Exception) {
+    } catch (e: IOException) {
       synchronized(failures) {
         failures.add(e)
       }
@@ -170,31 +169,44 @@ class DnsOverHttps internal constructor(
     throw unknownHostException
   }
 
-  @Throws(Exception::class)
-  private fun readResponse(
-    hostname: String,
-    response: Response,
-  ): List<InetAddress> {
-    if (response.cacheResponse == null && response.protocol !== Protocol.HTTP_2 && response.protocol !== Protocol.QUIC) {
+  @Throws(IOException::class)
+  private fun readResponse(response: Response): List<InetAddress> {
+    if (
+      response.cacheResponse == null &&
+      response.protocol !== Protocol.HTTP_2 &&
+      response.protocol !== Protocol.QUIC
+    ) {
       Platform.get().log("Incorrect protocol: ${response.protocol}", Platform.WARN)
     }
 
     response.use {
       if (!response.isSuccessful) {
-        throw IOException("response: " + response.code + " " + response.message)
+        throw IOException("response: ${response.code} ${response.message}")
       }
 
       val body = response.body
-
       if (body.contentLength() > MAX_RESPONSE_SIZE) {
-        throw IOException(
+        throw ProtocolException(
           "response size exceeds limit ($MAX_RESPONSE_SIZE bytes): ${body.contentLength()} bytes",
         )
       }
 
-      val responseBytes = body.source().readByteString()
+      val dnsResponse = DnsMessageReader(body.source()).read()
+      when (dnsResponse.responseCode) {
+        RESPONSE_CODE_SUCCESS -> {
+          return dnsResponse.answers
+            .filterIsInstance<DnsMessageReader.ResourceRecord.IpAddress>()
+            .map { InetAddress.getByAddress(it.address.toByteArray()) }
+        }
 
-      return DnsRecordCodec.decodeAnswers(hostname, responseBytes)
+        RESPONSE_CODE_SERVER_FAILURE -> {
+          throw UnknownHostException("DNS server failure")
+        }
+
+        else -> {
+          throw UnknownHostException()
+        }
+      }
     }
   }
 

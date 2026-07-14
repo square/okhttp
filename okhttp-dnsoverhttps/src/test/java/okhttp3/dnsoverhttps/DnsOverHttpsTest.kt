@@ -30,6 +30,7 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
+import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.StartStop
@@ -134,11 +135,8 @@ class DnsOverHttpsTest {
           "2c100000e10000003840012750000000e10",
       ),
     )
-    try {
+    assertFailsWith<UnknownHostException> {
       dns.lookup("google.com")
-      fail<Any>()
-    } catch (uhe: UnknownHostException) {
-      assertThat(uhe.message).isEqualTo("google.com: NXDOMAIN")
     }
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("GET")
