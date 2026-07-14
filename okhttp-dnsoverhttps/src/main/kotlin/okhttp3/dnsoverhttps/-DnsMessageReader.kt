@@ -184,10 +184,10 @@ internal class DnsMessageReader(
     val svcPriority = readShort().toUShort()
     val targetName = readName()
     var lastKey = -1
-    var alpnIds: MutableSet<String>? = null
+    var alpnIds: MutableList<String>? = null
     var noDefaultAlpn = false
     var port = -1
-    val ipAddressHints = mutableListOf<InetAddress>()
+    var ipAddressHints: MutableList<InetAddress>? = null
     var echConfigList: ByteString? = null
 
     while (!exhausted()) {
@@ -206,7 +206,7 @@ internal class DnsMessageReader(
         }
 
         SERVICE_PARAMETER_ALPN -> {
-          alpnIds = mutableSetOf()
+          alpnIds = mutableListOf()
           var pos = 0L
           while (pos < valueLength) {
             val alpnIdLength = readByte().toUByte().toLong()
@@ -230,6 +230,7 @@ internal class DnsMessageReader(
         }
 
         SERVICE_PARAMETER_IPV4_HINT -> {
+          ipAddressHints = mutableListOf()
           if (valueLength % 4 != 0L) throw ProtocolException("malformed HTTPS / ipv4hint")
           for (i in 0 until valueLength step 4) {
             ipAddressHints += InetAddress.getByAddress(readByteArray(4))
@@ -241,6 +242,7 @@ internal class DnsMessageReader(
         }
 
         SERVICE_PARAMETER_IPV6_HINT -> {
+          if (ipAddressHints == null) ipAddressHints = mutableListOf()
           if (valueLength % 16 != 0L) throw ProtocolException("malformed HTTPS / ipv6hint")
           for (i in 0 until valueLength step 16) {
             ipAddressHints += InetAddress.getByAddress(readByteArray(16))
@@ -256,7 +258,7 @@ internal class DnsMessageReader(
 
     if (noDefaultAlpn) {
       if (alpnIds == null) throw ProtocolException("malformed HTTPS / no-default-alpn")
-    } else if (alpnIds != null) {
+    } else if (alpnIds != null && Protocol.HTTP_1_1.toString() !in alpnIds) {
       alpnIds += Protocol.HTTP_1_1.toString()
     }
 
@@ -265,9 +267,9 @@ internal class DnsMessageReader(
       timeToLive = timeToLive,
       priority = svcPriority.toInt(),
       targetName = targetName,
-      alpnIds = alpnIds?.toList(),
+      alpnIds = alpnIds,
       port = port,
-      ipAddressHints = ipAddressHints,
+      ipAddressHints = ipAddressHints ?: listOf(),
       echConfigList = echConfigList,
     )
   }
