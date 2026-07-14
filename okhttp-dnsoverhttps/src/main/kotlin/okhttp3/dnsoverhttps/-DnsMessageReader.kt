@@ -173,13 +173,34 @@ internal class DnsMessageReader(
   ) {
     val responseCode: Int
       get() = (flags and 0b0000_0000_0000_1111)
+
+    // Avoid Short.hashCode(short) which isn't available on Android 5.
+    override fun hashCode(): Int {
+      var result = 0
+      result = 31 * result + id
+      result = 31 * result + flags
+      result = 31 * result + questions.hashCode()
+      result = 31 * result + answers.hashCode()
+      result = 31 * result + authorityRecords.hashCode()
+      result = 31 * result + additionalRecords.hashCode()
+      return result
+    }
   }
 
   data class Question(
     val name: String,
     val type: Short,
     val `class`: Short,
-  )
+  ) {
+    // Avoid Short.hashCode(short) which isn't available on Android 5.
+    override fun hashCode(): Int {
+      var result = 0
+      result = 31 * result + name.hashCode()
+      result = 31 * result + type
+      result = 31 * result + `class`
+      return result
+    }
+  }
 
   sealed interface ResourceRecord {
     val name: String
@@ -189,7 +210,16 @@ internal class DnsMessageReader(
       override val name: String,
       override val timeToLive: Int,
       val address: ByteString,
-    ) : ResourceRecord
+    ) : ResourceRecord {
+      // Avoid Int.hashCode(int) which isn't available on Android 5.
+      override fun hashCode(): Int {
+        var result = 0
+        result = 31 * result + name.hashCode()
+        result = 31 * result + timeToLive
+        result = 31 * result + address.hashCode()
+        return result
+      }
+    }
   }
 }
 
