@@ -43,12 +43,12 @@ class DnsMessageReaderRecordedValuesTest {
           "1807000000000000008b",
       )
     assertThat(reader.read()).isEqualTo(
-      DnsMessageReader.DnsMessage(
+      DnsMessage(
         id = 0,
         flags = -32384,
         questions =
           listOf(
-            DnsMessageReader.Question(
+            Question(
               name = "google.com",
               type = 28,
               `class` = 1,
@@ -89,12 +89,12 @@ class DnsMessageReaderRecordedValuesTest {
           "00002904d000000000000d000c0009585858585858585858",
       )
     assertThat(reader.read()).isEqualTo(
-      DnsMessageReader.DnsMessage(
+      DnsMessage(
         id = 0,
         flags = -32384,
         questions =
           listOf(
-            DnsMessageReader.Question(
+            Question(
               name = "google.com",
               type = 1,
               `class` = 1,
@@ -120,12 +120,12 @@ class DnsMessageReaderRecordedValuesTest {
           "0a0f000c04737461720463313072c012c030000100010000002e00041f0d5008",
       )
     assertThat(reader.read()).isEqualTo(
-      DnsMessageReader.DnsMessage(
+      DnsMessage(
         id = 0,
         flags = -32384,
         questions =
           listOf(
-            DnsMessageReader.Question(
+            Question(
               name = "graph.facebook.com",
               type = 1,
               `class` = 1,
@@ -152,12 +152,12 @@ class DnsMessageReaderRecordedValuesTest {
           "00000e10000003840012750000000e10",
       )
     assertThat(reader.read()).isEqualTo(
-      DnsMessageReader.DnsMessage(
+      DnsMessage(
         id = 0,
         flags = -32381,
         questions =
           listOf(
-            DnsMessageReader.Question(
+            Question(
               name = "sdflkhfsdlkjdf.ee",
               type = 28,
               `class` = 1,
@@ -178,12 +178,12 @@ class DnsMessageReaderRecordedValuesTest {
           "00002904d000000000000d000c0009585858585858585858",
       )
     assertThat(reader.read()).isEqualTo(
-      DnsMessageReader.DnsMessage(
+      DnsMessage(
         id = 0,
         flags = -32384,
         questions =
           listOf(
-            DnsMessageReader.Question(
+            Question(
               name = "google.com",
               type = 1,
               `class` = 1,
