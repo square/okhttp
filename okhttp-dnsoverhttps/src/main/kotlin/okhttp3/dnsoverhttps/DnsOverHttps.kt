@@ -29,7 +29,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
@@ -74,14 +73,14 @@ class DnsOverHttps internal constructor(
   private fun lookupHttps(hostname: String): List<InetAddress> {
     val networkRequests =
       buildList {
-        add(client.newCall(buildRequest(hostname, DnsRecordCodec.TYPE_A)))
+        add(client.newCall(buildRequest(hostname, TYPE_A)))
 
         if (includeHttps) {
           add(client.newCall(buildRequest(hostname, TYPE_HTTPS)))
         }
 
         if (includeIPv6) {
-          add(client.newCall(buildRequest(hostname, DnsRecordCodec.TYPE_AAAA)))
+          add(client.newCall(buildRequest(hostname, TYPE_AAAA)))
         }
       }
 
@@ -223,8 +222,6 @@ class DnsOverHttps internal constructor(
       .Builder()
       .header("Accept", DNS_MESSAGE.toString())
       .apply {
-        val query = DnsRecordCodec.encodeQuery(hostname, type)
-
         val dnsUrl: HttpUrl = this@DnsOverHttps.url
         if (post) {
           url(dnsUrl)
@@ -233,11 +230,10 @@ class DnsOverHttps internal constructor(
                 .newBuilder()
                 .addQueryParameter("hostname", hostname)
                 .build(),
-            ).post(query.toRequestBody(DNS_MESSAGE))
+            ).post(QueryRequestBody(DnsMessage.query(hostname, type)))
         } else {
-          val encoded = query.base64Url().replace("=", "")
-          val requestUrl = dnsUrl.newBuilder().addQueryParameter("dns", encoded).build()
-
+          val queryParameter = DnsMessage.query(hostname, type).asQueryParameter()
+          val requestUrl = dnsUrl.newBuilder().addQueryParameter("dns", queryParameter).build()
           url(requestUrl)
         }
       }.build()

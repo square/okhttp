@@ -50,8 +50,7 @@ class DnsMessageReaderRecordedValuesTest {
           listOf(
             Question(
               name = "google.com",
-              type = 28,
-              `class` = 1,
+              type = TYPE_AAAA,
             ),
           ),
         answers =
@@ -96,8 +95,7 @@ class DnsMessageReaderRecordedValuesTest {
           listOf(
             Question(
               name = "google.com",
-              type = 1,
-              `class` = 1,
+              type = TYPE_A,
             ),
           ),
         answers =
@@ -127,8 +125,7 @@ class DnsMessageReaderRecordedValuesTest {
           listOf(
             Question(
               name = "graph.facebook.com",
-              type = 1,
-              `class` = 1,
+              type = TYPE_A,
             ),
           ),
         answers =
@@ -159,12 +156,9 @@ class DnsMessageReaderRecordedValuesTest {
           listOf(
             Question(
               name = "sdflkhfsdlkjdf.ee",
-              type = 28,
-              `class` = 1,
+              type = TYPE_AAAA,
             ),
           ),
-        answers =
-          listOf(),
       ),
     )
   }
@@ -185,8 +179,7 @@ class DnsMessageReaderRecordedValuesTest {
           listOf(
             Question(
               name = "google.com",
-              type = 1,
-              `class` = 1,
+              type = TYPE_A,
             ),
           ),
         answers =
@@ -237,7 +230,6 @@ class DnsMessageReaderRecordedValuesTest {
           priority = 1,
           targetName = "",
           alpnIds = listOf("h2", "http/1.1"),
-          port = 443,
         ),
       )
   }
@@ -416,7 +408,6 @@ class DnsMessageReaderRecordedValuesTest {
           priority = 1,
           targetName = "dnsr1.planaltonet.net.br",
           alpnIds = listOf("h2", "h3", "http/1.1"),
-          port = 443,
           ipAddressHints =
             listOf(
               InetAddress.getByName("190.109.80.251"),

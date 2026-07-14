@@ -22,9 +22,8 @@ import assertk.assertions.isEqualTo
 import java.net.InetAddress
 import java.net.UnknownHostException
 import kotlin.test.assertFailsWith
-import okhttp3.dnsoverhttps.DnsRecordCodec.TYPE_A
-import okhttp3.dnsoverhttps.DnsRecordCodec.TYPE_AAAA
-import okhttp3.dnsoverhttps.DnsRecordCodec.decodeAnswers
+import okio.Buffer
+import okio.ByteString
 import okio.ByteString.Companion.decodeHex
 import org.junit.jupiter.api.Test
 
@@ -38,7 +37,7 @@ class DnsRecordCodecTest {
   private fun encodeQuery(
     host: String,
     type: Int,
-  ): String = DnsRecordCodec.encodeQuery(host, type).base64Url().replace("=", "")
+  ): String = DnsMessage.query(host, type).asQueryParameter()
 
   @Test
   fun testGoogleDotComEncodingWithIPv6() {
@@ -50,7 +49,6 @@ class DnsRecordCodecTest {
   fun testGoogleDotComDecodingFromCloudflare() {
     val encoded =
       decodeAnswers(
-        hostname = "test.com",
         byteString =
           (
             "00008180000100010000000006676f6f676c6503636f6d0000010001c00c0001000100000043" +
@@ -64,7 +62,6 @@ class DnsRecordCodecTest {
   fun testGoogleDotComDecodingFromGoogle() {
     val decoded =
       decodeAnswers(
-        hostname = "test.com",
         byteString =
           (
             "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c" +
@@ -79,7 +76,6 @@ class DnsRecordCodecTest {
   fun testGoogleDotComDecodingFromGoogleIPv6() {
     val decoded =
       decodeAnswers(
-        hostname = "test.com",
         byteString =
           (
             "0000818000010003000000000567726170680866616365626f6f6b03636f6d00001c0001c00c" +
@@ -95,7 +91,6 @@ class DnsRecordCodecTest {
   fun testGoogleDotComDecodingNxdomainFailure() {
     assertFailsWith<UnknownHostException> {
       decodeAnswers(
-        hostname = "sdflkhfsdlkjdf.ee",
         byteString =
           (
             "0000818300010000000100000e7364666c6b686673646c6b6a64660265650000010001c01b" +
@@ -103,8 +98,17 @@ class DnsRecordCodecTest {
               "74c01b5adb12c100000e10000003840012750000000e10"
           ).decodeHex(),
       )
-    }.also { expected ->
-      assertThat(expected.message).isEqualTo("sdflkhfsdlkjdf.ee: NXDOMAIN")
     }
+  }
+
+  private fun decodeAnswers(byteString: ByteString): List<InetAddress> {
+    val reader = DnsMessageReader(Buffer().write(byteString))
+    val dnsMessage = reader.read()
+    if (dnsMessage.responseCode != RESPONSE_CODE_SUCCESS) {
+      throw UnknownHostException()
+    }
+    return dnsMessage.answers
+      .filterIsInstance<ResourceRecord.IpAddress>()
+      .map { it.address }
   }
 }

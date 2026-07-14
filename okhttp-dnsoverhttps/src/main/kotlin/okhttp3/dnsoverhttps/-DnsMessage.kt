@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("ktlint:standard:filename")
+
 package okhttp3.dnsoverhttps
 
 import java.net.InetAddress
+import okhttp3.RequestBody
+import okhttp3.dnsoverhttps.DnsOverHttps.Companion.DNS_MESSAGE
+import okio.Buffer
+import okio.BufferedSink
 import okio.ByteString
 
 internal data class DnsMessage(
   val id: Short,
   val flags: Int,
   val questions: List<Question>,
-  val answers: List<ResourceRecord>,
+  val answers: List<ResourceRecord> = listOf(),
   val authorityRecords: List<ResourceRecord> = listOf(),
   val additionalRecords: List<ResourceRecord> = listOf(),
 ) {
@@ -40,12 +46,36 @@ internal data class DnsMessage(
     result = 31 * result + additionalRecords.hashCode()
     return result
   }
+
+  companion object {
+    fun query(
+      hostname: String,
+      type: Int,
+    ): DnsMessage {
+      //     QR = 0 (Query)
+      //     RD = 1 (Recursion Desired)
+      // OPCODE = 0 (standard query)
+      //           QR OPCODE AA TC RD RA   Z RCODE
+      val flags = 0b0___0000__0__0__1__0_000__0000
+      return DnsMessage(
+        id = 0,
+        flags = flags,
+        questions =
+          listOf(
+            Question(
+              name = hostname,
+              type = type,
+            ),
+          ),
+      )
+    }
+  }
 }
 
 internal data class Question(
   val name: String,
-  val type: Short,
-  val `class`: Short,
+  val type: Int,
+  val `class`: Int = CLASS_IN,
 ) {
   // Avoid Short.hashCode(short) which isn't available on Android 5.
   override fun hashCode(): Int {
@@ -82,9 +112,9 @@ internal sealed interface ResourceRecord {
     val priority: Int,
     val targetName: String,
     val alpnIds: List<String>? = null,
-    var port: Int = -1,
+    var port: Int = 443,
     val ipAddressHints: List<InetAddress> = listOf(),
-    var echConfigList: ByteString? = null,
+    val echConfigList: ByteString? = null,
   ) : ResourceRecord {
     // Avoid Int.hashCode(int) which isn't available on Android 5.
     override fun hashCode(): Int {
@@ -122,3 +152,20 @@ internal const val SERVICE_PARAMETER_PORT = 3
 internal const val SERVICE_PARAMETER_IPV4_HINT = 4
 internal const val SERVICE_PARAMETER_ECH = 5
 internal const val SERVICE_PARAMETER_IPV6_HINT = 6
+
+internal fun DnsMessage.asQueryParameter(): String {
+  val buffer = Buffer()
+  DnsMessageWriter(buffer).write(this@asQueryParameter)
+  return buffer.readByteString().base64Url().replace("=", "")
+}
+
+internal class QueryRequestBody(
+  private val query: DnsMessage,
+) : RequestBody() {
+  override fun contentType() = DNS_MESSAGE
+
+  override fun writeTo(sink: BufferedSink) {
+    DnsMessageWriter(sink.buffer).write(query)
+    sink.emitCompleteSegments()
+  }
+}
