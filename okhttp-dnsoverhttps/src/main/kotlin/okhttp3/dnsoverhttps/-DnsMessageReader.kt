@@ -17,13 +17,20 @@
 
 package okhttp3.dnsoverhttps
 
-import java.io.IOException
+import java.net.InetAddress
+import okhttp3.Protocol
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
+import okio.ForwardingSource
+import okio.IOException
 import okio.ProtocolException
+import okio.Source
+import okio.buffer
 
 /**
+ * Decode DNS messages, which are symmetric for requests and responses.
+ *
  * https://datatracker.ietf.org/doc/html/rfc1035
  */
 internal class DnsMessageReader(
@@ -47,22 +54,22 @@ internal class DnsMessageReader(
 
     val questions = ArrayList<Question>(questionCount)
     for (i in 0 until questionCount) {
-      questions += readQuestion()
+      questions += source.readQuestion()
     }
 
     val answers = ArrayList<ResourceRecord>(answerCount)
     for (i in 0 until answerCount) {
-      answers += readResourceRecord() ?: continue
+      answers += source.readResourceRecord() ?: continue
     }
 
     val authorityRecords = ArrayList<ResourceRecord>(authorityRecordCount)
     for (i in 0 until authorityRecordCount) {
-      authorityRecords += readResourceRecord() ?: continue
+      authorityRecords += source.readResourceRecord() ?: continue
     }
 
     val additionalRecords = ArrayList<ResourceRecord>(additionalRecordCount)
     for (i in 0 until additionalRecordCount) {
-      additionalRecords += readResourceRecord() ?: continue
+      additionalRecords += source.readResourceRecord() ?: continue
     }
 
     if (!source.exhausted()) {
@@ -81,10 +88,10 @@ internal class DnsMessageReader(
     )
   }
 
-  private fun readQuestion(): Question {
+  private fun BufferedSource.readQuestion(): Question {
     val name = readName()
-    val type = source.readShort()
-    val `class` = source.readShort()
+    val type = readShort()
+    val `class` = readShort()
     return Question(
       name = name,
       type = type,
@@ -92,18 +99,16 @@ internal class DnsMessageReader(
     )
   }
 
-  private fun readName(): String {
+  private fun BufferedSource.readName(): String {
     val result = Buffer()
-    readName(source, result)
+    readName(result)
     return result.readUtf8()
   }
 
-  private tailrec fun readName(
-    source: BufferedSource,
-    sink: Buffer,
-  ) {
+  // TODO: don't infinite loop
+  private tailrec fun BufferedSource.readName(sink: Buffer) {
     while (true) {
-      val labelTypeAndLength = source.readByte().toUByte().toInt()
+      val labelTypeAndLength = readByte().toUByte().toInt()
       val labelType = labelTypeAndLength and 0b11000000
       val labelLength = labelTypeAndLength and 0b00111111
       when (labelType) {
@@ -111,15 +116,15 @@ internal class DnsMessageReader(
         0b00_000000 -> {
           if (labelLength == 0) return
           if (sink.size > 0L) sink.writeByte('.'.code)
-          sink.write(source, labelLength.toLong())
+          sink.write(this, labelLength.toLong())
         }
 
         // Compressed suffix.
         0b11_000000 -> {
-          val offsetLength = (labelLength shl 8) or source.readByte().toUByte().toInt()
+          val offsetLength = (labelLength shl 8) or readByte().toUByte().toInt()
           val offsetSource = sourceOffsetZero.peek()
           offsetSource.skip(offsetLength.toLong())
-          return readName(offsetSource, sink)
+          return offsetSource.readName(sink)
         }
 
         0b01_000000, 0b10_000000 -> {
@@ -130,17 +135,17 @@ internal class DnsMessageReader(
   }
 
   /** Returns null if this record type is unsupported. */
-  fun readResourceRecord(): ResourceRecord? {
+  fun BufferedSource.readResourceRecord(): ResourceRecord? {
     val name = readName()
-    val type = source.readShort().toInt()
-    val `class` = source.readShort().toInt()
-    val timeToLive = source.readInt()
-    val recordDataLength = source.readShort().toLong()
+    val type = readShort().toInt()
+    val `class` = readShort().toInt()
+    val timeToLive = readInt()
+    val recordDataLength = readShort().toLong()
 
     when {
       `class` == CLASS_IN && type == TYPE_A -> {
         if (recordDataLength != 4L) throw ProtocolException("unexpected record length")
-        val address = source.readByteString(4L)
+        val address = InetAddress.getByAddress(readByteArray(4L))
         return ResourceRecord.IpAddress(
           name = name,
           timeToLive = timeToLive,
@@ -150,7 +155,7 @@ internal class DnsMessageReader(
 
       `class` == CLASS_IN && type == TYPE_AAAA -> {
         if (recordDataLength != 16L) throw ProtocolException("unexpected record length")
-        val address = source.readByteString(16L)
+        val address = InetAddress.getByAddress(readByteArray(16L))
         return ResourceRecord.IpAddress(
           name = name,
           timeToLive = timeToLive,
@@ -158,84 +163,142 @@ internal class DnsMessageReader(
         )
       }
 
+      `class` == CLASS_IN && type == TYPE_HTTPS -> {
+        return FixedLengthSource(this, recordDataLength)
+          .buffer()
+          .readHttpsResourceRecord(name, timeToLive)
+      }
+
       else -> {
-        source.skip(recordDataLength)
+        skip(recordDataLength)
         return null
       }
     }
   }
 
-  data class DnsMessage(
-    val id: Short,
-    val flags: Int,
-    val questions: List<Question>,
-    val answers: List<ResourceRecord>,
-    val authorityRecords: List<ResourceRecord> = listOf(),
-    val additionalRecords: List<ResourceRecord> = listOf(),
-  ) {
-    val responseCode: Int
-      get() = (flags and 0b0000_0000_0000_1111)
+  /** https://datatracker.ietf.org/doc/rfc9460/ */
+  private fun BufferedSource.readHttpsResourceRecord(
+    name: String,
+    timeToLive: Int,
+  ): ResourceRecord.Https {
+    val svcPriority = readShort().toUShort()
+    val targetName = readName()
+    var lastKey = -1
+    var alpnIds: MutableList<String>? = null
+    var noDefaultAlpn = false
+    var port = -1
+    var ipAddressHints: MutableList<InetAddress>? = null
+    var echConfigList: ByteString? = null
 
-    // Avoid Short.hashCode(short) which isn't available on Android 5.
-    override fun hashCode(): Int {
-      var result = 0
-      result = 31 * result + id
-      result = 31 * result + flags
-      result = 31 * result + questions.hashCode()
-      result = 31 * result + answers.hashCode()
-      result = 31 * result + authorityRecords.hashCode()
-      result = 31 * result + additionalRecords.hashCode()
-      return result
-    }
-  }
+    while (!exhausted()) {
+      val key = readShort().toUShort().toInt()
+      if (key <= lastKey) throw ProtocolException("malformed HTTPS resource record")
+      lastKey = key
+      val valueLength = readShort().toUShort().toLong()
+      when (key) {
+        SERVICE_PARAMETER_MANDATORY -> {
+          for (i in 0 until valueLength) {
+            val serviceParameterKey = readByte()
+            if (serviceParameterKey !in SERVICE_PARAMETER_MANDATORY..SERVICE_PARAMETER_IPV6_HINT) {
+              throw ProtocolException("unsupported HTTPS mandatory parameter $serviceParameterKey")
+            }
+          }
+        }
 
-  data class Question(
-    val name: String,
-    val type: Short,
-    val `class`: Short,
-  ) {
-    // Avoid Short.hashCode(short) which isn't available on Android 5.
-    override fun hashCode(): Int {
-      var result = 0
-      result = 31 * result + name.hashCode()
-      result = 31 * result + type
-      result = 31 * result + `class`
-      return result
-    }
-  }
+        SERVICE_PARAMETER_ALPN -> {
+          alpnIds = mutableListOf()
+          var pos = 0L
+          while (pos < valueLength) {
+            val alpnIdLength = readByte().toUByte().toLong()
+            pos++
+            if (pos + alpnIdLength > valueLength) {
+              throw ProtocolException("malformed HTTPS / alpn")
+            }
+            alpnIds += readUtf8(alpnIdLength)
+            pos += alpnIdLength
+          }
+        }
 
-  sealed interface ResourceRecord {
-    val name: String
-    val timeToLive: Int
+        SERVICE_PARAMETER_NO_DEFAULT_ALPN -> {
+          if (valueLength != 0L) throw ProtocolException("malformed HTTPS / no-default-alpn")
+          noDefaultAlpn = true
+        }
 
-    data class IpAddress(
-      override val name: String,
-      override val timeToLive: Int,
-      val address: ByteString,
-    ) : ResourceRecord {
-      // Avoid Int.hashCode(int) which isn't available on Android 5.
-      override fun hashCode(): Int {
-        var result = 0
-        result = 31 * result + name.hashCode()
-        result = 31 * result + timeToLive
-        result = 31 * result + address.hashCode()
-        return result
+        SERVICE_PARAMETER_PORT -> {
+          if (valueLength != 2L) throw ProtocolException("malformed HTTPS / port")
+          port = readShort().toUShort().toInt()
+        }
+
+        SERVICE_PARAMETER_IPV4_HINT -> {
+          ipAddressHints = mutableListOf()
+          if (valueLength % 4 != 0L) throw ProtocolException("malformed HTTPS / ipv4hint")
+          for (i in 0 until valueLength step 4) {
+            ipAddressHints += InetAddress.getByAddress(readByteArray(4))
+          }
+        }
+
+        SERVICE_PARAMETER_ECH -> {
+          echConfigList = readByteString(valueLength)
+        }
+
+        SERVICE_PARAMETER_IPV6_HINT -> {
+          if (ipAddressHints == null) ipAddressHints = mutableListOf()
+          if (valueLength % 16 != 0L) throw ProtocolException("malformed HTTPS / ipv6hint")
+          for (i in 0 until valueLength step 16) {
+            ipAddressHints += InetAddress.getByAddress(readByteArray(16))
+          }
+        }
+
+        // Skip an unknown parameter.
+        else -> {
+          skip(valueLength)
+        }
       }
     }
+
+    if (noDefaultAlpn) {
+      if (alpnIds == null) throw ProtocolException("malformed HTTPS / no-default-alpn")
+    } else if (alpnIds != null && Protocol.HTTP_1_1.toString() !in alpnIds) {
+      alpnIds += Protocol.HTTP_1_1.toString()
+    }
+
+    return ResourceRecord.Https(
+      name = name,
+      timeToLive = timeToLive,
+      priority = svcPriority.toInt(),
+      targetName = targetName,
+      alpnIds = alpnIds,
+      port = port,
+      ipAddressHints = ipAddressHints ?: listOf(),
+      echConfigList = echConfigList,
+    )
   }
 }
-
-internal val TYPE_A = 1
-internal val TYPE_AAAA = 28
-
-internal val CLASS_IN = 1
-
-internal val RESPONSE_CODE_SUCCESS = 0
-internal val RESPONSE_CODE_SERVER_FAILURE = 2
 
 @Throws(IOException::class)
 internal fun BufferedSource.skipAll() {
   while (!exhausted()) {
     skip(buffer.size)
+  }
+}
+
+internal class FixedLengthSource(
+  delegate: Source,
+  private val size: Long,
+) : ForwardingSource(delegate) {
+  private var bytesReceived = 0L
+
+  override fun read(
+    sink: Buffer,
+    byteCount: Long,
+  ): Long {
+    val result =
+      when (val toRead = byteCount.coerceAtMost(size - bytesReceived)) {
+        0L -> -1L
+        else -> super.read(sink, toRead)
+      }
+    if (result != -1L) bytesReceived += result
+    if (bytesReceived < size && result == -1L) throw ProtocolException("truncated stream")
+    return result
   }
 }
