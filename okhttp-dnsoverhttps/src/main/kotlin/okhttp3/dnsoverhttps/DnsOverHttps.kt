@@ -48,6 +48,7 @@ class DnsOverHttps internal constructor(
   @get:JvmName("client") val client: OkHttpClient,
   @get:JvmName("url") val url: HttpUrl,
   @get:JvmName("includeIPv6") val includeIPv6: Boolean,
+  @get:JvmName("includeHttps") val includeHttps: Boolean,
   @get:JvmName("post") val post: Boolean,
   @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
   @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean,
@@ -75,12 +76,16 @@ class DnsOverHttps internal constructor(
       buildList {
         add(client.newCall(buildRequest(hostname, DnsRecordCodec.TYPE_A)))
 
+        if (includeHttps) {
+          add(client.newCall(buildRequest(hostname, TYPE_HTTPS)))
+        }
+
         if (includeIPv6) {
           add(client.newCall(buildRequest(hostname, DnsRecordCodec.TYPE_AAAA)))
         }
       }
 
-    val failures = ArrayList<Exception>(2)
+    val failures = ArrayList<Exception>(3)
     val results = ArrayList<InetAddress>(5)
     executeRequests(networkRequests, results, failures)
 
@@ -195,8 +200,8 @@ class DnsOverHttps internal constructor(
       when (dnsResponse.responseCode) {
         RESPONSE_CODE_SUCCESS -> {
           return dnsResponse.answers
-            .filterIsInstance<DnsMessageReader.ResourceRecord.IpAddress>()
-            .map { InetAddress.getByAddress(it.address.toByteArray()) }
+            .filterIsInstance<ResourceRecord.IpAddress>()
+            .map { it.address }
         }
 
         RESPONSE_CODE_SERVER_FAILURE -> {
@@ -241,6 +246,7 @@ class DnsOverHttps internal constructor(
     internal var client: OkHttpClient? = null
     internal var url: HttpUrl? = null
     internal var includeIPv6 = true
+    internal var includeHttps = false
     internal var post = false
     internal var systemDns = Dns.SYSTEM
     internal var bootstrapDnsHosts: List<InetAddress>? = null
@@ -253,6 +259,7 @@ class DnsOverHttps internal constructor(
         client.newBuilder().dns(buildBootstrapClient(this)).build(),
         checkNotNull(url) { "url not set" },
         includeIPv6,
+        includeHttps,
         post,
         resolvePrivateAddresses,
         resolvePublicAddresses,
@@ -294,7 +301,8 @@ class DnsOverHttps internal constructor(
         this.bootstrapDnsHosts = bootstrapDnsHosts
       }
 
-    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder = bootstrapDnsHosts(bootstrapDnsHosts.toList())
+    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder =
+      bootstrapDnsHosts(bootstrapDnsHosts.toList())
 
     fun systemDns(systemDns: Dns) =
       apply {
@@ -316,6 +324,7 @@ class DnsOverHttps internal constructor(
       }
     }
 
-    internal fun isPrivateHost(host: String): Boolean = PublicSuffixDatabase.get().getEffectiveTldPlusOne(host) == null
+    internal fun isPrivateHost(host: String): Boolean =
+      PublicSuffixDatabase.get().getEffectiveTldPlusOne(host) == null
   }
 }
