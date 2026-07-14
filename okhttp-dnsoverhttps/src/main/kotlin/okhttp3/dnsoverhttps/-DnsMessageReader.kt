@@ -90,8 +90,8 @@ internal class DnsMessageReader(
 
   private fun BufferedSource.readQuestion(): Question {
     val name = readName()
-    val type = readShort()
-    val `class` = readShort()
+    val type = readShort().toInt()
+    val `class` = readShort().toInt()
     return Question(
       name = name,
       type = type,
@@ -186,7 +186,7 @@ internal class DnsMessageReader(
     var lastKey = -1
     var alpnIds: MutableList<String>? = null
     var noDefaultAlpn = false
-    var port = -1
+    var port = 443
     var ipAddressHints: MutableList<InetAddress>? = null
     var echConfigList: ByteString? = null
 
