@@ -216,8 +216,8 @@ class DnsMessageReaderRecordedValuesTest {
           timeToLive = 300,
           priority = 1,
           targetName = "",
-          alpnIds = listOf("h2")
-        )
+          alpnIds = listOf("h2"),
+        ),
       )
   }
 
@@ -237,8 +237,8 @@ class DnsMessageReaderRecordedValuesTest {
           priority = 1,
           targetName = "",
           alpnIds = listOf("h2", "http/1.1"),
-          port = 443
-        )
+          port = 443,
+        ),
       )
   }
 
@@ -265,7 +265,7 @@ class DnsMessageReaderRecordedValuesTest {
           priority = 2,
           targetName = "star-mini.fallback.c10r.facebook.com",
           alpnIds = listOf("h2", "h3", "http/1.1"),
-        )
+        ),
       )
   }
 
@@ -283,8 +283,8 @@ class DnsMessageReaderRecordedValuesTest {
           name = "histats.com",
           timeToLive = 60,
           priority = 0,
-          targetName = "histats.com.cdn.cloudflare.net"
-        )
+          targetName = "histats.com.cdn.cloudflare.net",
+        ),
       )
   }
 
@@ -302,7 +302,7 @@ class DnsMessageReaderRecordedValuesTest {
           timeToLive = 604800,
           priority = 0,
           targetName = "beebom.com",
-        )
+        ),
       )
   }
 
@@ -319,8 +319,8 @@ class DnsMessageReaderRecordedValuesTest {
           name = "aurakle.dev",
           timeToLive = 600,
           priority = 0,
-          targetName = "<nil>"
-        )
+          targetName = "<nil>",
+        ),
       )
   }
 
@@ -337,8 +337,8 @@ class DnsMessageReaderRecordedValuesTest {
           name = "unze.com.pk",
           timeToLive = 300,
           priority = 0,
-          targetName = "23.227.38.65"
-        )
+          targetName = "23.227.38.65",
+        ),
       )
   }
 
@@ -359,7 +359,7 @@ class DnsMessageReaderRecordedValuesTest {
           priority = 1,
           targetName = "",
           alpnIds = listOf("h2", "http/1.1"),
-          ipAddressHints = listOf(InetAddress.getByName("2a00:1098:3a0:0:0:0:0:1"))
+          ipAddressHints = listOf(InetAddress.getByName("2a00:1098:3a0:0:0:0:0:1")),
         ),
         ResourceRecord.Https(
           name = "prosody.im",
@@ -367,7 +367,7 @@ class DnsMessageReaderRecordedValuesTest {
           priority = 2,
           targetName = "",
           alpnIds = listOf("http/1.1"),
-          ipAddressHints = listOf(InetAddress.getByName("176.126.242.74"))
+          ipAddressHints = listOf(InetAddress.getByName("176.126.242.74")),
         ),
       )
   }
@@ -389,9 +389,12 @@ class DnsMessageReaderRecordedValuesTest {
           priority = 1,
           targetName = "",
           alpnIds = listOf("h3", "http/1.1"),
-          echConfigList = ("003dfe0d0039aa00200020a4a7bb34b77c43336c3a2931dd28c87d008218a99b44f1f" +
-            "0aa8a82537d487d43000400010001000a676f6f676c652e636f6d0000").decodeHex()
-        )
+          echConfigList =
+            (
+              "003dfe0d0039aa00200020a4a7bb34b77c43336c3a2931dd28c87d008218a99b44f1f" +
+                "0aa8a82537d487d43000400010001000a676f6f676c652e636f6d0000"
+            ).decodeHex(),
+        ),
       )
   }
 
@@ -414,14 +417,14 @@ class DnsMessageReaderRecordedValuesTest {
           targetName = "dnsr1.planaltonet.net.br",
           alpnIds = listOf("h2", "h3", "http/1.1"),
           port = 443,
-          ipAddressHints = listOf(
-            InetAddress.getByName("190.109.80.251"),
-            InetAddress.getByName("2804:1088:0:0:0:0:0:12"),
-          )
-        )
+          ipAddressHints =
+            listOf(
+              InetAddress.getByName("190.109.80.251"),
+              InetAddress.getByName("2804:1088:0:0:0:0:0:12"),
+            ),
+        ),
       )
   }
 
-  private fun DnsMessageReader(hex: String) =
-    DnsMessageReader(Buffer().write(hex.decodeHex()))
+  private fun DnsMessageReader(hex: String) = DnsMessageReader(Buffer().write(hex.decodeHex()))
 }

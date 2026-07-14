@@ -106,9 +106,7 @@ internal class DnsMessageReader(
   }
 
   // TODO: don't infinite loop
-  private tailrec fun BufferedSource.readName(
-    sink: Buffer,
-  ) {
+  private tailrec fun BufferedSource.readName(sink: Buffer) {
     while (true) {
       val labelTypeAndLength = readByte().toUByte().toInt()
       val labelType = labelTypeAndLength and 0b11000000
@@ -250,7 +248,9 @@ internal class DnsMessageReader(
         }
 
         // Skip an unknown parameter.
-        else -> skip(valueLength)
+        else -> {
+          skip(valueLength)
+        }
       }
     }
 
@@ -286,11 +286,15 @@ internal class FixedLengthSource(
 ) : ForwardingSource(delegate) {
   private var bytesReceived = 0L
 
-  override fun read(sink: Buffer, byteCount: Long): Long {
-    val result = when (val toRead = byteCount.coerceAtMost(size - bytesReceived)) {
-      0L -> -1L
-      else -> super.read(sink, toRead)
-    }
+  override fun read(
+    sink: Buffer,
+    byteCount: Long,
+  ): Long {
+    val result =
+      when (val toRead = byteCount.coerceAtMost(size - bytesReceived)) {
+        0L -> -1L
+        else -> super.read(sink, toRead)
+      }
     if (result != -1L) bytesReceived += result
     if (bytesReceived < size && result == -1L) throw ProtocolException("truncated stream")
     return result
