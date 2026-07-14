@@ -85,7 +85,21 @@ internal sealed interface ResourceRecord {
     var port: Int = -1,
     val ipAddressHints: List<InetAddress> = listOf(),
     var echConfigList: ByteString? = null,
-  ) : ResourceRecord
+  ) : ResourceRecord {
+    // Avoid Int.hashCode(int) which isn't available on Android 5.
+    override fun hashCode(): Int {
+      var result = 0
+      result = 31 * result + name.hashCode()
+      result = 31 * result + timeToLive
+      result = 31 * result + priority
+      result = 31 * result + targetName.hashCode()
+      result = 31 * result + alpnIds.hashCode()
+      result = 31 * result + port
+      result = 31 * result + ipAddressHints.hashCode()
+      result = 31 * result + echConfigList.hashCode()
+      return result
+    }
+  }
 }
 
 /** https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml#dns-parameters-4 */
