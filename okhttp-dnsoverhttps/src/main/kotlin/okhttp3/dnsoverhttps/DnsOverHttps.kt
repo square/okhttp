@@ -276,6 +276,12 @@ class DnsOverHttps internal constructor(
         this.url = url
       }
 
+    /**
+     * True to request [`HTTPS` DNS records](https://datatracker.ietf.org/doc/rfc9460/), which are
+     * necessary for [Encrypted Client Hello (ECH)](https://datatracker.ietf.org/doc/rfc9849/).
+     *
+     * This is false by default, but that default is subject to change in 2026.
+     */
     fun includeIPv6(includeIPv6: Boolean) =
       apply {
         this.includeIPv6 = includeIPv6
