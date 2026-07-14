@@ -18,6 +18,7 @@
 package okhttp3.dnsoverhttps
 
 import java.io.IOException
+import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
 import okio.ProtocolException
@@ -41,25 +42,25 @@ internal class DnsMessageReader(
 
     val questionCount = source.readShort().toUShort().toInt()
     val answerCount = source.readShort().toUShort().toInt()
-    val nameServerCount = source.readShort().toUShort().toInt()
+    val authorityRecordCount = source.readShort().toUShort().toInt()
     val additionalRecordCount = source.readShort().toUShort().toInt()
 
-    val questions = mutableListOf<Question>()
+    val questions = ArrayList<Question>(questionCount)
     for (i in 0 until questionCount) {
       questions += readQuestion()
     }
 
-    val answers = mutableListOf<ResourceRecord>()
+    val answers = ArrayList<ResourceRecord>(answerCount)
     for (i in 0 until answerCount) {
       answers += readResourceRecord() ?: continue
     }
 
-    val authorityRecords = mutableListOf<ResourceRecord>()
-    for (i in 0 until nameServerCount) {
+    val authorityRecords = ArrayList<ResourceRecord>(authorityRecordCount)
+    for (i in 0 until authorityRecordCount) {
       authorityRecords += readResourceRecord() ?: continue
     }
 
-    val additionalRecords = mutableListOf<ResourceRecord>()
+    val additionalRecords = ArrayList<ResourceRecord>(additionalRecordCount)
     for (i in 0 until additionalRecordCount) {
       additionalRecords += readResourceRecord() ?: continue
     }
@@ -91,14 +92,15 @@ internal class DnsMessageReader(
     )
   }
 
-  private fun readName(): String =
-    buildString {
-      readName(source, this)
-    }
+  private fun readName(): String {
+    val result = Buffer()
+    readName(source, result)
+    return result.readUtf8()
+  }
 
   private tailrec fun readName(
     source: BufferedSource,
-    builder: StringBuilder,
+    sink: Buffer,
   ) {
     while (true) {
       val labelTypeAndLength = source.readByte().toUByte().toInt()
@@ -108,8 +110,8 @@ internal class DnsMessageReader(
         // Inline value.
         0b00_000000 -> {
           if (labelLength == 0) return
-          if (builder.isNotEmpty()) builder.append('.')
-          builder.append(source.readUtf8(labelLength.toLong()))
+          if (sink.size > 0L) sink.writeByte('.'.code)
+          sink.write(source, labelLength.toLong())
         }
 
         // Compressed suffix.
@@ -117,7 +119,7 @@ internal class DnsMessageReader(
           val offsetLength = (labelLength shl 8) or source.readByte().toUByte().toInt()
           val offsetSource = sourceOffsetZero.peek()
           offsetSource.skip(offsetLength.toLong())
-          return readName(offsetSource, builder)
+          return readName(offsetSource, sink)
         }
 
         0b01_000000, 0b10_000000 -> {
