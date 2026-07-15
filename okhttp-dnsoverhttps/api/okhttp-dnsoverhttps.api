@@ -1,10 +1,11 @@
-public final class okhttp3/dnsoverhttps/DnsOverHttps : okhttp3/Dns {
+public final class okhttp3/dnsoverhttps/DnsOverHttps : okhttp3/Dns, okhttp3/Dns2 {
 	public static final field Companion Lokhttp3/dnsoverhttps/DnsOverHttps$Companion;
 	public static final field MAX_RESPONSE_SIZE I
 	public final fun client ()Lokhttp3/OkHttpClient;
 	public final fun includeHttps ()Z
 	public final fun includeIPv6 ()Z
 	public fun lookup (Ljava/lang/String;)Ljava/util/List;
+	public fun newCall (Lokhttp3/Dns2$Request;)Lokhttp3/Dns2$Call;
 	public final fun post ()Z
 	public final fun resolvePrivateAddresses ()Z
 	public final fun resolvePublicAddresses ()Z

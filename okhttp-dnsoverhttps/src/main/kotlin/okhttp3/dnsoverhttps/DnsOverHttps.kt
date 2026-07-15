@@ -23,6 +23,7 @@ import java.util.concurrent.CountDownLatch
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Dns
+import okhttp3.Dns2
 import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
@@ -51,7 +52,10 @@ class DnsOverHttps internal constructor(
   @get:JvmName("post") val post: Boolean,
   @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
   @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean,
-) : Dns {
+) : Dns,
+  Dns2 {
+  override fun newCall(request: Dns2.Request): Dns2.Call = DnsOverHttpsCall(this, request)
+
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
     if (!resolvePrivateAddresses || !resolvePublicAddresses) {
