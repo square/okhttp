@@ -767,14 +767,14 @@ release is the version name.
 
 ## Version 4.x
 
-See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the legacy version changelogs.
+See [4.x Change log](https://lysine.dev/okhttp/changelogs/changelog_4x/) for the legacy version changelogs.
 
 [GraalVM]: https://www.graalvm.org/
 [Gradle module metadata]: https://docs.gradle.org/current/userguide/publishing_gradle_module_metadata.html
 [HTTP 101]: https://httpwg.org/specs/rfc9110.html#status.101
 [JPMS]: https://openjdk.org/projects/jigsaw/spec/
 [Ktor]: https://ktor.io/
-[Retrofit]: https://square.github.io/retrofit/
+[Retrofit]: https://lysine.dev/retrofit/
 [ZSTD-KMP]: https://github.com/square/zstd-kmp
 [androidx_startup]: https://developer.android.com/jetpack/androidx/releases/startup
 [annotation_1_9_1]: https://developer.android.com/jetpack/androidx/releases/annotation#annotation-1.9.1
@@ -800,21 +800,21 @@ See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) f
 [kotlin_2_2_20]: https://github.com/JetBrains/kotlin/releases/tag/v2.2.20
 [kotlin_2_2_21]: https://github.com/JetBrains/kotlin/releases/tag/v2.2.21
 [loom]: https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html
-[okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
-[okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
-[okio_3_12_0]: https://square.github.io/okio/changelog/#version-3120
-[okio_3_13_0]: https://square.github.io/okio/changelog/#version-3130
-[okio_3_15_0]: https://square.github.io/okio/changelog/#version-3150
-[okio_3_16_0]: https://square.github.io/okio/changelog/#version-3160
-[okio_3_16_1]: https://square.github.io/okio/changelog/#version-3161
-[okio_3_16_2]: https://square.github.io/okio/changelog/#version-3162
-[okio_3_16_3]: https://square.github.io/okio/changelog/#version-3163
-[okio_3_16_4]: https://square.github.io/okio/changelog/#version-3164
-[okio_3_17_0]: https://square.github.io/okio/changelog/#version-3170
-[okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
-[okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
-[okio_3_7_0]: https://square.github.io/okio/changelog/#version-370
-[okio_3_9_0]: https://square.github.io/okio/changelog/#version-390
+[okio_2_9_0]: https://lysine.dev/okio/changelog/#version-290
+[okio_3_0_0]: https://lysine.dev/okio/changelog/#version-300
+[okio_3_12_0]: https://lysine.dev/okio/changelog/#version-3120
+[okio_3_13_0]: https://lysine.dev/okio/changelog/#version-3130
+[okio_3_15_0]: https://lysine.dev/okio/changelog/#version-3150
+[okio_3_16_0]: https://lysine.dev/okio/changelog/#version-3160
+[okio_3_16_1]: https://lysine.dev/okio/changelog/#version-3161
+[okio_3_16_2]: https://lysine.dev/okio/changelog/#version-3162
+[okio_3_16_3]: https://lysine.dev/okio/changelog/#version-3163
+[okio_3_16_4]: https://lysine.dev/okio/changelog/#version-3164
+[okio_3_17_0]: https://lysine.dev/okio/changelog/#version-3170
+[okio_3_1_0]: https://lysine.dev/okio/changelog/#version-310
+[okio_3_2_0]: https://lysine.dev/okio/changelog/#version-320
+[okio_3_7_0]: https://lysine.dev/okio/changelog/#version-370
+[okio_3_9_0]: https://lysine.dev/okio/changelog/#version-390
 [rfc_8305]: https://tools.ietf.org/html/rfc8305
 [startup_1_2_0]: https://developer.android.com/jetpack/androidx/releases/startup#1.2.0
 [uts46]: https://www.unicode.org/reports/tr46

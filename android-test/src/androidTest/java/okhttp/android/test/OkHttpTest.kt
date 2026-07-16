@@ -883,7 +883,7 @@ class OkHttpTest {
       client.newCall(request).execute().close()
       // Hopefully this passes
     } catch (ioe: IOException) {
-      // https://github.com/square/okhttp/issues/5840
+      // https://github.com/lysine-dev/okhttp/issues/5840
       when (ioe.cause) {
         is IllegalArgumentException -> {
           assertEquals("Android internal error", ioe.message)

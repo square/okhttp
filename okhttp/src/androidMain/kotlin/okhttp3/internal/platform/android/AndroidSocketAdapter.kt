@@ -86,7 +86,7 @@ open class AndroidSocketAdapter(
     } catch (e: IllegalAccessException) {
       throw AssertionError(e)
     } catch (e: InvocationTargetException) {
-      // https://github.com/square/okhttp/issues/5587
+      // https://github.com/lysine-dev/okhttp/issues/5587
       val cause = e.cause
       when {
         cause is NullPointerException && cause.message == "ssl == null" -> null

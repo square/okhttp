@@ -155,7 +155,7 @@ class RouteSelectorTest {
 
   /**
    * Don't call through to the proxy selector if we don't have a host name.
-   * https://github.com/square/okhttp/issues/5770
+   * https://github.com/lysine-dev/okhttp/issues/5770
    */
   @Test fun proxySelectorNotCalledForNullHost() {
     // The string '>' is okay in a hostname in HttpUrl, which does very light hostname validation.

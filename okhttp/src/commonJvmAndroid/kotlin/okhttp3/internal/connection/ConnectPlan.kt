@@ -282,7 +282,7 @@ class ConnectPlan internal constructor(
 
     // The following try/catch block is a pseudo hacky way to get around a crash on Android 7.0
     // More details:
-    // https://github.com/square/okhttp/issues/3245
+    // https://github.com/lysine-dev/okhttp/issues/3245
     // https://android-review.googlesource.com/#/c/271775/
     try {
       this.socket = rawSocket.asBufferedSocket()
