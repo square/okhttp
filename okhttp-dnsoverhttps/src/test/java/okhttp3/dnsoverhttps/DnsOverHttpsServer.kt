@@ -17,6 +17,7 @@ package okhttp3.dnsoverhttps
 
 import java.net.Inet4Address
 import java.net.Inet6Address
+import java.net.InetAddress
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingDeque
 import mockwebserver3.Dispatcher
@@ -41,6 +42,23 @@ internal class DnsOverHttpsServer : Dispatcher() {
     records: List<ResourceRecord>,
   ) {
     data[hostname] = records
+  }
+
+  @JvmName("set-inetAddresses") // Avoid raw types collision.
+  operator fun set(
+    hostname: String,
+    inetAddresses: List<InetAddress>,
+  ) {
+    set(
+      hostname,
+      inetAddresses.map { inetAddress ->
+        ResourceRecord.IpAddress(
+          name = hostname,
+          timeToLive = 5,
+          address = inetAddress,
+        )
+      },
+    )
   }
 
   fun takeRequest(): Pair<RecordedRequest, DnsMessage> = requests.take()
