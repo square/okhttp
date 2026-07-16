@@ -38,6 +38,7 @@ import okhttp3.internal.testAndSet
 internal class DnsOverHttpsCall(
   override val request: Dns2.Request,
   private val calls: List<Call>,
+  private val canceledException: IOException?,
 ) : Dns2.Call,
   Callback {
   private val state = AtomicReference<State>(State.Idle)
@@ -69,7 +70,10 @@ internal class DnsOverHttpsCall(
           ?: return // Already complete or canceled; nothing to do.
 
       val newRunningCalls = previous.runningCalls - call
-      val allFailures = previous.delayedFailures + e
+      val allFailures = when {
+        canceledException != null -> listOf(canceledException)
+        else -> previous.delayedFailures + e
+      }
       val next =
         when {
           newRunningCalls.isEmpty() -> {

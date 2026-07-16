@@ -51,49 +51,48 @@ class DnsOverHttps internal constructor(
   @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean,
 ) : Dns,
   Dns2 {
-  override fun newCall(request: Dns2.Request): Dns2.Call =
-    DnsOverHttpsCall(
-      request = request,
-      calls =
-        buildList {
-          if (includeHttps) {
-            add(createCall(request.hostname, TYPE_HTTPS))
-          }
+  override fun newCall(request: Dns2.Request): Dns2.Call {
+    val calls = callsList(request.hostname)
 
-          if (includeIPv6) {
-            add(createCall(request.hostname, TYPE_AAAA))
-          }
-
-          add(createCall(request.hostname, TYPE_A))
-        },
-    )
-
-  @Throws(UnknownHostException::class)
-  override fun lookup(hostname: String): List<InetAddress> {
-    if (!resolvePrivateAddresses || !resolvePublicAddresses) {
-      val privateHost = isPrivateHost(hostname)
-
-      if (privateHost && !resolvePrivateAddresses) {
-        throw UnknownHostException("private hosts not resolved")
-      }
-
-      if (!privateHost && !resolvePublicAddresses) {
-        throw UnknownHostException("public hosts not resolved")
+    val canceledException = validate(request.hostname)
+    if (canceledException != null) {
+      for (call in calls) {
+        call.cancel()
       }
     }
 
-    return lookupHttps(hostname)
+    return DnsOverHttpsCall(
+      request = request,
+      calls = calls,
+      canceledException = canceledException,
+    )
+  }
+
+  /**
+   * Returns an exception if [hostname] should not be resolved.
+   *
+   * We **return** this exception rather than throwing it because in the [Dns2.Callback] case we want
+   * `onFailure()` to be called on a dispatcher thread and not synchronously.
+   */
+  private fun validate(hostname: String): UnknownHostException? {
+    // Don't load the public suffix list unless necessary.
+    if (resolvePrivateAddresses && resolvePublicAddresses) return null
+
+    val privateHost = isPrivateHost(hostname)
+
+    return when {
+      privateHost && !resolvePrivateAddresses -> UnknownHostException("private hosts not resolved")
+      !privateHost && !resolvePublicAddresses -> UnknownHostException("public hosts not resolved")
+      else -> null
+    }
   }
 
   @Throws(UnknownHostException::class)
-  private fun lookupHttps(hostname: String): List<InetAddress> {
-    val calls =
-      buildList {
-        add(createCall(hostname, TYPE_A))
-        if (includeIPv6) {
-          add(createCall(hostname, TYPE_AAAA))
-        }
-      }
+  override fun lookup(hostname: String): List<InetAddress> {
+    val validationException = validate(hostname)
+    if (validationException != null) throw validationException
+
+    val calls = callsList(hostname, inetAddressesOnly = true)
 
     val failures = ArrayList<Exception>(3)
     val results = ArrayList<InetAddress>(5)
@@ -219,6 +218,23 @@ class DnsOverHttps internal constructor(
           }.build(),
     )
 
+  private fun callsList(
+    hostname: String,
+    inetAddressesOnly: Boolean = false,
+  ): List<Call> {
+    return buildList {
+      if (includeHttps && !inetAddressesOnly) {
+        add(createCall(hostname, TYPE_HTTPS))
+      }
+
+      if (includeIPv6) {
+        add(createCall(hostname, TYPE_AAAA))
+      }
+
+      add(createCall(hostname, TYPE_A))
+    }
+  }
+
   class Builder {
     internal var client: OkHttpClient? = null
     internal var url: HttpUrl? = null
@@ -289,7 +305,8 @@ class DnsOverHttps internal constructor(
         this.bootstrapDnsHosts = bootstrapDnsHosts
       }
 
-    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder = bootstrapDnsHosts(bootstrapDnsHosts.toList())
+    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder =
+      bootstrapDnsHosts(bootstrapDnsHosts.toList())
 
     fun systemDns(systemDns: Dns) =
       apply {
@@ -311,6 +328,7 @@ class DnsOverHttps internal constructor(
       }
     }
 
-    internal fun isPrivateHost(host: String): Boolean = PublicSuffixDatabase.get().getEffectiveTldPlusOne(host) == null
+    internal fun isPrivateHost(host: String): Boolean =
+      PublicSuffixDatabase.get().getEffectiveTldPlusOne(host) == null
   }
 }

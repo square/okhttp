@@ -18,7 +18,6 @@ package okhttp3.dnsoverhttps
 import app.cash.burst.Burst
 import assertk.assertThat
 import assertk.assertions.containsExactly
-import assertk.assertions.containsExactlyInAnyOrder
 import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
@@ -130,22 +129,18 @@ class DnsOverHttpsTest(
       )
     dns = buildLocalhost(bootstrapClient, includeIPv6 = true)
     val result = dns(entryPoint, "lysine.dev")
-    assertThat(result).containsExactlyInAnyOrder(
+    assertThat(result).containsExactly(
       address("1:2::3:4"),
       address("10.20.30.40"),
     )
 
     val (httpsRequest1, dnsRequest1) = dnsOverHttpsServer.takeRequest()
     assertThat(httpsRequest1.method).isEqualTo("GET")
+    assertThat(dnsRequest1).isEqualTo(queryRequest("lysine.dev", TYPE_AAAA))
 
     val (httpsRequest2, dnsRequest2) = dnsOverHttpsServer.takeRequest()
     assertThat(httpsRequest2.method).isEqualTo("GET")
-
-    assertThat(listOf(dnsRequest1, dnsRequest2))
-      .containsExactlyInAnyOrder(
-        queryRequest("lysine.dev", TYPE_A),
-        queryRequest("lysine.dev", TYPE_AAAA),
-      )
+    assertThat(dnsRequest2).isEqualTo(queryRequest("lysine.dev", TYPE_A))
   }
 
   @Test
@@ -157,6 +152,28 @@ class DnsOverHttpsTest(
     assertThat(httpsRequest.method).isEqualTo("GET")
     assertThat(dnsRequest)
       .isEqualTo(queryRequest("lysine.dev", TYPE_A))
+  }
+
+  @Test
+  fun resolveForbiddenPrivateDomain() {
+    dns = buildLocalhost(bootstrapClient, resolvePrivateAddresses = false)
+
+    val e = assertFailsWith<UnknownHostException> {
+      dns(entryPoint, "dev")
+    }
+    assertThat(e).hasMessage("private hosts not resolved")
+    assertThat(dnsOverHttpsServer.pollRequest()).isNull()
+  }
+
+  @Test
+  fun resolveForbiddenPublicDomain() {
+    dns = buildLocalhost(bootstrapClient, resolvePublicAddresses = false)
+
+    val e = assertFailsWith<UnknownHostException> {
+      dns(entryPoint, "lysine.dev")
+    }
+    assertThat(e).hasMessage("public hosts not resolved")
+    assertThat(dnsOverHttpsServer.pollRequest()).isNull()
   }
 
   @Test
@@ -555,6 +572,8 @@ class DnsOverHttpsTest(
     includeIPv6: Boolean = false,
     includeHttps: Boolean = false,
     post: Boolean = false,
+    resolvePrivateAddresses: Boolean = true,
+    resolvePublicAddresses: Boolean = true,
   ): DnsOverHttps {
     val url = server.url("/lookup?ct")
     return DnsOverHttps
@@ -562,7 +581,8 @@ class DnsOverHttpsTest(
       .client(bootstrapClient)
       .includeIPv6(includeIPv6)
       .includeHttps(includeHttps)
-      .resolvePrivateAddresses(true)
+      .resolvePrivateAddresses(resolvePrivateAddresses)
+      .resolvePublicAddresses(resolvePublicAddresses)
       .url(url)
       .post(post)
       .build()
