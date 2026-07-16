@@ -20,6 +20,7 @@ import java.net.Inet6Address
 import java.net.InetAddress
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.atomic.AtomicInteger
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.RecordedRequest
@@ -35,7 +36,8 @@ internal class DnsOverHttpsServer : Dispatcher() {
 
   var extraHeaders: Headers = Headers.headersOf()
   val requests = LinkedBlockingDeque<Pair<RecordedRequest, DnsMessage>>()
-  var override: MockResponse? = null
+  val nextSequenceIndex = AtomicInteger(0)
+  val sequenceIndexToOverride = ConcurrentHashMap<Int, MockResponse>()
 
   operator fun set(
     hostname: String,
@@ -66,7 +68,8 @@ internal class DnsOverHttpsServer : Dispatcher() {
   fun pollRequest(): Pair<RecordedRequest, DnsMessage>? = requests.poll()
 
   override fun dispatch(request: RecordedRequest): MockResponse {
-    val override = this.override
+    val sequenceIndex = nextSequenceIndex.getAndIncrement()
+    val override = sequenceIndexToOverride.remove(sequenceIndex)
     if (override != null) return override
 
     val requestBody = request.body

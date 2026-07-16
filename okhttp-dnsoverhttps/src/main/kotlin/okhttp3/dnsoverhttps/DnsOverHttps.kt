@@ -17,7 +17,6 @@ package okhttp3.dnsoverhttps
 
 import java.io.IOException
 import java.net.InetAddress
-import java.net.ProtocolException
 import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
 import okhttp3.Call
@@ -28,10 +27,8 @@ import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 
 /**
@@ -54,7 +51,22 @@ class DnsOverHttps internal constructor(
   @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean,
 ) : Dns,
   Dns2 {
-  override fun newCall(request: Dns2.Request): Dns2.Call = DnsOverHttpsCall(this, request)
+  override fun newCall(request: Dns2.Request): Dns2.Call =
+    DnsOverHttpsCall(
+      request = request,
+      calls =
+        buildList {
+          if (includeHttps) {
+            add(createCall(request.hostname, TYPE_HTTPS))
+          }
+
+          if (includeIPv6) {
+            add(createCall(request.hostname, TYPE_AAAA))
+          }
+
+          add(createCall(request.hostname, TYPE_A))
+        },
+    )
 
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
@@ -175,37 +187,6 @@ class DnsOverHttps internal constructor(
     throw unknownHostException
   }
 
-  @Throws(IOException::class)
-  internal fun decodeResponse(response: Response): List<ResourceRecord> {
-    if (
-      response.cacheResponse == null &&
-      response.protocol !== Protocol.HTTP_2 &&
-      response.protocol !== Protocol.QUIC
-    ) {
-      Platform.get().log("Incorrect protocol: ${response.protocol}", Platform.WARN)
-    }
-
-    response.use {
-      if (!response.isSuccessful) {
-        throw IOException("response: ${response.code} ${response.message}")
-      }
-
-      val body = response.body
-      if (body.contentLength() > MAX_RESPONSE_SIZE) {
-        throw ProtocolException(
-          "response size exceeds limit ($MAX_RESPONSE_SIZE bytes): ${body.contentLength()} bytes",
-        )
-      }
-
-      val dnsResponse = DnsMessageReader(body.source()).read()
-      when (dnsResponse.responseCode) {
-        RESPONSE_CODE_SUCCESS -> return dnsResponse.answers
-        RESPONSE_CODE_SERVER_FAILURE -> throw UnknownHostException("DNS server failure")
-        else -> throw UnknownHostException()
-      }
-    }
-  }
-
   internal fun createCall(
     hostname: String,
     type: Int,
@@ -278,6 +259,11 @@ class DnsOverHttps internal constructor(
      *
      * This is false by default, but that default is subject to change in 2026.
      */
+    fun includeHttps(includeHttps: Boolean) =
+      apply {
+        this.includeHttps = includeHttps
+      }
+
     fun includeIPv6(includeIPv6: Boolean) =
       apply {
         this.includeIPv6 = includeIPv6

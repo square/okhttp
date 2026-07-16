@@ -207,8 +207,6 @@ class DnsMessageReaderRecordedValuesTest {
         ResourceRecord.Https(
           name = "ylilauta.org",
           timeToLive = 300,
-          priority = 1,
-          targetName = "",
           alpnIds = listOf("h2"),
         ),
       )
@@ -227,8 +225,6 @@ class DnsMessageReaderRecordedValuesTest {
         ResourceRecord.Https(
           name = "airnewzealand.co.nz",
           timeToLive = 600,
-          priority = 1,
-          targetName = "",
           alpnIds = listOf("h2", "http/1.1"),
         ),
       )
@@ -247,8 +243,6 @@ class DnsMessageReaderRecordedValuesTest {
         ResourceRecord.Https(
           name = "fbcdn.net",
           timeToLive = 924,
-          priority = 1,
-          targetName = "",
           alpnIds = listOf("h2", "h3", "http/1.1"),
         ),
         ResourceRecord.Https(
@@ -349,7 +343,6 @@ class DnsMessageReaderRecordedValuesTest {
           name = "prosody.im",
           timeToLive = 300,
           priority = 1,
-          targetName = "",
           alpnIds = listOf("h2", "http/1.1"),
           ipAddressHints = listOf(InetAddress.getByName("2a00:1098:3a0:0:0:0:0:1")),
         ),
@@ -357,7 +350,6 @@ class DnsMessageReaderRecordedValuesTest {
           name = "prosody.im",
           timeToLive = 300,
           priority = 2,
-          targetName = "",
           alpnIds = listOf("http/1.1"),
           ipAddressHints = listOf(InetAddress.getByName("176.126.242.74")),
         ),
@@ -378,8 +370,6 @@ class DnsMessageReaderRecordedValuesTest {
         ResourceRecord.Https(
           name = "mtgal.com",
           timeToLive = 604800,
-          priority = 1,
-          targetName = "",
           alpnIds = listOf("h3", "http/1.1"),
           echConfigList =
             (
@@ -405,7 +395,6 @@ class DnsMessageReaderRecordedValuesTest {
         ResourceRecord.Https(
           name = "planaltonet.net.br",
           timeToLive = 300,
-          priority = 1,
           targetName = "dnsr1.planaltonet.net.br",
           alpnIds = listOf("h2", "h3", "http/1.1"),
           ipAddressHints =

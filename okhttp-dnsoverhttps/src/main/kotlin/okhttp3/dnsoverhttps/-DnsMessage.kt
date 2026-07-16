@@ -17,9 +17,16 @@
 
 package okhttp3.dnsoverhttps
 
+import java.io.IOException
 import java.net.InetAddress
+import java.net.ProtocolException
+import java.net.UnknownHostException
+import okhttp3.Protocol
 import okhttp3.RequestBody
+import okhttp3.Response
 import okhttp3.dnsoverhttps.DnsOverHttps.Companion.DNS_MESSAGE
+import okhttp3.dnsoverhttps.DnsOverHttps.Companion.MAX_RESPONSE_SIZE
+import okhttp3.internal.platform.Platform
 import okio.Buffer
 import okio.BufferedSink
 import okio.ByteString
@@ -109,8 +116,8 @@ internal sealed interface ResourceRecord {
   data class Https(
     override val name: String,
     override val timeToLive: Int,
-    val priority: Int,
-    val targetName: String,
+    val priority: Int = 1,
+    val targetName: String = "",
     val alpnIds: List<String>? = null,
     var port: Int = 443,
     val ipAddressHints: List<InetAddress> = listOf(),
@@ -167,5 +174,36 @@ internal class QueryRequestBody(
   override fun writeTo(sink: BufferedSink) {
     DnsMessageWriter(sink.buffer).write(query)
     sink.emitCompleteSegments()
+  }
+}
+
+@Throws(IOException::class)
+internal fun decodeResponse(response: Response): List<ResourceRecord> {
+  if (
+    response.cacheResponse == null &&
+    response.protocol !== Protocol.HTTP_2 &&
+    response.protocol !== Protocol.QUIC
+  ) {
+    Platform.get().log("Unexpected protocol: ${response.protocol}", Platform.WARN)
+  }
+
+  response.use {
+    if (!response.isSuccessful) {
+      throw IOException("response: ${response.code} ${response.message}")
+    }
+
+    val body = response.body
+    if (body.contentLength() > MAX_RESPONSE_SIZE) {
+      throw ProtocolException(
+        "response size exceeds limit ($MAX_RESPONSE_SIZE bytes): ${body.contentLength()} bytes",
+      )
+    }
+
+    val dnsResponse = DnsMessageReader(body.source()).read()
+    when (dnsResponse.responseCode) {
+      RESPONSE_CODE_SUCCESS -> return dnsResponse.answers
+      RESPONSE_CODE_SERVER_FAILURE -> throw UnknownHostException("DNS server failure")
+      else -> throw UnknownHostException()
+    }
   }
 }
