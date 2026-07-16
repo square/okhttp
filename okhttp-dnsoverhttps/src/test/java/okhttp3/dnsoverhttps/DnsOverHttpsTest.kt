@@ -28,7 +28,6 @@ import java.io.File
 import java.io.IOException
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
@@ -40,6 +39,7 @@ import okhttp3.CallEvent.CacheHit
 import okhttp3.CallEvent.CacheMiss
 import okhttp3.Dns
 import okhttp3.EventRecorder
+import okhttp3.Headers.Companion.headersOf
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.testing.PlatformRule
@@ -58,8 +58,14 @@ class DnsOverHttpsTest {
   @RegisterExtension
   val platform = PlatformRule()
 
+  private val dnsOverHttpsServer = DnsOverHttpsServer()
+
   @StartStop
-  private val server = MockWebServer()
+  private val server =
+    MockWebServer()
+      .apply {
+        dispatcher = dnsOverHttpsServer
+      }
 
   private lateinit var dns: Dns
   private val cacheFs = FakeFileSystem()
@@ -79,75 +85,68 @@ class DnsOverHttpsTest {
 
   @Test
   fun getOne() {
-    server.enqueue(
-      dnsResponse(
-        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
-          "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
-          "0003b00049df00112",
-      ),
-    )
+    dnsOverHttpsServer["google.com"] =
+      listOf(
+        ResourceRecord.IpAddress(
+          name = "star.c10r.facebook.com",
+          timeToLive = 59,
+          address = InetAddress.getByName("157.240.1.18"),
+        ),
+      )
     val result = dns.lookup("google.com")
     assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
-    val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.method).isEqualTo("GET")
-    assertThat(recordedRequest.url.encodedQuery)
-      .isEqualTo("ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ")
+    val (httpsRequest, dnsRequest) = dnsOverHttpsServer.takeRequest()
+    assertThat(httpsRequest.method).isEqualTo("GET")
+    assertThat(dnsRequest)
+      .isEqualTo(queryRequest("google.com", TYPE_A))
   }
 
   @Test
   fun getIpv6() {
-    server.enqueue(
-      dnsResponse(
-        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c0005000" +
-          "100000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c0420001000" +
-          "10000003b00049df00112",
-      ),
-    )
-    server.enqueue(
-      dnsResponse(
-        "0000818000010003000000000567726170680866616365626f6f6b03636f6d00001c0001c00c0005000" +
-          "100000a1b000603617069c012c0300005000100000b1f000c04737461720463313072c012c042001c000" +
-          "10000003b00102a032880f0290011faceb00c00000002",
-      ),
-    )
+    dnsOverHttpsServer["google.com"] =
+      listOf(
+        ResourceRecord.IpAddress(
+          name = "star.c10r.facebook.com",
+          timeToLive = 59,
+          address = InetAddress.getByName("157.240.1.18"),
+        ),
+        ResourceRecord.IpAddress(
+          name = "star.c10r.facebook.com",
+          timeToLive = 59,
+          address = InetAddress.getByName("2a03:2880:f029:11:face:b00c:0:2"),
+        ),
+      )
     dns = buildLocalhost(bootstrapClient, true)
     val result = dns.lookup("google.com")
     assertThat(result.size).isEqualTo(2)
     assertThat(result).contains(address("157.240.1.18"))
     assertThat(result).contains(address("2a03:2880:f029:11:face:b00c:0:2"))
-    val request1 = server.takeRequest()
-    assertThat(request1.method).isEqualTo("GET")
-    val request2 = server.takeRequest()
-    assertThat(request2.method).isEqualTo("GET")
-    assertThat(listOf(request1.url.encodedQuery, request2.url.encodedQuery))
+    val (httpsRequest1, dnsRequest1) = dnsOverHttpsServer.takeRequest()
+    assertThat(httpsRequest1.method).isEqualTo("GET")
+    val (httpsRequest2, dnsRequest2) = dnsOverHttpsServer.takeRequest()
+    assertThat(httpsRequest2.method).isEqualTo("GET")
+    assertThat(listOf(dnsRequest1, dnsRequest2))
       .containsExactlyInAnyOrder(
-        "ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
-        "ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AABwAAQ",
+        queryRequest("google.com", TYPE_A),
+        queryRequest("google.com", TYPE_AAAA),
       )
   }
 
   @Test
   fun failure() {
-    server.enqueue(
-      dnsResponse(
-        "0000818300010000000100000e7364666c6b686673646c6b6a64660265650000010001c01b00060001000" +
-          "007070038026e7303746c64c01b0a686f73746d61737465720d6565737469696e7465726e6574c01b5adb1" +
-          "2c100000e10000003840012750000000e10",
-      ),
-    )
     assertFailsWith<UnknownHostException> {
       dns.lookup("google.com")
     }
-    val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.method).isEqualTo("GET")
-    assertThat(recordedRequest.url.encodedQuery)
-      .isEqualTo("ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ")
+    val (httpsRequest, dnsRequest) = dnsOverHttpsServer.takeRequest()
+    assertThat(httpsRequest.method).isEqualTo("GET")
+    assertThat(dnsRequest)
+      .isEqualTo(queryRequest("google.com", TYPE_A))
   }
 
   @Test
   fun failOnExcessiveResponse() {
     val array = CharArray(128 * 1024 + 2) { '0' }
-    server.enqueue(dnsResponse(String(array)))
+    dnsOverHttpsServer.override = overrideResponse(String(array))
     try {
       dns.lookup("google.com")
       fail<Any>()
@@ -161,7 +160,7 @@ class DnsOverHttpsTest {
 
   @Test
   fun failOnBadResponse() {
-    server.enqueue(dnsResponse("00"))
+    dnsOverHttpsServer.override = overrideResponse("00")
     try {
       dns.lookup("google.com")
       fail<Any>()
@@ -183,39 +182,49 @@ class DnsOverHttpsTest {
     val cachedClient = bootstrapClient.newBuilder().cache(cache).build()
     val cachedDns = buildLocalhost(cachedClient, false)
 
-    repeat(2) {
-      server.enqueue(
-        dnsResponse(
-          "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
-            "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
-            "0003b00049df00112",
-        ).newBuilder()
-          .setHeader("cache-control", "private, max-age=298")
-          .build(),
+    dnsOverHttpsServer.extraHeaders =
+      headersOf(
+        "cache-control",
+        "private, max-age=298",
       )
-    }
+    dnsOverHttpsServer["google.com"] =
+      listOf(
+        ResourceRecord.IpAddress(
+          name = "star.c10r.facebook.com",
+          timeToLive = 59,
+          address = InetAddress.getByName("157.240.1.18"),
+        ),
+      )
+    dnsOverHttpsServer["www.google.com"] =
+      listOf(
+        ResourceRecord.IpAddress(
+          name = "star.c10r.facebook.com",
+          timeToLive = 59,
+          address = InetAddress.getByName("157.240.1.18"),
+        ),
+      )
 
     var result = cachedDns.lookup("google.com")
     assertThat(result).containsExactly(address("157.240.1.18"))
-    var recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.method).isEqualTo("GET")
-    assertThat(recordedRequest.url.encodedQuery)
-      .isEqualTo("ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ")
+    val (httpsRequest1, dnsRequest1) = dnsOverHttpsServer.takeRequest()
+    assertThat(httpsRequest1.method).isEqualTo("GET")
+    assertThat(dnsRequest1)
+      .isEqualTo(queryRequest("google.com", TYPE_A))
 
     assertThat(cacheEvents()).containsExactly(CacheMiss::class)
 
     result = cachedDns.lookup("google.com")
-    assertThat(server.takeRequest(1, TimeUnit.MILLISECONDS)).isNull()
+    assertThat(dnsOverHttpsServer.pollRequest()).isNull()
     assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
 
     assertThat(cacheEvents()).containsExactly(CacheHit::class)
 
     result = cachedDns.lookup("www.google.com")
     assertThat(result).containsExactly(address("157.240.1.18"))
-    recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.method).isEqualTo("GET")
-    assertThat(recordedRequest.url.encodedQuery)
-      .isEqualTo("ct&dns=AAABAAABAAAAAAAAA3d3dwZnb29nbGUDY29tAAABAAE")
+    val (httpsRequest2, dnsRequest2) = dnsOverHttpsServer.takeRequest()
+    assertThat(httpsRequest2.method).isEqualTo("GET")
+    assertThat(dnsRequest2)
+      .isEqualTo(queryRequest("www.google.com", TYPE_A))
 
     assertThat(cacheEvents()).containsExactly(CacheMiss::class)
   }
@@ -225,38 +234,48 @@ class DnsOverHttpsTest {
     val cache = Cache(cacheFs, "cache".toPath(), (100 * 1024).toLong())
     val cachedClient = bootstrapClient.newBuilder().cache(cache).build()
     val cachedDns = buildLocalhost(cachedClient, false, post = true)
-    repeat(2) {
-      server.enqueue(
-        dnsResponse(
-          "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
-            "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
-            "0003b00049df00112",
-        ).newBuilder()
-          .setHeader("cache-control", "private, max-age=298")
-          .build(),
+    dnsOverHttpsServer.extraHeaders =
+      headersOf(
+        "cache-control",
+        "private, max-age=298",
       )
-    }
+    dnsOverHttpsServer["google.com"] =
+      listOf(
+        ResourceRecord.IpAddress(
+          name = "star.c10r.facebook.com",
+          timeToLive = 59,
+          address = InetAddress.getByName("157.240.1.18"),
+        ),
+      )
+    dnsOverHttpsServer["www.google.com"] =
+      listOf(
+        ResourceRecord.IpAddress(
+          name = "star.c10r.facebook.com",
+          timeToLive = 59,
+          address = InetAddress.getByName("157.240.1.18"),
+        ),
+      )
 
     var result = cachedDns.lookup("google.com")
     assertThat(result).containsExactly(address("157.240.1.18"))
-    var recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.method).isEqualTo("POST")
-    assertThat(recordedRequest.url.encodedQuery)
+    val (httpsRequest1, _) = dnsOverHttpsServer.takeRequest()
+    assertThat(httpsRequest1.method).isEqualTo("POST")
+    assertThat(httpsRequest1.url.encodedQuery)
       .isEqualTo("ct")
 
     assertThat(cacheEvents()).containsExactly(CacheMiss::class)
 
     result = cachedDns.lookup("google.com")
-    assertThat(server.takeRequest(0, TimeUnit.MILLISECONDS)).isNull()
+    assertThat(dnsOverHttpsServer.pollRequest()).isNull()
     assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
 
     assertThat(cacheEvents()).containsExactly(CacheHit::class)
 
     result = cachedDns.lookup("www.google.com")
     assertThat(result).containsExactly(address("157.240.1.18"))
-    recordedRequest = server.takeRequest(0, TimeUnit.MILLISECONDS)!!
-    assertThat(recordedRequest.method).isEqualTo("POST")
-    assertThat(recordedRequest.url.encodedQuery)
+    val (httpsRequest2, _) = dnsOverHttpsServer.takeRequest()
+    assertThat(httpsRequest2.method).isEqualTo("POST")
+    assertThat(httpsRequest2.url.encodedQuery)
       .isEqualTo("ct")
 
     assertThat(cacheEvents()).containsExactly(CacheMiss::class)
@@ -267,41 +286,35 @@ class DnsOverHttpsTest {
     val cache = Cache(File("./target/DnsOverHttpsTest.cache"), 100 * 1024L)
     val cachedClient = bootstrapClient.newBuilder().cache(cache).build()
     val cachedDns = buildLocalhost(cachedClient, false)
-    server.enqueue(
-      dnsResponse(
-        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
-          "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
-          "0003b00049df00112",
-      ).newBuilder()
-        .setHeader("cache-control", "max-age=1")
-        .build(),
-    )
+    dnsOverHttpsServer.extraHeaders =
+      headersOf(
+        "cache-control",
+        "max-age=1",
+      )
+    dnsOverHttpsServer["google.com"] =
+      listOf(
+        ResourceRecord.IpAddress(
+          name = "star.c10r.facebook.com",
+          timeToLive = 59,
+          address = InetAddress.getByName("157.240.1.18"),
+        ),
+      )
     var result = cachedDns.lookup("google.com")
     assertThat(result).containsExactly(address("157.240.1.18"))
-    var recordedRequest = server.takeRequest(0, TimeUnit.SECONDS)
-    assertThat(recordedRequest!!.method).isEqualTo("GET")
-    assertThat(recordedRequest.url.encodedQuery).isEqualTo(
-      "ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
-    )
+    val (httpsRequest1, dnsRequest1) = dnsOverHttpsServer.takeRequest()
+    assertThat(httpsRequest1.method).isEqualTo("GET")
+    assertThat(dnsRequest1)
+      .isEqualTo(queryRequest("google.com", TYPE_A))
 
     assertThat(cacheEvents()).containsExactly(CacheMiss::class)
 
     Thread.sleep(2000)
-    server.enqueue(
-      dnsResponse(
-        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c000500010" +
-          "0000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010001000" +
-          "0003b00049df00112",
-      ).newBuilder()
-        .setHeader("cache-control", "max-age=1")
-        .build(),
-    )
     result = cachedDns.lookup("google.com")
     assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
-    recordedRequest = server.takeRequest(0, TimeUnit.SECONDS)
-    assertThat(recordedRequest!!.method).isEqualTo("GET")
-    assertThat(recordedRequest.url.encodedQuery)
-      .isEqualTo("ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ")
+    val (httpsRequest2, dnsRequest2) = dnsOverHttpsServer.takeRequest()
+    assertThat(httpsRequest2.method).isEqualTo("GET")
+    assertThat(dnsRequest2)
+      .isEqualTo(queryRequest("google.com", TYPE_A))
 
     assertThat(cacheEvents()).containsExactly(CacheMiss::class)
   }
@@ -311,14 +324,6 @@ class DnsOverHttpsTest {
       .recordedEventTypes()
       .filter { "Cache" in it.simpleName!! }
       .also { eventRecorder.clearAllEvents() }
-
-  private fun dnsResponse(s: String): MockResponse =
-    MockResponse
-      .Builder()
-      .body(Buffer().write(s.decodeHex()))
-      .addHeader("content-type", "application/dns-message")
-      .addHeader("content-length", s.length / 2)
-      .build()
 
   private fun buildLocalhost(
     bootstrapClient: OkHttpClient,
@@ -335,6 +340,31 @@ class DnsOverHttpsTest {
       .post(post)
       .build()
   }
+
+  private fun overrideResponse(body: String): MockResponse =
+    MockResponse
+      .Builder()
+      .body(Buffer().write(body.decodeHex()))
+      .addHeader("content-type", "application/dns-message")
+      .addHeader("content-length", body.length / 2)
+      .build()
+
+  private fun queryRequest(
+    host: String,
+    type: Int,
+  ): DnsMessage =
+    DnsMessage(
+      id = 0,
+      flags = 256,
+      questions =
+        listOf(
+          Question(
+            name = host,
+            type = type,
+            `class` = CLASS_IN,
+          ),
+        ),
+    )
 
   companion object {
     private fun address(host: String) = InetAddress.getByName(host)

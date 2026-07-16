@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:OptIn(OkHttpInternalApi::class)
+
 package okhttp3.internal.dns
 
 import java.io.IOException
@@ -20,6 +22,7 @@ import java.net.UnknownHostException
 import java.util.concurrent.atomic.AtomicReference
 import okhttp3.Dns
 import okhttp3.Dns2
+import okhttp3.internal.OkHttpInternalApi
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.testAndSet
