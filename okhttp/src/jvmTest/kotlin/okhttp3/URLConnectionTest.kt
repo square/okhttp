@@ -706,7 +706,7 @@ class URLConnectionTest {
    * When a pooled connection fails, don't blame the route. Otherwise pooled connection failures can
    * cause unnecessary SSL fallbacks.
    *
-   * https://github.com/square/okhttp/issues/515
+   * https://github.com/lysine-dev/okhttp/issues/515
    */
   @Test
   fun sslFallbackNotUsedWhenRecycledConnectionFails() {
@@ -752,7 +752,7 @@ class URLConnectionTest {
   @Flaky
   @Test
   fun connectViaHttpsToUntrustedServer() {
-    // Flaky https://github.com/square/okhttp/issues/5222
+    // Flaky https://github.com/lysine-dev/okhttp/issues/5222
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse()) // unused
     assertFailsWith<IOException> {
@@ -1793,7 +1793,7 @@ class URLConnectionTest {
     postBodyRetransmittedAfterAuthorizationFail("abc")
   }
 
-  /** Don't explode when resending an empty post. https://github.com/square/okhttp/issues/1131  */
+  /** Don't explode when resending an empty post. https://github.com/lysine-dev/okhttp/issues/1131  */
   @Test
   fun postEmptyBodyRetransmittedAfterAuthorizationFail() {
     postBodyRetransmittedAfterAuthorizationFail("")
@@ -2302,7 +2302,7 @@ class URLConnectionTest {
     }
   }
 
-  /** https://github.com/square/okhttp/issues/342  */
+  /** https://github.com/lysine-dev/okhttp/issues/342  */
   @Test
   fun authenticateRealmUppercase() {
     server.enqueue(
@@ -4111,7 +4111,7 @@ class URLConnectionTest {
   /**
    * We had a bug where we attempted to gunzip responses that didn't have a body. This only came up
    * with 304s since that response code can include headers (like "Content-Encoding") without any
-   * content to go along with it. https://github.com/square/okhttp/issues/358
+   * content to go along with it. https://github.com/lysine-dev/okhttp/issues/358
    */
   @Test
   fun noTransparentGzipFor304NotModified() {
@@ -4140,7 +4140,7 @@ class URLConnectionTest {
 
   /**
    * We had a bug where we weren't closing Gzip streams on redirects.
-   * https://github.com/square/okhttp/issues/441
+   * https://github.com/lysine-dev/okhttp/issues/441
    */
   @Test
   fun gzipWithRedirectAndConnectionReuse() {
