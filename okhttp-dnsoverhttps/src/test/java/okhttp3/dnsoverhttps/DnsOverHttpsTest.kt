@@ -15,6 +15,7 @@
  */
 package okhttp3.dnsoverhttps
 
+import app.cash.burst.Burst
 import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.containsExactly
@@ -25,9 +26,10 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
 import java.io.EOFException
 import java.io.File
-import java.io.IOException
 import java.net.InetAddress
 import java.net.UnknownHostException
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
 import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
@@ -37,7 +39,7 @@ import okhttp3.Cache
 import okhttp3.CallEvent
 import okhttp3.CallEvent.CacheHit
 import okhttp3.CallEvent.CacheMiss
-import okhttp3.Dns
+import okhttp3.Dns2
 import okhttp3.EventRecorder
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.OkHttpClient
@@ -45,6 +47,7 @@ import okhttp3.Protocol
 import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
+import okio.IOException
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
 import org.junit.jupiter.api.Assertions.fail
@@ -54,7 +57,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @Tag("Slowish")
-class DnsOverHttpsTest {
+@Burst
+class DnsOverHttpsTest(
+  private val entryPoint: EntryPoint = EntryPoint.NewCall,
+) {
   @RegisterExtension
   val platform = PlatformRule()
 
@@ -67,7 +73,7 @@ class DnsOverHttpsTest {
         dispatcher = dnsOverHttpsServer
       }
 
-  private lateinit var dns: Dns
+  private lateinit var dns: DnsOverHttps
   private val cacheFs = FakeFileSystem()
   private val eventRecorder = EventRecorder()
   private val bootstrapClient =
@@ -85,62 +91,47 @@ class DnsOverHttpsTest {
 
   @Test
   fun getOne() {
-    dnsOverHttpsServer["google.com"] =
-      listOf(
-        ResourceRecord.IpAddress(
-          name = "star.c10r.facebook.com",
-          timeToLive = 59,
-          address = InetAddress.getByName("157.240.1.18"),
-        ),
-      )
-    val result = dns.lookup("google.com")
-    assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
+    dnsOverHttpsServer["lysine.dev"] = listOf(InetAddress.getByName("10.20.30.40"))
+    val result = dns.invoke("lysine.dev")
+    assertThat(result).isEqualTo(listOf(address("10.20.30.40")))
     val (httpsRequest, dnsRequest) = dnsOverHttpsServer.takeRequest()
     assertThat(httpsRequest.method).isEqualTo("GET")
     assertThat(dnsRequest)
-      .isEqualTo(queryRequest("google.com", TYPE_A))
+      .isEqualTo(queryRequest("lysine.dev", TYPE_A))
   }
 
   @Test
   fun getIpv6() {
-    dnsOverHttpsServer["google.com"] =
+    dnsOverHttpsServer["lysine.dev"] =
       listOf(
-        ResourceRecord.IpAddress(
-          name = "star.c10r.facebook.com",
-          timeToLive = 59,
-          address = InetAddress.getByName("157.240.1.18"),
-        ),
-        ResourceRecord.IpAddress(
-          name = "star.c10r.facebook.com",
-          timeToLive = 59,
-          address = InetAddress.getByName("2a03:2880:f029:11:face:b00c:0:2"),
-        ),
+        InetAddress.getByName("10.20.30.40"),
+        InetAddress.getByName("1:2::3:4"),
       )
     dns = buildLocalhost(bootstrapClient, true)
-    val result = dns.lookup("google.com")
+    val result = dns("lysine.dev")
     assertThat(result.size).isEqualTo(2)
-    assertThat(result).contains(address("157.240.1.18"))
-    assertThat(result).contains(address("2a03:2880:f029:11:face:b00c:0:2"))
+    assertThat(result).contains(address("10.20.30.40"))
+    assertThat(result).contains(address("1:2::3:4"))
     val (httpsRequest1, dnsRequest1) = dnsOverHttpsServer.takeRequest()
     assertThat(httpsRequest1.method).isEqualTo("GET")
     val (httpsRequest2, dnsRequest2) = dnsOverHttpsServer.takeRequest()
     assertThat(httpsRequest2.method).isEqualTo("GET")
     assertThat(listOf(dnsRequest1, dnsRequest2))
       .containsExactlyInAnyOrder(
-        queryRequest("google.com", TYPE_A),
-        queryRequest("google.com", TYPE_AAAA),
+        queryRequest("lysine.dev", TYPE_A),
+        queryRequest("lysine.dev", TYPE_AAAA),
       )
   }
 
   @Test
   fun failure() {
     assertFailsWith<UnknownHostException> {
-      dns.lookup("google.com")
+      dns("lysine.dev")
     }
     val (httpsRequest, dnsRequest) = dnsOverHttpsServer.takeRequest()
     assertThat(httpsRequest.method).isEqualTo("GET")
     assertThat(dnsRequest)
-      .isEqualTo(queryRequest("google.com", TYPE_A))
+      .isEqualTo(queryRequest("lysine.dev", TYPE_A))
   }
 
   @Test
@@ -148,26 +139,23 @@ class DnsOverHttpsTest {
     val array = CharArray(128 * 1024 + 2) { '0' }
     dnsOverHttpsServer.override = overrideResponse(String(array))
     try {
-      dns.lookup("google.com")
+      dns("lysine.dev")
       fail<Any>()
-    } catch (ioe: IOException) {
-      assertThat(ioe.message).isEqualTo("google.com")
-      val cause = ioe.cause!!
-      assertThat(cause).isInstanceOf<IOException>()
-      assertThat(cause).hasMessage("response size exceeds limit (65536 bytes): 65537 bytes")
+    } catch (e: IOException) {
+      val rootCause = e.cause ?: e
+      assertThat(rootCause).hasMessage("response size exceeds limit (65536 bytes): 65537 bytes")
     }
   }
 
   @Test
   fun failOnBadResponse() {
     dnsOverHttpsServer.override = overrideResponse("00")
-    try {
-      dns.lookup("google.com")
-      fail<Any>()
-    } catch (ioe: IOException) {
-      assertThat(ioe).hasMessage("google.com")
-      assertThat(ioe.cause!!).isInstanceOf<EOFException>()
-    }
+    val e =
+      assertFailsWith<IOException> {
+        dns("lysine.dev")
+      }
+    val rootCause = e.cause ?: e
+    assertThat(rootCause).isInstanceOf<EOFException>()
   }
 
   // TODO GET preferred order - with tests to confirm this
@@ -187,44 +175,30 @@ class DnsOverHttpsTest {
         "cache-control",
         "private, max-age=298",
       )
-    dnsOverHttpsServer["google.com"] =
-      listOf(
-        ResourceRecord.IpAddress(
-          name = "star.c10r.facebook.com",
-          timeToLive = 59,
-          address = InetAddress.getByName("157.240.1.18"),
-        ),
-      )
-    dnsOverHttpsServer["www.google.com"] =
-      listOf(
-        ResourceRecord.IpAddress(
-          name = "star.c10r.facebook.com",
-          timeToLive = 59,
-          address = InetAddress.getByName("157.240.1.18"),
-        ),
-      )
+    dnsOverHttpsServer["lysine.dev"] = listOf(InetAddress.getByName("10.20.30.40"))
+    dnsOverHttpsServer["alternate.lysine.dev"] = listOf(InetAddress.getByName("55.66.77.88"))
 
-    var result = cachedDns.lookup("google.com")
-    assertThat(result).containsExactly(address("157.240.1.18"))
+    val result1 = cachedDns("lysine.dev")
+    assertThat(result1).containsExactly(address("10.20.30.40"))
     val (httpsRequest1, dnsRequest1) = dnsOverHttpsServer.takeRequest()
     assertThat(httpsRequest1.method).isEqualTo("GET")
     assertThat(dnsRequest1)
-      .isEqualTo(queryRequest("google.com", TYPE_A))
+      .isEqualTo(queryRequest("lysine.dev", TYPE_A))
 
     assertThat(cacheEvents()).containsExactly(CacheMiss::class)
 
-    result = cachedDns.lookup("google.com")
+    val result2 = cachedDns("lysine.dev")
     assertThat(dnsOverHttpsServer.pollRequest()).isNull()
-    assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
+    assertThat(result2).isEqualTo(listOf(address("10.20.30.40")))
 
     assertThat(cacheEvents()).containsExactly(CacheHit::class)
 
-    result = cachedDns.lookup("www.google.com")
-    assertThat(result).containsExactly(address("157.240.1.18"))
+    val result3 = cachedDns("alternate.lysine.dev")
+    assertThat(result3).containsExactly(address("55.66.77.88"))
     val (httpsRequest2, dnsRequest2) = dnsOverHttpsServer.takeRequest()
     assertThat(httpsRequest2.method).isEqualTo("GET")
     assertThat(dnsRequest2)
-      .isEqualTo(queryRequest("www.google.com", TYPE_A))
+      .isEqualTo(queryRequest("alternate.lysine.dev", TYPE_A))
 
     assertThat(cacheEvents()).containsExactly(CacheMiss::class)
   }
@@ -239,25 +213,11 @@ class DnsOverHttpsTest {
         "cache-control",
         "private, max-age=298",
       )
-    dnsOverHttpsServer["google.com"] =
-      listOf(
-        ResourceRecord.IpAddress(
-          name = "star.c10r.facebook.com",
-          timeToLive = 59,
-          address = InetAddress.getByName("157.240.1.18"),
-        ),
-      )
-    dnsOverHttpsServer["www.google.com"] =
-      listOf(
-        ResourceRecord.IpAddress(
-          name = "star.c10r.facebook.com",
-          timeToLive = 59,
-          address = InetAddress.getByName("157.240.1.18"),
-        ),
-      )
+    dnsOverHttpsServer["lysine.dev"] = listOf(InetAddress.getByName("10.20.30.40"))
+    dnsOverHttpsServer["alternate.lysine.dev"] = listOf(InetAddress.getByName("55.66.77.88"))
 
-    var result = cachedDns.lookup("google.com")
-    assertThat(result).containsExactly(address("157.240.1.18"))
+    val result1 = cachedDns("lysine.dev")
+    assertThat(result1).containsExactly(address("10.20.30.40"))
     val (httpsRequest1, _) = dnsOverHttpsServer.takeRequest()
     assertThat(httpsRequest1.method).isEqualTo("POST")
     assertThat(httpsRequest1.url.encodedQuery)
@@ -265,14 +225,14 @@ class DnsOverHttpsTest {
 
     assertThat(cacheEvents()).containsExactly(CacheMiss::class)
 
-    result = cachedDns.lookup("google.com")
+    val result2 = cachedDns("lysine.dev")
     assertThat(dnsOverHttpsServer.pollRequest()).isNull()
-    assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
+    assertThat(result2).isEqualTo(listOf(address("10.20.30.40")))
 
     assertThat(cacheEvents()).containsExactly(CacheHit::class)
 
-    result = cachedDns.lookup("www.google.com")
-    assertThat(result).containsExactly(address("157.240.1.18"))
+    val result3 = cachedDns("alternate.lysine.dev")
+    assertThat(result3).containsExactly(address("55.66.77.88"))
     val (httpsRequest2, _) = dnsOverHttpsServer.takeRequest()
     assertThat(httpsRequest2.method).isEqualTo("POST")
     assertThat(httpsRequest2.url.encodedQuery)
@@ -289,32 +249,24 @@ class DnsOverHttpsTest {
     dnsOverHttpsServer.extraHeaders =
       headersOf(
         "cache-control",
-        "max-age=1",
+        "no-store",
       )
-    dnsOverHttpsServer["google.com"] =
-      listOf(
-        ResourceRecord.IpAddress(
-          name = "star.c10r.facebook.com",
-          timeToLive = 59,
-          address = InetAddress.getByName("157.240.1.18"),
-        ),
-      )
-    var result = cachedDns.lookup("google.com")
-    assertThat(result).containsExactly(address("157.240.1.18"))
+    dnsOverHttpsServer["lysine.dev"] = listOf(InetAddress.getByName("10.20.30.40"))
+    val result1 = cachedDns("lysine.dev")
+    assertThat(result1).containsExactly(address("10.20.30.40"))
     val (httpsRequest1, dnsRequest1) = dnsOverHttpsServer.takeRequest()
     assertThat(httpsRequest1.method).isEqualTo("GET")
     assertThat(dnsRequest1)
-      .isEqualTo(queryRequest("google.com", TYPE_A))
+      .isEqualTo(queryRequest("lysine.dev", TYPE_A))
 
     assertThat(cacheEvents()).containsExactly(CacheMiss::class)
 
-    Thread.sleep(2000)
-    result = cachedDns.lookup("google.com")
-    assertThat(result).isEqualTo(listOf(address("157.240.1.18")))
+    val result2 = cachedDns("lysine.dev")
+    assertThat(result2).isEqualTo(listOf(address("10.20.30.40")))
     val (httpsRequest2, dnsRequest2) = dnsOverHttpsServer.takeRequest()
     assertThat(httpsRequest2.method).isEqualTo("GET")
     assertThat(dnsRequest2)
-      .isEqualTo(queryRequest("google.com", TYPE_A))
+      .isEqualTo(queryRequest("lysine.dev", TYPE_A))
 
     assertThat(cacheEvents()).containsExactly(CacheMiss::class)
   }
@@ -365,6 +317,63 @@ class DnsOverHttpsTest {
           ),
         ),
     )
+
+  /**
+   * Use Burst to call either the blocking API or the non-blocking API, both with a signature that
+   * resembles the [InetAddress.getAllByName] API.
+   */
+  private operator fun DnsOverHttps.invoke(hostname: String): List<InetAddress> =
+    when (entryPoint) {
+      EntryPoint.Lookup -> {
+        lookup(hostname)
+      }
+
+      EntryPoint.NewCall -> {
+        val future = CompletableFuture<List<InetAddress>>()
+
+        val call = newCall(Dns2.Request(hostname))
+        call.enqueue(
+          object : Dns2.Callback {
+            private val results = mutableListOf<InetAddress>()
+
+            override fun onRecords(
+              call: Dns2.Call,
+              last: Boolean,
+              records: List<Dns2.Record>,
+            ) {
+              this.results +=
+                records
+                  .filterIsInstance<Dns2.Record.IpAddress>()
+                  .map { it.address }
+              if (last) {
+                when {
+                  results.isNotEmpty() -> future.complete(this.results)
+                  else -> future.completeExceptionally(UnknownHostException())
+                }
+              }
+            }
+
+            override fun onFailure(
+              call: Dns2.Call,
+              e: IOException,
+            ) {
+              future.completeExceptionally(e)
+            }
+          },
+        )
+
+        try {
+          future.get()
+        } catch (e: ExecutionException) {
+          throw e.cause!!
+        }
+      }
+    }
+
+  enum class EntryPoint {
+    Lookup,
+    NewCall,
+  }
 
   companion object {
     private fun address(host: String) = InetAddress.getByName(host)
