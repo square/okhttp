@@ -19,13 +19,13 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.BlockingDeque
 import java.util.concurrent.LinkedBlockingDeque
-import okhttp3.Dns2
+import okhttp3.Dns
 import okio.IOException
 
 sealed interface DnsEvent {
   data class Records(
     val last: Boolean,
-    val records: List<Dns2.Record>,
+    val records: List<Dns.Record>,
   ) : DnsEvent
 
   data class Failure(
@@ -33,21 +33,21 @@ sealed interface DnsEvent {
   ) : DnsEvent
 }
 
-internal fun Dns2.Call.execute(): BlockingDeque<DnsEvent> {
+internal fun Dns.Call.execute(): BlockingDeque<DnsEvent> {
   val result = LinkedBlockingDeque<DnsEvent>()
 
   enqueue(
-    object : Dns2.Callback {
+    object : Dns.Callback {
       override fun onRecords(
-        call: Dns2.Call,
+        call: Dns.Call,
         last: Boolean,
-        records: List<Dns2.Record>,
+        records: List<Dns.Record>,
       ) {
         result.put(DnsEvent.Records(last, records))
       }
 
       override fun onFailure(
-        call: Dns2.Call,
+        call: Dns.Call,
         e: IOException,
       ) {
         result.put(DnsEvent.Failure(e))
@@ -73,7 +73,7 @@ operator fun DnsOverHttps.invoke(
 
     EntryPoint.NewCall -> {
       buildList {
-        val dnsEvents = newCall(Dns2.Request(hostname)).execute()
+        val dnsEvents = newCall(Dns.Request(hostname)).execute()
         while (true) {
           when (val dnsEvent = dnsEvents.take()) {
             is DnsEvent.Failure -> {
@@ -83,7 +83,7 @@ operator fun DnsOverHttps.invoke(
             is DnsEvent.Records -> {
               addAll(
                 dnsEvent.records
-                  .filterIsInstance<Dns2.Record.IpAddress>()
+                  .filterIsInstance<Dns.Record.IpAddress>()
                   .map { it.address },
               )
 

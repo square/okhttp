@@ -24,65 +24,65 @@ import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import okio.ByteString.Companion.encodeUtf8
 
-class Dns2Test {
+class DnsValuesTest {
   @Test
   fun `request canonical hostname`() {
-    assertThat(Dns2.Request(hostname = "EXAMPLE.COM").hostname)
+    assertThat(Dns.Request(hostname = "EXAMPLE.COM").hostname)
       .isEqualTo("example.com")
   }
 
   @Test
   fun `request invalid hostname`() {
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Request(hostname = "")
+      Dns.Request(hostname = "")
     }
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Request(hostname = "a".repeat(64))
+      Dns.Request(hostname = "a".repeat(64))
     }
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Request(hostname = ("${"a".repeat(55)}.".repeat(5)))
+      Dns.Request(hostname = ("${"a".repeat(55)}.".repeat(5)))
     }
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Request(hostname = "a?b")
+      Dns.Request(hostname = "a?b")
     }
   }
 
   @Test
   fun `request invalid port`() {
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Request(hostname = "example.com", port = -2)
+      Dns.Request(hostname = "example.com", port = -2)
     }
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Request(hostname = "example.com", port = 0)
+      Dns.Request(hostname = "example.com", port = 0)
     }
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Request(hostname = "example.com", port = 65536)
+      Dns.Request(hostname = "example.com", port = 65536)
     }
   }
 
   @Test
   fun `default port`() {
-    assertThat(Dns2.Request(hostname = "example.com", port = -1).port)
+    assertThat(Dns.Request(hostname = "example.com", port = -1).port)
       .isEqualTo(443)
   }
 
   @Test
   fun `request equals and hashCode`() {
-    assertThat(Dns2.Request(hostname = "example.com", port = 443))
-      .isEqualTo(Dns2.Request(hostname = "example.com", port = 443))
-    assertThat(Dns2.Request(hostname = "example.com", port = 443).hashCode())
-      .isEqualTo(Dns2.Request(hostname = "example.com", port = 443).hashCode())
-    assertThat(Dns2.Request(hostname = "example.com", port = 443))
-      .isNotEqualTo(Dns2.Request(hostname = "example.com", port = 8443))
-    assertThat(Dns2.Request(hostname = "example.com", port = 443))
-      .isNotEqualTo(Dns2.Request(hostname = "example.net", port = 443))
+    assertThat(Dns.Request(hostname = "example.com", port = 443))
+      .isEqualTo(Dns.Request(hostname = "example.com", port = 443))
+    assertThat(Dns.Request(hostname = "example.com", port = 443).hashCode())
+      .isEqualTo(Dns.Request(hostname = "example.com", port = 443).hashCode())
+    assertThat(Dns.Request(hostname = "example.com", port = 443))
+      .isNotEqualTo(Dns.Request(hostname = "example.com", port = 8443))
+    assertThat(Dns.Request(hostname = "example.com", port = 443))
+      .isNotEqualTo(Dns.Request(hostname = "example.net", port = 443))
   }
 
   @Test
   fun `request to string`() {
-    assertThat(Dns2.Request(hostname = "example.com", port = 443).toString())
+    assertThat(Dns.Request(hostname = "example.com", port = 443).toString())
       .isEqualTo("example.com")
-    assertThat(Dns2.Request(hostname = "example.com", port = 8443).toString())
+    assertThat(Dns.Request(hostname = "example.com", port = 8443).toString())
       .isEqualTo("example.com:8443")
   }
 
@@ -90,16 +90,16 @@ class Dns2Test {
   fun `ip address record invalid hostname`() {
     val address = InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Record.IpAddress(hostname = "", address = address)
+      Dns.Record.IpAddress(hostname = "", address = address)
     }
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Record.IpAddress(hostname = "a".repeat(64), address = address)
+      Dns.Record.IpAddress(hostname = "a".repeat(64), address = address)
     }
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Record.IpAddress(hostname = ("${"a".repeat(55)}.".repeat(5)), address = address)
+      Dns.Record.IpAddress(hostname = ("${"a".repeat(55)}.".repeat(5)), address = address)
     }
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Record.IpAddress(hostname = "a?b", address = address)
+      Dns.Record.IpAddress(hostname = "a?b", address = address)
     }
   }
 
@@ -107,60 +107,60 @@ class Dns2Test {
   fun `ip address equals and hashCode`() {
     val address1 = InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))
     val address2 = InetAddress.getByAddress(byteArrayOf(127, 0, 0, 2))
-    assertThat(Dns2.Record.IpAddress(hostname = "example.com", address = address1))
-      .isEqualTo(Dns2.Record.IpAddress(hostname = "example.com", address = address1))
-    assertThat(Dns2.Record.IpAddress(hostname = "example.com", address = address1).hashCode())
-      .isEqualTo(Dns2.Record.IpAddress(hostname = "example.com", address = address1).hashCode())
-    assertThat(Dns2.Record.IpAddress(hostname = "example.com", address = address1))
-      .isNotEqualTo(Dns2.Record.IpAddress(hostname = "example.com", address = address2))
-    assertThat(Dns2.Record.IpAddress(hostname = "example.com", address = address1).hashCode())
-      .isNotEqualTo(Dns2.Record.IpAddress(hostname = "example.com", address = address2).hashCode())
-    assertThat(Dns2.Record.IpAddress(hostname = "example.com", address = address1))
-      .isNotEqualTo(Dns2.Record.IpAddress(hostname = "example.net", address = address1))
-    assertThat(Dns2.Record.IpAddress(hostname = "example.com", address = address1).hashCode())
-      .isNotEqualTo(Dns2.Record.IpAddress(hostname = "example.net", address = address1).hashCode())
+    assertThat(Dns.Record.IpAddress(hostname = "example.com", address = address1))
+      .isEqualTo(Dns.Record.IpAddress(hostname = "example.com", address = address1))
+    assertThat(Dns.Record.IpAddress(hostname = "example.com", address = address1).hashCode())
+      .isEqualTo(Dns.Record.IpAddress(hostname = "example.com", address = address1).hashCode())
+    assertThat(Dns.Record.IpAddress(hostname = "example.com", address = address1))
+      .isNotEqualTo(Dns.Record.IpAddress(hostname = "example.com", address = address2))
+    assertThat(Dns.Record.IpAddress(hostname = "example.com", address = address1).hashCode())
+      .isNotEqualTo(Dns.Record.IpAddress(hostname = "example.com", address = address2).hashCode())
+    assertThat(Dns.Record.IpAddress(hostname = "example.com", address = address1))
+      .isNotEqualTo(Dns.Record.IpAddress(hostname = "example.net", address = address1))
+    assertThat(Dns.Record.IpAddress(hostname = "example.com", address = address1).hashCode())
+      .isNotEqualTo(Dns.Record.IpAddress(hostname = "example.net", address = address1).hashCode())
   }
 
   @Test
   fun `ip address toString`() {
     val address = InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))
-    assertThat(Dns2.Record.IpAddress(hostname = "example.com", address = address).toString())
+    assertThat(Dns.Record.IpAddress(hostname = "example.com", address = address).toString())
       .isEqualTo("example.com/127.0.0.1")
   }
 
   @Test
   fun `service metadata invalid hostname`() {
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Record.ServiceMetadata(hostname = "")
+      Dns.Record.ServiceMetadata(hostname = "")
     }
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Record.ServiceMetadata(hostname = "a".repeat(64))
+      Dns.Record.ServiceMetadata(hostname = "a".repeat(64))
     }
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Record.ServiceMetadata(hostname = ("${"a".repeat(55)}.".repeat(5)))
+      Dns.Record.ServiceMetadata(hostname = ("${"a".repeat(55)}.".repeat(5)))
     }
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Record.ServiceMetadata(hostname = "a?b")
+      Dns.Record.ServiceMetadata(hostname = "a?b")
     }
   }
 
   @Test
   fun `service metadata invalid port`() {
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Record.ServiceMetadata(hostname = "example.com", port = -2)
+      Dns.Record.ServiceMetadata(hostname = "example.com", port = -2)
     }
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Record.ServiceMetadata(hostname = "example.com", port = 0)
+      Dns.Record.ServiceMetadata(hostname = "example.com", port = 0)
     }
     assertFailsWith<IllegalArgumentException> {
-      Dns2.Record.ServiceMetadata(hostname = "example.com", port = 65536)
+      Dns.Record.ServiceMetadata(hostname = "example.com", port = 65536)
     }
   }
 
   @Test
   fun `service metadata equals and hashCode`() {
     val original =
-      Dns2.Record.ServiceMetadata(
+      Dns.Record.ServiceMetadata(
         hostname = "example.com",
         port = 443,
         alpnIds = listOf(Protocol.HTTP_1_1, Protocol.HTTP_2),
@@ -168,7 +168,7 @@ class Dns2Test {
         echConfigList = "hello I am ECH config".encodeUtf8(),
       )
     assertThat(original).isEqualTo(
-      Dns2.Record.ServiceMetadata(
+      Dns.Record.ServiceMetadata(
         hostname = "example.com",
         port = 443,
         alpnIds = listOf(Protocol.HTTP_1_1, Protocol.HTTP_2),
@@ -177,7 +177,7 @@ class Dns2Test {
       ),
     )
     assertThat(original.hashCode()).isEqualTo(
-      Dns2.Record
+      Dns.Record
         .ServiceMetadata(
           hostname = "example.com",
           port = 443,
@@ -187,35 +187,35 @@ class Dns2Test {
         ).hashCode(),
     )
     assertThat(original).isNotIn(
-      Dns2.Record.ServiceMetadata(
+      Dns.Record.ServiceMetadata(
         hostname = "example.net",
         port = 443,
         alpnIds = listOf(Protocol.HTTP_1_1, Protocol.HTTP_2),
         ipAddressHints = listOf(InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))),
         echConfigList = "hello I am ECH config".encodeUtf8(),
       ),
-      Dns2.Record.ServiceMetadata(
+      Dns.Record.ServiceMetadata(
         hostname = "example.com",
         port = 8443,
         alpnIds = listOf(Protocol.HTTP_1_1, Protocol.HTTP_2),
         ipAddressHints = listOf(InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))),
         echConfigList = "hello I am ECH config".encodeUtf8(),
       ),
-      Dns2.Record.ServiceMetadata(
+      Dns.Record.ServiceMetadata(
         hostname = "example.com",
         port = 443,
         alpnIds = listOf(Protocol.HTTP_1_1),
         ipAddressHints = listOf(InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))),
         echConfigList = "hello I am ECH config".encodeUtf8(),
       ),
-      Dns2.Record.ServiceMetadata(
+      Dns.Record.ServiceMetadata(
         hostname = "example.com",
         port = 443,
         alpnIds = listOf(Protocol.HTTP_1_1, Protocol.HTTP_2),
         ipAddressHints = listOf(InetAddress.getByAddress(byteArrayOf(127, 0, 0, 2))),
         echConfigList = "hello I am ECH config".encodeUtf8(),
       ),
-      Dns2.Record.ServiceMetadata(
+      Dns.Record.ServiceMetadata(
         hostname = "example.com",
         port = 443,
         alpnIds = listOf(Protocol.HTTP_1_1, Protocol.HTTP_2),
@@ -228,14 +228,14 @@ class Dns2Test {
   @Test
   fun `service metadata toString`() {
     val empty =
-      Dns2.Record.ServiceMetadata(
+      Dns.Record.ServiceMetadata(
         hostname = "example.com",
       )
     assertThat(empty.toString()).isEqualTo(
       "ServiceMetadata{example.com}",
     )
     val full =
-      Dns2.Record.ServiceMetadata(
+      Dns.Record.ServiceMetadata(
         hostname = "example.com",
         port = 443,
         alpnIds = listOf(Protocol.HTTP_1_1, Protocol.HTTP_2),

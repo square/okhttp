@@ -37,7 +37,7 @@ import okhttp3.CallEvent
 import okhttp3.CallEvent.CacheHit
 import okhttp3.CallEvent.CacheMiss
 import okhttp3.Dispatcher
-import okhttp3.Dns2
+import okhttp3.Dns
 import okhttp3.EventRecorder
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Interceptor
@@ -346,7 +346,7 @@ class DnsOverHttpsTest(
         ),
       )
 
-    val call = dns.newCall(Dns2.Request("lysine.dev"))
+    val call = dns.newCall(Dns.Request("lysine.dev"))
     val dnsEvents = call.execute()
 
     assertThat(dnsEvents.take()).isEqualTo(
@@ -354,7 +354,7 @@ class DnsOverHttpsTest(
         last = false,
         records =
           listOf(
-            Dns2.Record.ServiceMetadata(
+            Dns.Record.ServiceMetadata(
               hostname = "lysine.dev",
               alpnIds = listOf(Protocol.HTTP_2),
               port = 8843,
@@ -373,7 +373,7 @@ class DnsOverHttpsTest(
         last = false,
         records =
           listOf(
-            Dns2.Record.IpAddress(
+            Dns.Record.IpAddress(
               hostname = "lysine.dev",
               address = InetAddress.getByName("1:2::3:4"),
             ),
@@ -385,7 +385,7 @@ class DnsOverHttpsTest(
         last = true,
         records =
           listOf(
-            Dns2.Record.IpAddress(
+            Dns.Record.IpAddress(
               hostname = "lysine.dev",
               address = InetAddress.getByName("10.20.30.40"),
             ),
@@ -417,7 +417,7 @@ class DnsOverHttpsTest(
         ),
       )
 
-    val call = dns.newCall(Dns2.Request("lysine.dev"))
+    val call = dns.newCall(Dns.Request("lysine.dev"))
     val dnsEvents = call.execute()
 
     assertThat(dnsEvents.take()).isEqualTo(
@@ -425,7 +425,7 @@ class DnsOverHttpsTest(
         last = false,
         records =
           listOf(
-            Dns2.Record.IpAddress(
+            Dns.Record.IpAddress(
               hostname = "lysine.dev",
               address = InetAddress.getByName("11:22::33:44"),
             ),
@@ -437,7 +437,7 @@ class DnsOverHttpsTest(
         last = false,
         records =
           listOf(
-            Dns2.Record.IpAddress(
+            Dns.Record.IpAddress(
               hostname = "lysine.dev",
               address = InetAddress.getByName("10.20.30.40"),
             ),
@@ -465,7 +465,7 @@ class DnsOverHttpsTest(
         ),
       )
 
-    val call = dns.newCall(Dns2.Request("lysine.dev"))
+    val call = dns.newCall(Dns.Request("lysine.dev"))
     val dnsEvents = call.execute()
 
     assertThat(dnsEvents.take()).isEqualTo(
@@ -473,7 +473,7 @@ class DnsOverHttpsTest(
         last = false,
         records =
           listOf(
-            Dns2.Record.IpAddress(
+            Dns.Record.IpAddress(
               hostname = "lysine.dev",
               address = InetAddress.getByName("10.20.30.40"),
             ),
@@ -498,7 +498,7 @@ class DnsOverHttpsTest(
         ),
       )
 
-    val call = dns.newCall(Dns2.Request("lysine.dev"))
+    val call = dns.newCall(Dns.Request("lysine.dev"))
     val dnsEvents = call.execute()
 
     assertThat(dnsEvents.take()).isEqualTo(
@@ -506,7 +506,7 @@ class DnsOverHttpsTest(
         last = true,
         records =
           listOf(
-            Dns2.Record.IpAddress(
+            Dns.Record.IpAddress(
               hostname = "lysine.dev",
               address = InetAddress.getByName("10.20.30.40"),
             ),
@@ -521,7 +521,7 @@ class DnsOverHttpsTest(
 
     dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
 
-    val call = dns.newCall(Dns2.Request("lysine.dev"))
+    val call = dns.newCall(Dns.Request("lysine.dev"))
     val dnsEvents = call.execute()
 
     assertThat(dnsEvents.take()).isEqualTo(
@@ -538,7 +538,7 @@ class DnsOverHttpsTest(
 
     dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
 
-    val call = dns.newCall(Dns2.Request("lysine.dev"))
+    val call = dns.newCall(Dns.Request("lysine.dev"))
     call.cancel()
     assertThat(call.isCanceled()).isTrue()
     val dnsEvents = call.execute()
@@ -551,7 +551,7 @@ class DnsOverHttpsTest(
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
     dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
-    val call = dns.newCall(Dns2.Request("lysine.dev"))
+    val call = dns.newCall(Dns.Request("lysine.dev"))
 
     interceptor =
       Interceptor { chain ->
@@ -578,7 +578,7 @@ class DnsOverHttpsTest(
         ),
       )
 
-    val call = dns.newCall(Dns2.Request("lysine.dev"))
+    val call = dns.newCall(Dns.Request("lysine.dev"))
 
     interceptor =
       object : Interceptor {
@@ -599,7 +599,7 @@ class DnsOverHttpsTest(
         last = false,
         records =
           listOf(
-            Dns2.Record.IpAddress(
+            Dns.Record.IpAddress(
               hostname = "lysine.dev",
               address = InetAddress.getByName("11:22::33:44"),
             ),

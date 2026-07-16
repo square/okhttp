@@ -21,24 +21,22 @@ import assertk.assertions.isNull
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.LinkedBlockingDeque
+import kotlin.test.Test
 import okhttp3.internal.concurrent.TaskFaker
-import okhttp3.internal.dns.DnsAsDns2
+import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.dns.LookupDnsCall
 import okio.IOException
-import org.junit.jupiter.api.Test
 
-class DnsAsDns2Test {
+class LookupDnsCallTest {
   private val dns = BlockingFakeDns()
   private val taskFaker = TaskFaker()
-  private val dns2 =
-    DnsAsDns2(
-      taskRunner = taskFaker.taskRunner,
-      delegate = dns,
-    )
+  private val taskRunner: TaskRunner
+    get() = taskFaker.taskRunner
   private val callback = RecordingCallback()
 
   @Test
   fun `happy path`() {
-    val call = dns2.newCall(Dns2.Request("lysine.dev"))
+    val call = LookupDnsCall(taskRunner, dns, Dns.Request("lysine.dev"))
     call.enqueue(callback)
 
     val address1 = InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))
@@ -52,7 +50,7 @@ class DnsAsDns2Test {
 
   @Test
   fun `delegate throws`() {
-    val call = dns2.newCall(Dns2.Request("lysine.dev"))
+    val call = LookupDnsCall(taskRunner, dns, Dns.Request("lysine.dev"))
     call.enqueue(callback)
 
     dns.put(UnknownHostException("boom!"))
@@ -65,7 +63,7 @@ class DnsAsDns2Test {
 
   @Test
   fun `call canceled before callback is enqueued`() {
-    val call = dns2.newCall(Dns2.Request("lysine.dev"))
+    val call = LookupDnsCall(taskRunner, dns, Dns.Request("lysine.dev"))
     call.cancel()
     call.enqueue(callback)
 
@@ -73,10 +71,10 @@ class DnsAsDns2Test {
       .isEqualTo("onFailure(canceled)")
   }
 
-  /** Most importantly, the cancel is delivered to the [Dns2.Callback] immediately. */
+  /** Most importantly, the cancel is delivered to the [Dns.Callback] immediately. */
   @Test
   fun `call canceled before results are returned`() {
-    val call = dns2.newCall(Dns2.Request("lysine.dev"))
+    val call = LookupDnsCall(taskRunner, dns, Dns.Request("lysine.dev"))
     call.enqueue(callback)
 
     call.cancel()
@@ -89,7 +87,7 @@ class DnsAsDns2Test {
 
   @Test
   fun `call canceled after results are returned`() {
-    val call = dns2.newCall(Dns2.Request("lysine.dev"))
+    val call = LookupDnsCall(taskRunner, dns, Dns.Request("lysine.dev"))
     call.enqueue(callback)
 
     val address1 = InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))
@@ -106,7 +104,7 @@ class DnsAsDns2Test {
 
   @Test
   fun `results after cancel are not delivered`() {
-    val call = dns2.newCall(Dns2.Request("lysine.dev"))
+    val call = LookupDnsCall(taskRunner, dns, Dns.Request("lysine.dev"))
     call.enqueue(callback)
 
     call.cancel()
@@ -123,7 +121,7 @@ class DnsAsDns2Test {
 
   @Test
   fun `exception after cancel is not delivered`() {
-    val call = dns2.newCall(Dns2.Request("lysine.dev"))
+    val call = LookupDnsCall(taskRunner, dns, Dns.Request("lysine.dev"))
     call.enqueue(callback)
 
     call.cancel()
@@ -151,19 +149,19 @@ class DnsAsDns2Test {
     }
   }
 
-  class RecordingCallback : Dns2.Callback {
+  class RecordingCallback : Dns.Callback {
     val events = LinkedBlockingDeque<String>()
 
     override fun onRecords(
-      call: Dns2.Call,
+      call: Dns.Call,
       last: Boolean,
-      records: List<Dns2.Record>,
+      records: List<Dns.Record>,
     ) {
       events.put("onRecords(last=$last, records=$records)")
     }
 
     override fun onFailure(
-      call: Dns2.Call,
+      call: Dns.Call,
       e: IOException,
     ) {
       events.put("onFailure(${e.message})")
