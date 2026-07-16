@@ -70,10 +70,11 @@ internal class DnsOverHttpsCall(
           ?: return // Already complete or canceled; nothing to do.
 
       val newRunningCalls = previous.runningCalls - call
-      val allFailures = when {
-        canceledException != null -> listOf(canceledException)
-        else -> previous.delayedFailures + e
-      }
+      val allFailures =
+        when {
+          canceledException != null -> listOf(canceledException)
+          else -> previous.delayedFailures + e
+        }
       val next =
         when {
           newRunningCalls.isEmpty() -> {

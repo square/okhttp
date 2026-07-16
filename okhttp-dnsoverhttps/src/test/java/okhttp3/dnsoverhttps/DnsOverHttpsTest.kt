@@ -158,9 +158,10 @@ class DnsOverHttpsTest(
   fun resolveForbiddenPrivateDomain() {
     dns = buildLocalhost(bootstrapClient, resolvePrivateAddresses = false)
 
-    val e = assertFailsWith<UnknownHostException> {
-      dns(entryPoint, "dev")
-    }
+    val e =
+      assertFailsWith<UnknownHostException> {
+        dns(entryPoint, "dev")
+      }
     assertThat(e).hasMessage("private hosts not resolved")
     assertThat(dnsOverHttpsServer.pollRequest()).isNull()
   }
@@ -169,9 +170,10 @@ class DnsOverHttpsTest(
   fun resolveForbiddenPublicDomain() {
     dns = buildLocalhost(bootstrapClient, resolvePublicAddresses = false)
 
-    val e = assertFailsWith<UnknownHostException> {
-      dns(entryPoint, "lysine.dev")
-    }
+    val e =
+      assertFailsWith<UnknownHostException> {
+        dns(entryPoint, "lysine.dev")
+      }
     assertThat(e).hasMessage("public hosts not resolved")
     assertThat(dnsOverHttpsServer.pollRequest()).isNull()
   }

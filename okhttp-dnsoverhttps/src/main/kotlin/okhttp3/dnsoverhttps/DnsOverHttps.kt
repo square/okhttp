@@ -221,8 +221,8 @@ class DnsOverHttps internal constructor(
   private fun callsList(
     hostname: String,
     inetAddressesOnly: Boolean = false,
-  ): List<Call> {
-    return buildList {
+  ): List<Call> =
+    buildList {
       if (includeHttps && !inetAddressesOnly) {
         add(createCall(hostname, TYPE_HTTPS))
       }
@@ -233,7 +233,6 @@ class DnsOverHttps internal constructor(
 
       add(createCall(hostname, TYPE_A))
     }
-  }
 
   class Builder {
     internal var client: OkHttpClient? = null
@@ -305,8 +304,7 @@ class DnsOverHttps internal constructor(
         this.bootstrapDnsHosts = bootstrapDnsHosts
       }
 
-    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder =
-      bootstrapDnsHosts(bootstrapDnsHosts.toList())
+    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder = bootstrapDnsHosts(bootstrapDnsHosts.toList())
 
     fun systemDns(systemDns: Dns) =
       apply {
@@ -328,7 +326,6 @@ class DnsOverHttps internal constructor(
       }
     }
 
-    internal fun isPrivateHost(host: String): Boolean =
-      PublicSuffixDatabase.get().getEffectiveTldPlusOne(host) == null
+    internal fun isPrivateHost(host: String): Boolean = PublicSuffixDatabase.get().getEffectiveTldPlusOne(host) == null
   }
 }
