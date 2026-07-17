@@ -41,6 +41,7 @@ internal class DnsOverHttpsCall(
   private val canceledException: IOException?,
 ) : Dns2.Call,
   Callback {
+  @Volatile private var canceled = false
   private val state = AtomicReference<State>(State.Idle)
 
   override fun enqueue(callback: Dns2.Callback) {
@@ -188,12 +189,15 @@ internal class DnsOverHttpsCall(
   }
 
   override fun cancel() {
+    if (canceled) return // Already canceled.
+
+    canceled = true
     for (call in calls) {
       call.cancel()
     }
   }
 
-  override fun isCanceled() = calls.all { it.isCanceled() }
+  override fun isCanceled() = canceled
 
   private sealed interface State {
     object Idle : State
