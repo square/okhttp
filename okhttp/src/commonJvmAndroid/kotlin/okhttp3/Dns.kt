@@ -15,13 +15,13 @@
  */
 package okhttp3
 
+import java.io.IOException
 import java.net.InetAddress
 import java.net.UnknownHostException
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.dns.LookupDnsCall
 import okhttp3.internal.toCanonicalHost
 import okio.ByteString
-import okio.IOException
 
 /**
  * Loads IP addresses and service metadata for a hostname.

@@ -33,7 +33,8 @@ import okhttp3.internal.testAndSet
  * When canceled, the callback is immediately notified but the in-flight call is run to completion
  * and discarded.
  */
-internal class LookupDnsCall(
+@OkHttpInternalApi
+class LookupDnsCall(
   private val taskRunner: TaskRunner,
   private val delegate: Dns,
   override val request: Dns.Request,

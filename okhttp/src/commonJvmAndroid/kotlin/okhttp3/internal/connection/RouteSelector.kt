@@ -21,10 +21,13 @@ import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.SocketException
 import java.net.UnknownHostException
+import java.util.concurrent.CompletableFuture
 import okhttp3.Address
+import okhttp3.Dns
 import okhttp3.HttpUrl
 import okhttp3.Route
 import okhttp3.internal.canParseAsIpAddress
+import okhttp3.internal.dns.LookupDnsCall
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.toImmutableList
 
@@ -185,31 +188,103 @@ class RouteSelector internal constructor(
     }
   }
 
+  // TODO: switch RouteSelector to be async.
+
+  /**
+   * Use the new async [Dns.Call] API, but call it *synchronously* until we change this class to
+   * itself be asynchronous.
+   *
+   * To save threads and context switching, this currently falls back to the synchronous API if the
+   * DNS implementation is itself synchronous. When everything is async we won't do that anymore.
+   */
   private fun dnsLookup(
     proxy: Proxy,
     socketHost: String,
     socketPort: Int,
   ): List<Route> {
-    call.eventListener.dnsStart(call, socketHost)
+    call.eventListener.dnsStart(
+      call = call,
+      domainName = socketHost,
+    )
 
-    // TODO: switch to newCall() API to get ECH.
-    // TODO: switch to newCall() API to make this async.
-    val inetAddresses = address.dns.lookup(socketHost)
-    if (inetAddresses.isEmpty()) {
+    val dnsRequest = Dns.Request(socketHost)
+    val result =
+      when (val dnsCall = address.dns.newCall(dnsRequest)) {
+        is LookupDnsCall -> {
+          val inetAddresses = address.dns.lookup(socketHost)
+          inetAddresses.map { inetAddress ->
+            Route(
+              address,
+              proxy,
+              InetSocketAddress(inetAddress, socketPort),
+            )
+          }
+        }
+
+        else -> {
+          val records = dnsCall.execute()
+
+          val hostnameToServiceMetadata =
+            records
+              .filterIsInstance<Dns.Record.ServiceMetadata>()
+              .associateBy { it.hostname }
+
+          records
+            .filterIsInstance<Dns.Record.IpAddress>()
+            .map { record ->
+              val serviceMetadata = hostnameToServiceMetadata[record.hostname]
+              Route(
+                address = address,
+                proxy = proxy,
+                socketAddress = InetSocketAddress(record.address, socketPort),
+                echConfigList = serviceMetadata?.echConfigList,
+              )
+            }
+        }
+      }
+
+    if (result.isEmpty()) {
       throw UnknownHostException("${address.dns} returned no addresses for $socketHost")
     }
 
-    val result =
-      inetAddresses.map { inetAddress ->
-        Route(
-          address,
-          proxy,
-          InetSocketAddress(inetAddress, socketPort),
-        )
-      }
+    call.eventListener.dnsEnd(
+      call = call,
+      domainName = socketHost,
+      inetAddressList = result.map { it.socketAddress.address },
+    )
 
-    call.eventListener.dnsEnd(call, socketHost, inetAddresses)
     return result
+  }
+
+  /** Call this asynchronous API synchronously. */
+  private fun Dns.Call.execute(): List<Dns.Record> {
+    val future = CompletableFuture<List<Dns.Record>>()
+
+    enqueue(
+      object : Dns.Callback {
+        val allRecords = mutableListOf<Dns.Record>()
+
+        override fun onRecords(
+          call: Dns.Call,
+          last: Boolean,
+          records: List<Dns.Record>,
+        ) {
+          allRecords += records
+          if (last) {
+            future.complete(allRecords)
+          }
+        }
+
+        override fun onFailure(
+          call: Dns.Call,
+          e: okio.IOException,
+        ) {
+          future.completeExceptionally(e)
+        }
+      },
+    )
+
+    return future.get()
   }
 
   /** A set of selected Routes. */

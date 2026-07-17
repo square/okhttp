@@ -52,6 +52,10 @@ import okhttp3.dnsoverhttps.internal.Question
 import okhttp3.dnsoverhttps.internal.ResourceRecord
 import okhttp3.dnsoverhttps.internal.TYPE_A
 import okhttp3.dnsoverhttps.internal.TYPE_AAAA
+import okhttp3.internal.dns.DnsEvent
+import okhttp3.internal.dns.EntryPoint
+import okhttp3.internal.dns.execute
+import okhttp3.internal.dns.invoke
 import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
