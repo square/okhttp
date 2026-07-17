@@ -581,8 +581,9 @@ class DnsOverHttpsTest(
     val call = dns.newCall(Dns2.Request("lysine.dev"))
 
     interceptor =
-      object: Interceptor {
+      object : Interceptor {
         var requestCount = 0
+
         override fun intercept(chain: Interceptor.Chain): Response {
           if (requestCount++ == 1) {
             call.cancel()
