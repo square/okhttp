@@ -15,7 +15,7 @@
  */
 @file:Suppress("ktlint:standard:filename")
 
-package okhttp3.dnsoverhttps
+package okhttp3.dnsoverhttps.internal
 
 import java.io.IOException
 import java.net.InetAddress
@@ -26,12 +26,14 @@ import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.dnsoverhttps.DnsOverHttps.Companion.DNS_MESSAGE
 import okhttp3.dnsoverhttps.DnsOverHttps.Companion.MAX_RESPONSE_SIZE
+import okhttp3.internal.OkHttpInternalApi
 import okhttp3.internal.platform.Platform
 import okio.Buffer
 import okio.BufferedSink
 import okio.ByteString
 
-internal data class DnsMessage(
+@OkHttpInternalApi
+data class DnsMessage(
   val id: Short,
   val flags: Int,
   val questions: List<Question>,
@@ -79,7 +81,7 @@ internal data class DnsMessage(
   }
 }
 
-internal data class Question(
+data class Question(
   val name: String,
   val type: Int,
   val `class`: Int = CLASS_IN,
@@ -94,7 +96,7 @@ internal data class Question(
   }
 }
 
-internal sealed interface ResourceRecord {
+sealed interface ResourceRecord {
   val name: String
   val timeToLive: Int
 
@@ -140,12 +142,18 @@ internal sealed interface ResourceRecord {
 }
 
 /** https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml#dns-parameters-4 */
-internal const val TYPE_A = 1
-internal const val TYPE_AAAA = 28
-internal const val TYPE_HTTPS = 65
+@OkHttpInternalApi
+const val TYPE_A = 1
+
+@OkHttpInternalApi
+const val TYPE_AAAA = 28
+
+@OkHttpInternalApi
+const val TYPE_HTTPS = 65
 
 /** https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml#dns-parameters-2 */
-internal const val CLASS_IN = 1
+@OkHttpInternalApi
+const val CLASS_IN = 1
 
 /** https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml#dns-parameters-6 */
 internal const val RESPONSE_CODE_SUCCESS = 0

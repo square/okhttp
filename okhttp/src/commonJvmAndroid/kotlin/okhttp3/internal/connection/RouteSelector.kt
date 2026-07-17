@@ -42,9 +42,6 @@ class RouteSelector internal constructor(
   private var proxies = emptyList<Proxy>()
   private var nextProxyIndex: Int = 0
 
-  // State for negotiating the next socket address to use.
-  private var inetSocketAddresses = emptyList<InetSocketAddress>()
-
   // State for negotiating failed routes
   private val postponedRoutes = mutableListOf<Route>()
 
@@ -67,9 +64,8 @@ class RouteSelector internal constructor(
       // Postponed routes are always tried last. For example, if we have 2 proxies and all the
       // routes for proxy1 should be postponed, we'll move to proxy2. Only after we've exhausted
       // all the good routes will we attempt the postponed routes.
-      val proxy = nextProxy()
-      for (inetSocketAddress in inetSocketAddresses) {
-        val route = Route(address, proxy, inetSocketAddress)
+      val proxyRoutes = nextProxy()
+      for (route in proxyRoutes) {
         if (routeDatabase.shouldPostpone(route)) {
           postponedRoutes += route
         } else {
@@ -129,24 +125,19 @@ class RouteSelector internal constructor(
 
   /** Returns the next proxy to try. May be PROXY.NO_PROXY but never null. */
   @Throws(IOException::class)
-  private fun nextProxy(): Proxy {
+  private fun nextProxy(): List<Route> {
     if (!hasNextProxy()) {
       throw SocketException(
         "No route to ${address.url.host}; exhausted proxy configurations: $proxies",
       )
     }
     val result = proxies[nextProxyIndex++]
-    resetNextInetSocketAddress(result)
-    return result
+    return nextRoutes(result)
   }
 
-  /** Prepares the socket addresses to attempt for the current proxy or host. */
+  /** Returns the routes to attempt for [proxy]. */
   @Throws(IOException::class)
-  private fun resetNextInetSocketAddress(proxy: Proxy) {
-    // Clear the addresses. Necessary if getAllByName() below throws!
-    val mutableInetSocketAddresses = mutableListOf<InetSocketAddress>()
-    inetSocketAddresses = mutableInetSocketAddresses
-
+  private fun nextRoutes(proxy: Proxy): List<Route> {
     val socketHost: String
     val socketPort: Int
     if (proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.SOCKS) {
@@ -166,34 +157,59 @@ class RouteSelector internal constructor(
     }
 
     if (proxy.type() == Proxy.Type.SOCKS) {
-      mutableInetSocketAddresses += InetSocketAddress.createUnresolved(socketHost, socketPort)
-    } else {
-      val addresses =
-        if (socketHost.canParseAsIpAddress()) {
-          listOf(InetAddress.getByName(socketHost))
-        } else {
-          call.eventListener.dnsStart(call, socketHost)
-
-          val result = address.dns.lookup(socketHost)
-          if (result.isEmpty()) {
-            throw UnknownHostException("${address.dns} returned no addresses for $socketHost")
-          }
-
-          call.eventListener.dnsEnd(call, socketHost, result)
-          result
-        }
-
-      // Try each address for best behavior in mixed IPv4/IPv6 environments.
-      val orderedAddresses =
-        when {
-          fastFallback -> reorderForHappyEyeballs(addresses)
-          else -> addresses
-        }
-
-      for (inetAddress in orderedAddresses) {
-        mutableInetSocketAddresses += InetSocketAddress(inetAddress, socketPort)
-      }
+      return listOf(
+        Route(
+          address,
+          proxy,
+          InetSocketAddress.createUnresolved(socketHost, socketPort),
+        ),
+      )
     }
+
+    if (socketHost.canParseAsIpAddress()) {
+      return listOf(
+        Route(
+          address,
+          proxy,
+          InetSocketAddress(InetAddress.getByName(socketHost), socketPort),
+        ),
+      )
+    }
+
+    val routes = dnsLookup(proxy, socketHost, socketPort)
+
+    // Try each address for best behavior in mixed IPv4/IPv6 environments.
+    return when {
+      fastFallback -> reorderForHappyEyeballs(routes)
+      else -> routes
+    }
+  }
+
+  private fun dnsLookup(
+    proxy: Proxy,
+    socketHost: String,
+    socketPort: Int,
+  ): List<Route> {
+    call.eventListener.dnsStart(call, socketHost)
+
+    // TODO: switch to newCall() API to get ECH.
+    // TODO: switch to newCall() API to make this async.
+    val inetAddresses = address.dns.lookup(socketHost)
+    if (inetAddresses.isEmpty()) {
+      throw UnknownHostException("${address.dns} returned no addresses for $socketHost")
+    }
+
+    val result =
+      inetAddresses.map { inetAddress ->
+        Route(
+          address,
+          proxy,
+          InetSocketAddress(inetAddress, socketPort),
+        )
+      }
+
+    call.eventListener.dnsEnd(call, socketHost, inetAddresses)
+    return result
   }
 
   /** A set of selected Routes. */
@@ -212,15 +228,16 @@ class RouteSelector internal constructor(
 
   companion object {
     /** Obtain a host string containing either an actual host name or a numeric IP address. */
-    val InetSocketAddress.socketHost: String get() {
-      // The InetSocketAddress was specified with a string (either a numeric IP or a host name). If
-      // it is a name, all IPs for that name should be tried. If it is an IP address, only that IP
-      // address should be tried.
-      val address = address ?: return hostName
+    val InetSocketAddress.socketHost: String
+      get() {
+        // The InetSocketAddress was specified with a string (either a numeric IP or a host name).
+        // If it is a name, all IPs for that name should be tried. If it is an IP address, only that
+        // IP address should be tried.
+        val address = address ?: return hostName
 
-      // The InetSocketAddress has a specific address: we should only try that address. Therefore we
-      // return the address and ignore any host name that may be available.
-      return address.hostAddress
-    }
+        // The InetSocketAddress has a specific address: we should only try that address. Therefore,
+        // we return the address and ignore any host name that may be available.
+        return address.hostAddress
+      }
   }
 }

@@ -1303,7 +1303,9 @@ public final class okhttp3/Route {
 	public final fun -deprecated_proxy ()Ljava/net/Proxy;
 	public final fun -deprecated_socketAddress ()Ljava/net/InetSocketAddress;
 	public fun <init> (Lokhttp3/Address;Ljava/net/Proxy;Ljava/net/InetSocketAddress;)V
+	public fun <init> (Lokhttp3/Address;Ljava/net/Proxy;Ljava/net/InetSocketAddress;Lokio/ByteString;)V
 	public final fun address ()Lokhttp3/Address;
+	public final fun echConfigList ()Lokio/ByteString;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public final fun proxy ()Ljava/net/Proxy;

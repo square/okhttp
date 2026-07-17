@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 @file:Suppress("ktlint:standard:filename")
-@file:OptIn(OkHttpInternalApi::class)
 
-package okhttp3.dnsoverhttps
+package okhttp3.dnsoverhttps.internal
 
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
@@ -35,6 +34,7 @@ import okhttp3.internal.testAndSet
 /**
  * Implements [Dns.Call] by making multiple HTTPS calls.
  */
+@OkHttpInternalApi
 internal class DnsOverHttpsCall(
   override val request: Dns.Request,
   private val calls: List<Call>,

@@ -28,6 +28,15 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.dnsoverhttps.internal.DnsMessage
+import okhttp3.dnsoverhttps.internal.DnsOverHttpsCall
+import okhttp3.dnsoverhttps.internal.QueryRequestBody
+import okhttp3.dnsoverhttps.internal.ResourceRecord
+import okhttp3.dnsoverhttps.internal.TYPE_A
+import okhttp3.dnsoverhttps.internal.TYPE_AAAA
+import okhttp3.dnsoverhttps.internal.TYPE_HTTPS
+import okhttp3.dnsoverhttps.internal.asQueryParameter
+import okhttp3.dnsoverhttps.internal.decodeResponse
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 
 /**

@@ -39,6 +39,7 @@ import okhttp3.TestValueFactory
 import okhttp3.internal.connection.RouteSelector.Companion.socketHost
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.testing.PlatformRule
+import okio.ByteString.Companion.encodeUtf8
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -522,6 +523,14 @@ class RouteSelectorTest {
         InetSocketAddress(ipv4Address, 5678),
       ).toString(),
     ).isEqualTo("example.com:1003 via proxy 1.2.3.4:5678")
+    assertThat(
+      Route(
+        factory.newAddress(uriHost = "1.2.3.4", uriPort = 1003),
+        Proxy.NO_PROXY,
+        InetSocketAddress(ipv4Address, 1003),
+        "I am an ECH config".encodeUtf8(),
+      ).toString(),
+    ).isEqualTo("1.2.3.4:1003 with ECH")
   }
 
   @Test fun routeToStringIpv6() {

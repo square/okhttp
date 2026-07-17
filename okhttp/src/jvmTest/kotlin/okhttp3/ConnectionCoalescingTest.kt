@@ -89,7 +89,7 @@ class ConnectionCoalescingTest {
     dns["san.com"] = serverIps
     dns["nonsan.com"] = serverIps
     dns["www.wildcard.com"] = serverIps
-    dns["differentdns.com"] = listOf()
+    dns["differentdns.com"] = listOf<InetAddress>()
     val handshakeCertificates =
       HandshakeCertificates
         .Builder()
