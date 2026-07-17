@@ -347,6 +347,7 @@ class DnsOverHttpsTest(
         ResourceRecord.Https(
           name = "lysine.dev",
           timeToLive = 5,
+          targetName = "cdn.lysine.dev",
           alpnIds = listOf(Protocol.HTTP_2.toString()),
           port = 8843,
           ipAddressHints =
@@ -367,7 +368,7 @@ class DnsOverHttpsTest(
         records =
           listOf(
             Dns.Record.ServiceMetadata(
-              hostname = "lysine.dev",
+              hostname = "cdn.lysine.dev",
               alpnIds = listOf(Protocol.HTTP_2),
               port = 8843,
               ipAddressHints =
@@ -388,6 +389,55 @@ class DnsOverHttpsTest(
             Dns.Record.IpAddress(
               hostname = "lysine.dev",
               address = InetAddress.getByName("1:2::3:4"),
+            ),
+          ),
+      ),
+    )
+    assertThat(dnsEvents.take()).isEqualTo(
+      DnsEvent.Records(
+        last = true,
+        records =
+          listOf(
+            Dns.Record.IpAddress(
+              hostname = "lysine.dev",
+              address = InetAddress.getByName("10.20.30.40"),
+            ),
+          ),
+      ),
+    )
+  }
+
+  @Test
+  fun serviceMetadataEmptyTargetNameAliasesToRequestHostname() {
+    assumeTrue(entryPoint == EntryPoint.NewCall)
+
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    server["lysine.dev"] =
+      listOf(
+        ResourceRecord.IpAddress(
+          name = "lysine.dev",
+          timeToLive = 5,
+          address = InetAddress.getByName("10.20.30.40"),
+        ),
+        ResourceRecord.Https(
+          name = "lysine.dev",
+          timeToLive = 5,
+          targetName = "",
+          alpnIds = listOf(Protocol.HTTP_2.toString()),
+        ),
+      )
+
+    val call = dns.newCall(Dns.Request("lysine.dev"))
+    val dnsEvents = call.toEventsQueue()
+
+    assertThat(dnsEvents.take()).isEqualTo(
+      DnsEvent.Records(
+        last = false,
+        records =
+          listOf(
+            Dns.Record.ServiceMetadata(
+              hostname = "lysine.dev",
+              alpnIds = listOf(Protocol.HTTP_2),
             ),
           ),
       ),
