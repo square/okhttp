@@ -17,7 +17,7 @@
 
 package okhttp3.internal.dns
 
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.LinkedBlockingQueue
 import okhttp3.Dns
 import okhttp3.internal.OkHttpInternalApi
 
@@ -29,7 +29,7 @@ import okhttp3.internal.OkHttpInternalApi
  */
 @OkHttpInternalApi
 fun Dns.Call.execute(): List<Dns.Record> {
-  val future = CompletableFuture<List<Dns.Record>>()
+  val queue = LinkedBlockingQueue<Result<List<Dns.Record>>>()
 
   enqueue(
     object : Dns.Callback {
@@ -42,7 +42,7 @@ fun Dns.Call.execute(): List<Dns.Record> {
       ) {
         allRecords += records
         if (last) {
-          future.complete(allRecords)
+          queue.put(Result.success(allRecords))
         }
       }
 
@@ -50,10 +50,10 @@ fun Dns.Call.execute(): List<Dns.Record> {
         call: Dns.Call,
         e: okio.IOException,
       ) {
-        future.completeExceptionally(e)
+        queue.put(Result.failure(e))
       }
     },
   )
 
-  return future.get()
+  return queue.take().getOrThrow()
 }
