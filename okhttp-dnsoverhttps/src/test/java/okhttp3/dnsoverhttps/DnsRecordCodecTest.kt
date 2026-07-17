@@ -22,6 +22,13 @@ import assertk.assertions.isEqualTo
 import java.net.InetAddress
 import java.net.UnknownHostException
 import kotlin.test.assertFailsWith
+import okhttp3.dnsoverhttps.internal.DnsMessage
+import okhttp3.dnsoverhttps.internal.DnsMessageReader
+import okhttp3.dnsoverhttps.internal.RESPONSE_CODE_SUCCESS
+import okhttp3.dnsoverhttps.internal.ResourceRecord
+import okhttp3.dnsoverhttps.internal.TYPE_A
+import okhttp3.dnsoverhttps.internal.TYPE_AAAA
+import okhttp3.dnsoverhttps.internal.asQueryParameter
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeHex

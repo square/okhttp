@@ -15,10 +15,11 @@
  */
 @file:Suppress("ktlint:standard:filename")
 
-package okhttp3.dnsoverhttps
+package okhttp3.dnsoverhttps.internal
 
 import java.net.InetAddress
 import okhttp3.Protocol
+import okhttp3.internal.OkHttpInternalApi
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
@@ -33,7 +34,8 @@ import okio.buffer
  *
  * https://datatracker.ietf.org/doc/html/rfc1035
  */
-internal class DnsMessageReader(
+@OkHttpInternalApi
+class DnsMessageReader(
   source: BufferedSource,
 ) {
   /**

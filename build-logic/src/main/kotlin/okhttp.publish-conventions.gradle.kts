@@ -64,11 +64,12 @@ configure<MavenPublishBaseExtension> {
 }
 
 configure<ApiValidationExtension> {
-  ignoredPackages += "okhttp3.logging.internal"
   ignoredPackages += "mockwebserver3.internal"
-  ignoredPackages += "okhttp3.internal"
   ignoredPackages += "mockwebserver3.junit5.internal"
   ignoredPackages += "okhttp3.brotli.internal"
+  ignoredPackages += "okhttp3.dnsoverhttps.internal"
+  ignoredPackages += "okhttp3.internal"
+  ignoredPackages += "okhttp3.logging.internal"
   ignoredPackages += "okhttp3.sse.internal"
   ignoredPackages += "okhttp3.tls.internal"
 }
