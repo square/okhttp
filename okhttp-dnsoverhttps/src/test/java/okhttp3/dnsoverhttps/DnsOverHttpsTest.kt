@@ -43,6 +43,7 @@ import okhttp3.Headers.Companion.headersOf
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.Response
 import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
@@ -560,6 +561,50 @@ class DnsOverHttpsTest(
       }
 
     val dnsEvents = call.execute()
+    assertThat(dnsEvents.take()).isInstanceOf<DnsEvent.Failure>()
+  }
+
+  @Test
+  fun callIsCanceledAfterPartialSuccess() {
+    assumeTrue(entryPoint == EntryPoint.NewCall)
+
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true)
+    dnsOverHttpsServer["lysine.dev"] =
+      listOf(
+        ResourceRecord.IpAddress(
+          name = "lysine.dev",
+          timeToLive = 5,
+          address = InetAddress.getByName("11:22::33:44"),
+        ),
+      )
+
+    val call = dns.newCall(Dns2.Request("lysine.dev"))
+
+    interceptor =
+      object: Interceptor {
+        var requestCount = 0
+        override fun intercept(chain: Interceptor.Chain): Response {
+          if (requestCount++ == 1) {
+            call.cancel()
+            assertThat(call.isCanceled()).isTrue()
+          }
+          return chain.proceed(chain.request())
+        }
+      }
+
+    val dnsEvents = call.execute()
+    assertThat(dnsEvents.take()).isEqualTo(
+      DnsEvent.Records(
+        last = false,
+        records =
+          listOf(
+            Dns2.Record.IpAddress(
+              hostname = "lysine.dev",
+              address = InetAddress.getByName("11:22::33:44"),
+            ),
+          ),
+      ),
+    )
     assertThat(dnsEvents.take()).isInstanceOf<DnsEvent.Failure>()
   }
 
