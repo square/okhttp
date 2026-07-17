@@ -54,8 +54,8 @@ import okhttp3.dnsoverhttps.internal.TYPE_A
 import okhttp3.dnsoverhttps.internal.TYPE_AAAA
 import okhttp3.internal.dns.DnsEvent
 import okhttp3.internal.dns.EntryPoint
-import okhttp3.internal.dns.execute
 import okhttp3.internal.dns.invoke
+import okhttp3.internal.dns.toEventsQueue
 import okhttp3.testing.PlatformRule
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
@@ -359,7 +359,7 @@ class DnsOverHttpsTest(
       )
 
     val call = dns.newCall(Dns.Request("lysine.dev"))
-    val dnsEvents = call.execute()
+    val dnsEvents = call.toEventsQueue()
 
     assertThat(dnsEvents.take()).isEqualTo(
       DnsEvent.Records(
@@ -430,7 +430,7 @@ class DnsOverHttpsTest(
       )
 
     val call = dns.newCall(Dns.Request("lysine.dev"))
-    val dnsEvents = call.execute()
+    val dnsEvents = call.toEventsQueue()
 
     assertThat(dnsEvents.take()).isEqualTo(
       DnsEvent.Records(
@@ -478,7 +478,7 @@ class DnsOverHttpsTest(
       )
 
     val call = dns.newCall(Dns.Request("lysine.dev"))
-    val dnsEvents = call.execute()
+    val dnsEvents = call.toEventsQueue()
 
     assertThat(dnsEvents.take()).isEqualTo(
       DnsEvent.Records(
@@ -511,7 +511,7 @@ class DnsOverHttpsTest(
       )
 
     val call = dns.newCall(Dns.Request("lysine.dev"))
-    val dnsEvents = call.execute()
+    val dnsEvents = call.toEventsQueue()
 
     assertThat(dnsEvents.take()).isEqualTo(
       DnsEvent.Records(
@@ -534,7 +534,7 @@ class DnsOverHttpsTest(
     dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
 
     val call = dns.newCall(Dns.Request("lysine.dev"))
-    val dnsEvents = call.execute()
+    val dnsEvents = call.toEventsQueue()
 
     assertThat(dnsEvents.take()).isEqualTo(
       DnsEvent.Records(
@@ -553,7 +553,7 @@ class DnsOverHttpsTest(
     val call = dns.newCall(Dns.Request("lysine.dev"))
     call.cancel()
     assertThat(call.isCanceled()).isTrue()
-    val dnsEvents = call.execute()
+    val dnsEvents = call.toEventsQueue()
 
     assertThat(dnsEvents.take()).isInstanceOf<DnsEvent.Failure>()
   }
@@ -572,7 +572,7 @@ class DnsOverHttpsTest(
         chain.proceed(chain.request())
       }
 
-    val dnsEvents = call.execute()
+    val dnsEvents = call.toEventsQueue()
     assertThat(dnsEvents.take()).isInstanceOf<DnsEvent.Failure>()
   }
 
@@ -605,7 +605,7 @@ class DnsOverHttpsTest(
         }
       }
 
-    val dnsEvents = call.execute()
+    val dnsEvents = call.toEventsQueue()
     assertThat(dnsEvents.take()).isEqualTo(
       DnsEvent.Records(
         last = false,

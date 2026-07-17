@@ -21,13 +21,13 @@ import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.SocketException
 import java.net.UnknownHostException
-import java.util.concurrent.CompletableFuture
 import okhttp3.Address
 import okhttp3.Dns
 import okhttp3.HttpUrl
 import okhttp3.Route
 import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.dns.LookupDnsCall
+import okhttp3.internal.dns.execute
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.toImmutableList
 
@@ -254,37 +254,6 @@ class RouteSelector internal constructor(
     )
 
     return result
-  }
-
-  /** Call this asynchronous API synchronously. */
-  private fun Dns.Call.execute(): List<Dns.Record> {
-    val future = CompletableFuture<List<Dns.Record>>()
-
-    enqueue(
-      object : Dns.Callback {
-        val allRecords = mutableListOf<Dns.Record>()
-
-        override fun onRecords(
-          call: Dns.Call,
-          last: Boolean,
-          records: List<Dns.Record>,
-        ) {
-          allRecords += records
-          if (last) {
-            future.complete(allRecords)
-          }
-        }
-
-        override fun onFailure(
-          call: Dns.Call,
-          e: okio.IOException,
-        ) {
-          future.completeExceptionally(e)
-        }
-      },
-    )
-
-    return future.get()
   }
 
   /** A set of selected Routes. */

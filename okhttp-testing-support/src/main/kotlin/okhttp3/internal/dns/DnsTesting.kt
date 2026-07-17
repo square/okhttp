@@ -17,7 +17,7 @@ package okhttp3.internal.dns
 
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.util.concurrent.BlockingDeque
+import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingDeque
 import okhttp3.Dns
 import okhttp3.dnsoverhttps.DnsOverHttps
@@ -35,7 +35,7 @@ sealed interface DnsEvent {
   ) : DnsEvent
 }
 
-fun Dns.Call.execute(): BlockingDeque<DnsEvent> {
+fun Dns.Call.toEventsQueue(): BlockingQueue<DnsEvent> {
   val result = LinkedBlockingDeque<DnsEvent>()
 
   enqueue(
@@ -75,7 +75,7 @@ operator fun DnsOverHttps.invoke(
 
     EntryPoint.NewCall -> {
       buildList {
-        val dnsEvents = newCall(Dns.Request(hostname)).execute()
+        val dnsEvents = newCall(Dns.Request(hostname)).toEventsQueue()
         while (true) {
           when (val dnsEvent = dnsEvents.take()) {
             is DnsEvent.Failure -> {
