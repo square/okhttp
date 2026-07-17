@@ -120,7 +120,7 @@ internal class DnsOverHttpsCall(
         when (resourceRecord) {
           is ResourceRecord.Https -> {
             Dns.Record.ServiceMetadata(
-              hostname = request.hostname,
+              hostname = resourceRecord.targetName.takeIf { it != "" } ?: request.hostname,
               alpnIds =
                 resourceRecord.alpnIds?.mapNotNull { alpnId ->
                   try {

@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.dnsoverhttps
+package okhttp3.internal.dns
 
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.util.concurrent.BlockingDeque
+import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingDeque
 import okhttp3.Dns
+import okhttp3.dnsoverhttps.DnsOverHttps
+import okhttp3.internal.concurrent.TaskRunner
 import okio.IOException
 
 sealed interface DnsEvent {
@@ -33,7 +35,7 @@ sealed interface DnsEvent {
   ) : DnsEvent
 }
 
-internal fun Dns.Call.execute(): BlockingDeque<DnsEvent> {
+fun Dns.Call.toEventsQueue(): BlockingQueue<DnsEvent> {
   val result = LinkedBlockingDeque<DnsEvent>()
 
   enqueue(
@@ -73,7 +75,7 @@ operator fun DnsOverHttps.invoke(
 
     EntryPoint.NewCall -> {
       buildList {
-        val dnsEvents = newCall(Dns.Request(hostname)).execute()
+        val dnsEvents = newCall(Dns.Request(hostname)).toEventsQueue()
         while (true) {
           when (val dnsEvent = dnsEvents.take()) {
             is DnsEvent.Failure -> {
@@ -97,6 +99,33 @@ operator fun DnsOverHttps.invoke(
       }
     }
   }
+
+/**
+ * Force this instance to use the lookup API or ([LookupDnsCall]), or the call API (and definitely
+ * not [LookupDnsCall]). This is for tests that want to defeat OkHttp's implementation detection,
+ * so we can exercise all code paths.
+ */
+fun Dns.forceEntryPoint(entryPoint: EntryPoint): Dns {
+  return when (entryPoint) {
+    EntryPoint.Lookup -> {
+      object : Dns by this {
+        override fun newCall(request: Dns.Request) = LookupDnsCall(TaskRunner.INSTANCE, this, request)
+      }
+    }
+
+    EntryPoint.NewCall -> {
+      object : Dns by this {
+        override fun newCall(request: Dns.Request): Dns.Call {
+          val result = this@forceEntryPoint.newCall(request)
+          check(result !is LookupDnsCall) {
+            "unexpected call implementation on ${this@forceEntryPoint}"
+          }
+          return result
+        }
+      }
+    }
+  }
+}
 
 enum class EntryPoint {
   Lookup,

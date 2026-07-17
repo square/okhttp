@@ -17,6 +17,7 @@ package okhttp3
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
+import java.io.IOException
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
@@ -36,13 +37,16 @@ import okhttp3.dnsoverhttps.internal.ResourceRecord
 import okhttp3.dnsoverhttps.internal.TYPE_A
 import okhttp3.dnsoverhttps.internal.TYPE_AAAA
 import okhttp3.dnsoverhttps.internal.TYPE_HTTPS
+import okhttp3.internal.concurrent.TaskRunner
 import okio.Buffer
 import okio.ByteString.Companion.decodeBase64
 
 /**
  * Handles DNS calls using in-memory records.
  */
-class FakeDns : Dns {
+class FakeDns(
+  private val taskRunner: TaskRunner = TaskRunner.INSTANCE,
+) : Dns {
   private val data = ConcurrentHashMap<String, List<ResourceRecord>>()
 
   var extraHeaders: Headers = Headers.headersOf()
@@ -111,6 +115,8 @@ class FakeDns : Dns {
       },
     )
   }
+
+  override fun newCall(request: Dns.Request): Dns.Call = FakeDnsCall(request)
 
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
@@ -213,6 +219,104 @@ class FakeDns : Dns {
       TYPE_AAAA -> (this as? ResourceRecord.IpAddress)?.address is Inet6Address
       TYPE_HTTPS -> this is ResourceRecord.Https
       else -> false
+    }
+  }
+
+  /**
+   * Deliver each kind of DNS record in a separate callback, to most accurately simulate what a real
+   * DNS server does.
+   */
+  private inner class FakeDnsCall(
+    override val request: Dns.Request,
+  ) : Dns.Call {
+    @Volatile private var canceled = false
+    private var executed = false
+    private val taskQueue = taskRunner.newQueue()
+
+    override fun cancel() {
+      canceled = true
+    }
+
+    override fun isCanceled() = canceled
+
+    override fun enqueue(callback: Dns.Callback) {
+      check(!executed)
+      executed = true
+
+      requests.put(Request.FunctionCall(request.hostname))
+
+      if (canceled) {
+        taskQueue.execute("${request.hostname} dns") {
+          callback.onFailure(
+            call = this,
+            e = IOException("canceled"),
+          )
+        }
+        return
+      }
+
+      val resourceRecords = data[request.hostname] ?: listOf()
+      if (resourceRecords.isEmpty()) {
+        taskQueue.execute("${request.hostname} dns") {
+          callback.onRecords(
+            call = this,
+            last = true,
+            records = listOf(),
+          )
+        }
+        return
+      }
+
+      val serviceMetadataRecords = mutableListOf<Dns.Record.ServiceMetadata>()
+      val ipv6Records = mutableListOf<Dns.Record.IpAddress>()
+      val ipv4Records = mutableListOf<Dns.Record.IpAddress>()
+      for (resourceRecord in resourceRecords) {
+        when (resourceRecord) {
+          is ResourceRecord.Https -> {
+            serviceMetadataRecords +=
+              Dns.Record.ServiceMetadata(
+                hostname = resourceRecord.targetName.takeIf { it != "" } ?: request.hostname,
+                port = resourceRecord.port,
+                alpnIds = resourceRecord.alpnIds?.map { Protocol.get(it) },
+                ipAddressHints = resourceRecord.ipAddressHints,
+                echConfigList = resourceRecord.echConfigList,
+              )
+          }
+
+          is ResourceRecord.IpAddress -> {
+            val ipAddressRecord = Dns.Record.IpAddress(request.hostname, resourceRecord.address)
+            when (resourceRecord.address) {
+              is Inet4Address -> ipv4Records += ipAddressRecord
+              is Inet6Address -> ipv6Records += ipAddressRecord
+              else -> error("unexpected address")
+            }
+          }
+        }
+      }
+
+      taskQueue.execute("${request.hostname} dns") {
+        if (serviceMetadataRecords.isNotEmpty()) {
+          callback.onRecords(
+            call = this,
+            last = ipv6Records.isEmpty() && ipv4Records.isEmpty(),
+            records = serviceMetadataRecords,
+          )
+        }
+        if (ipv6Records.isNotEmpty()) {
+          callback.onRecords(
+            call = this,
+            last = ipv4Records.isEmpty(),
+            records = ipv6Records,
+          )
+        }
+        if (ipv4Records.isNotEmpty()) {
+          callback.onRecords(
+            call = this,
+            last = true,
+            records = ipv4Records,
+          )
+        }
+      }
     }
   }
 

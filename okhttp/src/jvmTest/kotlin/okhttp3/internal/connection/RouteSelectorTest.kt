@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.connection
 
+import app.cash.burst.Burst
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
@@ -36,16 +37,24 @@ import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
 import okhttp3.Route
 import okhttp3.TestValueFactory
+import okhttp3.dnsoverhttps.internal.ResourceRecord
 import okhttp3.internal.connection.RouteSelector.Companion.socketHost
+import okhttp3.internal.dns.EntryPoint
+import okhttp3.internal.dns.forceEntryPoint
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.testing.PlatformRule
+import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
-class RouteSelectorTest {
+@Burst
+class RouteSelectorTest(
+  private val entryPoint: EntryPoint = EntryPoint.Lookup,
+) {
   @RegisterExtension
   val platform = PlatformRule()
 
@@ -56,9 +65,10 @@ class RouteSelectorTest {
   private val proxySelector = RecordingProxySelector()
   private val uriHost = "hosta"
   private val uriPort = 1003
+  private val echConfigList = "this is an encrypted client hello".encodeUtf8()
   private val factory =
     TestValueFactory().apply {
-      this.dns = this@RouteSelectorTest.dns
+      this.dns = this@RouteSelectorTest.dns.forceEntryPoint(entryPoint)
       this.proxySelector = this@RouteSelectorTest.proxySelector
       this.uriHost = this@RouteSelectorTest.uriHost
       this.uriPort = this@RouteSelectorTest.uriPort
@@ -97,6 +107,30 @@ class RouteSelectorTest {
     assertFailsWith<NoSuchElementException> {
       routeSelector.next()
     }
+  }
+
+  @Test fun routeReturnsEncryptedClientHelloData() {
+    assumeTrue(entryPoint == EntryPoint.NewCall)
+
+    val address = factory.newAddress()
+    val routeSelector = newRouteSelector(address)
+    assertThat(routeSelector.hasNext()).isTrue()
+    dns[uriHost] =
+      listOf(
+        ResourceRecord.IpAddress(
+          name = uriHost,
+          timeToLive = 5,
+          address = dns.allocate(1).single(),
+        ),
+        ResourceRecord.Https(
+          name = uriHost,
+          timeToLive = 5,
+          echConfigList = echConfigList,
+        ),
+      )
+    val selection = routeSelector.next()
+    assertRoute(selection.next(), address, Proxy.NO_PROXY, dns[uriHost][0], uriPort, echConfigList)
+    dns.assertRequests(uriHost)
   }
 
   @Test fun singleRouteReturnsFailedRoute() {
@@ -433,16 +467,16 @@ class RouteSelectorTest {
         fastFallback = false,
       )
     assertThat(routeSelector.hasNext()).isTrue()
-    val (ipv4_1, ipv4_2) = dns.allocate(2)
     val (ipv6_1, ipv6_2) = dns.allocateIpv6(2)
-    dns[uriHost] = listOf(ipv4_1, ipv4_2, ipv6_1, ipv6_2)
+    val (ipv4_1, ipv4_2) = dns.allocate(2)
+    dns[uriHost] = listOf(ipv6_1, ipv6_2, ipv4_1, ipv4_2)
 
     val selection = routeSelector.next()
     assertThat(selection.routes.map { it.socketAddress.address }).containsExactly(
-      ipv4_1,
-      ipv4_2,
       ipv6_1,
       ipv6_2,
+      ipv4_1,
+      ipv4_2,
     )
   }
 
@@ -457,9 +491,9 @@ class RouteSelectorTest {
         fastFallback = true,
       )
     assertThat(routeSelector.hasNext()).isTrue()
-    val (ipv4_1, ipv4_2) = dns.allocate(2)
     val (ipv6_1, ipv6_2) = dns.allocateIpv6(2)
-    dns[uriHost] = listOf(ipv4_1, ipv4_2, ipv6_1, ipv6_2)
+    val (ipv4_1, ipv4_2) = dns.allocate(2)
+    dns[uriHost] = listOf(ipv6_1, ipv6_2, ipv4_1, ipv4_2)
 
     val selection = routeSelector.next()
     assertThat(selection.routes.map { it.socketAddress.address }).containsExactly(
@@ -574,11 +608,13 @@ class RouteSelectorTest {
     proxy: Proxy,
     socketAddress: InetAddress,
     socketPort: Int,
+    echConfigList: ByteString? = null,
   ) {
     assertThat(route.address).isEqualTo(address)
     assertThat(route.proxy).isEqualTo(proxy)
     assertThat(route.socketAddress.address).isEqualTo(socketAddress)
     assertThat(route.socketAddress.port).isEqualTo(socketPort)
+    assertThat(route.echConfigList).isEqualTo(echConfigList)
   }
 
   private fun newRouteSelector(
