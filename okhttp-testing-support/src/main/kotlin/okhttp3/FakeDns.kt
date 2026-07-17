@@ -46,7 +46,7 @@ class FakeDns : Dns {
   private val data = ConcurrentHashMap<String, List<ResourceRecord>>()
 
   var extraHeaders: Headers = Headers.headersOf()
-  val requests = LinkedBlockingDeque<Pair<RecordedRequest, DnsMessage>>()
+  private val requests = LinkedBlockingDeque<Request>()
   val nextSequenceIndex = AtomicInteger(0)
   val sequenceIndexToOverride = ConcurrentHashMap<Int, MockResponse>()
   private var nextAddress = 0xff000064L // 255.0.0.100 in IPv4; ::ff00:64 in IPv6.
@@ -69,7 +69,7 @@ class FakeDns : Dns {
           }
 
         val dnsRequest = DnsMessageReader(encodedDnsQuery).read()
-        requests.put(request to dnsRequest)
+        requests.put(Request.DnsOverHttpsRequest(request, dnsRequest))
 
         val dnsResponse = invoke(dnsRequest)
 
@@ -114,29 +114,32 @@ class FakeDns : Dns {
 
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
-    val records = data[hostname] ?: throw UnknownHostException()
+    requests.put(Request.FunctionCall(hostname))
 
+    val result = get(hostname)
+    if (result.isEmpty()) throw UnknownHostException()
+    return result
+  }
+
+  /** Note that this request is not recorded. */
+  @Throws(UnknownHostException::class)
+  operator fun get(hostname: String): List<InetAddress> {
+    val records = data[hostname] ?: return listOf()
     return records
       .filterIsInstance<ResourceRecord.IpAddress>()
       .map { it.address }
   }
-
-  @Throws(UnknownHostException::class)
-  fun lookup(
-    hostname: String,
-    index: Int,
-  ): InetAddress = lookup(hostname)[index]
 
   /** Clears the results for `hostname`. */
   fun clear(hostname: String) {
     data.remove(hostname)
   }
 
-  fun takeRequest(): Pair<RecordedRequest, DnsMessage> = requests.take()
+  fun takeRequest(): Request = requests.take()
 
-  fun pollRequest(): Pair<RecordedRequest, DnsMessage>? = requests.poll()
+  fun pollRequest(): Request? = requests.poll()
 
-  fun takeAllRequests(): List<Pair<RecordedRequest, DnsMessage>> =
+  fun takeAllRequests(): List<Request> =
     buildList {
       while (true) {
         val pair = pollRequest()
@@ -149,11 +152,8 @@ class FakeDns : Dns {
    * [expectedHosts].
    */
   fun assertRequests(vararg expectedHosts: String?) {
-    val actualHosts =
-      takeAllRequests()
-        .flatMap { (_, dnsMessage) -> dnsMessage.questions }
-        .map { it.name }
-    assertThat(actualHosts).containsExactly(*expectedHosts)
+    val actualHostnames = takeAllRequests().map { it.hostname }
+    assertThat(actualHostnames).containsExactly(*expectedHosts)
   }
 
   /** Allocates and returns `count` fake IPv4 addresses like [255.0.0.100, 255.0.0.101].  */
@@ -217,5 +217,21 @@ class FakeDns : Dns {
       TYPE_HTTPS -> this is ResourceRecord.Https
       else -> false
     }
+  }
+
+  sealed interface Request {
+    val hostname: String
+
+    data class DnsOverHttpsRequest(
+      val httpRequest: RecordedRequest,
+      val dnsRequest: DnsMessage,
+    ) : Request {
+      override val hostname: String
+        get() = dnsRequest.questions.single().name
+    }
+
+    data class FunctionCall(
+      override val hostname: String,
+    ) : Request
   }
 }

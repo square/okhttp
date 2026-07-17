@@ -40,6 +40,7 @@ import okhttp3.Dispatcher
 import okhttp3.Dns
 import okhttp3.EventRecorder
 import okhttp3.FakeDns
+import okhttp3.FakeDns.Request.DnsOverHttpsRequest
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -122,7 +123,7 @@ class DnsOverHttpsTest(
     server["lysine.dev"] = listOf(InetAddress.getByName("10.20.30.40"))
     val result = dns.invoke(entryPoint, "lysine.dev")
     assertThat(result).isEqualTo(listOf(address("10.20.30.40")))
-    val (httpsRequest, dnsRequest) = server.takeRequest()
+    val (httpsRequest, dnsRequest) = server.takeRequest() as DnsOverHttpsRequest
     assertThat(httpsRequest.method).isEqualTo("GET")
     assertThat(dnsRequest)
       .isEqualTo(queryRequest("lysine.dev", TYPE_A))
@@ -142,11 +143,11 @@ class DnsOverHttpsTest(
       address("10.20.30.40"),
     )
 
-    val (httpsRequest1, dnsRequest1) = server.takeRequest()
+    val (httpsRequest1, dnsRequest1) = server.takeRequest() as DnsOverHttpsRequest
     assertThat(httpsRequest1.method).isEqualTo("GET")
     assertThat(dnsRequest1).isEqualTo(queryRequest("lysine.dev", TYPE_AAAA))
 
-    val (httpsRequest2, dnsRequest2) = server.takeRequest()
+    val (httpsRequest2, dnsRequest2) = server.takeRequest() as DnsOverHttpsRequest
     assertThat(httpsRequest2.method).isEqualTo("GET")
     assertThat(dnsRequest2).isEqualTo(queryRequest("lysine.dev", TYPE_A))
   }
@@ -156,7 +157,7 @@ class DnsOverHttpsTest(
     assertFailsWith<UnknownHostException> {
       dns(entryPoint, "lysine.dev")
     }
-    val (httpsRequest, dnsRequest) = server.takeRequest()
+    val (httpsRequest, dnsRequest) = server.takeRequest() as DnsOverHttpsRequest
     assertThat(httpsRequest.method).isEqualTo("GET")
     assertThat(dnsRequest)
       .isEqualTo(queryRequest("lysine.dev", TYPE_A))
@@ -231,7 +232,7 @@ class DnsOverHttpsTest(
 
     val result1 = cachedDns(entryPoint, "lysine.dev")
     assertThat(result1).containsExactly(address("10.20.30.40"))
-    val (httpsRequest1, dnsRequest1) = server.takeRequest()
+    val (httpsRequest1, dnsRequest1) = server.takeRequest() as DnsOverHttpsRequest
     assertThat(httpsRequest1.method).isEqualTo("GET")
     assertThat(dnsRequest1)
       .isEqualTo(queryRequest("lysine.dev", TYPE_A))
@@ -246,7 +247,7 @@ class DnsOverHttpsTest(
 
     val result3 = cachedDns(entryPoint, "alternate.lysine.dev")
     assertThat(result3).containsExactly(address("55.66.77.88"))
-    val (httpsRequest2, dnsRequest2) = server.takeRequest()
+    val (httpsRequest2, dnsRequest2) = server.takeRequest() as DnsOverHttpsRequest
     assertThat(httpsRequest2.method).isEqualTo("GET")
     assertThat(dnsRequest2)
       .isEqualTo(queryRequest("alternate.lysine.dev", TYPE_A))
@@ -269,7 +270,7 @@ class DnsOverHttpsTest(
 
     val result1 = cachedDns(entryPoint, "lysine.dev")
     assertThat(result1).containsExactly(address("10.20.30.40"))
-    val (httpsRequest1, _) = server.takeRequest()
+    val (httpsRequest1, _) = server.takeRequest() as DnsOverHttpsRequest
     assertThat(httpsRequest1.method).isEqualTo("POST")
     assertThat(httpsRequest1.url.encodedQuery)
       .isEqualTo("ct")
@@ -284,7 +285,7 @@ class DnsOverHttpsTest(
 
     val result3 = cachedDns(entryPoint, "alternate.lysine.dev")
     assertThat(result3).containsExactly(address("55.66.77.88"))
-    val (httpsRequest2, _) = server.takeRequest()
+    val (httpsRequest2, _) = server.takeRequest() as DnsOverHttpsRequest
     assertThat(httpsRequest2.method).isEqualTo("POST")
     assertThat(httpsRequest2.url.encodedQuery)
       .isEqualTo("ct")
@@ -305,7 +306,7 @@ class DnsOverHttpsTest(
     server["lysine.dev"] = listOf(InetAddress.getByName("10.20.30.40"))
     val result1 = cachedDns(entryPoint, "lysine.dev")
     assertThat(result1).containsExactly(address("10.20.30.40"))
-    val (httpsRequest1, dnsRequest1) = server.takeRequest()
+    val (httpsRequest1, dnsRequest1) = server.takeRequest() as DnsOverHttpsRequest
     assertThat(httpsRequest1.method).isEqualTo("GET")
     assertThat(dnsRequest1)
       .isEqualTo(queryRequest("lysine.dev", TYPE_A))
@@ -314,7 +315,7 @@ class DnsOverHttpsTest(
 
     val result2 = cachedDns(entryPoint, "lysine.dev")
     assertThat(result2).isEqualTo(listOf(address("10.20.30.40")))
-    val (httpsRequest2, dnsRequest2) = server.takeRequest()
+    val (httpsRequest2, dnsRequest2) = server.takeRequest() as DnsOverHttpsRequest
     assertThat(httpsRequest2.method).isEqualTo("GET")
     assertThat(dnsRequest2)
       .isEqualTo(queryRequest("lysine.dev", TYPE_A))
