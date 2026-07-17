@@ -22,7 +22,6 @@ import java.util.concurrent.CountDownLatch
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Dns
-import okhttp3.Dns2
 import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
@@ -49,9 +48,8 @@ class DnsOverHttps internal constructor(
   @get:JvmName("post") val post: Boolean,
   @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
   @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean,
-) : Dns,
-  Dns2 {
-  override fun newCall(request: Dns2.Request): Dns2.Call {
+) : Dns {
+  override fun newCall(request: Dns.Request): Dns.Call {
     val calls = callsList(request.hostname)
 
     val canceledException = validate(request.hostname)
@@ -71,7 +69,7 @@ class DnsOverHttps internal constructor(
   /**
    * Returns an exception if [hostname] should not be resolved.
    *
-   * We **return** this exception rather than throwing it because in the [Dns2.Callback] case we want
+   * We **return** this exception rather than throwing it because in the [Dns.Callback] case we want
    * `onFailure()` to be called on a dispatcher thread and not synchronously.
    */
   private fun validate(hostname: String): UnknownHostException? {
