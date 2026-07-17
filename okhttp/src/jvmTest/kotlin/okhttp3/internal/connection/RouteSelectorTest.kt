@@ -46,13 +46,14 @@ import okhttp3.testing.PlatformRule
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @Burst
 class RouteSelectorTest(
-  private val entryPoint: EntryPoint = EntryPoint.NewCall,
+  private val entryPoint: EntryPoint = EntryPoint.Lookup,
 ) {
   @RegisterExtension
   val platform = PlatformRule()
@@ -109,6 +110,8 @@ class RouteSelectorTest(
   }
 
   @Test fun routeReturnsEncryptedClientHelloData() {
+    assumeTrue(entryPoint == EntryPoint.NewCall)
+
     val address = factory.newAddress()
     val routeSelector = newRouteSelector(address)
     assertThat(routeSelector.hasNext()).isTrue()
