@@ -17,7 +17,6 @@ package okhttp3.dnsoverhttps
 
 import java.io.IOException
 import java.net.InetAddress
-import java.net.ProtocolException
 import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
 import okhttp3.Call
@@ -28,10 +27,8 @@ import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 
 /**
@@ -54,34 +51,48 @@ class DnsOverHttps internal constructor(
   @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean,
 ) : Dns,
   Dns2 {
-  override fun newCall(request: Dns2.Request): Dns2.Call = DnsOverHttpsCall(this, request)
+  override fun newCall(request: Dns2.Request): Dns2.Call {
+    val calls = callsList(request.hostname)
 
-  @Throws(UnknownHostException::class)
-  override fun lookup(hostname: String): List<InetAddress> {
-    if (!resolvePrivateAddresses || !resolvePublicAddresses) {
-      val privateHost = isPrivateHost(hostname)
-
-      if (privateHost && !resolvePrivateAddresses) {
-        throw UnknownHostException("private hosts not resolved")
-      }
-
-      if (!privateHost && !resolvePublicAddresses) {
-        throw UnknownHostException("public hosts not resolved")
+    val canceledException = validate(request.hostname)
+    if (canceledException != null) {
+      for (call in calls) {
+        call.cancel()
       }
     }
 
-    return lookupHttps(hostname)
+    return DnsOverHttpsCall(
+      request = request,
+      calls = calls,
+      canceledException = canceledException,
+    )
+  }
+
+  /**
+   * Returns an exception if [hostname] should not be resolved.
+   *
+   * We **return** this exception rather than throwing it because in the [Dns2.Callback] case we want
+   * `onFailure()` to be called on a dispatcher thread and not synchronously.
+   */
+  private fun validate(hostname: String): UnknownHostException? {
+    // Don't load the public suffix list unless necessary.
+    if (resolvePrivateAddresses && resolvePublicAddresses) return null
+
+    val privateHost = isPrivateHost(hostname)
+
+    return when {
+      privateHost && !resolvePrivateAddresses -> UnknownHostException("private hosts not resolved")
+      !privateHost && !resolvePublicAddresses -> UnknownHostException("public hosts not resolved")
+      else -> null
+    }
   }
 
   @Throws(UnknownHostException::class)
-  private fun lookupHttps(hostname: String): List<InetAddress> {
-    val calls =
-      buildList {
-        add(createCall(hostname, TYPE_A))
-        if (includeIPv6) {
-          add(createCall(hostname, TYPE_AAAA))
-        }
-      }
+  override fun lookup(hostname: String): List<InetAddress> {
+    val validationException = validate(hostname)
+    if (validationException != null) throw validationException
+
+    val calls = callsList(hostname, inetAddressesOnly = true)
 
     val failures = ArrayList<Exception>(3)
     val results = ArrayList<InetAddress>(5)
@@ -175,37 +186,6 @@ class DnsOverHttps internal constructor(
     throw unknownHostException
   }
 
-  @Throws(IOException::class)
-  internal fun decodeResponse(response: Response): List<ResourceRecord> {
-    if (
-      response.cacheResponse == null &&
-      response.protocol !== Protocol.HTTP_2 &&
-      response.protocol !== Protocol.QUIC
-    ) {
-      Platform.get().log("Incorrect protocol: ${response.protocol}", Platform.WARN)
-    }
-
-    response.use {
-      if (!response.isSuccessful) {
-        throw IOException("response: ${response.code} ${response.message}")
-      }
-
-      val body = response.body
-      if (body.contentLength() > MAX_RESPONSE_SIZE) {
-        throw ProtocolException(
-          "response size exceeds limit ($MAX_RESPONSE_SIZE bytes): ${body.contentLength()} bytes",
-        )
-      }
-
-      val dnsResponse = DnsMessageReader(body.source()).read()
-      when (dnsResponse.responseCode) {
-        RESPONSE_CODE_SUCCESS -> return dnsResponse.answers
-        RESPONSE_CODE_SERVER_FAILURE -> throw UnknownHostException("DNS server failure")
-        else -> throw UnknownHostException()
-      }
-    }
-  }
-
   internal fun createCall(
     hostname: String,
     type: Int,
@@ -237,6 +217,22 @@ class DnsOverHttps internal constructor(
             }
           }.build(),
     )
+
+  private fun callsList(
+    hostname: String,
+    inetAddressesOnly: Boolean = false,
+  ): List<Call> =
+    buildList {
+      if (includeHttps && !inetAddressesOnly) {
+        add(createCall(hostname, TYPE_HTTPS))
+      }
+
+      if (includeIPv6) {
+        add(createCall(hostname, TYPE_AAAA))
+      }
+
+      add(createCall(hostname, TYPE_A))
+    }
 
   class Builder {
     internal var client: OkHttpClient? = null
@@ -278,6 +274,11 @@ class DnsOverHttps internal constructor(
      *
      * This is false by default, but that default is subject to change in 2026.
      */
+    fun includeHttps(includeHttps: Boolean) =
+      apply {
+        this.includeHttps = includeHttps
+      }
+
     fun includeIPv6(includeIPv6: Boolean) =
       apply {
         this.includeIPv6 = includeIPv6
