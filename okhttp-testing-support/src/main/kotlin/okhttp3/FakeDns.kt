@@ -115,16 +115,13 @@ class FakeDns : Dns {
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
     requests.put(Request.FunctionCall(hostname))
-
-    val result = get(hostname)
-    if (result.isEmpty()) throw UnknownHostException()
-    return result
+    return get(hostname)
   }
 
   /** Note that this request is not recorded. */
   @Throws(UnknownHostException::class)
   operator fun get(hostname: String): List<InetAddress> {
-    val records = data[hostname] ?: return listOf()
+    val records = data[hostname] ?: throw UnknownHostException()
     return records
       .filterIsInstance<ResourceRecord.IpAddress>()
       .map { it.address }
