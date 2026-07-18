@@ -350,7 +350,7 @@ class ConnectPlan internal constructor(
           sslSocket = sslSocket,
           hostname = address.url.host,
           protocols = address.protocols,
-          echConfigList = route.echConfigList
+          echConfigList = route.echConfigList,
         )
       }
 
