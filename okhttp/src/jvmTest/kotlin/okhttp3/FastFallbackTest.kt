@@ -286,8 +286,8 @@ class FastFallbackTest {
     val ipv6ConnectLatch = CountDownLatch(1)
     val socketFactory =
       object : DelegatingSocketFactory(SocketFactory.getDefault()) {
-        override fun createSocket(): Socket {
-          return object : Socket() {
+        override fun createSocket(): Socket =
+          object : Socket() {
             override fun connect(
               endpoint: SocketAddress,
               timeout: Int,
@@ -299,7 +299,6 @@ class FastFallbackTest {
               super.connect(endpoint, timeout)
             }
           }
-        }
       }
 
     client =
