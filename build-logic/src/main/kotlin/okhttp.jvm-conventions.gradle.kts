@@ -44,6 +44,7 @@ tasks.withType<KotlinCompile> {
       "-Xjvm-default=all",
       "-Xexpect-actual-classes",
     )
+    optIn.add("okhttp3.internal.OkHttpInternalApi")
   }
 }
 

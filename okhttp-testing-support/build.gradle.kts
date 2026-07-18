@@ -10,6 +10,7 @@ dependencies {
   api(libs.square.okio)
   api(projects.mockwebserver3)
   "friendsApi"(projects.okhttp)
+  "friendsApi"(projects.okhttpDnsoverhttps)
   api(projects.okhttpTls)
   api(libs.assertk)
   api(libs.bouncycastle.bcprov)

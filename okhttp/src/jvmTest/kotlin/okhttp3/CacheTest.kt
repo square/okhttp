@@ -426,7 +426,7 @@ class CacheTest {
    * An HTTPS response with a null handshake is rejected by Cache.put() rather than writing a
    * malformed cache entry. The response still succeeds but nothing is written to disk.
    *
-   * https://github.com/square/okhttp/issues/8962
+   * https://github.com/lysine-dev/okhttp/issues/8962
    */
   @Test
   fun httpsResponseWithNullHandshakeIsNotCached() {
@@ -463,7 +463,7 @@ class CacheTest {
   /**
    * Multiple HTTPS requests with null handshake all succeed without writing to cache.
    *
-   * https://github.com/square/okhttp/issues/8962
+   * https://github.com/lysine-dev/okhttp/issues/8962
    */
   @Test
   fun multipleHttpsRequestsWithNullHandshakeAllSucceed() {
@@ -505,7 +505,7 @@ class CacheTest {
    * When handshake is null for an HTTPS URL, Cache.put() rejects the entry so nothing is written
    * to disk. Subsequent requests hit the network.
    *
-   * https://github.com/square/okhttp/issues/8962
+   * https://github.com/lysine-dev/okhttp/issues/8962
    */
   @Test
   fun httpsResponseWithNullHandshakeIsNotServedFromCache() {
@@ -860,7 +860,7 @@ class CacheTest {
    * to the cache because we incorrectly assumed that HttpsURLConnection was always HTTPS and
    * HttpURLConnection was always HTTP; in practice redirects mean that each can do either.
    *
-   * https://github.com/square/okhttp/issues/214
+   * https://github.com/lysine-dev/okhttp/issues/214
    */
   @Test
   fun secureResponseCachingAndProtocolRedirects() {
@@ -1000,7 +1000,7 @@ class CacheTest {
     assertThat(get(url).body.string()).isEqualTo("b")
   }
 
-  /** https://github.com/square/okhttp/issues/2198  */
+  /** https://github.com/lysine-dev/okhttp/issues/2198  */
   @Test
   fun cachedRedirect() {
     server.enqueue(
@@ -1750,7 +1750,7 @@ class CacheTest {
    * its Last-Modified date is. This behavior was different prior to OkHttp 3.5 when we would prefer
    * the response with the later Last-Modified date.
    *
-   * https://github.com/square/okhttp/issues/2886
+   * https://github.com/lysine-dev/okhttp/issues/2886
    */
   @Test
   fun serverReturnsDocumentOlderThanCache() {
@@ -1955,7 +1955,7 @@ class CacheTest {
     assertThat(get(server.url("/")).body.string()).isEqualTo("DEFDEFDEF")
   }
 
-  /** https://github.com/square/okhttp/issues/947  */
+  /** https://github.com/lysine-dev/okhttp/issues/947  */
   @Test
   fun gzipAndVaryOnAcceptEncoding() {
     server.enqueue(
@@ -3288,7 +3288,7 @@ class CacheTest {
    * broke our cached response parser because it split on the first colon. This regression test
    * exists to help us read these old bad cache entries.
    *
-   * https://github.com/square/okhttp/issues/227
+   * https://github.com/lysine-dev/okhttp/issues/227
    */
   @Test
   fun testGoldenCacheResponse() {
@@ -3745,7 +3745,7 @@ CLEAN $urlKey ${entryMetadata.length} ${entryBody.length}
     }
   }
 
-  /** Test https://github.com/square/okhttp/issues/1712.  */
+  /** Test https://github.com/lysine-dev/okhttp/issues/1712.  */
   @Test
   fun conditionalMissUpdatesCache() {
     server.enqueue(

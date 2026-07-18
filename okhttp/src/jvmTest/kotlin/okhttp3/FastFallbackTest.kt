@@ -266,7 +266,7 @@ class FastFallbackTest {
    * already had a healthy connection. It sets up a deferred connection by stalling the IPv6
    * connect, and it sets up a same-connection retry with [ErrorCode.REFUSED_STREAM].
    *
-   * https://github.com/square/okhttp/pull/7190
+   * https://github.com/lysine-dev/okhttp/pull/7190
    */
   @Test
   fun preferCallConnectionOverDeferredConnection() {

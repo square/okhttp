@@ -110,7 +110,7 @@ class SocketChannelTest {
   }
 
   private fun testConnection(socketMode: SocketMode) {
-    // https://github.com/square/okhttp/pull/6554
+    // https://github.com/lysine-dev/okhttp/pull/6554
     assumeFalse(
       socketMode is TlsInstance &&
         socketMode.socketMode == Channel &&

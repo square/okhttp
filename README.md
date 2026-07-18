@@ -266,16 +266,16 @@ limitations under the License.
  [GraalVM]: https://www.graalvm.org/
  [androidx_startup]: https://developer.android.com/jetpack/androidx/releases/startup
  [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
- [changelog]: https://square.github.io/okhttp/changelog/
+ [changelog]: https://lysine.dev/okhttp/changelog/
  [conscrypt]: https://github.com/google/conscrypt/
- [get_example]: https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/GetExample.java
+ [get_example]: https://raw.github.com/lysine-dev/okhttp/master/samples/guide/src/main/java/okhttp3/guide/GetExample.java
  [kotlin]: https://kotlinlang.org/
- [okhttp3_pro]: https://raw.githubusercontent.com/square/okhttp/master/okhttp/src/main/resources/META-INF/proguard/okhttp3.pro
- [okhttp]: https://square.github.io/okhttp/
- [okhttp_312x]: https://github.com/square/okhttp/tree/okhttp_3.12.x
- [okio]: https://github.com/square/okio
- [post_example]: https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/PostExample.java
- [r8_proguard]: https://square.github.io/okhttp/features/r8_proguard/
- [recipes]: https://square.github.io/okhttp/recipes/
+ [okhttp3_pro]: https://raw.githubusercontent.com/lysine-dev/okhttp/master/okhttp/okhttp3.pro
+ [okhttp]: https://lysine.dev/okhttp/
+ [okhttp_312x]: https://github.com/lysine-dev/okhttp/tree/okhttp_3.12.x
+ [okio]: https://github.com/lysine-dev/okio
+ [post_example]: https://raw.github.com/lysine-dev/okhttp/master/samples/guide/src/main/java/okhttp3/guide/PostExample.java
+ [r8_proguard]: https://lysine.dev/okhttp/features/r8_proguard/
+ [recipes]: https://lysine.dev/okhttp/recipes/
  [snap]: https://s01.oss.sonatype.org/content/repositories/snapshots/
- [tls_history]: https://square.github.io/okhttp/tls_configuration_history/
+ [tls_history]: https://lysine.dev/okhttp/tls_configuration_history/
