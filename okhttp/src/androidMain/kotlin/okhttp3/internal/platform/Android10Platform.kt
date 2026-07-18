@@ -37,6 +37,7 @@ import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
+import okio.ByteString
 
 /** Android 10+ (API 29+). */
 @SuppressSignatureCheck
@@ -75,11 +76,12 @@ class Android10Platform :
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<Protocol>,
+    echConfigList: ByteString?,
   ) {
     // No TLS extensions if the socket class is custom.
     socketAdapters
       .find { it.matchesSocket(sslSocket) }
-      ?.configureTlsExtensions(sslSocket, hostname, protocols)
+      ?.configureTlsExtensions(sslSocket, hostname, protocols, echConfigList)
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
