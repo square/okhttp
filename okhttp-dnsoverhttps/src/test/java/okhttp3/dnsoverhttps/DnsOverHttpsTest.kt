@@ -19,6 +19,7 @@ import app.cash.burst.Burst
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.hasMessage
+import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
@@ -27,6 +28,11 @@ import java.io.EOFException
 import java.io.File
 import java.net.InetAddress
 import java.net.UnknownHostException
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
@@ -93,9 +99,26 @@ class DnsOverHttpsTest(
         dispatcher = server.dispatcher
       }
 
+  private val completedRunnables = LinkedBlockingDeque<Runnable>()
+  private val executorService =
+    object : ThreadPoolExecutor(
+      0,
+      Int.MAX_VALUE,
+      1,
+      TimeUnit.SECONDS,
+      SynchronousQueue(),
+    ) {
+      override fun afterExecute(
+        r: Runnable,
+        t: Throwable?,
+      ) {
+        completedRunnables.add(r)
+      }
+    }
+
   private lateinit var dns: DnsOverHttps
   private val dispatcher =
-    Dispatcher()
+    Dispatcher(executorService)
       .apply {
         // Force calls to run sequentially for determinism.
         this.maxRequestsPerHost = 1
@@ -669,6 +692,90 @@ class DnsOverHttpsTest(
       ),
     )
     assertThat(dnsEvents.take()).isInstanceOf<DnsEvent.Failure>()
+  }
+
+  @Test
+  fun callbackIsCalledSequentiallyWhenHttpCallsAreParallel() {
+    callbackIsCalledSequentially()
+  }
+
+  @Test
+  fun callbackIsCalledSequentiallyWhenCallsFail() {
+    server.sequenceIndexToOverride[0] = overrideResponse("")
+    callbackIsCalledSequentially()
+  }
+
+  /**
+   * We'd like to confirm that calls into [Dns.Callback] are serialized.
+   *
+   * Asserting that is awkward, so we're asserting something stronger, advised by the
+   * implementation: if the first call to `onRecords()` waits for the other 2 HTTP calls to
+   * finish, then all 3 calls will happen on the same thread.
+   *
+   * (This works because we know the other 2 HTTP calls will finish before their data is emitted.)
+   */
+  private fun callbackIsCalledSequentially() {
+    assumeTrue(entryPoint == EntryPoint.NewCall)
+
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    server["lysine.dev"] =
+      listOf(
+        ResourceRecord.IpAddress(
+          name = "lysine.dev",
+          timeToLive = 5,
+          address = InetAddress.getByName("10.20.30.40"),
+        ),
+        ResourceRecord.IpAddress(
+          name = "lysine.dev",
+          timeToLive = 5,
+          address = InetAddress.getByName("1:2::3:4"),
+        ),
+        ResourceRecord.Https(
+          name = "lysine.dev",
+          timeToLive = 5,
+          alpnIds = listOf(Protocol.HTTP_2.toString()),
+        ),
+      )
+
+    // Track which threads receive callbacks.
+    val threadsFuture = CompletableFuture<Set<Thread>>()
+
+    dispatcher.maxRequestsPerHost = 3
+
+    val call = dns.newCall(Dns.Request("lysine.dev"))
+    call.enqueue(
+      object : Dns.Callback {
+        private val threads = mutableSetOf<Thread>()
+
+        override fun onRecords(
+          call: Dns.Call,
+          last: Boolean,
+          records: List<Dns.Record>,
+        ) {
+          onCallback(last)
+        }
+
+        override fun onFailure(
+          call: Dns.Call,
+          e: java.io.IOException,
+        ) {
+          onCallback(true)
+        }
+
+        private fun onCallback(last: Boolean) {
+          if (threads.isEmpty()) {
+            completedRunnables.take()
+            completedRunnables.take()
+          }
+          threads += Thread.currentThread()
+          if (last) {
+            threadsFuture.complete(threads)
+          }
+        }
+      },
+    )
+
+    assertThat(threadsFuture.get()).hasSize(1)
   }
 
   private fun cacheEvents(): List<KClass<out CallEvent>> =

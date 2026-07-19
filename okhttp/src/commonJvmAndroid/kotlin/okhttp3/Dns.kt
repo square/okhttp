@@ -60,6 +60,12 @@ fun interface Dns {
     fun isCanceled(): Boolean
   }
 
+  /**
+   * Receives a stream of records from the DNS server.
+   *
+   * Calls to [onRecords] and [onFailure] may be invoked by different threads, but never in
+   * parallel: a call will not be made until the prior call has returned.
+   */
   interface Callback {
     /**
      * @param last true if this is the last list of records for this address. That is a terminal
