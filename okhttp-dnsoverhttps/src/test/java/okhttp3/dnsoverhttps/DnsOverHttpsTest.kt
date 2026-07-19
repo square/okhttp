@@ -797,7 +797,7 @@ class DnsOverHttpsTest(
       .Builder()
       .client(bootstrapClient)
       .includeIPv6(includeIPv6)
-      .includeHttps(includeHttps)
+      .includeServiceMetadata(includeHttps)
       .resolvePrivateAddresses(resolvePrivateAddresses)
       .resolvePublicAddresses(resolvePublicAddresses)
       .url(url)
