@@ -125,12 +125,14 @@ open class EventRecorder(
       assertThat(Thread.holdsLock(lock), lock.toString()).isFalse()
     }
 
-    if (enforceOrder) {
-      checkForStartEvent(e)
-    }
+    synchronized(this) {
+      if (enforceOrder) {
+        checkForStartEvent(e)
+      }
 
-    eventsForMatching.offer(e)
-    eventSequence.offer(e)
+      eventsForMatching.offer(e)
+      eventSequence.offer(e)
+    }
   }
 
   private fun checkForStartEvent(e: CallEvent) {

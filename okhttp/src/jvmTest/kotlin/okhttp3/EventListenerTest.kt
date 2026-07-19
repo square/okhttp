@@ -30,6 +30,7 @@ import assertk.assertions.isNotEmpty
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isSameInstanceAs
+import assertk.assertions.isTrue
 import assertk.assertions.prop
 import java.io.File
 import java.io.IOException
@@ -419,6 +420,19 @@ class EventListenerTest(
         .body("abc")
         .build(),
     )
+
+    // Hold the call in an application interceptor so cancel runs after CallStart handoff completes.
+    // Otherwise cancel races connection events and can miss Canceled under EventListenerRelay (#9372).
+    val inFlight = CountDownLatch(1)
+    val release = CountDownLatch(1)
+    client =
+      client
+        .newBuilder()
+        .addInterceptor { chain ->
+          inFlight.countDown()
+          assertThat(release.await(5, TimeUnit.SECONDS)).isTrue()
+          chain.proceed(chain.request())
+        }.build()
     val call =
       client.newCallWithListener(
         Request
@@ -426,12 +440,14 @@ class EventListenerTest(
           .url(server.url("/"))
           .build(),
       )
+    val done = CountDownLatch(1)
     call.enqueue(
       object : Callback {
         override fun onFailure(
           call: Call,
           e: IOException,
         ) {
+          done.countDown()
         }
 
         override fun onResponse(
@@ -439,10 +455,16 @@ class EventListenerTest(
           response: Response,
         ) {
           response.close()
+          done.countDown()
         }
       },
     )
+
+    assertThat(inFlight.await(5, TimeUnit.SECONDS)).isTrue()
     call.cancel()
+    release.countDown()
+
+    assertThat(done.await(5, TimeUnit.SECONDS)).isTrue()
     assertThat(eventRecorder.recordedEventTypes()).contains(Canceled::class)
   }
 
