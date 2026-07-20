@@ -53,7 +53,7 @@ class DnsOverHttps internal constructor(
   @get:JvmName("client") val client: OkHttpClient,
   @get:JvmName("url") val url: HttpUrl,
   @get:JvmName("includeIPv6") val includeIPv6: Boolean,
-  @get:JvmName("includeHttps") val includeHttps: Boolean,
+  @get:JvmName("includeServiceMetadata") val includeServiceMetadata: Boolean,
   @get:JvmName("post") val post: Boolean,
   @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
   @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean,
@@ -230,7 +230,7 @@ class DnsOverHttps internal constructor(
     inetAddressesOnly: Boolean = false,
   ): List<Call> =
     buildList {
-      if (includeHttps && !inetAddressesOnly) {
+      if (includeServiceMetadata && !inetAddressesOnly) {
         add(createCall(hostname, TYPE_HTTPS))
       }
 
@@ -245,7 +245,7 @@ class DnsOverHttps internal constructor(
     internal var client: OkHttpClient? = null
     internal var url: HttpUrl? = null
     internal var includeIPv6 = true
-    internal var includeHttps = false
+    internal var includeServiceMetadata = true
     internal var post = false
     internal var systemDns = Dns.SYSTEM
     internal var bootstrapDnsHosts: List<InetAddress>? = null
@@ -258,7 +258,7 @@ class DnsOverHttps internal constructor(
         client.newBuilder().dns(buildBootstrapClient(this)).build(),
         checkNotNull(url) { "url not set" },
         includeIPv6,
-        includeHttps,
+        includeServiceMetadata,
         post,
         resolvePrivateAddresses,
         resolvePublicAddresses,
@@ -278,12 +278,10 @@ class DnsOverHttps internal constructor(
     /**
      * True to request [`HTTPS` DNS records](https://datatracker.ietf.org/doc/rfc9460/), which are
      * necessary for [Encrypted Client Hello (ECH)](https://datatracker.ietf.org/doc/rfc9849/).
-     *
-     * This is false by default, but that default is subject to change in 2026.
      */
-    fun includeHttps(includeHttps: Boolean) =
+    fun includeServiceMetadata(includeServiceMetadata: Boolean) =
       apply {
-        this.includeHttps = includeHttps
+        this.includeServiceMetadata = includeServiceMetadata
       }
 
     fun includeIPv6(includeIPv6: Boolean) =

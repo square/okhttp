@@ -354,7 +354,7 @@ class DnsOverHttpsTest(
   fun completeHttpsRecordsReturned() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
     server["lysine.dev"] =
       listOf(
         ResourceRecord.IpAddress(
@@ -434,7 +434,7 @@ class DnsOverHttpsTest(
   fun serviceMetadataEmptyTargetNameAliasesToRequestHostname() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
     server["lysine.dev"] =
       listOf(
         ResourceRecord.IpAddress(
@@ -484,7 +484,7 @@ class DnsOverHttpsTest(
   fun httpsFailureIsDeliveredAfterIpv6AndIpv4Records() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
 
     // Fail the HTTPS call, which should have index 0.
     server.sequenceIndexToOverride[0] = overrideResponse("")
@@ -537,7 +537,7 @@ class DnsOverHttpsTest(
   fun ipv6FailureIsDeliveredAfterIpv4Records() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
 
     // Fail the IPv6 call, which should have index 1.
     server.sequenceIndexToOverride[1] = overrideResponse("")
@@ -573,7 +573,7 @@ class DnsOverHttpsTest(
   fun emptyResultsAreSkipped() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
     server["lysine.dev"] =
       listOf(
         ResourceRecord.IpAddress(
@@ -604,7 +604,7 @@ class DnsOverHttpsTest(
   fun lastEventIsDeliveredEventIfItIsEmpty() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
 
     val call = dns.newCall(Dns.Request("lysine.dev"))
     val dnsEvents = call.toEventsQueue()
@@ -621,7 +621,7 @@ class DnsOverHttpsTest(
   fun callIsCanceledBeforeItIsStarted() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
 
     val call = dns.newCall(Dns.Request("lysine.dev"))
     call.cancel()
@@ -635,7 +635,7 @@ class DnsOverHttpsTest(
   fun callIsCanceledBeforeItReachesTheNetwork() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
     val call = dns.newCall(Dns.Request("lysine.dev"))
 
     interceptor =
@@ -717,7 +717,7 @@ class DnsOverHttpsTest(
   private fun callbackIsCalledSequentially() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
     server["lysine.dev"] =
       listOf(
         ResourceRecord.IpAddress(
@@ -787,7 +787,7 @@ class DnsOverHttpsTest(
   private fun buildLocalhost(
     bootstrapClient: OkHttpClient,
     includeIPv6: Boolean = false,
-    includeHttps: Boolean = false,
+    includeServiceMetadata: Boolean = false,
     post: Boolean = false,
     resolvePrivateAddresses: Boolean = true,
     resolvePublicAddresses: Boolean = true,
@@ -797,7 +797,7 @@ class DnsOverHttpsTest(
       .Builder()
       .client(bootstrapClient)
       .includeIPv6(includeIPv6)
-      .includeHttps(includeHttps)
+      .includeServiceMetadata(includeServiceMetadata)
       .resolvePrivateAddresses(resolvePrivateAddresses)
       .resolvePublicAddresses(resolvePublicAddresses)
       .url(url)
