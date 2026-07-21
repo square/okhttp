@@ -20,7 +20,6 @@ package okhttp3.dnsoverhttps.internal
 import java.io.IOException
 import java.net.InetAddress
 import java.net.ProtocolException
-import java.net.UnknownHostException
 import okhttp3.Protocol
 import okhttp3.RequestBody
 import okhttp3.Response
@@ -186,7 +185,7 @@ internal class QueryRequestBody(
 }
 
 @Throws(IOException::class)
-internal fun decodeResponse(response: Response): List<ResourceRecord> {
+internal fun decodeResponse(response: Response): DnsMessage {
   if (
     response.cacheResponse == null &&
     response.protocol !== Protocol.HTTP_2 &&
@@ -207,11 +206,6 @@ internal fun decodeResponse(response: Response): List<ResourceRecord> {
       )
     }
 
-    val dnsResponse = DnsMessageReader(body.source()).read()
-    when (dnsResponse.responseCode) {
-      RESPONSE_CODE_SUCCESS -> return dnsResponse.answers
-      RESPONSE_CODE_SERVER_FAILURE -> throw UnknownHostException("DNS server failure")
-      else -> throw UnknownHostException()
-    }
+    return DnsMessageReader(body.source()).read()
   }
 }

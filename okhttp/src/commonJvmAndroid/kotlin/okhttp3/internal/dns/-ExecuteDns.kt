@@ -62,8 +62,15 @@ fun Dns.Call.execute(): List<Dns.Record> {
       private fun complete(e: IOException? = null) {
         val result =
           when {
-            allRecords.any { it is Dns.Record.IpAddress } -> Result.success(allRecords)
-            else -> Result.failure(e ?: UnknownHostException())
+            allRecords.any { it is Dns.Record.IpAddress } -> {
+              Result.success(allRecords)
+            }
+
+            else -> {
+              Result.failure(
+                e ?: UnknownHostException("DNS returned no addresses for ${request.hostname}"),
+              )
+            }
           }
         queue.put(result)
       }

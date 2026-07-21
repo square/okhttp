@@ -85,7 +85,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 @Tag("Slowish")
 @Burst
 class DnsOverHttpsTest(
-  private val entryPoint: EntryPoint = EntryPoint.Lookup,
+  private val entryPoint: EntryPoint = EntryPoint.NewCall,
 ) {
   @RegisterExtension
   val platform = PlatformRule()

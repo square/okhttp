@@ -17,20 +17,12 @@ package okhttp3.dnsoverhttps
 
 import java.net.InetAddress
 import java.net.UnknownHostException
-import okhttp3.Call
 import okhttp3.Dns
 import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.dnsoverhttps.internal.DnsMessage
 import okhttp3.dnsoverhttps.internal.DnsOverHttpsCall
-import okhttp3.dnsoverhttps.internal.QueryRequestBody
-import okhttp3.dnsoverhttps.internal.TYPE_A
-import okhttp3.dnsoverhttps.internal.TYPE_AAAA
-import okhttp3.dnsoverhttps.internal.TYPE_HTTPS
-import okhttp3.dnsoverhttps.internal.asQueryParameter
 import okhttp3.internal.dns.execute
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 
@@ -54,18 +46,14 @@ class DnsOverHttps internal constructor(
   @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean,
 ) : Dns {
   override fun newCall(request: Dns.Request): Dns.Call {
-    val calls = callsList(request.hostname)
-
     val canceledException = validate(request.hostname)
-    if (canceledException != null) {
-      for (call in calls) {
-        call.cancel()
-      }
-    }
-
     return DnsOverHttpsCall(
       request = request,
-      calls = calls,
+      client = client,
+      dnsUrl = url,
+      post = post,
+      includeIPv6 = includeIPv6,
+      includeServiceMetadata = includeServiceMetadata,
       canceledException = canceledException,
     )
   }
@@ -107,54 +95,6 @@ class DnsOverHttps internal constructor(
       .filterIsInstance<Dns.Record.IpAddress>()
       .map { it.address }
   }
-
-  internal fun createCall(
-    hostname: String,
-    type: Int,
-  ): Call =
-    client.newCall(
-      request =
-        Request
-          .Builder()
-          .header("Accept", DNS_MESSAGE.toString())
-          .apply {
-            val dnsUrl = this@DnsOverHttps.url
-            if (post) {
-              url(dnsUrl)
-              cacheUrlOverride(
-                dnsUrl
-                  .newBuilder()
-                  .addQueryParameter("hostname", hostname)
-                  .build(),
-              )
-              post(QueryRequestBody(DnsMessage.query(hostname, type)))
-            } else {
-              val queryParameter = DnsMessage.query(hostname, type).asQueryParameter()
-              val requestUrl =
-                dnsUrl
-                  .newBuilder()
-                  .addQueryParameter("dns", queryParameter)
-                  .build()
-              url(requestUrl)
-            }
-          }.build(),
-    )
-
-  private fun callsList(
-    hostname: String,
-    inetAddressesOnly: Boolean = false,
-  ): List<Call> =
-    buildList {
-      if (includeServiceMetadata && !inetAddressesOnly) {
-        add(createCall(hostname, TYPE_HTTPS))
-      }
-
-      if (includeIPv6) {
-        add(createCall(hostname, TYPE_AAAA))
-      }
-
-      add(createCall(hostname, TYPE_A))
-    }
 
   class Builder {
     internal var client: OkHttpClient? = null
