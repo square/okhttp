@@ -85,7 +85,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 @Tag("Slowish")
 @Burst
 class DnsOverHttpsTest(
-  private val entryPoint: EntryPoint = EntryPoint.NewCall,
+  private val entryPoint: EntryPoint = EntryPoint.Lookup,
 ) {
   @RegisterExtension
   val platform = PlatformRule()
@@ -180,7 +180,32 @@ class DnsOverHttpsTest(
   }
 
   @Test
-  fun failure() {
+  fun lookupDoesNotRequestServiceMetadata() {
+    assumeTrue(entryPoint == EntryPoint.Lookup)
+
+    server["lysine.dev"] =
+      listOf(
+        InetAddress.getByName("10.20.30.40"),
+        InetAddress.getByName("1:2::3:4"),
+      )
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
+    val result = dns(entryPoint, "lysine.dev")
+    assertThat(result).containsExactly(
+      address("1:2::3:4"),
+      address("10.20.30.40"),
+    )
+
+    val (_, dnsRequest1) = server.takeRequest() as DnsOverHttpsRequest
+    assertThat(dnsRequest1).isEqualTo(queryRequest("lysine.dev", TYPE_AAAA))
+
+    val (_, dnsRequest2) = server.takeRequest() as DnsOverHttpsRequest
+    assertThat(dnsRequest2).isEqualTo(queryRequest("lysine.dev", TYPE_A))
+
+    assertThat(server.pollRequest()).isNull()
+  }
+
+  @Test
+  fun failsBecauseNoRecords() {
     assertFailsWith<UnknownHostException> {
       dns(entryPoint, "lysine.dev")
     }
@@ -188,6 +213,30 @@ class DnsOverHttpsTest(
     assertThat(httpsRequest.method).isEqualTo("GET")
     assertThat(dnsRequest)
       .isEqualTo(queryRequest("lysine.dev", TYPE_A))
+  }
+
+  @Test
+  fun lookupReturnsNormallyIfIpv4FailsAndIpv6Succeeds() {
+    assumeTrue(entryPoint == EntryPoint.Lookup)
+
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true)
+    server["lysine.dev"] = listOf(InetAddress.getByName("11:22::33:44"))
+    server.sequenceIndexToOverride[1] = overrideResponse("")
+
+    val results = dns(entryPoint, "lysine.dev")
+    assertThat(results).containsExactly(InetAddress.getByName("11:22::33:44"))
+  }
+
+  @Test
+  fun lookupReturnsNormallyIfIpv6FailsAndIpv6Succeeds() {
+    assumeTrue(entryPoint == EntryPoint.Lookup)
+
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true)
+    server["lysine.dev"] = listOf(InetAddress.getByName("10.20.30.40"))
+    server.sequenceIndexToOverride[0] = overrideResponse("")
+
+    val results = dns(entryPoint, "lysine.dev")
+    assertThat(results).containsExactly(InetAddress.getByName("10.20.30.40"))
   }
 
   @Test

@@ -15,28 +15,23 @@
  */
 package okhttp3.dnsoverhttps
 
-import java.io.IOException
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.util.concurrent.CountDownLatch
 import okhttp3.Call
-import okhttp3.Callback
 import okhttp3.Dns
 import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.Response
 import okhttp3.dnsoverhttps.internal.DnsMessage
 import okhttp3.dnsoverhttps.internal.DnsOverHttpsCall
 import okhttp3.dnsoverhttps.internal.QueryRequestBody
-import okhttp3.dnsoverhttps.internal.ResourceRecord
 import okhttp3.dnsoverhttps.internal.TYPE_A
 import okhttp3.dnsoverhttps.internal.TYPE_AAAA
 import okhttp3.dnsoverhttps.internal.TYPE_HTTPS
 import okhttp3.dnsoverhttps.internal.asQueryParameter
-import okhttp3.dnsoverhttps.internal.decodeResponse
+import okhttp3.internal.dns.execute
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 
 /**
@@ -96,101 +91,21 @@ class DnsOverHttps internal constructor(
 
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
-    val validationException = validate(hostname)
-    if (validationException != null) throw validationException
-
-    val calls = callsList(hostname, inetAddressesOnly = true)
-
-    val failures = ArrayList<Exception>(3)
-    val results = ArrayList<InetAddress>(5)
-    executeRequests(calls, results, failures)
-
-    return results.ifEmpty {
-      throwBestFailure(hostname, failures)
-    }
-  }
-
-  private fun executeRequests(
-    networkRequests: List<Call>,
-    responses: MutableList<InetAddress>,
-    failures: MutableList<Exception>,
-  ) {
-    val latch = CountDownLatch(networkRequests.size)
-
-    for (call in networkRequests) {
-      call.enqueue(
-        object : Callback {
-          override fun onFailure(
-            call: Call,
-            e: IOException,
-          ) {
-            synchronized(failures) {
-              failures.add(e)
-            }
-            latch.countDown()
-          }
-
-          override fun onResponse(
-            call: Call,
-            response: Response,
-          ) {
-            processResponse(response, responses, failures)
-            latch.countDown()
-          }
-        },
+    val withoutServiceMetadata =
+      DnsOverHttps(
+        client = client,
+        url = url,
+        includeIPv6 = includeIPv6,
+        includeServiceMetadata = false,
+        post = post,
+        resolvePrivateAddresses = resolvePrivateAddresses,
+        resolvePublicAddresses = resolvePublicAddresses,
       )
-    }
-
-    try {
-      latch.await()
-    } catch (e: InterruptedException) {
-      failures.add(e)
-    }
-  }
-
-  private fun processResponse(
-    response: Response,
-    results: MutableList<InetAddress>,
-    failures: MutableList<Exception>,
-  ) {
-    try {
-      val addresses =
-        decodeResponse(response)
-          .filterIsInstance<ResourceRecord.IpAddress>()
-          .map { it.address }
-      synchronized(results) {
-        results.addAll(addresses)
-      }
-    } catch (e: IOException) {
-      synchronized(failures) {
-        failures.add(e)
-      }
-    }
-  }
-
-  @Throws(UnknownHostException::class)
-  private fun throwBestFailure(
-    hostname: String,
-    failures: List<Exception>,
-  ): List<InetAddress> {
-    if (failures.isEmpty()) {
-      throw UnknownHostException(hostname)
-    }
-
-    val failure = failures[0]
-
-    if (failure is UnknownHostException) {
-      throw failure
-    }
-
-    val unknownHostException = UnknownHostException(hostname)
-    unknownHostException.initCause(failure)
-
-    for (i in 1 until failures.size) {
-      unknownHostException.addSuppressed(failures[i])
-    }
-
-    throw unknownHostException
+    val call = withoutServiceMetadata.newCall(Dns.Request(hostname))
+    val records = call.execute()
+    return records
+      .filterIsInstance<Dns.Record.IpAddress>()
+      .map { it.address }
   }
 
   internal fun createCall(
