@@ -37,9 +37,9 @@ import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
 import okhttp3.Route
 import okhttp3.TestValueFactory
-import okhttp3.dnsoverhttps.internal.ResourceRecord
 import okhttp3.internal.connection.RouteSelector.Companion.socketHost
 import okhttp3.internal.dns.EntryPoint
+import okhttp3.internal.dns.ResourceRecord
 import okhttp3.internal.dns.forceEntryPoint
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.testing.PlatformRule

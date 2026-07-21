@@ -15,16 +15,16 @@
  */
 @file:Suppress("ktlint:standard:filename")
 
-package okhttp3.dnsoverhttps.internal
+package okhttp3.internal.dns
 
 import java.net.InetAddress
 import okhttp3.Protocol
 import okhttp3.internal.OkHttpInternalApi
+import okhttp3.internal.skipAll
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
 import okio.ForwardingSource
-import okio.IOException
 import okio.ProtocolException
 import okio.Source
 import okio.buffer
@@ -282,13 +282,6 @@ class DnsMessageReader(
       ipAddressHints = ipAddressHints ?: listOf(),
       echConfigList = echConfigList,
     )
-  }
-}
-
-@Throws(IOException::class)
-internal fun BufferedSource.skipAll() {
-  while (!exhausted()) {
-    skip(buffer.size)
   }
 }
 
