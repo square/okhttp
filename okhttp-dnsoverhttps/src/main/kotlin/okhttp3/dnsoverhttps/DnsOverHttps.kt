@@ -91,18 +91,20 @@ class DnsOverHttps internal constructor(
 
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
-    val withoutServiceMetadata = DnsOverHttps(
-      client = client,
-      url = url,
-      includeIPv6 = includeIPv6,
-      includeServiceMetadata = false,
-      post = post,
-      resolvePrivateAddresses = resolvePrivateAddresses,
-      resolvePublicAddresses = resolvePublicAddresses,
-    )
+    val withoutServiceMetadata =
+      DnsOverHttps(
+        client = client,
+        url = url,
+        includeIPv6 = includeIPv6,
+        includeServiceMetadata = false,
+        post = post,
+        resolvePrivateAddresses = resolvePrivateAddresses,
+        resolvePublicAddresses = resolvePublicAddresses,
+      )
     val call = withoutServiceMetadata.newCall(Dns.Request(hostname))
     val records = call.execute()
-    return records.filterIsInstance<Dns.Record.IpAddress>()
+    return records
+      .filterIsInstance<Dns.Record.IpAddress>()
       .map { it.address }
   }
 
@@ -222,8 +224,7 @@ class DnsOverHttps internal constructor(
         this.bootstrapDnsHosts = bootstrapDnsHosts
       }
 
-    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder =
-      bootstrapDnsHosts(bootstrapDnsHosts.toList())
+    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder = bootstrapDnsHosts(bootstrapDnsHosts.toList())
 
     fun systemDns(systemDns: Dns) =
       apply {
@@ -245,7 +246,6 @@ class DnsOverHttps internal constructor(
       }
     }
 
-    internal fun isPrivateHost(host: String): Boolean =
-      PublicSuffixDatabase.get().getEffectiveTldPlusOne(host) == null
+    internal fun isPrivateHost(host: String): Boolean = PublicSuffixDatabase.get().getEffectiveTldPlusOne(host) == null
   }
 }

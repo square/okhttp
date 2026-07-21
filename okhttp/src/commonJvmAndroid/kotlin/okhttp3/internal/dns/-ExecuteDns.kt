@@ -60,10 +60,11 @@ fun Dns.Call.execute(): List<Dns.Record> {
       }
 
       private fun complete(e: IOException? = null) {
-        val result = when {
-          allRecords.any { it is Dns.Record.IpAddress } -> Result.success(allRecords)
-          else -> Result.failure(e ?: UnknownHostException())
-        }
+        val result =
+          when {
+            allRecords.any { it is Dns.Record.IpAddress } -> Result.success(allRecords)
+            else -> Result.failure(e ?: UnknownHostException())
+          }
         queue.put(result)
       }
     },
