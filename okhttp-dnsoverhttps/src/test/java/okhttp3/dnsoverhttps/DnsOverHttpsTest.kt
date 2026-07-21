@@ -216,7 +216,7 @@ class DnsOverHttpsTest(
   }
 
   @Test
-  fun lookupReturnsNormallyIfIpv4FailsAndIpv4Succeeds() {
+  fun lookupReturnsNormallyIfIpv4FailsAndIpv6Succeeds() {
     assumeTrue(entryPoint == EntryPoint.Lookup)
 
     dns = buildLocalhost(bootstrapClient, includeIPv6 = true)
