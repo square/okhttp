@@ -30,8 +30,8 @@ import okhttp3.Protocol
  *
  * A few things conspire to make concurrency tricky:
  *
- *  * Each DNS record type is queried in parallel; [onQueryResponse] and [onQueryFailure] may be called
- *    concurrently.
+ *  * Each DNS record type is queried in parallel; [onQueryResponse] and [onQueryFailure] may be
+ *    called concurrently.
  *  * Calls to [okhttp3.Dns.Callback] must be serialized.
  *  * We don't want to use locks to guard access to [okhttp3.Dns.Callback] functions.
  *

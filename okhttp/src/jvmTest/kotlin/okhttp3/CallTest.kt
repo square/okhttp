@@ -3677,7 +3677,7 @@ open class CallTest {
           .host("android.com")
           .build(),
       )
-    executeSynchronously(request).assertFailure("$dns returned no addresses for android.com")
+    executeSynchronously(request).assertFailure("DNS returned no addresses for android.com")
     dns.assertRequests("android.com")
   }
 
