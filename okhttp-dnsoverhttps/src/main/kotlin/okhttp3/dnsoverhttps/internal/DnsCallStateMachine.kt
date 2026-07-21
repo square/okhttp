@@ -20,6 +20,13 @@ import java.net.UnknownHostException
 import java.util.concurrent.atomic.AtomicReference
 import okhttp3.Dns
 import okhttp3.Protocol
+import okhttp3.internal.dns.DnsMessage
+import okhttp3.internal.dns.RESPONSE_CODE_SERVER_FAILURE
+import okhttp3.internal.dns.RESPONSE_CODE_SUCCESS
+import okhttp3.internal.dns.ResourceRecord
+import okhttp3.internal.dns.TYPE_A
+import okhttp3.internal.dns.TYPE_AAAA
+import okhttp3.internal.dns.TYPE_HTTPS
 
 /**
  * State machine for DNS calls. This is intended for use with any transport for the queries, such

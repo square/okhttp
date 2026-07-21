@@ -22,6 +22,13 @@ import java.net.InetAddress
 import java.net.ProtocolException
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
+import okhttp3.internal.dns.DnsMessage
+import okhttp3.internal.dns.DnsMessageReader
+import okhttp3.internal.dns.Question
+import okhttp3.internal.dns.ResourceRecord
+import okhttp3.internal.dns.TYPE_A
+import okhttp3.internal.dns.TYPE_AAAA
+import okhttp3.internal.dns.TYPE_HTTPS
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
 

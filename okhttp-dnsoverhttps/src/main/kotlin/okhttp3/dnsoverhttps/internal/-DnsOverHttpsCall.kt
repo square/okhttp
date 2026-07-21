@@ -18,15 +18,24 @@
 package okhttp3.dnsoverhttps.internal
 
 import java.io.IOException
+import java.net.ProtocolException
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Dns
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.dnsoverhttps.DnsOverHttps.Companion.DNS_MESSAGE
+import okhttp3.dnsoverhttps.DnsOverHttps.Companion.MAX_RESPONSE_SIZE
 import okhttp3.internal.OkHttpInternalApi
+import okhttp3.internal.dns.DnsMessage
+import okhttp3.internal.dns.DnsMessageReader
+import okhttp3.internal.platform.Platform
+import okio.Buffer
+import okio.BufferedSink
 
 // TODO: in-memory caching that uses timeToLive.
 // TODO: honor Https.priority and Https.targetName. Create new calls!
@@ -122,4 +131,47 @@ internal class DnsOverHttpsCall(
   }
 
   override fun isCanceled() = stateMachine.canceled
+}
+
+internal fun DnsMessage.asQueryParameter(): String {
+  val buffer = Buffer()
+  DnsMessageWriter(buffer).write(this@asQueryParameter)
+  return buffer.readByteString().base64Url().replace("=", "")
+}
+
+internal class QueryRequestBody(
+  private val query: DnsMessage,
+) : RequestBody() {
+  override fun contentType() = DNS_MESSAGE
+
+  override fun writeTo(sink: BufferedSink) {
+    DnsMessageWriter(sink.buffer).write(query)
+    sink.emitCompleteSegments()
+  }
+}
+
+@Throws(IOException::class)
+internal fun decodeResponse(response: Response): DnsMessage {
+  if (
+    response.cacheResponse == null &&
+    response.protocol !== Protocol.HTTP_2 &&
+    response.protocol !== Protocol.QUIC
+  ) {
+    Platform.get().log("Unexpected protocol: ${response.protocol}", Platform.WARN)
+  }
+
+  response.use {
+    if (!response.isSuccessful) {
+      throw IOException("response: ${response.code} ${response.message}")
+    }
+
+    val body = response.body
+    if (body.contentLength() > MAX_RESPONSE_SIZE) {
+      throw ProtocolException(
+        "response size exceeds limit ($MAX_RESPONSE_SIZE bytes): ${body.contentLength()} bytes",
+      )
+    }
+
+    return DnsMessageReader(body.source()).read()
+  }
 }
