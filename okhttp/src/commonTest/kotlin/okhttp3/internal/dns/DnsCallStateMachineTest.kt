@@ -17,7 +17,6 @@
 
 package okhttp3.internal.dns
 
-import java.io.IOException
 import java.net.InetAddress
 import kotlin.test.Test
 import okhttp3.Dns
@@ -36,24 +35,21 @@ class DnsCallStateMachineTest {
       val query1 = takeQuery("lysine.dev", TYPE_AAAA)
       val query2 = takeQuery("lysine.dev", TYPE_A)
 
-      respondIpAddresses(
-        query = query1.query,
+      query1.respondIpAddresses(
         addresses = listOf(InetAddress.getByName("1:2::3:4")),
       )
       takeOnRecordsIpAddresses(
         addresses = listOf(InetAddress.getByName("1:2::3:4")),
       )
 
-      respondIpAddresses(
-        query = query2.query,
+      query2.respondIpAddresses(
         addresses = listOf(InetAddress.getByName("10.20.30.40")),
       )
       takeOnRecordsIpAddresses(
         addresses = listOf(InetAddress.getByName("10.20.30.40")),
       )
 
-      respondServiceMetadata(
-        query = query0.query,
+      query0.respondServiceMetadata(
         alpnIds = listOf("h2"),
       )
       takeOnRecordsServiceMetadata(
@@ -73,21 +69,16 @@ class DnsCallStateMachineTest {
       val query1 = takeQuery("lysine.dev", TYPE_AAAA)
       val query2 = takeQuery("lysine.dev", TYPE_A)
 
-      respondFailure(
-        query = query1.query,
-        e = IOException("boom!"),
-      )
+      query1.respondFailure("boom!")
 
-      respondIpAddresses(
-        query = query2.query,
+      query2.respondIpAddresses(
         addresses = listOf(InetAddress.getByName("10.20.30.40")),
       )
       takeOnRecordsIpAddresses(
         addresses = listOf(InetAddress.getByName("10.20.30.40")),
       )
 
-      respondServiceMetadata(
-        query = query0.query,
+      query0.respondServiceMetadata(
         alpnIds = listOf("h2"),
       )
       takeOnRecordsServiceMetadata(
@@ -114,17 +105,14 @@ class DnsCallStateMachineTest {
       val query2 = takeQuery("lysine.dev", TYPE_A)
 
       onNextEvent = {
-        respondIpAddresses(
-          query = query2.query,
+        query2.respondIpAddresses(
           addresses = listOf(InetAddress.getByName("10.20.30.40")),
         )
-        respondIpAddresses(
-          query = query1.query,
+        query1.respondIpAddresses(
           addresses = listOf(InetAddress.getByName("1:2::3:4")),
         )
       }
-      respondServiceMetadata(
-        query = query0.query,
+      query0.respondServiceMetadata(
         alpnIds = listOf("h2"),
       )
       takeOnRecordsServiceMetadata(
@@ -152,16 +140,16 @@ class DnsCallStateMachineTest {
       call.cancel()
       enqueue()
 
-      val query0 = takeCancel("lysine.dev", TYPE_HTTPS)
-      takeQuery("lysine.dev", TYPE_HTTPS)
-      val query1 = takeCancel("lysine.dev", TYPE_AAAA)
-      takeQuery("lysine.dev", TYPE_AAAA)
-      val query2 = takeCancel("lysine.dev", TYPE_A)
-      takeQuery("lysine.dev", TYPE_A)
+      takeCancel("lysine.dev", TYPE_HTTPS)
+      val query0 = takeQuery("lysine.dev", TYPE_HTTPS)
+      takeCancel("lysine.dev", TYPE_AAAA)
+      val query1 = takeQuery("lysine.dev", TYPE_AAAA)
+      takeCancel("lysine.dev", TYPE_A)
+      val query2 = takeQuery("lysine.dev", TYPE_A)
 
-      respondFailure(query0.query, IOException("canceled"))
-      respondFailure(query1.query, IOException("canceled"))
-      respondFailure(query2.query, IOException("canceled"))
+      query0.respondFailure("canceled")
+      query1.respondFailure("canceled")
+      query2.respondFailure("canceled")
 
       takeOnFailure("canceled")
     }
@@ -178,8 +166,7 @@ class DnsCallStateMachineTest {
       val query1 = takeQuery("lysine.dev", TYPE_AAAA)
       val query2 = takeQuery("lysine.dev", TYPE_A)
 
-      respondIpAddresses(
-        query = query1.query,
+      query1.respondIpAddresses(
         addresses = listOf(InetAddress.getByName("1:2::3:4")),
       )
       takeOnRecordsIpAddresses(
@@ -191,16 +178,14 @@ class DnsCallStateMachineTest {
       takeCancel("lysine.dev", TYPE_HTTPS)
       takeCancel("lysine.dev", TYPE_A)
 
-      respondIpAddresses(
-        query = query2.query,
+      query2.respondIpAddresses(
         addresses = listOf(InetAddress.getByName("10.20.30.40")),
       )
       takeOnRecordsIpAddresses(
         addresses = listOf(InetAddress.getByName("10.20.30.40")),
       )
 
-      respondServiceMetadata(
-        query = query0.query,
+      query0.respondServiceMetadata(
         alpnIds = listOf("h2"),
       )
       takeOnRecordsServiceMetadata(

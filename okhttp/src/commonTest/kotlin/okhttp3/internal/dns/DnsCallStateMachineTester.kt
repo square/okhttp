@@ -12,8 +12,10 @@ import okhttp3.Dns
 import okhttp3.Protocol
 import okhttp3.dnsResponse
 import okhttp3.internal.OkHttpInternalApi
+import okhttp3.internal.dns.DnsCallStateMachine.Transport
 import okhttp3.internal.dns.DnsCallStateMachineTester.Event.OnRecords
 import okhttp3.internal.dns.DnsCallStateMachineTester.Event.QueryEnqueued
+import okhttp3.internal.dns.DnsMessage.Companion.query
 import okio.ByteString
 
 /**
@@ -46,11 +48,14 @@ class DnsCallStateMachineTester internal constructor(
   private var acceptCallbacks: Boolean = true
 
   private val transport =
-    object : DnsCallStateMachine.Transport<Query> {
-      override fun newQuery(dnsMessage: DnsMessage) = Query(dnsMessage)
+    object : Transport<Query> {
+      override fun newQuery(question: Question) = Query(question)
 
-      override fun enqueue(query: Query) {
-        postEvent(QueryEnqueued(query))
+      override fun enqueue(
+        query: Query,
+        callback: Transport.Callback<Query>
+      ) {
+        postEvent(QueryEnqueued(query, callback))
       }
 
       override fun cancel(query: Query) {
@@ -157,64 +162,6 @@ class DnsCallStateMachineTester internal constructor(
     return event
   }
 
-  /** Respond to a [TYPE_A] or [TYPE_AAAA] query with a (possibly-empty) list of IP addresses. */
-  fun respondIpAddresses(
-    query: Query,
-    timeToLive: Int = 300,
-    addresses: List<InetAddress> = listOf(),
-  ) {
-    stateMachine.onQueryResponse(
-      query,
-      dnsResponse(
-        query.dnsMessage,
-        addresses.map { address ->
-          ResourceRecord.IpAddress(
-            name =
-              query.dnsMessage.questions
-                .single()
-                .name,
-            timeToLive = timeToLive,
-            address = address,
-          )
-        },
-      ),
-    )
-  }
-
-  /** Respond to a [TYPE_HTTPS] query with service metadata. */
-  fun respondServiceMetadata(
-    query: Query,
-    timeToLive: Int = 300,
-    alpnIds: List<String>? = null,
-    echConfigList: ByteString? = null,
-  ) {
-    stateMachine.onQueryResponse(
-      query,
-      dnsResponse(
-        query.dnsMessage,
-        listOf(
-          ResourceRecord.Https(
-            name =
-              query.dnsMessage.questions
-                .single()
-                .name,
-            timeToLive = timeToLive,
-            alpnIds = alpnIds,
-            echConfigList = echConfigList,
-          ),
-        ),
-      ),
-    )
-  }
-
-  /** Respond to any query with a failure. */
-  fun respondFailure(
-    query: Query,
-    e: IOException,
-  ) {
-    stateMachine.onQueryFailure(query, e)
-  }
-
   /**
    * Asserts that the next-posted event is a call to [Dns.Callback.onRecords] with a list of IP
    * addresses.
@@ -255,46 +202,80 @@ class DnsCallStateMachineTester internal constructor(
   }
 
   class Query(
-    val dnsMessage: DnsMessage,
+    val question: Question,
   )
 
   sealed interface Event {
-    data class QueryEnqueued(
+    class QueryEnqueued(
+      val query: Query,
+      val callback: Transport.Callback<Query>,
+    ) : Event {
+      val hostname: String
+        get() = query.question.name
+      val type: Int
+        get() = query.question.type
+
+      /** Respond to a [TYPE_HTTPS] query with service metadata. */
+      fun respondServiceMetadata(
+        timeToLive: Int = 300,
+        alpnIds: List<String>? = null,
+        echConfigList: ByteString? = null,
+      ) {
+        callback.onResponse(
+          dnsResponse(
+            query(query.question),
+            listOf(
+              ResourceRecord.Https(
+                name = query.question.name,
+                timeToLive = timeToLive,
+                alpnIds = alpnIds,
+                echConfigList = echConfigList,
+              ),
+            ),
+          ),
+        )
+      }
+
+      /** Respond to any query with a failure. */
+      fun respondFailure(message: String) {
+        callback.onFailure(IOException(message))
+      }
+
+      /** Respond to a [TYPE_A] or [TYPE_AAAA] query with a (possibly-empty) list of IP addresses. */
+      fun respondIpAddresses(
+        timeToLive: Int = 300,
+        addresses: List<InetAddress> = listOf(),
+      ) {
+        callback.onResponse(
+          dnsResponse(
+            query(query.question),
+            addresses.map { address ->
+              ResourceRecord.IpAddress(
+                name = query.question.name,
+                timeToLive = timeToLive,
+                address = address,
+              )
+            },
+          ),
+        )
+      }
+    }
+
+    class QueryCanceled(
       val query: Query,
     ) : Event {
       val hostname: String
-        get() =
-          query.dnsMessage.questions
-            .single()
-            .name
+        get() = query.question.name
       val type: Int
-        get() =
-          query.dnsMessage.questions
-            .single()
-            .type
+        get() = query.question.type
     }
 
-    data class QueryCanceled(
-      val query: Query,
-    ) : Event {
-      val hostname: String
-        get() =
-          query.dnsMessage.questions
-            .single()
-            .name
-      val type: Int
-        get() =
-          query.dnsMessage.questions
-            .single()
-            .type
-    }
-
-    data class OnRecords(
+    class OnRecords(
       val last: Boolean,
       val records: List<Dns.Record>,
     ) : Event
 
-    data class OnFailure(
+    class OnFailure(
       val e: IOException,
     ) : Event
   }
