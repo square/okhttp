@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:OptIn(OkHttpInternalApi::class)
+@file:Suppress("ktlint:standard:filename")
 
 package okhttp3.internal.dns
 
