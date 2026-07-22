@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.dnsoverhttps.internal
+@file:OptIn(OkHttpInternalApi::class)
+
+package okhttp3.internal.dns
 
 import assertk.assertThat
 import assertk.assertions.hasMessage
@@ -22,13 +24,7 @@ import java.net.InetAddress
 import java.net.ProtocolException
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
-import okhttp3.internal.dns.DnsMessage
-import okhttp3.internal.dns.DnsMessageReader
-import okhttp3.internal.dns.Question
-import okhttp3.internal.dns.ResourceRecord
-import okhttp3.internal.dns.TYPE_A
-import okhttp3.internal.dns.TYPE_AAAA
-import okhttp3.internal.dns.TYPE_HTTPS
+import okhttp3.internal.OkHttpInternalApi
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
 

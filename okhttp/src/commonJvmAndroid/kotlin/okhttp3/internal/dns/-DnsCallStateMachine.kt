@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.dnsoverhttps.internal
+@file:OptIn(OkHttpInternalApi::class)
+@file:Suppress("ktlint:standard:filename")
+
+package okhttp3.internal.dns
 
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.atomic.AtomicReference
 import okhttp3.Dns
 import okhttp3.Protocol
-import okhttp3.internal.dns.DnsMessage
-import okhttp3.internal.dns.RESPONSE_CODE_SERVER_FAILURE
-import okhttp3.internal.dns.RESPONSE_CODE_SUCCESS
-import okhttp3.internal.dns.ResourceRecord
-import okhttp3.internal.dns.TYPE_A
-import okhttp3.internal.dns.TYPE_AAAA
-import okhttp3.internal.dns.TYPE_HTTPS
+import okhttp3.internal.OkHttpInternalApi
 
 /**
  * State machine for DNS calls. This is intended for use with any transport for the queries, such
@@ -55,7 +52,8 @@ import okhttp3.internal.dns.TYPE_HTTPS
  * If a thread is intending to call the callback, it sets [State.Running.lockHeld] to true while
  * that call is executing.
  */
-internal class DnsCallStateMachine<Q>(
+@OkHttpInternalApi
+class DnsCallStateMachine<Q>(
   private val transport: Transport<Q>,
   private val call: Dns.Call,
   private val canceledException: IOException?,

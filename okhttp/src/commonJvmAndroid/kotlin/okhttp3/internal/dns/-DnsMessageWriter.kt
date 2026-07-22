@@ -15,25 +15,12 @@
  */
 @file:Suppress("ktlint:standard:filename")
 
-package okhttp3.dnsoverhttps.internal
+package okhttp3.internal.dns
 
 import java.net.Inet4Address
 import java.net.Inet6Address
 import okhttp3.Protocol
 import okhttp3.internal.OkHttpInternalApi
-import okhttp3.internal.dns.CLASS_IN
-import okhttp3.internal.dns.DnsMessage
-import okhttp3.internal.dns.Question
-import okhttp3.internal.dns.ResourceRecord
-import okhttp3.internal.dns.SERVICE_PARAMETER_ALPN
-import okhttp3.internal.dns.SERVICE_PARAMETER_ECH
-import okhttp3.internal.dns.SERVICE_PARAMETER_IPV4_HINT
-import okhttp3.internal.dns.SERVICE_PARAMETER_IPV6_HINT
-import okhttp3.internal.dns.SERVICE_PARAMETER_NO_DEFAULT_ALPN
-import okhttp3.internal.dns.SERVICE_PARAMETER_PORT
-import okhttp3.internal.dns.TYPE_A
-import okhttp3.internal.dns.TYPE_AAAA
-import okhttp3.internal.dns.TYPE_HTTPS
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
