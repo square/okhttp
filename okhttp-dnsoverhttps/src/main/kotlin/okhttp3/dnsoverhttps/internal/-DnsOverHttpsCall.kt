@@ -31,8 +31,10 @@ import okhttp3.Response
 import okhttp3.dnsoverhttps.DnsOverHttps.Companion.DNS_MESSAGE
 import okhttp3.dnsoverhttps.DnsOverHttps.Companion.MAX_RESPONSE_SIZE
 import okhttp3.internal.OkHttpInternalApi
+import okhttp3.internal.dns.DnsCallStateMachine
 import okhttp3.internal.dns.DnsMessage
 import okhttp3.internal.dns.DnsMessageReader
+import okhttp3.internal.dns.DnsMessageWriter
 import okhttp3.internal.platform.Platform
 import okio.Buffer
 import okio.BufferedSink
