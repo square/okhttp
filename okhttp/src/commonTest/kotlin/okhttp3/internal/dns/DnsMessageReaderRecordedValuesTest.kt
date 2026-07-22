@@ -375,10 +375,10 @@ class DnsMessageReaderRecordedValuesTest {
           timeToLive = 604800,
           alpnIds = listOf("h3", "http/1.1"),
           echConfigList =
-            (
-              "003dfe0d0039aa00200020a4a7bb34b77c43336c3a2931dd28c87d008218a99b44f1f" +
-                "0aa8a82537d487d43000400010001000a676f6f676c652e636f6d0000"
-            ).decodeHex(),
+            """
+            003dfe0d0039aa00200020a4a7bb34b77c43336c3a2931dd28c87d008218a99b44f1f0aa8a82537d487d4300
+            0400010001000a676f6f676c652e636f6d0000
+            """.decodeHex(ignoreWhitespace = true),
         ),
       )
   }

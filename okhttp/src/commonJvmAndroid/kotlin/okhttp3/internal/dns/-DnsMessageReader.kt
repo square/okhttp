@@ -24,10 +24,11 @@ import okhttp3.internal.skipAll
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
-import okio.ForwardingSource
 import okio.ProtocolException
-import okio.Source
 import okio.buffer
+import okio.limit
+import okio.readUByte
+import okio.readUShort
 
 /**
  * Decode DNS messages, which are symmetric for requests and responses.
@@ -49,10 +50,10 @@ class DnsMessageReader(
     val id = source.readShort()
     val flags = source.readShort().toInt()
 
-    val questionCount = source.readShort().toUShort().toInt()
-    val answerCount = source.readShort().toUShort().toInt()
-    val authorityRecordCount = source.readShort().toUShort().toInt()
-    val additionalRecordCount = source.readShort().toUShort().toInt()
+    val questionCount = source.readUShort().toInt()
+    val answerCount = source.readUShort().toInt()
+    val authorityRecordCount = source.readUShort().toInt()
+    val additionalRecordCount = source.readUShort().toInt()
 
     val questions = ArrayList<Question>(questionCount)
     for (i in 0 until questionCount) {
@@ -112,7 +113,7 @@ class DnsMessageReader(
     maxOffset: Int = Int.MAX_VALUE,
   ) {
     while (true) {
-      val labelTypeAndLength = readByte().toUByte().toInt()
+      val labelTypeAndLength = readUByte().toInt()
       val labelType = labelTypeAndLength and 0b11000000
       val labelLength = labelTypeAndLength and 0b00111111
       when (labelType) {
@@ -125,7 +126,7 @@ class DnsMessageReader(
 
         // Compressed suffix.
         0b11_000000 -> {
-          val offset = (labelLength shl 8) or readByte().toUByte().toInt()
+          val offset = (labelLength shl 8) or readUByte().toInt()
 
           // Pointers may only refer to prior occurrences.
           if (offset >= maxOffset) {
@@ -174,7 +175,7 @@ class DnsMessageReader(
       }
 
       `class` == CLASS_IN && type == TYPE_HTTPS -> {
-        return FixedLengthSource(this, recordDataLength)
+        return limit(recordDataLength)
           .buffer()
           .readHttpsResourceRecord(name, timeToLive)
       }
@@ -191,7 +192,7 @@ class DnsMessageReader(
     name: String,
     timeToLive: Int,
   ): ResourceRecord.Https {
-    val svcPriority = readShort().toUShort()
+    val svcPriority = readUShort()
     val targetName = readName()
     var lastKey = -1
     var alpnIds: MutableList<String>? = null
@@ -201,10 +202,10 @@ class DnsMessageReader(
     var echConfigList: ByteString? = null
 
     while (!exhausted()) {
-      val key = readShort().toUShort().toInt()
+      val key = readUShort().toInt()
       if (key <= lastKey) throw ProtocolException("malformed HTTPS resource record")
       lastKey = key
-      val valueLength = readShort().toUShort().toLong()
+      val valueLength = readUShort().toLong()
       when (key) {
         SERVICE_PARAMETER_MANDATORY -> {
           for (i in 0 until valueLength) {
@@ -219,7 +220,7 @@ class DnsMessageReader(
           alpnIds = mutableListOf()
           var pos = 0L
           while (pos < valueLength) {
-            val alpnIdLength = readByte().toUByte().toLong()
+            val alpnIdLength = readUByte().toLong()
             pos++
             if (pos + alpnIdLength > valueLength) {
               throw ProtocolException("malformed HTTPS / alpn")
@@ -236,7 +237,7 @@ class DnsMessageReader(
 
         SERVICE_PARAMETER_PORT -> {
           if (valueLength != 2L) throw ProtocolException("malformed HTTPS / port")
-          port = readShort().toUShort().toInt()
+          port = readUShort().toInt()
         }
 
         SERVICE_PARAMETER_IPV4_HINT -> {
@@ -282,26 +283,5 @@ class DnsMessageReader(
       ipAddressHints = ipAddressHints ?: listOf(),
       echConfigList = echConfigList,
     )
-  }
-}
-
-internal class FixedLengthSource(
-  delegate: Source,
-  private val size: Long,
-) : ForwardingSource(delegate) {
-  private var bytesReceived = 0L
-
-  override fun read(
-    sink: Buffer,
-    byteCount: Long,
-  ): Long {
-    val result =
-      when (val toRead = byteCount.coerceAtMost(size - bytesReceived)) {
-        0L -> -1L
-        else -> super.read(sink, toRead)
-      }
-    if (result != -1L) bytesReceived += result
-    if (bytesReceived < size && result == -1L) throw ProtocolException("truncated stream")
-    return result
   }
 }
