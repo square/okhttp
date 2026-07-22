@@ -33,18 +33,6 @@ data class DnsMessage(
   val responseCode: Int
     get() = (flags and 0b0000_0000_0000_1111)
 
-  // Avoid Short.hashCode(short) which isn't available on Android 5.
-  override fun hashCode(): Int {
-    var result = 0
-    result = 31 * result + id
-    result = 31 * result + flags
-    result = 31 * result + questions.hashCode()
-    result = 31 * result + answers.hashCode()
-    result = 31 * result + authorityRecords.hashCode()
-    result = 31 * result + additionalRecords.hashCode()
-    return result
-  }
-
   companion object {
     fun query(
       hostname: String,
@@ -74,16 +62,7 @@ data class Question(
   val name: String,
   val type: Int,
   val `class`: Int = CLASS_IN,
-) {
-  // Avoid Short.hashCode(short) which isn't available on Android 5.
-  override fun hashCode(): Int {
-    var result = 0
-    result = 31 * result + name.hashCode()
-    result = 31 * result + type
-    result = 31 * result + `class`
-    return result
-  }
-}
+)
 
 sealed interface ResourceRecord {
   val name: String
@@ -93,16 +72,7 @@ sealed interface ResourceRecord {
     override val name: String,
     override val timeToLive: Int,
     val address: InetAddress,
-  ) : ResourceRecord {
-    // Avoid Int.hashCode(int) which isn't available on Android 5.
-    override fun hashCode(): Int {
-      var result = 0
-      result = 31 * result + name.hashCode()
-      result = 31 * result + timeToLive
-      result = 31 * result + address.hashCode()
-      return result
-    }
-  }
+  ) : ResourceRecord
 
   data class Https(
     override val name: String,
@@ -113,21 +83,7 @@ sealed interface ResourceRecord {
     var port: Int = 443,
     val ipAddressHints: List<InetAddress> = listOf(),
     val echConfigList: ByteString? = null,
-  ) : ResourceRecord {
-    // Avoid Int.hashCode(int) which isn't available on Android 5.
-    override fun hashCode(): Int {
-      var result = 0
-      result = 31 * result + name.hashCode()
-      result = 31 * result + timeToLive
-      result = 31 * result + priority
-      result = 31 * result + targetName.hashCode()
-      result = 31 * result + alpnIds.hashCode()
-      result = 31 * result + port
-      result = 31 * result + ipAddressHints.hashCode()
-      result = 31 * result + echConfigList.hashCode()
-      return result
-    }
-  }
+  ) : ResourceRecord
 }
 
 /** https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml#dns-parameters-4 */
