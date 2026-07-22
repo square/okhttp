@@ -326,7 +326,7 @@ class FakeDns(
 
 fun dnsResponse(
   request: DnsMessage,
-  answers: List<ResourceRecord>
+  answers: List<ResourceRecord>,
 ): DnsMessage {
   //     QR = 1 (Response)
   // OPCODE = 0 (standard query)

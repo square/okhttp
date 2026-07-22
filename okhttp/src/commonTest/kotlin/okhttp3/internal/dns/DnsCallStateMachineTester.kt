@@ -45,69 +45,76 @@ class DnsCallStateMachineTester internal constructor(
   /** Defend against re-entrant calls. */
   private var acceptCallbacks: Boolean = true
 
-  private val transport = object : DnsCallStateMachine.Transport<Query> {
-    override fun newQuery(dnsMessage: DnsMessage) = Query(dnsMessage)
+  private val transport =
+    object : DnsCallStateMachine.Transport<Query> {
+      override fun newQuery(dnsMessage: DnsMessage) = Query(dnsMessage)
 
-    override fun enqueue(query: Query) {
-      postEvent(QueryEnqueued(query))
-    }
+      override fun enqueue(query: Query) {
+        postEvent(QueryEnqueued(query))
+      }
 
-    override fun cancel(query: Query) {
-      postEvent(Event.QueryCanceled(query))
-    }
-  }
-
-  val call: Dns.Call = object : Dns.Call {
-    override val request: Dns.Request = request
-
-    override fun enqueue(callback: Dns.Callback) {
-      stateMachine.start(callback)
-    }
-
-    override fun cancel() {
-      stateMachine.cancel()
-    }
-
-    override fun isCanceled() = stateMachine.canceled
-  }
-
-  private val callback = object : Dns.Callback {
-    override fun onRecords(
-      call: Dns.Call,
-      last: Boolean,
-      records: List<Dns.Record>
-    ) {
-      check(call == this@DnsCallStateMachineTester.call)
-      check(acceptCallbacks) { "unexpected callback" }
-
-      acceptCallbacks = false
-      try {
-        postEvent(OnRecords(last, records))
-      } finally {
-        acceptCallbacks = true
+      override fun cancel(query: Query) {
+        postEvent(Event.QueryCanceled(query))
       }
     }
 
-    override fun onFailure(call: Dns.Call, e: IOException) {
-      check(call == this@DnsCallStateMachineTester.call)
-      check(acceptCallbacks) { "unexpected callback" }
+  val call: Dns.Call =
+    object : Dns.Call {
+      override val request: Dns.Request = request
 
-      acceptCallbacks = false
-      try {
-        postEvent(Event.OnFailure(e))
-      } finally {
-        acceptCallbacks = true
+      override fun enqueue(callback: Dns.Callback) {
+        stateMachine.start(callback)
+      }
+
+      override fun cancel() {
+        stateMachine.cancel()
+      }
+
+      override fun isCanceled() = stateMachine.canceled
+    }
+
+  private val callback =
+    object : Dns.Callback {
+      override fun onRecords(
+        call: Dns.Call,
+        last: Boolean,
+        records: List<Dns.Record>,
+      ) {
+        check(call == this@DnsCallStateMachineTester.call)
+        check(acceptCallbacks) { "unexpected callback" }
+
+        acceptCallbacks = false
+        try {
+          postEvent(OnRecords(last, records))
+        } finally {
+          acceptCallbacks = true
+        }
+      }
+
+      override fun onFailure(
+        call: Dns.Call,
+        e: IOException,
+      ) {
+        check(call == this@DnsCallStateMachineTester.call)
+        check(acceptCallbacks) { "unexpected callback" }
+
+        acceptCallbacks = false
+        try {
+          postEvent(Event.OnFailure(e))
+        } finally {
+          acceptCallbacks = true
+        }
       }
     }
-  }
 
-  val stateMachine = DnsCallStateMachine<Query>(
-    transport = transport,
-    call = call,
-    canceledException = null,
-    includeIPv6 = includeIPv6,
-    includeServiceMetadata = includeServiceMetadata,
-  )
+  val stateMachine =
+    DnsCallStateMachine<Query>(
+      transport = transport,
+      call = call,
+      canceledException = null,
+      includeIPv6 = includeIPv6,
+      includeServiceMetadata = includeServiceMetadata,
+    )
 
   /** Start the DNS call. */
   fun enqueue() {
@@ -129,7 +136,10 @@ class DnsCallStateMachineTester internal constructor(
   }
 
   /** Asserts that the next-posted event is a query enqueue. */
-  fun takeQuery(hostname: String, type: Int): QueryEnqueued {
+  fun takeQuery(
+    hostname: String,
+    type: Int,
+  ): QueryEnqueued {
     val event = events.take() as QueryEnqueued
     assertThat(event.hostname).isEqualTo(hostname)
     assertThat(event.type).isEqualTo(type)
@@ -137,7 +147,10 @@ class DnsCallStateMachineTester internal constructor(
   }
 
   /** Asserts that the next-posted event is a query cancel. */
-  fun takeCancel(hostname: String, type: Int): Event.QueryCanceled {
+  fun takeCancel(
+    hostname: String,
+    type: Int,
+  ): Event.QueryCanceled {
     val event = events.take() as Event.QueryCanceled
     assertThat(event.hostname).isEqualTo(hostname)
     assertThat(event.type).isEqualTo(type)
@@ -156,12 +169,15 @@ class DnsCallStateMachineTester internal constructor(
         query.dnsMessage,
         addresses.map { address ->
           ResourceRecord.IpAddress(
-            name = query.dnsMessage.questions.single().name,
+            name =
+              query.dnsMessage.questions
+                .single()
+                .name,
             timeToLive = timeToLive,
             address = address,
           )
-        }
-      )
+        },
+      ),
     )
   }
 
@@ -178,13 +194,16 @@ class DnsCallStateMachineTester internal constructor(
         query.dnsMessage,
         listOf(
           ResourceRecord.Https(
-            name = query.dnsMessage.questions.single().name,
+            name =
+              query.dnsMessage.questions
+                .single()
+                .name,
             timeToLive = timeToLive,
             alpnIds = alpnIds,
             echConfigList = echConfigList,
-          )
-        )
-      )
+          ),
+        ),
+      ),
     )
   }
 
@@ -244,23 +263,35 @@ class DnsCallStateMachineTester internal constructor(
       val query: Query,
     ) : Event {
       val hostname: String
-        get() = query.dnsMessage.questions.single().name
+        get() =
+          query.dnsMessage.questions
+            .single()
+            .name
       val type: Int
-        get() = query.dnsMessage.questions.single().type
+        get() =
+          query.dnsMessage.questions
+            .single()
+            .type
     }
 
     data class QueryCanceled(
       val query: Query,
     ) : Event {
       val hostname: String
-        get() = query.dnsMessage.questions.single().name
+        get() =
+          query.dnsMessage.questions
+            .single()
+            .name
       val type: Int
-        get() = query.dnsMessage.questions.single().type
+        get() =
+          query.dnsMessage.questions
+            .single()
+            .type
     }
 
     data class OnRecords(
       val last: Boolean,
-      val records: List<Dns.Record>
+      val records: List<Dns.Record>,
     ) : Event
 
     data class OnFailure(

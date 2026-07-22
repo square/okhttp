@@ -26,74 +26,76 @@ import okhttp3.internal.OkHttpInternalApi
 
 class DnsCallStateMachineTest {
   @Test
-  fun `happy path`() = testDnsCallStateMachine(
-    request = Dns.Request(hostname = "lysine.dev"),
-  ) {
-    enqueue()
+  fun `happy path`() =
+    testDnsCallStateMachine(
+      request = Dns.Request(hostname = "lysine.dev"),
+    ) {
+      enqueue()
 
-    val query0 = takeQuery("lysine.dev", TYPE_HTTPS)
-    val query1 = takeQuery("lysine.dev", TYPE_AAAA)
-    val query2 = takeQuery("lysine.dev", TYPE_A)
+      val query0 = takeQuery("lysine.dev", TYPE_HTTPS)
+      val query1 = takeQuery("lysine.dev", TYPE_AAAA)
+      val query2 = takeQuery("lysine.dev", TYPE_A)
 
-    respondIpAddresses(
-      query = query1.query,
-      addresses = listOf(InetAddress.getByName("1:2::3:4")),
-    )
-    takeOnRecordsIpAddresses(
-      addresses = listOf(InetAddress.getByName("1:2::3:4"))
-    )
+      respondIpAddresses(
+        query = query1.query,
+        addresses = listOf(InetAddress.getByName("1:2::3:4")),
+      )
+      takeOnRecordsIpAddresses(
+        addresses = listOf(InetAddress.getByName("1:2::3:4")),
+      )
 
-    respondIpAddresses(
-      query = query2.query,
-      addresses = listOf(InetAddress.getByName("10.20.30.40")),
-    )
-    takeOnRecordsIpAddresses(
-      addresses = listOf(InetAddress.getByName("10.20.30.40"))
-    )
+      respondIpAddresses(
+        query = query2.query,
+        addresses = listOf(InetAddress.getByName("10.20.30.40")),
+      )
+      takeOnRecordsIpAddresses(
+        addresses = listOf(InetAddress.getByName("10.20.30.40")),
+      )
 
-    respondServiceMetadata(
-      query = query0.query,
-      alpnIds = listOf("h2"),
-    )
-    takeOnRecordsServiceMetadata(
-      last = true,
-      alpnIds = listOf(Protocol.HTTP_2)
-    )
-  }
+      respondServiceMetadata(
+        query = query0.query,
+        alpnIds = listOf("h2"),
+      )
+      takeOnRecordsServiceMetadata(
+        last = true,
+        alpnIds = listOf(Protocol.HTTP_2),
+      )
+    }
 
   @Test
-  fun `failure returned last`() = testDnsCallStateMachine(
-    request = Dns.Request(hostname = "lysine.dev"),
-  ) {
-    enqueue()
+  fun `failure returned last`() =
+    testDnsCallStateMachine(
+      request = Dns.Request(hostname = "lysine.dev"),
+    ) {
+      enqueue()
 
-    val query0 = takeQuery("lysine.dev", TYPE_HTTPS)
-    val query1 = takeQuery("lysine.dev", TYPE_AAAA)
-    val query2 = takeQuery("lysine.dev", TYPE_A)
+      val query0 = takeQuery("lysine.dev", TYPE_HTTPS)
+      val query1 = takeQuery("lysine.dev", TYPE_AAAA)
+      val query2 = takeQuery("lysine.dev", TYPE_A)
 
-    respondFailure(
-      query = query1.query,
-      e = IOException("boom!"),
-    )
+      respondFailure(
+        query = query1.query,
+        e = IOException("boom!"),
+      )
 
-    respondIpAddresses(
-      query = query2.query,
-      addresses = listOf(InetAddress.getByName("10.20.30.40")),
-    )
-    takeOnRecordsIpAddresses(
-      addresses = listOf(InetAddress.getByName("10.20.30.40"))
-    )
+      respondIpAddresses(
+        query = query2.query,
+        addresses = listOf(InetAddress.getByName("10.20.30.40")),
+      )
+      takeOnRecordsIpAddresses(
+        addresses = listOf(InetAddress.getByName("10.20.30.40")),
+      )
 
-    respondServiceMetadata(
-      query = query0.query,
-      alpnIds = listOf("h2"),
-    )
-    takeOnRecordsServiceMetadata(
-      alpnIds = listOf(Protocol.HTTP_2)
-    )
+      respondServiceMetadata(
+        query = query0.query,
+        alpnIds = listOf("h2"),
+      )
+      takeOnRecordsServiceMetadata(
+        alpnIds = listOf(Protocol.HTTP_2),
+      )
 
-    takeOnFailure("boom!")
-  }
+      takeOnFailure("boom!")
+    }
 
   /**
    * Confirm that the state machine calls doesn't call any [Dns.Callback] methods until the previous
@@ -126,14 +128,15 @@ class DnsCallStateMachineTest {
         alpnIds = listOf("h2"),
       )
       takeOnRecordsServiceMetadata(
-        alpnIds = listOf(Protocol.HTTP_2)
+        alpnIds = listOf(Protocol.HTTP_2),
       )
       takeOnRecordsIpAddresses(
         last = true,
-        addresses = listOf(
-          InetAddress.getByName("10.20.30.40"),
-          InetAddress.getByName("1:2::3:4"),
-        )
+        addresses =
+          listOf(
+            InetAddress.getByName("10.20.30.40"),
+            InetAddress.getByName("1:2::3:4"),
+          ),
       )
     }
 
@@ -142,65 +145,67 @@ class DnsCallStateMachineTest {
    * dispatcher thread to post the failures back to the callback.
    */
   @Test
-  fun `cancel before enqueue`() = testDnsCallStateMachine(
-    request = Dns.Request(hostname = "lysine.dev"),
-  ) {
-    call.cancel()
-    enqueue()
+  fun `cancel before enqueue`() =
+    testDnsCallStateMachine(
+      request = Dns.Request(hostname = "lysine.dev"),
+    ) {
+      call.cancel()
+      enqueue()
 
-    val query0 = takeCancel("lysine.dev", TYPE_HTTPS)
-    takeQuery("lysine.dev", TYPE_HTTPS)
-    val query1 = takeCancel("lysine.dev", TYPE_AAAA)
-    takeQuery("lysine.dev", TYPE_AAAA)
-    val query2 = takeCancel("lysine.dev", TYPE_A)
-    takeQuery("lysine.dev", TYPE_A)
+      val query0 = takeCancel("lysine.dev", TYPE_HTTPS)
+      takeQuery("lysine.dev", TYPE_HTTPS)
+      val query1 = takeCancel("lysine.dev", TYPE_AAAA)
+      takeQuery("lysine.dev", TYPE_AAAA)
+      val query2 = takeCancel("lysine.dev", TYPE_A)
+      takeQuery("lysine.dev", TYPE_A)
 
-    respondFailure(query0.query, IOException("canceled"))
-    respondFailure(query1.query, IOException("canceled"))
-    respondFailure(query2.query, IOException("canceled"))
+      respondFailure(query0.query, IOException("canceled"))
+      respondFailure(query1.query, IOException("canceled"))
+      respondFailure(query2.query, IOException("canceled"))
 
-    takeOnFailure("canceled")
-  }
+      takeOnFailure("canceled")
+    }
 
   /** Cancels are asynchronous and if the canceled query completes anyway, that's fine. */
   @Test
-  fun `cancel ignored if canceled query completes`() = testDnsCallStateMachine(
-    request = Dns.Request(hostname = "lysine.dev"),
-  ) {
-    enqueue()
+  fun `cancel ignored if canceled query completes`() =
+    testDnsCallStateMachine(
+      request = Dns.Request(hostname = "lysine.dev"),
+    ) {
+      enqueue()
 
-    val query0 = takeQuery("lysine.dev", TYPE_HTTPS)
-    val query1 = takeQuery("lysine.dev", TYPE_AAAA)
-    val query2 = takeQuery("lysine.dev", TYPE_A)
+      val query0 = takeQuery("lysine.dev", TYPE_HTTPS)
+      val query1 = takeQuery("lysine.dev", TYPE_AAAA)
+      val query2 = takeQuery("lysine.dev", TYPE_A)
 
-    respondIpAddresses(
-      query = query1.query,
-      addresses = listOf(InetAddress.getByName("1:2::3:4")),
-    )
-    takeOnRecordsIpAddresses(
-      addresses = listOf(InetAddress.getByName("1:2::3:4"))
-    )
+      respondIpAddresses(
+        query = query1.query,
+        addresses = listOf(InetAddress.getByName("1:2::3:4")),
+      )
+      takeOnRecordsIpAddresses(
+        addresses = listOf(InetAddress.getByName("1:2::3:4")),
+      )
 
-    call.cancel()
+      call.cancel()
 
-    takeCancel("lysine.dev", TYPE_HTTPS)
-    takeCancel("lysine.dev", TYPE_A)
+      takeCancel("lysine.dev", TYPE_HTTPS)
+      takeCancel("lysine.dev", TYPE_A)
 
-    respondIpAddresses(
-      query = query2.query,
-      addresses = listOf(InetAddress.getByName("10.20.30.40")),
-    )
-    takeOnRecordsIpAddresses(
-      addresses = listOf(InetAddress.getByName("10.20.30.40"))
-    )
+      respondIpAddresses(
+        query = query2.query,
+        addresses = listOf(InetAddress.getByName("10.20.30.40")),
+      )
+      takeOnRecordsIpAddresses(
+        addresses = listOf(InetAddress.getByName("10.20.30.40")),
+      )
 
-    respondServiceMetadata(
-      query = query0.query,
-      alpnIds = listOf("h2"),
-    )
-    takeOnRecordsServiceMetadata(
-      last = true,
-      alpnIds = listOf(Protocol.HTTP_2)
-    )
-  }
+      respondServiceMetadata(
+        query = query0.query,
+        alpnIds = listOf("h2"),
+      )
+      takeOnRecordsServiceMetadata(
+        last = true,
+        alpnIds = listOf(Protocol.HTTP_2),
+      )
+    }
 }
