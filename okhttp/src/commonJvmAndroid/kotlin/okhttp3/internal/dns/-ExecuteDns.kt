@@ -17,6 +17,8 @@
 
 package okhttp3.internal.dns
 
+import java.io.IOException
+import java.net.UnknownHostException
 import java.util.concurrent.LinkedBlockingQueue
 import okhttp3.Dns
 import okhttp3.internal.OkHttpInternalApi
@@ -24,10 +26,14 @@ import okhttp3.internal.OkHttpInternalApi
 /**
  * Call our asynchronous API synchronously.
  *
+ * This returns normally if at least one [Dns.Record.IpAddress] is returned. Partial failures are
+ * silently ignored.
+ *
  * This is intended to be transitional only; doing it this way needlessly blocks the caller's
  * thread.
  */
 @OkHttpInternalApi
+@Throws(UnknownHostException::class)
 fun Dns.Call.execute(): List<Dns.Record> {
   val queue = LinkedBlockingQueue<Result<List<Dns.Record>>>()
 
@@ -42,15 +48,31 @@ fun Dns.Call.execute(): List<Dns.Record> {
       ) {
         allRecords += records
         if (last) {
-          queue.put(Result.success(allRecords))
+          complete()
         }
       }
 
       override fun onFailure(
         call: Dns.Call,
-        e: okio.IOException,
+        e: IOException,
       ) {
-        queue.put(Result.failure(e))
+        complete(e)
+      }
+
+      private fun complete(e: IOException? = null) {
+        val result =
+          when {
+            allRecords.any { it is Dns.Record.IpAddress } -> {
+              Result.success(allRecords)
+            }
+
+            else -> {
+              Result.failure(
+                e ?: UnknownHostException("DNS returned no addresses for ${request.hostname}"),
+              )
+            }
+          }
+        queue.put(result)
       }
     },
   )

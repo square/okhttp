@@ -19,6 +19,7 @@ import app.cash.burst.Burst
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.hasMessage
+import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
@@ -27,6 +28,11 @@ import java.io.EOFException
 import java.io.File
 import java.net.InetAddress
 import java.net.UnknownHostException
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
 import mockwebserver3.MockResponse
@@ -46,14 +52,14 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Response
-import okhttp3.dnsoverhttps.internal.CLASS_IN
-import okhttp3.dnsoverhttps.internal.DnsMessage
-import okhttp3.dnsoverhttps.internal.Question
-import okhttp3.dnsoverhttps.internal.ResourceRecord
-import okhttp3.dnsoverhttps.internal.TYPE_A
-import okhttp3.dnsoverhttps.internal.TYPE_AAAA
+import okhttp3.internal.dns.CLASS_IN
 import okhttp3.internal.dns.DnsEvent
+import okhttp3.internal.dns.DnsMessage
 import okhttp3.internal.dns.EntryPoint
+import okhttp3.internal.dns.Question
+import okhttp3.internal.dns.ResourceRecord
+import okhttp3.internal.dns.TYPE_A
+import okhttp3.internal.dns.TYPE_AAAA
 import okhttp3.internal.dns.invoke
 import okhttp3.internal.dns.toEventsQueue
 import okhttp3.testing.PlatformRule
@@ -93,9 +99,26 @@ class DnsOverHttpsTest(
         dispatcher = server.dispatcher
       }
 
+  private val completedRunnables = LinkedBlockingDeque<Runnable>()
+  private val executorService =
+    object : ThreadPoolExecutor(
+      0,
+      Int.MAX_VALUE,
+      1,
+      TimeUnit.SECONDS,
+      SynchronousQueue(),
+    ) {
+      override fun afterExecute(
+        r: Runnable,
+        t: Throwable?,
+      ) {
+        completedRunnables.add(r)
+      }
+    }
+
   private lateinit var dns: DnsOverHttps
   private val dispatcher =
-    Dispatcher()
+    Dispatcher(executorService)
       .apply {
         // Force calls to run sequentially for determinism.
         this.maxRequestsPerHost = 1
@@ -157,7 +180,32 @@ class DnsOverHttpsTest(
   }
 
   @Test
-  fun failure() {
+  fun lookupDoesNotRequestServiceMetadata() {
+    assumeTrue(entryPoint == EntryPoint.Lookup)
+
+    server["lysine.dev"] =
+      listOf(
+        InetAddress.getByName("10.20.30.40"),
+        InetAddress.getByName("1:2::3:4"),
+      )
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
+    val result = dns(entryPoint, "lysine.dev")
+    assertThat(result).containsExactly(
+      address("1:2::3:4"),
+      address("10.20.30.40"),
+    )
+
+    val (_, dnsRequest1) = server.takeRequest() as DnsOverHttpsRequest
+    assertThat(dnsRequest1).isEqualTo(queryRequest("lysine.dev", TYPE_AAAA))
+
+    val (_, dnsRequest2) = server.takeRequest() as DnsOverHttpsRequest
+    assertThat(dnsRequest2).isEqualTo(queryRequest("lysine.dev", TYPE_A))
+
+    assertThat(server.pollRequest()).isNull()
+  }
+
+  @Test
+  fun failsBecauseNoRecords() {
     assertFailsWith<UnknownHostException> {
       dns(entryPoint, "lysine.dev")
     }
@@ -165,6 +213,30 @@ class DnsOverHttpsTest(
     assertThat(httpsRequest.method).isEqualTo("GET")
     assertThat(dnsRequest)
       .isEqualTo(queryRequest("lysine.dev", TYPE_A))
+  }
+
+  @Test
+  fun lookupReturnsNormallyIfIpv4FailsAndIpv6Succeeds() {
+    assumeTrue(entryPoint == EntryPoint.Lookup)
+
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true)
+    server["lysine.dev"] = listOf(InetAddress.getByName("11:22::33:44"))
+    server.sequenceIndexToOverride[1] = overrideResponse("")
+
+    val results = dns(entryPoint, "lysine.dev")
+    assertThat(results).containsExactly(InetAddress.getByName("11:22::33:44"))
+  }
+
+  @Test
+  fun lookupReturnsNormallyIfIpv6FailsAndIpv6Succeeds() {
+    assumeTrue(entryPoint == EntryPoint.Lookup)
+
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true)
+    server["lysine.dev"] = listOf(InetAddress.getByName("10.20.30.40"))
+    server.sequenceIndexToOverride[0] = overrideResponse("")
+
+    val results = dns(entryPoint, "lysine.dev")
+    assertThat(results).containsExactly(InetAddress.getByName("10.20.30.40"))
   }
 
   @Test
@@ -331,7 +403,7 @@ class DnsOverHttpsTest(
   fun completeHttpsRecordsReturned() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
     server["lysine.dev"] =
       listOf(
         ResourceRecord.IpAddress(
@@ -411,7 +483,7 @@ class DnsOverHttpsTest(
   fun serviceMetadataEmptyTargetNameAliasesToRequestHostname() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
     server["lysine.dev"] =
       listOf(
         ResourceRecord.IpAddress(
@@ -461,7 +533,7 @@ class DnsOverHttpsTest(
   fun httpsFailureIsDeliveredAfterIpv6AndIpv4Records() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
 
     // Fail the HTTPS call, which should have index 0.
     server.sequenceIndexToOverride[0] = overrideResponse("")
@@ -514,7 +586,7 @@ class DnsOverHttpsTest(
   fun ipv6FailureIsDeliveredAfterIpv4Records() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
 
     // Fail the IPv6 call, which should have index 1.
     server.sequenceIndexToOverride[1] = overrideResponse("")
@@ -550,7 +622,7 @@ class DnsOverHttpsTest(
   fun emptyResultsAreSkipped() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
     server["lysine.dev"] =
       listOf(
         ResourceRecord.IpAddress(
@@ -581,7 +653,7 @@ class DnsOverHttpsTest(
   fun lastEventIsDeliveredEventIfItIsEmpty() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
 
     val call = dns.newCall(Dns.Request("lysine.dev"))
     val dnsEvents = call.toEventsQueue()
@@ -598,7 +670,7 @@ class DnsOverHttpsTest(
   fun callIsCanceledBeforeItIsStarted() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
 
     val call = dns.newCall(Dns.Request("lysine.dev"))
     call.cancel()
@@ -612,7 +684,7 @@ class DnsOverHttpsTest(
   fun callIsCanceledBeforeItReachesTheNetwork() {
     assumeTrue(entryPoint == EntryPoint.NewCall)
 
-    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeHttps = true)
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
     val call = dns.newCall(Dns.Request("lysine.dev"))
 
     interceptor =
@@ -671,6 +743,90 @@ class DnsOverHttpsTest(
     assertThat(dnsEvents.take()).isInstanceOf<DnsEvent.Failure>()
   }
 
+  @Test
+  fun callbackIsCalledSequentiallyWhenHttpCallsAreParallel() {
+    callbackIsCalledSequentially()
+  }
+
+  @Test
+  fun callbackIsCalledSequentiallyWhenCallsFail() {
+    server.sequenceIndexToOverride[0] = overrideResponse("")
+    callbackIsCalledSequentially()
+  }
+
+  /**
+   * We'd like to confirm that calls into [Dns.Callback] are serialized.
+   *
+   * Asserting that is awkward, so we're asserting something stronger, advised by the
+   * implementation: if the first call to `onRecords()` waits for the other 2 HTTP calls to
+   * finish, then all 3 calls will happen on the same thread.
+   *
+   * (This works because we know the other 2 HTTP calls will finish before their data is emitted.)
+   */
+  private fun callbackIsCalledSequentially() {
+    assumeTrue(entryPoint == EntryPoint.NewCall)
+
+    dns = buildLocalhost(bootstrapClient, includeIPv6 = true, includeServiceMetadata = true)
+    server["lysine.dev"] =
+      listOf(
+        ResourceRecord.IpAddress(
+          name = "lysine.dev",
+          timeToLive = 5,
+          address = InetAddress.getByName("10.20.30.40"),
+        ),
+        ResourceRecord.IpAddress(
+          name = "lysine.dev",
+          timeToLive = 5,
+          address = InetAddress.getByName("1:2::3:4"),
+        ),
+        ResourceRecord.Https(
+          name = "lysine.dev",
+          timeToLive = 5,
+          alpnIds = listOf(Protocol.HTTP_2.toString()),
+        ),
+      )
+
+    // Track which threads receive callbacks.
+    val threadsFuture = CompletableFuture<Set<Thread>>()
+
+    dispatcher.maxRequestsPerHost = 3
+
+    val call = dns.newCall(Dns.Request("lysine.dev"))
+    call.enqueue(
+      object : Dns.Callback {
+        private val threads = mutableSetOf<Thread>()
+
+        override fun onRecords(
+          call: Dns.Call,
+          last: Boolean,
+          records: List<Dns.Record>,
+        ) {
+          onCallback(last)
+        }
+
+        override fun onFailure(
+          call: Dns.Call,
+          e: java.io.IOException,
+        ) {
+          onCallback(true)
+        }
+
+        private fun onCallback(last: Boolean) {
+          if (threads.isEmpty()) {
+            completedRunnables.take()
+            completedRunnables.take()
+          }
+          threads += Thread.currentThread()
+          if (last) {
+            threadsFuture.complete(threads)
+          }
+        }
+      },
+    )
+
+    assertThat(threadsFuture.get()).hasSize(1)
+  }
+
   private fun cacheEvents(): List<KClass<out CallEvent>> =
     eventRecorder
       .recordedEventTypes()
@@ -680,7 +836,7 @@ class DnsOverHttpsTest(
   private fun buildLocalhost(
     bootstrapClient: OkHttpClient,
     includeIPv6: Boolean = false,
-    includeHttps: Boolean = false,
+    includeServiceMetadata: Boolean = false,
     post: Boolean = false,
     resolvePrivateAddresses: Boolean = true,
     resolvePublicAddresses: Boolean = true,
@@ -690,7 +846,7 @@ class DnsOverHttpsTest(
       .Builder()
       .client(bootstrapClient)
       .includeIPv6(includeIPv6)
-      .includeHttps(includeHttps)
+      .includeServiceMetadata(includeServiceMetadata)
       .resolvePrivateAddresses(resolvePrivateAddresses)
       .resolvePublicAddresses(resolvePublicAddresses)
       .url(url)

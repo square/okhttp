@@ -15,28 +15,15 @@
  */
 package okhttp3.dnsoverhttps
 
-import java.io.IOException
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.util.concurrent.CountDownLatch
-import okhttp3.Call
-import okhttp3.Callback
 import okhttp3.Dns
 import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.dnsoverhttps.internal.DnsMessage
 import okhttp3.dnsoverhttps.internal.DnsOverHttpsCall
-import okhttp3.dnsoverhttps.internal.QueryRequestBody
-import okhttp3.dnsoverhttps.internal.ResourceRecord
-import okhttp3.dnsoverhttps.internal.TYPE_A
-import okhttp3.dnsoverhttps.internal.TYPE_AAAA
-import okhttp3.dnsoverhttps.internal.TYPE_HTTPS
-import okhttp3.dnsoverhttps.internal.asQueryParameter
-import okhttp3.dnsoverhttps.internal.decodeResponse
+import okhttp3.internal.dns.execute
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 
 /**
@@ -53,24 +40,20 @@ class DnsOverHttps internal constructor(
   @get:JvmName("client") val client: OkHttpClient,
   @get:JvmName("url") val url: HttpUrl,
   @get:JvmName("includeIPv6") val includeIPv6: Boolean,
-  @get:JvmName("includeHttps") val includeHttps: Boolean,
+  @get:JvmName("includeServiceMetadata") val includeServiceMetadata: Boolean,
   @get:JvmName("post") val post: Boolean,
   @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
   @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean,
 ) : Dns {
   override fun newCall(request: Dns.Request): Dns.Call {
-    val calls = callsList(request.hostname)
-
     val canceledException = validate(request.hostname)
-    if (canceledException != null) {
-      for (call in calls) {
-        call.cancel()
-      }
-    }
-
     return DnsOverHttpsCall(
       request = request,
-      calls = calls,
+      client = client,
+      dnsUrl = url,
+      post = post,
+      includeIPv6 = includeIPv6,
+      includeServiceMetadata = includeServiceMetadata,
       canceledException = canceledException,
     )
   }
@@ -96,156 +79,28 @@ class DnsOverHttps internal constructor(
 
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
-    val validationException = validate(hostname)
-    if (validationException != null) throw validationException
-
-    val calls = callsList(hostname, inetAddressesOnly = true)
-
-    val failures = ArrayList<Exception>(3)
-    val results = ArrayList<InetAddress>(5)
-    executeRequests(calls, results, failures)
-
-    return results.ifEmpty {
-      throwBestFailure(hostname, failures)
-    }
-  }
-
-  private fun executeRequests(
-    networkRequests: List<Call>,
-    responses: MutableList<InetAddress>,
-    failures: MutableList<Exception>,
-  ) {
-    val latch = CountDownLatch(networkRequests.size)
-
-    for (call in networkRequests) {
-      call.enqueue(
-        object : Callback {
-          override fun onFailure(
-            call: Call,
-            e: IOException,
-          ) {
-            synchronized(failures) {
-              failures.add(e)
-            }
-            latch.countDown()
-          }
-
-          override fun onResponse(
-            call: Call,
-            response: Response,
-          ) {
-            processResponse(response, responses, failures)
-            latch.countDown()
-          }
-        },
+    val withoutServiceMetadata =
+      DnsOverHttps(
+        client = client,
+        url = url,
+        includeIPv6 = includeIPv6,
+        includeServiceMetadata = false,
+        post = post,
+        resolvePrivateAddresses = resolvePrivateAddresses,
+        resolvePublicAddresses = resolvePublicAddresses,
       )
-    }
-
-    try {
-      latch.await()
-    } catch (e: InterruptedException) {
-      failures.add(e)
-    }
+    val call = withoutServiceMetadata.newCall(Dns.Request(hostname))
+    val records = call.execute()
+    return records
+      .filterIsInstance<Dns.Record.IpAddress>()
+      .map { it.address }
   }
-
-  private fun processResponse(
-    response: Response,
-    results: MutableList<InetAddress>,
-    failures: MutableList<Exception>,
-  ) {
-    try {
-      val addresses =
-        decodeResponse(response)
-          .filterIsInstance<ResourceRecord.IpAddress>()
-          .map { it.address }
-      synchronized(results) {
-        results.addAll(addresses)
-      }
-    } catch (e: IOException) {
-      synchronized(failures) {
-        failures.add(e)
-      }
-    }
-  }
-
-  @Throws(UnknownHostException::class)
-  private fun throwBestFailure(
-    hostname: String,
-    failures: List<Exception>,
-  ): List<InetAddress> {
-    if (failures.isEmpty()) {
-      throw UnknownHostException(hostname)
-    }
-
-    val failure = failures[0]
-
-    if (failure is UnknownHostException) {
-      throw failure
-    }
-
-    val unknownHostException = UnknownHostException(hostname)
-    unknownHostException.initCause(failure)
-
-    for (i in 1 until failures.size) {
-      unknownHostException.addSuppressed(failures[i])
-    }
-
-    throw unknownHostException
-  }
-
-  internal fun createCall(
-    hostname: String,
-    type: Int,
-  ): Call =
-    client.newCall(
-      request =
-        Request
-          .Builder()
-          .header("Accept", DNS_MESSAGE.toString())
-          .apply {
-            val dnsUrl = this@DnsOverHttps.url
-            if (post) {
-              url(dnsUrl)
-              cacheUrlOverride(
-                dnsUrl
-                  .newBuilder()
-                  .addQueryParameter("hostname", hostname)
-                  .build(),
-              )
-              post(QueryRequestBody(DnsMessage.query(hostname, type)))
-            } else {
-              val queryParameter = DnsMessage.query(hostname, type).asQueryParameter()
-              val requestUrl =
-                dnsUrl
-                  .newBuilder()
-                  .addQueryParameter("dns", queryParameter)
-                  .build()
-              url(requestUrl)
-            }
-          }.build(),
-    )
-
-  private fun callsList(
-    hostname: String,
-    inetAddressesOnly: Boolean = false,
-  ): List<Call> =
-    buildList {
-      if (includeHttps && !inetAddressesOnly) {
-        add(createCall(hostname, TYPE_HTTPS))
-      }
-
-      if (includeIPv6) {
-        add(createCall(hostname, TYPE_AAAA))
-      }
-
-      add(createCall(hostname, TYPE_A))
-    }
 
   class Builder {
     internal var client: OkHttpClient? = null
     internal var url: HttpUrl? = null
     internal var includeIPv6 = true
-    internal var includeHttps = false
+    internal var includeServiceMetadata = true
     internal var post = false
     internal var systemDns = Dns.SYSTEM
     internal var bootstrapDnsHosts: List<InetAddress>? = null
@@ -258,7 +113,7 @@ class DnsOverHttps internal constructor(
         client.newBuilder().dns(buildBootstrapClient(this)).build(),
         checkNotNull(url) { "url not set" },
         includeIPv6,
-        includeHttps,
+        includeServiceMetadata,
         post,
         resolvePrivateAddresses,
         resolvePublicAddresses,
@@ -278,12 +133,10 @@ class DnsOverHttps internal constructor(
     /**
      * True to request [`HTTPS` DNS records](https://datatracker.ietf.org/doc/rfc9460/), which are
      * necessary for [Encrypted Client Hello (ECH)](https://datatracker.ietf.org/doc/rfc9849/).
-     *
-     * This is false by default, but that default is subject to change in 2026.
      */
-    fun includeHttps(includeHttps: Boolean) =
+    fun includeServiceMetadata(includeServiceMetadata: Boolean) =
       apply {
-        this.includeHttps = includeHttps
+        this.includeServiceMetadata = includeServiceMetadata
       }
 
     fun includeIPv6(includeIPv6: Boolean) =

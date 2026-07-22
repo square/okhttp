@@ -40,6 +40,7 @@ import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
 import okio.Buffer
+import okio.ByteString
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 /**
@@ -116,6 +117,7 @@ open class Platform {
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<@JvmSuppressWildcards Protocol>,
+    echConfigList: ByteString?,
   ) {
   }
 

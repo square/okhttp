@@ -18,6 +18,7 @@ package okhttp3.internal.connection
 import java.io.IOException
 import java.net.ConnectException
 import java.net.HttpURLConnection
+import java.net.NoRouteToHostException
 import java.net.ProtocolException
 import java.net.Proxy
 import java.net.Socket as JavaNetSocket
@@ -345,7 +346,12 @@ class ConnectPlan internal constructor(
     var success = false
     try {
       if (connectionSpec.supportsTlsExtensions) {
-        Platform.get().configureTlsExtensions(sslSocket, address.url.host, address.protocols)
+        Platform.get().configureTlsExtensions(
+          sslSocket = sslSocket,
+          hostname = address.url.host,
+          protocols = address.protocols,
+          echConfigList = route.echConfigList,
+        )
       }
 
       // Force handshake. This can throw!

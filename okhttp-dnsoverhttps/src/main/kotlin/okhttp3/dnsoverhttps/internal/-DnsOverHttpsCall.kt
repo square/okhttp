@@ -18,16 +18,25 @@
 package okhttp3.dnsoverhttps.internal
 
 import java.io.IOException
-import java.util.concurrent.atomic.AtomicReference
+import java.net.ProtocolException
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Dns
+import okhttp3.HttpUrl
+import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.Response
+import okhttp3.dnsoverhttps.DnsOverHttps.Companion.DNS_MESSAGE
+import okhttp3.dnsoverhttps.DnsOverHttps.Companion.MAX_RESPONSE_SIZE
 import okhttp3.internal.OkHttpInternalApi
-import okhttp3.internal.testAndSet
+import okhttp3.internal.dns.DnsMessage
+import okhttp3.internal.dns.DnsMessageReader
+import okhttp3.internal.platform.Platform
+import okio.Buffer
+import okio.BufferedSink
 
-// TODO: honor resolvePrivateAddresses, resolvePublicAddresses
 // TODO: in-memory caching that uses timeToLive.
 // TODO: honor Https.priority and Https.targetName. Create new calls!
 
@@ -37,189 +46,132 @@ import okhttp3.internal.testAndSet
 @OkHttpInternalApi
 internal class DnsOverHttpsCall(
   override val request: Dns.Request,
-  private val calls: List<Call>,
-  private val canceledException: IOException?,
+  private val client: OkHttpClient,
+  private val dnsUrl: HttpUrl,
+  private val post: Boolean,
+  includeIPv6: Boolean,
+  includeServiceMetadata: Boolean,
+  canceledException: IOException?,
 ) : Dns.Call,
+  DnsCallStateMachine.Transport<Call>,
   Callback {
-  @Volatile private var canceled = false
-  private val state = AtomicReference<State>(State.Idle)
+  private val stateMachine =
+    DnsCallStateMachine(
+      transport = this,
+      call = this,
+      canceledException = canceledException,
+      includeIPv6 = includeIPv6,
+      includeServiceMetadata = includeServiceMetadata,
+    )
 
-  override fun enqueue(callback: Dns.Callback) {
-    val running = State.Running(callback, calls)
-
-    val previous = state.testAndSet(running) { it is State.Idle }
-    check(previous is State.Idle) {
-      "already enqueued"
-    }
-
-    for (call in calls) {
-      call.enqueue(this)
-    }
+  override fun newQuery(dnsMessage: DnsMessage): Call {
+    val queryParameter = dnsMessage.asQueryParameter()
+    return client.newCall(
+      request =
+        Request
+          .Builder()
+          .header("Accept", DNS_MESSAGE.toString())
+          .apply {
+            if (post) {
+              url(dnsUrl)
+              cacheUrlOverride(
+                dnsUrl
+                  .newBuilder()
+                  .addQueryParameter("query", queryParameter)
+                  .build(),
+              )
+              post(QueryRequestBody(dnsMessage))
+            } else {
+              val requestUrl =
+                dnsUrl
+                  .newBuilder()
+                  .addQueryParameter("dns", queryParameter)
+                  .build()
+              url(requestUrl)
+            }
+          }.build(),
+    )
   }
 
-  /**
-   * If this is the last DNS call, call [Callback.onFailure]. Otherwise, hold that call until the
-   * last DNS call completes.
-   */
+  override fun enqueue(query: Call) {
+    query.enqueue(this)
+  }
+
+  override fun cancel(query: Call) {
+    query.cancel()
+  }
+
   override fun onFailure(
     call: Call,
     e: IOException,
   ) {
-    while (true) {
-      val previous =
-        state.get() as? State.Running
-          ?: return // Already complete or canceled; nothing to do.
-
-      val newRunningCalls = previous.runningCalls - call
-      val allFailures =
-        when {
-          canceledException != null -> listOf(canceledException)
-          else -> previous.delayedFailures + e
-        }
-      val next =
-        when {
-          newRunningCalls.isEmpty() -> {
-            State.Complete
-          }
-
-          else -> {
-            State.Running(
-              callback = previous.callback,
-              runningCalls = newRunningCalls,
-              delayedFailures = allFailures,
-            )
-          }
-        }
-
-      if (!state.compareAndSet(previous, next)) continue // Lost a race; retry.
-
-      if (next is State.Complete) {
-        previous.callback.onFailure(
-          call = this,
-          exceptions = allFailures,
-        )
-      }
-
-      return
-    }
+    stateMachine.onQueryFailure(call, e)
   }
 
   override fun onResponse(
     call: Call,
     response: Response,
   ) {
-    val resourceRecords =
+    val dnsMessage =
       try {
         decodeResponse(response)
       } catch (e: IOException) {
-        return onFailure(call, e)
+        return stateMachine.onQueryFailure(call, e)
       }
 
-    val dnsRecords =
-      resourceRecords.map { resourceRecord ->
-        when (resourceRecord) {
-          is ResourceRecord.Https -> {
-            Dns.Record.ServiceMetadata(
-              hostname = resourceRecord.targetName.takeIf { it != "" } ?: request.hostname,
-              alpnIds =
-                resourceRecord.alpnIds?.mapNotNull { alpnId ->
-                  try {
-                    Protocol.get(alpnId)
-                  } catch (_: IOException) {
-                    null // Skip unrecognized ALPN ID.
-                  }
-                },
-              port = resourceRecord.port,
-              ipAddressHints = resourceRecord.ipAddressHints,
-              echConfigList = resourceRecord.echConfigList,
-            )
-          }
+    stateMachine.onQueryResponse(call, dnsMessage)
+  }
 
-          is ResourceRecord.IpAddress -> {
-            Dns.Record.IpAddress(
-              hostname = request.hostname,
-              address = resourceRecord.address,
-            )
-          }
-        }
-      }
-
-    while (true) {
-      val previous =
-        state.get() as? State.Running
-          ?: return // Already complete or canceled; nothing to do.
-
-      val newRunningCalls = previous.runningCalls - call
-      val lastRunningCall = newRunningCalls.isEmpty()
-      val next =
-        when {
-          lastRunningCall -> {
-            State.Complete
-          }
-
-          else -> {
-            State.Running(
-              callback = previous.callback,
-              runningCalls = newRunningCalls,
-              delayedFailures = previous.delayedFailures,
-            )
-          }
-        }
-
-      if (!state.compareAndSet(previous, next)) continue // Lost a race; retry.
-
-      val emitDelayedFailures = lastRunningCall && previous.delayedFailures.isNotEmpty()
-      val lastEvent = lastRunningCall && !emitDelayedFailures
-      if (dnsRecords.isNotEmpty() || lastEvent) {
-        previous.callback.onRecords(
-          call = this,
-          last = lastEvent,
-          records = dnsRecords,
-        )
-      }
-      if (emitDelayedFailures) {
-        previous.callback.onFailure(
-          call = this,
-          exceptions = previous.delayedFailures,
-        )
-      }
-
-      return
-    }
+  override fun enqueue(callback: Dns.Callback) {
+    stateMachine.start(callback)
   }
 
   override fun cancel() {
-    if (canceled) return // Already canceled.
-
-    canceled = true
-    for (call in calls) {
-      call.cancel()
-    }
+    stateMachine.cancel()
   }
 
-  override fun isCanceled() = canceled
+  override fun isCanceled() = stateMachine.canceled
+}
 
-  private sealed interface State {
-    object Idle : State
+internal fun DnsMessage.asQueryParameter(): String {
+  val buffer = Buffer()
+  DnsMessageWriter(buffer).write(this@asQueryParameter)
+  return buffer.readByteString().base64Url().replace("=", "")
+}
 
-    class Running(
-      val callback: Dns.Callback,
-      val runningCalls: List<Call>,
-      val delayedFailures: List<IOException> = listOf(),
-    ) : State
+internal class QueryRequestBody(
+  private val query: DnsMessage,
+) : RequestBody() {
+  override fun contentType() = DNS_MESSAGE
 
-    object Complete : State
+  override fun writeTo(sink: BufferedSink) {
+    DnsMessageWriter(sink.buffer).write(query)
+    sink.emitCompleteSegments()
   }
 }
 
-internal fun Dns.Callback.onFailure(
-  call: DnsOverHttpsCall,
-  exceptions: List<IOException>,
-) {
-  val firstException = exceptions.first()
-  for (i in 1 until exceptions.size) {
-    firstException.addSuppressed(exceptions[i])
+@Throws(IOException::class)
+internal fun decodeResponse(response: Response): DnsMessage {
+  if (
+    response.cacheResponse == null &&
+    response.protocol !== Protocol.HTTP_2 &&
+    response.protocol !== Protocol.QUIC
+  ) {
+    Platform.get().log("Unexpected protocol: ${response.protocol}", Platform.WARN)
   }
 
-  onFailure(call, firstException)
+  response.use {
+    if (!response.isSuccessful) {
+      throw IOException("response: ${response.code} ${response.message}")
+    }
+
+    val body = response.body
+    if (body.contentLength() > MAX_RESPONSE_SIZE) {
+      throw ProtocolException(
+        "response size exceeds limit ($MAX_RESPONSE_SIZE bytes): ${body.contentLength()} bytes",
+      )
+    }
+
+    return DnsMessageReader(body.source()).read()
+  }
 }

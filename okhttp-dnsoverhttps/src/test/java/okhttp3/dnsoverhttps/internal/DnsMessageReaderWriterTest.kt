@@ -16,9 +16,19 @@
 package okhttp3.dnsoverhttps.internal
 
 import assertk.assertThat
+import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import java.net.InetAddress
+import java.net.ProtocolException
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
+import okhttp3.internal.dns.DnsMessage
+import okhttp3.internal.dns.DnsMessageReader
+import okhttp3.internal.dns.Question
+import okhttp3.internal.dns.ResourceRecord
+import okhttp3.internal.dns.TYPE_A
+import okhttp3.internal.dns.TYPE_AAAA
+import okhttp3.internal.dns.TYPE_HTTPS
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
 
@@ -132,6 +142,22 @@ class DnsMessageReaderWriterTest {
           ),
       ),
     )
+  }
+
+  @Test
+  fun `unbounded name compression`() {
+    val buffer = Buffer()
+    buffer.write(
+      "000081800001000100000000066c7973696e65c00c000100010363646ec00c000100010000000000040a141e28"
+        .decodeHex(),
+    )
+
+    val reader = DnsMessageReader(buffer)
+    val e =
+      assertFailsWith<ProtocolException> {
+        reader.read()
+      }
+    assertThat(e).hasMessage("malformed DNS message")
   }
 
   private fun assertRoundTrip(message: DnsMessage) {

@@ -15,16 +15,16 @@
  */
 @file:Suppress("ktlint:standard:filename")
 
-package okhttp3.dnsoverhttps.internal
+package okhttp3.internal.dns
 
 import java.net.InetAddress
 import okhttp3.Protocol
 import okhttp3.internal.OkHttpInternalApi
+import okhttp3.internal.skipAll
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
 import okio.ForwardingSource
-import okio.IOException
 import okio.ProtocolException
 import okio.Source
 import okio.buffer
@@ -107,8 +107,10 @@ class DnsMessageReader(
     return result.readUtf8()
   }
 
-  // TODO: don't infinite loop
-  private tailrec fun BufferedSource.readName(sink: Buffer) {
+  private tailrec fun BufferedSource.readName(
+    sink: Buffer,
+    maxOffset: Int = Int.MAX_VALUE,
+  ) {
     while (true) {
       val labelTypeAndLength = readByte().toUByte().toInt()
       val labelType = labelTypeAndLength and 0b11000000
@@ -123,10 +125,16 @@ class DnsMessageReader(
 
         // Compressed suffix.
         0b11_000000 -> {
-          val offsetLength = (labelLength shl 8) or readByte().toUByte().toInt()
+          val offset = (labelLength shl 8) or readByte().toUByte().toInt()
+
+          // Pointers may only refer to prior occurrences.
+          if (offset >= maxOffset) {
+            throw ProtocolException("malformed DNS message")
+          }
+
           val offsetSource = sourceOffsetZero.peek()
-          offsetSource.skip(offsetLength.toLong())
-          return offsetSource.readName(sink)
+          offsetSource.skip(offset.toLong())
+          return offsetSource.readName(sink, maxOffset = offset)
         }
 
         0b01_000000, 0b10_000000 -> {
@@ -274,13 +282,6 @@ class DnsMessageReader(
       ipAddressHints = ipAddressHints ?: listOf(),
       echConfigList = echConfigList,
     )
-  }
-}
-
-@Throws(IOException::class)
-internal fun BufferedSource.skipAll() {
-  while (!exhausted()) {
-    skip(buffer.size)
   }
 }
 
