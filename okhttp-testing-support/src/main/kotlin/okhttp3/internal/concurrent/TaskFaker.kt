@@ -19,6 +19,7 @@
   "INVISIBLE_MEMBER",
   "INVISIBLE_REFERENCE",
 )
+@file:OptIn(ExperimentalTime::class)
 
 package okhttp3.internal.concurrent
 
@@ -30,6 +31,10 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import okhttp3.TestUtil.threadFactory
 
 /**
@@ -81,6 +86,11 @@ class TaskFaker : Closeable {
 
   /** Guarded by `this`. */
   private var activeThreads = 0
+
+  /** Adapt this API to Kotlin's time API. */
+  val clock = object : Clock {
+    override fun now(): Instant = Instant.fromEpochSeconds(0L) + nanoTime.nanoseconds
+  }
 
   /** A task runner that posts tasks to this fake. Tasks won't be executed until requested. */
   val taskRunner: TaskRunner =
