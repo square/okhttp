@@ -31,9 +31,7 @@ import okio.ByteString
  * This tracks all effects from the state machine as events: creating queries, canceling queries,
  * calling callbacks.
  */
-fun testDnsCallStateMachine(
-  block: DnsCallStateMachineTester.() -> Unit,
-) {
+fun testDnsCallStateMachine(block: DnsCallStateMachineTester.() -> Unit) {
   val tester = DnsCallStateMachineTester()
   tester.block()
   assertThat(tester.transport.events.poll(), "unexpected transport event").isNull()
@@ -49,23 +47,25 @@ class DnsCallStateMachineTester internal constructor() {
 
   private val taskFaker = TaskFaker()
 
-  private val cachingTransport = CachingTransport<Query>(
-    taskRunner = taskFaker.taskRunner,
-    delegate = transport,
-    clock = taskFaker.clock,
-  )
+  private val cachingTransport =
+    CachingTransport<Query>(
+      taskRunner = taskFaker.taskRunner,
+      delegate = transport,
+      clock = taskFaker.clock,
+    )
 
   fun newCall(
     request: Dns.Request,
     includeIPv6: Boolean = true,
     includeServiceMetadata: Boolean = true,
     caching: Boolean = false,
-  ): Call = Call(
-    request = request,
-    includeIPv6 = includeIPv6,
-    includeServiceMetadata = includeServiceMetadata,
-    caching = caching
-  )
+  ): Call =
+    Call(
+      request = request,
+      includeIPv6 = includeIPv6,
+      includeServiceMetadata = includeServiceMetadata,
+      caching = caching,
+    )
 
   inner class Transport : DnsCallStateMachine.Transport<Query> {
     val events = LinkedBlockingDeque<TransportEvent>()
@@ -94,6 +94,7 @@ class DnsCallStateMachineTester internal constructor() {
       assertThat(event.type).isEqualTo(type)
       return event
     }
+
     /** Asserts that the next-posted event is a query cancel. */
     fun takeCancel(
       hostname: String,
@@ -107,7 +108,7 @@ class DnsCallStateMachineTester internal constructor() {
 
     override fun enqueue(
       query: Query,
-      callback: Transport.Callback<Query>
+      callback: Transport.Callback<Query>,
     ) {
       postEvent(QueryEnqueued(query, callback))
     }
@@ -123,15 +124,17 @@ class DnsCallStateMachineTester internal constructor() {
     includeIPv6: Boolean = true,
     includeServiceMetadata: Boolean = true,
     caching: Boolean = false,
-  ) : Dns.Call, Dns.Callback {
+  ) : Dns.Call,
+    Dns.Callback {
     private val events = LinkedBlockingDeque<CallEvent>()
 
     val stateMachine =
       DnsCallStateMachine(
-        transport = when {
-          caching -> cachingTransport
-          else -> transport
-        },
+        transport =
+          when {
+            caching -> cachingTransport
+            else -> transport
+          },
         call = this,
         canceledException = null,
         includeIPv6 = includeIPv6,

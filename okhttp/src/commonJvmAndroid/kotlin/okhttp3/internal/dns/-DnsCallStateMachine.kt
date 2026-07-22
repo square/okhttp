@@ -103,21 +103,22 @@ class DnsCallStateMachine<Q>(
 
         transport.enqueue(
           query = query,
-          callback = object : Transport.Callback<Q> {
-            override fun onResponse(dnsResponse: DnsMessage) {
-              updateStateAndCallCallbacks(
-                completedQuery = query,
-                dnsResponse = dnsResponse,
-              )
-            }
+          callback =
+            object : Transport.Callback<Q> {
+              override fun onResponse(dnsResponse: DnsMessage) {
+                updateStateAndCallCallbacks(
+                  completedQuery = query,
+                  dnsResponse = dnsResponse,
+                )
+              }
 
-            override fun onFailure(e: IOException) {
-              updateStateAndCallCallbacks(
-                completedQuery = query,
-                newException = e,
-              )
-            }
-          }
+              override fun onFailure(e: IOException) {
+                updateStateAndCallCallbacks(
+                  completedQuery = query,
+                  newException = e,
+                )
+              }
+            },
         )
       }
 
@@ -332,12 +333,16 @@ class DnsCallStateMachine<Q>(
   interface Transport<Q> {
     fun newQuery(question: Question): Q
 
-    fun enqueue(query: Q, callback: Callback<Q>)
+    fun enqueue(
+      query: Q,
+      callback: Callback<Q>,
+    )
 
     fun cancel(query: Q)
 
     interface Callback<Q> {
       fun onFailure(e: IOException)
+
       fun onResponse(dnsResponse: DnsMessage)
     }
   }

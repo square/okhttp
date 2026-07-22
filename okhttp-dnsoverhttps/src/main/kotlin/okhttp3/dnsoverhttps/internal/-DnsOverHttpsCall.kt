@@ -98,15 +98,21 @@ internal class DnsOverHttpsCall(
 
   override fun enqueue(
     query: Call,
-    callback: DnsCallStateMachine.Transport.Callback<Call>
+    callback: DnsCallStateMachine.Transport.Callback<Call>,
   ) {
     query.enqueue(
       object : Callback {
-        override fun onFailure(call: Call, e: IOException) {
+        override fun onFailure(
+          call: Call,
+          e: IOException,
+        ) {
           callback.onFailure(e)
         }
 
-        override fun onResponse(call: Call, response: Response) {
+        override fun onResponse(
+          call: Call,
+          response: Response,
+        ) {
           val dnsMessage =
             try {
               decodeResponse(response)
@@ -116,7 +122,7 @@ internal class DnsOverHttpsCall(
 
           callback.onResponse(dnsMessage)
         }
-      }
+      },
     )
   }
 

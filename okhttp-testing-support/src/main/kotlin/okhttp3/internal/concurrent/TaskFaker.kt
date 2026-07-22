@@ -88,9 +88,10 @@ class TaskFaker : Closeable {
   private var activeThreads = 0
 
   /** Adapt this API to Kotlin's time API. */
-  val clock = object : Clock {
-    override fun now(): Instant = Instant.fromEpochSeconds(0L) + nanoTime.nanoseconds
-  }
+  val clock =
+    object : Clock {
+      override fun now(): Instant = Instant.fromEpochSeconds(0L) + nanoTime.nanoseconds
+    }
 
   /** A task runner that posts tasks to this fake. Tasks won't be executed until requested. */
   val taskRunner: TaskRunner =
