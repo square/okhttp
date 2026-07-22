@@ -138,7 +138,7 @@ internal class DnsOverHttpsCall(
 internal fun DnsMessage.asQueryParameter(): String {
   val buffer = Buffer()
   DnsMessageWriter(buffer).write(this@asQueryParameter)
-  return buffer.readByteString().base64Url().replace("=", "")
+  return buffer.readByteString().base64Url(includePadding = false)
 }
 
 internal class QueryRequestBody(
