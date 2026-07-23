@@ -84,7 +84,9 @@ dependencies {
   androidTestImplementation(libs.assertk)
   androidTestImplementation(libs.bouncycastle.bcprov)
   androidTestImplementation(libs.bouncycastle.bctls)
-  androidTestImplementation(libs.conscrypt.android)
+  // The instrumented PQC test needs Conscrypt 2.6+ (post-quantum). Safe here because the bundled
+  // Conscrypt does the full handshake via its own SSLContext, not as a JSSE provider under SunJSSE.
+  androidTestImplementation(libs.conscrypt.pqc.android)
   androidTestImplementation(projects.mockwebserver3Junit4)
   androidTestImplementation(projects.mockwebserver3Junit5)
   androidTestImplementation(projects.okhttpBrotli)
