@@ -28,7 +28,7 @@ import okhttp3.Protocol
 import okhttp3.internal.OkHttpInternalApi
 
 @Burst
-class DnsCallStateMachineTest {
+class StateMachineDnsCallTest {
   /** Arbitrary sample values. */
   private val blueIpv6s = listOf(InetAddress.getByName("1:2::3:4"))
   private val blueIpv4s = listOf(InetAddress.getByName("10.20.30.40"))
@@ -37,7 +37,7 @@ class DnsCallStateMachineTest {
 
   @Test
   fun `happy path`(caching: Boolean = true) {
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -75,7 +75,7 @@ class DnsCallStateMachineTest {
 
   @Test
   fun `caches are independent per hostname`() {
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val lysineCall0 =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -134,7 +134,7 @@ class DnsCallStateMachineTest {
 
   @Test
   fun `cache already completed values`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call0 =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -168,7 +168,7 @@ class DnsCallStateMachineTest {
 
   @Test
   fun `server time to live is honored`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call0 =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -223,7 +223,7 @@ class DnsCallStateMachineTest {
    */
   @Test
   fun `time to live is measured from call send time`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call0 =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -263,7 +263,7 @@ class DnsCallStateMachineTest {
 
   @Test
   fun `server time to live is clamped to at least configured minimum`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call0 =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -297,7 +297,7 @@ class DnsCallStateMachineTest {
 
   @Test
   fun `server time to live is clamped to at most configured maximum`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call0 =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -338,7 +338,7 @@ class DnsCallStateMachineTest {
   /** Confirm that two queries to the cache yield a single query to the underlying transport. */
   @Test
   fun `cache in flight calls`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call0 =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -383,7 +383,7 @@ class DnsCallStateMachineTest {
 
   @Test
   fun `cache revalidate returns cached result and also makes request`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       // Seed the cache.
       val call0 =
         newCall(
@@ -445,7 +445,7 @@ class DnsCallStateMachineTest {
 
   @Test
   fun `new call joins incomplete revalidate call`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       // Seed the cache.
       val call0 =
         newCall(
@@ -519,7 +519,7 @@ class DnsCallStateMachineTest {
 
   @Test
   fun `failure returned last`(caching: Boolean = true) =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -552,7 +552,7 @@ class DnsCallStateMachineTest {
 
   @Test
   fun `partial failure is cached`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call0 =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -590,7 +590,7 @@ class DnsCallStateMachineTest {
 
   @Test
   fun `failure expires`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call0 =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -625,7 +625,7 @@ class DnsCallStateMachineTest {
 
   @Test
   fun `failure is revalidated`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call0 =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -678,7 +678,7 @@ class DnsCallStateMachineTest {
    */
   @Test
   fun `calls to onRecords are serialized`(caching: Boolean = true) =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -720,7 +720,7 @@ class DnsCallStateMachineTest {
    */
   @Test
   fun `cancel before enqueue`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -745,7 +745,7 @@ class DnsCallStateMachineTest {
 
   @Test
   fun `cancel before enqueue with caching`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -768,7 +768,7 @@ class DnsCallStateMachineTest {
   /** Cancels are asynchronous and if the canceled query completes anyway, that's fine. */
   @Test
   fun `cancel ignored if canceled query completes`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
@@ -811,7 +811,7 @@ class DnsCallStateMachineTest {
   /** When caching, cancels aren't applied to the transport. */
   @Test
   fun `cancel ignored if canceled query completes with caching`() =
-    testDnsCallStateMachine {
+    testStateMachineDnsCall {
       val call =
         newCall(
           request = Dns.Request(hostname = "lysine.dev"),
