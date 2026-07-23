@@ -18,8 +18,11 @@
 package okhttp3.internal.dns
 
 import app.cash.burst.Burst
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import java.net.InetAddress
 import kotlin.test.Test
+import kotlin.time.Duration.Companion.seconds
 import okhttp3.Dns
 import okhttp3.Protocol
 import okhttp3.internal.OkHttpInternalApi
@@ -29,6 +32,8 @@ class DnsCallStateMachineTest {
   /** Arbitrary sample values. */
   private val blueIpv6s = listOf(InetAddress.getByName("1:2::3:4"))
   private val blueIpv4s = listOf(InetAddress.getByName("10.20.30.40"))
+  private val greenIpv6s = listOf(InetAddress.getByName("5:6::7:8"))
+  private val greenIpv4s = listOf(InetAddress.getByName("50.60.70.80"))
 
   @Test
   fun `happy path`(caching: Boolean = true) {
@@ -69,6 +74,65 @@ class DnsCallStateMachineTest {
   }
 
   @Test
+  fun `caches are independent per hostname`() {
+    testDnsCallStateMachine {
+      val lysineCall0 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      lysineCall0.enqueue()
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        addresses = blueIpv4s,
+      )
+      assertThat(lysineCall0.takeAllRecords().addresses())
+        .isEqualTo(blueIpv4s)
+
+      val commonhausCall0 =
+        newCall(
+          request = Dns.Request(hostname = "commonhaus.org"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      commonhausCall0.enqueue()
+      transport.respondToQuery(
+        hostname = "commonhaus.org",
+        type = TYPE_A,
+        addresses = greenIpv4s,
+      )
+      assertThat(commonhausCall0.takeAllRecords().addresses())
+        .isEqualTo(greenIpv4s)
+
+      val lysineCall1 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      lysineCall1.enqueue()
+      assertThat(lysineCall1.takeAllRecords().addresses())
+        .isEqualTo(blueIpv4s)
+
+      val commonhausCall1 =
+        newCall(
+          request = Dns.Request(hostname = "commonhaus.org"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      commonhausCall1.enqueue()
+      assertThat(commonhausCall1.takeAllRecords().addresses())
+        .isEqualTo(greenIpv4s)
+    }
+  }
+
+  @Test
   fun `cache already completed values`() =
     testDnsCallStateMachine {
       val call0 =
@@ -85,17 +149,11 @@ class DnsCallStateMachineTest {
       call0QueryIpv6.respondIpAddresses(
         addresses = blueIpv6s,
       )
-      call0.takeOnRecordsIpAddresses(
-        addresses = blueIpv6s,
-      )
-
       call0QueryIpv4.respondIpAddresses(
         addresses = blueIpv4s,
       )
-      call0.takeOnRecordsIpAddresses(
-        last = true,
-        addresses = blueIpv4s,
-      )
+      assertThat(call0.takeAllRecords().addresses())
+        .isEqualTo(blueIpv6s + blueIpv4s)
 
       val call1 =
         newCall(
@@ -104,14 +162,177 @@ class DnsCallStateMachineTest {
           caching = true,
         )
       call1.enqueue()
+      assertThat(call1.takeAllRecords().addresses())
+        .isEqualTo(blueIpv6s + blueIpv4s)
+    }
 
-      call1.takeOnRecordsIpAddresses(
-        addresses = blueIpv6s,
-      )
-      call1.takeOnRecordsIpAddresses(
-        last = true,
+  @Test
+  fun `server time to live is honored`() =
+    testDnsCallStateMachine {
+      val call0 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call0.enqueue()
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        timeToLive = 30.seconds,
         addresses = blueIpv4s,
       )
+      assertThat(call0.takeAllRecords().addresses())
+        .isEqualTo(blueIpv4s)
+
+      sleep(27.seconds)
+      val call1 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call1.enqueue()
+      assertThat(call1.takeAllRecords().addresses())
+        .isEqualTo(blueIpv4s)
+
+      // The blueIp4s response is expired after 30 seconds.
+      sleep(3.seconds)
+      val call2 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call2.enqueue()
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        addresses = greenIpv4s,
+      )
+      assertThat(call2.takeAllRecords().addresses())
+        .isEqualTo(greenIpv4s)
+    }
+
+  /**
+   * We compute expiration time from when the request is made, not from when it is received. This is
+   * the most conservative policy, but moderated by the minimum time to live configuration.
+   */
+  @Test
+  fun `time to live is measured from call send time`() =
+    testDnsCallStateMachine {
+      val call0 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call0.enqueue()
+      sleep(30.seconds)
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        timeToLive = 30.seconds,
+        addresses = blueIpv4s,
+      )
+      assertThat(call0.takeAllRecords().addresses())
+        .isEqualTo(blueIpv4s)
+
+      // The first call's cache is already expired because it took 30 seconds to be returned.
+      val call1 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call1.enqueue()
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        timeToLive = 30.seconds,
+        addresses = greenIpv4s,
+      )
+      assertThat(call1.takeAllRecords().addresses())
+        .isEqualTo(greenIpv4s)
+    }
+
+  @Test
+  fun `server time to live is clamped to at least configured minimum`() =
+    testDnsCallStateMachine {
+      val call0 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call0.enqueue()
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        timeToLive = 1.seconds,
+        addresses = blueIpv4s,
+      )
+      assertThat(call0.takeAllRecords().addresses())
+        .isEqualTo(blueIpv4s)
+
+      // The test cache's configured minimum TTL is 10 seconds, so the first response is served.
+      sleep(2.seconds)
+      val call1 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call1.enqueue()
+      assertThat(call1.takeAllRecords().addresses())
+        .isEqualTo(blueIpv4s)
+    }
+
+  @Test
+  fun `server time to live is clamped to at most configured maximum`() =
+    testDnsCallStateMachine {
+      val call0 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call0.enqueue()
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        timeToLive = 100.seconds,
+        addresses = blueIpv4s,
+      )
+      assertThat(call0.takeAllRecords().addresses())
+        .isEqualTo(blueIpv4s)
+
+      // The test cache's configured maximum TTL is 60 seconds, so the first response is not served.
+      sleep(62.seconds)
+      val call1 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call1.enqueue()
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        timeToLive = 1.seconds,
+        addresses = greenIpv4s,
+      )
+      assertThat(call1.takeAllRecords().addresses())
+        .isEqualTo(greenIpv4s)
     }
 
   /** Confirm that two queries to the cache yield a single query to the underlying transport. */
@@ -161,6 +382,140 @@ class DnsCallStateMachineTest {
     }
 
   @Test
+  fun `cache revalidate returns cached result and also makes request`() =
+    testDnsCallStateMachine {
+      // Seed the cache.
+      val call0 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call0.enqueue()
+
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_AAAA,
+        timeToLive = 10.seconds,
+        addresses = blueIpv6s,
+      )
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        timeToLive = 10.seconds,
+        addresses = blueIpv4s,
+      )
+      assertThat(call0.takeAllRecords().addresses())
+        .isEqualTo(blueIpv6s + blueIpv4s)
+
+      // After 8 seconds, the cached response is returned immediately and a revalidating call is
+      // also made. (10 seconds minus 2 seconds for revalidateBeforeExpire.)
+      sleep(8.seconds)
+      val call1 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call1.enqueue()
+      assertThat(call1.takeAllRecords().addresses())
+        .isEqualTo(blueIpv6s + blueIpv4s)
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_AAAA,
+        addresses = greenIpv6s,
+      )
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        addresses = greenIpv4s,
+      )
+
+      // After the revalidating queries return, new queries return that data immediately.
+      val call2 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call2.enqueue()
+      assertThat(call2.takeAllRecords().addresses())
+        .isEqualTo(greenIpv6s + greenIpv4s)
+    }
+
+  @Test
+  fun `new call joins incomplete revalidate call`() =
+    testDnsCallStateMachine {
+      // Seed the cache.
+      val call0 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call0.enqueue()
+
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_AAAA,
+        timeToLive = 10.seconds,
+        addresses = blueIpv6s,
+      )
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        timeToLive = 10.seconds,
+        addresses = blueIpv4s,
+      )
+      assertThat(call0.takeAllRecords().addresses())
+        .isEqualTo(blueIpv6s + blueIpv4s)
+
+      // After 8 seconds, the cached response is returned immediately and a revalidating call is
+      // also made. (10 seconds minus 2 seconds for revalidateBeforeExpire.)
+      sleep(8.seconds)
+      val call1 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call1.enqueue()
+      assertThat(call1.takeAllRecords().addresses())
+        .isEqualTo(blueIpv6s + blueIpv4s)
+      // Note this doesn't respond to TYPE_AAAA yet.
+      val revalidateQuery0 = transport.takeQuery(
+        hostname = "lysine.dev",
+        type = TYPE_AAAA
+      )
+      val revalidateQuery1 = transport.takeQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A
+      )
+      revalidateQuery1.respondIpAddresses(addresses = greenIpv4s)
+
+      // A later query can use the revalidated IPv4 records, but must wait for the revalidated
+      // IPv6 records.
+      sleep(2.seconds)
+      val call2 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call2.enqueue()
+      call2.takeOnRecordsIpAddresses(
+        addresses = greenIpv4s,
+      )
+      revalidateQuery0.respondIpAddresses(
+        addresses = greenIpv6s,
+      )
+      call2.takeOnRecordsIpAddresses(
+        last = true,
+        addresses = greenIpv6s,
+      )
+    }
+
+  @Test
   fun `failure returned last`(caching: Boolean = true) =
     testDnsCallStateMachine {
       val call =
@@ -194,7 +549,7 @@ class DnsCallStateMachineTest {
     }
 
   @Test
-  fun `failure is cached`() =
+  fun `partial failure is cached`() =
     testDnsCallStateMachine {
       val call0 =
         newCall(
@@ -229,6 +584,85 @@ class DnsCallStateMachineTest {
         addresses = blueIpv4s,
       )
       call1.takeOnFailure("boom!")
+    }
+
+  @Test
+  fun `failure expires`() =
+    testDnsCallStateMachine {
+      val call0 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          caching = true,
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+        )
+      call0.enqueue()
+      transport.takeQuery("lysine.dev", TYPE_A)
+        .respondFailure("boom!")
+      call0.takeOnFailure("boom!")
+
+      // The test cache expires failures after 5 seconds.
+      sleep(5.seconds)
+      val call1 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          caching = true,
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+        )
+      call1.enqueue()
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        addresses = greenIpv4s,
+      )
+      assertThat(call1.takeAllRecords().addresses())
+        .isEqualTo(greenIpv4s)
+    }
+
+  @Test
+  fun `failure is revalidated`() =
+    testDnsCallStateMachine {
+      val call0 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          caching = true,
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+        )
+      call0.enqueue()
+      transport.takeQuery("lysine.dev", TYPE_A)
+        .respondFailure("boom!")
+      call0.takeOnFailure("boom!")
+
+      // The failure expires after 5 seconds, but we start revalidating it 2 seconds before that.
+      sleep(3.seconds)
+      val call1 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          caching = true,
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+        )
+      call1.enqueue()
+      call1.takeOnFailure("boom!")
+      transport.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        addresses = blueIpv4s,
+      )
+
+      // After the revalidation returns, that result is used.
+      val call2 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          caching = true,
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+        )
+      call2.enqueue()
+      assertThat(call2.takeAllRecords().addresses())
+        .isEqualTo(blueIpv4s)
     }
 
   /**

@@ -9,6 +9,8 @@ import assertk.assertions.isNull
 import java.io.IOException
 import java.net.InetAddress
 import java.util.concurrent.LinkedBlockingDeque
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import okhttp3.Dns
 import okhttp3.Protocol
@@ -52,6 +54,10 @@ class DnsCallStateMachineTester internal constructor() {
       taskRunner = taskFaker.taskRunner,
       delegate = transport,
       timeSource = taskFaker.timeSource,
+      minimumTimeToLive = 10.seconds,
+      maximumTimeToLive = 60.seconds,
+      failureTimeToLive = 5.seconds,
+      revalidateBeforeExpire = 2.seconds,
     )
 
   fun newCall(
@@ -66,6 +72,10 @@ class DnsCallStateMachineTester internal constructor() {
       includeServiceMetadata = includeServiceMetadata,
       caching = caching,
     )
+
+  fun sleep(duration: Duration) {
+    taskFaker.advanceUntil(taskFaker.nanoTime + duration.inWholeNanoseconds)
+  }
 
   inner class Transport : DnsCallStateMachine.Transport<Query> {
     val events = LinkedBlockingDeque<TransportEvent>()
@@ -92,6 +102,18 @@ class DnsCallStateMachineTester internal constructor() {
       val event = transport.takeEvent() as QueryEnqueued
       assertThat(event.hostname).isEqualTo(hostname)
       assertThat(event.type).isEqualTo(type)
+      return event
+    }
+
+    /** Combines [takeQuery] and [QueryEnqueued.respondIpAddresses]. */
+    fun respondToQuery(
+      hostname: String,
+      type: Int,
+      timeToLive: Duration = 300.seconds,
+      addresses: List<InetAddress> = listOf(),
+    ): QueryEnqueued {
+      val event = takeQuery(hostname, type)
+      event.respondIpAddresses(timeToLive, addresses)
       return event
     }
 
@@ -236,6 +258,13 @@ class DnsCallStateMachineTester internal constructor() {
       return event
     }
 
+    fun takeAllRecords(): List<Dns.Record> = buildList {
+      do {
+        val event = takeEvent() as OnRecords
+        addAll(event.records)
+      } while (!event.last)
+    }
+
     /** Asserts that the next-posted event is a call to [Dns.Callback.onFailure]. */
     fun takeOnFailure(message: String): OnFailure {
       val event = takeEvent() as OnFailure
@@ -260,7 +289,7 @@ class DnsCallStateMachineTester internal constructor() {
 
       /** Respond to a [TYPE_HTTPS] query with service metadata. */
       fun respondServiceMetadata(
-        timeToLive: Int = 300,
+        timeToLive: Duration = 300.seconds,
         alpnIds: List<String>? = null,
         echConfigList: ByteString? = null,
       ) {
@@ -270,7 +299,7 @@ class DnsCallStateMachineTester internal constructor() {
             listOf(
               ResourceRecord.Https(
                 name = query.question.name,
-                timeToLive = timeToLive,
+                timeToLive = timeToLive.inWholeSeconds.toInt(),
                 alpnIds = alpnIds,
                 echConfigList = echConfigList,
               ),
@@ -286,7 +315,7 @@ class DnsCallStateMachineTester internal constructor() {
 
       /** Respond to a [TYPE_A] or [TYPE_AAAA] query with a (possibly-empty) list of IP addresses. */
       fun respondIpAddresses(
-        timeToLive: Int = 300,
+        timeToLive: Duration = 300.seconds,
         addresses: List<InetAddress> = listOf(),
       ) {
         callback.onResponse(
@@ -295,7 +324,7 @@ class DnsCallStateMachineTester internal constructor() {
             addresses.map { address ->
               ResourceRecord.IpAddress(
                 name = query.question.name,
-                timeToLive = timeToLive,
+                timeToLive = timeToLive.inWholeSeconds.toInt(),
                 address = address,
               )
             },
@@ -325,3 +354,6 @@ class DnsCallStateMachineTester internal constructor() {
     ) : CallEvent
   }
 }
+
+fun List<Dns.Record>.addresses(): List<InetAddress> =
+  map { (it as Dns.Record.IpAddress).address }
