@@ -51,7 +51,7 @@ class DnsCallStateMachineTester internal constructor() {
     CachingTransport<Query>(
       taskRunner = taskFaker.taskRunner,
       delegate = transport,
-      clock = taskFaker.clock,
+      timeSource = taskFaker.timeSource,
     )
 
   fun newCall(

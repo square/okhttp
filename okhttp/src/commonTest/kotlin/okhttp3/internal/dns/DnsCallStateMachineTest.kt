@@ -26,16 +26,18 @@ import okhttp3.internal.OkHttpInternalApi
 
 @Burst
 class DnsCallStateMachineTest {
-  private val ipv6_1_2_3_4 = listOf(InetAddress.getByName("1:2::3:4"))
-  private val ipv4_10_20_30_40 = listOf(InetAddress.getByName("10.20.30.40"))
+  /** Arbitrary sample values. */
+  private val blueIpv6s = listOf(InetAddress.getByName("1:2::3:4"))
+  private val blueIpv4s = listOf(InetAddress.getByName("10.20.30.40"))
 
   @Test
   fun `happy path`(caching: Boolean = true) {
     testDnsCallStateMachine {
-      val call = newCall(
-        request = Dns.Request(hostname = "lysine.dev"),
-        caching = caching,
-      )
+      val call =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          caching = caching,
+        )
       call.enqueue()
 
       val query0 = transport.takeQuery("lysine.dev", TYPE_HTTPS)
@@ -43,17 +45,17 @@ class DnsCallStateMachineTest {
       val query2 = transport.takeQuery("lysine.dev", TYPE_A)
 
       query1.respondIpAddresses(
-        addresses = ipv6_1_2_3_4,
+        addresses = blueIpv6s,
       )
       call.takeOnRecordsIpAddresses(
-        addresses = ipv6_1_2_3_4,
+        addresses = blueIpv6s,
       )
 
       query2.respondIpAddresses(
-        addresses = ipv4_10_20_30_40,
+        addresses = blueIpv4s,
       )
       call.takeOnRecordsIpAddresses(
-        addresses = ipv4_10_20_30_40,
+        addresses = blueIpv4s,
       )
 
       query0.respondServiceMetadata(
@@ -67,98 +69,105 @@ class DnsCallStateMachineTest {
   }
 
   @Test
-  fun `cache already completed values`() = testDnsCallStateMachine {
-    val call0 = newCall(
-      request = Dns.Request(hostname = "lysine.dev"),
-      includeServiceMetadata = false,
-      caching = true,
-    )
-    call0.enqueue()
+  fun `cache already completed values`() =
+    testDnsCallStateMachine {
+      val call0 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call0.enqueue()
 
-    val call0QueryIpv6 = transport.takeQuery("lysine.dev", TYPE_AAAA)
-    val call0QueryIpv4 = transport.takeQuery("lysine.dev", TYPE_A)
+      val call0QueryIpv6 = transport.takeQuery("lysine.dev", TYPE_AAAA)
+      val call0QueryIpv4 = transport.takeQuery("lysine.dev", TYPE_A)
 
-    call0QueryIpv6.respondIpAddresses(
-      addresses = ipv6_1_2_3_4,
-    )
-    call0.takeOnRecordsIpAddresses(
-      addresses = ipv6_1_2_3_4,
-    )
+      call0QueryIpv6.respondIpAddresses(
+        addresses = blueIpv6s,
+      )
+      call0.takeOnRecordsIpAddresses(
+        addresses = blueIpv6s,
+      )
 
-    call0QueryIpv4.respondIpAddresses(
-      addresses = ipv4_10_20_30_40,
-    )
-    call0.takeOnRecordsIpAddresses(
-      last = true,
-      addresses = ipv4_10_20_30_40,
-    )
+      call0QueryIpv4.respondIpAddresses(
+        addresses = blueIpv4s,
+      )
+      call0.takeOnRecordsIpAddresses(
+        last = true,
+        addresses = blueIpv4s,
+      )
 
-    val call1 = newCall(
-      request = Dns.Request(hostname = "lysine.dev"),
-      includeServiceMetadata = false,
-      caching = true,
-    )
-    call1.enqueue()
+      val call1 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call1.enqueue()
 
-    call1.takeOnRecordsIpAddresses(
-      addresses = ipv6_1_2_3_4,
-    )
-    call1.takeOnRecordsIpAddresses(
-      last = true,
-      addresses = ipv4_10_20_30_40,
-    )
-  }
+      call1.takeOnRecordsIpAddresses(
+        addresses = blueIpv6s,
+      )
+      call1.takeOnRecordsIpAddresses(
+        last = true,
+        addresses = blueIpv4s,
+      )
+    }
 
   /** Confirm that two queries to the cache yield a single query to the underlying transport. */
   @Test
-  fun `cache in flight calls`() = testDnsCallStateMachine {
-    val call0 = newCall(
-      request = Dns.Request(hostname = "lysine.dev"),
-      includeServiceMetadata = false,
-      caching = true,
-    )
-    call0.enqueue()
+  fun `cache in flight calls`() =
+    testDnsCallStateMachine {
+      val call0 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call0.enqueue()
 
-    val call0QueryIpv6 = transport.takeQuery("lysine.dev", TYPE_AAAA)
-    val call0QueryIpv4 = transport.takeQuery("lysine.dev", TYPE_A)
+      val call0QueryIpv6 = transport.takeQuery("lysine.dev", TYPE_AAAA)
+      val call0QueryIpv4 = transport.takeQuery("lysine.dev", TYPE_A)
 
-    val call1 = newCall(
-      request = Dns.Request(hostname = "lysine.dev"),
-      includeServiceMetadata = false,
-      caching = true,
-    )
-    call1.enqueue()
+      val call1 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call1.enqueue()
 
-    call0QueryIpv6.respondIpAddresses(
-      addresses = ipv6_1_2_3_4,
-    )
-    call0.takeOnRecordsIpAddresses(
-      addresses = ipv6_1_2_3_4,
-    )
-    call1.takeOnRecordsIpAddresses(
-      addresses = ipv6_1_2_3_4,
-    )
+      call0QueryIpv6.respondIpAddresses(
+        addresses = blueIpv6s,
+      )
+      call0.takeOnRecordsIpAddresses(
+        addresses = blueIpv6s,
+      )
+      call1.takeOnRecordsIpAddresses(
+        addresses = blueIpv6s,
+      )
 
-    call0QueryIpv4.respondIpAddresses(
-      addresses = ipv4_10_20_30_40,
-    )
-    call0.takeOnRecordsIpAddresses(
-      last = true,
-      addresses = ipv4_10_20_30_40,
-    )
-    call1.takeOnRecordsIpAddresses(
-      last = true,
-      addresses = ipv4_10_20_30_40,
-    )
-  }
+      call0QueryIpv4.respondIpAddresses(
+        addresses = blueIpv4s,
+      )
+      call0.takeOnRecordsIpAddresses(
+        last = true,
+        addresses = blueIpv4s,
+      )
+      call1.takeOnRecordsIpAddresses(
+        last = true,
+        addresses = blueIpv4s,
+      )
+    }
 
   @Test
   fun `failure returned last`(caching: Boolean = true) =
     testDnsCallStateMachine {
-      val call = newCall(
-        request = Dns.Request(hostname = "lysine.dev"),
-        caching = caching,
-      )
+      val call =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          caching = caching,
+        )
       call.enqueue()
 
       val query0 = transport.takeQuery("lysine.dev", TYPE_HTTPS)
@@ -168,10 +177,10 @@ class DnsCallStateMachineTest {
       query1.respondFailure("boom!")
 
       query2.respondIpAddresses(
-        addresses = ipv4_10_20_30_40,
+        addresses = blueIpv4s,
       )
       call.takeOnRecordsIpAddresses(
-        addresses = ipv4_10_20_30_40,
+        addresses = blueIpv4s,
       )
 
       query0.respondServiceMetadata(
@@ -187,11 +196,12 @@ class DnsCallStateMachineTest {
   @Test
   fun `failure is cached`() =
     testDnsCallStateMachine {
-      val call0 = newCall(
-        request = Dns.Request(hostname = "lysine.dev"),
-        caching = true,
-        includeServiceMetadata = false,
-      )
+      val call0 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          caching = true,
+          includeServiceMetadata = false,
+        )
       call0.enqueue()
 
       val queryIpv6 = transport.takeQuery("lysine.dev", TYPE_AAAA)
@@ -199,23 +209,24 @@ class DnsCallStateMachineTest {
 
       queryIpv6.respondFailure("boom!")
       queryIpv4.respondIpAddresses(
-        addresses = ipv4_10_20_30_40,
+        addresses = blueIpv4s,
       )
 
       call0.takeOnRecordsIpAddresses(
-        addresses = ipv4_10_20_30_40,
+        addresses = blueIpv4s,
       )
       call0.takeOnFailure("boom!")
 
-      val call1 = newCall(
-        request = Dns.Request(hostname = "lysine.dev"),
-        caching = true,
-        includeServiceMetadata = false,
-      )
+      val call1 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          caching = true,
+          includeServiceMetadata = false,
+        )
       call1.enqueue()
 
       call1.takeOnRecordsIpAddresses(
-        addresses = ipv4_10_20_30_40,
+        addresses = blueIpv4s,
       )
       call1.takeOnFailure("boom!")
     }
@@ -230,10 +241,11 @@ class DnsCallStateMachineTest {
   @Test
   fun `calls to onRecords are serialized`(caching: Boolean = true) =
     testDnsCallStateMachine {
-      val call = newCall(
-        request = Dns.Request(hostname = "lysine.dev"),
-        caching = caching,
-      )
+      val call =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          caching = caching,
+        )
       call.enqueue()
 
       val query0 = transport.takeQuery("lysine.dev", TYPE_HTTPS)
@@ -242,10 +254,10 @@ class DnsCallStateMachineTest {
 
       onNextEvent = {
         query2.respondIpAddresses(
-          addresses = ipv4_10_20_30_40,
+          addresses = blueIpv4s,
         )
         query1.respondIpAddresses(
-          addresses = ipv6_1_2_3_4,
+          addresses = blueIpv6s,
         )
       }
       query0.respondServiceMetadata(
@@ -271,10 +283,11 @@ class DnsCallStateMachineTest {
   @Test
   fun `cancel before enqueue`() =
     testDnsCallStateMachine {
-      val call = newCall(
-        request = Dns.Request(hostname = "lysine.dev"),
-        caching = false,
-      )
+      val call =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          caching = false,
+        )
       call.cancel()
       call.enqueue()
 
@@ -295,10 +308,11 @@ class DnsCallStateMachineTest {
   @Test
   fun `cancel before enqueue with caching`() =
     testDnsCallStateMachine {
-      val call = newCall(
-        request = Dns.Request(hostname = "lysine.dev"),
-        caching = true,
-      )
+      val call =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          caching = true,
+        )
       call.cancel()
       call.enqueue()
 
@@ -317,10 +331,11 @@ class DnsCallStateMachineTest {
   @Test
   fun `cancel ignored if canceled query completes`() =
     testDnsCallStateMachine {
-      val call = newCall(
-        request = Dns.Request(hostname = "lysine.dev"),
-        caching = false,
-      )
+      val call =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          caching = false,
+        )
       call.enqueue()
 
       val query0 = transport.takeQuery("lysine.dev", TYPE_HTTPS)
@@ -328,10 +343,10 @@ class DnsCallStateMachineTest {
       val query2 = transport.takeQuery("lysine.dev", TYPE_A)
 
       query1.respondIpAddresses(
-        addresses = ipv6_1_2_3_4,
+        addresses = blueIpv6s,
       )
       call.takeOnRecordsIpAddresses(
-        addresses = ipv6_1_2_3_4,
+        addresses = blueIpv6s,
       )
 
       call.cancel()
@@ -340,10 +355,10 @@ class DnsCallStateMachineTest {
       transport.takeCancel("lysine.dev", TYPE_A)
 
       query2.respondIpAddresses(
-        addresses = ipv4_10_20_30_40,
+        addresses = blueIpv4s,
       )
       call.takeOnRecordsIpAddresses(
-        addresses = ipv4_10_20_30_40,
+        addresses = blueIpv4s,
       )
 
       query0.respondServiceMetadata(
@@ -359,10 +374,11 @@ class DnsCallStateMachineTest {
   @Test
   fun `cancel ignored if canceled query completes with caching`() =
     testDnsCallStateMachine {
-      val call = newCall(
-        request = Dns.Request(hostname = "lysine.dev"),
-        caching = true,
-      )
+      val call =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          caching = true,
+        )
       call.enqueue()
 
       val query0 = transport.takeQuery("lysine.dev", TYPE_HTTPS)
@@ -370,16 +386,16 @@ class DnsCallStateMachineTest {
       val query2 = transport.takeQuery("lysine.dev", TYPE_A)
 
       query1.respondIpAddresses(
-        addresses = ipv6_1_2_3_4,
+        addresses = blueIpv6s,
       )
       call.takeOnRecordsIpAddresses(
-        addresses = ipv6_1_2_3_4,
+        addresses = blueIpv6s,
       )
 
       call.cancel()
 
       query2.respondIpAddresses(
-        addresses = ipv4_10_20_30_40,
+        addresses = blueIpv4s,
       )
 
       query0.respondServiceMetadata(

@@ -31,10 +31,9 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.AbstractLongTimeSource
+import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 import okhttp3.TestUtil.threadFactory
 
 /**
@@ -88,9 +87,9 @@ class TaskFaker : Closeable {
   private var activeThreads = 0
 
   /** Adapt this API to Kotlin's time API. */
-  val clock =
-    object : Clock {
-      override fun now(): Instant = Instant.fromEpochSeconds(0L) + nanoTime.nanoseconds
+  val timeSource =
+    object : AbstractLongTimeSource(DurationUnit.NANOSECONDS) {
+      override fun read() = nanoTime
     }
 
   /** A task runner that posts tasks to this fake. Tasks won't be executed until requested. */
