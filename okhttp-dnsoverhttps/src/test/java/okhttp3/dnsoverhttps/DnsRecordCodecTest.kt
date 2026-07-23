@@ -25,6 +25,7 @@ import kotlin.test.assertFailsWith
 import okhttp3.dnsoverhttps.internal.asQueryParameter
 import okhttp3.internal.dns.DnsMessage
 import okhttp3.internal.dns.DnsMessageReader
+import okhttp3.internal.dns.Question
 import okhttp3.internal.dns.RESPONSE_CODE_SUCCESS
 import okhttp3.internal.dns.ResourceRecord
 import okhttp3.internal.dns.TYPE_A
@@ -44,7 +45,7 @@ class DnsRecordCodecTest {
   private fun encodeQuery(
     host: String,
     type: Int,
-  ): String = DnsMessage.query(host, type).asQueryParameter()
+  ): String = DnsMessage.query(Question(host, type)).asQueryParameter()
 
   @Test
   fun testGoogleDotComEncodingWithIPv6() {

@@ -34,8 +34,8 @@ import okhttp3.internal.OkHttpInternalApi
  *
  * A few things conspire to make concurrency tricky:
  *
- *  * Each DNS record type is queried in parallel; [onQueryResponse] and [onQueryFailure] may be
- *    called concurrently.
+ *  * Each DNS record type is queried in parallel; [Transport.Callback.onResponse] and
+ *    [Transport.Callback.onFailure] may be called concurrently.
  *  * Calls to [okhttp3.Dns.Callback] must be serialized.
  *  * We don't want to use locks to guard access to [okhttp3.Dns.Callback] functions.
  *
@@ -66,20 +66,20 @@ class DnsCallStateMachine<Q>(
     get() = state.get().canceled
 
   fun start(callback: Dns.Callback) {
-    val queryMessages =
+    val questions =
       buildList {
         if (includeServiceMetadata) {
-          add(DnsMessage.query(call.request.hostname, TYPE_HTTPS))
+          add(Question(call.request.hostname, TYPE_HTTPS))
         }
         if (includeIPv6) {
-          add(DnsMessage.query(call.request.hostname, TYPE_AAAA))
+          add(Question(call.request.hostname, TYPE_AAAA))
         }
-        add(DnsMessage.query(call.request.hostname, TYPE_A))
+        add(Question(call.request.hostname, TYPE_A))
       }
 
     val queries =
-      queryMessages.map { dnsMessage ->
-        transport.newQuery(dnsMessage)
+      questions.map { question ->
+        transport.newQuery(question)
       }
 
     while (true) {
@@ -100,7 +100,26 @@ class DnsCallStateMachine<Q>(
         if (previous.canceled || canceledException != null) {
           transport.cancel(query)
         }
-        transport.enqueue(query)
+
+        transport.enqueue(
+          query = query,
+          callback =
+            object : Transport.Callback<Q> {
+              override fun onResponse(dnsResponse: DnsMessage) {
+                updateStateAndCallCallbacks(
+                  completedQuery = query,
+                  dnsResponse = dnsResponse,
+                )
+              }
+
+              override fun onFailure(e: IOException) {
+                updateStateAndCallCallbacks(
+                  completedQuery = query,
+                  newException = e,
+                )
+              }
+            },
+        )
       }
 
       return
@@ -122,18 +141,8 @@ class DnsCallStateMachine<Q>(
     }
   }
 
-  fun onQueryFailure(
-    query: Q,
-    e: IOException,
-  ) {
-    updateStateAndCallCallbacks(
-      completedQuery = query,
-      newException = e,
-    )
-  }
-
-  fun onQueryResponse(
-    query: Q,
+  private fun updateStateAndCallCallbacks(
+    completedQuery: Q,
     dnsResponse: DnsMessage,
   ) {
     val resourceRecords =
@@ -145,7 +154,7 @@ class DnsCallStateMachine<Q>(
         }
       } catch (e: IOException) {
         return updateStateAndCallCallbacks(
-          completedQuery = query,
+          completedQuery = completedQuery,
           newException = e,
         )
       }
@@ -180,7 +189,7 @@ class DnsCallStateMachine<Q>(
       }
 
     updateStateAndCallCallbacks(
-      completedQuery = query,
+      completedQuery = completedQuery,
       newRecords = dnsRecords,
     )
   }
@@ -322,11 +331,20 @@ class DnsCallStateMachine<Q>(
   }
 
   interface Transport<Q> {
-    fun newQuery(dnsMessage: DnsMessage): Q
+    fun newQuery(question: Question): Q
 
-    fun enqueue(query: Q)
+    fun enqueue(
+      query: Q,
+      callback: Callback<Q>,
+    )
 
     fun cancel(query: Q)
+
+    interface Callback<Q> {
+      fun onFailure(e: IOException)
+
+      fun onResponse(dnsResponse: DnsMessage)
+    }
   }
 }
 

@@ -35,6 +35,7 @@ import okhttp3.internal.dns.DnsCallStateMachine
 import okhttp3.internal.dns.DnsMessage
 import okhttp3.internal.dns.DnsMessageReader
 import okhttp3.internal.dns.DnsMessageWriter
+import okhttp3.internal.dns.Question
 import okhttp3.internal.platform.Platform
 import okio.Buffer
 import okio.BufferedSink
@@ -55,8 +56,7 @@ internal class DnsOverHttpsCall(
   includeServiceMetadata: Boolean,
   canceledException: IOException?,
 ) : Dns.Call,
-  DnsCallStateMachine.Transport<Call>,
-  Callback {
+  DnsCallStateMachine.Transport<Call> {
   private val stateMachine =
     DnsCallStateMachine(
       transport = this,
@@ -66,8 +66,8 @@ internal class DnsOverHttpsCall(
       includeServiceMetadata = includeServiceMetadata,
     )
 
-  override fun newQuery(dnsMessage: DnsMessage): Call {
-    val queryParameter = dnsMessage.asQueryParameter()
+  override fun newQuery(question: Question): Call {
+    val dnsMessage = DnsMessage.query(question)
     return client.newCall(
       request =
         Request
@@ -79,7 +79,8 @@ internal class DnsOverHttpsCall(
               cacheUrlOverride(
                 dnsUrl
                   .newBuilder()
-                  .addQueryParameter("query", queryParameter)
+                  .addQueryParameter("hostname", question.name)
+                  .addQueryParameter("type", question.type.toString())
                   .build(),
               )
               post(QueryRequestBody(dnsMessage))
@@ -87,7 +88,7 @@ internal class DnsOverHttpsCall(
               val requestUrl =
                 dnsUrl
                   .newBuilder()
-                  .addQueryParameter("dns", queryParameter)
+                  .addQueryParameter("dns", dnsMessage.asQueryParameter())
                   .build()
               url(requestUrl)
             }
@@ -95,33 +96,38 @@ internal class DnsOverHttpsCall(
     )
   }
 
-  override fun enqueue(query: Call) {
-    query.enqueue(this)
+  override fun enqueue(
+    query: Call,
+    callback: DnsCallStateMachine.Transport.Callback<Call>,
+  ) {
+    query.enqueue(
+      object : Callback {
+        override fun onFailure(
+          call: Call,
+          e: IOException,
+        ) {
+          callback.onFailure(e)
+        }
+
+        override fun onResponse(
+          call: Call,
+          response: Response,
+        ) {
+          val dnsMessage =
+            try {
+              decodeResponse(response)
+            } catch (e: IOException) {
+              return callback.onFailure(e)
+            }
+
+          callback.onResponse(dnsMessage)
+        }
+      },
+    )
   }
 
   override fun cancel(query: Call) {
     query.cancel()
-  }
-
-  override fun onFailure(
-    call: Call,
-    e: IOException,
-  ) {
-    stateMachine.onQueryFailure(call, e)
-  }
-
-  override fun onResponse(
-    call: Call,
-    response: Response,
-  ) {
-    val dnsMessage =
-      try {
-        decodeResponse(response)
-      } catch (e: IOException) {
-        return stateMachine.onQueryFailure(call, e)
-      }
-
-    stateMachine.onQueryResponse(call, dnsMessage)
   }
 
   override fun enqueue(callback: Dns.Callback) {
