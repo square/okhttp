@@ -258,12 +258,13 @@ class DnsCallStateMachineTester internal constructor() {
       return event
     }
 
-    fun takeAllRecords(): List<Dns.Record> = buildList {
-      do {
-        val event = takeEvent() as OnRecords
-        addAll(event.records)
-      } while (!event.last)
-    }
+    fun takeAllRecords(): List<Dns.Record> =
+      buildList {
+        do {
+          val event = takeEvent() as OnRecords
+          addAll(event.records)
+        } while (!event.last)
+      }
 
     /** Asserts that the next-posted event is a call to [Dns.Callback.onFailure]. */
     fun takeOnFailure(message: String): OnFailure {
@@ -355,5 +356,4 @@ class DnsCallStateMachineTester internal constructor() {
   }
 }
 
-fun List<Dns.Record>.addresses(): List<InetAddress> =
-  map { (it as Dns.Record.IpAddress).address }
+fun List<Dns.Record>.addresses(): List<InetAddress> = map { (it as Dns.Record.IpAddress).address }

@@ -483,14 +483,16 @@ class DnsCallStateMachineTest {
       assertThat(call1.takeAllRecords().addresses())
         .isEqualTo(blueIpv6s + blueIpv4s)
       // Note this doesn't respond to TYPE_AAAA yet.
-      val revalidateQuery0 = transport.takeQuery(
-        hostname = "lysine.dev",
-        type = TYPE_AAAA
-      )
-      val revalidateQuery1 = transport.takeQuery(
-        hostname = "lysine.dev",
-        type = TYPE_A
-      )
+      val revalidateQuery0 =
+        transport.takeQuery(
+          hostname = "lysine.dev",
+          type = TYPE_AAAA,
+        )
+      val revalidateQuery1 =
+        transport.takeQuery(
+          hostname = "lysine.dev",
+          type = TYPE_A,
+        )
       revalidateQuery1.respondIpAddresses(addresses = greenIpv4s)
 
       // A later query can use the revalidated IPv4 records, but must wait for the revalidated
@@ -597,7 +599,8 @@ class DnsCallStateMachineTest {
           includeServiceMetadata = false,
         )
       call0.enqueue()
-      transport.takeQuery("lysine.dev", TYPE_A)
+      transport
+        .takeQuery("lysine.dev", TYPE_A)
         .respondFailure("boom!")
       call0.takeOnFailure("boom!")
 
@@ -631,7 +634,8 @@ class DnsCallStateMachineTest {
           includeServiceMetadata = false,
         )
       call0.enqueue()
-      transport.takeQuery("lysine.dev", TYPE_A)
+      transport
+        .takeQuery("lysine.dev", TYPE_A)
         .respondFailure("boom!")
       call0.takeOnFailure("boom!")
 
