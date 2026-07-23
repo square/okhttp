@@ -22,7 +22,8 @@ import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.dnsoverhttps.internal.DnsOverHttpsCall
+import okhttp3.dnsoverhttps.internal.DnsOverHttpsTransport
+import okhttp3.internal.dns.StateMachineDnsCall
 import okhttp3.internal.dns.execute
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 
@@ -45,18 +46,21 @@ class DnsOverHttps internal constructor(
   @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
   @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean,
 ) : Dns {
-  override fun newCall(request: Dns.Request): Dns.Call {
-    val canceledException = validate(request.hostname)
-    return DnsOverHttpsCall(
-      request = request,
+  private val transport =
+    DnsOverHttpsTransport(
       client = client,
       dnsUrl = url,
       post = post,
+    )
+
+  override fun newCall(request: Dns.Request): Dns.Call =
+    StateMachineDnsCall(
+      request = request,
+      transport = transport,
+      canceledException = validate(request.hostname),
       includeIPv6 = includeIPv6,
       includeServiceMetadata = includeServiceMetadata,
-      canceledException = canceledException,
     )
-  }
 
   /**
    * Returns an exception if [hostname] should not be resolved.

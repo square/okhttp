@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("ktlint:standard:filename")
+
 package okhttp3.internal.dns
 
 import java.io.IOException
@@ -25,7 +27,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 import okhttp3.internal.OkHttpInternalApi
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.dns.DnsCallStateMachine.Transport
+import okhttp3.internal.dns.StateMachineDnsCall.Transport
 
 // TODO: evict old entries from cache using State.lastRequestedAt
 

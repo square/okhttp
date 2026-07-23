@@ -9,35 +9,37 @@ import assertk.assertions.isNull
 import java.io.IOException
 import java.net.InetAddress
 import java.util.concurrent.LinkedBlockingDeque
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import okhttp3.Dns
 import okhttp3.Protocol
 import okhttp3.dnsResponse
 import okhttp3.internal.OkHttpInternalApi
 import okhttp3.internal.concurrent.TaskFaker
-import okhttp3.internal.dns.DnsCallStateMachine.Transport
-import okhttp3.internal.dns.DnsCallStateMachineTester.CallEvent.OnFailure
-import okhttp3.internal.dns.DnsCallStateMachineTester.CallEvent.OnRecords
-import okhttp3.internal.dns.DnsCallStateMachineTester.TransportEvent.QueryCanceled
-import okhttp3.internal.dns.DnsCallStateMachineTester.TransportEvent.QueryEnqueued
 import okhttp3.internal.dns.DnsMessage.Companion.query
+import okhttp3.internal.dns.StateMachineDnsCall.Transport
+import okhttp3.internal.dns.StateMachineDnsCallTester.CallEvent.OnFailure
+import okhttp3.internal.dns.StateMachineDnsCallTester.CallEvent.OnRecords
+import okhttp3.internal.dns.StateMachineDnsCallTester.TransportEvent.QueryCanceled
+import okhttp3.internal.dns.StateMachineDnsCallTester.TransportEvent.QueryEnqueued
 import okio.ByteString
 
 /**
- * Test the DNS state machine.
+ * Test [StateMachineDnsCall].
  *
  * This has helpers to operate on the state machine:
  *
  * This tracks all effects from the state machine as events: creating queries, canceling queries,
  * calling callbacks.
  */
-fun testDnsCallStateMachine(block: DnsCallStateMachineTester.() -> Unit) {
-  val tester = DnsCallStateMachineTester()
+fun testStateMachineDnsCall(block: StateMachineDnsCallTester.() -> Unit) {
+  val tester = StateMachineDnsCallTester()
   tester.block()
   assertThat(tester.transport.events.poll(), "unexpected transport event").isNull()
 }
 
-class DnsCallStateMachineTester internal constructor() {
+class StateMachineDnsCallTester internal constructor() {
   var onNextEvent: (() -> Unit)? = null
 
   /** Defend against re-entrant calls. */
@@ -52,6 +54,10 @@ class DnsCallStateMachineTester internal constructor() {
       taskRunner = taskFaker.taskRunner,
       delegate = transport,
       timeSource = taskFaker.timeSource,
+      minimumTimeToLive = 10.seconds,
+      maximumTimeToLive = 60.seconds,
+      failureTimeToLive = 5.seconds,
+      revalidateBeforeExpire = 2.seconds,
     )
 
   fun newCall(
@@ -59,15 +65,19 @@ class DnsCallStateMachineTester internal constructor() {
     includeIPv6: Boolean = true,
     includeServiceMetadata: Boolean = true,
     caching: Boolean = false,
-  ): Call =
-    Call(
-      request = request,
-      includeIPv6 = includeIPv6,
-      includeServiceMetadata = includeServiceMetadata,
-      caching = caching,
-    )
+  ) = CallTester(
+    request = request,
+    includeIPv6 = includeIPv6,
+    includeServiceMetadata = includeServiceMetadata,
+    caching = caching,
+  )
 
-  inner class Transport : DnsCallStateMachine.Transport<Query> {
+  fun sleep(duration: Duration) {
+    taskFaker.advanceUntil(taskFaker.nanoTime + duration.inWholeNanoseconds)
+  }
+
+  /** Scriptable transport for testing. */
+  inner class Transport : StateMachineDnsCall.Transport<Query> {
     val events = LinkedBlockingDeque<TransportEvent>()
 
     override fun newQuery(question: Question) = Query(question)
@@ -95,6 +105,18 @@ class DnsCallStateMachineTester internal constructor() {
       return event
     }
 
+    /** Combines [takeQuery] and [QueryEnqueued.respondIpAddresses]. */
+    fun respondToQuery(
+      hostname: String,
+      type: Int,
+      timeToLive: Duration = 300.seconds,
+      addresses: List<InetAddress> = listOf(),
+    ): QueryEnqueued {
+      val event = takeQuery(hostname, type)
+      event.respondIpAddresses(timeToLive, addresses)
+      return event
+    }
+
     /** Asserts that the next-posted event is a query cancel. */
     fun takeCancel(
       hostname: String,
@@ -119,23 +141,22 @@ class DnsCallStateMachineTester internal constructor() {
   }
 
   /** A DNS call for the fake state machine. */
-  inner class Call(
-    override val request: Dns.Request,
+  inner class CallTester(
+    request: Dns.Request,
     includeIPv6: Boolean = true,
     includeServiceMetadata: Boolean = true,
     caching: Boolean = false,
-  ) : Dns.Call,
-    Dns.Callback {
+  ) : Dns.Callback {
     private val events = LinkedBlockingDeque<CallEvent>()
 
-    val stateMachine =
-      DnsCallStateMachine(
+    val call =
+      StateMachineDnsCall(
+        request = request,
         transport =
           when {
             caching -> cachingTransport
             else -> transport
           },
-        call = this,
         canceledException = null,
         includeIPv6 = includeIPv6,
         includeServiceMetadata = includeServiceMetadata,
@@ -151,15 +172,13 @@ class DnsCallStateMachineTester internal constructor() {
       }
     }
 
-    override fun enqueue(callback: Dns.Callback) {
-      stateMachine.start(callback)
+    fun enqueue(callback: Dns.Callback) {
+      call.enqueue(callback)
     }
 
-    override fun cancel() {
-      stateMachine.cancel()
+    fun cancel() {
+      call.cancel()
     }
-
-    override fun isCanceled() = stateMachine.canceled
 
     private fun postEvent(e: CallEvent) {
       events.put(e)
@@ -178,7 +197,7 @@ class DnsCallStateMachineTester internal constructor() {
       last: Boolean,
       records: List<Dns.Record>,
     ) {
-      check(call == this)
+      check(call == this.call)
       check(acceptCallbacks) { "unexpected callback" }
 
       acceptCallbacks = false
@@ -193,7 +212,7 @@ class DnsCallStateMachineTester internal constructor() {
       call: Dns.Call,
       e: IOException,
     ) {
-      check(call == this)
+      check(call == this.call)
       check(acceptCallbacks) { "unexpected callback" }
 
       acceptCallbacks = false
@@ -236,6 +255,14 @@ class DnsCallStateMachineTester internal constructor() {
       return event
     }
 
+    fun takeAllRecords(): List<Dns.Record> =
+      buildList {
+        do {
+          val event = takeEvent() as OnRecords
+          addAll(event.records)
+        } while (!event.last)
+      }
+
     /** Asserts that the next-posted event is a call to [Dns.Callback.onFailure]. */
     fun takeOnFailure(message: String): OnFailure {
       val event = takeEvent() as OnFailure
@@ -260,7 +287,7 @@ class DnsCallStateMachineTester internal constructor() {
 
       /** Respond to a [TYPE_HTTPS] query with service metadata. */
       fun respondServiceMetadata(
-        timeToLive: Int = 300,
+        timeToLive: Duration = 300.seconds,
         alpnIds: List<String>? = null,
         echConfigList: ByteString? = null,
       ) {
@@ -270,7 +297,7 @@ class DnsCallStateMachineTester internal constructor() {
             listOf(
               ResourceRecord.Https(
                 name = query.question.name,
-                timeToLive = timeToLive,
+                timeToLive = timeToLive.inWholeSeconds.toInt(),
                 alpnIds = alpnIds,
                 echConfigList = echConfigList,
               ),
@@ -286,7 +313,7 @@ class DnsCallStateMachineTester internal constructor() {
 
       /** Respond to a [TYPE_A] or [TYPE_AAAA] query with a (possibly-empty) list of IP addresses. */
       fun respondIpAddresses(
-        timeToLive: Int = 300,
+        timeToLive: Duration = 300.seconds,
         addresses: List<InetAddress> = listOf(),
       ) {
         callback.onResponse(
@@ -295,7 +322,7 @@ class DnsCallStateMachineTester internal constructor() {
             addresses.map { address ->
               ResourceRecord.IpAddress(
                 name = query.question.name,
-                timeToLive = timeToLive,
+                timeToLive = timeToLive.inWholeSeconds.toInt(),
                 address = address,
               )
             },
@@ -325,3 +352,5 @@ class DnsCallStateMachineTester internal constructor() {
     ) : CallEvent
   }
 }
+
+fun List<Dns.Record>.addresses(): List<InetAddress> = map { (it as Dns.Record.IpAddress).address }
