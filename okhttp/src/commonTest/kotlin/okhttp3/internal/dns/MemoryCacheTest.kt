@@ -28,23 +28,25 @@ import kotlin.time.DurationUnit
 
 class MemoryCacheTest {
   private var time = 0.seconds
-  private val timeSource = object : AbstractLongTimeSource(DurationUnit.SECONDS) {
-    override fun read() = time.inWholeSeconds
-  }
-
-  private val cache = object : MemoryCache<String, Record>(
-    timeSource = timeSource,
-    maxSize = 4,
-  ) {
-    override fun lastRequestedAt(
-      now: Time,
-      value: Record
-    ): Time? {
-      val evictAt = value.evictAt ?: return null
-      if (now >= evictAt) return null
-      return value.lastRequestedAt
+  private val timeSource =
+    object : AbstractLongTimeSource(DurationUnit.SECONDS) {
+      override fun read() = time.inWholeSeconds
     }
-  }
+
+  private val cache =
+    object : MemoryCache<String, Record>(
+      timeSource = timeSource,
+      maxSize = 4,
+    ) {
+      override fun lastRequestedAt(
+        now: Time,
+        value: Record,
+      ): Time? {
+        val evictAt = value.evictAt ?: return null
+        if (now >= evictAt) return null
+        return value.lastRequestedAt
+      }
+    }
 
   @Test
   fun `computeIfAbsent remembers values`() {
@@ -63,11 +65,12 @@ class MemoryCacheTest {
     val now = timeSource.markNow()
     val r0 = Record("r0", now, now)
     val r1 = Record("r1", now, now)
-    val a0 = cache.computeIfAbsent("a") {
-      val a1 = cache.computeIfAbsent("a") { r1 }
-      assertThat(a1).isSameInstanceAs(r1)
-      r0
-    }
+    val a0 =
+      cache.computeIfAbsent("a") {
+        val a1 = cache.computeIfAbsent("a") { r1 }
+        assertThat(a1).isSameInstanceAs(r1)
+        r0
+      }
     assertThat(a0).isSameInstanceAs(r1)
   }
 
@@ -218,15 +221,19 @@ class MemoryCacheTest {
   }
 
   fun MemoryCache<String, Record>.assertAbsent(key: String) {
-    val actual = try {
-      computeIfAbsent(key) { throw Exception("absent!") }
-    } catch (_: Exception) {
-      null
-    }
+    val actual =
+      try {
+        computeIfAbsent(key) { throw Exception("absent!") }
+      } catch (_: Exception) {
+        null
+      }
     assertThat(actual).isNull()
   }
 
-  fun MemoryCache<String, Record>.assertPresent(key: String, expected: Record) {
+  fun MemoryCache<String, Record>.assertPresent(
+    key: String,
+    expected: Record,
+  ) {
     val actual = computeIfAbsent(key) { throw Exception("absent!") }
     assertThat(actual).isEqualTo(expected)
   }

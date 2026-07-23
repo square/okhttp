@@ -76,22 +76,26 @@ class CachingTransport<Q>(
   private val revalidateBeforeExpire: Duration = 5.seconds,
   maxEntryCount: Int = 1000,
 ) : Transport<CachingTransport.Query<Q>> {
-  private val cache = object : MemoryCache<Question, Entry>(
-    timeSource = timeSource,
-    maxSize = maxEntryCount
-  ) {
-    override fun lastRequestedAt(now: Time, value: CachingTransport<Q>.Entry): Time? {
-      val state = value.state.get()
+  private val cache =
+    object : MemoryCache<Question, Entry>(
+      timeSource = timeSource,
+      maxSize = maxEntryCount,
+    ) {
+      override fun lastRequestedAt(
+        now: Time,
+        value: CachingTransport<Q>.Entry,
+      ): Time? {
+        val state = value.state.get()
 
-      // If it's already expired, evict immediately.
-      if (state.inFlightCall == null) {
-        val expireAt = state.result?.expireAt ?: return null
-        if (expireAt <= now) return null
+        // If it's already expired, evict immediately.
+        if (state.inFlightCall == null) {
+          val expireAt = state.result?.expireAt ?: return null
+          if (expireAt <= now) return null
+        }
+
+        return state.lastRequestedAt
       }
-
-      return state.lastRequestedAt
     }
-  }
 
   init {
     require(failureTimeToLive >= 0.seconds)

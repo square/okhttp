@@ -42,13 +42,19 @@ abstract class MemoryCache<K : Any, V : Any>(
    * Returns the time this value was most recently used, in order to make an eviction decision. This
    * should return null if this element should be evicted immediately.
    */
-  abstract fun lastRequestedAt(now: Time, value: V): Time?
+  abstract fun lastRequestedAt(
+    now: Time,
+    value: V,
+  ): Time?
 
   /**
    * Similar to [ConcurrentHashMap.computeIfAbsent], but this will also prune the cache to size if
    * this function grows the cache to double [maxSize].
    */
-  fun computeIfAbsent(key: K, computeValue: () -> V): V {
+  fun computeIfAbsent(
+    key: K,
+    computeValue: () -> V,
+  ): V {
     if (maxSize == 0) return computeValue()
 
     val result = entries[key]
@@ -112,6 +118,9 @@ abstract class MemoryCache<K : Any, V : Any>(
   }
 
   private object NewestFirst : Comparator<Pair<Time, *>> {
-    override fun compare(o1: Pair<Time, *>, o2: Pair<Time, *>)= o2.first.compareTo(o1.first)
+    override fun compare(
+      o1: Pair<Time, *>,
+      o2: Pair<Time, *>,
+    ) = o2.first.compareTo(o1.first)
   }
 }
