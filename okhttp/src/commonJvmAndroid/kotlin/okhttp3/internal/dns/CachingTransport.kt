@@ -71,7 +71,8 @@ class CachingTransport<Q>(
   }
 
   override fun newQuery(question: Question): Query<Q> {
-    val entry = entries.computeIfAbsent(question) { Entry(question) }
+    val inserted = Entry(question)
+    val entry = entries.putIfAbsent(question, inserted) ?: inserted
     return Query(entry)
   }
 
