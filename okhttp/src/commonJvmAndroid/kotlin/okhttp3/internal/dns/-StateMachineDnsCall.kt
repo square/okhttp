@@ -26,8 +26,8 @@ import okhttp3.Protocol
 import okhttp3.internal.OkHttpInternalApi
 
 /**
- * State machine for DNS calls. This is intended for use with any transport for the queries, such
- * as UDP or DNS over HTTPS.
+ * An application-layer DNS call that performs multiple transport-layer DNS queries in parallel.
+ * This delegates to an arbitrary transport  like UDP or DNS over HTTPS.
  *
  * Concurrency
  * -----------
@@ -53,28 +53,27 @@ import okhttp3.internal.OkHttpInternalApi
  * that call is executing.
  */
 @OkHttpInternalApi
-class DnsCallStateMachine<Q>(
+class StateMachineDnsCall<Q>(
+  override val request: Dns.Request,
   private val transport: Transport<Q>,
-  private val call: Dns.Call,
   private val canceledException: IOException?,
   private val includeIPv6: Boolean,
   private val includeServiceMetadata: Boolean,
-) {
+) : Dns.Call {
   private val state = AtomicReference<State<Q>>(State.Idle())
 
-  val canceled: Boolean
-    get() = state.get().canceled
+  override fun isCanceled() = state.get().canceled
 
-  fun start(callback: Dns.Callback) {
+  override fun enqueue(callback: Dns.Callback) {
     val questions =
       buildList {
         if (includeServiceMetadata) {
-          add(Question(call.request.hostname, TYPE_HTTPS))
+          add(Question(request.hostname, TYPE_HTTPS))
         }
         if (includeIPv6) {
-          add(Question(call.request.hostname, TYPE_AAAA))
+          add(Question(request.hostname, TYPE_AAAA))
         }
-        add(Question(call.request.hostname, TYPE_A))
+        add(Question(request.hostname, TYPE_A))
       }
 
     val queries =
@@ -126,7 +125,7 @@ class DnsCallStateMachine<Q>(
     }
   }
 
-  fun cancel() {
+  override fun cancel() {
     while (true) {
       val previous = state.get()
       val next = previous.cancel()
@@ -164,7 +163,7 @@ class DnsCallStateMachine<Q>(
         when (resourceRecord) {
           is ResourceRecord.Https -> {
             Dns.Record.ServiceMetadata(
-              hostname = resourceRecord.targetName.takeIf { it != "" } ?: call.request.hostname,
+              hostname = resourceRecord.targetName.takeIf { it != "" } ?: request.hostname,
               alpnIds =
                 resourceRecord.alpnIds?.mapNotNull { alpnId ->
                   try {
@@ -181,7 +180,7 @@ class DnsCallStateMachine<Q>(
 
           is ResourceRecord.IpAddress -> {
             Dns.Record.IpAddress(
-              hostname = call.request.hostname,
+              hostname = request.hostname,
               address = resourceRecord.address,
             )
           }
@@ -268,7 +267,7 @@ class DnsCallStateMachine<Q>(
       val lastAndNoExceptions = last && allExceptions.isEmpty()
       if (allRecords.isNotEmpty() || lastAndNoExceptions) {
         previous.callback.onRecords(
-          call = call,
+          call = this,
           last = lastAndNoExceptions,
           records = allRecords,
         )
@@ -276,7 +275,7 @@ class DnsCallStateMachine<Q>(
 
       if (last && allExceptions.isNotEmpty()) {
         previous.callback.onFailure(
-          call = call,
+          call = this,
           exceptions = allExceptions,
         )
       }

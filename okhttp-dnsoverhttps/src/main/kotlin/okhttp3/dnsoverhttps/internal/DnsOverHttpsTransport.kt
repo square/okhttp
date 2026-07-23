@@ -13,66 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("ktlint:standard:filename")
-
 package okhttp3.dnsoverhttps.internal
 
 import java.io.IOException
 import java.net.ProtocolException
 import okhttp3.Call
 import okhttp3.Callback
-import okhttp3.Dns
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.Response
+import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.dnsoverhttps.DnsOverHttps.Companion.DNS_MESSAGE
 import okhttp3.dnsoverhttps.DnsOverHttps.Companion.MAX_RESPONSE_SIZE
 import okhttp3.internal.OkHttpInternalApi
-import okhttp3.internal.dns.DnsCallStateMachine
 import okhttp3.internal.dns.DnsMessage
 import okhttp3.internal.dns.DnsMessageReader
 import okhttp3.internal.dns.DnsMessageWriter
 import okhttp3.internal.dns.Question
+import okhttp3.internal.dns.StateMachineDnsCall
 import okhttp3.internal.platform.Platform
 import okio.Buffer
 import okio.BufferedSink
 
-// TODO: in-memory caching that uses timeToLive.
-// TODO: honor Https.priority and Https.targetName. Create new calls!
-
-/**
- * Implements [Dns.Call] by making multiple HTTPS calls.
- */
 @OkHttpInternalApi
-internal class DnsOverHttpsCall(
-  override val request: Dns.Request,
+internal class DnsOverHttpsTransport(
   private val client: OkHttpClient,
   private val dnsUrl: HttpUrl,
   private val post: Boolean,
-  includeIPv6: Boolean,
-  includeServiceMetadata: Boolean,
-  canceledException: IOException?,
-) : Dns.Call,
-  DnsCallStateMachine.Transport<Call> {
-  private val stateMachine =
-    DnsCallStateMachine(
-      transport = this,
-      call = this,
-      canceledException = canceledException,
-      includeIPv6 = includeIPv6,
-      includeServiceMetadata = includeServiceMetadata,
-    )
-
+) : StateMachineDnsCall.Transport<Call> {
   override fun newQuery(question: Question): Call {
     val dnsMessage = DnsMessage.query(question)
     return client.newCall(
       request =
         Request
           .Builder()
-          .header("Accept", DNS_MESSAGE.toString())
+          .header("Accept", DnsOverHttps.DNS_MESSAGE.toString())
           .apply {
             if (post) {
               url(dnsUrl)
@@ -98,7 +76,7 @@ internal class DnsOverHttpsCall(
 
   override fun enqueue(
     query: Call,
-    callback: DnsCallStateMachine.Transport.Callback<Call>,
+    callback: StateMachineDnsCall.Transport.Callback<Call>,
   ) {
     query.enqueue(
       object : Callback {
@@ -129,16 +107,6 @@ internal class DnsOverHttpsCall(
   override fun cancel(query: Call) {
     query.cancel()
   }
-
-  override fun enqueue(callback: Dns.Callback) {
-    stateMachine.start(callback)
-  }
-
-  override fun cancel() {
-    stateMachine.cancel()
-  }
-
-  override fun isCanceled() = stateMachine.canceled
 }
 
 internal fun DnsMessage.asQueryParameter(): String {
