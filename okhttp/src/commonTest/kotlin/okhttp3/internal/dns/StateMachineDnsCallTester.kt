@@ -14,10 +14,8 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import okhttp3.Dns
 import okhttp3.Protocol
-import okhttp3.dnsResponse
 import okhttp3.internal.OkHttpInternalApi
 import okhttp3.internal.concurrent.TaskFaker
-import okhttp3.internal.dns.DnsMessage.Companion.query
 import okhttp3.internal.dns.StateMachineDnsCallTester.CallEvent.OnFailure
 import okhttp3.internal.dns.StateMachineDnsCallTester.CallEvent.OnRecords
 import okhttp3.internal.dns.StateMachineDnsCallTester.TransportEvent.QueryCanceled
@@ -285,9 +283,9 @@ class StateMachineDnsCallTester internal constructor() {
         echConfigList: ByteString? = null,
       ) {
         callback.onResponse(
-          dnsResponse(
-            query(question),
-            listOf(
+          DnsMessage.response(
+            questions = listOf(question),
+            answers = listOf(
               ResourceRecord.Https(
                 name = question.name,
                 timeToLive = timeToLive.inWholeSeconds.toInt(),
@@ -310,9 +308,9 @@ class StateMachineDnsCallTester internal constructor() {
         addresses: List<InetAddress> = listOf(),
       ) {
         callback.onResponse(
-          dnsResponse(
-            query(question),
-            addresses.map { address ->
+          DnsMessage.response(
+            questions = listOf(question),
+            answers = addresses.map { address ->
               ResourceRecord.IpAddress(
                 name = question.name,
                 timeToLive = timeToLive.inWholeSeconds.toInt(),
