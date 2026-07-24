@@ -537,6 +537,22 @@ public final class okhttp3/Dns$Request {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class okhttp3/DnsCache {
+	public final field -delegate Lokhttp3/internal/dns/RealDnsCache;
+	public synthetic fun <init> (JJJJIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun evictAll ()V
+	public final fun failureTimeToLive ()J
+	public final fun hitCount ()I
+	public final fun maxSize ()I
+	public final fun maximumTimeToLive ()J
+	public final fun minimumTimeToLive ()J
+	public final fun networkCount ()I
+	public final fun requestCount ()I
+	public final fun revalidateBeforeExpire ()J
+	public final fun size ()I
+}
+
 public abstract class okhttp3/EventListener {
 	public static final field Companion Lokhttp3/EventListener$Companion;
 	public static final field NONE Lokhttp3/EventListener;

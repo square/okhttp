@@ -44,8 +44,8 @@ class StateMachineDnsCallTester internal constructor() {
 
   private val taskFaker = TaskFaker()
 
-  private val dnsCache =
-    DnsCache(
+  val cache =
+    RealDnsCache(
       taskRunner = taskFaker.taskRunner,
       timeSource = taskFaker.timeSource,
       minimumTimeToLive = 10.seconds,
@@ -149,7 +149,7 @@ class StateMachineDnsCallTester internal constructor() {
         request = request,
         queryFactory =
           when {
-            caching -> dnsCache.wrap(queryFactory)
+            caching -> cache.wrap(queryFactory)
             else -> queryFactory
           },
         canceledException = null,

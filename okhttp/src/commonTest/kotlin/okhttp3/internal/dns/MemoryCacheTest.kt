@@ -75,6 +75,16 @@ class MemoryCacheTest {
   }
 
   @Test
+  fun `evictAll evicts all`() {
+    cache.access("a")
+    cache.access("b")
+
+    cache.evictAll()
+    cache.assertAbsent("a")
+    cache.assertAbsent("b")
+  }
+
+  @Test
   fun `evict removes expired records`() {
     cache.access("b")
     sleep(7.seconds)
