@@ -157,6 +157,31 @@ class DnsMessageReaderWriterTest {
     assertThat(e).hasMessage("malformed DNS message")
   }
 
+  @Test
+  fun `rejects mandatory service parameter with unsupported key`() {
+    // An HTTPS record whose mandatory value is the single 2-octet SvcParamKey 0x0101 (257), which
+    // OkHttp does not support. RFC 9460 requires such a record be treated as malformed.
+    val buffer = Buffer()
+    buffer.write(
+      "0000818000000001000000000000410001000000000009000100000000020101".decodeHex(),
+    )
+    assertFailsWith<ProtocolException> {
+      DnsMessageReader(buffer).read()
+    }
+  }
+
+  @Test
+  fun `rejects odd length mandatory service parameter`() {
+    // The mandatory value has an odd length, so it can't be a list of 2-octet SvcParamKeys.
+    val buffer = Buffer()
+    buffer.write(
+      "00008180000000010000000000004100010000000000080001000000000103".decodeHex(),
+    )
+    assertFailsWith<ProtocolException> {
+      DnsMessageReader(buffer).read()
+    }
+  }
+
   private fun assertRoundTrip(message: DnsMessage) {
     val buffer = Buffer()
     DnsMessageWriter(buffer).write(message)
