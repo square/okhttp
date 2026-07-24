@@ -87,8 +87,7 @@ abstract class MemoryCache<K : Any, V : Any>(
     // the comparator, we'd break the PriorityQueue's invariant that the sort order is stable.
     var count = count
     val now = timeSource.markNow()
-    val entriesToEvict = PriorityQueue<Pair<Time, Map.Entry<K, V>>>(NewestFirst)
-
+    val entriesToEvict = PriorityQueue<Pair<Time, Map.Entry<K, V>>>(count + 1, NewestFirst)
     val i = entries.entries.iterator()
     while (i.hasNext()) {
       val entry = i.next()
