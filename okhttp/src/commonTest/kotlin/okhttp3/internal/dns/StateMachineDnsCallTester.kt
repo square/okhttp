@@ -285,14 +285,15 @@ class StateMachineDnsCallTester internal constructor() {
         callback.onResponse(
           DnsMessage.response(
             questions = listOf(question),
-            answers = listOf(
-              ResourceRecord.Https(
-                name = question.name,
-                timeToLive = timeToLive.inWholeSeconds.toInt(),
-                alpnIds = alpnIds,
-                echConfigList = echConfigList,
+            answers =
+              listOf(
+                ResourceRecord.Https(
+                  name = question.name,
+                  timeToLive = timeToLive.inWholeSeconds.toInt(),
+                  alpnIds = alpnIds,
+                  echConfigList = echConfigList,
+                ),
               ),
-            ),
           ),
         )
       }
@@ -310,13 +311,14 @@ class StateMachineDnsCallTester internal constructor() {
         callback.onResponse(
           DnsMessage.response(
             questions = listOf(question),
-            answers = addresses.map { address ->
-              ResourceRecord.IpAddress(
-                name = question.name,
-                timeToLive = timeToLive.inWholeSeconds.toInt(),
-                address = address,
-              )
-            },
+            answers =
+              addresses.map { address ->
+                ResourceRecord.IpAddress(
+                  name = question.name,
+                  timeToLive = timeToLive.inWholeSeconds.toInt(),
+                  address = address,
+                )
+              },
           ),
         )
       }
