@@ -195,7 +195,11 @@ class FakeDns(
         }
       }
 
-    return dnsResponse(request, answers)
+    return DnsMessage.response(
+      id = request.id,
+      questions = request.questions,
+      answers = answers,
+    )
   }
 
   private fun ResourceRecord.matches(question: Question): Boolean {
@@ -322,24 +326,4 @@ class FakeDns(
       override val hostname: String,
     ) : Request
   }
-}
-
-fun dnsResponse(
-  request: DnsMessage,
-  answers: List<ResourceRecord>,
-): DnsMessage {
-  //     QR = 1 (Response)
-  // OPCODE = 0 (standard query)
-  //     RD = 1 (Recursion Desired)
-  //     RA = 1 (Recursion Available)
-  //  RCODE = 0 (success)
-  //           QR OPCODE AA TC RD RA   Z RCODE
-  val flags = 0b1___0000__0__0__1__1_000__0000
-
-  return DnsMessage(
-    id = request.id,
-    flags = flags,
-    questions = request.questions,
-    answers = answers,
-  )
 }
