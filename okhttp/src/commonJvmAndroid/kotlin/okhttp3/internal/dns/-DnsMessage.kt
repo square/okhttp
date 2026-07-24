@@ -46,6 +46,25 @@ data class DnsMessage(
         questions = listOf(question),
       )
     }
+
+    fun response(
+      id: Short = 0,
+      questions: List<Question>,
+      answers: List<ResourceRecord>,
+    ): DnsMessage {
+      //     QR = 1 (Response)
+      // OPCODE = 0 (standard query)
+      //  RCODE = 0 (success)
+      //           QR OPCODE AA TC RD RA   Z RCODE
+      val flags = 0b1___0000__0__0__0__0_000__0000
+
+      return DnsMessage(
+        id = id,
+        flags = flags,
+        questions = questions,
+        answers = answers,
+      )
+    }
   }
 }
 
