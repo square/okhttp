@@ -58,7 +58,7 @@ kotlin {
   android {
     namespace = "okhttp.okhttp3"
     compileSdk {
-      version = release(36)
+      version = release(37)
     }
     minSdk = 21
 
@@ -340,7 +340,7 @@ afterEvaluate {
 
 // Work around issue 8826, where the Sentry SDK assumes that OkHttp's internal-visibility symbols
 // will be suffixed '$okhttp' in deployable artifacts. This isn't intended to be a published API,
-// but it's easy enough for us to keep it working. https://github.com/square/okhttp/issues/8826
+// but it's easy enough for us to keep it working. https://github.com/lysine-dev/okhttp/issues/8826
 tasks.withType<KotlinCompile> {
   compilerOptions {
     freeCompilerArgs.addAll("-module-name=okhttp", "-Xexpect-actual-classes")

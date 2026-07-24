@@ -18,6 +18,7 @@ package okhttp3.internal.connection
 import java.io.IOException
 import java.net.ConnectException
 import java.net.HttpURLConnection
+import java.net.NoRouteToHostException
 import java.net.ProtocolException
 import java.net.Proxy
 import java.net.Socket as JavaNetSocket
@@ -282,7 +283,7 @@ class ConnectPlan internal constructor(
 
     // The following try/catch block is a pseudo hacky way to get around a crash on Android 7.0
     // More details:
-    // https://github.com/square/okhttp/issues/3245
+    // https://github.com/lysine-dev/okhttp/issues/3245
     // https://android-review.googlesource.com/#/c/271775/
     try {
       this.socket = rawSocket.asBufferedSocket()
@@ -345,7 +346,12 @@ class ConnectPlan internal constructor(
     var success = false
     try {
       if (connectionSpec.supportsTlsExtensions) {
-        Platform.get().configureTlsExtensions(sslSocket, address.url.host, address.protocols)
+        Platform.get().configureTlsExtensions(
+          sslSocket = sslSocket,
+          hostname = address.url.host,
+          protocols = address.protocols,
+          echConfigList = route.echConfigList,
+        )
       }
 
       // Force handshake. This can throw!

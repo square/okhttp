@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Square, Inc.
+ * Copyright (c) 2026 OkHttp Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.connection
+package okhttp3.internal
 
-/**
- * A RoutePlanner that will always establish a new connection, ignoring any connection pooling
- */
-class ForceConnectRoutePlanner(
-  private val delegate: RealRoutePlanner,
-) : RoutePlanner by delegate {
-  override fun plan(): RoutePlanner.Plan = delegate.planConnect() // not delegate.plan()
-}
+import kotlin.RequiresOptIn.Level.ERROR
+import kotlin.annotation.AnnotationRetention.BINARY
+import kotlin.annotation.AnnotationTarget.CLASS
+import kotlin.annotation.AnnotationTarget.FUNCTION
+import kotlin.annotation.AnnotationTarget.PROPERTY
+
+@RequiresOptIn(level = ERROR, message = "Internal APIs for OkHttp's own modules")
+@Retention(BINARY)
+@Target(CLASS, FUNCTION, PROPERTY)
+annotation class OkHttpInternalApi
