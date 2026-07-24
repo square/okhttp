@@ -60,7 +60,16 @@ class Android17SocketAdapter
     ) {
       SSLSockets.setUseSessionTickets(sslSocket, true)
 
-      val sslParameters = sslSocket.sslParameters
+      val sslParameters =
+        try {
+          sslSocket.sslParameters
+        } catch (iae: IllegalArgumentException) {
+          // Conscrypt's getSSLParameters() eagerly builds an SNIHostName from the peer host and
+          // throws "Invalid input to toASCII" (via IDN.toASCII) for names that violate STD3 ASCII,
+          // such as hostnames containing underscores. The JDK skips such names instead of throwing;
+          // wrap it as an IOException so the call fails cleanly. Mirrors Android10SocketAdapter.
+          throw IOException("Android internal error", iae)
+        }
 
       // Enable ALPN.
       sslParameters.applicationProtocols = Platform.alpnProtocolNames(protocols).toTypedArray()

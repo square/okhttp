@@ -17,6 +17,7 @@
 
 package okhttp3.android
 
+import android.annotation.SuppressLint
 import android.net.DnsResolver
 import android.net.Network
 import android.os.CancellationSignal
@@ -56,8 +57,9 @@ class AndroidDns
     private val dnsResolver: DnsResolver = DnsResolver.getInstance(),
     private val network: Network? = null,
     /**
-     * True to also query the `HTTPS` record for service metadata such as ECH. Set this to false to
-     * save a query when only IP addresses are needed.
+     * True to also query the `HTTPS` record for service metadata. Keep this on: it enables privacy
+     * features such as Encrypted Client Hello (ECH) for the HTTPS call. Set it to false only when
+     * you want to disable ECH.
      */
     private val includeServiceMetadata: Boolean = true,
     // Runs inline; the executor only hands off DnsResolver's callbacks.
@@ -153,9 +155,13 @@ class AndroidDns
        * the same decoder `DnsOverHttps` uses.
        *
        * Failures are reported to the [StateMachineDnsCall] rather than swallowed, so callers can
-       * tell an absent `HTTPS` record from a query that errored. Any addresses already resolved are
-       * still delivered first.
+       * tell an absent `HTTPS` record from a query that errored.
+       *
+       * `WrongConstant` is suppressed because okhttp's [TYPE_HTTPS] is the DNS wire value (65), the
+       * same as the platform's `DnsResolver.TYPE_HTTPS`. We use ours so the query stays valid on
+       * API 29+; `DnsResolver.TYPE_HTTPS` was only added in API 37.
        */
+      @SuppressLint("WrongConstant")
       @Suppress("ktlint:standard:comment-wrapping")
       private fun queryServiceMetadata(
         query: Query,
