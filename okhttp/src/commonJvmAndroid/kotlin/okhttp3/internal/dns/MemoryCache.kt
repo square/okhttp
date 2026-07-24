@@ -32,6 +32,9 @@ abstract class MemoryCache<K : Any, V : Any>(
   val timeSource: TimeSource.WithComparableMarks,
   val maxSize: Int,
 ) {
+  val size: Int
+    get() = entries.size
+
   private val entries = ConcurrentHashMap<K, V>()
 
   init {
@@ -71,6 +74,10 @@ abstract class MemoryCache<K : Any, V : Any>(
     }
 
     return created
+  }
+
+  fun evictAll() {
+    entries.clear()
   }
 
   /**

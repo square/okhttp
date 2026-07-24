@@ -70,6 +70,13 @@ class StateMachineDnsCallTest {
         last = true,
         alpnIds = listOf(Protocol.HTTP_2),
       )
+
+      if (caching) {
+        assertThat(cache.size).isEqualTo(3)
+        assertThat(cache.requestCount).isEqualTo(3)
+        assertThat(cache.networkCount).isEqualTo(3)
+        assertThat(cache.hitCount).isEqualTo(0)
+      }
     }
   }
 
@@ -129,6 +136,11 @@ class StateMachineDnsCallTest {
       commonhausCall1.enqueue()
       assertThat(commonhausCall1.takeAllRecords().addresses())
         .isEqualTo(greenIpv4s)
+
+      assertThat(cache.size).isEqualTo(2)
+      assertThat(cache.requestCount).isEqualTo(4)
+      assertThat(cache.networkCount).isEqualTo(2)
+      assertThat(cache.hitCount).isEqualTo(2)
     }
   }
 
@@ -164,6 +176,55 @@ class StateMachineDnsCallTest {
       call1.enqueue()
       assertThat(call1.takeAllRecords().addresses())
         .isEqualTo(blueIpv6s + blueIpv4s)
+
+      assertThat(cache.size).isEqualTo(2)
+      assertThat(cache.requestCount).isEqualTo(4)
+      assertThat(cache.networkCount).isEqualTo(2)
+      assertThat(cache.hitCount).isEqualTo(2)
+    }
+
+  @Test
+  fun `cache evictAll causes misses`() =
+    testStateMachineDnsCall {
+      val call0 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call0.enqueue()
+
+      queryFactory.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        addresses = blueIpv4s,
+      )
+      assertThat(call0.takeAllRecords().addresses())
+        .isEqualTo(blueIpv4s)
+
+      cache.evictAll()
+
+      val call1 =
+        newCall(
+          request = Dns.Request(hostname = "lysine.dev"),
+          includeIPv6 = false,
+          includeServiceMetadata = false,
+          caching = true,
+        )
+      call1.enqueue()
+      queryFactory.respondToQuery(
+        hostname = "lysine.dev",
+        type = TYPE_A,
+        addresses = greenIpv4s,
+      )
+      assertThat(call1.takeAllRecords().addresses())
+        .isEqualTo(greenIpv4s)
+
+      assertThat(cache.size).isEqualTo(1)
+      assertThat(cache.requestCount).isEqualTo(2)
+      assertThat(cache.networkCount).isEqualTo(2)
+      assertThat(cache.hitCount).isEqualTo(0)
     }
 
   @Test
@@ -215,6 +276,11 @@ class StateMachineDnsCallTest {
       )
       assertThat(call2.takeAllRecords().addresses())
         .isEqualTo(greenIpv4s)
+
+      assertThat(cache.size).isEqualTo(1)
+      assertThat(cache.requestCount).isEqualTo(3)
+      assertThat(cache.networkCount).isEqualTo(2)
+      assertThat(cache.hitCount).isEqualTo(1)
     }
 
   /**
@@ -259,6 +325,11 @@ class StateMachineDnsCallTest {
       )
       assertThat(call1.takeAllRecords().addresses())
         .isEqualTo(greenIpv4s)
+
+      assertThat(cache.size).isEqualTo(1)
+      assertThat(cache.requestCount).isEqualTo(2)
+      assertThat(cache.networkCount).isEqualTo(2)
+      assertThat(cache.hitCount).isEqualTo(0)
     }
 
   @Test
@@ -293,6 +364,11 @@ class StateMachineDnsCallTest {
       call1.enqueue()
       assertThat(call1.takeAllRecords().addresses())
         .isEqualTo(blueIpv4s)
+
+      assertThat(cache.size).isEqualTo(1)
+      assertThat(cache.requestCount).isEqualTo(2)
+      assertThat(cache.networkCount).isEqualTo(1)
+      assertThat(cache.hitCount).isEqualTo(1)
     }
 
   @Test
@@ -333,6 +409,11 @@ class StateMachineDnsCallTest {
       )
       assertThat(call1.takeAllRecords().addresses())
         .isEqualTo(greenIpv4s)
+
+      assertThat(cache.size).isEqualTo(1)
+      assertThat(cache.requestCount).isEqualTo(2)
+      assertThat(cache.networkCount).isEqualTo(2)
+      assertThat(cache.hitCount).isEqualTo(0)
     }
 
   /** Confirm that two queries to the cache yield a single query to the underlying transport. */
@@ -379,6 +460,13 @@ class StateMachineDnsCallTest {
         last = true,
         addresses = blueIpv4s,
       )
+
+      assertThat(cache.size).isEqualTo(2)
+      assertThat(cache.requestCount).isEqualTo(4)
+      assertThat(cache.networkCount).isEqualTo(2)
+
+      // We don't consider it a cache hit if the caller needs to wait for revalidation.
+      assertThat(cache.hitCount).isEqualTo(0)
     }
 
   @Test
@@ -441,6 +529,11 @@ class StateMachineDnsCallTest {
       call2.enqueue()
       assertThat(call2.takeAllRecords().addresses())
         .isEqualTo(greenIpv6s + greenIpv4s)
+
+      assertThat(cache.size).isEqualTo(2)
+      assertThat(cache.requestCount).isEqualTo(6)
+      assertThat(cache.networkCount).isEqualTo(4)
+      assertThat(cache.hitCount).isEqualTo(4)
     }
 
   @Test
@@ -515,6 +608,11 @@ class StateMachineDnsCallTest {
         last = true,
         addresses = greenIpv6s,
       )
+
+      assertThat(cache.size).isEqualTo(2)
+      assertThat(cache.requestCount).isEqualTo(6)
+      assertThat(cache.networkCount).isEqualTo(4)
+      assertThat(cache.hitCount).isEqualTo(3)
     }
 
   @Test
@@ -548,6 +646,13 @@ class StateMachineDnsCallTest {
       )
 
       call.takeOnFailure("boom!")
+
+      if (caching) {
+        assertThat(cache.size).isEqualTo(3)
+        assertThat(cache.requestCount).isEqualTo(3)
+        assertThat(cache.networkCount).isEqualTo(3)
+        assertThat(cache.hitCount).isEqualTo(0)
+      }
     }
 
   @Test
@@ -586,6 +691,11 @@ class StateMachineDnsCallTest {
         addresses = blueIpv4s,
       )
       call1.takeOnFailure("boom!")
+
+      assertThat(cache.size).isEqualTo(2)
+      assertThat(cache.requestCount).isEqualTo(4)
+      assertThat(cache.networkCount).isEqualTo(2)
+      assertThat(cache.hitCount).isEqualTo(2)
     }
 
   @Test
@@ -621,6 +731,11 @@ class StateMachineDnsCallTest {
       )
       assertThat(call1.takeAllRecords().addresses())
         .isEqualTo(greenIpv4s)
+
+      assertThat(cache.size).isEqualTo(1)
+      assertThat(cache.requestCount).isEqualTo(2)
+      assertThat(cache.networkCount).isEqualTo(2)
+      assertThat(cache.hitCount).isEqualTo(0)
     }
 
   @Test
@@ -667,6 +782,11 @@ class StateMachineDnsCallTest {
       call2.enqueue()
       assertThat(call2.takeAllRecords().addresses())
         .isEqualTo(blueIpv4s)
+
+      assertThat(cache.size).isEqualTo(1)
+      assertThat(cache.requestCount).isEqualTo(3)
+      assertThat(cache.networkCount).isEqualTo(2)
+      assertThat(cache.hitCount).isEqualTo(2)
     }
 
   /**
@@ -712,6 +832,13 @@ class StateMachineDnsCallTest {
             InetAddress.getByName("1:2::3:4"),
           ),
       )
+
+      if (caching) {
+        assertThat(cache.size).isEqualTo(3)
+        assertThat(cache.requestCount).isEqualTo(3)
+        assertThat(cache.networkCount).isEqualTo(3)
+        assertThat(cache.hitCount).isEqualTo(0)
+      }
     }
 
   /**
@@ -763,6 +890,11 @@ class StateMachineDnsCallTest {
       query2.respondFailure("canceled")
 
       call.takeOnFailure("canceled")
+
+      assertThat(cache.size).isEqualTo(3)
+      assertThat(cache.requestCount).isEqualTo(3)
+      assertThat(cache.networkCount).isEqualTo(3)
+      assertThat(cache.hitCount).isEqualTo(0)
     }
 
   /** Cancels are asynchronous and if the canceled query completes anyway, that's fine. */
@@ -840,5 +972,10 @@ class StateMachineDnsCallTest {
         alpnIds = listOf("h2"),
       )
       call.takeOnFailure("canceled")
+
+      assertThat(cache.size).isEqualTo(3)
+      assertThat(cache.requestCount).isEqualTo(3)
+      assertThat(cache.networkCount).isEqualTo(3)
+      assertThat(cache.hitCount).isEqualTo(0)
     }
 }

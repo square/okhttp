@@ -18,6 +18,7 @@
 package okhttp3.internal.dns
 
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.ComparableTimeMark as Time
 import kotlin.time.Duration
@@ -27,53 +28,16 @@ import kotlin.time.TimeSource
 import okhttp3.internal.OkHttpInternalApi
 import okhttp3.internal.concurrent.TaskRunner
 
-/**
- * A DNS query cache that stores responses according to their [ResourceRecord.timeToLive]. Each
- * entry's lifetime is bounded between [minimumTimeToLive] and [maximumTimeToLive]. The cache's size
- * is bounded by a [maxEntryCount].
- *
- * Cache Hits
- * ----------
- *
- * The age of the result impacts how queries are satisfied:
- *
- *  * After [Result.expireAt], the cached result is not used and a call to the underlying transport
- *    is made.
- *
- *  * After [Result.revalidateAt], the cached result is returned immediately. A call to the
- *    underlying transport is also made, in order to freshen the cache for a possible future call.
- *
- *  * Otherwise, the cached data is returned immediately.
- *
- * Failures are cached to prevent error cases from using more resources than success cases. There's
- * no server-provided defaults for these so the configuration parameter [failureTimeToLive] must be
- * used.
- *
- * If this receives multiple equivalent queries, it combines them into a single query on the
- * underlying transport.
- *
- * Memory Usage
- * ------------
- *
- * By default, this retains the 1,000 most recently accessed entries. Most hostnames will require 3
- * entries (`TYPE_A`, `TYPE_AAAA`, and `TYPE_HTTPS`).
- *
- * Between evictions the memory cache will grow to double that max, 2,000 entries.
- *
- * Each entry consumes about 400 bytes of memory.
- *
- * In total, the default cache will use about 800 KiB of memory.
- */
 @OkHttpInternalApi
 @OptIn(ExperimentalTime::class) // We know Clock and Instant will be stable in Kotlin 2.3.
-class DnsCache(
+class RealDnsCache(
   private val taskRunner: TaskRunner,
   timeSource: TimeSource.WithComparableMarks,
-  private val minimumTimeToLive: Duration = 10.seconds,
-  private val maximumTimeToLive: Duration = 300.seconds,
-  private val failureTimeToLive: Duration = 10.seconds,
-  private val revalidateBeforeExpire: Duration = 5.seconds,
-  maxEntryCount: Int = 1000,
+  internal val minimumTimeToLive: Duration,
+  internal val maximumTimeToLive: Duration,
+  internal val failureTimeToLive: Duration,
+  internal val revalidateBeforeExpire: Duration,
+  maxEntryCount: Int,
 ) {
   private val cache =
     object : MemoryCache<Question, Entry>(
@@ -96,11 +60,30 @@ class DnsCache(
       }
     }
 
+  private val atomicNetworkCount = AtomicInteger()
+  private val atomicHitCount = AtomicInteger()
+  private val atomicRequestCount = AtomicInteger()
+
+  internal val size: Int
+    get() = cache.size
+  internal val maxSize: Int
+    get() = cache.maxSize
+  internal val networkCount: Int
+    get() = atomicNetworkCount.get()
+  internal val hitCount: Int
+    get() = atomicHitCount.get()
+  internal val requestCount: Int
+    get() = atomicRequestCount.get()
+
   init {
     require(failureTimeToLive >= 0.seconds)
     require(minimumTimeToLive >= 0.seconds)
     require(maximumTimeToLive >= minimumTimeToLive)
     require(revalidateBeforeExpire >= 0.seconds)
+  }
+
+  fun evictAll() {
+    cache.evictAll()
   }
 
   fun wrap(delegate: DnsQuery.Factory) =
@@ -165,11 +148,15 @@ class DnsCache(
 
         if (!entry.state.compareAndSet(previous, next)) continue // Lost a race, retry.
 
+        atomicRequestCount.incrementAndGet()
+
         if (inFlightCall == null && next.inFlightCall != null) {
+          atomicNetworkCount.incrementAndGet()
           next.inFlightCall.query.enqueue(this)
         }
 
         if (useCached) {
+          atomicHitCount.incrementAndGet()
           taskRunner.newQueue().execute("${question.name} dns") {
             when (result) {
               is Result.Success -> callback.onResponse(result.message)
