@@ -98,7 +98,11 @@ class AndroidDns
     ) {
       when (query.type) {
         TYPE_A -> resolveAddresses(query.hostname, callback)
-        else -> queryServiceMetadata(query, callback)
+
+        TYPE_HTTPS -> queryServiceMetadata(query, callback)
+
+        // AndroidDns only ever issues `A` and `HTTPS` queries (includeIPv6 = false, so no `AAAA`).
+        else -> error("unexpected query type ${query.type}")
       }
     }
 
@@ -201,7 +205,7 @@ class AndroidDns
       val type: Int = question.type
 
       /** Only the `HTTPS` query reaches [DnsResolver], which is the API that takes a signal. */
-      val cancellationSignal = if (type == TYPE_A) null else CancellationSignal()
+      val cancellationSignal = if (type == TYPE_HTTPS) CancellationSignal() else null
     }
   }
 
