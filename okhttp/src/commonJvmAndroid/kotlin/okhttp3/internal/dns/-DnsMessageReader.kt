@@ -208,8 +208,9 @@ class DnsMessageReader(
       val valueLength = readUShort().toLong()
       when (key) {
         SERVICE_PARAMETER_MANDATORY -> {
-          for (i in 0 until valueLength) {
-            val serviceParameterKey = readByte()
+          if (valueLength % 2 != 0L) throw ProtocolException("malformed HTTPS / mandatory")
+          for (i in 0 until valueLength step 2) {
+            val serviceParameterKey = readUShort().toInt()
             if (serviceParameterKey !in SERVICE_PARAMETER_MANDATORY..SERVICE_PARAMETER_IPV6_HINT) {
               throw ProtocolException("unsupported HTTPS mandatory parameter $serviceParameterKey")
             }
