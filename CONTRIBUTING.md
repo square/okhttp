@@ -63,7 +63,10 @@ org.gradle.caching=true
 Running Android Tests
 ---------------------
 
+```
 $ ANDROID_SDK_ROOT=PATH_TO_ANDROID_HOME/sdk ./gradlew :android-test:connectedCheck -PandroidBuild=true
+
+```
 
 Committer's Guides
 ------------------
