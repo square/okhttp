@@ -1,25 +1,79 @@
 Contributing
 ============
 
-If you would like to contribute code to OkHttp you can do so through GitHub by
-forking the repository and sending a pull request.
+Our goal with this project is to build a simple, fast, and secure component that you can trust. We
+have scoped the project deliberately to address common use cases easily, and made it extensible so
+it'll handle exotic use cases too.
 
-When submitting code, please make every effort to follow existing conventions
-and style in order to keep the code as readable as possible. Please also make
-sure your code compiles by running `./gradlew check`. Checkstyle failures
-during compilation indicate errors in your style and can be viewed in the
-`checkstyle-result.xml` file.
+Keeping the project small and stable limits our ability to accept new contributors. We are not
+seeking new committers at this time, but some small contributions are welcome.
 
-Some general advice
+If you've found a bug, please contribute a failing test case so we can study and fix it.
 
-- Don’t change public API lightly, avoid if possible, and include your reasoning in the PR if essential.  It causes pain for developers who use OkHttp and sometimes runtime errors.
-- Favour a working external library if appropriate.  There are many examples of OkHttp libraries that can sit on top or hook in via existing APIs.
-- Get working code on a personal branch with tests before you submit a PR.
-- OkHttp is a small and light dependency.  Don't introduce new dependencies or major new functionality.
-- OkHttp targets the intersection of RFC correct *and* widely implemented.  Incorrect implementations that are very widely implemented e.g. a bug in Apache, Nginx, Google, Firefox should also be handled.
-
-Before your code can be accepted into the project you must also sign the
-[Individual Contributor License Agreement (CLA)][1].
+If you have a new feature idea, please build it in an external library. There are
+[many libraries][works_with_okhttp] that sit on top or hook in via existing APIs. If you build
+something that integrates with OkHttp, tell us so that we can link it!
 
 
- [1]: https://spreadsheets.google.com/spreadsheet/viewform?formkey=dDViT2xzUHAwRkI3X3k5Z0lQM091OGc6MQ&ndplr=1
+No Generative Tools
+-------------------
+
+We don't use LLMs or generative tools in our source code or documentation. We don't use them for
+human-to-human communication in commits, issues, and pull requests. We believe writing is thinking,
+and want our work to be thoughtful.
+
+We require all contributors to do likewise. Building is more fun when everyone is making an effort.
+
+We’ll immediately reject LLM-generated contributions to protect the culture of our project. We ban
+repeat offenders.
+
+Some narrow exceptions to this policy:
+
+* Non-English speakers may use machine translation tools if they are disclosed.
+* Local autocomplete. (Avoid tools that are metered in tokens.)
+
+Coding is fun.
+
+
+Code Contributions
+------------------
+
+Get working code on a personal branch with tests passing before you submit a PR:
+
+```
+./gradlew clean check
+```
+
+Please make every effort to follow existing conventions and style in order to keep the code as
+readable as possible.
+
+Contribute code changes through GitHub by forking the repository and sending a pull request. We
+squash all pull requests on merge.
+
+
+Gradle Setup
+------------
+
+```
+$ cat local.properties
+sdk.dir=PATH_TO_ANDROID_HOME/sdk
+org.gradle.caching=true
+```
+
+Running Android Tests
+---------------------
+
+$ ANDROID_SDK_ROOT=PATH_TO_ANDROID_HOME/sdk ./gradlew :android-test:connectedCheck -PandroidBuild=true
+
+Committer's Guides
+------------------
+
+* [Concurrency][concurrency]
+* [Debug Logging][debug_logging]
+* [Releasing][releasing]
+
+[concurrency]: https://lysine.dev/okhttp/concurrency/
+[debug_logging]: https://lysine.dev/okhttp/debug_logging/
+[releasing]: https://lysine.dev/okhttp/releasing/
+[works_with_okhttp]: https://lysine.dev/okhttp/works_with_okhttp/
+[okhttp_build]: https://github.com/lysine-dev/okhttp/blob/master/okhttp/build.gradle.kts
