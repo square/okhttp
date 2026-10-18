@@ -191,7 +191,8 @@ class CertificatePinnerKotlinTest {
     assertTrue(wildcardPin.matchesHostname("a.example.com."))
 
     val certificatePinner =
-      CertificatePinner.Builder()
+      CertificatePinner
+        .Builder()
         .add("example.com", certA1Sha256Pin)
         .build()
     assertThat(certificatePinner.findMatchingPins("example.com.")).containsExactly(exactPin)
