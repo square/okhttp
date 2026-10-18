@@ -145,6 +145,7 @@ class Http2Connection internal constructor(
   private val currentPushRequests = mutableSetOf<Int>()
 
   // Streams we've reset so we can ignore late-arriving frames.
+  // Guarded by this.
   private val resetStreamIds = linkedSetOf<Int>()
 
   init {
