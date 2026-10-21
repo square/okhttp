@@ -34,10 +34,9 @@ internal object CertificateBlocklist {
       "ec4ffa1ad0ac88081314b7aaffef6a91f97cd57291bb5ba686c5415f5eb4f6b6".decodeHex(),
     )
 
-  fun isBlocklisted(handshake: Handshake): Boolean {
-    return handshake.peerCertificates.any { certificate ->
+  fun isBlocklisted(handshake: Handshake): Boolean =
+    handshake.peerCertificates.any { certificate ->
       val sha256Hash = (certificate as X509Certificate).sha256Hash()
       sha256Hash in blockedCertificateSha256s
     }
-  }
 }

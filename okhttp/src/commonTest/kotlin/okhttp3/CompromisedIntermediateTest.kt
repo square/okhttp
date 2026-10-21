@@ -169,16 +169,18 @@ class CompromisedIntermediateTest {
   fun test() {
     server.enqueue(MockResponse(body = "hello this is your bank"))
 
-    val call = client.newCall(
-      Request(
-        url = "https://bank.secure:${server.port}/".toHttpUrl(),
-        headers = Headers.headersOf("Authorization", "secret-token"),
+    val call =
+      client.newCall(
+        Request(
+          url = "https://bank.secure:${server.port}/".toHttpUrl(),
+          headers = Headers.headersOf("Authorization", "secret-token"),
+        ),
       )
-    )
 
-    val exception = assertFailsWith<IOException> {
-      call.execute()
-    }
+    val exception =
+      assertFailsWith<IOException> {
+        call.execute()
+      }
 
     // Nothing reached the server.
     assertThat(server.takeRequest(100, TimeUnit.MILLISECONDS)).isNull()
