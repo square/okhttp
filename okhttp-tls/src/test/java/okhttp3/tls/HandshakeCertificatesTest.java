@@ -148,7 +148,7 @@ public final class HandshakeCertificatesTest {
         .collect(Collectors.toCollection(LinkedHashSet::new));
 
     // It's safe to assume all platforms will have a major Internet certificate issuer.
-    assertThat(names).anyMatch(s -> s.matches("[A-Z]+=Entrust.*"));
+    assertThat(names).anyMatch(s -> s.matches("[A-Z]+=ISRG.*"));
   }
 
   private InetSocketAddress startTlsServer() throws IOException {
