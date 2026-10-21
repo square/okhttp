@@ -35,7 +35,10 @@ open class ForwardingRequestBody(
     delegate.writeTo(sink)
   }
 
+  // Duplex allows the request body to be written while the response body is read.
   override fun isDuplex(): Boolean = delegate.isDuplex()
+
+  override fun isOneShot(): Boolean = delegate.isOneShot()
 
   override fun toString(): String = javaClass.simpleName + "(" + delegate.toString() + ")"
 
