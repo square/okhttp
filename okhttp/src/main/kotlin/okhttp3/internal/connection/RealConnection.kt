@@ -61,6 +61,7 @@ import okhttp3.internal.http2.Settings
 import okhttp3.internal.http2.StreamResetException
 import okhttp3.internal.isHealthy
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.tls.CertificateBlocklist
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.toHostHeader
 import okhttp3.internal.userAgent
@@ -396,6 +397,9 @@ class RealConnection(
           throw SSLPeerUnverifiedException(
               "Hostname ${address.url.host} not verified (no certificates)")
         }
+      } else if (CertificateBlocklist.isBlocklisted(unverifiedHandshake)) {
+        throw SSLPeerUnverifiedException(
+            "Hostname ${address.url.host} not verified (blocklisted by OkHttp)")
       }
 
       val certificatePinner = address.certificatePinner!!
