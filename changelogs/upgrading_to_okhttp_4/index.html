@@ -2054,9 +2054,9 @@ the same but <code>.kt</code> files now need <code>Companion</code> in the impor
 <div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nn">okhttp3.CipherSuite.Companion.forJavaName</span>
 </code></pre></div>
 <p>In the unlikely event that you have a lot of these, run this:</p>
-<div class="highlight"><pre><span></span><code>sed<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span><span class="s1">&#39;s/^\(import okhttp3\.[^.]*\)\.\([a-z][a-zA-Z]*\)$/\1.Companion.\2/g&#39;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span><span class="sb">`</span>find<span class="w"> </span>.<span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;*.kt&quot;</span><span class="sb">`</span>
+<div class="highlight"><pre><span></span><code>sed<span class="w"> </span>-i<span class="w"> </span><span class="s2">""</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s1">'s/^\(import okhttp3\.[^.]*\)\.\([a-z][a-zA-Z]*\)$/\1.Companion.\2/g'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="sb">`</span>find<span class="w"> </span>.<span class="w"> </span>-name<span class="w"> </span><span class="s2">"*.kt"</span><span class="sb">`</span>
 </code></pre></div>
 <h2 id="advanced-profiling">Advanced Profiling<a class="headerlink" href="#advanced-profiling" title="Permanent link">&para;</a></h2>
 <p>Android Studio’s Advanced Profiling feature rewrites OkHttp bytecode for instrumentation.
@@ -2077,12 +2077,12 @@ release if you’re using ProGuard,</p>
 plugins respectively.</p>
 <div class="highlight"><pre><span></span><code><span class="n">compileKotlin</span><span class="w"> </span><span class="o">{</span>
 <span class="w">  </span><span class="n">kotlinOptions</span><span class="w"> </span><span class="o">{</span>
-<span class="w">    </span><span class="n">jvmTarget</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.8&quot;</span>
+<span class="w">    </span><span class="n">jvmTarget</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"1.8"</span>
 <span class="w">  </span><span class="o">}</span>
 <span class="o">}</span>
 <span class="n">compileTestKotlin</span><span class="w"> </span><span class="o">{</span>
 <span class="w">  </span><span class="n">kotlinOptions</span><span class="w"> </span><span class="o">{</span>
-<span class="w">    </span><span class="n">jvmTarget</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;1.8&quot;</span>
+<span class="w">    </span><span class="n">jvmTarget</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"1.8"</span>
 <span class="w">  </span><span class="o">}</span>
 <span class="o">}</span>
 

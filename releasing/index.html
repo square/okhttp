@@ -1447,26 +1447,30 @@ export NEXT_VERSION=X.Y.Z-SNAPSHOT
 </li>
 <li>
 <p>Update versions, tag the release, and prepare for the next release.</p>
-<p><code>``
-sed -i "" \
+<div class="highlight"><pre><span></span><code>sed -i "" \
   "s/version = \".*\"/version = \"$RELEASE_VERSION\"/g" \
   build-logic/src/main/kotlin/okhttp.base-conventions.gradle.kts
 sed -i "" \
-  "s/\"com.squareup.okhttp3:\([^\:]*\):[^\"]*\"/\"com.squareup.okhttp3:\1:$RELEASE_VERSION\"/g" \</code>find . -name &ldquo;README.md&rdquo;<code>sed -i "" \
-  "s/\/com.squareup.okhttp3\/\([^\:]*\)\/[^\/]*\//\/com.squareup.okhttp3\/\1\/$RELEASE_VERSION\//g" \</code>find . -name &ldquo;README.md&rdquo;`</p>
-<p>git commit -am &ldquo;Prepare for release $RELEASE_VERSION.&rdquo;
-git tag -a parent-$RELEASE_VERSION -m &ldquo;Version $RELEASE_VERSION&rdquo;
-git push &amp;&amp; git push &ndash;tags</p>
+  "s/\"com.squareup.okhttp3:\([^\:]*\):[^\"]*\"/\"com.squareup.okhttp3:\1:$RELEASE_VERSION\"/g" \
+  `find . -name "README.md"`
+sed -i "" \
+  "s/\/com.squareup.okhttp3\/\([^\:]*\)\/[^\/]*\//\/com.squareup.okhttp3\/\1\/$RELEASE_VERSION\//g" \
+  `find . -name "README.md"`
+
+git commit -am "Prepare for release $RELEASE_VERSION."
+git tag -a parent-$RELEASE_VERSION -m "Version $RELEASE_VERSION"
+git push &amp;&amp; git push --tags
+
+sed -i "" \
+  "s/version = \".*\"/version = \"$NEXT_VERSION\"/g" \
+  build-logic/src/main/kotlin/okhttp.base-conventions.gradle.kts
+git commit -am "Prepare next development version."
+git push
+</code></pre></div>
 </li>
-</ol>
-<p>sed -i &ldquo;&rdquo; \
-      &ldquo;s/version = ".*"/version = "$NEXT_VERSION"/g&rdquo; \
-      build-logic/src/main/kotlin/okhttp.base-conventions.gradle.kts
-    git commit -am &ldquo;Prepare next development version.&rdquo;
-    git push
-    ```</p>
-<ol>
-<li>Wait for <a href="https://github.com/lysine-dev/okhttp/actions">GitHub Actions</a> to build and promote the release.</li>
+<li>
+<p>Wait for <a href="https://github.com/lysine-dev/okhttp/actions">GitHub Actions</a> to build and promote the release.</p>
+</li>
 </ol>
 
 

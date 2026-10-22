@@ -2249,7 +2249,7 @@ Bouncy Castle security provider.</strong> If you still need it, you can do it yo
 </code></pre></div>
 <p>You will also need to configure this dependency:</p>
 <div class="highlight"><pre><span></span><code>dependencies {
-  implementation &quot;org.bouncycastle:bcprov-jdk15on:1.65&quot;
+  implementation "org.bouncycastle:bcprov-jdk15on:1.65"
 }
 </code></pre></div>
 <ul>
@@ -2280,7 +2280,7 @@ Bouncy Castle security provider.</strong> If you still need it, you can do it yo
 </li>
 <li>
 <p>Upgrade: <a href="https://lysine.dev/okio/changelog/#version-270">Okio 2.7.0</a>.</p>
-<div class="highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okio:okio:2.7.0&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">(</span><span class="s">"com.squareup.okio:okio:2.7.0"</span><span class="p">)</span>
 </code></pre></div>
 </li>
 <li>
@@ -2317,7 +2317,7 @@ Bouncy Castle security provider.</strong> If you still need it, you can do it yo
     <a href="https://github.com/lysine-dev/okhttp/blob/482f88300f78c3419b04379fc26c3683c10d6a9d/samples/guide/src/main/java/okhttp3/recipes/kt/DevServer.kt">our DevServer sample</a>:</p>
 <div class="highlight"><pre><span></span><code><span class="kd">val</span><span class="w"> </span><span class="nv">clientCertificates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HandshakeCertificates</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
 <span class="w">    </span><span class="p">.</span><span class="na">addPlatformTrustedCertificates</span><span class="p">()</span>
-<span class="w">    </span><span class="p">.</span><span class="na">addInsecureHost</span><span class="p">(</span><span class="s">&quot;localhost&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">addInsecureHost</span><span class="p">(</span><span class="s">"localhost"</span><span class="p">)</span>
 <span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">()</span>
 
 <span class="kd">val</span><span class="w"> </span><span class="nv">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
@@ -2400,7 +2400,7 @@ Bouncy Castle security provider.</strong> If you still need it, you can do it yo
 </li>
 <li>
 <p>Upgrade: <a href="https://lysine.dev/okio/changelog/#version-260">Okio 2.6.0</a>.</p>
-<div class="highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okio:okio:2.6.0&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">(</span><span class="s">"com.squareup.okio:okio:2.6.0"</span><span class="p">)</span>
 </code></pre></div>
 </li>
 <li>
@@ -2481,15 +2481,15 @@ disable the <code>permessage-deflate</code> compression settings on your server.
     keep all of your OkHttp artifacts on the same version, even if they&rsquo;re declared via transitive
     dependencies. You can even omit versions when declaring other OkHttp dependencies.</p>
 <div class="highlight"><pre><span></span><code><span class="n">dependencies</span><span class="w"> </span><span class="p">{</span>
-<span class="w">   </span><span class="n">api</span><span class="p">(</span><span class="n">platform</span><span class="p">(</span><span class="s">&quot;com.squareup.okhttp3:okhttp-bom:4.4.0&quot;</span><span class="p">))</span>
-<span class="w">   </span><span class="n">api</span><span class="p">(</span><span class="s">&quot;com.squareup.okhttp3:okhttp&quot;</span><span class="p">)</span><span class="w">              </span><span class="c1">// No version!</span>
-<span class="w">   </span><span class="n">api</span><span class="p">(</span><span class="s">&quot;com.squareup.okhttp3:logging-interceptor&quot;</span><span class="p">)</span><span class="w"> </span><span class="c1">// No version!</span>
+<span class="w">   </span><span class="n">api</span><span class="p">(</span><span class="n">platform</span><span class="p">(</span><span class="s">"com.squareup.okhttp3:okhttp-bom:4.4.0"</span><span class="p">))</span>
+<span class="w">   </span><span class="n">api</span><span class="p">(</span><span class="s">"com.squareup.okhttp3:okhttp"</span><span class="p">)</span><span class="w">              </span><span class="c1">// No version!</span>
+<span class="w">   </span><span class="n">api</span><span class="p">(</span><span class="s">"com.squareup.okhttp3:logging-interceptor"</span><span class="p">)</span><span class="w"> </span><span class="c1">// No version!</span>
 <span class="p">}</span>
 </code></pre></div>
 </li>
 <li>
 <p>New: Upgrade to Okio 2.4.3.</p>
-<div class="highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okio:okio:2.4.3&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">(</span><span class="s">"com.squareup.okio:okio:2.4.3"</span><span class="p">)</span>
 </code></pre></div>
 </li>
 <li>
@@ -2594,7 +2594,7 @@ the proxy selectors are different. Ugh!</p>
 <li>
 <p>New: API to decode a certificate and private key to create a <code>HeldCertificate</code>. This accepts a
     string containing both a certificate and PKCS #8-encoded private key.</p>
-<div class="highlight"><pre><span></span><code><span class="kd">val</span><span class="w"> </span><span class="nv">heldCertificate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HeldCertificate</span><span class="p">.</span><span class="na">decode</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kd">val</span><span class="w"> </span><span class="nv">heldCertificate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HeldCertificate</span><span class="p">.</span><span class="na">decode</span><span class="p">(</span><span class="s">"""</span>
 <span class="s">    |-----BEGIN CERTIFICATE-----</span>
 <span class="s">    |MIIBYTCCAQegAwIBAgIBKjAKBggqhkjOPQQDAjApMRQwEgYDVQQLEwtlbmdpbmVl</span>
 <span class="s">    |cmluZzERMA8GA1UEAxMIY2FzaC5hcHAwHhcNNzAwMTAxMDAwMDA1WhcNNzAwMTAx</span>
@@ -2609,7 +2609,7 @@ the proxy selectors are different. Ugh!</p>
 <span class="s">    |MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCA7ODT0xhGSNn4ESj6J</span>
 <span class="s">    |lu/GJQZoU9lDrCPeUcQ28tzOWw==</span>
 <span class="s">    |-----END PRIVATE KEY-----</span>
-<span class="s">    &quot;&quot;&quot;</span><span class="p">.</span><span class="na">trimMargin</span><span class="p">())</span>
+<span class="s">    """</span><span class="p">.</span><span class="na">trimMargin</span><span class="p">())</span>
 <span class="kd">val</span><span class="w"> </span><span class="nv">handshakeCertificates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HandshakeCertificates</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
 <span class="w">    </span><span class="p">.</span><span class="na">heldCertificate</span><span class="p">(</span><span class="n">heldCertificate</span><span class="p">)</span>
 <span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">()</span>

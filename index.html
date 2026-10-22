@@ -1771,7 +1771,7 @@ invalid requests.</p>
 </code></pre></div>
 <h2 id="post-to-a-server">Post to a Server<a class="headerlink" href="#post-to-a-server" title="Permanent link">&para;</a></h2>
 <p>This program posts data to a service. <a href="https://raw.github.com/lysine-dev/okhttp/master/samples/guide/src/main/java/okhttp3/guide/PostExample.java">Full source</a>.</p>
-<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">MediaType</span><span class="w"> </span><span class="n">JSON</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MediaType</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="s">&quot;application/json&quot;</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">MediaType</span><span class="w"> </span><span class="n">JSON</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MediaType</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="s">"application/json"</span><span class="p">);</span>
 
 <span class="n">OkHttpClient</span><span class="w"> </span><span class="n">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">OkHttpClient</span><span class="p">();</span>
 
@@ -1805,18 +1805,18 @@ the first security provider:</p>
 support for TLS 1.2 and should not be used.</p>
 <h2 id="releases">Releases<a class="headerlink" href="#releases" title="Permanent link">&para;</a></h2>
 <p>Our <a href="https://lysine.dev/okhttp/changelog/">change log</a> has release history.</p>
-<p>The latest release is available on <a href="https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/5.5.0/jar">Maven Central</a>.</p>
-<div class="highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okhttp3:okhttp:5.5.0&quot;</span><span class="p">)</span>
+<p>The latest release is available on <a href="https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/5.5.1/jar">Maven Central</a>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">(</span><span class="s">"com.squareup.okhttp3:okhttp:5.5.1"</span><span class="p">)</span>
 </code></pre></div>
 <p>Snapshot builds are <a href="https://s01.oss.sonatype.org/content/repositories/snapshots/">available</a>. <a href="https://lysine.dev/okhttp/features/r8_proguard/">R8 and ProGuard</a> rules are available.</p>
 <p>Also, we have a <a href="https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import">bill of materials (BOM)</a> available to help you keep OkHttp artifacts up to date and be sure about version compatibility.</p>
 <div class="highlight"><pre><span></span><code><span class="w">    </span><span class="n">dependencies</span><span class="w"> </span><span class="p">{</span>
 <span class="w">       </span><span class="c1">// define a BOM and its version</span>
-<span class="w">       </span><span class="n">implementation</span><span class="p">(</span><span class="n">platform</span><span class="p">(</span><span class="s">&quot;com.squareup.okhttp3:okhttp-bom:5.5.0&quot;</span><span class="p">))</span>
+<span class="w">       </span><span class="n">implementation</span><span class="p">(</span><span class="n">platform</span><span class="p">(</span><span class="s">"com.squareup.okhttp3:okhttp-bom:5.5.1"</span><span class="p">))</span>
 
 <span class="w">       </span><span class="c1">// define any required OkHttp artifacts without version</span>
-<span class="w">       </span><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okhttp3:okhttp&quot;</span><span class="p">)</span>
-<span class="w">       </span><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okhttp3:logging-interceptor&quot;</span><span class="p">)</span>
+<span class="w">       </span><span class="n">implementation</span><span class="p">(</span><span class="s">"com.squareup.okhttp3:okhttp"</span><span class="p">)</span>
+<span class="w">       </span><span class="n">implementation</span><span class="p">(</span><span class="s">"com.squareup.okhttp3:logging-interceptor"</span><span class="p">)</span>
 <span class="w">    </span><span class="p">}</span>
 </code></pre></div>
 <h2 id="maven-and-jvm-projects">Maven and JVM Projects<a class="headerlink" href="#maven-and-jvm-projects" title="Permanent link">&para;</a></h2>
@@ -1854,8 +1854,8 @@ Maven projects.</p>
 </code></pre></div>
 <h2 id="mockwebserver">MockWebServer<a class="headerlink" href="#mockwebserver" title="Permanent link">&para;</a></h2>
 <p>OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.</p>
-<p>The latest release is available on <a href="https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/5.5.0/jar">Maven Central</a>.</p>
-<div class="highlight"><pre><span></span><code><span class="n">testImplementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okhttp3:mockwebserver3:5.5.0&quot;</span><span class="p">)</span>
+<p>The latest release is available on <a href="https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/5.5.1/jar">Maven Central</a>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">testImplementation</span><span class="p">(</span><span class="s">"com.squareup.okhttp3:mockwebserver3:5.5.1"</span><span class="p">)</span>
 </code></pre></div>
 <p>MockWebServer is used for firstly for internal testing, and for basic testing of apps using OkHttp client.
 It is not a full featured HTTP testing library that is developed standalone. It is not being actively developed
@@ -1894,14 +1894,14 @@ $<span class="w"> </span>./okcurl/build/graal/okcurl<span class="w"> </span>http
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>Copyright 2019 Square, Inc.
 
-Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.

@@ -1625,27 +1625,27 @@
 
 <span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">printEvent</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="n">nowNanos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">nanoTime</span><span class="p">();</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">name</span><span class="p">.</span><span class="na">equals</span><span class="p">(</span><span class="s">&quot;callStart&quot;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">name</span><span class="p">.</span><span class="na">equals</span><span class="p">(</span><span class="s">"callStart"</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
 <span class="w">      </span><span class="n">callStartNanos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nowNanos</span><span class="p">;</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="n">elapsedNanos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nowNanos</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">callStartNanos</span><span class="p">;</span>
-<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;%.3f %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">elapsedNanos</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000000000</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">"%.3f %s%n"</span><span class="p">,</span><span class="w"> </span><span class="n">elapsedNanos</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000000000</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">callStart</span><span class="p">(</span><span class="n">Call</span><span class="w"> </span><span class="n">call</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">printEvent</span><span class="p">(</span><span class="s">&quot;callStart&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">printEvent</span><span class="p">(</span><span class="s">"callStart"</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">callEnd</span><span class="p">(</span><span class="n">Call</span><span class="w"> </span><span class="n">call</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">printEvent</span><span class="p">(</span><span class="s">&quot;callEnd&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">printEvent</span><span class="p">(</span><span class="s">"callEnd"</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">dnsStart</span><span class="p">(</span><span class="n">Call</span><span class="w"> </span><span class="n">call</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">domainName</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">printEvent</span><span class="p">(</span><span class="s">&quot;dnsStart&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">printEvent</span><span class="p">(</span><span class="s">"dnsStart"</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">dnsEnd</span><span class="p">(</span><span class="n">Call</span><span class="w"> </span><span class="n">call</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">domainName</span><span class="p">,</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">InetAddress</span><span class="o">&gt;</span><span class="w"> </span><span class="n">inetAddressList</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">printEvent</span><span class="p">(</span><span class="s">&quot;dnsEnd&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">printEvent</span><span class="p">(</span><span class="s">"dnsEnd"</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="p">...</span>
@@ -1653,16 +1653,16 @@
 </code></pre></div>
 <p>We make a couple calls:</p>
 <div class="highlight"><pre><span></span><code><span class="n">Request</span><span class="w"> </span><span class="n">request</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
-<span class="w">    </span><span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;https://publicobject.com/helloworld.txt&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">"https://publicobject.com/helloworld.txt"</span><span class="p">)</span>
 <span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
 
-<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;REQUEST 1 (new connection)&quot;</span><span class="p">);</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"REQUEST 1 (new connection)"</span><span class="p">);</span>
 <span class="k">try</span><span class="w"> </span><span class="p">(</span><span class="n">Response</span><span class="w"> </span><span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="na">execute</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="c1">// Consume and discard the response body.</span>
 <span class="w">  </span><span class="n">response</span><span class="p">.</span><span class="na">body</span><span class="p">().</span><span class="na">source</span><span class="p">().</span><span class="na">readByteString</span><span class="p">();</span>
 <span class="p">}</span>
 
-<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;REQUEST 2 (pooled connection)&quot;</span><span class="p">);</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"REQUEST 2 (pooled connection)"</span><span class="p">);</span>
 <span class="k">try</span><span class="w"> </span><span class="p">(</span><span class="n">Response</span><span class="w"> </span><span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="na">execute</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="c1">// Consume and discard the response body.</span>
 <span class="w">  </span><span class="n">response</span><span class="p">.</span><span class="na">body</span><span class="p">().</span><span class="na">source</span><span class="p">().</span><span class="na">readByteString</span><span class="p">();</span>
@@ -1708,7 +1708,7 @@ REQUEST 2 (pooled connection)
 
 <span class="w">    </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="n">EventListener</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="n">Call</span><span class="w"> </span><span class="n">call</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">      </span><span class="kt">long</span><span class="w"> </span><span class="n">callId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nextCallId</span><span class="p">.</span><span class="na">getAndIncrement</span><span class="p">();</span>
-<span class="w">      </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;%04d %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">callId</span><span class="p">,</span><span class="w"> </span><span class="n">call</span><span class="p">.</span><span class="na">request</span><span class="p">().</span><span class="na">url</span><span class="p">());</span>
+<span class="w">      </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">"%04d %s%n"</span><span class="p">,</span><span class="w"> </span><span class="n">callId</span><span class="p">,</span><span class="w"> </span><span class="n">call</span><span class="p">.</span><span class="na">request</span><span class="p">().</span><span class="na">url</span><span class="p">());</span>
 <span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">PrintingEventListener</span><span class="p">(</span><span class="n">callId</span><span class="p">,</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">nanoTime</span><span class="p">());</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">};</span>
@@ -1723,15 +1723,15 @@ REQUEST 2 (pooled connection)
 
 <span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">printEvent</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="n">elapsedNanos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">nanoTime</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">callStartNanos</span><span class="p">;</span>
-<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;%04d %.3f %s%n&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">callId</span><span class="p">,</span><span class="w"> </span><span class="n">elapsedNanos</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000000000</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">"%04d %.3f %s%n"</span><span class="p">,</span><span class="w"> </span><span class="n">callId</span><span class="p">,</span><span class="w"> </span><span class="n">elapsedNanos</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000000000</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">callStart</span><span class="p">(</span><span class="n">Call</span><span class="w"> </span><span class="n">call</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">printEvent</span><span class="p">(</span><span class="s">&quot;callStart&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">printEvent</span><span class="p">(</span><span class="s">"callStart"</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">callEnd</span><span class="p">(</span><span class="n">Call</span><span class="w"> </span><span class="n">call</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">printEvent</span><span class="p">(</span><span class="s">&quot;callEnd&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">printEvent</span><span class="p">(</span><span class="s">"callEnd"</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="p">...</span>
@@ -1739,14 +1739,14 @@ REQUEST 2 (pooled connection)
 </code></pre></div>
 <p>We can use this listener to race a pair of concurrent HTTP requests:</p>
 <div class="highlight"><pre><span></span><code><span class="n">Request</span><span class="w"> </span><span class="n">washingtonPostRequest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
-<span class="w">    </span><span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;https://www.washingtonpost.com/&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">"https://www.washingtonpost.com/"</span><span class="p">)</span>
 <span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
 <span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">washingtonPostRequest</span><span class="p">).</span><span class="na">enqueue</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">Callback</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="p">...</span>
 <span class="p">});</span>
 
 <span class="n">Request</span><span class="w"> </span><span class="n">newYorkTimesRequest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
-<span class="w">    </span><span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;https://www.nytimes.com/&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">"https://www.nytimes.com/"</span><span class="p">)</span>
 <span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
 <span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">newYorkTimesRequest</span><span class="p">).</span><span class="na">enqueue</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">Callback</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="p">...</span>

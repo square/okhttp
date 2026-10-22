@@ -1133,6 +1133,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-551" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 5.5.1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-550" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1803,6 +1814,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-551" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 5.5.1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-550" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2139,6 +2161,14 @@
 
 
 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-551">Version 5.5.1<a class="headerlink" href="#version-551" title="Permanent link">&para;</a></h2>
+<p><em>2026_10_22</em></p>
+<ul>
+<li>Fix: <a href="https://groups.google.com/a/mozilla.org/g/dev-security-policy/c/0R3XLJL6FuE/m/0XofdebrAAAJ?pli=1">Block 8 compromised eMudhra intermediate certificates</a>. Note that this
+   update is not necessary for Android devices with Google Play Services as Google has issued an
+   <a href="https://blog.google/security/protecting-chrome-and-android-users-from-compromised-emudhra-intermediate-ca-certificates/">automatic update</a>. This change protects JVMs and AOSP devices that are exposed
+   to the compromised certificates.</li>
+</ul>
 <h2 id="version-550">Version 5.5.0<a class="headerlink" href="#version-550" title="Permanent link">&para;</a></h2>
 <p><em>2026-08-16</em></p>
 <p>This release introduces <strong>opt-in</strong> support for <a href="https://www.rfc-editor.org/info/rfc9849/">Encrypted Client Hello (ECH)</a>. This new feature
@@ -2157,11 +2187,11 @@ just IP addresses!), asynchronous streaming results, and in-memory caching.</p>
 <span class="c1">// same bootstrap client so they share a connection pool and dispatcher.</span>
 <span class="kd">val</span><span class="w"> </span><span class="nv">bootstrapClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">OkHttpClient</span><span class="p">()</span>
 
-<span class="c1">// This sample uses Cloudflare&#39;s 1.1.1.1 DnsOverHttps service.</span>
+<span class="c1">// This sample uses Cloudflare's 1.1.1.1 DnsOverHttps service.</span>
 <span class="kd">val</span><span class="w"> </span><span class="nv">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bootstrapClient</span><span class="p">.</span><span class="na">newBuilder</span><span class="p">()</span>
 <span class="w">  </span><span class="p">.</span><span class="na">dns</span><span class="p">(</span><span class="n">DnsOverHttps</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
 <span class="w">    </span><span class="p">.</span><span class="na">client</span><span class="p">(</span><span class="n">bootstrapClient</span><span class="p">)</span>
-<span class="w">    </span><span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;https://1.1.1.1/dns-query&quot;</span><span class="p">.</span><span class="na">toHttpUrl</span><span class="p">())</span>
+<span class="w">    </span><span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">"https://1.1.1.1/dns-query"</span><span class="p">.</span><span class="na">toHttpUrl</span><span class="p">())</span>
 <span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">())</span>
 <span class="w">  </span><span class="p">.</span><span class="na">build</span><span class="p">()</span>
 </code></pre></div>
@@ -2374,7 +2404,7 @@ migrate.)</p>
 and IPv4 connections concurrently, keeping whichever connects first.</p>
 <p><strong>We’ve improved our Kotlin APIs.</strong> You can skip the builder:</p>
 <div class="highlight"><pre><span></span><code><span class="kd">val</span><span class="w"> </span><span class="nv">request</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Request</span><span class="p">(</span>
-<span class="w">  </span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;https://cash.app/&quot;</span><span class="p">.</span><span class="na">toHttpUrl</span><span class="p">(),</span>
+<span class="w">  </span><span class="n">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"https://cash.app/"</span><span class="p">.</span><span class="na">toHttpUrl</span><span class="p">(),</span>
 <span class="p">)</span>
 </code></pre></div>
 <p><strong>OkHttp now supports <a href="https://www.graalvm.org/">GraalVM</a>.</strong></p>
@@ -2718,7 +2748,7 @@ of unacknowledged data per stream and no per-connection limit.</p>
     system. We&rsquo;ve fixed this with a new package (<code>okhttp3.java.net.cookiejar</code>) and a new artifact,
     <code>com.squareup.okhttp3:okhttp-java-net-cookiehandler</code>. (The original artifact now delegates to
     this new one.)</p>
-<div class="highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okhttp3:okhttp-java-net-cookiehandler:5.0.0-alpha.12&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">(</span><span class="s">"com.squareup.okhttp3:okhttp-java-net-cookiehandler:5.0.0-alpha.12"</span><span class="p">)</span>
 </code></pre></div>
 </li>
 <li>
@@ -2837,7 +2867,7 @@ the fixes or features below, please upgrade.</p>
 <li>
 <p>New: Named and default parameters constructor for <code>Request</code>:</p>
 <div class="highlight"><pre><span></span><code>val request = Request(
-  url = &quot;https://cash.app/&quot;.toHttpUrl(),
+  url = "https://cash.app/".toHttpUrl(),
 )
 </code></pre></div>
 </li>
@@ -2998,7 +3028,7 @@ and Android! Please report any issues you encounter: we&rsquo;ll fix them urgent
 <li>New: Support OSGi metadata.</li>
 <li>
 <p>Upgrade: <a href="https://lysine.dev/okio/changelog/#version-290">Okio 2.9.0</a>.</p>
-<div class="highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okio:okio:2.9.0&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">(</span><span class="s">"com.squareup.okio:okio:2.9.0"</span><span class="p">)</span>
 </code></pre></div>
 </li>
 </ul>
