@@ -1,7 +1,7 @@
 [versions]
 agp = "9.1.1"
 amazon-corretto = "2.5.0"
-android-junit5 = "2.0.1"
+android-junit5 = "2.0.2"
 androidx-activity = "1.11.0"
 androidx-annotation = "1.11.0"
 androidx-espresso-core = "3.7.0"
