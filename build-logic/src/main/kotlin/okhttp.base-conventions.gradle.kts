@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
 group = "com.squareup.okhttp3"
-version = "5.5.0"
+version = "5.5.1"
 
 val platform = project.platform
 val testJavaVersion = project.testJavaVersion
