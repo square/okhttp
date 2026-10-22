@@ -36,7 +36,10 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SECRET_KEY }}
 
       - name: Complete Publish
-        run: curl -v -X POST 'https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/dev.lysine'
+        run: curl -w '%{http_code}\n' --variable %SONATYPE_CENTRAL_USERNAME --variable %SONATYPE_CENTRAL_PASSWORD --expand-user "{{SONATYPE_CENTRAL_USERNAME}}:{{SONATYPE_CENTRAL_PASSWORD}}" -X POST 'https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/com.squareup.okhttp3'
+        env:
+          SONATYPE_CENTRAL_USERNAME: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
+          SONATYPE_CENTRAL_PASSWORD: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
 
   checkjdk11:
     runs-on: ubuntu-latest
