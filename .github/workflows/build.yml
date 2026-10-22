@@ -3,7 +3,7 @@ name: build
 on:
   push:
     branches:
-      - okhttp_4x
+      - okhttp_4.12.x
   pull_request:
     types: [opened, labeled, unlabeled, synchronize]
 
@@ -13,7 +13,7 @@ env:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/okhttp_4x'
+    if: github.ref == 'refs/heads/okhttp_4.12.x'
 
     steps:
       - name: Checkout
@@ -31,9 +31,12 @@ jobs:
       - name: Upload Artifacts
         run: ./gradlew publishAllPublicationsToMavencentralRepository
         env:
-          ORG_GRADLE_PROJECT_SONATYPE_NEXUS_USERNAME: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
-          ORG_GRADLE_PROJECT_SONATYPE_NEXUS_PASSWORD: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.ARTIFACT_SIGNING_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SECRET_KEY }}
+
+      - name: Complete Publish
+        run: curl -v -X POST 'https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/dev.lysine'
 
   checkjdk11:
     runs-on: ubuntu-latest
